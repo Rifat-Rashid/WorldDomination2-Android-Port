@@ -1,0 +1,43 @@
+name: Android validation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  android:
+    name: Build, unit tests, and lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install compile SDK
+        run: sdkmanager 'platforms;android-37'
+
+      - name: Resolve dependencies, build, test, and lint
+        run: ./gradlew --no-daemon --stacktrace :app:dependencies :app:assembleDebug :app:testDebugUnitTest :app:lintDebug
+
+      - name: Upload validation reports on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-validation-failure-reports
+          path: |
+            app/build/reports/
+            app/build/test-results/
+          if-no-files-found: ignore

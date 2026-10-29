@@ -1,0 +1,64 @@
+# Local Codex/agent instructions
+AGENTS.md
+agents.md
+agent.md
+**/AGENTS.md
+**/agents.md
+**/agent.md
+**/CLAUDE.md
+**/GEMINI.md
+
+# Local prompts and analysis (do not commit)
+analysis/
+**/analysis/
+prompts/
+**/prompts/
+*.prompt.md
+*.prompt.txt
+*.prompts.md
+
+# Android / Gradle generated outputs
+.gradle/
+**/build/
+/local.properties
+*.apk
+*.aab
+*.ap_
+*.hprof
+captures/
+.externalNativeBuild/
+.cxx/
+
+# IDE and machine-specific files
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Local logs and secrets
+*.log
+.env
+.env.*
+
+!.env.example
+*.jks
+*.keystore
+*.p12
+*.pem
+*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+

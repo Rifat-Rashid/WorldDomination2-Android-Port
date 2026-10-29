@@ -1,0 +1,1411 @@
+{
+  "swf_sha256": "fe60c4d8793a23e7ddd59ddcb406b5471540e28d64f7552d17308fbb269e6fe1",
+  "scale": 0.8,
+  "symbols": {
+    "communist_buildings": {
+      "character_id": 1337,
+      "frames": {
+        "1": {
+          "file": "1337_1.png",
+          "source_size": [
+            95,
+            126
+          ],
+          "source_sha256": "e5a8bcb80842a17aca1e28eca0a05076e1804a2e077b5b54f17199e188c91e52",
+          "crop": [
+            26,
+            68,
+            66,
+            103
+          ],
+          "registration": [
+            42.0,
+            91.5
+          ],
+          "offset": [
+            -16.0,
+            -23.5
+          ],
+          "sha256": "db14eb298653c3b201164b057065d5ceec0a7c1e546fd386a3b5453bfcfc8d23"
+        },
+        "2": {
+          "file": "1337_2.png",
+          "source_size": [
+            95,
+            126
+          ],
+          "source_sha256": "c97e9afd20a1f36a7d63eda95f5c8a73ea76612591f236d9fabecdb5f1c21f69",
+          "crop": [
+            22,
+            60,
+            72,
+            104
+          ],
+          "registration": [
+            42.0,
+            91.5
+          ],
+          "offset": [
+            -20.0,
+            -31.5
+          ],
+          "sha256": "c3bab2d2c6dd34c0a410d44336c70ef2e64b2004d392b53f0a56ce5fd179090f"
+        },
+        "3": {
+          "file": "1337_3.png",
+          "source_size": [
+            95,
+            126
+          ],
+          "source_sha256": "e8e6cc1fc6d91f919c24c9e720f5dbb86810fa7aff62134257a3a59f90557f99",
+          "crop": [
+            23,
+            54,
+            75,
+            102
+          ],
+          "registration": [
+            42.0,
+            91.5
+          ],
+          "offset": [
+            -19.0,
+            -37.5
+          ],
+          "sha256": "c3e318e301963d71092e619f4e83e52c686803abe0e090d6d1ed4fdad1c17944"
+        },
+        "4": {
+          "file": "1337_4.png",
+          "source_size": [
+            95,
+            126
+          ],
+          "source_sha256": "ed7c50aad884996391d2ca88ebfbbe403ddf4666dc657865ae642aea4808fa67",
+          "crop": [
+            13,
+            36,
+            86,
+            104
+          ],
+          "registration": [
+            42.0,
+            91.5
+          ],
+          "offset": [
+            -29.0,
+            -55.5
+          ],
+          "sha256": "d8ad096473d483248135a19e2ccaca73512efc0ad6bba8f42298e7bd2bc5f802"
+        },
+        "5": {
+          "file": "1337_5.png",
+          "source_size": [
+            95,
+            126
+          ],
+          "source_sha256": "c3a047ae90ca3535eefb80675f933270e3c24b13d30449b4d98a4de05652e049",
+          "crop": [
+            20,
+            21,
+            94,
+            105
+          ],
+          "registration": [
+            42.0,
+            91.5
+          ],
+          "offset": [
+            -22.0,
+            -70.5
+          ],
+          "sha256": "f81b58a93bf3e8a3c6dc6b5372e4b1e708fdd31450773babec86cd6893d999c1"
+        },
+        "6": {
+          "file": "1337_6.png",
+          "source_size": [
+            95,
+            126
+          ],
+          "source_sha256": "13576146faff216d1b61aa1348224ab52e1496163fdda55fcc281fae9b7b0049",
+          "crop": [
+            9,
+            1,
+            91,
+            105
+          ],
+          "registration": [
+            42.0,
+            91.5
+          ],
+          "offset": [
+            -33.0,
+            -90.5
+          ],
+          "sha256": "18f1cc45594ffb55851c9c87191d0229ee5663e670a6f73458e9ae4912e4d52c"
+        },
+        "10": {
+          "file": "1337_10.png",
+          "source_size": [
+            95,
+            126
+          ],
+          "source_sha256": "74fdabc575041cb58efaddf9315e7fa1891ad80bee8980c405f5b50f32c59974",
+          "crop": [
+            18,
+            70,
+            72,
+            109
+          ],
+          "registration": [
+            42.0,
+            91.5
+          ],
+          "offset": [
+            -24.0,
+            -21.5
+          ],
+          "sha256": "8eee28b3d53f6aee5f95eeed14c29d83105d4d10c4ba9f32d429336945f93429"
+        },
+        "11": {
+          "file": "1337_11.png",
+          "source_size": [
+            95,
+            126
+          ],
+          "source_sha256": "ce6cc419f9dd65739e8098378bc31e593fb6db3db27af18533b1341869943960",
+          "crop": [
+            17,
+            61,
+            73,
+            111
+          ],
+          "registration": [
+            42.0,
+            91.5
+          ],
+          "offset": [
+            -25.0,
+            -30.5
+          ],
+          "sha256": "b4a69d6d6518109a4efc8e97a53a29cbee2187d1e8bce7e8d46871ecfda0d65a"
+        },
+        "12": {
+          "file": "1337_12.png",
+          "source_size": [
+            95,
+            126
+          ],
+          "source_sha256": "d693d7568e99379ad77b7f293329d26a00ef537c08bccb38b0b531ad81003b0a",
+          "crop": [
+            12,
+            59,
+            78,
+            118
+          ],
+          "registration": [
+            42.0,
+            91.5
+          ],
+          "offset": [
+            -30.0,
+            -32.5
+          ],
+          "sha256": "104e57bd65a59ba8bbc91e4959745301f362cd6d0a141f15693cd3101350f00d"
+        },
+        "13": {
+          "file": "1337_13.png",
+          "source_size": [
+            95,
+            126
+          ],
+          "source_sha256": "a4f088d7b298bd4a7915092373c6de74cca5c2cff6dd8fc71f042a309a4da6ce",
+          "crop": [
+            4,
+            36,
+            89,
+            117
+          ],
+          "registration": [
+            42.0,
+            91.5
+          ],
+          "offset": [
+            -38.0,
+            -55.5
+          ],
+          "sha256": "c1a793768aa19fe09de02bdebb244014ad47b21b627bfaaeee2d6eddf36092f3"
+        },
+        "14": {
+          "file": "1337_14.png",
+          "source_size": [
+            95,
+            126
+          ],
+          "source_sha256": "60b78bbe9eb3b3a646bd1f47d4f0a761ff802cb53fd03d81d66012da81341a1a",
+          "crop": [
+            12,
+            30,
+            81,
+            114
+          ],
+          "registration": [
+            42.0,
+            91.5
+          ],
+          "offset": [
+            -30.0,
+            -61.5
+          ],
+          "sha256": "81e2b0b5f1bea5e55411ee140a88b2977c19c58bcddadae8c0e30c152db645c3"
+        },
+        "15": {
+          "file": "1337_15.png",
+          "source_size": [
+            95,
+            126
+          ],
+          "source_sha256": "b2b288d10faa2685bb3641ec65de7c0c5486206e74a4062889ce5e3cca7484d9",
+          "crop": [
+            3,
+            18,
+            86,
+            123
+          ],
+          "registration": [
+            42.0,
+            91.5
+          ],
+          "offset": [
+            -39.0,
+            -73.5
+          ],
+          "sha256": "bcf27b5a30f65c7f8443f9357eacc3c1a3e01bcdba202c0c434d219a6d748bfe"
+        }
+      }
+    },
+    "christian_buildings": {
+      "character_id": 1363,
+      "frames": {
+        "1": {
+          "file": "1363_1.png",
+          "source_size": [
+            103,
+            141
+          ],
+          "source_sha256": "9432fd3727f94bd16beb26220a2db67b374e951d6703cc8720d3d82f6da78aae",
+          "crop": [
+            29,
+            77,
+            65,
+            109
+          ],
+          "registration": [
+            43.0,
+            97.0
+          ],
+          "offset": [
+            -14.0,
+            -20.0
+          ],
+          "sha256": "e4361bd051103f0938efafd47164e4003e4007329394fcd77d20b6f81e1836a6"
+        },
+        "2": {
+          "file": "1363_2.png",
+          "source_size": [
+            103,
+            141
+          ],
+          "source_sha256": "6c08b1041d67d2ea59159fe5f79b4d7c1280e2074a2df8a9afe074e2ea7640bb",
+          "crop": [
+            22,
+            69,
+            74,
+            112
+          ],
+          "registration": [
+            43.0,
+            97.0
+          ],
+          "offset": [
+            -21.0,
+            -28.0
+          ],
+          "sha256": "956d4b42eb886416520e62fc25bffbc6e8044b1b5d32bfe59b4664d67f477d13"
+        },
+        "3": {
+          "file": "1363_3.png",
+          "source_size": [
+            103,
+            141
+          ],
+          "source_sha256": "af7ac9d9e8488d0be689459f6edc00ec0c562550e6df4bbce969760d45a5fe75",
+          "crop": [
+            23,
+            61,
+            75,
+            112
+          ],
+          "registration": [
+            43.0,
+            97.0
+          ],
+          "offset": [
+            -20.0,
+            -36.0
+          ],
+          "sha256": "e8437e3ae466732af78c41b0440e4acedb9060a2382c6e77cc27588449e40755"
+        },
+        "4": {
+          "file": "1363_4.png",
+          "source_size": [
+            103,
+            141
+          ],
+          "source_sha256": "ee6760e53fc3cb642def4e39ad291c059197971657ee8007c5d47d8697d4d10b",
+          "crop": [
+            23,
+            50,
+            82,
+            112
+          ],
+          "registration": [
+            43.0,
+            97.0
+          ],
+          "offset": [
+            -20.0,
+            -47.0
+          ],
+          "sha256": "7de5470987dec29144bf5d85ca317b4cb5b05a64f12264f61cf898734a5df5d6"
+        },
+        "5": {
+          "file": "1363_5.png",
+          "source_size": [
+            103,
+            141
+          ],
+          "source_sha256": "42829bf03ace4136b27299181fde369682170b8f440f5081c7e99a80ebd1c650",
+          "crop": [
+            20,
+            26,
+            88,
+            112
+          ],
+          "registration": [
+            43.0,
+            97.0
+          ],
+          "offset": [
+            -23.0,
+            -71.0
+          ],
+          "sha256": "c8bc6aa16bc03e699fb7cd04327bbf5d8ecee72641143001be957dcf12a611cb"
+        },
+        "6": {
+          "file": "1363_6.png",
+          "source_size": [
+            103,
+            141
+          ],
+          "source_sha256": "8a4e2b6ce7d554709e64365d1199f53613e7ed9023580542fb212464f2a8a9ee",
+          "crop": [
+            24,
+            1,
+            100,
+            114
+          ],
+          "registration": [
+            43.0,
+            97.0
+          ],
+          "offset": [
+            -19.0,
+            -96.0
+          ],
+          "sha256": "bfffe8026e59ba8c692fba62ca4051474d7379ac9c4a35842500812f12c2ea75"
+        },
+        "10": {
+          "file": "1363_10.png",
+          "source_size": [
+            103,
+            141
+          ],
+          "source_sha256": "9c48f5502adb663fea79410d48bf66cdcb2017b7799a42b3d5148c519857627c",
+          "crop": [
+            19,
+            74,
+            71,
+            120
+          ],
+          "registration": [
+            43.0,
+            97.0
+          ],
+          "offset": [
+            -24.0,
+            -23.0
+          ],
+          "sha256": "0142c8eff852b813469d15df2ee40ab17d5c6204ce32df1c3d064df9a2c98446"
+        },
+        "11": {
+          "file": "1363_11.png",
+          "source_size": [
+            103,
+            141
+          ],
+          "source_sha256": "7bd9596cc94bf919a9f5ee0f3683f182aa70f4c69957e1daf0e0e9e8498970c9",
+          "crop": [
+            15,
+            68,
+            91,
+            126
+          ],
+          "registration": [
+            43.0,
+            97.0
+          ],
+          "offset": [
+            -28.0,
+            -29.0
+          ],
+          "sha256": "db3f7beb13b4b794da68cc0d6f939004ed8286feaaea3aacf04a07ccdd4c8dfb"
+        },
+        "12": {
+          "file": "1363_12.png",
+          "source_size": [
+            103,
+            141
+          ],
+          "source_sha256": "5f8a7bc1ade72638dca4e5c7adb290ca6de4612cb328babed10bef106e8a93a9",
+          "crop": [
+            12,
+            60,
+            78,
+            123
+          ],
+          "registration": [
+            43.0,
+            97.0
+          ],
+          "offset": [
+            -31.0,
+            -37.0
+          ],
+          "sha256": "e3b2a0539829c06eb454bd2a46fef91a0f7024f090b7df561843b4412d83a630"
+        },
+        "13": {
+          "file": "1363_13.png",
+          "source_size": [
+            103,
+            141
+          ],
+          "source_sha256": "b803fa3d32cee5e7afd03a95650fee10b280e06c974d597079ad82e04334aa14",
+          "crop": [
+            4,
+            50,
+            89,
+            124
+          ],
+          "registration": [
+            43.0,
+            97.0
+          ],
+          "offset": [
+            -39.0,
+            -47.0
+          ],
+          "sha256": "5c12afbea32b2c1e2e01bea25258c6654e92eae194064c63a9ec3ba6c4af9da3"
+        },
+        "14": {
+          "file": "1363_14.png",
+          "source_size": [
+            103,
+            141
+          ],
+          "source_sha256": "e42f745c67b4d8e2a6bc5930cb061b149e8a51459436eb5b957f12c904440ced",
+          "crop": [
+            7,
+            24,
+            92,
+            126
+          ],
+          "registration": [
+            43.0,
+            97.0
+          ],
+          "offset": [
+            -36.0,
+            -73.0
+          ],
+          "sha256": "65d4f849368e698057a0b49cc295c3c2888422836f8c23c93e87d381574cd3f6"
+        },
+        "15": {
+          "file": "1363_15.png",
+          "source_size": [
+            103,
+            141
+          ],
+          "source_sha256": "81e44564590575c9dd6c3e4dcd8184f3e8f191451c1b70ba637f23a6af6a29ee",
+          "crop": [
+            3,
+            24,
+            100,
+            137
+          ],
+          "registration": [
+            43.0,
+            97.0
+          ],
+          "offset": [
+            -40.0,
+            -73.0
+          ],
+          "sha256": "2011d3fbcc4b20ba72bde02792684a03a498edfea9cb21e5e95ad739c7ff8518"
+        }
+      }
+    },
+    "budhist_buildings": {
+      "character_id": 1388,
+      "frames": {
+        "1": {
+          "file": "1388_1.png",
+          "source_size": [
+            107,
+            133
+          ],
+          "source_sha256": "6edbca74616fd691b43d625c3ff30ed8c7df62f4ea6c92a1ed6f45dcc33dcc36",
+          "crop": [
+            33,
+            71,
+            67,
+            101
+          ],
+          "registration": [
+            47.0,
+            90.75
+          ],
+          "offset": [
+            -14.0,
+            -19.75
+          ],
+          "sha256": "cd32a58376413ea238b70421b538fc265e9bee5a000d35bddc487fd384c4ab5d"
+        },
+        "2": {
+          "file": "1388_2.png",
+          "source_size": [
+            107,
+            133
+          ],
+          "source_sha256": "28af679fbac0bf6f5a0ac9d56de48e2d14527adce2b6bfe369799359ad2ed460",
+          "crop": [
+            26,
+            62,
+            76,
+            103
+          ],
+          "registration": [
+            47.0,
+            90.75
+          ],
+          "offset": [
+            -21.0,
+            -28.75
+          ],
+          "sha256": "f2a348dcc19875f91ea53d858d5e9097c67cd524d0c4111656cd5aec98f89399"
+        },
+        "3": {
+          "file": "1388_3.png",
+          "source_size": [
+            107,
+            133
+          ],
+          "source_sha256": "92ed972668543801fb49a7fc2addc31875acb8fb6457914526f51bff4811eeb9",
+          "crop": [
+            26,
+            53,
+            75,
+            101
+          ],
+          "registration": [
+            47.0,
+            90.75
+          ],
+          "offset": [
+            -21.0,
+            -37.75
+          ],
+          "sha256": "9dd882a0aca35e8b3e679c7cfed657b89981771e112038d38c656abdfe6a67d8"
+        },
+        "4": {
+          "file": "1388_4.png",
+          "source_size": [
+            107,
+            133
+          ],
+          "source_sha256": "b4dfc2eda9514e5c791ed74ddfa92db9abe83a0acd8adcb82c9884acf2ad26a5",
+          "crop": [
+            23,
+            41,
+            87,
+            107
+          ],
+          "registration": [
+            47.0,
+            90.75
+          ],
+          "offset": [
+            -24.0,
+            -49.75
+          ],
+          "sha256": "d6a88f7614c316e734f74629201b43cb3c46a71a4a1533a9fa058f3745ba772b"
+        },
+        "5": {
+          "file": "1388_5.png",
+          "source_size": [
+            107,
+            133
+          ],
+          "source_sha256": "2566b557f228569cc310eb287c0d1527b368390eb8c887283f34eb570e2fa12f",
+          "crop": [
+            18,
+            23,
+            96,
+            104
+          ],
+          "registration": [
+            47.0,
+            90.75
+          ],
+          "offset": [
+            -29.0,
+            -67.75
+          ],
+          "sha256": "5e2ea339105334f52bf3ad689307d411b469209db29abcef6d9a403e9636398a"
+        },
+        "6": {
+          "file": "1388_6.png",
+          "source_size": [
+            107,
+            133
+          ],
+          "source_sha256": "2ef36b11c0a8b8a028b498f6fff6b2e1a426404dcbee29d166e0210d77d29231",
+          "crop": [
+            22,
+            1,
+            103,
+            111
+          ],
+          "registration": [
+            47.0,
+            90.75
+          ],
+          "offset": [
+            -25.0,
+            -89.75
+          ],
+          "sha256": "f74e59d19c0f7a48c95bd4fa95f582c98127d96417609adb330b8b8fd6b91459"
+        },
+        "10": {
+          "file": "1388_10.png",
+          "source_size": [
+            107,
+            133
+          ],
+          "source_sha256": "cdbf0d0de7269a9781677d8228b7a33c7600b1d07ca5ff6867d636db96f7fbcb",
+          "crop": [
+            21,
+            75,
+            76,
+            114
+          ],
+          "registration": [
+            47.0,
+            90.75
+          ],
+          "offset": [
+            -26.0,
+            -15.75
+          ],
+          "sha256": "3c8d71d4e4de02ac6d9c9b8f449f318de460b2ba0223ed4bd4967e098cbd1110"
+        },
+        "11": {
+          "file": "1388_11.png",
+          "source_size": [
+            107,
+            133
+          ],
+          "source_sha256": "bb7f9f53293750698ebb516f0b70d88122c6546dbdcaf21843abe8f1a3fee4c5",
+          "crop": [
+            21,
+            62,
+            78,
+            113
+          ],
+          "registration": [
+            47.0,
+            90.75
+          ],
+          "offset": [
+            -26.0,
+            -28.75
+          ],
+          "sha256": "2e3c084cf9bedf82eb5e0e6364ac9ebc539219ed8ec10aa737a6ce778430877f"
+        },
+        "12": {
+          "file": "1388_12.png",
+          "source_size": [
+            107,
+            133
+          ],
+          "source_sha256": "ddd23b1bfb49f2fbebbd17708e4f95048de70f61820fff2882bcfe5e3264c554",
+          "crop": [
+            20,
+            59,
+            76,
+            111
+          ],
+          "registration": [
+            47.0,
+            90.75
+          ],
+          "offset": [
+            -27.0,
+            -31.75
+          ],
+          "sha256": "5e034aa0d8a092858dc0fbf767b2e082c3ccf737777d155b9c88be08a8ed185b"
+        },
+        "13": {
+          "file": "1388_13.png",
+          "source_size": [
+            107,
+            133
+          ],
+          "source_sha256": "c9ec0b59c2ed3326ae53954024a79ec13ff59c626d02d57491db6b03138e2860",
+          "crop": [
+            17,
+            52,
+            88,
+            118
+          ],
+          "registration": [
+            47.0,
+            90.75
+          ],
+          "offset": [
+            -30.0,
+            -38.75
+          ],
+          "sha256": "5b45614973e34876196279938d008324b1749c9b84e625634a1125270c9064e8"
+        },
+        "14": {
+          "file": "1388_14.png",
+          "source_size": [
+            107,
+            133
+          ],
+          "source_sha256": "a94cf3ce25d1a0f3c52fb8a118b36f8f36ce5c4e9799ab69c820e60ca975e040",
+          "crop": [
+            3,
+            30,
+            83,
+            112
+          ],
+          "registration": [
+            47.0,
+            90.75
+          ],
+          "offset": [
+            -44.0,
+            -60.75
+          ],
+          "sha256": "e9d22b5cf72a87a5d64ee616d525f41f1d00e98332c4509ea4b079a40ca571b6"
+        },
+        "15": {
+          "file": "1388_15.png",
+          "source_size": [
+            107,
+            133
+          ],
+          "source_sha256": "7a31b2329068d25d993db759ffd902d41b99c7060d532d539741c572a4623304",
+          "crop": [
+            10,
+            19,
+            104,
+            130
+          ],
+          "registration": [
+            47.0,
+            90.75
+          ],
+          "offset": [
+            -37.0,
+            -71.75
+          ],
+          "sha256": "24dd6a781522bf8ff9546c0966142e03e8fa1d59b4417afb9466c9bbdbd8754e"
+        }
+      }
+    },
+    "jewish_buildings": {
+      "character_id": 1414,
+      "frames": {
+        "1": {
+          "file": "1414_1.png",
+          "source_size": [
+            103,
+            119
+          ],
+          "source_sha256": "1a8d82df6c863bf4c5cc0140723e4eddb425319f374dd81292dfa12b3001c4cb",
+          "crop": [
+            25,
+            62,
+            70,
+            103
+          ],
+          "registration": [
+            45.0,
+            90.0
+          ],
+          "offset": [
+            -20.0,
+            -28.0
+          ],
+          "sha256": "ef2b8b40cd3f7647192e10db59b744e2986435760346b90e48b726d8c15a7202"
+        },
+        "2": {
+          "file": "1414_2.png",
+          "source_size": [
+            103,
+            119
+          ],
+          "source_sha256": "d1f60fee43380ab054f005e88bcb80fc017d4b7bbbf5c1febbb1beea12c5e4c4",
+          "crop": [
+            24,
+            58,
+            73,
+            102
+          ],
+          "registration": [
+            45.0,
+            90.0
+          ],
+          "offset": [
+            -21.0,
+            -32.0
+          ],
+          "sha256": "09823fe44c0e4f554c11076c5bf614e3e233f1abee0b7d1f66c81eedbc9d0924"
+        },
+        "3": {
+          "file": "1414_3.png",
+          "source_size": [
+            103,
+            119
+          ],
+          "source_sha256": "816da3074583caf091e4fde3ac3f079ccf813312adf42d52d2951beec6f2bef6",
+          "crop": [
+            27,
+            53,
+            75,
+            102
+          ],
+          "registration": [
+            45.0,
+            90.0
+          ],
+          "offset": [
+            -18.0,
+            -37.0
+          ],
+          "sha256": "fabea04144378a03da1a39ae572bff9320afaca96ce658f127683c9b9872b1e8"
+        },
+        "4": {
+          "file": "1414_4.png",
+          "source_size": [
+            103,
+            119
+          ],
+          "source_sha256": "8842b9d6484d6224cb6ebbb75c23c79f5bedaf8da9213ea8afeb7b419aa14860",
+          "crop": [
+            23,
+            44,
+            82,
+            105
+          ],
+          "registration": [
+            45.0,
+            90.0
+          ],
+          "offset": [
+            -22.0,
+            -46.0
+          ],
+          "sha256": "4b9bc97ca1921e9f14562e024bf679a7e5f6bcca654ec9f5ff216c544e272e94"
+        },
+        "5": {
+          "file": "1414_5.png",
+          "source_size": [
+            103,
+            119
+          ],
+          "source_sha256": "8bce3231cfa38e4af3bab52d695eeef8468f0b7f5c3d9a2d89dd36e4e1ec3441",
+          "crop": [
+            23,
+            21,
+            96,
+            102
+          ],
+          "registration": [
+            45.0,
+            90.0
+          ],
+          "offset": [
+            -22.0,
+            -69.0
+          ],
+          "sha256": "ec1ae67b08658cce316e1bd453677dc923f2b2e3ec011298ccfc3dfbdfdd546a"
+        },
+        "6": {
+          "file": "1414_6.png",
+          "source_size": [
+            103,
+            119
+          ],
+          "source_sha256": "b507f8842746b106e80e88ea6f237888c580d4cc671a396df3d0ae7f2de1509e",
+          "crop": [
+            12,
+            2,
+            101,
+            103
+          ],
+          "registration": [
+            45.0,
+            90.0
+          ],
+          "offset": [
+            -33.0,
+            -88.0
+          ],
+          "sha256": "09851b818420ecb561302f3bf128e22cad53905e9a4db2d6df14614a9426199f"
+        },
+        "10": {
+          "file": "1414_10.png",
+          "source_size": [
+            103,
+            119
+          ],
+          "source_sha256": "910af372a8b4af845c12e07e0db50527adc450cf8cf965a1ab8fa8e82d1afd25",
+          "crop": [
+            22,
+            67,
+            74,
+            111
+          ],
+          "registration": [
+            45.0,
+            90.0
+          ],
+          "offset": [
+            -23.0,
+            -23.0
+          ],
+          "sha256": "183704c327c40e4b800cdeef5edd48bf81bd62164539072548a3ad5451024e81"
+        },
+        "11": {
+          "file": "1414_11.png",
+          "source_size": [
+            103,
+            119
+          ],
+          "source_sha256": "a5c457371ad5a2d8638870f69812a2bca08c4502cc78ff09ff1538b266cdc614",
+          "crop": [
+            18,
+            59,
+            75,
+            107
+          ],
+          "registration": [
+            45.0,
+            90.0
+          ],
+          "offset": [
+            -27.0,
+            -31.0
+          ],
+          "sha256": "d9e2aba0449cb904ab8e31603022ad12bd2315e0319fe636245397d4c6641ad9"
+        },
+        "12": {
+          "file": "1414_12.png",
+          "source_size": [
+            103,
+            119
+          ],
+          "source_sha256": "0bb886e09dbdde73a4768c2a9cfaa61c05940cc9d3c8ce23e3bd15c7832a1102",
+          "crop": [
+            21,
+            55,
+            77,
+            112
+          ],
+          "registration": [
+            45.0,
+            90.0
+          ],
+          "offset": [
+            -24.0,
+            -35.0
+          ],
+          "sha256": "948a68b61783a6b2291ac43b36544c02d832c17d6be5fc5415c57487d3c2c67a"
+        },
+        "13": {
+          "file": "1414_13.png",
+          "source_size": [
+            103,
+            119
+          ],
+          "source_sha256": "095b0d7c4c4742f581d75e960665a2b4d54835da40d23431763fa0b53ed4f2b2",
+          "crop": [
+            10,
+            42,
+            90,
+            115
+          ],
+          "registration": [
+            45.0,
+            90.0
+          ],
+          "offset": [
+            -35.0,
+            -48.0
+          ],
+          "sha256": "8ec214203f6a28778a32ac24d3b272372724fe08fb797b150d363e05ab431d56"
+        },
+        "14": {
+          "file": "1414_14.png",
+          "source_size": [
+            103,
+            119
+          ],
+          "source_sha256": "25b87615c7cfe1ccc1b68fbc9eedaabd60db923740f309e9cea2dbaeacdd22f4",
+          "crop": [
+            8,
+            30,
+            89,
+            110
+          ],
+          "registration": [
+            45.0,
+            90.0
+          ],
+          "offset": [
+            -37.0,
+            -60.0
+          ],
+          "sha256": "1ae67534ae1a014f14a3f3730d7ca7a78395f3cd7114bde767727091e6017a32"
+        },
+        "15": {
+          "file": "1414_15.png",
+          "source_size": [
+            103,
+            119
+          ],
+          "source_sha256": "ed2bff5c98c23533c463225ee638b0f2cff7449492be0ad7a4c7cee7555ac0e3",
+          "crop": [
+            3,
+            3,
+            100,
+            116
+          ],
+          "registration": [
+            45.0,
+            90.0
+          ],
+          "offset": [
+            -42.0,
+            -87.0
+          ],
+          "sha256": "227238f51ce35d7f81f1d059449ef80ee7857bcbdabce6010be7584259fa3749"
+        }
+      }
+    },
+    "muslim_buildings": {
+      "character_id": 1441,
+      "frames": {
+        "1": {
+          "file": "1441_1.png",
+          "source_size": [
+            105,
+            113
+          ],
+          "source_sha256": "66d9124eb3ae1db03ec556bb85a14e26ed0e30dcf7e8600d12ab725272cb42d3",
+          "crop": [
+            31,
+            58,
+            69,
+            93
+          ],
+          "registration": [
+            47.0,
+            81.5
+          ],
+          "offset": [
+            -16.0,
+            -23.5
+          ],
+          "sha256": "21fb9061ab799a40ab39cf1fa96549fb2abceb3ea1cc10250f06c7fc2031fcdb"
+        },
+        "2": {
+          "file": "1441_2.png",
+          "source_size": [
+            105,
+            113
+          ],
+          "source_sha256": "0bd39b92d940c232809ddec31b50ce43bb5a8c9f0a2df3b6fb5b089287543753",
+          "crop": [
+            26,
+            51,
+            77,
+            95
+          ],
+          "registration": [
+            47.0,
+            81.5
+          ],
+          "offset": [
+            -21.0,
+            -30.5
+          ],
+          "sha256": "d306c167bc267d53db594ed01622c6abad8b8185eb5f9e3c73a8a7ec3661ce23"
+        },
+        "3": {
+          "file": "1441_3.png",
+          "source_size": [
+            105,
+            113
+          ],
+          "source_sha256": "ec8dd3686a2b04cf6e58fc181194ae718ddb913526e4e0c5e2de9e1b394755c8",
+          "crop": [
+            28,
+            42,
+            79,
+            93
+          ],
+          "registration": [
+            47.0,
+            81.5
+          ],
+          "offset": [
+            -19.0,
+            -39.5
+          ],
+          "sha256": "cdf8580a040fc78d014e212955267bc8ed6903eda55775474cea2b061e219f30"
+        },
+        "4": {
+          "file": "1441_4.png",
+          "source_size": [
+            105,
+            113
+          ],
+          "source_sha256": "61da42971530cdebdd0ad8f1735086b3ba5d698100ac18d887bf22a2ad013c33",
+          "crop": [
+            24,
+            27,
+            83,
+            95
+          ],
+          "registration": [
+            47.0,
+            81.5
+          ],
+          "offset": [
+            -23.0,
+            -54.5
+          ],
+          "sha256": "de55258c818fbcd601bb352d67d249ff65a1bbf8e8420d845d8a81dad8c6e381"
+        },
+        "5": {
+          "file": "1441_5.png",
+          "source_size": [
+            105,
+            113
+          ],
+          "source_sha256": "f628a423e54141a93e595067eb7279569c40efa9fcc1762161772c9f4c4d8c78",
+          "crop": [
+            25,
+            18,
+            89,
+            94
+          ],
+          "registration": [
+            47.0,
+            81.5
+          ],
+          "offset": [
+            -22.0,
+            -63.5
+          ],
+          "sha256": "6768070dcd381beb6d74ae222bad9f075fc1f64ad9907575d585f60e522eb20a"
+        },
+        "6": {
+          "file": "1441_6.png",
+          "source_size": [
+            105,
+            113
+          ],
+          "source_sha256": "faf223a77f3486ac44daa92f1088cae73d0a2d4387cd66d3b3e128d97a43fea5",
+          "crop": [
+            20,
+            1,
+            104,
+            92
+          ],
+          "registration": [
+            47.0,
+            81.5
+          ],
+          "offset": [
+            -27.0,
+            -80.5
+          ],
+          "sha256": "e6a1ccafea1fdb5cbd7e48181e2bac2adfb8b201062c266b43a20ec06772a494"
+        },
+        "10": {
+          "file": "1441_10.png",
+          "source_size": [
+            105,
+            113
+          ],
+          "source_sha256": "b0f3ea9b42e4c53d790510cea3433de7b38353b5b5c3143f6a32373f30920a4c",
+          "crop": [
+            22,
+            53,
+            72,
+            94
+          ],
+          "registration": [
+            47.0,
+            81.5
+          ],
+          "offset": [
+            -25.0,
+            -28.5
+          ],
+          "sha256": "7dbb0d72fe45d8206a6da34c2abf360561a347f5a61bcb5c9644672bb1a0f8f3"
+        },
+        "11": {
+          "file": "1441_11.png",
+          "source_size": [
+            105,
+            113
+          ],
+          "source_sha256": "c2fefa0809ff35a7c058722c8f2837141869dedf96d27cc1737c779bf42232f3",
+          "crop": [
+            22,
+            52,
+            78,
+            102
+          ],
+          "registration": [
+            47.0,
+            81.5
+          ],
+          "offset": [
+            -25.0,
+            -29.5
+          ],
+          "sha256": "2774b75074fd4597d1bccaddc54aa190bab52cff2d087a2a1d4bf2f07d2530a6"
+        },
+        "12": {
+          "file": "1441_12.png",
+          "source_size": [
+            105,
+            113
+          ],
+          "source_sha256": "92f41f0061813178ae3da811e19bb90c9a27b08a3505ea3f68bad7b937cfced3",
+          "crop": [
+            17,
+            42,
+            86,
+            104
+          ],
+          "registration": [
+            47.0,
+            81.5
+          ],
+          "offset": [
+            -30.0,
+            -39.5
+          ],
+          "sha256": "adeb8dd2044b3745030ad6aef20e3b6c4f006dbef158e695ccfaffb80843feb8"
+        },
+        "13": {
+          "file": "1441_13.png",
+          "source_size": [
+            105,
+            113
+          ],
+          "source_sha256": "b4cc2bcb55543c816ef07850ac767fd8bf29058f1422e415ec31fcc600ce65f2",
+          "crop": [
+            11,
+            27,
+            93,
+            110
+          ],
+          "registration": [
+            47.0,
+            81.5
+          ],
+          "offset": [
+            -36.0,
+            -54.5
+          ],
+          "sha256": "0d6f138e77547e28a573ce9f30ad2507bbdef796150e97b1f1352e28e71e56eb"
+        },
+        "14": {
+          "file": "1441_14.png",
+          "source_size": [
+            105,
+            113
+          ],
+          "source_sha256": "e02c3195f88f865d0d3e1e96b51812ae6939e4dc6674a0f01e31acbc1da79113",
+          "crop": [
+            14,
+            31,
+            91,
+            110
+          ],
+          "registration": [
+            47.0,
+            81.5
+          ],
+          "offset": [
+            -33.0,
+            -50.5
+          ],
+          "sha256": "491b58066644f1a3a7151c8422d2b74661f30899a309cfc8a68abb2362cd02ba"
+        },
+        "15": {
+          "file": "1441_15.png",
+          "source_size": [
+            105,
+            113
+          ],
+          "source_sha256": "908445dc6bf49e1f29bd58ddd54a0ab6db3f8531d15d79a3bfe6461a6274457b",
+          "crop": [
+            3,
+            14,
+            88,
+            107
+          ],
+          "registration": [
+            47.0,
+            81.5
+          ],
+          "offset": [
+            -44.0,
+            -67.5
+          ],
+          "sha256": "fe15d90387e268800e3364ce08b9a56717f7ad93b21249ff642bddea1ab1bb95"
+        }
+      }
+    }
+  }
+}
