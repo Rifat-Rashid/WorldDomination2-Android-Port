@@ -1,0 +1,2046 @@
+{
+  "source_swf_sha256": "fe60c4d8793a23e7ddd59ddcb406b5471540e28d64f7552d17308fbb269e6fe1",
+  "scale_relative_to_flash": 2.0,
+  "frames": {
+    "1337_1.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1337,
+      "frame": 1,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        40,
+        35
+      ],
+      "dimensions": [
+        82,
+        71
+      ],
+      "canvas_dimensions": [
+        190,
+        252
+      ],
+      "crop": [
+        51,
+        135,
+        133,
+        206
+      ],
+      "registration": [
+        84.0,
+        183.0
+      ],
+      "offset": [
+        -33.0,
+        -48.0
+      ],
+      "sha256": "4e2f494752f96d3b8c1509e2a13e976d6ae0584013acf3841a435deaecc60205",
+      "mean_absolute_difference_at_old_size": 9.87732142857143
+    },
+    "1337_2.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1337,
+      "frame": 2,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        50,
+        44
+      ],
+      "dimensions": [
+        102,
+        90
+      ],
+      "canvas_dimensions": [
+        190,
+        252
+      ],
+      "crop": [
+        43,
+        119,
+        145,
+        209
+      ],
+      "registration": [
+        84.0,
+        183.0
+      ],
+      "offset": [
+        -41.0,
+        -64.0
+      ],
+      "sha256": "858c2740d1866801858bdff8dc90572cfd0b15354c0d003c30df1f48e8525545",
+      "mean_absolute_difference_at_old_size": 7.656704545454545
+    },
+    "1337_3.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1337,
+      "frame": 3,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        52,
+        48
+      ],
+      "dimensions": [
+        106,
+        98
+      ],
+      "canvas_dimensions": [
+        190,
+        252
+      ],
+      "crop": [
+        45,
+        107,
+        151,
+        205
+      ],
+      "registration": [
+        84.0,
+        183.0
+      ],
+      "offset": [
+        -39.0,
+        -76.0
+      ],
+      "sha256": "857787833b44f3a529ea3d62e721c708ec7161927496d255643a6c4d05000af5",
+      "mean_absolute_difference_at_old_size": 8.298277243589743
+    },
+    "1337_4.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1337,
+      "frame": 4,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        73,
+        68
+      ],
+      "dimensions": [
+        146,
+        138
+      ],
+      "canvas_dimensions": [
+        190,
+        252
+      ],
+      "crop": [
+        26,
+        71,
+        172,
+        209
+      ],
+      "registration": [
+        84.0,
+        183.0
+      ],
+      "offset": [
+        -58.0,
+        -112.0
+      ],
+      "sha256": "97781631f031ef1bb8f10f15412bcb157467ca7cfbcc173659ca4dae3fdba846",
+      "mean_absolute_difference_at_old_size": 4.330479452054795
+    },
+    "1337_5.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1337,
+      "frame": 5,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        74,
+        84
+      ],
+      "dimensions": [
+        148,
+        168
+      ],
+      "canvas_dimensions": [
+        190,
+        252
+      ],
+      "crop": [
+        40,
+        42,
+        188,
+        210
+      ],
+      "registration": [
+        84.0,
+        183.0
+      ],
+      "offset": [
+        -44.0,
+        -141.0
+      ],
+      "sha256": "fe02ea11e89f1a1d9d1dfb8e5336b938e4e9fbc424c152e67c485b2d17f379be",
+      "mean_absolute_difference_at_old_size": 4.596565315315315
+    },
+    "1337_6.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1337,
+      "frame": 6,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        82,
+        104
+      ],
+      "dimensions": [
+        164,
+        210
+      ],
+      "canvas_dimensions": [
+        190,
+        252
+      ],
+      "crop": [
+        18,
+        1,
+        182,
+        211
+      ],
+      "registration": [
+        84.0,
+        183.0
+      ],
+      "offset": [
+        -66.0,
+        -182.0
+      ],
+      "sha256": "07f15bd2fe48efec74257d67c65008ea2a279218f1357bc8cb71b72c0b669388",
+      "mean_absolute_difference_at_old_size": 5.362628986866792
+    },
+    "1337_10.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1337,
+      "frame": 10,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        54,
+        39
+      ],
+      "dimensions": [
+        108,
+        78
+      ],
+      "canvas_dimensions": [
+        190,
+        252
+      ],
+      "crop": [
+        36,
+        139,
+        144,
+        217
+      ],
+      "registration": [
+        84.0,
+        183.0
+      ],
+      "offset": [
+        -48.0,
+        -44.0
+      ],
+      "sha256": "a553f469e4e9e57c7937d061a40d1e1166e3ff2a4cd1871c50920a425f8c448f",
+      "mean_absolute_difference_at_old_size": 4.4594017094017095
+    },
+    "1337_11.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1337,
+      "frame": 11,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        56,
+        50
+      ],
+      "dimensions": [
+        112,
+        100
+      ],
+      "canvas_dimensions": [
+        190,
+        252
+      ],
+      "crop": [
+        34,
+        121,
+        146,
+        221
+      ],
+      "registration": [
+        84.0,
+        183.0
+      ],
+      "offset": [
+        -50.0,
+        -62.0
+      ],
+      "sha256": "6a2ad4ffed2b2bd05ed85f8975b1243460c360f8cdc463fea32bed1c498fcfcc",
+      "mean_absolute_difference_at_old_size": 7.9225892857142854
+    },
+    "1337_12.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1337,
+      "frame": 12,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        66,
+        59
+      ],
+      "dimensions": [
+        132,
+        118
+      ],
+      "canvas_dimensions": [
+        190,
+        252
+      ],
+      "crop": [
+        24,
+        117,
+        156,
+        235
+      ],
+      "registration": [
+        84.0,
+        183.0
+      ],
+      "offset": [
+        -60.0,
+        -66.0
+      ],
+      "sha256": "ae8a81ea2a5b49d6777a8affc888e782c897c6372e7a751148879f4b83e39f9c",
+      "mean_absolute_difference_at_old_size": 3.271764252696456
+    },
+    "1337_13.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1337,
+      "frame": 13,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        85,
+        81
+      ],
+      "dimensions": [
+        170,
+        162
+      ],
+      "canvas_dimensions": [
+        190,
+        252
+      ],
+      "crop": [
+        8,
+        71,
+        178,
+        233
+      ],
+      "registration": [
+        84.0,
+        183.0
+      ],
+      "offset": [
+        -76.0,
+        -112.0
+      ],
+      "sha256": "ed3f96a2f3c7c9eaaf4ab99c29a506af20aad49354272bd2ebe934ab753a9317",
+      "mean_absolute_difference_at_old_size": 3.2803558460421205
+    },
+    "1337_14.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1337,
+      "frame": 14,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        69,
+        84
+      ],
+      "dimensions": [
+        138,
+        168
+      ],
+      "canvas_dimensions": [
+        190,
+        252
+      ],
+      "crop": [
+        24,
+        59,
+        162,
+        227
+      ],
+      "registration": [
+        84.0,
+        183.0
+      ],
+      "offset": [
+        -60.0,
+        -124.0
+      ],
+      "sha256": "d79853460841a48e694dccbe30b03c626321ad5bf0802b65a81dc7e35ffcfaa5",
+      "mean_absolute_difference_at_old_size": 3.556073153899241
+    },
+    "1337_15.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1337,
+      "frame": 15,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        83,
+        105
+      ],
+      "dimensions": [
+        166,
+        210
+      ],
+      "canvas_dimensions": [
+        190,
+        252
+      ],
+      "crop": [
+        6,
+        35,
+        172,
+        245
+      ],
+      "registration": [
+        84.0,
+        183.0
+      ],
+      "offset": [
+        -78.0,
+        -148.0
+      ],
+      "sha256": "e5a692a0a615f94ac7db866c264a73f48b68c521de6882b35a3514d425e464cf",
+      "mean_absolute_difference_at_old_size": 3.0880665519219734
+    },
+    "1363_1.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1363,
+      "frame": 1,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        36,
+        32
+      ],
+      "dimensions": [
+        74,
+        65
+      ],
+      "canvas_dimensions": [
+        206,
+        280
+      ],
+      "crop": [
+        57,
+        153,
+        131,
+        218
+      ],
+      "registration": [
+        86.0,
+        194.0
+      ],
+      "offset": [
+        -29.0,
+        -41.0
+      ],
+      "sha256": "3f0685ab039b4dfac4da5eddfbc662b96815b71b0bcd51fb1f45ed5df6cd0ad2",
+      "mean_absolute_difference_at_old_size": 8.404296875
+    },
+    "1363_2.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1363,
+      "frame": 2,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        52,
+        43
+      ],
+      "dimensions": [
+        106,
+        88
+      ],
+      "canvas_dimensions": [
+        206,
+        280
+      ],
+      "crop": [
+        43,
+        137,
+        149,
+        225
+      ],
+      "registration": [
+        86.0,
+        194.0
+      ],
+      "offset": [
+        -43.0,
+        -57.0
+      ],
+      "sha256": "b9fb97b76d27e47acde1392441e2c949a1fdfe52df64b8c79302fe503e681d63",
+      "mean_absolute_difference_at_old_size": 8.560711091234348
+    },
+    "1363_3.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1363,
+      "frame": 3,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        52,
+        51
+      ],
+      "dimensions": [
+        106,
+        104
+      ],
+      "canvas_dimensions": [
+        206,
+        280
+      ],
+      "crop": [
+        45,
+        121,
+        151,
+        225
+      ],
+      "registration": [
+        86.0,
+        194.0
+      ],
+      "offset": [
+        -41.0,
+        -73.0
+      ],
+      "sha256": "f797c1680e5d3e9b5cae91b3f6fc915897caad4e1194922bdc113ad256cbb700",
+      "mean_absolute_difference_at_old_size": 10.34049773755656
+    },
+    "1363_4.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1363,
+      "frame": 4,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        59,
+        62
+      ],
+      "dimensions": [
+        120,
+        126
+      ],
+      "canvas_dimensions": [
+        206,
+        280
+      ],
+      "crop": [
+        45,
+        99,
+        165,
+        225
+      ],
+      "registration": [
+        86.0,
+        194.0
+      ],
+      "offset": [
+        -41.0,
+        -95.0
+      ],
+      "sha256": "9dc765afbe3525ab36cb32cd3f519d049d8094168e585c30e5916e8a4ff87eb6",
+      "mean_absolute_difference_at_old_size": 7.033693275013668
+    },
+    "1363_5.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1363,
+      "frame": 5,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        68,
+        86
+      ],
+      "dimensions": [
+        138,
+        174
+      ],
+      "canvas_dimensions": [
+        206,
+        280
+      ],
+      "crop": [
+        39,
+        51,
+        177,
+        225
+      ],
+      "registration": [
+        86.0,
+        194.0
+      ],
+      "offset": [
+        -47.0,
+        -143.0
+      ],
+      "sha256": "e4571ccfb02e44ddf26bfca6708ffcea6b8b86a856923b5203d0bcd77b3c136b",
+      "mean_absolute_difference_at_old_size": 4.956993844049248
+    },
+    "1363_6.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1363,
+      "frame": 6,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        76,
+        113
+      ],
+      "dimensions": [
+        154,
+        228
+      ],
+      "canvas_dimensions": [
+        206,
+        280
+      ],
+      "crop": [
+        47,
+        1,
+        201,
+        229
+      ],
+      "registration": [
+        86.0,
+        194.0
+      ],
+      "offset": [
+        -39.0,
+        -193.0
+      ],
+      "sha256": "3c89ac0262469f2cc99e71861f288db8c043b5ebf608d2be8feb4d84b8bbfb0f",
+      "mean_absolute_difference_at_old_size": 7.7165812761993475
+    },
+    "1363_10.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1363,
+      "frame": 10,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        52,
+        46
+      ],
+      "dimensions": [
+        104,
+        92
+      ],
+      "canvas_dimensions": [
+        206,
+        280
+      ],
+      "crop": [
+        38,
+        148,
+        142,
+        240
+      ],
+      "registration": [
+        86.0,
+        194.0
+      ],
+      "offset": [
+        -48.0,
+        -46.0
+      ],
+      "sha256": "3623d178917a959386f102c92cfe65db329cd88213c1544bf59399ec052c2fc6",
+      "mean_absolute_difference_at_old_size": 4.670777591973244
+    },
+    "1363_11.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1363,
+      "frame": 11,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        76,
+        58
+      ],
+      "dimensions": [
+        152,
+        116
+      ],
+      "canvas_dimensions": [
+        206,
+        280
+      ],
+      "crop": [
+        30,
+        136,
+        182,
+        252
+      ],
+      "registration": [
+        86.0,
+        194.0
+      ],
+      "offset": [
+        -56.0,
+        -58.0
+      ],
+      "sha256": "c50ca2d91268dfd3af00885a33a2798d48133f017933e0897dc6d06fa2c89cbb",
+      "mean_absolute_difference_at_old_size": 3.9160049909255896
+    },
+    "1363_12.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1363,
+      "frame": 12,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        66,
+        63
+      ],
+      "dimensions": [
+        132,
+        126
+      ],
+      "canvas_dimensions": [
+        206,
+        280
+      ],
+      "crop": [
+        24,
+        120,
+        156,
+        246
+      ],
+      "registration": [
+        86.0,
+        194.0
+      ],
+      "offset": [
+        -62.0,
+        -74.0
+      ],
+      "sha256": "91831a55581bd8b5225f559a3e286d3efe782d61e4d513cd0c029c01fb219e81",
+      "mean_absolute_difference_at_old_size": 5.138167388167388
+    },
+    "1363_13.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1363,
+      "frame": 13,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        85,
+        74
+      ],
+      "dimensions": [
+        170,
+        148
+      ],
+      "canvas_dimensions": [
+        206,
+        280
+      ],
+      "crop": [
+        8,
+        100,
+        178,
+        248
+      ],
+      "registration": [
+        86.0,
+        194.0
+      ],
+      "offset": [
+        -78.0,
+        -94.0
+      ],
+      "sha256": "71ee79c3b49aeb0c3bdcabcd7a9b010f51f2ceb2cd3691838d0362288a9959ba",
+      "mean_absolute_difference_at_old_size": 3.1544912559618443
+    },
+    "1363_14.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1363,
+      "frame": 14,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        85,
+        102
+      ],
+      "dimensions": [
+        170,
+        204
+      ],
+      "canvas_dimensions": [
+        206,
+        280
+      ],
+      "crop": [
+        14,
+        48,
+        184,
+        252
+      ],
+      "registration": [
+        86.0,
+        194.0
+      ],
+      "offset": [
+        -72.0,
+        -146.0
+      ],
+      "sha256": "c17e40d9dfa2d46ba52239eb95088516052cebbd7f426aeb3a5cb206400d2344",
+      "mean_absolute_difference_at_old_size": 3.468425605536332
+    },
+    "1363_15.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1363,
+      "frame": 15,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        97,
+        113
+      ],
+      "dimensions": [
+        194,
+        226
+      ],
+      "canvas_dimensions": [
+        206,
+        280
+      ],
+      "crop": [
+        6,
+        48,
+        200,
+        274
+      ],
+      "registration": [
+        86.0,
+        194.0
+      ],
+      "offset": [
+        -80.0,
+        -146.0
+      ],
+      "sha256": "394e83cb67e4fd0c4a7b6185d209758c65b79d2e06549eb5ba31fc1ccf55e25b",
+      "mean_absolute_difference_at_old_size": 5.767950004561627
+    },
+    "1388_1.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1388,
+      "frame": 1,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        34,
+        30
+      ],
+      "dimensions": [
+        68,
+        62
+      ],
+      "canvas_dimensions": [
+        214,
+        266
+      ],
+      "crop": [
+        66,
+        141,
+        134,
+        203
+      ],
+      "registration": [
+        94.0,
+        181.5
+      ],
+      "offset": [
+        -28.0,
+        -40.5
+      ],
+      "sha256": "c0461df7144af48a313357d36a44ae6b709003081481789f95793c2833a319ac",
+      "mean_absolute_difference_at_old_size": 7.742647058823529
+    },
+    "1388_2.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1388,
+      "frame": 2,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        50,
+        41
+      ],
+      "dimensions": [
+        100,
+        81
+      ],
+      "canvas_dimensions": [
+        214,
+        266
+      ],
+      "crop": [
+        52,
+        124,
+        152,
+        205
+      ],
+      "registration": [
+        94.0,
+        181.5
+      ],
+      "offset": [
+        -42.0,
+        -57.5
+      ],
+      "sha256": "d3ce52f308e74667693b65ad7e0efad2d68ea93e83d33126624a2617ca72a0e3",
+      "mean_absolute_difference_at_old_size": 6.341829268292683
+    },
+    "1388_3.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1388,
+      "frame": 3,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        49,
+        48
+      ],
+      "dimensions": [
+        100,
+        98
+      ],
+      "canvas_dimensions": [
+        214,
+        266
+      ],
+      "crop": [
+        51,
+        105,
+        151,
+        203
+      ],
+      "registration": [
+        94.0,
+        181.5
+      ],
+      "offset": [
+        -43.0,
+        -76.5
+      ],
+      "sha256": "e86094ad9020b6e9b7ede8d74f5c8a7465289792967c90b11b46fd8acb088173",
+      "mean_absolute_difference_at_old_size": 9.267325680272108
+    },
+    "1388_4.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1388,
+      "frame": 4,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        64,
+        66
+      ],
+      "dimensions": [
+        130,
+        132
+      ],
+      "canvas_dimensions": [
+        214,
+        266
+      ],
+      "crop": [
+        45,
+        81,
+        175,
+        213
+      ],
+      "registration": [
+        94.0,
+        181.5
+      ],
+      "offset": [
+        -49.0,
+        -100.5
+      ],
+      "sha256": "adbbd4696a00749bde4eab3d0760351766b1de9b4c53f8f093091e3adedd2ebf",
+      "mean_absolute_difference_at_old_size": 4.440991950757576
+    },
+    "1388_5.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1388,
+      "frame": 5,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        78,
+        81
+      ],
+      "dimensions": [
+        158,
+        162
+      ],
+      "canvas_dimensions": [
+        214,
+        266
+      ],
+      "crop": [
+        35,
+        47,
+        193,
+        209
+      ],
+      "registration": [
+        94.0,
+        181.5
+      ],
+      "offset": [
+        -59.0,
+        -134.5
+      ],
+      "sha256": "e58d589af26873faed5018e3fffb026098f3a9779192e7d8f935b14b8f600752",
+      "mean_absolute_difference_at_old_size": 6.5723725862614755
+    },
+    "1388_6.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1388,
+      "frame": 6,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        81,
+        110
+      ],
+      "dimensions": [
+        164,
+        222
+      ],
+      "canvas_dimensions": [
+        214,
+        266
+      ],
+      "crop": [
+        43,
+        1,
+        207,
+        223
+      ],
+      "registration": [
+        94.0,
+        181.5
+      ],
+      "offset": [
+        -51.0,
+        -180.5
+      ],
+      "sha256": "72d9fae9b1504bbb5fc575fb97869fe48526b286217d17b07d17cd1f078a9638",
+      "mean_absolute_difference_at_old_size": 4.8781425364758695
+    },
+    "1388_10.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1388,
+      "frame": 10,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        55,
+        39
+      ],
+      "dimensions": [
+        110,
+        78
+      ],
+      "canvas_dimensions": [
+        214,
+        266
+      ],
+      "crop": [
+        41,
+        149,
+        151,
+        227
+      ],
+      "registration": [
+        94.0,
+        181.5
+      ],
+      "offset": [
+        -53.0,
+        -32.5
+      ],
+      "sha256": "c403a3dcee7fd9e969df4aced5647ed3b4a17bb61cf539deeca06307a73272e5",
+      "mean_absolute_difference_at_old_size": 4.537296037296037
+    },
+    "1388_11.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1388,
+      "frame": 11,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        57,
+        51
+      ],
+      "dimensions": [
+        114,
+        102
+      ],
+      "canvas_dimensions": [
+        214,
+        266
+      ],
+      "crop": [
+        42,
+        123,
+        156,
+        225
+      ],
+      "registration": [
+        94.0,
+        181.5
+      ],
+      "offset": [
+        -52.0,
+        -58.5
+      ],
+      "sha256": "542e32ef8be544b2ec6886a0f5365c095ecb0a29d4760a18a9fa1ea1bd37a1c9",
+      "mean_absolute_difference_at_old_size": 8.324647402820778
+    },
+    "1388_12.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1388,
+      "frame": 12,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        56,
+        52
+      ],
+      "dimensions": [
+        112,
+        104
+      ],
+      "canvas_dimensions": [
+        214,
+        266
+      ],
+      "crop": [
+        40,
+        117,
+        152,
+        221
+      ],
+      "registration": [
+        94.0,
+        181.5
+      ],
+      "offset": [
+        -54.0,
+        -64.5
+      ],
+      "sha256": "d0c980e5e2a123afea8e2fcace4101bbb0da96c34ae38220aed0c10d8c72bf4b",
+      "mean_absolute_difference_at_old_size": 4.743046016483516
+    },
+    "1388_13.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1388,
+      "frame": 13,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        71,
+        66
+      ],
+      "dimensions": [
+        142,
+        132
+      ],
+      "canvas_dimensions": [
+        214,
+        266
+      ],
+      "crop": [
+        34,
+        103,
+        176,
+        235
+      ],
+      "registration": [
+        94.0,
+        181.5
+      ],
+      "offset": [
+        -60.0,
+        -78.5
+      ],
+      "sha256": "4943d77571347f532f76f9da1c83803d914454a2197cee488aeef5fc0ca93ee4",
+      "mean_absolute_difference_at_old_size": 2.854726845924029
+    },
+    "1388_14.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1388,
+      "frame": 14,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        80,
+        82
+      ],
+      "dimensions": [
+        160,
+        164
+      ],
+      "canvas_dimensions": [
+        214,
+        266
+      ],
+      "crop": [
+        6,
+        59,
+        166,
+        223
+      ],
+      "registration": [
+        94.0,
+        181.5
+      ],
+      "offset": [
+        -88.0,
+        -122.5
+      ],
+      "sha256": "766a5534d08dd14a3a3421a3273ede46c1c034c8595f44c7e05685376a09b77a",
+      "mean_absolute_difference_at_old_size": 5.391806402439024
+    },
+    "1388_15.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1388,
+      "frame": 15,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        94,
+        111
+      ],
+      "dimensions": [
+        188,
+        222
+      ],
+      "canvas_dimensions": [
+        214,
+        266
+      ],
+      "crop": [
+        20,
+        37,
+        208,
+        259
+      ],
+      "registration": [
+        94.0,
+        181.5
+      ],
+      "offset": [
+        -74.0,
+        -144.5
+      ],
+      "sha256": "8d18a2fd5a06a6050b649b631a0749eb6aa8e963d2fe6c9d19973c287071e051",
+      "mean_absolute_difference_at_old_size": 3.9383505846271802
+    },
+    "1414_1.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1414,
+      "frame": 1,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        45,
+        41
+      ],
+      "dimensions": [
+        92,
+        81
+      ],
+      "canvas_dimensions": [
+        206,
+        238
+      ],
+      "crop": [
+        49,
+        124,
+        141,
+        205
+      ],
+      "registration": [
+        90.0,
+        180.0
+      ],
+      "offset": [
+        -41.0,
+        -56.0
+      ],
+      "sha256": "01d885bfce00a4bf0d9577c1e6290f9489f2e92c361156719c9fce848ba36b41",
+      "mean_absolute_difference_at_old_size": 7.462195121951219
+    },
+    "1414_2.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1414,
+      "frame": 2,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        49,
+        44
+      ],
+      "dimensions": [
+        98,
+        88
+      ],
+      "canvas_dimensions": [
+        206,
+        238
+      ],
+      "crop": [
+        48,
+        116,
+        146,
+        204
+      ],
+      "registration": [
+        90.0,
+        180.0
+      ],
+      "offset": [
+        -42.0,
+        -64.0
+      ],
+      "sha256": "150143c8ba4f31a0a54544ccdc9858bd1c5cc5d709b0d826967a098e8dbf407e",
+      "mean_absolute_difference_at_old_size": 5.272611317254174
+    },
+    "1414_3.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1414,
+      "frame": 3,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        48,
+        49
+      ],
+      "dimensions": [
+        98,
+        98
+      ],
+      "canvas_dimensions": [
+        206,
+        238
+      ],
+      "crop": [
+        53,
+        106,
+        151,
+        204
+      ],
+      "registration": [
+        90.0,
+        180.0
+      ],
+      "offset": [
+        -37.0,
+        -74.0
+      ],
+      "sha256": "0b1ec566c4bb4f719ce230b7d09750bb1ed6d594973a4d5b2872b3e453c91486",
+      "mean_absolute_difference_at_old_size": 6.377976190476191
+    },
+    "1414_4.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1414,
+      "frame": 4,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        59,
+        61
+      ],
+      "dimensions": [
+        120,
+        122
+      ],
+      "canvas_dimensions": [
+        206,
+        238
+      ],
+      "crop": [
+        45,
+        88,
+        165,
+        210
+      ],
+      "registration": [
+        90.0,
+        180.0
+      ],
+      "offset": [
+        -45.0,
+        -92.0
+      ],
+      "sha256": "1112f66b829699e15f59d42ecc72195d615f7634611476b2d50aee0b5676ce09",
+      "mean_absolute_difference_at_old_size": 6.25805779383162
+    },
+    "1414_5.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1414,
+      "frame": 5,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        73,
+        81
+      ],
+      "dimensions": [
+        146,
+        164
+      ],
+      "canvas_dimensions": [
+        206,
+        238
+      ],
+      "crop": [
+        46,
+        41,
+        192,
+        205
+      ],
+      "registration": [
+        90.0,
+        180.0
+      ],
+      "offset": [
+        -44.0,
+        -139.0
+      ],
+      "sha256": "6b5a8cc7d75100d259b99230cd3b4e0d846e50b700805e04227b143f453d06c1",
+      "mean_absolute_difference_at_old_size": 3.445543717233215
+    },
+    "1414_6.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1414,
+      "frame": 6,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        89,
+        101
+      ],
+      "dimensions": [
+        178,
+        202
+      ],
+      "canvas_dimensions": [
+        206,
+        238
+      ],
+      "crop": [
+        24,
+        4,
+        202,
+        206
+      ],
+      "registration": [
+        90.0,
+        180.0
+      ],
+      "offset": [
+        -66.0,
+        -176.0
+      ],
+      "sha256": "70288df5c93d4ca20ec98a911a3c7bb8c0cdb06798d1b4e8f484f854669a2de1",
+      "mean_absolute_difference_at_old_size": 3.845978418066526
+    },
+    "1414_10.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1414,
+      "frame": 10,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        52,
+        44
+      ],
+      "dimensions": [
+        104,
+        88
+      ],
+      "canvas_dimensions": [
+        206,
+        238
+      ],
+      "crop": [
+        44,
+        134,
+        148,
+        222
+      ],
+      "registration": [
+        90.0,
+        180.0
+      ],
+      "offset": [
+        -46.0,
+        -46.0
+      ],
+      "sha256": "bb349c00aee1aaf030784869a739812b8d9f6fdccbbe23c964faf87304b08bbe",
+      "mean_absolute_difference_at_old_size": 4.159309440559441
+    },
+    "1414_11.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1414,
+      "frame": 11,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        57,
+        48
+      ],
+      "dimensions": [
+        114,
+        96
+      ],
+      "canvas_dimensions": [
+        206,
+        238
+      ],
+      "crop": [
+        36,
+        118,
+        150,
+        214
+      ],
+      "registration": [
+        90.0,
+        180.0
+      ],
+      "offset": [
+        -54.0,
+        -62.0
+      ],
+      "sha256": "b401a7567cfdc01ee679bf7ce0aed62b8e27bfa5cfaf562143ca8cd07a01c067",
+      "mean_absolute_difference_at_old_size": 4.252923976608187
+    },
+    "1414_12.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1414,
+      "frame": 12,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        56,
+        57
+      ],
+      "dimensions": [
+        112,
+        114
+      ],
+      "canvas_dimensions": [
+        206,
+        238
+      ],
+      "crop": [
+        42,
+        110,
+        154,
+        224
+      ],
+      "registration": [
+        90.0,
+        180.0
+      ],
+      "offset": [
+        -48.0,
+        -70.0
+      ],
+      "sha256": "1881a7efb8c864e0ba1132b4022163e8f31f9492cd478f637f8c62d12c6140dc",
+      "mean_absolute_difference_at_old_size": 5.2397399749373434
+    },
+    "1414_13.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1414,
+      "frame": 13,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        80,
+        73
+      ],
+      "dimensions": [
+        160,
+        146
+      ],
+      "canvas_dimensions": [
+        206,
+        238
+      ],
+      "crop": [
+        20,
+        84,
+        180,
+        230
+      ],
+      "registration": [
+        90.0,
+        180.0
+      ],
+      "offset": [
+        -70.0,
+        -96.0
+      ],
+      "sha256": "02392c07bc20823a66e53f4fa72496b936fbb944fccaae9daf823da1448fd0fa",
+      "mean_absolute_difference_at_old_size": 2.951498287671233
+    },
+    "1414_14.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1414,
+      "frame": 14,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        81,
+        80
+      ],
+      "dimensions": [
+        162,
+        160
+      ],
+      "canvas_dimensions": [
+        206,
+        238
+      ],
+      "crop": [
+        16,
+        60,
+        178,
+        220
+      ],
+      "registration": [
+        90.0,
+        180.0
+      ],
+      "offset": [
+        -74.0,
+        -120.0
+      ],
+      "sha256": "ebe07317adef63f60b5655a807f2870db387c4fd84312002de9692f45ea88011",
+      "mean_absolute_difference_at_old_size": 2.5945987654320986
+    },
+    "1414_15.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1414,
+      "frame": 15,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        97,
+        113
+      ],
+      "dimensions": [
+        194,
+        226
+      ],
+      "canvas_dimensions": [
+        206,
+        238
+      ],
+      "crop": [
+        6,
+        6,
+        200,
+        232
+      ],
+      "registration": [
+        90.0,
+        180.0
+      ],
+      "offset": [
+        -84.0,
+        -174.0
+      ],
+      "sha256": "ff7fef8336792a96afd124902ff37dc1af6673b8b972cd547cc50bedc1172a0d",
+      "mean_absolute_difference_at_old_size": 3.4834184837149893
+    },
+    "1441_1.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1441,
+      "frame": 1,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        38,
+        35
+      ],
+      "dimensions": [
+        78,
+        72
+      ],
+      "canvas_dimensions": [
+        210,
+        226
+      ],
+      "crop": [
+        61,
+        115,
+        139,
+        187
+      ],
+      "registration": [
+        94.0,
+        163.0
+      ],
+      "offset": [
+        -33.0,
+        -48.0
+      ],
+      "sha256": "d1dcea1d8364f8c5c4a9bd0fda4267dc3e504bd29efa96460d0901a73769ca62",
+      "mean_absolute_difference_at_old_size": 9.93157894736842
+    },
+    "1441_2.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1441,
+      "frame": 2,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        51,
+        44
+      ],
+      "dimensions": [
+        103,
+        90
+      ],
+      "canvas_dimensions": [
+        210,
+        226
+      ],
+      "crop": [
+        52,
+        101,
+        155,
+        191
+      ],
+      "registration": [
+        94.0,
+        163.0
+      ],
+      "offset": [
+        -42.0,
+        -62.0
+      ],
+      "sha256": "951ea92e3bf56ba6d19e1db431d43ab329f57e3f307fc295297ce3ca98906f9d",
+      "mean_absolute_difference_at_old_size": 11.136586452762923
+    },
+    "1441_3.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1441,
+      "frame": 3,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        51,
+        51
+      ],
+      "dimensions": [
+        102,
+        102
+      ],
+      "canvas_dimensions": [
+        210,
+        226
+      ],
+      "crop": [
+        56,
+        84,
+        158,
+        186
+      ],
+      "registration": [
+        94.0,
+        163.0
+      ],
+      "offset": [
+        -38.0,
+        -79.0
+      ],
+      "sha256": "8d49453fa3dda9ce8e95a0bb71e895a406e13e975ec7e5232496f8f480379581",
+      "mean_absolute_difference_at_old_size": 6.15715109573241
+    },
+    "1441_4.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1441,
+      "frame": 4,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        59,
+        68
+      ],
+      "dimensions": [
+        120,
+        136
+      ],
+      "canvas_dimensions": [
+        210,
+        226
+      ],
+      "crop": [
+        47,
+        54,
+        167,
+        190
+      ],
+      "registration": [
+        94.0,
+        163.0
+      ],
+      "offset": [
+        -47.0,
+        -109.0
+      ],
+      "sha256": "fbd90f53da3a65fc87942b1b6992d8e70096522c50b2cc5a36d1aad38b5a1bc8",
+      "mean_absolute_difference_at_old_size": 6.6286764705882355
+    },
+    "1441_5.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1441,
+      "frame": 5,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        64,
+        76
+      ],
+      "dimensions": [
+        130,
+        152
+      ],
+      "canvas_dimensions": [
+        210,
+        226
+      ],
+      "crop": [
+        49,
+        36,
+        179,
+        188
+      ],
+      "registration": [
+        94.0,
+        163.0
+      ],
+      "offset": [
+        -45.0,
+        -127.0
+      ],
+      "sha256": "2316bca95f7ed3594128834e80a555a5536e6175e3e5bbf236f2df5dc874fbc2",
+      "mean_absolute_difference_at_old_size": 6.3349609375
+    },
+    "1441_6.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1441,
+      "frame": 6,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        84,
+        91
+      ],
+      "dimensions": [
+        168,
+        184
+      ],
+      "canvas_dimensions": [
+        210,
+        226
+      ],
+      "crop": [
+        40,
+        1,
+        208,
+        185
+      ],
+      "registration": [
+        94.0,
+        163.0
+      ],
+      "offset": [
+        -54.0,
+        -162.0
+      ],
+      "sha256": "9aa345130044cd8b9f5ada7c034676b2563b6ce6086dcf02764763151a5ac489",
+      "mean_absolute_difference_at_old_size": 4.265436944008372
+    },
+    "1441_10.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1441,
+      "frame": 10,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        50,
+        41
+      ],
+      "dimensions": [
+        100,
+        82
+      ],
+      "canvas_dimensions": [
+        210,
+        226
+      ],
+      "crop": [
+        44,
+        105,
+        144,
+        187
+      ],
+      "registration": [
+        94.0,
+        163.0
+      ],
+      "offset": [
+        -50.0,
+        -58.0
+      ],
+      "sha256": "60ebde6772da74d9a8022713a3abdbeb231df3d0f84af7598c0ad089470694e4",
+      "mean_absolute_difference_at_old_size": 5.276341463414634
+    },
+    "1441_11.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1441,
+      "frame": 11,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        56,
+        50
+      ],
+      "dimensions": [
+        112,
+        100
+      ],
+      "canvas_dimensions": [
+        210,
+        226
+      ],
+      "crop": [
+        44,
+        103,
+        156,
+        203
+      ],
+      "registration": [
+        94.0,
+        163.0
+      ],
+      "offset": [
+        -50.0,
+        -60.0
+      ],
+      "sha256": "f5863293216ab6e58678b30b3ada447f672cccc4cb32c489ab5794c7eaf45719",
+      "mean_absolute_difference_at_old_size": 7.026428571428571
+    },
+    "1441_12.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1441,
+      "frame": 12,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        69,
+        62
+      ],
+      "dimensions": [
+        138,
+        124
+      ],
+      "canvas_dimensions": [
+        210,
+        226
+      ],
+      "crop": [
+        34,
+        83,
+        172,
+        207
+      ],
+      "registration": [
+        94.0,
+        163.0
+      ],
+      "offset": [
+        -60.0,
+        -80.0
+      ],
+      "sha256": "2e04bce0957bea976be40113ca3f2b099d675cc199164a264a7981b3f388a2bf",
+      "mean_absolute_difference_at_old_size": 6.309957924263674
+    },
+    "1441_13.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1441,
+      "frame": 13,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        82,
+        83
+      ],
+      "dimensions": [
+        164,
+        166
+      ],
+      "canvas_dimensions": [
+        210,
+        226
+      ],
+      "crop": [
+        22,
+        53,
+        186,
+        219
+      ],
+      "registration": [
+        94.0,
+        163.0
+      ],
+      "offset": [
+        -72.0,
+        -110.0
+      ],
+      "sha256": "2a60005bafb491a9faf5d6f2a50cf05210be3dcf8bd2e94a39c69676495db5ea",
+      "mean_absolute_difference_at_old_size": 4.90133705553923
+    },
+    "1441_14.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1441,
+      "frame": 14,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        77,
+        79
+      ],
+      "dimensions": [
+        154,
+        158
+      ],
+      "canvas_dimensions": [
+        210,
+        226
+      ],
+      "crop": [
+        28,
+        61,
+        182,
+        219
+      ],
+      "registration": [
+        94.0,
+        163.0
+      ],
+      "offset": [
+        -66.0,
+        -102.0
+      ],
+      "sha256": "8d418253a766735c2b025c2be78a5816fdd72d0e9552ae44b78457796144e0a2",
+      "mean_absolute_difference_at_old_size": 3.2414926845306593
+    },
+    "1441_15.png": {
+      "source": "WorldDomination2.swf",
+      "character_id": 1441,
+      "frame": 15,
+      "method": "JPEXS SVG, resvg 2x, alpha crop",
+      "old_dimensions": [
+        85,
+        93
+      ],
+      "dimensions": [
+        170,
+        186
+      ],
+      "canvas_dimensions": [
+        210,
+        226
+      ],
+      "crop": [
+        6,
+        27,
+        176,
+        213
+      ],
+      "registration": [
+        94.0,
+        163.0
+      ],
+      "offset": [
+        -88.0,
+        -136.0
+      ],
+      "sha256": "22312685128a2614b97a9197249945342182264d3df5e86d4e1b6e322fbbb10c",
+      "mean_absolute_difference_at_old_size": 3.5011068943706514
+    }
+  }
+}
