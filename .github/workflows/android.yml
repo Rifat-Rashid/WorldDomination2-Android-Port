@@ -36,14 +36,14 @@ jobs:
           set +o pipefail
           yes | "$sdkmanager" --licenses
           set -o pipefail
-          "$sdkmanager" 'platform-tools' 'platforms;android-37' 'build-tools;36.0.0'
+          "$sdkmanager" 'platform-tools' 'platforms;android-37.0' 'build-tools;36.0.0'
 
       - name: Resolve dependencies, build, test, and lint
         run: ./gradlew --no-daemon --stacktrace :app:dependencies :app:assembleDebug :app:testDebugUnitTest :app:lintDebug
 
       - name: Upload validation reports on failure
         if: failure()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: android-validation-failure-reports
           path: |
