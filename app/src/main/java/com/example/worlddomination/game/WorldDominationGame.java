@@ -17,6 +17,7 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.example.worlddomination.game.assets.OriginalUiAssets;
 import com.example.worlddomination.game.simulation.GameState;
+import com.example.worlddomination.game.simulation.CityState;
 import com.example.worlddomination.game.ui.ScrollPaneState;
 
 /** Native OpenGL ES game screen; it loads no Python, browser, or network runtime. */
@@ -30,6 +31,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private static final float EQUIPMENT_ROW_HEIGHT = 36f;
     private static final float MAP_WIDTH = 523f;
     private static final float MAP_HEIGHT = 318f;
+    private static final String[] PRODUCTION_CATEGORIES = {
+            "ROCKETS", "PLANES", "SPECIAL", "WARHEAD", "BIOLOAD", "SOLDIER", "SPY", "DEFENSE"
+    };
+    private static final int RESEARCH_ROWS_PER_PAGE = 6;
     private static final int GESTURE_NONE = 0;
     private static final int GESTURE_NAV = 1;
     private static final int GESTURE_EQUIPMENT = 2;
@@ -108,9 +113,20 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private final Rectangle modal = new Rectangle();
     private final Rectangle modalAccept = new Rectangle();
     private final Rectangle modalCancel = new Rectangle();
+    private final Rectangle productionSlider = new Rectangle();
+    private final Rectangle researchPrevious = new Rectangle();
+    private final Rectangle researchNext = new Rectangle();
+    private final Rectangle attackTargetPrevious = new Rectangle();
+    private final Rectangle attackTargetNext = new Rectangle();
+    private final Rectangle attackCityPrevious = new Rectangle();
+    private final Rectangle attackCityNext = new Rectangle();
+    private final Rectangle attackWeaponPrevious = new Rectangle();
+    private final Rectangle attackWeaponNext = new Rectangle();
     private final Rectangle[] navRows = new Rectangle[ACTIONS.length];
     private final Rectangle[] equipmentRows = new Rectangle[EQUIPMENT_ROWS.length];
     private final Rectangle[] equipmentCards = new Rectangle[EQUIPMENT_GROUP_STARTS.length];
+    private final Rectangle[] productionCategoryRows = new Rectangle[PRODUCTION_CATEGORIES.length];
+    private final Rectangle[] researchRows = new Rectangle[RESEARCH_ROWS_PER_PAGE];
     private final ScrollPaneState navigationScroll = new ScrollPaneState();
     private final ScrollPaneState equipmentScroll = new ScrollPaneState();
     private final Vector3 pointer = new Vector3();
@@ -142,6 +158,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private int gestureArea;
     private boolean dragging;
     private boolean modalOpen;
+    private int researchPage;
     private String selectedEquipment = "";
 
     public WorldDominationGame() {
@@ -153,6 +170,12 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         for (int i = 0; i < equipmentCards.length; i++) {
             equipmentCards[i] = new Rectangle();
+        }
+        for (int i = 0; i < productionCategoryRows.length; i++) {
+            productionCategoryRows[i] = new Rectangle();
+        }
+        for (int i = 0; i < researchRows.length; i++) {
+            researchRows[i] = new Rectangle();
         }
         for (int i = 0; i < portraitCards.length; i++) {
             portraitCards[i] = new Rectangle();
@@ -282,6 +305,49 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 modal.width * 0.15f, modal.height * 0.09f);
         modalAccept.set(modal.x + modal.width * 0.75f, modal.y + 4f,
                 modal.width * 0.15f, modal.height * 0.09f);
+        float categoryGap = 4f;
+        float categoryWidth = (modal.width - 18f - categoryGap) / 2f;
+        float categoryHeight = Math.min(17f, modal.height * 0.075f);
+        float categoryTop = modal.y + modal.height * 0.69f;
+        for (int i = 0; i < productionCategoryRows.length; i++) {
+            int row = i / 2;
+            int column = i % 2;
+            productionCategoryRows[i].set(modal.x + 7f + column * (categoryWidth + categoryGap),
+                    categoryTop - row * (categoryHeight + 3f) - categoryHeight,
+                    categoryWidth, categoryHeight);
+        }
+        productionSlider.set(modal.x + modal.width * 0.20f, modal.y + modal.height * 0.22f,
+                modal.width * 0.60f, 13f);
+        float researchRowHeight = Math.min(18f, (modal.height - 83f) / RESEARCH_ROWS_PER_PAGE);
+        float researchTop = modal.y + modal.height - 44f;
+        for (int i = 0; i < researchRows.length; i++) {
+            researchRows[i].set(modal.x + 9f,
+                    researchTop - (i + 1) * researchRowHeight,
+                    modal.width - 18f, researchRowHeight - 1.5f);
+        }
+        researchPrevious.set(modal.x + modal.width * 0.36f, modal.y + modal.height - 33f,
+                modal.width * 0.10f, 16f);
+        researchNext.set(modal.x + modal.width * 0.54f, modal.y + modal.height - 33f,
+                modal.width * 0.10f, 16f);
+        float attackControlWidth = Math.min(25f, modal.width * 0.12f);
+        float attackControlHeight = Math.min(18f, modal.height * 0.085f);
+        float attackLeftX = modal.x + modal.width * 0.11f;
+        float attackRightX = modal.x + modal.width * 0.77f;
+        float attackTargetY = modal.y + modal.height * 0.65f;
+        float attackCityY = modal.y + modal.height * 0.46f;
+        float attackWeaponY = modal.y + modal.height * 0.27f;
+        attackTargetPrevious.set(attackLeftX, attackTargetY, attackControlWidth,
+                attackControlHeight);
+        attackTargetNext.set(attackRightX, attackTargetY, attackControlWidth,
+                attackControlHeight);
+        attackCityPrevious.set(attackLeftX, attackCityY, attackControlWidth,
+                attackControlHeight);
+        attackCityNext.set(attackRightX, attackCityY, attackControlWidth,
+                attackControlHeight);
+        attackWeaponPrevious.set(attackLeftX, attackWeaponY, attackControlWidth,
+                attackControlHeight);
+        attackWeaponNext.set(attackRightX, attackWeaponY, attackControlWidth,
+                attackControlHeight);
 
         navigationScroll.setRange(ACTIONS.length * (NAV_ROW_HEIGHT + NAV_ROW_GAP)
                 - NAV_ROW_GAP, navViewport.height);
@@ -582,6 +648,31 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
     }
 
+    /** Draw helper used inside the filled-shape pass for the attack target controls. */
+    private void drawAttackControlRow(Rectangle previous, Rectangle next) {
+        float rowY = previous.y - 1f;
+        shapes.setColor(BUTTON);
+        shapes.rect(modal.x + 7f, rowY, modal.width - 14f, previous.height + 2f);
+        shapes.setColor(PANEL_EDGE);
+        shapes.rect(previous.x, previous.y, previous.width, previous.height);
+        shapes.rect(next.x, next.y, next.width, next.height);
+    }
+
+    private void drawAttackControlLabels() {
+        drawCentered("<", attackTargetPrevious.x + attackTargetPrevious.width / 2f,
+                attackTargetPrevious.y + attackTargetPrevious.height / 2f + 3f, 8f);
+        drawCentered(">", attackTargetNext.x + attackTargetNext.width / 2f,
+                attackTargetNext.y + attackTargetNext.height / 2f + 3f, 8f);
+        drawCentered("<", attackCityPrevious.x + attackCityPrevious.width / 2f,
+                attackCityPrevious.y + attackCityPrevious.height / 2f + 3f, 8f);
+        drawCentered(">", attackCityNext.x + attackCityNext.width / 2f,
+                attackCityNext.y + attackCityNext.height / 2f + 3f, 8f);
+        drawCentered("<", attackWeaponPrevious.x + attackWeaponPrevious.width / 2f,
+                attackWeaponPrevious.y + attackWeaponPrevious.height / 2f + 3f, 8f);
+        drawCentered(">", attackWeaponNext.x + attackWeaponNext.width / 2f,
+                attackWeaponNext.y + attackWeaponNext.height / 2f + 3f, 8f);
+    }
+
     private void drawEquipmentRows() {
         setScissor(equipmentViewport);
         float top = equipmentViewport.y + equipmentViewport.height
@@ -780,19 +871,36 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         shapes.end();
     }
 
-    private static boolean isEquipmentAvailable(int rowIndex) {
-        return equipmentStock(rowIndex) >= 0;
+    private boolean isEquipmentAvailable(int rowIndex) {
+        String weaponName = equipmentWeaponName(rowIndex);
+        return weaponName != null && game.isWeaponActive(0, weaponName);
     }
 
-    /** Source WeaponSlot defaults; production and technology will move these into GameState. */
-    private static int equipmentStock(int rowIndex) {
-        if (rowIndex == 6) { // Fighter is active in the normal source setup, initially empty.
-            return 0;
+    private int equipmentStock(int rowIndex) {
+        String weaponName = equipmentWeaponName(rowIndex);
+        return weaponName == null || !game.isWeaponActive(0, weaponName)
+                ? -1 : game.getWeaponStock(weaponName);
+    }
+
+    private static String equipmentWeaponName(int rowIndex) {
+        if (rowIndex >= 1 && rowIndex <= 4) return "rocket" + rowIndex;
+        if (rowIndex == 6) return "plane1";
+        if (rowIndex == 7) return "plane2";
+        if (rowIndex >= 9 && rowIndex <= 12) {
+            switch (rowIndex) {
+                case 9: return "sub";
+                case 10: return "ship";
+                case 11: return "space";
+                default: return "specialLoad";
+            }
         }
-        if (rowIndex == 34 || rowIndex == 35) { // Anti-air and anti-rocket start at two.
-            return 2;
-        }
-        return -1;
+        if (rowIndex >= 14 && rowIndex <= 17) return "warhead" + (rowIndex - 13);
+        if (rowIndex >= 19 && rowIndex <= 22) return "bioload" + (rowIndex - 18);
+        if (rowIndex >= 24 && rowIndex <= 27) return "soldier" + (rowIndex - 23);
+        if (rowIndex >= 29 && rowIndex <= 32) return "spy" + (rowIndex - 28);
+        if (rowIndex == 34) return "antiAir";
+        if (rowIndex == 35) return "antiRocket";
+        return null;
     }
 
     private void drawMapSelection() {
@@ -986,6 +1094,12 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             return;
         }
 
+        java.util.List<String> availableResearch = action == GameState.Action.RESEARCH
+                ? game.getAvailableResearch() : java.util.Collections.emptyList();
+        int pageCount = Math.max(1,
+                (availableResearch.size() + RESEARCH_ROWS_PER_PAGE - 1) / RESEARCH_ROWS_PER_PAGE);
+        researchPage = Math.min(researchPage, pageCount - 1);
+
         shapes.setProjectionMatrix(camera.combined);
         shapes.begin(ShapeRenderer.ShapeType.Filled);
         drawPanelFill(modal);
@@ -1004,16 +1118,115 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         shapes.begin(ShapeRenderer.ShapeType.Filled);
         drawButtonGradient(modalAccept, false);
         drawButtonGradient(modalCancel, false);
+        if (action == GameState.Action.PRODUCTION) {
+            for (int i = 0; i < productionCategoryRows.length; i++) {
+                String category = PRODUCTION_CATEGORIES[i].toLowerCase(java.util.Locale.US);
+                boolean selected = category.equals(game.getSelectedProductionCategory());
+                shapes.setColor(selected ? BUTTON_SELECTED : BUTTON);
+                shapes.rect(productionCategoryRows[i].x, productionCategoryRows[i].y,
+                        productionCategoryRows[i].width, productionCategoryRows[i].height);
+            }
+            shapes.setColor(0.015f, 0.05f, 0.07f, 1f);
+            shapes.rect(productionSlider.x, productionSlider.y + 5f,
+                    productionSlider.width, 3f);
+            shapes.setColor(MODAL_ORANGE);
+            shapes.rect(productionSlider.x, productionSlider.y + 5f,
+                    productionSlider.width * game.getSelectedProductionPercent() / 100f, 3f);
+        } else if (action == GameState.Action.RESEARCH) {
+            int first = researchPage * RESEARCH_ROWS_PER_PAGE;
+            float originalScale = font.getScaleX();
+            font.getData().setScale(0.58f);
+            for (int i = 0; i < researchRows.length; i++) {
+                int item = first + i;
+                if (item >= availableResearch.size()) {
+                    break;
+                }
+                String technology = availableResearch.get(item);
+                boolean selected = technology.equals(game.getSelectedTechnology());
+                shapes.setColor(selected ? BUTTON_SELECTED : BUTTON);
+                Rectangle row = researchRows[i];
+                shapes.rect(row.x, row.y, row.width, row.height);
+            }
+            shapes.setColor(BUTTON);
+            shapes.rect(researchPrevious.x, researchPrevious.y,
+                    researchPrevious.width, researchPrevious.height);
+            shapes.rect(researchNext.x, researchNext.y,
+                    researchNext.width, researchNext.height);
+        } else if (action == GameState.Action.ATTACK) {
+            drawAttackControlRow(attackTargetPrevious, attackTargetNext);
+            drawAttackControlRow(attackCityPrevious, attackCityNext);
+            drawAttackControlRow(attackWeaponPrevious, attackWeaponNext);
+        }
         shapes.end();
         batch.begin();
         font.setColor(Color.WHITE);
         drawCentered(action == null ? "SELECT AN ACTION" : action.label.toUpperCase(),
                 modal.x + modal.width / 2f, modal.y + modal.height - 12f, 12f);
         font.setColor(TITLE_TEXT);
-        drawCentered("Increase Mass Media influence.", modal.x + modal.width / 2f,
-                modal.y + modal.height - 55f, 10f);
-        drawCentered("Influence gain: +" + game.getMassMediaGain(),
-                modal.x + modal.width / 2f, modal.y + modal.height - 76f, 10f);
+        if (action == GameState.Action.MASS_MEDIA) {
+            drawCentered("Increase Mass Media influence.", modal.x + modal.width / 2f,
+                    modal.y + modal.height - 55f, 10f);
+            drawCentered("Influence gain: +" + game.getMassMediaGain(),
+                    modal.x + modal.width / 2f, modal.y + modal.height - 76f, 10f);
+        } else if (action == GameState.Action.PRODUCTION) {
+            drawCentered("Select category and investment.", modal.x + modal.width / 2f,
+                    modal.y + modal.height - 37f, 8f);
+            for (int i = 0; i < productionCategoryRows.length; i++) {
+                Rectangle row = productionCategoryRows[i];
+                drawCentered(PRODUCTION_CATEGORIES[i], row.x + row.width / 2f,
+                        row.y + row.height / 2f + 2.5f, 7f);
+            }
+            drawCentered(game.getSelectedProductionPercent() + "%    Budget: $"
+                            + formatMillions(game.getSelectedProductionBudgetMillions()),
+                    modal.x + modal.width / 2f, productionSlider.y + 15f, 8f);
+        } else if (action == GameState.Action.RESEARCH) {
+            int first = researchPage * RESEARCH_ROWS_PER_PAGE;
+            float originalScale = font.getScaleX();
+            font.getData().setScale(0.58f);
+            for (int i = 0; i < researchRows.length; i++) {
+                int item = first + i;
+                if (item >= availableResearch.size()) {
+                    break;
+                }
+                String technology = availableResearch.get(item);
+                Rectangle row = researchRows[i];
+                String label = game.getTechnologyLabel(technology) + "   $"
+                        + game.getTechnologyCost(technology) + "M";
+                font.draw(batch, label, row.x + 7f, row.y + row.height * 0.72f);
+            }
+            font.getData().setScale(originalScale);
+            drawCentered("PREV", researchPrevious.x + researchPrevious.width / 2f,
+                    researchPrevious.y + researchPrevious.height / 2f + 2f, 6.5f);
+            drawCentered((researchPage + 1) + " / " + pageCount,
+                    modal.x + modal.width / 2f,
+                    researchPrevious.y + researchPrevious.height / 2f + 2f, 6.5f);
+            drawCentered("NEXT", researchNext.x + researchNext.width / 2f,
+                    researchNext.y + researchNext.height / 2f + 2f, 6.5f);
+            if (availableResearch.isEmpty()) {
+                drawCentered("No technology can be researched with the current budget.",
+                        modal.x + modal.width / 2f, modal.y + modal.height / 2f, 8f);
+            }
+        } else if (action == GameState.Action.ATTACK) {
+            GameState.PlayerState target = game.getPlayerState(game.getSelectedTargetPlayer());
+            CityState city = target.getCity(game.getSelectedTargetCity());
+            drawAttackControlLabels();
+            drawCentered("NATION " + target.id + (target.alive ? "" : " (DEFEATED)"),
+                    modal.x + modal.width / 2f,
+                    attackTargetPrevious.y + attackTargetPrevious.height / 2f + 3f, 8f);
+            drawCentered(city == null ? "NO CITY" : "CITY " + (city.index + 1)
+                            + "   POPULATION " + city.populationMillions + "M",
+                    modal.x + modal.width / 2f,
+                    attackCityPrevious.y + attackCityPrevious.height / 2f + 3f, 7f);
+            int stock = game.getWeaponStock(game.getSelectedAttackWeapon());
+            drawCentered(game.getSelectedAttackWeapon().toUpperCase(java.util.Locale.US)
+                            + "   STOCK " + stock,
+                    modal.x + modal.width / 2f,
+                    attackWeaponPrevious.y + attackWeaponPrevious.height / 2f + 3f, 7f);
+            if (!game.canAcceptAttack()) {
+                drawCentered("Choose a living target and available unit.",
+                        modal.x + modal.width / 2f, modal.y + modal.height * 0.18f, 7f);
+            }
+        }
         font.setColor(TITLE_TEXT);
         drawCentered("ACCEPT", modalAccept.x + modalAccept.width / 2f,
                 modalAccept.y + modalAccept.height / 2f + 3f, 8f);
@@ -1162,6 +1375,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 modalOpen = false;
             } else {
                 game.selectAction(action);
+                if (action == GameState.Action.RESEARCH) {
+                    researchPage = 0;
+                }
                 modalOpen = game.getSelectedAction() != null;
             }
             return;
@@ -1203,9 +1419,74 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     private void activateAt(float x, float y) {
         if (modalOpen) {
+            GameState.Action action = game.getSelectedAction();
+            if (action == GameState.Action.PRODUCTION) {
+                for (int i = 0; i < productionCategoryRows.length; i++) {
+                    if (productionCategoryRows[i].contains(x, y)) {
+                        game.configureProduction(
+                                PRODUCTION_CATEGORIES[i].toLowerCase(java.util.Locale.US),
+                                game.getSelectedProductionPercent());
+                        return;
+                    }
+                }
+                if (productionSlider.contains(x, y)) {
+                    float sliderX = Math.max(productionSlider.x,
+                            Math.min(x, productionSlider.x + productionSlider.width));
+                    int percent = Math.round(100f * (sliderX - productionSlider.x)
+                            / productionSlider.width);
+                    game.configureProduction(game.getSelectedProductionCategory(), percent);
+                    return;
+                }
+            } else if (action == GameState.Action.RESEARCH) {
+                if (researchPrevious.contains(x, y)) {
+                    researchPage = Math.max(0, researchPage - 1);
+                    return;
+                }
+                int pageCount = Math.max(1, (game.getAvailableResearch().size()
+                        + RESEARCH_ROWS_PER_PAGE - 1) / RESEARCH_ROWS_PER_PAGE);
+                if (researchNext.contains(x, y)) {
+                    researchPage = Math.min(pageCount - 1, researchPage + 1);
+                    return;
+                }
+                java.util.List<String> available = game.getAvailableResearch();
+                int first = researchPage * RESEARCH_ROWS_PER_PAGE;
+                for (int i = 0; i < researchRows.length; i++) {
+                    int item = first + i;
+                    if (item < available.size() && researchRows[i].contains(x, y)) {
+                        game.selectResearchTechnology(available.get(item));
+                        return;
+                    }
+                }
+            } else if (action == GameState.Action.ATTACK) {
+                if (attackTargetPrevious.contains(x, y)) {
+                    game.cycleAttackTarget(-1);
+                    return;
+                }
+                if (attackTargetNext.contains(x, y)) {
+                    game.cycleAttackTarget(1);
+                    return;
+                }
+                if (attackCityPrevious.contains(x, y)) {
+                    game.cycleAttackCity(-1);
+                    return;
+                }
+                if (attackCityNext.contains(x, y)) {
+                    game.cycleAttackCity(1);
+                    return;
+                }
+                if (attackWeaponPrevious.contains(x, y)) {
+                    game.cycleAttackWeapon(-1);
+                    return;
+                }
+                if (attackWeaponNext.contains(x, y)) {
+                    game.cycleAttackWeapon(1);
+                    return;
+                }
+            }
             if (modalAccept.contains(x, y)) {
-                game.acceptSelectedAction();
-                modalOpen = false;
+                if (game.acceptSelectedAction()) {
+                    modalOpen = false;
+                }
             } else if (modalCancel.contains(x, y)) {
                 game.cancelSelection();
                 modalOpen = false;
