@@ -210,6 +210,96 @@ public final class GameStateTest {
     }
 
     @Test
+    public void propagandaTransfersSourceCalculatedCitizensFromChosenCity() {
+        GameState state = new GameState(1, 32L);
+        GameState.PlayerState attacker = state.getHuman();
+        GameState.PlayerState defender = state.getPlayers()[1];
+        attacker.religion = 0;
+        defender.religion = 0;
+        CityState targetCity = defender.getCity(0);
+        int targetBefore = targetCity.populationMillions;
+        int[] attackerCitiesBefore = new int[5];
+        for (int i = 0; i < attackerCitiesBefore.length; i++) {
+            attackerCitiesBefore[i] = attacker.getCity(i).populationMillions;
+        }
+        int transfer = state.getPropagandaTransferEstimate(1, 0);
+        int expectedTransfer = Math.round(Math.round(targetBefore * 5f / 100f) / 2f);
+        assertEquals(expectedTransfer, transfer);
+
+        state.selectAction(GameState.Action.PROPAGANDA);
+        assertTrue(state.configurePropaganda(1, 0));
+        assertTrue(state.canAcceptPropaganda());
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+
+        assertEquals(targetBefore - transfer, targetCity.populationMillions);
+        int expectedCityGain = Math.round(transfer / 5f);
+        int expectedPlayerGain = 0;
+        for (int i = 0; i < attackerCitiesBefore.length; i++) {
+            assertEquals(attackerCitiesBefore[i] + expectedCityGain,
+                    attacker.getCity(i).populationMillions);
+            expectedPlayerGain += expectedCityGain;
+        }
+        assertEquals(450 + expectedPlayerGain, attacker.populationMillions);
+        assertEquals(447, defender.populationMillions);
+        assertTrue(attacker.score > 0);
+    }
+
+    @Test
+    public void propagandaHonorsReligionCapAndRejectsInvalidTargets() {
+        GameState state = new GameState(1, 19L);
+        GameState.PlayerState attacker = state.getHuman();
+        GameState.PlayerState defender = state.getPlayers()[1];
+        attacker.religion = 11;
+        defender.religion = 100;
+        CityState targetCity = defender.getCity(0);
+        int targetBefore = targetCity.populationMillions;
+        int transfer = state.getPropagandaTransferEstimate(1, 0);
+        assertEquals(Math.round(Math.round(targetBefore * 5f / 100f) / 2f), transfer);
+
+        state.selectAction(GameState.Action.PROPAGANDA);
+        assertFalse(state.configurePropaganda(0, 0));
+        assertFalse(state.configurePropaganda(1, 5));
+        assertTrue(state.configurePropaganda(1, 0));
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+        assertEquals(targetBefore - transfer, targetCity.populationMillions);
+        assertEquals(450 - transfer, defender.populationMillions);
+    }
+
+    @Test
+    public void propagandaUsesStrictPopulationThresholdsAndHumanReligionCap() {
+        GameState state = new GameState(1, 7L);
+        GameState.PlayerState attacker = state.getHuman();
+        GameState.PlayerState defender = state.getPlayers()[1];
+        CityState city = defender.getCity(0);
+        city.populationMillions = 64;
+        attacker.religion = 80;
+        defender.religion = 60;
+        defender.populationMillions = 450;
+
+        int[] populationDifferences = {20, 21, 40, 41, 80, 81};
+        int[] expectedTransfers = {7, 6, 6, 6, 6, 5};
+        for (int i = 0; i < populationDifferences.length; i++) {
+            attacker.populationMillions = 450 + populationDifferences[i];
+            assertEquals(expectedTransfers[i], state.getPropagandaTransferEstimate(1, 0));
+        }
+
+        attacker.populationMillions = 450;
+        attacker.religion = 100;
+        defender.religion = 0;
+        assertEquals(7, state.getPropagandaTransferEstimate(1, 0));
+
+        attacker.religion = 99;
+        defender.religion = 100;
+        assertEquals(2, state.getPropagandaTransferEstimate(1, 0));
+    }
+
+    @Test
     public void eliminatingTheLastCityMarksOpponentDefeated() {
         GameState state = new GameState(1, 5L);
         GameState.PlayerState opponent = state.getPlayers()[1];

@@ -36,7 +36,7 @@ public final class GameState {
 
         public boolean isPorted() {
             return this == RESOURCES || this == PRODUCTION || this == RESEARCH
-                    || this == MASS_MEDIA || this == ATTACK;
+                    || this == MASS_MEDIA || this == ATTACK || this == PROPAGANDA;
         }
     }
 
@@ -501,6 +501,9 @@ public final class GameState {
         } else if (selectedAction == Action.ATTACK && !canAcceptAttack()) {
             messages.add("Choose a living target city and an available unit.");
             return false;
+        } else if (selectedAction == Action.PROPAGANDA && !canAcceptPropaganda()) {
+            messages.add("Choose a living opponent and a populated city.");
+            return false;
         }
         if (reserved > getHuman().turnMoneyMillions) {
             messages.add("The selected action exceeds the remaining budget.");
@@ -634,6 +637,9 @@ public final class GameState {
                 case ATTACK:
                     resolveAttack(order);
                     break;
+                case PROPAGANDA:
+                    resolvePropaganda(order);
+                    break;
                 default:
                     throw new IllegalStateException("Unported action entered the turn queue: "
                             + order.action);
@@ -721,6 +727,144 @@ public final class GameState {
         weapon.inStock--;
         messages.add(casualties + " citizens lost in nation " + defender.id
                 + " city " + (city.index + 1) + ".");
+    }
+
+    /**
+     * Recovered Presenter.doTR_from_battle propaganda calculation. Influence is
+     * limited by the acting nation's religion and population advantage, then
+     * the selected enemy city loses citizens that are distributed across the
+     * acting nation's populated cities using the source's rounded per-city share.
+     */
+    private void resolvePropaganda(ActionOrder order) {
+        PlayerState attacker = getHuman();
+        PlayerState defender = playerById(order.targetPlayerId);
+        CityState targetCity = defender.getCity(order.targetCityIndex);
+        if (!defender.alive || targetCity == null || targetCity.populationMillions <= 0) {
+            messages.add("Propaganda cancelled: target city is no longer available.");
+            return;
+        }
+
+        int transfer = calculatePropagandaTransfer(attacker, defender, targetCity);
+
+        targetCity.populationMillions = Math.max(0, targetCity.populationMillions - transfer);
+        defender.populationMillions = totalPopulation(defender);
+        int recipientCount = 0;
+        for (CityState city : attacker.cities) {
+            if (city.populationMillions > 0) {
+                recipientCount++;
+            }
+        }
+        if (recipientCount > 0) {
+            int share = Math.round((float) transfer / recipientCount);
+            for (CityState city : attacker.cities) {
+                if (city.populationMillions > 0) {
+                    city.populationMillions += share;
+                }
+            }
+            attacker.populationMillions = totalPopulation(attacker);
+        }
+        addToHighscore(attacker, 7, transfer);
+        if (transfer > 0) {
+            messages.add("You gained " + transfer
+                    + ".000.000 citizens from propaganda.");
+        } else {
+            messages.add("Propaganda had no effect in the selected city.");
+        }
+    }
+
+    public boolean configurePropaganda(int targetPlayerId, int cityIndex) {
+        if (selectedAction != Action.PROPAGANDA || targetPlayerId <= 0
+                || targetPlayerId >= players.length || cityIndex < 0 || cityIndex >= 5) {
+            return false;
+        }
+        PlayerState target = players[targetPlayerId];
+        CityState city = target.getCity(cityIndex);
+        if (!target.alive || city == null || city.populationMillions <= 0) {
+            return false;
+        }
+        selectedTargetPlayer = targetPlayerId;
+        selectedTargetCity = cityIndex;
+        return true;
+    }
+
+    public void cyclePropagandaTarget(int direction) {
+        if (direction == 0 || selectedAction != Action.PROPAGANDA) {
+            return;
+        }
+        for (int step = 1; step < players.length; step++) {
+            int candidate = 1 + Math.floorMod(selectedTargetPlayer - 1
+                    + Integer.signum(direction) * step, players.length - 1);
+            int cityIndex = firstPopulatedCity(players[candidate], selectedTargetCity);
+            if (players[candidate].alive && cityIndex >= 0) {
+                configurePropaganda(candidate, cityIndex);
+                return;
+            }
+        }
+    }
+
+    public void cyclePropagandaCity(int direction) {
+        if (direction == 0 || selectedAction != Action.PROPAGANDA) {
+            return;
+        }
+        PlayerState target = players[selectedTargetPlayer];
+        for (int step = 1; step <= target.cities.size(); step++) {
+            int cityIndex = Math.floorMod(selectedTargetCity
+                    + Integer.signum(direction) * step, target.cities.size());
+            if (target.getCity(cityIndex).populationMillions > 0) {
+                configurePropaganda(selectedTargetPlayer, cityIndex);
+                return;
+            }
+        }
+    }
+
+    public boolean canAcceptPropaganda() {
+        PlayerState target = selectedTargetPlayer > 0 && selectedTargetPlayer < players.length
+                ? players[selectedTargetPlayer] : null;
+        CityState city = target == null ? null : target.getCity(selectedTargetCity);
+        return target != null && target.alive && city != null && city.populationMillions > 0;
+    }
+
+    /** Source upper bound used by the propaganda action preview, in millions. */
+    public int getPropagandaTransferEstimate(int targetPlayerId, int cityIndex) {
+        if (targetPlayerId <= 0 || targetPlayerId >= players.length
+                || cityIndex < 0 || cityIndex >= 5) {
+            return 0;
+        }
+        PlayerState attacker = getHuman();
+        PlayerState defender = players[targetPlayerId];
+        CityState city = defender.getCity(cityIndex);
+        if (!defender.alive || city.populationMillions <= 0) {
+            return 0;
+        }
+        return calculatePropagandaTransfer(attacker, defender, city);
+    }
+
+    private static int calculatePropagandaTransfer(PlayerState attacker,
+                                                   PlayerState defender,
+                                                   CityState city) {
+        int religionAdvantage = Math.max(0, attacker.religion - defender.religion);
+        int populationShift = 0;
+        int populationAdvantage = attacker.populationMillions - defender.populationMillions;
+        if (populationAdvantage > 80) {
+            populationShift = -4;
+        } else if (populationAdvantage > 40) {
+            populationShift = -2;
+        } else if (populationAdvantage > 20) {
+            populationShift = -1;
+        } else if (populationAdvantage < -80) {
+            populationShift = 4;
+        } else if (populationAdvantage < -40) {
+            populationShift = 2;
+        } else if (populationAdvantage < -20) {
+            populationShift = 1;
+        }
+
+        int influence = attacker.religion > defender.religion ? religionAdvantage : 0;
+        influence = Math.min(attacker.human ? 15 : 25, influence);
+        influence = defender.religion == 100 ? 0 : Math.max(0, influence + populationShift);
+        int roundedLoss = Math.min(Math.round((float) city.populationMillions
+                * (influence + 5) / 100f), 40);
+        return Math.round(roundedLoss / 2f);
     }
 
     private static int totalPopulation(PlayerState player) {
