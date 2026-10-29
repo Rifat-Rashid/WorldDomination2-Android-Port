@@ -1,0 +1,145 @@
+ui.png
+size: 1024, 512
+format: RGBA8888
+filter: Linear, Linear
+repeat: none
+battleMap
+  rotate: false
+  xy: 0, 0
+  size: 523, 318
+  orig: 523, 318
+  offset: 0, 0
+  index: -1
+resourceModal
+  rotate: false
+  xy: 527, 0
+  size: 423, 322
+  orig: 423, 322
+  offset: 0, 0
+  index: -1
+logo
+  rotate: false
+  xy: 0, 326
+  size: 174, 102
+  orig: 174, 102
+  offset: 0, 0
+  index: -1
+portrait1
+  rotate: false
+  xy: 180, 326
+  size: 65, 60
+  orig: 65, 60
+  offset: 0, 0
+  index: -1
+portrait2
+  rotate: false
+  xy: 249, 326
+  size: 65, 60
+  orig: 65, 60
+  offset: 0, 0
+  index: -1
+portrait3
+  rotate: false
+  xy: 318, 326
+  size: 65, 60
+  orig: 65, 60
+  offset: 0, 0
+  index: -1
+portrait4
+  rotate: false
+  xy: 387, 326
+  size: 65, 60
+  orig: 65, 60
+  offset: 0, 0
+  index: -1
+navResources
+  rotate: false
+  xy: 456, 326
+  size: 40, 38
+  orig: 40, 38
+  offset: 0, 0
+  index: -1
+navProduction
+  rotate: false
+  xy: 500, 326
+  size: 40, 39
+  orig: 40, 39
+  offset: 0, 0
+  index: -1
+navTechnology
+  rotate: false
+  xy: 544, 326
+  size: 40, 40
+  orig: 40, 40
+  offset: 0, 0
+  index: -1
+navMedia
+  rotate: false
+  xy: 588, 326
+  size: 40, 40
+  orig: 40, 40
+  offset: 0, 0
+  index: -1
+navAttack
+  rotate: false
+  xy: 632, 326
+  size: 40, 40
+  orig: 40, 40
+  offset: 0, 0
+  index: -1
+actionFirst
+  rotate: false
+  xy: 676, 326
+  size: 113, 44
+  orig: 113, 44
+  offset: 0, 0
+  index: -1
+actionSecond
+  rotate: false
+  xy: 793, 326
+  size: 113, 44
+  orig: 113, 44
+  offset: 0, 0
+  index: -1
+actionConfirm
+  rotate: false
+  xy: 910, 326
+  size: 35, 44
+  orig: 35, 44
+  offset: 0, 0
+  index: -1
+inventoryCounter
+  rotate: false
+  xy: 0, 432
+  size: 30, 32
+  orig: 30, 32
+  offset: 0, 0
+  index: -1
+inventorySwitch
+  rotate: false
+  xy: 34, 432
+  size: 31, 32
+  orig: 31, 32
+  offset: 0, 0
+  index: -1
+button
+  rotate: false
+  xy: 69, 432
+  size: 127, 18
+  orig: 127, 18
+  offset: 0, 0
+  index: -1
+metalTile
+  rotate: false
+  xy: 200, 432
+  size: 110, 12
+  orig: 110, 12
+  offset: 0, 0
+  index: -1
+inventoryRadio
+  rotate: false
+  xy: 314, 432
+  size: 20, 20
+  orig: 20, 20
+  offset: 0, 0
+  index: -1
