@@ -48,6 +48,7 @@ public final class GameState {
         public int turnMoneyMillions;
         public int religion;
         public int score;
+        public int spyReadiness = 25;
         public boolean alive = true;
         private final List<CityState> cities = new ArrayList<>(5);
         private final Set<String> inventedTechnologies = new LinkedHashSet<>();
@@ -105,10 +106,11 @@ public final class GameState {
         final int targetPlayerId;
         final int targetCityIndex;
         final String weaponName;
+        final String spyBuilding;
 
         ActionOrder(Action action, String productionCategory, int productionPercent,
                     String technology, int reservedMillions, int targetPlayerId,
-                    int targetCityIndex, String weaponName) {
+                    int targetCityIndex, String weaponName, String spyBuilding) {
             this.action = action;
             this.productionCategory = productionCategory;
             this.productionPercent = productionPercent;
@@ -117,6 +119,7 @@ public final class GameState {
             this.targetPlayerId = targetPlayerId;
             this.targetCityIndex = targetCityIndex;
             this.weaponName = weaponName;
+            this.spyBuilding = spyBuilding;
         }
     }
 
@@ -138,6 +141,16 @@ public final class GameState {
     private static final int[] PRODUCTION_GROUPS = {1, 2, 3, 4, 5, 6, 7, 8};
     private static final int PLAYER_STOCK_CAP = 4;
     private static final int MAX_TURN_ACTIONS = 2;
+    private static final int[][] SPY_STATISTICS = {
+            {5, 20}, {7, 40}, {9, 60}, {12, 80}
+    };
+    private static final int[] SPY_MONEY_CAP = {90, 120, 150};
+    private static final String[] SPY_BUILDINGS = {
+            "spyCenter", "tech", "religion", "resources", "factory"
+    };
+    private static final String[] SPY_ACTION_CATEGORIES = {
+            "diplomacy", "factory", "tech", "religion", "resources"
+    };
 
     private final int difficulty;
     private final PlayerState[] players = new PlayerState[5];
@@ -151,6 +164,7 @@ public final class GameState {
     private int selectedTargetPlayer = 1;
     private int selectedTargetCity;
     private String selectedAttackWeapon = "soldier1";
+    private String selectedSpyBuilding = "spyCenter";
     private int turn;
     private int selectedIsland = -1;
     private MatchStatus matchStatus = MatchStatus.ONGOING;
@@ -276,6 +290,7 @@ public final class GameState {
         selectedTargetPlayer = selectedIsland > 0 ? selectedIsland : 1;
         selectedTargetCity = 0;
         selectedAttackWeapon = firstAvailableAttackWeapon();
+        selectedSpyBuilding = "spyCenter";
         selectedProductionCategory = "soldier";
         selectedProductionPercent = 0;
     }
@@ -355,11 +370,43 @@ public final class GameState {
         return selectedAttackWeapon;
     }
 
+    public int getSpyReadiness() {
+        return getHuman().spyReadiness;
+    }
+
+    public String getSelectedSpyBuilding() {
+        return selectedSpyBuilding;
+    }
+
+    public boolean isSelectedAttackSpy() {
+        WeaponState weapon = getHuman().weapons.get(selectedAttackWeapon);
+        return selectedAction == Action.ATTACK && weapon != null
+                && "spy".equals(weapon.definition.type);
+    }
+
+    public void cycleSpyBuilding(int direction) {
+        if (direction == 0 || !isSelectedAttackSpy()) {
+            return;
+        }
+        int current = 0;
+        for (int i = 0; i < SPY_BUILDINGS.length; i++) {
+            if (SPY_BUILDINGS[i].equals(selectedSpyBuilding)) {
+                current = i;
+                break;
+            }
+        }
+        int next = Math.floorMod(current + Integer.signum(direction), SPY_BUILDINGS.length);
+        selectedSpyBuilding = SPY_BUILDINGS[next];
+    }
+
     public List<String> getAvailableAttackWeapons() {
         List<String> available = new ArrayList<>();
         for (WeaponState weapon : getHuman().weapons.values()) {
             String type = weapon.definition.type;
-            if (weapon.active && weapon.inStock > 0 && "soldier".equals(type)) {
+            boolean soldier = "soldier".equals(type);
+            boolean readySpy = "spy".equals(type)
+                    && weapon.definition.level <= getHuman().spyReadiness / 25;
+            if (weapon.active && weapon.inStock > 0 && (soldier || readySpy)) {
                 available.add(weapon.definition.name);
             }
         }
@@ -374,9 +421,11 @@ public final class GameState {
         PlayerState target = players[targetPlayerId];
         CityState city = target.getCity(cityIndex);
         WeaponState weapon = getHuman().weapons.get(weaponName);
-        if (!target.alive || city == null || city.populationMillions <= 0
+        boolean soldier = weapon != null && "soldier".equals(weapon.definition.type);
+        if (!target.alive || totalPopulation(target) <= 0 || city == null
                 || weapon == null || !weapon.active || weapon.inStock <= 0
-                || !"soldier".equals(weapon.definition.type)) {
+                || (!soldier && !canUseSpy(getHuman(), weapon))
+                || (soldier && city.populationMillions <= 0)) {
             return false;
         }
         selectedTargetPlayer = targetPlayerId;
@@ -405,7 +454,7 @@ public final class GameState {
     }
 
     public void cycleAttackCity(int direction) {
-        if (direction == 0 || selectedAction != Action.ATTACK) {
+        if (direction == 0 || selectedAction != Action.ATTACK || isSelectedAttackSpy()) {
             return;
         }
         PlayerState target = players[selectedTargetPlayer];
@@ -449,9 +498,10 @@ public final class GameState {
                 ? players[selectedTargetPlayer] : null;
         CityState city = target == null ? null : target.getCity(selectedTargetCity);
         WeaponState weapon = getHuman().weapons.get(selectedAttackWeapon);
-        return target != null && target.alive && city != null && city.populationMillions > 0
+        return target != null && target.alive && totalPopulation(target) > 0 && city != null
                 && weapon != null && weapon.active && weapon.inStock > 0
-                && "soldier".equals(weapon.definition.type);
+                && ("soldier".equals(weapon.definition.type)
+                ? city.populationMillions > 0 : canUseSpy(getHuman(), weapon));
     }
 
     private String firstAvailableAttackWeapon() {
@@ -511,7 +561,8 @@ public final class GameState {
         }
         ActionOrder order = new ActionOrder(selectedAction, selectedProductionCategory,
                 selectedProductionPercent, selectedTechnology, reserved,
-                selectedTargetPlayer, selectedTargetCity, selectedAttackWeapon);
+                selectedTargetPlayer, selectedTargetCity, selectedAttackWeapon,
+                selectedSpyBuilding);
         queuedActions.add(order);
         getHuman().turnMoneyMillions -= reserved;
         messages.add(selectedAction.label + " queued.");
@@ -620,6 +671,7 @@ public final class GameState {
             throw new IllegalStateException("Choose two actions before confirming the turn");
         }
         decayReligion();
+        advanceSpyReadiness();
         for (ActionOrder order : queuedActions) {
             switch (order.action) {
                 case RESOURCES:
@@ -702,9 +754,18 @@ public final class GameState {
         PlayerState defender = playerById(order.targetPlayerId);
         CityState city = defender.getCity(order.targetCityIndex);
         WeaponState weapon = attacker.weapons.get(order.weaponName);
-        if (!defender.alive || city == null || city.populationMillions <= 0
-                || weapon == null || !weapon.active || weapon.inStock <= 0) {
+        boolean spyMission = weapon != null && "spy".equals(weapon.definition.type);
+        if (!defender.alive || city == null
+                || (!spyMission && city.populationMillions <= 0)
+                || weapon == null || !weapon.active || weapon.inStock <= 0
+                || (spyMission && !canUseSpy(attacker, weapon))) {
             messages.add("Attack cancelled: target or weapon is no longer available.");
+            return;
+        }
+        if (spyMission) {
+            resolveSpyAttack(attacker, defender, weapon);
+            weapon.inStock--;
+            messages.add("Spy operation completed against nation " + defender.id + ".");
             return;
         }
         int casualties = 0;
@@ -727,6 +788,95 @@ public final class GameState {
         weapon.inStock--;
         messages.add(casualties + " citizens lost in nation " + defender.id
                 + " city " + (city.index + 1) + ".");
+    }
+
+    private void resolveSpyAttack(PlayerState attacker, PlayerState defender,
+                                  WeaponState spy) {
+        int level = spy.definition.level;
+        int[] statistics = SPY_STATISTICS[level - 1];
+        int weaponCount = 1 + random.nextInt(statistics[0]);
+        int moneyPercent = level * 10
+                + random.nextInt(statistics[1] - level * 10 + 1);
+        long moneyAmount = Math.round((defender.moneyMillions / 100.0d) * moneyPercent);
+        moneyAmount = Math.min(moneyAmount, SPY_MONEY_CAP[difficulty]);
+
+        List<String> availableSpyActions = new ArrayList<>();
+        Collections.addAll(availableSpyActions, SPY_ACTION_CATEGORIES);
+        for (ActionOrder order : queuedActions) {
+            String excluded = spyActionCategory(order.action);
+            if (excluded != null) {
+                availableSpyActions.remove(excluded);
+            }
+        }
+        if (!availableSpyActions.isEmpty()) {
+            // The recovered model chooses a spy objective here; it controls the
+            // mission report while the stolen technologies/stock are resolved below.
+            random.nextInt(availableSpyActions.size());
+        }
+
+        List<WeaponState> availableTargets = new ArrayList<>();
+        for (WeaponState targetWeapon : defender.weapons.values()) {
+            if (targetWeapon.inStock > 0 && targetWeapon.definition.level <= level
+                    && !"spy".equals(targetWeapon.definition.type)) {
+                availableTargets.add(targetWeapon);
+            }
+        }
+        weaponCount = Math.min(weaponCount, availableTargets.size());
+        int stolenMoney = (int) Math.min(defender.moneyMillions, moneyAmount);
+        defender.moneyMillions -= stolenMoney;
+        attacker.moneyMillions += stolenMoney;
+        if (stolenMoney > 0) {
+            messages.add("Spy stole " + stolenMoney + "M from nation " + defender.id + ".");
+        }
+
+        for (int i = 0; i < weaponCount; i++) {
+            WeaponState targetWeapon = availableTargets.remove(
+                    random.nextInt(availableTargets.size()));
+            WeaponState matchingWeapon = attacker.weapons.get(targetWeapon.definition.name);
+            if (matchingWeapon.active) {
+                matchingWeapon.inStock++;
+                if (targetWeapon.inStock > 0) {
+                    targetWeapon.inStock--;
+                }
+                messages.add("Spy stole " + targetWeapon.definition.name + " stock.");
+            } else {
+                matchingWeapon.active = true;
+                attacker.inventedTechnologies.add(targetWeapon.definition.technology);
+                messages.add("Spy uncovered " + targetWeapon.definition.technology + " technology.");
+            }
+            addToHighscore(attacker, 2, 1);
+        }
+        attacker.spyReadiness = 0;
+    }
+
+    private static String spyActionCategory(Action action) {
+        switch (action) {
+            case RESOURCES:
+                return "resources";
+            case PRODUCTION:
+                return "factory";
+            case RESEARCH:
+                return "tech";
+            case MASS_MEDIA:
+                return "religion";
+            case DIPLOMACY:
+                return "diplomacy";
+            default:
+                return null;
+        }
+    }
+
+    private void advanceSpyReadiness() {
+        for (PlayerState player : players) {
+            if (player.alive) {
+                player.spyReadiness = Math.min(100, player.spyReadiness + 25);
+            }
+        }
+    }
+
+    private static boolean canUseSpy(PlayerState player, WeaponState weapon) {
+        return "spy".equals(weapon.definition.type)
+                && weapon.definition.level <= player.spyReadiness / 25;
     }
 
     /**

@@ -1225,18 +1225,31 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             drawCentered("NATION " + target.id + (target.alive ? "" : " (DEFEATED)"),
                     modal.x + modal.width / 2f,
                     attackTargetPrevious.y + attackTargetPrevious.height / 2f + 3f, 8f);
-            drawCentered(city == null ? "NO CITY" : "CITY " + (city.index + 1)
-                            + "   POPULATION " + city.populationMillions + "M",
-                    modal.x + modal.width / 2f,
-                    attackCityPrevious.y + attackCityPrevious.height / 2f + 3f, 7f);
+            if (game.isSelectedAttackSpy()) {
+                drawCentered("SPY BUILDING: "
+                                + game.getSelectedSpyBuilding().toUpperCase(java.util.Locale.US),
+                        modal.x + modal.width / 2f,
+                        attackCityPrevious.y + attackCityPrevious.height / 2f + 3f, 7f);
+            } else {
+                drawCentered(city == null ? "NO CITY" : "CITY " + (city.index + 1)
+                                + "   POPULATION " + city.populationMillions + "M",
+                        modal.x + modal.width / 2f,
+                        attackCityPrevious.y + attackCityPrevious.height / 2f + 3f, 7f);
+            }
             if (action == GameState.Action.ATTACK) {
                 int stock = game.getWeaponStock(game.getSelectedAttackWeapon());
-                drawCentered(game.getSelectedAttackWeapon().toUpperCase(java.util.Locale.US)
-                                + "   STOCK " + stock,
+                String weaponLabel = game.getSelectedAttackWeapon()
+                        .toUpperCase(java.util.Locale.US) + "   STOCK " + stock;
+                if (game.isSelectedAttackSpy()) {
+                    weaponLabel += "   READINESS " + game.getSpyReadiness() + "%";
+                }
+                drawCentered(weaponLabel,
                         modal.x + modal.width / 2f,
                         attackWeaponPrevious.y + attackWeaponPrevious.height / 2f + 3f, 7f);
                 if (!game.canAcceptAttack()) {
-                    drawCentered("Choose a living target and available unit.",
+                    drawCentered(game.isSelectedAttackSpy()
+                                    ? "Spy readiness or available spy stock is too low."
+                                    : "Choose a living target and available unit.",
                             modal.x + modal.width / 2f, modal.y + modal.height * 0.18f, 7f);
                 }
             } else {
@@ -1490,11 +1503,19 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                     return;
                 }
                 if (attackCityPrevious.contains(x, y)) {
-                    game.cycleAttackCity(-1);
+                    if (game.isSelectedAttackSpy()) {
+                        game.cycleSpyBuilding(-1);
+                    } else {
+                        game.cycleAttackCity(-1);
+                    }
                     return;
                 }
                 if (attackCityNext.contains(x, y)) {
-                    game.cycleAttackCity(1);
+                    if (game.isSelectedAttackSpy()) {
+                        game.cycleSpyBuilding(1);
+                    } else {
+                        game.cycleAttackCity(1);
+                    }
                     return;
                 }
                 if (attackWeaponPrevious.contains(x, y)) {
