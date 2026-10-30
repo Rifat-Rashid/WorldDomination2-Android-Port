@@ -4,6 +4,8 @@ import com.example.worlddomination.game.simulation.GameState;
 import com.example.worlddomination.game.simulation.TechnologyCatalog;
 import org.junit.Test;
 
+import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -30,6 +32,72 @@ public final class OpponentAITest {
         assertEquals(70, special.getRegardToward(0));
         assertEquals(special.getPrimaryEnemyId(),
                 OpponentAI.mostHostileTarget(state, special, false).id);
+    }
+
+    @Test
+    public void preCounterScoreUsesTheThreateningEnemyRegardAndLowPopulationBonus() {
+        GameState state = null;
+        for (long seed = 0; seed < 500; seed++) {
+            GameState candidate = new GameState(1, seed);
+            GameState.PlayerState defender = candidate.getPlayerState(1);
+            if (!defender.isSpecialPerson() && defender.getPrimaryEnemyId() != 0
+                    && defender.getSecondaryEnemyId() != 0) {
+                state = candidate;
+                break;
+            }
+        }
+        assertNotNull("seed sweep should leave the human outside the AI target pair", state);
+
+        GameState.PlayerState defender = state.getPlayerState(1);
+        int humanRegard = defender.getRegardToward(0);
+        defender.populationMillions = 10;
+        assertEquals(Math.max(0, 86 - humanRegard + 10),
+                OpponentAI.preCounterScore(state, defender, Collections.singletonList(0)),
+                0.0);
+        defender.populationMillions = 20;
+        assertEquals(Math.max(0, 86 - humanRegard),
+                OpponentAI.preCounterScore(state, defender, Collections.singletonList(0)),
+                0.0);
+        assertEquals(0.0, OpponentAI.preCounterScore(state, defender,
+                Collections.<Integer>emptyList()), 0.0);
+    }
+
+    @Test
+    public void preparedDefenseTargetsHighestScoringEnemyThenSourceStrength() {
+        GameState state = null;
+        int defenderId = 1;
+        int weakerThreatId = -1;
+        int strongerThreatId = -1;
+        for (long seed = 0; seed < 500 && state == null; seed++) {
+            GameState candidate = new GameState(1, seed);
+            GameState.PlayerState defender = candidate.getPlayerState(defenderId);
+            for (int firstId = 0; firstId < 5 && state == null; firstId++) {
+                if (firstId == defenderId || !candidate.getPlayerState(firstId).alive) {
+                    continue;
+                }
+                for (int secondId = firstId + 1; secondId < 5; secondId++) {
+                    if (secondId != defenderId && candidate.getPlayerState(secondId).alive
+                            && defender.getRegardToward(firstId)
+                            == defender.getRegardToward(secondId)
+                            && defender.getRegardToward(firstId) < 86) {
+                        state = candidate;
+                        weakerThreatId = firstId;
+                        strongerThreatId = secondId;
+                        break;
+                    }
+                }
+            }
+        }
+        assertNotNull("seed sweep should find equal-scoring prepared threats", state);
+
+        GameState.PlayerState defender = state.getPlayerState(defenderId);
+        GameState.PlayerState weakerThreat = state.getPlayerState(weakerThreatId);
+        GameState.PlayerState strongerThreat = state.getPlayerState(strongerThreatId);
+        weakerThreat.moneyMillions = 1;
+        strongerThreat.moneyMillions = 1_000_000;
+        assertTrue(strongerThreat.getStrength() > weakerThreat.getStrength());
+        assertEquals(strongerThreatId, OpponentAI.mostThreateningPreparedEnemy(state,
+                defender, Arrays.asList(weakerThreatId, strongerThreatId)));
     }
 
     @Test

@@ -221,13 +221,8 @@ public final class OpponentAI {
             attack = -999;
         }
 
-        double preCounter = 0;
-        if (state.getCounterWeaponForPreparedThreat(player.id) != null) {
-            preCounter = 86 - lowestRegard;
-            if (player.populationMillions < 20) {
-                preCounter += 10;
-            }
-        }
+        double preCounter = preCounterScore(state, player,
+                state.getPreparedThreatPlayerIds(player.id));
         double preparedAttack = Math.max(0,
                 ATTACK_BASE[state.getDifficulty()] - lowestRegard / 2.0);
         if (player.getPreparedCarrierName() != null) {
@@ -341,6 +336,46 @@ public final class OpponentAI {
         return scores;
     }
 
+    static double preCounterScore(GameState state, GameState.PlayerState defender,
+                                  List<Integer> preparedThreatPlayerIds) {
+        double highestThreatScore = 0;
+        for (int threatPlayerId : preparedThreatPlayerIds) {
+            double threatScore = preparedThreatScore(state, defender, threatPlayerId);
+            highestThreatScore = Math.max(highestThreatScore, threatScore);
+        }
+        return highestThreatScore;
+    }
+
+    static int mostThreateningPreparedEnemy(GameState state,
+                                            GameState.PlayerState defender,
+                                            List<Integer> threatPlayerIds) {
+        int bestThreatId = -1;
+        double bestScore = 0;
+        int bestStrength = -1;
+        for (int threatPlayerId : threatPlayerIds) {
+            double score = preparedThreatScore(state, defender, threatPlayerId);
+            int strength = state.getPlayerState(threatPlayerId).getStrength();
+            if (score > bestScore || (score == bestScore && score >= 0
+                    && strength > bestStrength)) {
+                bestScore = score;
+                bestStrength = strength;
+                bestThreatId = threatPlayerId;
+            }
+        }
+        return bestThreatId;
+    }
+
+    private static double preparedThreatScore(GameState state,
+                                              GameState.PlayerState defender,
+                                              int threatPlayerId) {
+        GameState.PlayerState threat = state.getPlayerState(threatPlayerId);
+        double score = 86 - defender.getRegardToward(threat.id);
+        if (defender.populationMillions < 20) {
+            score += 10;
+        }
+        return score;
+    }
+
     private static double weaponStockLevel(GameState.PlayerState player) {
         int active = 0;
         int satisfied = 0;
@@ -402,7 +437,10 @@ public final class OpponentAI {
         if (plannedUse.containsKey("@defense")) {
             return null;
         }
-        String counter = state.getCounterWeaponForPreparedThreat(defender.id);
+        int threatId = mostThreateningPreparedEnemy(state, defender,
+                state.getPreparedThreatPlayerIds(defender.id));
+        String counter = threatId < 0 ? null
+                : state.getCounterWeaponForThreat(defender.id, threatId);
         return counter == null ? null : new Decision(defender.id, GameState.Action.DEFENSE,
                 Collections.<String, Integer>emptyMap(), Collections.<String>emptyList(),
                 0, -1, -1, counter, -1);
