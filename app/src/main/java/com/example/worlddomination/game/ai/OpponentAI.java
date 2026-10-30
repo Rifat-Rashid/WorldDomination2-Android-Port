@@ -650,31 +650,55 @@ public final class OpponentAI {
                 null, -1);
     }
 
-    private static Decision planDiplomacy(GameState state, GameState.PlayerState actor,
-                                           Random random) {
-        GameState.PlayerState offerTarget = null;
-        GameState.PlayerState demandTarget = null;
+    static Decision planDiplomacy(GameState state, GameState.PlayerState actor,
+                                  Random random) {
+        GameState.PlayerState poorestPopulationTarget = null;
+        int lowestTargetPopulation = 0;
         for (GameState.PlayerState target : state.getPlayers()) {
-            if (!isDiplomacyTarget(state, actor, target)) {
+            if (!isLivingDiplomacyOpponent(actor, target)) {
                 continue;
             }
-            if (target.id == 0 && target.moneyMillions > 50
-                    && actor.getRegardToward(0) < 50) {
-                demandTarget = target;
+            if (poorestPopulationTarget == null || lowestTargetPopulation == 0
+                    || target.populationMillions < lowestTargetPopulation) {
+                poorestPopulationTarget = target;
+                lowestTargetPopulation = target.populationMillions;
             }
-            if (target.id == 0 && actor.moneyMillions > 50
-                    && actor.getRegardToward(0) > 50) {
-                offerTarget = target;
+        }
+
+        // The source reuses its minimum-population local as the floor for the
+        // random 1..5 offer-target roll. This intentionally preserves its
+        // behavior where ordinary, populated rivals do not pass that floor.
+        Integer randomOfferScoreFloor = poorestPopulationTarget == null
+                ? null : lowestTargetPopulation;
+        GameState.PlayerState randomOfferTarget = null;
+        for (GameState.PlayerState target : state.getPlayers()) {
+            if (!isLivingDiplomacyOpponent(actor, target)
+                    || actor.getDiplomacyOfferedLastTurn(target.id) != 0) {
+                continue;
             }
-            if (target.id != 0 && target.populationMillions > actor.populationMillions
-                    && (offerTarget == null
-                    || target.populationMillions > offerTarget.populationMillions)) {
-                offerTarget = target;
+            int candidateScore = randomInclusive(random, 1, 5);
+            if (randomOfferScoreFloor == null || randomOfferScoreFloor == 0
+                    || candidateScore > randomOfferScoreFloor) {
+                randomOfferScoreFloor = candidateScore;
+                randomOfferTarget = target;
             }
-            if (target.id != 0 && target.moneyMillions > actor.moneyMillions
-                    && (demandTarget == null
-                    || target.populationMillions < demandTarget.populationMillions)) {
-                demandTarget = target;
+        }
+
+        GameState.PlayerState offerTarget = randomOfferTarget != null
+                && randomOfferTarget.populationMillions > actor.populationMillions
+                ? randomOfferTarget : null;
+        GameState.PlayerState demandTarget = poorestPopulationTarget != null
+                && poorestPopulationTarget.moneyMillions > actor.moneyMillions
+                ? poorestPopulationTarget : null;
+
+        GameState.PlayerState human = state.getHuman();
+        if (!actor.hasCeasefireWith(human.id)
+                && actor.getDiplomacyOfferedLastTurn(human.id) == 0) {
+            if (human.moneyMillions > 50 && actor.getRegardToward(human.id) < 50) {
+                demandTarget = human;
+            }
+            if (actor.moneyMillions > 50 && actor.getRegardToward(human.id) > 50) {
+                offerTarget = human;
             }
         }
         boolean offer = offerTarget != null;
@@ -707,13 +731,10 @@ public final class OpponentAI {
                 reserved, target.id, -1, null, option);
     }
 
-    private static boolean isDiplomacyTarget(GameState state,
-                                             GameState.PlayerState actor,
-                                             GameState.PlayerState target) {
+    private static boolean isLivingDiplomacyOpponent(GameState.PlayerState actor,
+                                                      GameState.PlayerState target) {
         return target.alive && target.id != actor.id
-                && !actor.hasCeasefireWith(target.id)
-                && actor.getDiplomacyOfferedLastTurn(target.id) == 0
-                && state.getPendingDiplomacyProposal(target.id, actor.id) == null;
+                && !actor.hasCeasefireWith(target.id);
     }
 
     private static Decision planProduction(GameState state, GameState.PlayerState player,
