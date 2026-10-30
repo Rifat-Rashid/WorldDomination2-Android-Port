@@ -45,7 +45,7 @@ for path in sorted(SOURCE.rglob('*.java')):
                 params = [{'name': p.name, 'type': typename(p.type), 'varargs': p.varargs} for p in member.parameters]
                 signature = member.name + '(' + ', '.join(p['type'] + ('...' if p['varargs'] else '') + ' ' + p['name'] for p in params) + ')'
                 item = {'name': member.name, 'signature': signature, 'returns': typename(member.return_type) if isinstance(member,javalang.tree.MethodDeclaration) else None, 'line': member.position.line if member.position else line, 'modifiers': sorted(member.modifiers), 'parameters': params, 'locals': []}
-                for _, local in member.filter(javalang.tree.LocalVariableDeclaration):
+                for _, local in member.filter(javalang.tree.VariableDeclaration):
                     for v in local.declarators:
                         item['locals'].append({'name': v.name, 'type': typename(local.type), 'line': local.position.line if local.position else item['line']})
                 for _, local in member.filter(javalang.tree.CatchClauseParameter):

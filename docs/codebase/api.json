@@ -1,5 +1,5 @@
 {
-  "commit": "5ad9effb095a0dc8ccbf10a0038606f89e5d4e6c",
+  "commit": "f5fb34be72303b6c2e7cbc2506b072f08298610d",
   "files": [
     {
       "path": "app/src/main/java/com/example/worlddomination/game/ai/OpponentAI.java",
@@ -139,6 +139,11 @@
                   "line": 128
                 },
                 {
+                  "name": "decision",
+                  "type": "Decision",
+                  "line": 105
+                },
+                {
                   "name": "attackResetsCompanion",
                   "type": "boolean",
                   "line": 146
@@ -147,6 +152,11 @@
                   "name": "secondOrder",
                   "type": "Decision",
                   "line": 148
+                },
+                {
+                  "name": "slot",
+                  "type": "int",
+                  "line": 105
                 },
                 {
                   "name": "decision",
@@ -293,6 +303,16 @@
                   "line": 216
                 },
                 {
+                  "name": "candidate",
+                  "type": "GameState.PlayerState",
+                  "line": 211
+                },
+                {
+                  "name": "city",
+                  "type": "CityState",
+                  "line": 211
+                },
+                {
                   "name": "lowestRegard",
                   "type": "double",
                   "line": 231
@@ -348,6 +368,11 @@
                   "line": 291
                 },
                 {
+                  "name": "other",
+                  "type": "GameState.PlayerState",
+                  "line": 211
+                },
+                {
                   "name": "personalityResearchBonus",
                   "type": "double",
                   "line": 304
@@ -381,6 +406,11 @@
                   "name": "scores",
                   "type": "List<ScoredAction>",
                   "line": 336
+                },
+                {
+                  "name": "index",
+                  "type": "int",
+                  "line": 211
                 },
                 {
                   "name": "scored",
@@ -419,7 +449,13 @@
                   "varargs": false
                 }
               ],
-              "locals": []
+              "locals": [
+                {
+                  "name": "scored",
+                  "type": "ScoredAction",
+                  "line": 354
+                }
+              ]
             },
             {
               "name": "researchTurnRatio",
@@ -519,6 +555,11 @@
                   "name": "lowestRegard",
                   "type": "double",
                   "line": 382
+                },
+                {
+                  "name": "other",
+                  "type": "GameState.PlayerState",
+                  "line": 381
                 }
               ]
             },
@@ -552,6 +593,11 @@
                   "name": "highestThreatScore",
                   "type": "double",
                   "line": 394
+                },
+                {
+                  "name": "threatPlayerId",
+                  "type": "int",
+                  "line": 392
                 },
                 {
                   "name": "threatScore",
@@ -631,6 +677,11 @@
                   "line": 413
                 },
                 {
+                  "name": "threatPlayerId",
+                  "type": "int",
+                  "line": 410
+                },
+                {
                   "name": "score",
                   "type": "double",
                   "line": 415
@@ -701,6 +752,11 @@
                   "name": "satisfied",
                   "type": "int",
                   "line": 443
+                },
+                {
+                  "name": "weapon",
+                  "type": "GameState.WeaponState",
+                  "line": 441
                 }
               ]
             },
@@ -730,6 +786,11 @@
                   "name": "best",
                   "type": "int",
                   "line": 458
+                },
+                {
+                  "name": "level",
+                  "type": "int",
+                  "line": 457
                 },
                 {
                   "name": "name",
@@ -961,7 +1022,13 @@
                   "varargs": false
                 }
               ],
-              "locals": []
+              "locals": [
+                {
+                  "name": "weapon",
+                  "type": "GameState.WeaponState",
+                  "line": 608
+                }
+              ]
             },
             {
               "name": "hasAvailableSpy",
@@ -984,7 +1051,13 @@
                   "varargs": false
                 }
               ],
-              "locals": []
+              "locals": [
+                {
+                  "name": "weapon",
+                  "type": "GameState.WeaponState",
+                  "line": 619
+                }
+              ]
             },
             {
               "name": "randomAvailableCarrier",
@@ -1024,6 +1097,16 @@
                   "line": 639
                 },
                 {
+                  "name": "type",
+                  "type": "String",
+                  "line": 630
+                },
+                {
+                  "name": "name",
+                  "type": "String",
+                  "line": 630
+                },
+                {
                   "name": "weapon",
                   "type": "GameState.WeaponState",
                   "line": 642
@@ -1037,6 +1120,11 @@
                   "name": "highest",
                   "type": "String",
                   "line": 654
+                },
+                {
+                  "name": "name",
+                  "type": "String",
+                  "line": 630
                 },
                 {
                   "name": "weapon",
@@ -1071,6 +1159,11 @@
                   "name": "carriers",
                   "type": "List<String>",
                   "line": 668
+                },
+                {
+                  "name": "weapon",
+                  "type": "GameState.WeaponState",
+                  "line": 666
                 }
               ]
             },
@@ -1095,6 +1188,11 @@
                   "name": "carriers",
                   "type": "List<String>",
                   "line": 679
+                },
+                {
+                  "name": "carrier",
+                  "type": "GameState.WeaponState",
+                  "line": 678
                 }
               ]
             },
@@ -1124,6 +1222,21 @@
                   "name": "type",
                   "type": "String",
                   "line": 691
+                },
+                {
+                  "name": "weapon",
+                  "type": "GameState.WeaponState",
+                  "line": 689
+                },
+                {
+                  "name": "payload",
+                  "type": "GameState.WeaponState",
+                  "line": 689
+                },
+                {
+                  "name": "payload",
+                  "type": "GameState.WeaponState",
+                  "line": 689
                 },
                 {
                   "name": "specialLoad",
@@ -1212,6 +1325,11 @@
                   "line": 734
                 },
                 {
+                  "name": "name",
+                  "type": "String",
+                  "line": 730
+                },
+                {
                   "name": "payload",
                   "type": "GameState.WeaponState",
                   "line": 736
@@ -1244,6 +1362,11 @@
                   "name": "strongest",
                   "type": "GameState.WeaponState",
                   "line": 748
+                },
+                {
+                  "name": "weapon",
+                  "type": "GameState.WeaponState",
+                  "line": 746
                 }
               ]
             },
@@ -1273,6 +1396,11 @@
                   "name": "selected",
                   "type": "int",
                   "line": 763
+                },
+                {
+                  "name": "city",
+                  "type": "CityState",
+                  "line": 762
                 }
               ]
             },
@@ -1302,6 +1430,11 @@
                   "name": "selected",
                   "type": "CityState",
                   "line": 774
+                },
+                {
+                  "name": "city",
+                  "type": "CityState",
+                  "line": 772
                 }
               ]
             },
@@ -1321,7 +1454,13 @@
                   "varargs": false
                 }
               ],
-              "locals": []
+              "locals": [
+                {
+                  "name": "city",
+                  "type": "CityState",
+                  "line": 785
+                }
+              ]
             },
             {
               "name": "randomPopulatedCity",
@@ -1349,6 +1488,11 @@
                   "name": "populated",
                   "type": "List<Integer>",
                   "line": 795
+                },
+                {
+                  "name": "city",
+                  "type": "CityState",
+                  "line": 794
                 }
               ]
             },
@@ -1466,6 +1610,11 @@
                   "line": 824
                 },
                 {
+                  "name": "weapon",
+                  "type": "GameState.WeaponState",
+                  "line": 819
+                },
+                {
                   "name": "selected",
                   "type": "GameState.WeaponState",
                   "line": 834
@@ -1524,6 +1673,11 @@
                   "line": 864
                 },
                 {
+                  "name": "threatId",
+                  "type": "int",
+                  "line": 859
+                },
+                {
                   "name": "counter",
                   "type": "String",
                   "line": 867
@@ -1573,6 +1727,11 @@
                   "line": 885
                 },
                 {
+                  "name": "candidate",
+                  "type": "String",
+                  "line": 877
+                },
+                {
                   "name": "carrier",
                   "type": "GameState.WeaponState",
                   "line": 888
@@ -1593,6 +1752,11 @@
                   "line": 910
                 },
                 {
+                  "name": "payloadName",
+                  "type": "String",
+                  "line": 877
+                },
+                {
                   "name": "payload",
                   "type": "GameState.WeaponState",
                   "line": 912
@@ -1606,6 +1770,11 @@
                   "name": "populated",
                   "type": "List<Integer>",
                   "line": 922
+                },
+                {
+                  "name": "city",
+                  "type": "CityState",
+                  "line": 877
                 },
                 {
                   "name": "cityIndex",
@@ -1706,6 +1875,11 @@
                   "line": 956
                 },
                 {
+                  "name": "payloadName",
+                  "type": "String",
+                  "line": 947
+                },
+                {
                   "name": "payload",
                   "type": "GameState.WeaponState",
                   "line": 959
@@ -1716,14 +1890,29 @@
                   "line": 960
                 },
                 {
+                  "name": "stock",
+                  "type": "int",
+                  "line": 947
+                },
+                {
                   "name": "populated",
                   "type": "List<Integer>",
                   "line": 971
                 },
                 {
+                  "name": "city",
+                  "type": "CityState",
+                  "line": 947
+                },
+                {
                   "name": "strikes",
                   "type": "List<GameState.ShipStrike>",
                   "line": 980
+                },
+                {
+                  "name": "index",
+                  "type": "int",
+                  "line": 947
                 },
                 {
                   "name": "payload",
@@ -1779,6 +1968,11 @@
                   "line": 996
                 },
                 {
+                  "name": "weapon",
+                  "type": "GameState.WeaponState",
+                  "line": 993
+                },
+                {
                   "name": "selected",
                   "type": "GameState.WeaponState",
                   "line": 1007
@@ -1807,6 +2001,11 @@
                   "name": "populated",
                   "type": "List<Integer>",
                   "line": 1033
+                },
+                {
+                  "name": "city",
+                  "type": "CityState",
+                  "line": 993
                 },
                 {
                   "name": "cityIndex",
@@ -1848,6 +2047,11 @@
                   "line": 1050
                 },
                 {
+                  "name": "weapon",
+                  "type": "GameState.WeaponState",
+                  "line": 1048
+                },
+                {
                   "name": "bestEnemyStock",
                   "type": "int",
                   "line": 1062
@@ -1861,6 +2065,16 @@
                   "name": "bestTargetId",
                   "type": "int",
                   "line": 1064
+                },
+                {
+                  "name": "target",
+                  "type": "GameState.PlayerState",
+                  "line": 1048
+                },
+                {
+                  "name": "level",
+                  "type": "int",
+                  "line": 1048
                 },
                 {
                   "name": "enemyStockAtLevel",
@@ -1915,6 +2129,11 @@
                   "name": "stock",
                   "type": "int",
                   "line": 1099
+                },
+                {
+                  "name": "weapon",
+                  "type": "GameState.WeaponState",
+                  "line": 1098
                 }
               ]
             },
@@ -1939,6 +2158,11 @@
                   "name": "highestLevel",
                   "type": "int",
                   "line": 1109
+                },
+                {
+                  "name": "weapon",
+                  "type": "GameState.WeaponState",
+                  "line": 1108
                 }
               ]
             },
@@ -2003,6 +2227,11 @@
                   "line": 1129
                 },
                 {
+                  "name": "weapon",
+                  "type": "GameState.WeaponState",
+                  "line": 1125
+                },
+                {
                   "name": "space",
                   "type": "GameState.WeaponState",
                   "line": 1147
@@ -2040,6 +2269,11 @@
                   "name": "carrier",
                   "type": "GameState.WeaponState",
                   "line": 1162
+                },
+                {
+                  "name": "carrierName",
+                  "type": "String",
+                  "line": 1159
                 }
               ]
             },
@@ -2079,6 +2313,11 @@
                   "name": "bestValue",
                   "type": "double",
                   "line": 1181
+                },
+                {
+                  "name": "target",
+                  "type": "GameState.PlayerState",
+                  "line": 1177
                 },
                 {
                   "name": "largest",
@@ -2129,6 +2368,11 @@
                   "line": 1208
                 },
                 {
+                  "name": "target",
+                  "type": "GameState.PlayerState",
+                  "line": 1205
+                },
+                {
                   "name": "randomOfferScoreFloor",
                   "type": "Integer",
                   "line": 1223
@@ -2137,6 +2381,11 @@
                   "name": "randomOfferTarget",
                   "type": "GameState.PlayerState",
                   "line": 1225
+                },
+                {
+                  "name": "target",
+                  "type": "GameState.PlayerState",
+                  "line": 1205
                 },
                 {
                   "name": "candidateScore",
@@ -2182,6 +2431,16 @@
                   "name": "option",
                   "type": "int",
                   "line": 1263
+                },
+                {
+                  "name": "candidate",
+                  "type": "int",
+                  "line": 1205
+                },
+                {
+                  "name": "candidate",
+                  "type": "int",
+                  "line": 1205
                 },
                 {
                   "name": "reserved",
@@ -2250,6 +2509,11 @@
                   "line": 1295
                 },
                 {
+                  "name": "group",
+                  "type": "int",
+                  "line": 1292
+                },
+                {
                   "name": "deficit",
                   "type": "int",
                   "line": 1297
@@ -2258,6 +2522,11 @@
                   "name": "active",
                   "type": "boolean",
                   "line": 1298
+                },
+                {
+                  "name": "weapon",
+                  "type": "GameState.WeaponState",
+                  "line": 1292
                 },
                 {
                   "name": "categoryCount",
@@ -2285,6 +2554,11 @@
                   "line": 1330
                 },
                 {
+                  "name": "index",
+                  "type": "int",
+                  "line": 1292
+                },
+                {
                   "name": "group",
                   "type": "int",
                   "line": 1332
@@ -2303,6 +2577,11 @@
                   "name": "reserved",
                   "type": "int",
                   "line": 1355
+                },
+                {
+                  "name": "percentage",
+                  "type": "Map.Entry<String, Integer>",
+                  "line": 1292
                 },
                 {
                   "name": "budget",
@@ -2332,7 +2611,13 @@
                   "varargs": false
                 }
               ],
-              "locals": []
+              "locals": [
+                {
+                  "name": "weapon",
+                  "type": "GameState.WeaponState",
+                  "line": 1367
+                }
+              ]
             },
             {
               "name": "categoryForGroup",
@@ -2395,6 +2680,11 @@
                   "line": 1389
                 },
                 {
+                  "name": "technology",
+                  "type": "TechnologyCatalog.Definition",
+                  "line": 1381
+                },
+                {
                   "name": "technologies",
                   "type": "List<String>",
                   "line": 1403
@@ -2408,6 +2698,11 @@
                   "name": "remaining",
                   "type": "int",
                   "line": 1405
+                },
+                {
+                  "name": "technology",
+                  "type": "TechnologyCatalog.Definition",
+                  "line": 1381
                 }
               ]
             },
@@ -2446,6 +2741,11 @@
                   "name": "bestHostility",
                   "type": "double",
                   "line": 1427
+                },
+                {
+                  "name": "target",
+                  "type": "GameState.PlayerState",
+                  "line": 1423
                 },
                 {
                   "name": "hostility",
@@ -2496,6 +2796,11 @@
                   "line": 1448
                 },
                 {
+                  "name": "player",
+                  "type": "GameState.PlayerState",
+                  "line": 1443
+                },
+                {
                   "name": "target",
                   "type": "GameState.PlayerState",
                   "line": 1459
@@ -2506,6 +2811,11 @@
                   "line": 1460
                 },
                 {
+                  "name": "candidate",
+                  "type": "GameState.PlayerState",
+                  "line": 1443
+                },
+                {
                   "name": "hostility",
                   "type": "double",
                   "line": 1462
@@ -2514,6 +2824,11 @@
                   "name": "lowestRegard",
                   "type": "double",
                   "line": 1475
+                },
+                {
+                  "name": "index",
+                  "type": "int",
+                  "line": 1443
                 },
                 {
                   "name": "indexed",
@@ -2543,6 +2858,11 @@
                   "name": "largest",
                   "type": "CityState",
                   "line": 1492
+                },
+                {
+                  "name": "city",
+                  "type": "CityState",
+                  "line": 1491
                 }
               ]
             },
@@ -3042,7 +3362,7 @@
           "extends": null
         }
       ],
-      "url": "https://github.com/Rifat-Rashid/WorldDomination2-Android-Port/blob/5ad9effb095a0dc8ccbf10a0038606f89e5d4e6c/app/src/main/java/com/example/worlddomination/game/ai/OpponentAI.java",
+      "url": "https://github.com/Rifat-Rashid/WorldDomination2-Android-Port/blob/f5fb34be72303b6c2e7cbc2506b072f08298610d/app/src/main/java/com/example/worlddomination/game/ai/OpponentAI.java",
       "lines": 1509
     },
     {
@@ -3274,6 +3594,16 @@
                   "name": "sourceHeight",
                   "type": "int[]",
                   "line": 67
+                },
+                {
+                  "name": "row",
+                  "type": "int",
+                  "line": 31
+                },
+                {
+                  "name": "column",
+                  "type": "int",
+                  "line": 31
                 }
               ]
             }
@@ -3282,7 +3612,7 @@
           "extends": null
         }
       ],
-      "url": "https://github.com/Rifat-Rashid/WorldDomination2-Android-Port/blob/5ad9effb095a0dc8ccbf10a0038606f89e5d4e6c/app/src/main/java/com/example/worlddomination/game/assets/OriginalUiAssets.java",
+      "url": "https://github.com/Rifat-Rashid/WorldDomination2-Android-Port/blob/f5fb34be72303b6c2e7cbc2506b072f08298610d/app/src/main/java/com/example/worlddomination/game/assets/OriginalUiAssets.java",
       "lines": 91
     },
     {
@@ -3468,7 +3798,13 @@
                 "public"
               ],
               "parameters": [],
-              "locals": []
+              "locals": [
+                {
+                  "name": "sound",
+                  "type": "Sound",
+                  "line": 110
+                }
+              ]
             },
             {
               "name": "internalPath",
@@ -3709,7 +4045,7 @@
           "extends": null
         }
       ],
-      "url": "https://github.com/Rifat-Rashid/WorldDomination2-Android-Port/blob/5ad9effb095a0dc8ccbf10a0038606f89e5d4e6c/app/src/main/java/com/example/worlddomination/game/audio/OriginalAudio.java",
+      "url": "https://github.com/Rifat-Rashid/WorldDomination2-Android-Port/blob/f5fb34be72303b6c2e7cbc2506b072f08298610d/app/src/main/java/com/example/worlddomination/game/audio/OriginalAudio.java",
       "lines": 197
     },
     {
@@ -3806,7 +4142,7 @@
           "extends": null
         }
       ],
-      "url": "https://github.com/Rifat-Rashid/WorldDomination2-Android-Port/blob/5ad9effb095a0dc8ccbf10a0038606f89e5d4e6c/app/src/main/java/com/example/worlddomination/game/simulation/CityState.java",
+      "url": "https://github.com/Rifat-Rashid/WorldDomination2-Android-Port/blob/f5fb34be72303b6c2e7cbc2506b072f08298610d/app/src/main/java/com/example/worlddomination/game/simulation/CityState.java",
       "lines": 18
     },
     {
@@ -4017,7 +4353,7 @@
           "extends": null
         }
       ],
-      "url": "https://github.com/Rifat-Rashid/WorldDomination2-Android-Port/blob/5ad9effb095a0dc8ccbf10a0038606f89e5d4e6c/app/src/main/java/com/example/worlddomination/game/simulation/FinalScoreBreakdown.java",
+      "url": "https://github.com/Rifat-Rashid/WorldDomination2-Android-Port/blob/f5fb34be72303b6c2e7cbc2506b072f08298610d/app/src/main/java/com/example/worlddomination/game/simulation/FinalScoreBreakdown.java",
       "lines": 59
     },
     {
@@ -4531,7 +4867,7 @@
           "extends": null
         }
       ],
-      "url": "https://github.com/Rifat-Rashid/WorldDomination2-Android-Port/blob/5ad9effb095a0dc8ccbf10a0038606f89e5d4e6c/app/src/main/java/com/example/worlddomination/game/simulation/GameSetup.java",
+      "url": "https://github.com/Rifat-Rashid/WorldDomination2-Android-Port/blob/f5fb34be72303b6c2e7cbc2506b072f08298610d/app/src/main/java/com/example/worlddomination/game/simulation/GameSetup.java",
       "lines": 181
     },
     {
@@ -5012,6 +5348,11 @@
                   "name": "candidates",
                   "type": "List<PlayerState>",
                   "line": 601
+                },
+                {
+                  "name": "candidate",
+                  "type": "PlayerState",
+                  "line": 600
                 }
               ]
             },
@@ -5046,7 +5387,13 @@
                 "private"
               ],
               "parameters": [],
-              "locals": []
+              "locals": [
+                {
+                  "name": "player",
+                  "type": "PlayerState",
+                  "line": 620
+                }
+              ]
             },
             {
               "name": "initializeDifficultyTechnologies",
@@ -5062,6 +5409,11 @@
                   "name": "humanTechnologyLevel",
                   "type": "int",
                   "line": 635
+                },
+                {
+                  "name": "playerId",
+                  "type": "int",
+                  "line": 634
                 },
                 {
                   "name": "opponent",
@@ -5098,6 +5450,11 @@
               ],
               "locals": [
                 {
+                  "name": "technology",
+                  "type": "TechnologyCatalog.Definition",
+                  "line": 654
+                },
+                {
                   "name": "weapon",
                   "type": "WeaponState",
                   "line": 660
@@ -5130,7 +5487,13 @@
                   "varargs": false
                 }
               ],
-              "locals": []
+              "locals": [
+                {
+                  "name": "weapon",
+                  "type": "WeaponState",
+                  "line": 667
+                }
+              ]
             },
             {
               "name": "initializeHardDifficultyOpponents",
@@ -5142,6 +5505,11 @@
               ],
               "parameters": [],
               "locals": [
+                {
+                  "name": "playerId",
+                  "type": "int",
+                  "line": 675
+                },
                 {
                   "name": "opponent",
                   "type": "PlayerState",
@@ -5158,7 +5526,18 @@
                 "private"
               ],
               "parameters": [],
-              "locals": []
+              "locals": [
+                {
+                  "name": "special",
+                  "type": "PlayerState",
+                  "line": 687
+                },
+                {
+                  "name": "other",
+                  "type": "PlayerState",
+                  "line": 687
+                }
+              ]
             },
             {
               "name": "setupDifficulty",
@@ -5208,6 +5587,11 @@
                   "name": "conventionalUnits",
                   "type": "boolean",
                   "line": 711
+                },
+                {
+                  "name": "weapon",
+                  "type": "WeaponState",
+                  "line": 708
                 }
               ]
             },
@@ -5237,6 +5621,11 @@
                   "name": "index",
                   "type": "int",
                   "line": 746
+                },
+                {
+                  "name": "definition",
+                  "type": "WeaponCatalog.Definition",
+                  "line": 745
                 },
                 {
                   "name": "desire",
@@ -5271,7 +5660,13 @@
                   "varargs": false
                 }
               ],
-              "locals": []
+              "locals": [
+                {
+                  "name": "i",
+                  "type": "int",
+                  "line": 760
+                }
+              ]
             },
             {
               "name": "initializeInventory",
@@ -5290,6 +5685,11 @@
                 }
               ],
               "locals": [
+                {
+                  "name": "definition",
+                  "type": "WeaponCatalog.Definition",
+                  "line": 766
+                },
                 {
                   "name": "weapon",
                   "type": "WeaponState",
@@ -5322,6 +5722,11 @@
                   "name": "initial",
                   "type": "int",
                   "line": 778
+                },
+                {
+                  "name": "cityIndex",
+                  "type": "int",
+                  "line": 776
                 },
                 {
                   "name": "population",
@@ -5588,6 +5993,11 @@
                   "name": "available",
                   "type": "List<String>",
                   "line": 921
+                },
+                {
+                  "name": "definition",
+                  "type": "TechnologyCatalog.Definition",
+                  "line": 920
                 }
               ]
             },
@@ -5829,6 +6239,11 @@
               ],
               "locals": [
                 {
+                  "name": "step",
+                  "type": "int",
+                  "line": 1010
+                },
+                {
                   "name": "candidate",
                   "type": "int",
                   "line": 1015
@@ -5901,6 +6316,11 @@
               ],
               "parameters": [],
               "locals": [
+                {
+                  "name": "proposerId",
+                  "type": "int",
+                  "line": 1047
+                },
                 {
                   "name": "proposal",
                   "type": "DiplomacyProposal",
@@ -6068,6 +6488,11 @@
                   "line": 1133
                 },
                 {
+                  "name": "i",
+                  "type": "int",
+                  "line": 1129
+                },
+                {
                   "name": "next",
                   "type": "int",
                   "line": 1140
@@ -6088,6 +6513,11 @@
                   "name": "available",
                   "type": "List<String>",
                   "line": 1145
+                },
+                {
+                  "name": "weapon",
+                  "type": "WeaponState",
+                  "line": 1144
                 },
                 {
                   "name": "type",
@@ -6179,6 +6609,11 @@
                   "name": "available",
                   "type": "List<String>",
                   "line": 1183
+                },
+                {
+                  "name": "weapon",
+                  "type": "WeaponState",
+                  "line": 1181
                 }
               ]
             },
@@ -6217,6 +6652,11 @@
                   "name": "available",
                   "type": "List<String>",
                   "line": 1198
+                },
+                {
+                  "name": "payload",
+                  "type": "WeaponState",
+                  "line": 1195
                 }
               ]
             },
@@ -6264,6 +6704,11 @@
                 }
               ],
               "locals": [
+                {
+                  "name": "attackerId",
+                  "type": "int",
+                  "line": 1221
+                },
                 {
                   "name": "counter",
                   "type": "String",
@@ -6339,6 +6784,11 @@
                   "name": "threats",
                   "type": "List<Integer>",
                   "line": 1255
+                },
+                {
+                  "name": "attacker",
+                  "type": "PlayerState",
+                  "line": 1253
                 }
               ]
             },
@@ -6536,6 +6986,11 @@
                   "name": "selected",
                   "type": "int",
                   "line": 1357
+                },
+                {
+                  "name": "strike",
+                  "type": "ShipStrike",
+                  "line": 1352
                 }
               ]
             },
@@ -6641,6 +7096,11 @@
                   "line": 1418
                 },
                 {
+                  "name": "strike",
+                  "type": "ShipStrike",
+                  "line": 1408
+                },
+                {
                   "name": "city",
                   "type": "CityState",
                   "line": 1420
@@ -6654,6 +7114,11 @@
                   "name": "count",
                   "type": "Integer",
                   "line": 1428
+                },
+                {
+                  "name": "selected",
+                  "type": "Map.Entry<String, Integer>",
+                  "line": 1408
                 }
               ]
             },
@@ -6738,6 +7203,11 @@
               ],
               "locals": [
                 {
+                  "name": "step",
+                  "type": "int",
+                  "line": 1465
+                },
+                {
                   "name": "candidate",
                   "type": "int",
                   "line": 1470
@@ -6774,6 +7244,11 @@
                   "name": "target",
                   "type": "PlayerState",
                   "line": 1488
+                },
+                {
+                  "name": "step",
+                  "type": "int",
+                  "line": 1484
                 },
                 {
                   "name": "cityIndex",
@@ -6842,6 +7317,11 @@
                 }
               ],
               "locals": [
+                {
+                  "name": "offset",
+                  "type": "int",
+                  "line": 1514
+                },
                 {
                   "name": "index",
                   "type": "int",
@@ -7282,6 +7762,11 @@
               "parameters": [],
               "locals": [
                 {
+                  "name": "player",
+                  "type": "PlayerState",
+                  "line": 1741
+                },
+                {
                   "name": "diplomacyResponses",
                   "type": "List<AiDiplomacyResponse>",
                   "line": 1753
@@ -7292,9 +7777,29 @@
                   "line": 1754
                 },
                 {
+                  "name": "player",
+                  "type": "PlayerState",
+                  "line": 1741
+                },
+                {
+                  "name": "order",
+                  "type": "ActionOrder",
+                  "line": 1741
+                },
+                {
                   "name": "decisions",
                   "type": "List<OpponentAI.Decision>",
                   "line": 1766
+                },
+                {
+                  "name": "decision",
+                  "type": "OpponentAI.Decision",
+                  "line": 1741
+                },
+                {
+                  "name": "response",
+                  "type": "AiDiplomacyResponse",
+                  "line": 1741
                 },
                 {
                   "name": "resolvedDefenses",
@@ -7317,9 +7822,34 @@
                   "line": 1786
                 },
                 {
+                  "name": "order",
+                  "type": "ActionOrder",
+                  "line": 1741
+                },
+                {
+                  "name": "order",
+                  "type": "ActionOrder",
+                  "line": 1741
+                },
+                {
                   "name": "actor",
                   "type": "PlayerState",
                   "line": 1793
+                },
+                {
+                  "name": "order",
+                  "type": "ActionOrder",
+                  "line": 1741
+                },
+                {
+                  "name": "player",
+                  "type": "PlayerState",
+                  "line": 1741
+                },
+                {
+                  "name": "player",
+                  "type": "PlayerState",
+                  "line": 1741
                 }
               ]
             },
@@ -7360,7 +7890,13 @@
                 "private"
               ],
               "parameters": [],
-              "locals": []
+              "locals": [
+                {
+                  "name": "player",
+                  "type": "PlayerState",
+                  "line": 1870
+                }
+              ]
             },
             {
               "name": "resolvePendingAiDiplomacy",
@@ -7378,9 +7914,19 @@
                   "line": 1884
                 },
                 {
+                  "name": "targetId",
+                  "type": "int",
+                  "line": 1883
+                },
+                {
                   "name": "target",
                   "type": "PlayerState",
                   "line": 1886
+                },
+                {
+                  "name": "proposerId",
+                  "type": "int",
+                  "line": 1883
                 },
                 {
                   "name": "proposal",
@@ -7626,9 +8172,19 @@
               ],
               "locals": [
                 {
+                  "name": "player",
+                  "type": "PlayerState",
+                  "line": 2026
+                },
+                {
                   "name": "thirdPartyAdjustment",
                   "type": "double",
                   "line": 2039
+                },
+                {
+                  "name": "observer",
+                  "type": "PlayerState",
+                  "line": 2026
                 }
               ]
             },
@@ -7662,6 +8218,11 @@
                   "name": "thirdPartyAdjustment",
                   "type": "double",
                   "line": 2058
+                },
+                {
+                  "name": "observer",
+                  "type": "PlayerState",
+                  "line": 2053
                 }
               ]
             },
@@ -7676,9 +8237,24 @@
               "parameters": [],
               "locals": [
                 {
+                  "name": "player",
+                  "type": "PlayerState",
+                  "line": 2071
+                },
+                {
+                  "name": "otherId",
+                  "type": "int",
+                  "line": 2071
+                },
+                {
                   "name": "regard",
                   "type": "double",
                   "line": 2077
+                },
+                {
+                  "name": "otherId",
+                  "type": "int",
+                  "line": 2071
                 }
               ]
             },
@@ -7691,7 +8267,18 @@
                 "private"
               ],
               "parameters": [],
-              "locals": []
+              "locals": [
+                {
+                  "name": "player",
+                  "type": "PlayerState",
+                  "line": 2100
+                },
+                {
+                  "name": "otherId",
+                  "type": "int",
+                  "line": 2100
+                }
+              ]
             },
             {
               "name": "tickCeasefires",
@@ -7702,7 +8289,18 @@
                 "private"
               ],
               "parameters": [],
-              "locals": []
+              "locals": [
+                {
+                  "name": "player",
+                  "type": "PlayerState",
+                  "line": 2110
+                },
+                {
+                  "name": "otherId",
+                  "type": "int",
+                  "line": 2110
+                }
+              ]
             },
             {
               "name": "decayReligion",
@@ -7713,7 +8311,13 @@
                 "private"
               ],
               "parameters": [],
-              "locals": []
+              "locals": [
+                {
+                  "name": "player",
+                  "type": "PlayerState",
+                  "line": 2120
+                }
+              ]
             },
             {
               "name": "resolveResources",
@@ -7786,6 +8390,11 @@
                   "name": "invented",
                   "type": "List<String>",
                   "line": 2147
+                },
+                {
+                  "name": "technologyName",
+                  "type": "String",
+                  "line": 2145
                 },
                 {
                   "name": "technology",
@@ -7967,6 +8576,11 @@
                   "line": 2277
                 },
                 {
+                  "name": "defense",
+                  "type": "ActionOrder",
+                  "line": 2232
+                },
+                {
                   "name": "bioLevel",
                   "type": "int",
                   "line": 2292
@@ -8030,6 +8644,11 @@
                   "line": 2317
                 },
                 {
+                  "name": "strike",
+                  "type": "ShipStrike",
+                  "line": 2306
+                },
+                {
                   "name": "city",
                   "type": "CityState",
                   "line": 2319
@@ -8043,6 +8662,11 @@
                   "name": "count",
                   "type": "Integer",
                   "line": 2327
+                },
+                {
+                  "name": "used",
+                  "type": "Map.Entry<String, Integer>",
+                  "line": 2306
                 },
                 {
                   "name": "payload",
@@ -8060,9 +8684,19 @@
                   "line": 2339
                 },
                 {
+                  "name": "defense",
+                  "type": "ActionOrder",
+                  "line": 2306
+                },
+                {
                   "name": "results",
                   "type": "List<ShipStrikeResult>",
                   "line": 2346
+                },
+                {
+                  "name": "strike",
+                  "type": "ShipStrike",
+                  "line": 2306
                 },
                 {
                   "name": "payload",
@@ -8090,9 +8724,19 @@
                   "line": 2354
                 },
                 {
+                  "name": "strike",
+                  "type": "ShipStrike",
+                  "line": 2306
+                },
+                {
                   "name": "totalCasualties",
                   "type": "int",
                   "line": 2367
+                },
+                {
+                  "name": "result",
+                  "type": "ShipStrikeResult",
+                  "line": 2306
                 },
                 {
                   "name": "strike",
@@ -8336,14 +8980,29 @@
                   "line": 2437
                 },
                 {
+                  "name": "i",
+                  "type": "int",
+                  "line": 2432
+                },
+                {
                   "name": "sourceWeaponArray",
                   "type": "List<WeaponState>",
                   "line": 2445
                 },
                 {
+                  "name": "weapon",
+                  "type": "WeaponState",
+                  "line": 2432
+                },
+                {
                   "name": "attempts",
                   "type": "int",
                   "line": 2451
+                },
+                {
+                  "name": "i",
+                  "type": "int",
+                  "line": 2432
                 },
                 {
                   "name": "weapon",
@@ -8369,6 +9028,11 @@
               ],
               "locals": [
                 {
+                  "name": "effect",
+                  "type": "BiologicalEffect",
+                  "line": 2461
+                },
+                {
                   "name": "target",
                   "type": "PlayerState",
                   "line": 2463
@@ -8377,6 +9041,11 @@
                   "name": "city",
                   "type": "CityState",
                   "line": 2464
+                },
+                {
+                  "name": "weaponName",
+                  "type": "String",
+                  "line": 2461
                 },
                 {
                   "name": "weapon",
@@ -8394,7 +9063,23 @@
                 "private"
               ],
               "parameters": [],
-              "locals": []
+              "locals": [
+                {
+                  "name": "player",
+                  "type": "PlayerState",
+                  "line": 2483
+                },
+                {
+                  "name": "weapon",
+                  "type": "WeaponState",
+                  "line": 2483
+                },
+                {
+                  "name": "city",
+                  "type": "CityState",
+                  "line": 2483
+                }
+              ]
             },
             {
               "name": "clearExpiredPreparedAttacks",
@@ -8413,9 +9098,19 @@
               ],
               "locals": [
                 {
+                  "name": "player",
+                  "type": "PlayerState",
+                  "line": 2499
+                },
+                {
                   "name": "usedPreparedAttackAction",
                   "type": "boolean",
                   "line": 2504
+                },
+                {
+                  "name": "order",
+                  "type": "ActionOrder",
+                  "line": 2499
                 }
               ]
             },
@@ -8481,6 +9176,11 @@
                   "line": 2532
                 },
                 {
+                  "name": "planned",
+                  "type": "ActionOrder",
+                  "line": 2518
+                },
+                {
                   "name": "excluded",
                   "type": "String",
                   "line": 2536
@@ -8491,6 +9191,11 @@
                   "line": 2548
                 },
                 {
+                  "name": "targetWeapon",
+                  "type": "WeaponState",
+                  "line": 2518
+                },
+                {
                   "name": "maximumTargetLevel",
                   "type": "int",
                   "line": 2550
@@ -8499,6 +9204,11 @@
                   "name": "stolenMoney",
                   "type": "int",
                   "line": 2557
+                },
+                {
+                  "name": "i",
+                  "type": "int",
+                  "line": 2518
                 },
                 {
                   "name": "targetWeapon",
@@ -8539,7 +9249,13 @@
                 "private"
               ],
               "parameters": [],
-              "locals": []
+              "locals": [
+                {
+                  "name": "player",
+                  "type": "PlayerState",
+                  "line": 2601
+                }
+              ]
             },
             {
               "name": "canUseSpy",
@@ -8611,9 +9327,19 @@
                   "line": 2633
                 },
                 {
+                  "name": "city",
+                  "type": "CityState",
+                  "line": 2620
+                },
+                {
                   "name": "share",
                   "type": "int",
                   "line": 2641
+                },
+                {
+                  "name": "city",
+                  "type": "CityState",
+                  "line": 2620
                 }
               ]
             },
@@ -8667,6 +9393,11 @@
               ],
               "locals": [
                 {
+                  "name": "step",
+                  "type": "int",
+                  "line": 2674
+                },
+                {
                   "name": "candidate",
                   "type": "int",
                   "line": 2679
@@ -8698,6 +9429,11 @@
                   "name": "target",
                   "type": "PlayerState",
                   "line": 2693
+                },
+                {
+                  "name": "step",
+                  "type": "int",
+                  "line": 2689
                 },
                 {
                   "name": "cityIndex",
@@ -8863,7 +9599,23 @@
                   "varargs": false
                 }
               ],
-              "locals": []
+              "locals": [
+                {
+                  "name": "player",
+                  "type": "PlayerState",
+                  "line": 2761
+                },
+                {
+                  "name": "city",
+                  "type": "CityState",
+                  "line": 2761
+                },
+                {
+                  "name": "loss",
+                  "type": "int",
+                  "line": 2761
+                }
+              ]
             },
             {
               "name": "totalPopulation",
@@ -8886,6 +9638,11 @@
                   "name": "population",
                   "type": "int",
                   "line": 2778
+                },
+                {
+                  "name": "city",
+                  "type": "CityState",
+                  "line": 2777
                 }
               ]
             },
@@ -8898,7 +9655,18 @@
                 "private"
               ],
               "parameters": [],
-              "locals": []
+              "locals": [
+                {
+                  "name": "player",
+                  "type": "PlayerState",
+                  "line": 2785
+                },
+                {
+                  "name": "playerId",
+                  "type": "int",
+                  "line": 2785
+                }
+              ]
             },
             {
               "name": "eliminatePlayer",
@@ -8915,7 +9683,18 @@
                   "varargs": false
                 }
               ],
-              "locals": []
+              "locals": [
+                {
+                  "name": "city",
+                  "type": "CityState",
+                  "line": 2809
+                },
+                {
+                  "name": "defeated",
+                  "type": "PlayerState",
+                  "line": 2809
+                }
+              ]
             },
             {
               "name": "captureFinalScore",
@@ -8931,6 +9710,11 @@
                   "name": "humanCreditedFlags",
                   "type": "int",
                   "line": 2829
+                },
+                {
+                  "name": "player",
+                  "type": "PlayerState",
+                  "line": 2825
                 }
               ]
             },
@@ -8954,6 +9738,11 @@
                   "name": "producer",
                   "type": "PlayerState",
                   "line": 2840
+                },
+                {
+                  "name": "investment",
+                  "type": "Map.Entry<String, Integer>",
+                  "line": 2839
                 }
               ]
             },
@@ -8997,6 +9786,11 @@
                   "name": "minimumCost",
                   "type": "int",
                   "line": 2853
+                },
+                {
+                  "name": "weapon",
+                  "type": "WeaponState",
+                  "line": 2846
                 },
                 {
                   "name": "definition",
@@ -9047,6 +9841,11 @@
                   "name": "summary",
                   "type": "StringBuilder",
                   "line": 2899
+                },
+                {
+                  "name": "entry",
+                  "type": "Map.Entry<String, Integer>",
+                  "line": 2846
                 }
               ]
             },
@@ -9065,7 +9864,13 @@
                   "varargs": false
                 }
               ],
-              "locals": []
+              "locals": [
+                {
+                  "name": "index",
+                  "type": "int",
+                  "line": 2913
+                }
+              ]
             },
             {
               "name": "addToHighscore",
@@ -9123,7 +9928,13 @@
                   "varargs": false
                 }
               ],
-              "locals": []
+              "locals": [
+                {
+                  "name": "order",
+                  "type": "ActionOrder",
+                  "line": 2929
+                }
+              ]
             },
             {
               "name": "productionGroup",
@@ -9141,7 +9952,13 @@
                   "varargs": false
                 }
               ],
-              "locals": []
+              "locals": [
+                {
+                  "name": "index",
+                  "type": "int",
+                  "line": 2938
+                }
+              ]
             },
             {
               "name": "trimMessages",
@@ -9284,6 +10101,11 @@
                   "line": 530
                 },
                 {
+                  "name": "color",
+                  "type": "int",
+                  "line": 513
+                },
+                {
                   "name": "specialPersonAssigned",
                   "type": "boolean",
                   "line": 536
@@ -9292,6 +10114,11 @@
                   "name": "suicidePersonAssigned",
                   "type": "boolean",
                   "line": 537
+                },
+                {
+                  "name": "i",
+                  "type": "int",
+                  "line": 513
                 },
                 {
                   "name": "active",
@@ -9312,6 +10139,26 @@
                   "name": "color",
                   "type": "int",
                   "line": 543
+                },
+                {
+                  "name": "player",
+                  "type": "PlayerState",
+                  "line": 513
+                },
+                {
+                  "name": "other",
+                  "type": "int",
+                  "line": 513
+                },
+                {
+                  "name": "player",
+                  "type": "PlayerState",
+                  "line": 513
+                },
+                {
+                  "name": "player",
+                  "type": "PlayerState",
+                  "line": 513
                 }
               ]
             }
@@ -9891,6 +10738,11 @@
                   "name": "unlockedSpecialTechCount",
                   "type": "int",
                   "line": 136
+                },
+                {
+                  "name": "technology",
+                  "type": "TechnologyCatalog.Definition",
+                  "line": 135
                 }
               ]
             },
@@ -9998,6 +10850,11 @@
                   "line": 179
                 },
                 {
+                  "name": "technologyName",
+                  "type": "String",
+                  "line": 178
+                },
+                {
                   "name": "technology",
                   "type": "TechnologyCatalog.Definition",
                   "line": 181
@@ -10006,6 +10863,11 @@
                   "name": "weaponStrength",
                   "type": "int",
                   "line": 186
+                },
+                {
+                  "name": "weapon",
+                  "type": "WeaponState",
+                  "line": 178
                 }
               ]
             },
@@ -11067,7 +11929,7 @@
           "extends": null
         }
       ],
-      "url": "https://github.com/Rifat-Rashid/WorldDomination2-Android-Port/blob/5ad9effb095a0dc8ccbf10a0038606f89e5d4e6c/app/src/main/java/com/example/worlddomination/game/simulation/GameState.java",
+      "url": "https://github.com/Rifat-Rashid/WorldDomination2-Android-Port/blob/f5fb34be72303b6c2e7cbc2506b072f08298610d/app/src/main/java/com/example/worlddomination/game/simulation/GameState.java",
       "lines": 2952
     },
     {
@@ -11141,6 +12003,11 @@
                   "name": "previous",
                   "type": "String",
                   "line": 56
+                },
+                {
+                  "name": "index",
+                  "type": "int",
+                  "line": 55
                 },
                 {
                   "name": "name",
@@ -11423,7 +12290,7 @@
           "extends": null
         }
       ],
-      "url": "https://github.com/Rifat-Rashid/WorldDomination2-Android-Port/blob/5ad9effb095a0dc8ccbf10a0038606f89e5d4e6c/app/src/main/java/com/example/worlddomination/game/simulation/TechnologyCatalog.java",
+      "url": "https://github.com/Rifat-Rashid/WorldDomination2-Android-Port/blob/f5fb34be72303b6c2e7cbc2506b072f08298610d/app/src/main/java/com/example/worlddomination/game/simulation/TechnologyCatalog.java",
       "lines": 94
     },
     {
@@ -11508,6 +12375,11 @@
                 }
               ],
               "locals": [
+                {
+                  "name": "index",
+                  "type": "int",
+                  "line": 65
+                },
                 {
                   "name": "name",
                   "type": "String",
@@ -11774,7 +12646,7 @@
           "extends": null
         }
       ],
-      "url": "https://github.com/Rifat-Rashid/WorldDomination2-Android-Port/blob/5ad9effb095a0dc8ccbf10a0038606f89e5d4e6c/app/src/main/java/com/example/worlddomination/game/simulation/WeaponCatalog.java",
+      "url": "https://github.com/Rifat-Rashid/WorldDomination2-Android-Port/blob/f5fb34be72303b6c2e7cbc2506b072f08298610d/app/src/main/java/com/example/worlddomination/game/simulation/WeaponCatalog.java",
       "lines": 91
     },
     {
@@ -11899,7 +12771,7 @@
           "extends": null
         }
       ],
-      "url": "https://github.com/Rifat-Rashid/WorldDomination2-Android-Port/blob/5ad9effb095a0dc8ccbf10a0038606f89e5d4e6c/app/src/main/java/com/example/worlddomination/game/ui/MatchOutcomePresentation.java",
+      "url": "https://github.com/Rifat-Rashid/WorldDomination2-Android-Port/blob/f5fb34be72303b6c2e7cbc2506b072f08298610d/app/src/main/java/com/example/worlddomination/game/ui/MatchOutcomePresentation.java",
       "lines": 43
     },
     {
@@ -12087,7 +12959,7 @@
           "extends": null
         }
       ],
-      "url": "https://github.com/Rifat-Rashid/WorldDomination2-Android-Port/blob/5ad9effb095a0dc8ccbf10a0038606f89e5d4e6c/app/src/main/java/com/example/worlddomination/game/ui/ScrollPaneState.java",
+      "url": "https://github.com/Rifat-Rashid/WorldDomination2-Android-Port/blob/f5fb34be72303b6c2e7cbc2506b072f08298610d/app/src/main/java/com/example/worlddomination/game/ui/ScrollPaneState.java",
       "lines": 53
     },
     {
@@ -13360,6 +14232,11 @@
                   "line": 215
                 },
                 {
+                  "name": "i",
+                  "type": "int",
+                  "line": 214
+                },
+                {
                   "name": "count",
                   "type": "int",
                   "line": 217
@@ -13532,6 +14409,11 @@
                   "line": 345
                 },
                 {
+                  "name": "i",
+                  "type": "int",
+                  "line": 255
+                },
+                {
                   "name": "row",
                   "type": "int",
                   "line": 347
@@ -13550,6 +14432,11 @@
                   "name": "researchTop",
                   "type": "float",
                   "line": 356
+                },
+                {
+                  "name": "i",
+                  "type": "int",
+                  "line": 255
                 },
                 {
                   "name": "attackControlWidth",
@@ -13600,6 +14487,11 @@
                   "name": "slotStartX",
                   "type": "float",
                   "line": 412
+                },
+                {
+                  "name": "i",
+                  "type": "int",
+                  "line": 255
                 }
               ]
             },
@@ -13690,6 +14582,11 @@
                   "line": 489
                 },
                 {
+                  "name": "i",
+                  "type": "int",
+                  "line": 477
+                },
+                {
                   "name": "slot",
                   "type": "Rectangle",
                   "line": 497
@@ -13705,6 +14602,11 @@
                   "line": 541
                 },
                 {
+                  "name": "i",
+                  "type": "int",
+                  "line": 477
+                },
+                {
                   "name": "label",
                   "type": "String",
                   "line": 552
@@ -13713,6 +14615,11 @@
                   "name": "slot",
                   "type": "Rectangle",
                   "line": 553
+                },
+                {
+                  "name": "slot",
+                  "type": "Rectangle",
+                  "line": 477
                 }
               ]
             },
@@ -13850,6 +14757,11 @@
                   "line": 702
                 },
                 {
+                  "name": "i",
+                  "type": "int",
+                  "line": 697
+                },
+                {
                   "name": "x",
                   "type": "float",
                   "line": 704
@@ -13872,6 +14784,11 @@
               "parameters": [],
               "locals": [
                 {
+                  "name": "i",
+                  "type": "int",
+                  "line": 713
+                },
+                {
                   "name": "card",
                   "type": "Rectangle",
                   "line": 717
@@ -13887,7 +14804,13 @@
                 "private"
               ],
               "parameters": [],
-              "locals": []
+              "locals": [
+                {
+                  "name": "card",
+                  "type": "Rectangle",
+                  "line": 725
+                }
+              ]
             },
             {
               "name": "fitTitlePlate",
@@ -14011,9 +14934,19 @@
                   "line": 758
                 },
                 {
+                  "name": "i",
+                  "type": "int",
+                  "line": 755
+                },
+                {
                   "name": "y",
                   "type": "float",
                   "line": 762
+                },
+                {
+                  "name": "i",
+                  "type": "int",
+                  "line": 755
                 },
                 {
                   "name": "row",
@@ -14021,9 +14954,19 @@
                   "line": 773
                 },
                 {
+                  "name": "i",
+                  "type": "int",
+                  "line": 755
+                },
+                {
                   "name": "row",
                   "type": "Rectangle",
                   "line": 781
+                },
+                {
+                  "name": "i",
+                  "type": "int",
+                  "line": 755
                 },
                 {
                   "name": "row",
@@ -14092,6 +15035,16 @@
                   "name": "y3",
                   "type": "float",
                   "line": 815
+                },
+                {
+                  "name": "row",
+                  "type": "int",
+                  "line": 806
+                },
+                {
+                  "name": "column",
+                  "type": "int",
+                  "line": 806
                 },
                 {
                   "name": "patchX",
@@ -14175,6 +15128,11 @@
                   "name": "bands",
                   "type": "int",
                   "line": 836
+                },
+                {
+                  "name": "i",
+                  "type": "int",
+                  "line": 828
                 },
                 {
                   "name": "t",
@@ -14378,6 +15336,11 @@
                   "line": 1014
                 },
                 {
+                  "name": "group",
+                  "type": "int",
+                  "line": 1012
+                },
+                {
                   "name": "start",
                   "type": "int",
                   "line": 1018
@@ -14433,6 +15396,11 @@
                   "line": 1034
                 },
                 {
+                  "name": "item",
+                  "type": "int",
+                  "line": 1012
+                },
+                {
                   "name": "itemRow",
                   "type": "int",
                   "line": 1036
@@ -14451,6 +15419,16 @@
                   "name": "row",
                   "type": "Rectangle",
                   "line": 1050
+                },
+                {
+                  "name": "group",
+                  "type": "int",
+                  "line": 1012
+                },
+                {
+                  "name": "rowIndex",
+                  "type": "int",
+                  "line": 1012
                 },
                 {
                   "name": "row",
@@ -14488,6 +15466,11 @@
                   "line": 1082
                 },
                 {
+                  "name": "rowIndex",
+                  "type": "int",
+                  "line": 1012
+                },
+                {
                   "name": "row",
                   "type": "Rectangle",
                   "line": 1092
@@ -14523,9 +15506,19 @@
                   "line": 1111
                 },
                 {
+                  "name": "card",
+                  "type": "Rectangle",
+                  "line": 1012
+                },
+                {
                   "name": "originalTextScale",
                   "type": "float",
                   "line": 1131
+                },
+                {
+                  "name": "group",
+                  "type": "int",
+                  "line": 1012
                 },
                 {
                   "name": "start",
@@ -14541,6 +15534,11 @@
                   "name": "heading",
                   "type": "Rectangle",
                   "line": 1140
+                },
+                {
+                  "name": "rowIndex",
+                  "type": "int",
+                  "line": 1012
                 },
                 {
                   "name": "row",
@@ -14561,6 +15559,11 @@
                   "name": "stock",
                   "type": "int",
                   "line": 1160
+                },
+                {
+                  "name": "group",
+                  "type": "int",
+                  "line": 1012
                 },
                 {
                   "name": "card",
@@ -14835,6 +15838,11 @@
                   "line": 1346
                 },
                 {
+                  "name": "i",
+                  "type": "int",
+                  "line": 1342
+                },
+                {
                   "name": "value",
                   "type": "int",
                   "line": 1348
@@ -14848,6 +15856,11 @@
                   "name": "filledWidth",
                   "type": "float",
                   "line": 1353
+                },
+                {
+                  "name": "band",
+                  "type": "int",
+                  "line": 1342
                 },
                 {
                   "name": "segmentLeft",
@@ -14877,6 +15890,11 @@
               "parameters": [],
               "locals": [
                 {
+                  "name": "slot",
+                  "type": "int",
+                  "line": 1365
+                },
+                {
                   "name": "target",
                   "type": "Rectangle",
                   "line": 1370
@@ -14893,6 +15911,11 @@
               ],
               "parameters": [],
               "locals": [
+                {
+                  "name": "slot",
+                  "type": "int",
+                  "line": 1377
+                },
                 {
                   "name": "action",
                   "type": "GameState.Action",
@@ -14924,6 +15947,11 @@
                   "name": "cy",
                   "type": "float",
                   "line": 1394
+                },
+                {
+                  "name": "i",
+                  "type": "int",
+                  "line": 1390
                 },
                 {
                   "name": "angle",
@@ -14958,6 +15986,11 @@
                   "line": 1435
                 },
                 {
+                  "name": "i",
+                  "type": "int",
+                  "line": 1407
+                },
+                {
                   "name": "category",
                   "type": "String",
                   "line": 1459
@@ -14976,6 +16009,11 @@
                   "name": "originalScale",
                   "type": "float",
                   "line": 1473
+                },
+                {
+                  "name": "i",
+                  "type": "int",
+                  "line": 1407
                 },
                 {
                   "name": "item",
@@ -15003,6 +16041,11 @@
                   "line": 1507
                 },
                 {
+                  "name": "i",
+                  "type": "int",
+                  "line": 1407
+                },
+                {
                   "name": "row",
                   "type": "Rectangle",
                   "line": 1541
@@ -15016,6 +16059,11 @@
                   "name": "originalScale",
                   "type": "float",
                   "line": 1550
+                },
+                {
+                  "name": "i",
+                  "type": "int",
+                  "line": 1407
                 },
                 {
                   "name": "item",
@@ -15188,6 +16236,16 @@
                   "name": "points",
                   "type": "float[][]",
                   "line": 1803
+                },
+                {
+                  "name": "point",
+                  "type": "float[]",
+                  "line": 1791
+                },
+                {
+                  "name": "point",
+                  "type": "float[]",
+                  "line": 1791
                 }
               ]
             },
@@ -15467,6 +16525,11 @@
               ],
               "locals": [
                 {
+                  "name": "i",
+                  "type": "int",
+                  "line": 1895
+                },
+                {
                   "name": "action",
                   "type": "GameState.Action",
                   "line": 1900
@@ -15493,7 +16556,13 @@
                   "varargs": false
                 }
               ],
-              "locals": []
+              "locals": [
+                {
+                  "name": "i",
+                  "type": "int",
+                  "line": 1931
+                }
+              ]
             },
             {
               "name": "activateSetupAt",
@@ -15525,6 +16594,11 @@
                   "name": "alreadySelected",
                   "type": "boolean",
                   "line": 1968
+                },
+                {
+                  "name": "i",
+                  "type": "int",
+                  "line": 1941
                 }
               ]
             },
@@ -15608,9 +16682,19 @@
                   "line": 2044
                 },
                 {
+                  "name": "payload",
+                  "type": "String",
+                  "line": 2025
+                },
+                {
                   "name": "selected",
                   "type": "int",
                   "line": 2046
+                },
+                {
+                  "name": "strike",
+                  "type": "GameState.ShipStrike",
+                  "line": 2025
                 },
                 {
                   "name": "replacingOldest",
@@ -15646,6 +16730,11 @@
                   "line": 2062
                 },
                 {
+                  "name": "offset",
+                  "type": "int",
+                  "line": 2061
+                },
+                {
                   "name": "candidate",
                   "type": "int",
                   "line": 2064
@@ -15654,6 +16743,11 @@
                   "name": "player",
                   "type": "GameState.PlayerState",
                   "line": 2065
+                },
+                {
+                  "name": "city",
+                  "type": "CityState",
+                  "line": 2061
                 }
               ]
             },
@@ -15687,6 +16781,11 @@
                   "name": "target",
                   "type": "GameState.PlayerState",
                   "line": 2082
+                },
+                {
+                  "name": "offset",
+                  "type": "int",
+                  "line": 2078
                 },
                 {
                   "name": "candidate",
@@ -15885,6 +16984,11 @@
                   "line": 2178
                 },
                 {
+                  "name": "i",
+                  "type": "int",
+                  "line": 2173
+                },
+                {
                   "name": "cx",
                   "type": "float",
                   "line": 2180
@@ -15943,6 +17047,11 @@
                   "line": 2231
                 },
                 {
+                  "name": "i",
+                  "type": "int",
+                  "line": 2198
+                },
+                {
                   "name": "sliderX",
                   "type": "float",
                   "line": 2291
@@ -15966,6 +17075,11 @@
                   "name": "first",
                   "type": "int",
                   "line": 2310
+                },
+                {
+                  "name": "i",
+                  "type": "int",
+                  "line": 2198
                 },
                 {
                   "name": "item",
@@ -16284,14 +17398,50 @@
                 "public"
               ],
               "parameters": [],
-              "locals": []
+              "locals": [
+                {
+                  "name": "i",
+                  "type": "int",
+                  "line": 190
+                },
+                {
+                  "name": "i",
+                  "type": "int",
+                  "line": 190
+                },
+                {
+                  "name": "i",
+                  "type": "int",
+                  "line": 190
+                },
+                {
+                  "name": "i",
+                  "type": "int",
+                  "line": 190
+                },
+                {
+                  "name": "i",
+                  "type": "int",
+                  "line": 190
+                },
+                {
+                  "name": "i",
+                  "type": "int",
+                  "line": 190
+                },
+                {
+                  "name": "i",
+                  "type": "int",
+                  "line": 190
+                }
+              ]
             }
           ],
           "enum_values": [],
           "extends": "ApplicationAdapter"
         }
       ],
-      "url": "https://github.com/Rifat-Rashid/WorldDomination2-Android-Port/blob/5ad9effb095a0dc8ccbf10a0038606f89e5d4e6c/app/src/main/java/com/example/worlddomination/game/WorldDominationGame.java",
+      "url": "https://github.com/Rifat-Rashid/WorldDomination2-Android-Port/blob/f5fb34be72303b6c2e7cbc2506b072f08298610d/app/src/main/java/com/example/worlddomination/game/WorldDominationGame.java",
       "lines": 2581
     },
     {
@@ -16406,7 +17556,7 @@
           "extends": "AndroidApplication"
         }
       ],
-      "url": "https://github.com/Rifat-Rashid/WorldDomination2-Android-Port/blob/5ad9effb095a0dc8ccbf10a0038606f89e5d4e6c/app/src/main/java/com/example/worlddomination/MainActivity.java",
+      "url": "https://github.com/Rifat-Rashid/WorldDomination2-Android-Port/blob/f5fb34be72303b6c2e7cbc2506b072f08298610d/app/src/main/java/com/example/worlddomination/MainActivity.java",
       "lines": 78
     }
   ],
@@ -16426,6 +17576,6 @@
     "types": 31,
     "methods": 449,
     "fields": 354,
-    "locals": 773
+    "locals": 998
   }
 }
