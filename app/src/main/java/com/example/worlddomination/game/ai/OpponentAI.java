@@ -97,7 +97,7 @@ public final class OpponentAI {
         }
     }
 
-    private static final class ScoredAction {
+    static final class ScoredAction {
         final GameState.Action action;
         final double score;
 
@@ -281,9 +281,9 @@ public final class OpponentAI {
                 player.turnMoneyMillions - decision.reservedMillions);
     }
 
-    private static List<ScoredAction> scoreActions(GameState state,
-                                                    GameState.PlayerState player,
-                                                    Random random) {
+    static List<ScoredAction> scoreActions(GameState state,
+                                           GameState.PlayerState player,
+                                           Random random) {
         List<GameState.PlayerState> alive = new ArrayList<>();
         int largestPopulation = 0;
         int largestCity = 0;
