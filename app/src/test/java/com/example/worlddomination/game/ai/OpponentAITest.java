@@ -26,6 +26,20 @@ public final class OpponentAITest {
     }
 
     @Test
+    public void resourcesActionRequiresFundsBelowTheFlashThreshold() {
+        GameState state = new GameState(1, 121L);
+        GameState.PlayerState actor = state.getPlayerState(1);
+        actor.moneyMillions = 149;
+
+        assertNotNull(OpponentAI.planAction(state, actor, GameState.Action.RESOURCES,
+                new Random(1L), 0, Collections.<String, Integer>emptyMap()));
+
+        actor.moneyMillions = 150;
+        assertNull(OpponentAI.planAction(state, actor, GameState.Action.RESOURCES,
+                new Random(1L), 0, Collections.<String, Integer>emptyMap()));
+    }
+
+    @Test
     public void diplomacyDoesNotSkipPoorestRivalForARicherRival() {
         GameState state = findAiWithNeutralHumanRegard();
         GameState.PlayerState actor = aiWithNeutralHumanRegard(state);
