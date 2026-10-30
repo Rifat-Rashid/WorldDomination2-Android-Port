@@ -19,6 +19,45 @@ public final class GameState {
         DEFEAT
     }
 
+    /** Resolved combat outcomes consumed by the native presentation layer. */
+    public enum CombatEventType {
+        DIRECT_ATTACK,
+        STRIKE_IMPACT,
+        STRIKE_INTERCEPTED
+    }
+
+    public static final class CombatEvent {
+        public final CombatEventType type;
+        public final int attackerPlayerId;
+        public final int defenderPlayerId;
+        public final int cityIndex;
+        public final String weaponName;
+        public final String payloadName;
+        public final String counterWeaponName;
+        public final int casualtiesMillions;
+
+        private CombatEvent(CombatEventType type, int attackerPlayerId,
+                            int defenderPlayerId, int cityIndex, String weaponName,
+                            String payloadName, int casualtiesMillions) {
+            this(type, attackerPlayerId, defenderPlayerId, cityIndex, weaponName,
+                    payloadName, casualtiesMillions, null);
+        }
+
+        private CombatEvent(CombatEventType type, int attackerPlayerId,
+                            int defenderPlayerId, int cityIndex, String weaponName,
+                            String payloadName, int casualtiesMillions,
+                            String counterWeaponName) {
+            this.type = type;
+            this.attackerPlayerId = attackerPlayerId;
+            this.defenderPlayerId = defenderPlayerId;
+            this.cityIndex = cityIndex;
+            this.weaponName = weaponName;
+            this.payloadName = payloadName;
+            this.casualtiesMillions = casualtiesMillions;
+            this.counterWeaponName = counterWeaponName;
+        }
+    }
+
     public enum Action {
         RESOURCES("Resources"),
         PRODUCTION("Production"),
@@ -471,6 +510,7 @@ public final class GameState {
     private final PlayerState[] players = new PlayerState[5];
     private final List<ActionOrder> queuedActions = new ArrayList<>(MAX_TURN_ACTIONS);
     private final List<String> messages = new ArrayList<>();
+    private final List<CombatEvent> lastTurnCombatEvents = new ArrayList<>();
     private List<String> researchChoicesCache = Collections.emptyList();
     private boolean researchChoicesDirty = true;
     private final Random random;
@@ -2000,11 +2040,25 @@ public final class GameState {
                 : messages.get(messages.size() - 1);
     }
 
+    /** Returns the combat outcomes from the most recently resolved turn. */
+    public List<CombatEvent> getLastTurnCombatEvents() {
+        return Collections.unmodifiableList(lastTurnCombatEvents);
+    }
+
+    /**
+     * Copies the reference-compatible RNG state for deterministic battle presentation.
+     * Presentation draws remain isolated from future simulation turns.
+     */
+    public ReferenceRandom createPresentationRandomCopy() {
+        return ((ReferenceRandom) random).copy();
+    }
+
     /** Resolves human and opponent actions using the source turn order. */
     public void confirmTurn() {
         if (queuedActions.size() != MAX_TURN_ACTIONS) {
             throw new IllegalStateException("Choose two actions before confirming the turn");
         }
+        lastTurnCombatEvents.clear();
         for (PlayerState player : players) {
             player.lastTurnActions.clear();
             player.lastAttackedByCasualties = 0;
@@ -2471,6 +2525,9 @@ public final class GameState {
         if ("soldier".equals(weapon.definition.type)) {
             casualties = populationChanges.addBattleCasualties(city,
                     sourceDirectAttackCasualties(weapon.definition.maxKillsMillions, random));
+            lastTurnCombatEvents.add(new CombatEvent(CombatEventType.DIRECT_ATTACK,
+                    attacker.id, defender.id, city.index, weapon.definition.name, null,
+                    casualties));
             recordLargestBattle(attacker, defender, casualties);
             applyBattleHostilityEffects(attacker, defender, casualties);
             if (casualties > 0) {
@@ -2552,6 +2609,9 @@ public final class GameState {
             }
         }
         if (intercepted) {
+            lastTurnCombatEvents.add(new CombatEvent(CombatEventType.STRIKE_INTERCEPTED,
+                    attacker.id, defender.id, city.index, carrier.definition.name,
+                    payload.definition.name, 0, counterName));
             messages.add("Nation " + defender.id + " intercepted the prepared strike.");
             return;
         }
@@ -2561,6 +2621,9 @@ public final class GameState {
             biologicalEffects.add(createBiologicalEffect(defender, city, bioLevel));
         }
         int casualties = populationChanges.addBattleCasualties(city, rolledCasualties);
+        lastTurnCombatEvents.add(new CombatEvent(CombatEventType.STRIKE_IMPACT,
+                attacker.id, defender.id, city.index, carrier.definition.name,
+                payload.definition.name, casualties));
         recordLargestBattle(attacker, defender, casualties);
         applyBattleHostilityEffects(attacker, defender, casualties);
         if (casualties > 0) {
@@ -2639,10 +2702,17 @@ public final class GameState {
             int casualties;
             if (result.intercepted) {
                 casualties = 0;
+                lastTurnCombatEvents.add(new CombatEvent(
+                        CombatEventType.STRIKE_INTERCEPTED, attacker.id, defender.id,
+                        city.index, carrier.definition.name, result.payloadName, 0,
+                        counterName));
                 messages.add("Nation " + defender.id + " intercepted one ship payload.");
             } else {
                 casualties = populationChanges.addBattleCasualties(city,
                         result.rolledCasualties);
+                lastTurnCombatEvents.add(new CombatEvent(CombatEventType.STRIKE_IMPACT,
+                        attacker.id, defender.id, city.index, carrier.definition.name,
+                        result.payloadName, casualties));
                 totalCasualties += casualties;
                 recordLargestBattle(attacker, defender, casualties);
                 if (casualties > 0) {
