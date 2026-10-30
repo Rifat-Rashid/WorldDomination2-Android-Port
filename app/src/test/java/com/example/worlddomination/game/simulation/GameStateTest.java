@@ -459,13 +459,159 @@ public final class GameStateTest {
     }
 
     @Test
+    public void diplomacyOptionsMatchReferenceTableAndReserveOfferFunds() {
+        GameState state = new GameState(1, 4L);
+        assertEquals(65, state.getHuman().getRegardToward(1));
+        assertEquals("offer", state.getDiplomacyOptionType(0));
+        assertEquals(10, state.getDiplomacyOptionAmount(0));
+        assertEquals(3, state.getDiplomacyOptionDuration(0));
+        assertEquals("offer", state.getDiplomacyOptionType(1));
+        assertEquals(50, state.getDiplomacyOptionAmount(1));
+        assertEquals(6, state.getDiplomacyOptionDuration(1));
+        assertEquals("offer", state.getDiplomacyOptionType(2));
+        assertEquals(90, state.getDiplomacyOptionAmount(2));
+        assertEquals(10, state.getDiplomacyOptionDuration(2));
+        assertEquals("demand", state.getDiplomacyOptionType(3));
+
+        state.selectAction(GameState.Action.DIPLOMACY);
+        state.cycleDiplomacyOption(1);
+        assertEquals(1, state.getSelectedDiplomacyOption());
+        assertTrue(state.canAcceptDiplomacy());
+        assertTrue(state.acceptSelectedAction());
+        assertEquals(15, state.getTurnMoneyMillions());
+        state.removeQueuedAction(0);
+        assertEquals(65, state.getTurnMoneyMillions());
+
+        state.selectAction(GameState.Action.DIPLOMACY);
+        state.cycleDiplomacyOption(1);
+        state.cycleDiplomacyOption(1);
+        assertEquals(2, state.getSelectedDiplomacyOption());
+        assertFalse(state.canAcceptDiplomacy());
+    }
+
+    @Test
+    public void diplomacyOfferIsResolvedByAiAndCreatesTimedSymmetricCeasefire() {
+        GameState state = new GameState(1, 18L);
+        state.selectAction(GameState.Action.DIPLOMACY);
+        assertTrue(state.acceptSelectedAction());
+        assertEquals(55, state.getTurnMoneyMillions());
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+
+        assertEquals(96, state.getHuman().moneyMillions);
+        assertEquals(65, state.getPlayerState(1).moneyMillions);
+        assertEquals(67, state.getHuman().getRegardToward(1));
+        assertEquals(67, state.getPlayerState(1).getRegardToward(0));
+        assertEquals(0, state.getPendingDiplomacyProposal(1).proposerId);
+
+        completeTurnWithResourcesAndMedia(state);
+        assertEquals(75, state.getPlayerState(1).moneyMillions);
+        assertEquals(2, state.getHuman().getCeasefireTurnsWith(1));
+        assertEquals(2, state.getPlayerState(1).getCeasefireTurnsWith(0));
+
+        state.selectAction(GameState.Action.ATTACK);
+        assertFalse(state.configureAttack(1, 0, "soldier1"));
+        assertTrue(state.configureAttack(1, 0, "spy1"));
+        assertTrue(state.canAcceptAttack());
+
+        completeTurnWithResourcesAndMedia(state);
+        assertEquals(1, state.getHuman().getCeasefireTurnsWith(1));
+        completeTurnWithResourcesAndMedia(state);
+        assertFalse(state.getHuman().hasCeasefireWith(1));
+    }
+
+    @Test
+    public void rejectedDiplomacyOfferRefundsItsFullCost() {
+        GameState state = new GameState(1, 13L);
+        GameState.PlayerState opponent = state.getPlayerState(1);
+        opponent.moneyMillions = 200;
+        opponent.turnMoneyMillions = 200;
+        setRegard(opponent, 0, 0);
+
+        state.selectAction(GameState.Action.DIPLOMACY);
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+        int afterOfferAndIncome = state.getHuman().moneyMillions;
+        assertEquals(65 - 10 + 41, afterOfferAndIncome);
+
+        completeTurnWithResourcesAndMedia(state);
+        assertEquals(afterOfferAndIncome + 10 + 41, state.getHuman().moneyMillions);
+        assertFalse(state.getHuman().hasCeasefireWith(1));
+    }
+
+    @Test
+    public void diplomacyDemandUsesAiAcceptanceRulesAndTransfersMoney() {
+        GameState state = new GameState(1, 20L);
+        GameState.PlayerState human = state.getHuman();
+        GameState.PlayerState opponent = state.getPlayerState(1);
+        human.moneyMillions = 1000;
+        human.turnMoneyMillions = 1000;
+        human.populationMillions = 500;
+        opponent.moneyMillions = 10;
+        opponent.turnMoneyMillions = 10;
+        opponent.populationMillions = 400;
+
+        state.selectAction(GameState.Action.DIPLOMACY);
+        for (int i = 0; i < 3; i++) {
+            state.cycleDiplomacyOption(1);
+        }
+        assertEquals(3, state.getSelectedDiplomacyOption());
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.MASS_MEDIA);
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+
+        completeTurnWithResourcesAndMedia(state);
+        assertEquals(1051, human.moneyMillions);
+        assertEquals(0, opponent.moneyMillions);
+        assertTrue(human.hasCeasefireWith(1));
+    }
+
+    @Test
+    public void humanCanRespondToAiOfferAndDemandProposals() {
+        GameState offerState = new GameState(1, 6L);
+        assertTrue(offerState.submitDiplomacyProposal(1, 0, 0));
+        assertEquals(55, offerState.getPlayerState(1).moneyMillions);
+        assertTrue(offerState.respondToDiplomacyProposal(true));
+        assertEquals(75, offerState.getHuman().moneyMillions);
+        assertEquals(3, offerState.getHuman().getCeasefireTurnsWith(1));
+
+        GameState demandState = new GameState(1, 6L);
+        assertTrue(demandState.submitDiplomacyProposal(1, 0, 3));
+        assertTrue(demandState.respondToDiplomacyProposal(true));
+        assertEquals(55, demandState.getHuman().moneyMillions);
+        assertEquals(75, demandState.getPlayerState(1).moneyMillions);
+        assertTrue(demandState.getPlayerState(1).hasCeasefireWith(0));
+    }
+
+    private static void completeTurnWithResourcesAndMedia(GameState state) {
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.MASS_MEDIA);
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+    }
+
+    private static void setRegard(GameState.PlayerState player, int opponentId, int value) {
+        try {
+            java.lang.reflect.Field field = GameState.PlayerState.class
+                    .getDeclaredField("regardToward");
+            field.setAccessible(true);
+            ((int[]) field.get(player))[opponentId] = value;
+        } catch (ReflectiveOperationException exception) {
+            throw new AssertionError(exception);
+        }
+    }
+
+    @Test
     public void unportedActionsCannotBeSelectedOrQueued() {
         GameState state = new GameState(1);
         GameState.Action[] unportedActions = {
-                GameState.Action.DIPLOMACY,
                 GameState.Action.PREPARED_ATTACK,
-                GameState.Action.DEFENSE,
-                GameState.Action.PROPAGANDA
+                GameState.Action.DEFENSE
         };
         for (GameState.Action action : unportedActions) {
             state.selectAction(action);

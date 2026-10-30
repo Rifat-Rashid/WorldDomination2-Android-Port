@@ -373,7 +373,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         camera.update();
         drawPanelsAndMap();
         drawTextAndControls();
-        if (modalOpen) {
+        if (game.getPendingHumanDiplomacyProposal() != null) {
+            drawDiplomacyResponseModal();
+        } else if (modalOpen) {
             drawActionModal();
         }
         if (showExitPromptSeconds > 0f) {
@@ -1157,11 +1159,16 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             shapes.rect(researchNext.x, researchNext.y,
                     researchNext.width, researchNext.height);
         } else if (action == GameState.Action.ATTACK
-                || action == GameState.Action.PROPAGANDA) {
+                || action == GameState.Action.PROPAGANDA
+                || action == GameState.Action.DIPLOMACY) {
             drawAttackControlRow(attackTargetPrevious, attackTargetNext);
             drawAttackControlRow(attackCityPrevious, attackCityNext);
             if (action == GameState.Action.ATTACK) {
                 drawAttackControlRow(attackWeaponPrevious, attackWeaponNext);
+            } else if (action == GameState.Action.DIPLOMACY) {
+                shapes.setColor(BUTTON);
+                shapes.rect(modal.x + 7f, attackWeaponPrevious.y - 1f,
+                        modal.width - 14f, attackWeaponPrevious.height + 2f);
             }
         }
         shapes.end();
@@ -1214,7 +1221,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                         modal.x + modal.width / 2f, modal.y + modal.height / 2f, 8f);
             }
         } else if (action == GameState.Action.ATTACK
-                || action == GameState.Action.PROPAGANDA) {
+                || action == GameState.Action.PROPAGANDA
+                || action == GameState.Action.DIPLOMACY) {
             GameState.PlayerState target = game.getPlayerState(game.getSelectedTargetPlayer());
             CityState city = target.getCity(game.getSelectedTargetCity());
             if (action == GameState.Action.ATTACK) {
@@ -1225,7 +1233,31 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             drawCentered("NATION " + target.id + (target.alive ? "" : " (DEFEATED)"),
                     modal.x + modal.width / 2f,
                     attackTargetPrevious.y + attackTargetPrevious.height / 2f + 3f, 8f);
-            if (game.isSelectedAttackSpy()) {
+            if (action == GameState.Action.DIPLOMACY) {
+                String type = game.getDiplomacyOptionType(game.getSelectedDiplomacyOption());
+                String optionText = type.toUpperCase(java.util.Locale.US) + "  $"
+                        + game.getSelectedDiplomacyAmount() + "M  /  "
+                        + game.getSelectedDiplomacyDuration() + " TURNS";
+                drawCentered(optionText, modal.x + modal.width / 2f,
+                        attackCityPrevious.y + attackCityPrevious.height / 2f + 3f, 8f);
+                drawCentered("REGARD " + game.getHuman().getRegardToward(target.id)
+                                + "     CEASEFIRE "
+                                + (game.getHuman().hasCeasefireWith(target.id)
+                                ? game.getHuman().getCeasefireTurnsWith(target.id) + " TURNS"
+                                : "NONE"),
+                        modal.x + modal.width / 2f,
+                        attackWeaponPrevious.y + attackWeaponPrevious.height / 2f + 3f, 7f);
+                if (!game.canAcceptDiplomacy()) {
+                    String error = !target.alive ? "Select a living nation."
+                            : game.getDiplomacyOptionType(game.getSelectedDiplomacyOption())
+                            .equals("offer")
+                            && game.getSelectedDiplomacyAmount() > game.getTurnMoneyMillions()
+                            ? "The selected offer exceeds the remaining budget."
+                            : "A ceasefire or proposal is already active.";
+                    drawCentered(error, modal.x + modal.width / 2f,
+                            modal.y + modal.height * 0.18f, 7f);
+                }
+            } else if (game.isSelectedAttackSpy()) {
                 drawCentered("SPY BUILDING: "
                                 + game.getSelectedSpyBuilding().toUpperCase(java.util.Locale.US),
                         modal.x + modal.width / 2f,
@@ -1252,7 +1284,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                                     : "Choose a living target and available unit.",
                             modal.x + modal.width / 2f, modal.y + modal.height * 0.18f, 7f);
                 }
-            } else {
+            } else if (action == GameState.Action.PROPAGANDA) {
                 drawCentered("ESTIMATED CITIZEN TRANSFER: "
                                 + game.getPropagandaTransferEstimate(target.id, city.index) + "M",
                         modal.x + modal.width / 2f,
@@ -1285,6 +1317,56 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         font.setColor(Color.WHITE);
         drawCentered("Press Back again to exit", worldWidth / 2f, worldHeight / 2f, 13f);
         batch.end();
+    }
+
+    private void drawDiplomacyResponseModal() {
+        GameState.DiplomacyProposal proposal = game.getPendingHumanDiplomacyProposal();
+        if (proposal == null) {
+            return;
+        }
+        GameState.PlayerState proposer = game.getPlayerState(proposal.proposerId);
+        String kind = game.getDiplomacyOptionType(proposal.optionIndex);
+        shapes.setProjectionMatrix(camera.combined);
+        shapes.begin(ShapeRenderer.ShapeType.Filled);
+        drawPanelFill(modal);
+        shapes.setColor(MODAL_ORANGE);
+        shapes.rect(modal.x + 3f, modal.y + modal.height - 29f,
+                modal.width - 6f, 25f);
+        shapes.rect(modal.x + 3f, modal.y + 3f, modal.width - 6f, 25f);
+        drawButtonGradient(modalAccept, false);
+        drawButtonGradient(modalCancel, false);
+        shapes.end();
+        batch.setProjectionMatrix(camera.combined);
+        batch.begin();
+        drawPanelTexture(modal);
+        drawOriginalButton(modalAccept);
+        drawOriginalButton(modalCancel);
+        font.setColor(Color.WHITE);
+        drawCentered("DIPLOMACY PROPOSAL", modal.x + modal.width / 2f,
+                modal.y + modal.height - 12f, 12f);
+        font.setColor(TITLE_TEXT);
+        drawCentered("NATION " + proposer.id + " MAKES A " + kind.toUpperCase(
+                        java.util.Locale.US), modal.x + modal.width / 2f,
+                modal.y + modal.height * 0.68f, 9f);
+        String moneyDirection = kind.equals("offer") ? "YOU RECEIVE $" : "YOU PAY $";
+        drawCentered(moneyDirection + game.getDiplomacyOptionAmount(proposal.optionIndex)
+                        + "M   /   "
+                        + game.getDiplomacyOptionDuration(proposal.optionIndex) + " TURNS",
+                modal.x + modal.width / 2f, modal.y + modal.height * 0.50f, 9f);
+        if (!game.canAcceptPendingHumanDiplomacy()) {
+            drawCentered("INSUFFICIENT FUNDS TO ACCEPT THIS DEMAND",
+                    modal.x + modal.width / 2f, modal.y + modal.height * 0.31f, 7f);
+        }
+        font.setColor(TITLE_TEXT);
+        drawCentered(game.canAcceptPendingHumanDiplomacy() ? "ACCEPT" : "CANNOT ACCEPT",
+                modalAccept.x + modalAccept.width / 2f,
+                modalAccept.y + modalAccept.height / 2f + 3f, 8f);
+        drawCentered("REJECT", modalCancel.x + modalCancel.width / 2f,
+                modalCancel.y + modalCancel.height / 2f + 3f, 8f);
+        batch.end();
+        shapes.begin(ShapeRenderer.ShapeType.Line);
+        drawPanelEdges(modal);
+        shapes.end();
     }
 
     private void drawPanelFill(Rectangle rectangle) {
@@ -1454,6 +1536,20 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     }
 
     private void activateAt(float x, float y) {
+        if (game.getPendingHumanDiplomacyProposal() != null) {
+            if (modalAccept.contains(x, y)) {
+                if (game.respondToDiplomacyProposal(true)) {
+                    game.cancelSelection();
+                    modalOpen = false;
+                }
+            } else if (modalCancel.contains(x, y)) {
+                if (game.respondToDiplomacyProposal(false)) {
+                    game.cancelSelection();
+                    modalOpen = false;
+                }
+            }
+            return;
+        }
         if (modalOpen) {
             GameState.Action action = game.getSelectedAction();
             if (action == GameState.Action.PRODUCTION) {
@@ -1543,6 +1639,23 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                     game.cyclePropagandaCity(1);
                     return;
                 }
+            } else if (action == GameState.Action.DIPLOMACY) {
+                if (attackTargetPrevious.contains(x, y)) {
+                    game.cycleDiplomacyTarget(-1);
+                    return;
+                }
+                if (attackTargetNext.contains(x, y)) {
+                    game.cycleDiplomacyTarget(1);
+                    return;
+                }
+                if (attackCityPrevious.contains(x, y)) {
+                    game.cycleDiplomacyOption(-1);
+                    return;
+                }
+                if (attackCityNext.contains(x, y)) {
+                    game.cycleDiplomacyOption(1);
+                    return;
+                }
             }
             if (modalAccept.contains(x, y)) {
                 if (game.acceptSelectedAction()) {
@@ -1571,6 +1684,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     }
 
     private boolean handleBack() {
+        if (game.getPendingHumanDiplomacyProposal() != null) {
+            return true;
+        }
         if (modalOpen) {
             modalOpen = false;
             game.cancelSelection();

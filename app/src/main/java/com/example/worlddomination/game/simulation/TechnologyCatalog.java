@@ -14,16 +14,18 @@ final class TechnologyCatalog {
         final int costMillions;
         final int group;
         final int level;
+        final int strengthWeight;
         final String prerequisite;
         final String prettyName;
 
         Definition(int id, String name, int costMillions, int group, int level,
-                   String prerequisite, String prettyName) {
+                   int strengthWeight, String prerequisite, String prettyName) {
             this.id = id;
             this.name = name;
             this.costMillions = costMillions;
             this.group = group;
             this.level = level;
+            this.strengthWeight = strengthWeight;
             this.prerequisite = prerequisite;
             this.prettyName = prettyName;
         }
@@ -39,12 +41,12 @@ final class TechnologyCatalog {
         addLine(13, "soldier", 4, new int[]{5, 10, 15, 20});
         addLine(17, "spy", 5, new int[]{5, 10, 15, 20});
         addLine(21, "plane", 6, new int[]{5, 10});
-        add(23, "sub", 20, 7, 1, null, "SUBMARINE");
-        add(24, "ship", 40, 7, 2, "sub", "AIRCRAFT CARRIER");
-        add(25, "space", 50, 7, 3, "ship", "SPACE ROCKET");
-        add(26, "antiAir", 20, 8, 1, null, "ANTI AIR");
-        add(27, "antiRocket", 20, 8, 1, null, "ANTI ROCKET");
-        add(28, "specialLoad", 50, 7, 4, "space", "SATELLITE");
+        add(23, "sub", 20, 7, 1, 3, null, "SUBMARINE");
+        add(24, "ship", 40, 7, 2, 5, "sub", "AIRCRAFT CARRIER");
+        add(25, "space", 50, 7, 3, 8, "ship", "SPACE ROCKET");
+        add(26, "antiAir", 20, 8, 1, 8, null, "ANTI AIR");
+        add(27, "antiRocket", 20, 8, 1, 8, null, "ANTI ROCKET");
+        add(28, "specialLoad", 50, 7, 4, 8, "space", "SATELLITE");
         ALL = Collections.unmodifiableList(new ArrayList<>(BY_NAME.values()));
     }
 
@@ -54,15 +56,17 @@ final class TechnologyCatalog {
         String previous = null;
         for (int index = 0; index < costs.length; index++) {
             String name = stem + (index + 1);
-            add(firstId + index, name, costs[index], group, index + 1, previous,
+            int weight = index == 0 ? 0 : index == 1 ? ("plane".equals(stem) ? 4 : 3)
+                    : index == 2 ? 5 : 8;
+            add(firstId + index, name, costs[index], group, index + 1, weight, previous,
                     prettyName(stem, index + 1));
             previous = name;
         }
     }
 
     private static void add(int id, String name, int cost, int group, int level,
-                            String prerequisite, String prettyName) {
-        BY_NAME.put(name, new Definition(id, name, cost, group, level, prerequisite,
+                            int strengthWeight, String prerequisite, String prettyName) {
+        BY_NAME.put(name, new Definition(id, name, cost, group, level, strengthWeight, prerequisite,
                 prettyName));
     }
 

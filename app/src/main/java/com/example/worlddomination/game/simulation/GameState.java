@@ -36,7 +36,19 @@ public final class GameState {
 
         public boolean isPorted() {
             return this == RESOURCES || this == PRODUCTION || this == RESEARCH
-                    || this == MASS_MEDIA || this == ATTACK || this == PROPAGANDA;
+                    || this == MASS_MEDIA || this == ATTACK || this == PROPAGANDA
+                    || this == DIPLOMACY;
+        }
+    }
+
+    /** A diplomacy proposal waiting for the target nation's response. */
+    public static final class DiplomacyProposal {
+        public final int proposerId;
+        public final int optionIndex;
+
+        private DiplomacyProposal(int proposerId, int optionIndex) {
+            this.proposerId = proposerId;
+            this.optionIndex = optionIndex;
         }
     }
 
@@ -50,6 +62,10 @@ public final class GameState {
         public int score;
         public int spyReadiness = 25;
         public boolean alive = true;
+        private final int[] regardToward = new int[5];
+        private final int[] ceasefireTurns = new int[5];
+        private final int[] diplomacyOfferedLastTurn = new int[5];
+        private final DiplomacyProposal[] pendingDiplomacy = new DiplomacyProposal[5];
         private final List<CityState> cities = new ArrayList<>(5);
         private final Set<String> inventedTechnologies = new LinkedHashSet<>();
         private final Map<String, WeaponState> weapons = new LinkedHashMap<>();
@@ -83,6 +99,34 @@ public final class GameState {
         public CityState getCity(int index) {
             return index < 0 || index >= cities.size() ? null : cities.get(index);
         }
+
+        public int getRegardToward(int playerId) {
+            if (playerId < 0 || playerId >= regardToward.length) {
+                throw new IllegalArgumentException("Invalid player index");
+            }
+            return regardToward[playerId];
+        }
+
+        public boolean hasCeasefireWith(int playerId) {
+            if (playerId < 0 || playerId >= ceasefireTurns.length) {
+                throw new IllegalArgumentException("Invalid player index");
+            }
+            return ceasefireTurns[playerId] > 0;
+        }
+
+        public int getCeasefireTurnsWith(int playerId) {
+            if (playerId < 0 || playerId >= ceasefireTurns.length) {
+                throw new IllegalArgumentException("Invalid player index");
+            }
+            return ceasefireTurns[playerId];
+        }
+
+        public DiplomacyProposal getPendingDiplomacyFrom(int playerId) {
+            if (playerId < 0 || playerId >= pendingDiplomacy.length) {
+                throw new IllegalArgumentException("Invalid player index");
+            }
+            return pendingDiplomacy[playerId];
+        }
     }
 
     public static final class WeaponState {
@@ -107,10 +151,12 @@ public final class GameState {
         final int targetCityIndex;
         final String weaponName;
         final String spyBuilding;
+        final int diplomacyOption;
 
         ActionOrder(Action action, String productionCategory, int productionPercent,
                     String technology, int reservedMillions, int targetPlayerId,
-                    int targetCityIndex, String weaponName, String spyBuilding) {
+                    int targetCityIndex, String weaponName, String spyBuilding,
+                    int diplomacyOption) {
             this.action = action;
             this.productionCategory = productionCategory;
             this.productionPercent = productionPercent;
@@ -120,6 +166,7 @@ public final class GameState {
             this.targetCityIndex = targetCityIndex;
             this.weaponName = weaponName;
             this.spyBuilding = spyBuilding;
+            this.diplomacyOption = diplomacyOption;
         }
     }
 
@@ -145,6 +192,10 @@ public final class GameState {
             {5, 20}, {7, 40}, {9, 60}, {12, 80}
     };
     private static final int[] SPY_MONEY_CAP = {90, 120, 150};
+    private static final int[] DIPLOMACY_DURATION = {3, 6, 10, 3, 6, 10};
+    private static final int[] DIPLOMACY_AMOUNT = {10, 50, 90, 10, 50, 90};
+    private static final int[] STARTING_REGARD = {80, 65, 50};
+    private static final int DIPLOMACY_BONUS = 3;
     private static final String[] SPY_BUILDINGS = {
             "spyCenter", "tech", "religion", "resources", "factory"
     };
@@ -165,6 +216,7 @@ public final class GameState {
     private int selectedTargetCity;
     private String selectedAttackWeapon = "soldier1";
     private String selectedSpyBuilding = "spyCenter";
+    private int selectedDiplomacyOption;
     private int turn;
     private int selectedIsland = -1;
     private MatchStatus matchStatus = MatchStatus.ONGOING;
@@ -188,6 +240,9 @@ public final class GameState {
                     ENEMY_START_MONEY[difficulty], new int[]{30, 40, 60}[difficulty]);
         }
         for (PlayerState player : players) {
+            for (int other = 0; other < players.length; other++) {
+                player.regardToward[other] = STARTING_REGARD[difficulty];
+            }
             initializeInventory(player);
             initializeCities(player);
         }
@@ -291,6 +346,7 @@ public final class GameState {
         selectedTargetCity = 0;
         selectedAttackWeapon = firstAvailableAttackWeapon();
         selectedSpyBuilding = "spyCenter";
+        selectedDiplomacyOption = 0;
         selectedProductionCategory = "soldier";
         selectedProductionPercent = 0;
     }
@@ -366,6 +422,142 @@ public final class GameState {
         return selectedTargetCity;
     }
 
+    public int getSelectedDiplomacyOption() {
+        return selectedDiplomacyOption;
+    }
+
+    public String getDiplomacyOptionType(int optionIndex) {
+        validateDiplomacyOption(optionIndex);
+        return optionIndex < 3 ? "offer" : "demand";
+    }
+
+    public int getDiplomacyOptionAmount(int optionIndex) {
+        validateDiplomacyOption(optionIndex);
+        return DIPLOMACY_AMOUNT[optionIndex];
+    }
+
+    public int getDiplomacyOptionDuration(int optionIndex) {
+        validateDiplomacyOption(optionIndex);
+        return DIPLOMACY_DURATION[optionIndex];
+    }
+
+    public int getSelectedDiplomacyAmount() {
+        return getDiplomacyOptionAmount(selectedDiplomacyOption);
+    }
+
+    public int getSelectedDiplomacyDuration() {
+        return getDiplomacyOptionDuration(selectedDiplomacyOption);
+    }
+
+    private static void validateDiplomacyOption(int optionIndex) {
+        if (optionIndex < 0 || optionIndex >= DIPLOMACY_AMOUNT.length) {
+            throw new IllegalArgumentException("Diplomacy option must be 0..5");
+        }
+    }
+
+    public void cycleDiplomacyOption(int direction) {
+        if (direction != 0 && selectedAction == Action.DIPLOMACY) {
+            selectedDiplomacyOption = Math.floorMod(selectedDiplomacyOption
+                    + Integer.signum(direction), DIPLOMACY_AMOUNT.length);
+        }
+    }
+
+    public void cycleDiplomacyTarget(int direction) {
+        if (direction == 0 || selectedAction != Action.DIPLOMACY) {
+            return;
+        }
+        for (int step = 1; step < players.length; step++) {
+            int candidate = 1 + Math.floorMod(selectedTargetPlayer - 1
+                    + Integer.signum(direction) * step, players.length - 1);
+            if (players[candidate].alive) {
+                selectedTargetPlayer = candidate;
+                return;
+            }
+        }
+    }
+
+    public boolean canAcceptDiplomacy() {
+        if (selectedAction != Action.DIPLOMACY || selectedTargetPlayer <= 0
+                || selectedTargetPlayer >= players.length) {
+            return false;
+        }
+        PlayerState target = players[selectedTargetPlayer];
+        if (!target.alive || getHuman().hasCeasefireWith(target.id)
+                || target.pendingDiplomacy[0] != null) {
+            return false;
+        }
+        return selectedDiplomacyOption >= 3
+                || DIPLOMACY_AMOUNT[selectedDiplomacyOption] <= getHuman().turnMoneyMillions;
+    }
+
+    public DiplomacyProposal getPendingDiplomacyProposal(int targetPlayerId) {
+        return playerById(targetPlayerId).pendingDiplomacy[0];
+    }
+
+    public DiplomacyProposal getPendingHumanDiplomacyProposal() {
+        for (int proposerId = 1; proposerId < players.length; proposerId++) {
+            DiplomacyProposal proposal = players[0].pendingDiplomacy[proposerId];
+            if (proposal != null) {
+                return proposal;
+            }
+        }
+        return null;
+    }
+
+    public boolean canAcceptPendingHumanDiplomacy() {
+        DiplomacyProposal proposal = getPendingHumanDiplomacyProposal();
+        return proposal != null && (proposal.optionIndex < 3
+                || getHuman().turnMoneyMillions >= DIPLOMACY_AMOUNT[proposal.optionIndex]);
+    }
+
+    /**
+     * Entry point for a ported opponent AI to send a source-format proposal.
+     * Offer costs are paid when the proposal is sent; a rejected offer is refunded.
+     */
+    public boolean submitDiplomacyProposal(int proposerPlayerId, int targetPlayerId,
+                                           int optionIndex) {
+        validateDiplomacyOption(optionIndex);
+        if (proposerPlayerId == targetPlayerId || proposerPlayerId < 0
+                || proposerPlayerId >= players.length || targetPlayerId < 0
+                || targetPlayerId >= players.length) {
+            return false;
+        }
+        PlayerState proposer = players[proposerPlayerId];
+        PlayerState target = players[targetPlayerId];
+        if (!proposer.alive || !target.alive || target.pendingDiplomacy[proposerPlayerId] != null
+                || (!proposer.human
+                && proposer.diplomacyOfferedLastTurn[targetPlayerId] > 0)
+                || proposer.ceasefireTurns[targetPlayerId] > 0) {
+            return false;
+        }
+        int amount = DIPLOMACY_AMOUNT[optionIndex];
+        boolean offer = optionIndex < 3;
+        if (offer && proposer.moneyMillions < amount) {
+            return false;
+        }
+        if (offer) {
+            proposer.moneyMillions -= amount;
+        }
+        target.pendingDiplomacy[proposerPlayerId] =
+                new DiplomacyProposal(proposerPlayerId, optionIndex);
+        target.diplomacyOfferedLastTurn[proposerPlayerId] = 2;
+        applyDiplomacySentRegard(proposer, target, optionIndex);
+        return true;
+    }
+
+    /** Resolves the current human-facing proposal using the target's available funds. */
+    public boolean respondToDiplomacyProposal(boolean accept) {
+        DiplomacyProposal proposal = getPendingHumanDiplomacyProposal();
+        if (proposal == null) {
+            return false;
+        }
+        if (accept && !canAcceptPendingHumanDiplomacy()) {
+            return false;
+        }
+        resolveDiplomacyResponse(players[0], proposal, accept);
+        return true;
+    }
+
     public String getSelectedAttackWeapon() {
         return selectedAttackWeapon;
     }
@@ -425,7 +617,8 @@ public final class GameState {
         if (!target.alive || totalPopulation(target) <= 0 || city == null
                 || weapon == null || !weapon.active || weapon.inStock <= 0
                 || (!soldier && !canUseSpy(getHuman(), weapon))
-                || (soldier && city.populationMillions <= 0)) {
+                || (soldier && city.populationMillions <= 0)
+                || (soldier && target.hasCeasefireWith(getHuman().id))) {
             return false;
         }
         selectedTargetPlayer = targetPlayerId;
@@ -501,7 +694,8 @@ public final class GameState {
         return target != null && target.alive && totalPopulation(target) > 0 && city != null
                 && weapon != null && weapon.active && weapon.inStock > 0
                 && ("soldier".equals(weapon.definition.type)
-                ? city.populationMillions > 0 : canUseSpy(getHuman(), weapon));
+                ? city.populationMillions > 0 && !target.hasCeasefireWith(getHuman().id)
+                : canUseSpy(getHuman(), weapon));
     }
 
     private String firstAvailableAttackWeapon() {
@@ -554,6 +748,12 @@ public final class GameState {
         } else if (selectedAction == Action.PROPAGANDA && !canAcceptPropaganda()) {
             messages.add("Choose a living opponent and a populated city.");
             return false;
+        } else if (selectedAction == Action.DIPLOMACY && !canAcceptDiplomacy()) {
+            messages.add("Choose a living nation and an affordable diplomacy option.");
+            return false;
+        } else if (selectedAction == Action.DIPLOMACY
+                && selectedDiplomacyOption < 3) {
+            reserved = DIPLOMACY_AMOUNT[selectedDiplomacyOption];
         }
         if (reserved > getHuman().turnMoneyMillions) {
             messages.add("The selected action exceeds the remaining budget.");
@@ -562,7 +762,7 @@ public final class GameState {
         ActionOrder order = new ActionOrder(selectedAction, selectedProductionCategory,
                 selectedProductionPercent, selectedTechnology, reserved,
                 selectedTargetPlayer, selectedTargetCity, selectedAttackWeapon,
-                selectedSpyBuilding);
+                selectedSpyBuilding, selectedDiplomacyOption);
         queuedActions.add(order);
         getHuman().turnMoneyMillions -= reserved;
         messages.add(selectedAction.label + " queued.");
@@ -571,6 +771,7 @@ public final class GameState {
         selectedTargetPlayer = selectedIsland > 0 ? selectedIsland : 1;
         selectedTargetCity = 0;
         selectedAttackWeapon = firstAvailableAttackWeapon();
+        selectedDiplomacyOption = 0;
         return true;
     }
 
@@ -579,6 +780,7 @@ public final class GameState {
         selectedTechnology = null;
         selectedProductionPercent = 0;
         selectedProductionCategory = "soldier";
+        selectedDiplomacyOption = 0;
     }
 
     public void removeQueuedAction(int slot) {
@@ -672,6 +874,7 @@ public final class GameState {
         }
         decayReligion();
         advanceSpyReadiness();
+        resolvePendingAiDiplomacy();
         for (ActionOrder order : queuedActions) {
             switch (order.action) {
                 case RESOURCES:
@@ -692,6 +895,9 @@ public final class GameState {
                 case PROPAGANDA:
                     resolvePropaganda(order);
                     break;
+                case DIPLOMACY:
+                    resolveDiplomacy(order);
+                    break;
                 default:
                     throw new IllegalStateException("Unported action entered the turn queue: "
                             + order.action);
@@ -699,7 +905,10 @@ public final class GameState {
         }
         for (PlayerState player : players) {
             player.religion = Math.min(100, Math.max(0, player.religion));
+            player.turnMoneyMillions = player.moneyMillions;
         }
+        updateDiplomacyRelations();
+        tickCeasefiresAndDiplomacyCooldowns();
         refreshMatchStatus();
         turn++;
         getHuman().turnMoneyMillions = getHuman().moneyMillions;
@@ -707,6 +916,174 @@ public final class GameState {
         queuedActions.clear();
         cancelSelection();
         trimMessages();
+    }
+
+    private void resolveDiplomacy(ActionOrder order) {
+        if (!submitDiplomacyProposal(getHuman().id, order.targetPlayerId,
+                order.diplomacyOption)) {
+            messages.add("Diplomacy proposal could not be sent.");
+            return;
+        }
+        String type = order.diplomacyOption < 3 ? "offer" : "demand";
+        messages.add("Diplomacy " + type + " sent to nation " + order.targetPlayerId
+                + " for " + DIPLOMACY_DURATION[order.diplomacyOption] + " turns.");
+    }
+
+    private void resolvePendingAiDiplomacy() {
+        for (int targetId = 1; targetId < players.length; targetId++) {
+            PlayerState target = players[targetId];
+            DiplomacyProposal proposal = target.pendingDiplomacy[0];
+            if (proposal == null) {
+                continue;
+            }
+            boolean accept = shouldAiAccept(target, proposal);
+            resolveDiplomacyResponse(target, proposal, accept);
+        }
+    }
+
+    private boolean shouldAiAccept(PlayerState receiver, DiplomacyProposal proposal) {
+        PlayerState proposer = players[proposal.proposerId];
+        int optionIndex = proposal.optionIndex;
+        int accept = 2;
+        int reject = 0;
+        if (optionIndex < 3) {
+            if (receiver.getRegardToward(proposer.id) > 50) {
+                accept++;
+            } else {
+                reject++;
+            }
+            accept += optionIndex * 4;
+            if (strength(receiver) < strength(proposer)) {
+                accept++;
+            } else {
+                reject++;
+            }
+            if (proposer.populationMillions > receiver.populationMillions) {
+                accept++;
+            }
+            if (receiver.moneyMillions < 30) {
+                accept++;
+            }
+        } else {
+            if (receiver.getRegardToward(proposer.id) > 50) {
+                accept++;
+            } else {
+                reject++;
+            }
+            reject += Math.round(optionIndex / 2f);
+            if (strength(receiver) < strength(proposer)) {
+                accept++;
+            } else {
+                reject++;
+            }
+            if (strength(receiver) < strength(proposer) / 2f) {
+                accept += 2;
+            } else {
+                reject++;
+            }
+            if (proposer.populationMillions > receiver.populationMillions) {
+                accept++;
+            } else {
+                reject++;
+            }
+        }
+        return accept > reject && (optionIndex < 3
+                || receiver.turnMoneyMillions >= DIPLOMACY_AMOUNT[optionIndex]);
+    }
+
+    private int strength(PlayerState player) {
+        int technologyWeight = 0;
+        for (String technologyName : player.inventedTechnologies) {
+            TechnologyCatalog.Definition technology = TechnologyCatalog.byName(technologyName);
+            if (technology != null) {
+                technologyWeight += technology.strengthWeight;
+            }
+        }
+        int weaponStrength = 0;
+        for (WeaponState weapon : player.weapons.values()) {
+            weaponStrength += weapon.inStock * weapon.definition.level;
+        }
+        return technologyWeight + weaponStrength + player.moneyMillions;
+    }
+
+    private void resolveDiplomacyResponse(PlayerState target, DiplomacyProposal proposal,
+                                          boolean accepted) {
+        int proposerId = proposal.proposerId;
+        PlayerState proposer = players[proposerId];
+        int optionIndex = proposal.optionIndex;
+        int amount = DIPLOMACY_AMOUNT[optionIndex];
+        if (accepted && optionIndex >= 3 && target.moneyMillions < amount) {
+            accepted = false;
+        }
+        target.pendingDiplomacy[proposerId] = null;
+        if (accepted) {
+            target.regardToward[proposerId] += DIPLOMACY_BONUS;
+            proposer.regardToward[target.id] += DIPLOMACY_BONUS;
+            if (optionIndex < 3) {
+                target.moneyMillions += amount;
+                target.turnMoneyMillions += amount;
+            } else {
+                proposer.moneyMillions += amount;
+                proposer.turnMoneyMillions += amount;
+                target.moneyMillions -= amount;
+                target.turnMoneyMillions = Math.max(0, target.turnMoneyMillions - amount);
+            }
+            int duration = DIPLOMACY_DURATION[optionIndex];
+            target.ceasefireTurns[proposerId] = duration;
+            proposer.ceasefireTurns[target.id] = duration;
+            messages.add("Nation " + target.id + " accepted diplomacy with nation "
+                    + proposer.id + ".");
+        } else {
+            target.regardToward[proposerId] -= DIPLOMACY_BONUS;
+            proposer.regardToward[target.id] -= DIPLOMACY_BONUS;
+            if (optionIndex < 3) {
+                proposer.moneyMillions += amount;
+                proposer.turnMoneyMillions += amount;
+            }
+            messages.add("Nation " + target.id + " rejected diplomacy with nation "
+                    + proposer.id + ".");
+        }
+    }
+
+    private static void applyDiplomacySentRegard(PlayerState proposer, PlayerState target,
+                                                  int optionIndex) {
+        int adjustment = optionIndex < 3 ? optionIndex * 5 : -optionIndex;
+        proposer.regardToward[target.id] += adjustment;
+        target.regardToward[proposer.id] += adjustment;
+    }
+
+    private void updateDiplomacyRelations() {
+        for (PlayerState player : players) {
+            for (int otherId = 0; otherId < players.length; otherId++) {
+                int regard = player.regardToward[otherId];
+                if (player.ceasefireTurns[otherId] > 0) {
+                    regard += 2;
+                }
+                if (regard < 100) {
+                    regard += difficulty == 0 ? 3 : difficulty == 1 ? 2 : 1;
+                }
+                if (regard < 50) {
+                    regard += difficulty == 0 ? 2 : 1;
+                }
+                if (regard < 30) {
+                    regard++;
+                }
+                player.regardToward[otherId] = Math.min(100, regard);
+            }
+        }
+    }
+
+    private void tickCeasefiresAndDiplomacyCooldowns() {
+        for (PlayerState player : players) {
+            for (int otherId = 0; otherId < players.length; otherId++) {
+                if (player.ceasefireTurns[otherId] > 0) {
+                    player.ceasefireTurns[otherId]--;
+                }
+                if (player.diplomacyOfferedLastTurn[otherId] > 0) {
+                    player.diplomacyOfferedLastTurn[otherId]--;
+                }
+            }
+        }
     }
 
     private void decayReligion() {
@@ -766,6 +1143,11 @@ public final class GameState {
             resolveSpyAttack(attacker, defender, weapon);
             weapon.inStock--;
             messages.add("Spy operation completed against nation " + defender.id + ".");
+            return;
+        }
+        if (defender.hasCeasefireWith(attacker.id)) {
+            messages.add("Attack cancelled: a ceasefire is active with nation "
+                    + defender.id + ".");
             return;
         }
         int casualties = 0;
