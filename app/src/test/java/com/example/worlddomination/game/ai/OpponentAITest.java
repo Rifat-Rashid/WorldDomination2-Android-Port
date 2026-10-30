@@ -156,6 +156,33 @@ public final class OpponentAITest {
     }
 
     @Test
+    public void opponentShipLaunchConsumesThreePayloadUnitsAcrossItsStrikeArray() {
+        GameState state = new GameState(1, 208L);
+        GameState.PlayerState attacker = state.getPlayerState(1);
+        attacker.getWeapons().get("ship").active = true;
+        attacker.getWeapons().get("ship").inStock = 1;
+        attacker.getWeapons().get("warhead1").inStock = 2;
+        attacker.getWeapons().get("bioload1").inStock = 1;
+
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.MASS_MEDIA);
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+        assertEquals("ship", attacker.getPreparedCarrierName());
+
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.MASS_MEDIA);
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+
+        assertNull(attacker.getPreparedCarrierName());
+        assertEquals(0, attacker.getWeaponStockByName("warhead1"));
+        assertEquals(0, attacker.getWeaponStockByName("bioload1"));
+    }
+
+    @Test
     public void biologicalStrikeBlocksHumanActionsAndRestoresTemporaryWeaponLocks() {
         GameState state = new GameState(1, 55L);
         GameState.PlayerState attacker = state.getPlayerState(1);

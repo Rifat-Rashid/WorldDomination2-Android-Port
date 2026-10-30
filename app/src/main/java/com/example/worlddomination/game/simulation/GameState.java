@@ -54,6 +54,19 @@ public final class GameState {
         }
     }
 
+    /** One payload/city pair in the original carrier-ship three strike. */
+    public static final class ShipStrike {
+        public final int targetPlayerId;
+        public final int cityIndex;
+        public final String payloadName;
+
+        public ShipStrike(int targetPlayerId, int cityIndex, String payloadName) {
+            this.targetPlayerId = targetPlayerId;
+            this.cityIndex = cityIndex;
+            this.payloadName = payloadName;
+        }
+    }
+
     public static final class PlayerState {
         public final int id;
         public final boolean human;
@@ -200,12 +213,24 @@ public final class GameState {
         final boolean prepareCarrier;
         final String spyBuilding;
         final int diplomacyOption;
+        final List<ShipStrike> shipStrikes;
 
         ActionOrder(int playerId, Action action,
                     Map<String, Integer> productionBudgets, List<String> technologies,
                     int reservedMillions, int targetPlayerId,
                     int targetCityIndex, String weaponName, String payloadName,
                     boolean prepareCarrier, String spyBuilding, int diplomacyOption) {
+            this(playerId, action, productionBudgets, technologies, reservedMillions,
+                    targetPlayerId, targetCityIndex, weaponName, payloadName, prepareCarrier,
+                    spyBuilding, diplomacyOption, Collections.<ShipStrike>emptyList());
+        }
+
+        ActionOrder(int playerId, Action action,
+                    Map<String, Integer> productionBudgets, List<String> technologies,
+                    int reservedMillions, int targetPlayerId,
+                    int targetCityIndex, String weaponName, String payloadName,
+                    boolean prepareCarrier, String spyBuilding, int diplomacyOption,
+                    List<ShipStrike> shipStrikes) {
             this.playerId = playerId;
             this.action = action;
             this.productionBudgets = productionBudgets;
@@ -218,6 +243,7 @@ public final class GameState {
             this.prepareCarrier = prepareCarrier;
             this.spyBuilding = spyBuilding;
             this.diplomacyOption = diplomacyOption;
+            this.shipStrikes = Collections.unmodifiableList(new ArrayList<>(shipStrikes));
         }
     }
 
@@ -230,6 +256,21 @@ public final class GameState {
         BiologicalEffect(int targetPlayerId, int cityIndex) {
             this.targetPlayerId = targetPlayerId;
             this.cityIndex = cityIndex;
+        }
+    }
+
+    private static final class ShipStrikeResult {
+        final ShipStrike strike;
+        final String payloadName;
+        final int rolledCasualties;
+        final boolean intercepted;
+
+        ShipStrikeResult(ShipStrike strike, String payloadName, int rolledCasualties,
+                         boolean intercepted) {
+            this.strike = strike;
+            this.payloadName = payloadName;
+            this.rolledCasualties = rolledCasualties;
+            this.intercepted = intercepted;
         }
     }
 
@@ -286,6 +327,7 @@ public final class GameState {
     private String selectedAttackWeapon = "soldier1";
     private String selectedPreparedCarrier;
     private String selectedPreparedPayload;
+    private final List<ShipStrike> selectedShipStrikes = new ArrayList<>(3);
     private String selectedDefenseWeapon;
     private String selectedSpyBuilding = "spyCenter";
     private int selectedDiplomacyOption;
@@ -472,6 +514,7 @@ public final class GameState {
         selectedAttackWeapon = firstAvailableAttackWeapon();
         selectedPreparedCarrier = null;
         selectedPreparedPayload = null;
+        selectedShipStrikes.clear();
         selectedDefenseWeapon = firstAvailableDefenseWeapon();
         selectedSpyBuilding = "spyCenter";
         selectedDiplomacyOption = 0;
@@ -842,6 +885,7 @@ public final class GameState {
         }
         selectedPreparedCarrier = carrierName;
         selectedPreparedPayload = null;
+        selectedShipStrikes.clear();
         return true;
     }
 
@@ -860,6 +904,7 @@ public final class GameState {
         WeaponState payload = getHuman().weapons.get(payloadName);
         if (!target.alive || city == null || city.populationMillions <= 0
                 || target.hasCeasefireWith(0)
+                || carrier == null || "ship".equals(carrier.definition.type)
                 || !isCompatiblePayload(carrier, payload) || !payload.active
                 || payload.inStock <= 0) {
             return false;
@@ -869,6 +914,65 @@ public final class GameState {
         selectedTargetPlayer = targetPlayerId;
         selectedTargetCity = cityIndex;
         return true;
+    }
+
+    /** Adds one same-nation payload/city pair for a prepared carrier ship. */
+    public boolean configurePreparedShipStrike(int targetPlayerId, int cityIndex,
+                                                String payloadName) {
+        if (selectedAction != Action.PREPARED_ATTACK
+                || getHuman().preparedCarrierName == null
+                || targetPlayerId <= 0 || targetPlayerId >= players.length
+                || cityIndex < 0 || cityIndex >= 5) {
+            return false;
+        }
+        PlayerState target = players[targetPlayerId];
+        CityState city = target.getCity(cityIndex);
+        WeaponState carrier = getHuman().weapons.get(getHuman().preparedCarrierName);
+        WeaponState payload = getHuman().weapons.get(payloadName);
+        if (carrier == null || !"ship".equals(carrier.definition.type)
+                || !target.alive || city == null || city.populationMillions <= 0
+                || target.hasCeasefireWith(0)
+                || !selectedShipStrikes.isEmpty()
+                && selectedShipStrikes.get(0).targetPlayerId != targetPlayerId
+                || !isCompatiblePayload(carrier, payload) || !payload.active
+                || availableShipPayloadStock(payloadName,
+                selectedShipStrikes.size() == 3) <= 0) {
+            return false;
+        }
+        if (selectedShipStrikes.size() == 3) {
+            selectedShipStrikes.remove(0);
+        }
+        selectedShipStrikes.add(new ShipStrike(targetPlayerId, cityIndex, payloadName));
+        selectedPreparedCarrier = getHuman().preparedCarrierName;
+        selectedPreparedPayload = null;
+        selectedTargetPlayer = targetPlayerId;
+        selectedTargetCity = cityIndex;
+        return true;
+    }
+
+    private int availableShipPayloadStock(String payloadName, boolean replacingOldest) {
+        WeaponState payload = getHuman().weapons.get(payloadName);
+        if (payload == null) {
+            return 0;
+        }
+        int selected = 0;
+        for (ShipStrike strike : selectedShipStrikes) {
+            if (strike.payloadName.equals(payloadName)) {
+                selected++;
+            }
+        }
+        if (replacingOldest && selectedShipStrikes.get(0).payloadName.equals(payloadName)) {
+            selected--;
+        }
+        return payload.inStock - selected;
+    }
+
+    public int getSelectedShipStrikeCount() {
+        return selectedShipStrikes.size();
+    }
+
+    public List<ShipStrike> getSelectedShipStrikes() {
+        return Collections.unmodifiableList(selectedShipStrikes);
     }
 
     /** Chooses an anti-air or anti-rocket device for this turn's defense slot. */
@@ -889,14 +993,48 @@ public final class GameState {
             return selectedPreparedCarrier != null
                     && getAvailablePreparedCarriers(0).contains(selectedPreparedCarrier);
         }
+        WeaponState carrier = getHuman().weapons.get(getHuman().preparedCarrierName);
+        if (carrier != null && "ship".equals(carrier.definition.type)) {
+            return canAcceptPreparedShipAttack();
+        }
         PlayerState target = selectedTargetPlayer > 0 && selectedTargetPlayer < players.length
                 ? players[selectedTargetPlayer] : null;
         CityState city = target == null ? null : target.getCity(selectedTargetCity);
-        WeaponState carrier = getHuman().weapons.get(getHuman().preparedCarrierName);
         WeaponState payload = getHuman().weapons.get(selectedPreparedPayload);
         return target != null && target.alive && city != null && city.populationMillions > 0
                 && !target.hasCeasefireWith(0)
                 && isCompatiblePayload(carrier, payload) && payload.active && payload.inStock > 0;
+    }
+
+    private boolean canAcceptPreparedShipAttack() {
+        if (selectedShipStrikes.size() != 3) {
+            return false;
+        }
+        int targetId = selectedShipStrikes.get(0).targetPlayerId;
+        PlayerState target = playerById(targetId);
+        WeaponState carrier = getHuman().weapons.get(getHuman().preparedCarrierName);
+        if (!target.alive || target.hasCeasefireWith(0) || carrier == null) {
+            return false;
+        }
+        Map<String, Integer> selectedPayloads = new LinkedHashMap<>();
+        for (ShipStrike strike : selectedShipStrikes) {
+            CityState city = target.getCity(strike.cityIndex);
+            WeaponState payload = getHuman().weapons.get(strike.payloadName);
+            if (strike.targetPlayerId != targetId || city == null
+                    || city.populationMillions <= 0
+                    || !isCompatiblePayload(carrier, payload)
+                    || !payload.active) {
+                return false;
+            }
+            Integer count = selectedPayloads.get(strike.payloadName);
+            selectedPayloads.put(strike.payloadName, count == null ? 1 : count + 1);
+        }
+        for (Map.Entry<String, Integer> selected : selectedPayloads.entrySet()) {
+            if (getWeaponStock(0, selected.getKey()) < selected.getValue()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public boolean canAcceptDefense() {
@@ -919,10 +1057,6 @@ public final class GameState {
         }
         if ("space".equals(carrier.definition.type)) {
             return "specialLoad".equals(payload.definition.type);
-        }
-        // A source ship strike requires three separately selected payload/city pairs.
-        if ("ship".equals(carrier.definition.type)) {
-            return false;
         }
         String payloadType = payload.definition.type;
         return "rocketload".equals(payloadType)
@@ -1091,7 +1225,7 @@ public final class GameState {
                 selectedPreparedPayload,
                 selectedAction == Action.PREPARED_ATTACK
                         && getHuman().preparedCarrierName == null,
-                selectedSpyBuilding, selectedDiplomacyOption);
+                selectedSpyBuilding, selectedDiplomacyOption, selectedShipStrikes);
         queuedActions.add(order);
         getHuman().turnMoneyMillions -= reserved;
         messages.add(selectedAction.label + " queued.");
@@ -1102,6 +1236,7 @@ public final class GameState {
         selectedAttackWeapon = firstAvailableAttackWeapon();
         selectedPreparedCarrier = null;
         selectedPreparedPayload = null;
+        selectedShipStrikes.clear();
         selectedDefenseWeapon = firstAvailableDefenseWeapon();
         selectedDiplomacyOption = 0;
         return true;
@@ -1115,6 +1250,7 @@ public final class GameState {
         selectedDiplomacyOption = 0;
         selectedPreparedCarrier = null;
         selectedPreparedPayload = null;
+        selectedShipStrikes.clear();
         selectedDefenseWeapon = null;
     }
 
@@ -1234,7 +1370,7 @@ public final class GameState {
                         decision.targetCityIndex,
                         decision.weaponName,
                         decision.payloadName, decision.prepareCarrier, "spyCenter",
-                        decision.diplomacyOption));
+                        decision.diplomacyOption, decision.shipStrikes));
                 player.lastTurnActions.add(decision.action);
             }
         }
@@ -1603,8 +1739,13 @@ public final class GameState {
         }
 
         PlayerState defender = playerById(order.targetPlayerId);
-        CityState city = defender.getCity(order.targetCityIndex);
         WeaponState carrier = attacker.weapons.get(order.weaponName);
+        if (carrier != null && "ship".equals(carrier.definition.type)) {
+            resolveShipPreparedAttack(order, attacker, defender, carrier,
+                    resolvedDefenses, biologicalEffects);
+            return;
+        }
+        CityState city = defender.getCity(order.targetCityIndex);
         WeaponState payload = attacker.weapons.get(order.payloadName);
         if (!order.weaponName.equals(attacker.preparedCarrierName)
                 || !defender.alive || city == null || city.populationMillions <= 0
@@ -1617,6 +1758,8 @@ public final class GameState {
 
         attacker.preparedCarrierName = null;
         payload.inStock--;
+        int rolledCasualties = sourceStrikeCasualties(payload.definition.maxKillsMillions,
+                attacker.human, defender.human);
         boolean intercepted = false;
         String counterName = carrier.definition.counteredBy;
         if (!counterName.isEmpty()) {
@@ -1632,9 +1775,11 @@ public final class GameState {
             return;
         }
 
-        int casualties = sourceStrikeCasualties(payload.definition.maxKillsMillions,
-                attacker.human, defender.human);
-        casualties = Math.min(casualties, city.populationMillions);
+        if (order.payloadName.startsWith("bioload")) {
+            int bioLevel = order.payloadName.charAt(order.payloadName.length() - 1) - '0';
+            biologicalEffects.add(createBiologicalEffect(defender, city, bioLevel));
+        }
+        int casualties = Math.min(rolledCasualties, city.populationMillions);
         city.populationMillions -= casualties;
         defender.populationMillions = totalPopulation(defender);
         if (defender.populationMillions <= 0) {
@@ -1644,13 +1789,106 @@ public final class GameState {
         if (casualties > 0) {
             addToHighscore(attacker, 1, casualties);
         }
-        if (order.payloadName.startsWith("bioload")) {
-            int bioLevel = order.payloadName.charAt(order.payloadName.length() - 1) - '0';
-            biologicalEffects.add(createBiologicalEffect(defender, city, bioLevel));
-        }
         messages.add(order.payloadName + " strike caused " + casualties
                 + " million casualties in nation " + defender.id + " city "
                 + (city.index + 1) + ".");
+    }
+
+    private void resolveShipPreparedAttack(ActionOrder order, PlayerState attacker,
+                                          PlayerState defender, WeaponState carrier,
+                                          List<ActionOrder> resolvedDefenses,
+                                          List<BiologicalEffect> biologicalEffects) {
+        if (!order.weaponName.equals(attacker.preparedCarrierName)
+                || !defender.alive || defender.hasCeasefireWith(attacker.id)
+                || order.shipStrikes.size() != 3) {
+            messages.add("Ship strike cancelled: target or payload sequence is unavailable.");
+            return;
+        }
+        Map<String, Integer> payloadUse = new LinkedHashMap<>();
+        for (ShipStrike strike : order.shipStrikes) {
+            CityState city = defender.getCity(strike.cityIndex);
+            WeaponState payload = attacker.weapons.get(strike.payloadName);
+            if (strike.targetPlayerId != defender.id || city == null
+                    || city.populationMillions <= 0
+                    || !isCompatiblePayload(carrier, payload) || !payload.active) {
+                messages.add("Ship strike cancelled: target or payload sequence is unavailable.");
+                return;
+            }
+            Integer count = payloadUse.get(strike.payloadName);
+            payloadUse.put(strike.payloadName, count == null ? 1 : count + 1);
+        }
+        for (Map.Entry<String, Integer> used : payloadUse.entrySet()) {
+            WeaponState payload = attacker.weapons.get(used.getKey());
+            if (payload.inStock < used.getValue()) {
+                messages.add("Ship strike cancelled: selected payload stock is unavailable.");
+                return;
+            }
+        }
+
+        String counterName = carrier.definition.counteredBy;
+        boolean hasMatchingDefense = false;
+        for (ActionOrder defense : resolvedDefenses) {
+            if (defense.playerId == defender.id && counterName.equals(defense.weaponName)) {
+                hasMatchingDefense = true;
+                break;
+            }
+        }
+        List<ShipStrikeResult> results = new ArrayList<>(3);
+        for (ShipStrike strike : order.shipStrikes) {
+            WeaponState payload = attacker.weapons.get(strike.payloadName);
+            int rolledCasualties = sourceShipStrikeCasualties(
+                    payload.definition.maxKillsMillions, random);
+            boolean counterRollIntercepts = shipCounterRollIntercepts(random);
+            boolean intercepted = hasMatchingDefense && counterRollIntercepts;
+            if (!intercepted && payload.definition.name.startsWith("bioload")) {
+                int level = payload.definition.name.charAt(
+                        payload.definition.name.length() - 1) - '0';
+                biologicalEffects.add(createBiologicalEffect(defender,
+                        defender.getCity(strike.cityIndex), level));
+            }
+            results.add(new ShipStrikeResult(strike, payload.definition.name,
+                    rolledCasualties, intercepted));
+        }
+
+        attacker.preparedCarrierName = null;
+        for (ShipStrike strike : order.shipStrikes) {
+            attacker.weapons.get(strike.payloadName).inStock--;
+        }
+        for (ShipStrikeResult result : results) {
+            ShipStrike strike = result.strike;
+            CityState city = defender.getCity(strike.cityIndex);
+            int casualties;
+            if (result.intercepted) {
+                casualties = 0;
+                messages.add("Nation " + defender.id + " intercepted one ship payload.");
+            } else {
+                casualties = Math.min(result.rolledCasualties, city.populationMillions);
+                city.populationMillions -= casualties;
+                if (casualties > 0) {
+                    addToHighscore(attacker, 1, casualties);
+                }
+            }
+            messages.add(result.payloadName + " ship payload caused " + casualties
+                    + " million casualties in nation " + defender.id + " city "
+                    + (city.index + 1) + ".");
+        }
+        defender.populationMillions = totalPopulation(defender);
+        if (defender.populationMillions <= 0) {
+            defender.alive = false;
+            messages.add("Nation " + defender.id + " has been eliminated.");
+        }
+    }
+
+    /** Source ship counter roll uses randRange(1, 3) == 2: one of three strikes. */
+    static boolean shipCounterRollIntercepts(Random random) {
+        return random.nextInt(3) + 1 == 2;
+    }
+
+    /** Source Tools.randRange(maxKills/2, maxKills), followed by Math.round. */
+    static int sourceShipStrikeCasualties(int maximum, Random random) {
+        float minimum = maximum / 2f;
+        int offset = (int) Math.floor(random.nextFloat() * (maximum - minimum + 1f));
+        return Math.round(minimum + offset);
     }
 
     /** Source Tools.randRange(1, 9) != 5: eight outcomes intercept. */

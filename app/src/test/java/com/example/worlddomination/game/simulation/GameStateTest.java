@@ -271,6 +271,86 @@ public final class GameStateTest {
     }
 
     @Test
+    public void preparedShipRequiresThreeSameNationPayloadCityPairsAndResolvesEach() {
+        GameState state = new GameState(1, 207L, false);
+        GameState.PlayerState human = state.getHuman();
+        GameState.PlayerState target = state.getPlayerState(1);
+        human.getWeapons().get("ship").active = true;
+        human.getWeapons().get("ship").inStock = 1;
+        human.getWeapons().get("warhead1").inStock = 2;
+        human.getWeapons().get("bioload1").inStock = 1;
+
+        state.selectAction(GameState.Action.PREPARED_ATTACK);
+        assertTrue(state.configurePreparedCarrier("ship"));
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+        assertEquals("ship", human.getPreparedCarrierName());
+        assertEquals(0, state.getWeaponStock(0, "ship"));
+
+        int[] before = new int[3];
+        for (int city = 1; city <= 3; city++) {
+            before[city - 1] = target.getCity(city).populationMillions;
+        }
+        state.selectAction(GameState.Action.PREPARED_ATTACK);
+        assertFalse(state.canAcceptPreparedAttack());
+        assertTrue(state.configurePreparedShipStrike(1, 0, "warhead1"));
+        assertFalse("all three city selections must belong to one nation",
+                state.configurePreparedShipStrike(2, 0, "warhead1"));
+        assertTrue(state.configurePreparedShipStrike(1, 1, "warhead1"));
+        assertTrue(state.configurePreparedShipStrike(1, 2, "bioload1"));
+        assertEquals(3, state.getSelectedShipStrikeCount());
+        assertTrue("selecting a fourth city replaces the oldest ship strike",
+                state.configurePreparedShipStrike(1, 3, "warhead1"));
+        assertEquals(3, state.getSelectedShipStrikeCount());
+        assertEquals(1, state.getSelectedShipStrikes().get(0).cityIndex);
+        assertEquals(3, state.getSelectedShipStrikes().get(2).cityIndex);
+        assertTrue(state.canAcceptPreparedAttack());
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+
+        assertNull(human.getPreparedCarrierName());
+        assertEquals(0, state.getWeaponStock(0, "warhead1"));
+        assertEquals(0, state.getWeaponStock(0, "bioload1"));
+        for (int city = 1; city <= 3; city++) {
+            assertTrue("ship payload did not damage city " + city,
+                    target.getCity(city).populationMillions < before[city - 1]);
+        }
+    }
+
+    @Test
+    public void shipCounterAndCasualtyRollsMatchSourceBoundaries() {
+        for (int roll = 1; roll <= 3; roll++) {
+            final int sourceRoll = roll;
+            Random fixed = new Random(0L) {
+                @Override
+                public int nextInt(int bound) {
+                    assertEquals(3, bound);
+                    return sourceRoll - 1;
+                }
+            };
+            assertEquals(roll == 2, GameState.shipCounterRollIntercepts(fixed));
+        }
+        Random minimum = new Random(0L) {
+            @Override
+            public float nextFloat() {
+                return 0f;
+            }
+        };
+        Random maximum = new Random(0L) {
+            @Override
+            public float nextFloat() {
+                return 0.9999f;
+            }
+        };
+        assertEquals(8, GameState.sourceShipStrikeCasualties(15, minimum));
+        assertEquals(16, GameState.sourceShipStrikeCasualties(15, maximum));
+    }
+
+    @Test
     public void defenseSelectionConsumesOneMatchingCounter() {
         GameState state = new GameState(1, 203L, false);
         assertTrue(state.getAvailableDefenseWeapons(0).contains("antiRocket"));
@@ -302,7 +382,7 @@ public final class GameStateTest {
                 .contains("warhead2"));
         human.getWeapons().get("ship").active = true;
         human.getWeapons().get("ship").inStock = 1;
-        assertFalse(state.getAvailablePreparedCarriers(0).contains("ship"));
+        assertTrue(state.getAvailablePreparedCarriers(0).contains("ship"));
     }
 
     @Test
