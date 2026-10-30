@@ -1865,6 +1865,9 @@ public final class GameState {
 
     private void updateDiplomacyRelations() {
         for (PlayerState player : players) {
+            if (!player.alive) {
+                continue;
+            }
             for (int otherId = 0; otherId < players.length; otherId++) {
                 int regard = player.regardToward[otherId];
                 if (player.ceasefireTurns[otherId] > 0) {
@@ -1880,6 +1883,11 @@ public final class GameState {
                     regard++;
                 }
                 player.regardToward[otherId] = Math.min(100, regard);
+            }
+            if (!player.human) {
+                for (int otherId = 1; otherId < players.length; otherId++) {
+                    player.regardToward[otherId] += difficulty;
+                }
             }
         }
     }

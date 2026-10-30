@@ -999,6 +999,36 @@ public final class GameStateTest {
     }
 
     @Test
+    public void diplomacyRegardDriftAddsDifficultyBonusOnlyToAiRivalRelations() {
+        for (int difficulty = 0; difficulty <= 2; difficulty++) {
+            GameState state = new GameState(difficulty, 50L + difficulty, false);
+            GameState.PlayerState ai = state.getPlayerState(1);
+            setRegard(ai, 0, 70);
+            setRegard(ai, 2, 70);
+
+            completeTurnWithResourcesAndMedia(state);
+
+            int baseDrift = difficulty == 0 ? 3 : difficulty == 1 ? 2 : 1;
+            assertEquals(70 + baseDrift, ai.getRegardToward(0));
+            assertEquals(70 + baseDrift + difficulty, ai.getRegardToward(2));
+        }
+    }
+
+    @Test
+    public void diplomacyDriftSkipsDeadActorsButUpdatesRelationsTowardThem() {
+        GameState state = new GameState(1, 52L, false);
+        GameState.PlayerState eliminated = state.getPlayerState(4);
+        eliminated.alive = false;
+        setRegard(eliminated, 0, 70);
+        setRegard(state.getHuman(), eliminated.id, 70);
+
+        completeTurnWithResourcesAndMedia(state);
+
+        assertEquals(70, eliminated.getRegardToward(0));
+        assertEquals(72, state.getHuman().getRegardToward(eliminated.id));
+    }
+
+    @Test
     public void rejectedDiplomacyOfferRefundsItsFullCost() {
         GameState state = new GameState(1, 13L);
         GameState.PlayerState opponent = state.getPlayerState(1);
