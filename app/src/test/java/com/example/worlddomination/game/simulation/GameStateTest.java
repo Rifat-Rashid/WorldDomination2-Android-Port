@@ -308,18 +308,18 @@ public final class GameStateTest {
     }
 
     @Test
-    public void tappingAQueuedResourcesActionRemovesItForRequeue() {
-        GameState state = new GameState(1);
+    public void tappingQueuedResourcesCanFillSecondSlotAndSlotControlRemovesIt() {
+        GameState state = new GameState(1, 54L, false);
         state.selectAction(GameState.Action.RESOURCES);
-        state.acceptSelectedAction();
+        assertTrue(state.acceptSelectedAction());
         assertEquals(1, state.getQueuedActionCount());
 
         state.selectAction(GameState.Action.RESOURCES);
-        assertEquals(0, state.getQueuedActionCount());
-        assertNull(state.getSelectedAction());
+        assertEquals(GameState.Action.RESOURCES, state.getSelectedAction());
+        assertTrue(state.acceptSelectedAction());
+        assertEquals(2, state.getQueuedActionCount());
 
-        state.selectAction(GameState.Action.RESOURCES);
-        assertEquals(true, state.acceptSelectedAction());
+        state.removeQueuedAction(1);
         assertEquals(1, state.getQueuedActionCount());
     }
 
@@ -349,6 +349,30 @@ public final class GameStateTest {
         assertEquals(55, state.getTurnMoneyMillions());
         assertEquals(65, state.getHuman().moneyMillions);
         assertFalse(state.getHuman().hasTechnology("soldier2"));
+    }
+
+    @Test
+    public void sameUninventedTechnologyCanFillBothSlotsButResearchesOnce() {
+        GameState state = new GameState(1, 55L, false);
+        GameState.PlayerState human = state.getHuman();
+        int startingFunds = human.moneyMillions;
+        int researchCost = state.getTechnologyCost("soldier2");
+
+        for (int slot = 0; slot < 2; slot++) {
+            state.selectAction(GameState.Action.RESEARCH);
+            assertTrue(state.isResearchAvailable("soldier2"));
+            assertTrue(state.selectResearchTechnology("soldier2"));
+            assertTrue(state.acceptSelectedAction());
+            assertEquals(startingFunds - (slot + 1) * researchCost,
+                    state.getTurnMoneyMillions());
+        }
+        assertEquals(2, state.getQueuedActionCount());
+
+        state.confirmTurn();
+
+        assertTrue(human.hasTechnology("soldier2"));
+        assertEquals(startingFunds - researchCost, human.moneyMillions);
+        assertEquals(human.moneyMillions, state.getTurnMoneyMillions());
     }
 
     @Test
@@ -636,6 +660,133 @@ public final class GameStateTest {
         assertTrue(state.configureAttack(1, 0, "soldier1"));
         assertTrue(state.acceptSelectedAction());
         assertEquals(GameState.Action.ATTACK, state.getQueuedAction(0));
+    }
+
+    @Test
+    public void sameActionCanBeQueuedTwiceWhileEachUnitIsReserved() {
+        GameState state = new GameState(1, 49L, false);
+        GameState.WeaponState soldier = state.getHuman().getWeapons().get("soldier1");
+        soldier.active = true;
+        soldier.inStock = 2;
+
+        state.selectAction(GameState.Action.ATTACK);
+        assertTrue(state.configureAttack(1, 0, "soldier1"));
+        assertTrue(state.acceptSelectedAction());
+        assertTrue("one of two soldiers remains available",
+                state.getAvailableAttackWeapons().contains("soldier1"));
+
+        state.selectAction(GameState.Action.ATTACK);
+        assertTrue(state.configureAttack(1, 1, "soldier1"));
+        assertTrue(state.acceptSelectedAction());
+        assertEquals(2, state.getQueuedActionCount());
+        assertEquals(GameState.Action.ATTACK, state.getQueuedAction(0));
+        assertEquals(GameState.Action.ATTACK, state.getQueuedAction(1));
+        assertFalse("both queued orders reserve the two available soldiers",
+                state.getAvailableAttackWeapons().contains("soldier1"));
+    }
+
+    @Test
+    public void removingQueuedActionReleasesItsWeaponReservation() {
+        GameState state = new GameState(1, 50L, false);
+        GameState.WeaponState soldier = state.getHuman().getWeapons().get("soldier1");
+        soldier.active = true;
+        soldier.inStock = 1;
+
+        state.selectAction(GameState.Action.ATTACK);
+        assertTrue(state.configureAttack(1, 0, "soldier1"));
+        assertTrue(state.acceptSelectedAction());
+        assertFalse(state.getAvailableAttackWeapons().contains("soldier1"));
+
+        state.selectAction(GameState.Action.ATTACK);
+        assertFalse(state.configureAttack(1, 0, "soldier1"));
+        state.cancelSelection();
+        state.removeQueuedAction(0);
+        state.selectAction(GameState.Action.ATTACK);
+        assertTrue(state.getAvailableAttackWeapons().contains("soldier1"));
+        assertTrue(state.configureAttack(1, 0, "soldier1"));
+    }
+
+    @Test
+    public void queuedDefenseReservesCounterStockUntilTheOrderIsRemoved() {
+        GameState state = new GameState(1, 51L, false);
+        GameState.WeaponState antiAir = state.getHuman().getWeapons().get("antiAir");
+        antiAir.active = true;
+        antiAir.inStock = 1;
+
+        state.selectAction(GameState.Action.DEFENSE);
+        assertTrue(state.configureDefense("antiAir"));
+        assertTrue(state.acceptSelectedAction());
+        assertFalse(state.getAvailableDefenseWeapons(0).contains("antiAir"));
+
+        state.selectAction(GameState.Action.DEFENSE);
+        assertFalse(state.configureDefense("antiAir"));
+        state.cancelSelection();
+        state.removeQueuedAction(0);
+        state.selectAction(GameState.Action.DEFENSE);
+        assertTrue(state.getAvailableDefenseWeapons(0).contains("antiAir"));
+        assertTrue(state.configureDefense("antiAir"));
+    }
+
+    @Test
+    public void queuedCarrierAndPayloadReservePreparedStrikeStock() {
+        GameState state = new GameState(1, 52L, false);
+        GameState.PlayerState human = state.getHuman();
+        GameState.WeaponState rocket = human.getWeapons().get("rocket1");
+        GameState.WeaponState warhead = human.getWeapons().get("warhead1");
+        rocket.active = true;
+        rocket.inStock = 1;
+        warhead.active = true;
+        warhead.inStock = 1;
+
+        state.selectAction(GameState.Action.PREPARED_ATTACK);
+        assertTrue(state.configurePreparedCarrier("rocket1"));
+        assertTrue(state.acceptSelectedAction());
+        assertFalse(state.getAvailablePreparedCarriers(0).contains("rocket1"));
+
+        state.selectAction(GameState.Action.PREPARED_ATTACK);
+        assertFalse(state.configurePreparedCarrier("rocket1"));
+        state.cancelSelection();
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+        assertEquals("rocket1", human.getPreparedCarrierName());
+
+        state.selectAction(GameState.Action.PREPARED_ATTACK);
+        assertTrue(state.configurePreparedLaunch(1, 0, "warhead1"));
+        assertTrue(state.acceptSelectedAction());
+        assertFalse(state.getAvailablePreparedPayloads(0, "rocket1")
+                .contains("warhead1"));
+
+        state.selectAction(GameState.Action.PREPARED_ATTACK);
+        assertFalse(state.configurePreparedLaunch(1, 0, "warhead1"));
+    }
+
+    @Test
+    public void queuedShipStrikeReservesEverySelectedPayload() {
+        GameState state = new GameState(1, 53L, false);
+        GameState.PlayerState human = state.getHuman();
+        GameState.WeaponState ship = human.getWeapons().get("ship");
+        GameState.WeaponState warhead = human.getWeapons().get("warhead1");
+        ship.active = true;
+        ship.inStock = 1;
+        warhead.active = true;
+        warhead.inStock = 3;
+
+        state.selectAction(GameState.Action.PREPARED_ATTACK);
+        assertTrue(state.configurePreparedCarrier("ship"));
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+
+        state.selectAction(GameState.Action.PREPARED_ATTACK);
+        assertTrue(state.configurePreparedShipStrike(1, 0, "warhead1"));
+        assertTrue(state.configurePreparedShipStrike(1, 1, "warhead1"));
+        assertTrue(state.configurePreparedShipStrike(1, 2, "warhead1"));
+        assertTrue(state.canAcceptPreparedAttack());
+        assertTrue(state.acceptSelectedAction());
+        assertFalse(state.getAvailablePreparedPayloads(0, "ship")
+                .contains("warhead1"));
     }
 
     @Test
