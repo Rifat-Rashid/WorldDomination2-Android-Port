@@ -524,7 +524,7 @@ public final class GameState {
         }
         this.difficulty = difficulty;
         this.opponentTurnsEnabled = opponentTurnsEnabled;
-        this.random = new Random(seed);
+        this.random = new ReferenceRandom(seed);
         players[0] = new PlayerState(0, true, PLAYER_START_POPULATION[difficulty],
                 PLAYER_START_MONEY[difficulty], PLAYER_START_MONEY[difficulty], -1,
                 setup == null ? "chr" : setup.getHumanReligionCode(),
@@ -2687,8 +2687,8 @@ public final class GameState {
 
     /** Flash Tools.randRange floors an inclusive random offset before Math.round. */
     private static int sourceRandRangeRounded(float minimum, float maximum, Random random) {
-        int offset = (int) Math.floor(random.nextFloat() * (maximum - minimum + 1f));
-        return Math.round(minimum + offset);
+        int offset = (int) Math.floor(random.nextDouble() * (maximum - minimum + 1.0));
+        return (int) Math.floor(minimum + offset + 0.5);
     }
 
     private int sourceStrikeCasualties(int maximum, boolean attackerIsHuman,
