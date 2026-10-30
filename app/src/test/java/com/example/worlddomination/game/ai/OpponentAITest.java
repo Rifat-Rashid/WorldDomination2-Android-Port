@@ -688,7 +688,7 @@ public final class OpponentAITest {
 
     @Test
     public void plannerCanPrepareACompatibleCarrierWithoutDuplicatingTheSlot() {
-        GameState state = new GameState(1, 53L);
+        GameState state = gameWithRegularFirstOpponent(53L);
         GameState.PlayerState opponent = state.getPlayerState(1);
         configureSourcePreparationScenario(opponent, "rocket1");
 
@@ -798,8 +798,10 @@ public final class OpponentAITest {
 
     @Test
     public void opponentPreparesAndLaunchesAStockedRocketAcrossTurns() {
-        GameState state = gameWithRegularFirstOpponent(54L);
+        GameState state = new GameState(1, 59L);
         GameState.PlayerState opponent = state.getPlayerState(1);
+        assertFalse(opponent.isSpecialPerson());
+        assertFalse(opponent.isSuicidePerson());
         opponent.moneyMillions = 0;
         opponent.turnMoneyMillions = 0;
         for (GameState.WeaponState weapon : opponent.getWeapons().values()) {
@@ -821,7 +823,8 @@ public final class OpponentAITest {
         assertEquals(0, state.getWeaponStock(1, "rocket1"));
         assertEquals(1, state.getWeaponStock(1, "warhead1"));
 
-        int antiRocketBefore = state.getWeaponStock(0, "antiRocket");
+        state.getHuman().getWeapons().get("antiRocket").active = true;
+        state.getHuman().getWeapons().get("antiRocket").inStock = 1;
         state.selectAction(GameState.Action.DEFENSE);
         assertTrue(state.configureDefense("antiRocket"));
         assertTrue(state.acceptSelectedAction());
@@ -832,7 +835,7 @@ public final class OpponentAITest {
         assertTrue(opponent.getLastTurnActions().contains(GameState.Action.PREPARED_ATTACK));
         assertNull(opponent.getPreparedCarrierName());
         assertEquals(0, state.getWeaponStock(1, "warhead1"));
-        assertEquals(antiRocketBefore - 1, state.getWeaponStock(0, "antiRocket"));
+        assertEquals(0, state.getWeaponStock(0, "antiRocket"));
     }
 
     @Test
@@ -869,8 +872,10 @@ public final class OpponentAITest {
 
     @Test
     public void biologicalStrikeBlocksHumanActionsAndRestoresTemporaryWeaponLocks() {
-        GameState state = gameWithRegularFirstOpponent(55L);
+        GameState state = new GameState(1, 62L);
         GameState.PlayerState attacker = state.getPlayerState(1);
+        assertFalse(attacker.isSpecialPerson());
+        assertFalse(attacker.isSuicidePerson());
         attacker.moneyMillions = 0;
         attacker.turnMoneyMillions = 0;
         for (GameState.WeaponState weapon : attacker.getWeapons().values()) {
@@ -886,6 +891,7 @@ public final class OpponentAITest {
                 weapon.active = true;
             }
         }
+        state.getHuman().getWeapons().get("antiRocket").inStock = 0;
 
         state.selectAction(GameState.Action.RESOURCES);
         assertTrue(state.acceptSelectedAction());
@@ -899,6 +905,8 @@ public final class OpponentAITest {
         state.selectAction(GameState.Action.MASS_MEDIA);
         assertTrue(state.acceptSelectedAction());
         state.confirmTurn();
+        assertTrue(attacker.getLastTurnActions().contains(GameState.Action.PREPARED_ATTACK));
+        assertEquals(0, state.getWeaponStock(1, "bioload1"));
 
         GameState.PlayerState human = state.getHuman();
         assertTrue(human.isBioloaded());

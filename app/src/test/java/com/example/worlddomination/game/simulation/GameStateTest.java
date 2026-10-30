@@ -1203,14 +1203,14 @@ public final class GameStateTest {
         }
         Random minimum = new Random(0L) {
             @Override
-            public float nextFloat() {
+            public double nextDouble() {
                 return 0f;
             }
         };
         Random maximum = new Random(0L) {
             @Override
-            public float nextFloat() {
-                return 0.9999f;
+            public double nextDouble() {
+                return 0.9999;
             }
         };
         assertEquals(8, GameState.sourceShipStrikeCasualties(15, minimum));
@@ -1221,16 +1221,16 @@ public final class GameStateTest {
     public void soldierCasualtyRollFloorsSourceRandRangeBeforeRounding() {
         Random upperOffset = new Random(0L) {
             @Override
-            public float nextFloat() {
-                return 0.667f;
+            public double nextDouble() {
+                return 0.667;
             }
         };
         assertEquals(4, GameState.sourceDirectAttackCasualties(4, upperOffset));
 
         Random oddMaximum = new Random(0L) {
             @Override
-            public float nextFloat() {
-                return 0.9999f;
+            public double nextDouble() {
+                return 0.9999;
             }
         };
         // The source's half-integer lower bound and inclusive roll can round
@@ -1325,6 +1325,17 @@ public final class GameStateTest {
         GameState state = new GameState(1, 11L, false);
         GameState.PlayerState attacker = state.getHuman();
         GameState.PlayerState defender = state.getPlayers()[1];
+        attacker.getWeapons().get("spy1").active = true;
+        attacker.getWeapons().get("spy1").inStock = 1;
+        attacker.getWeapons().get("rocket1").active = true;
+        attacker.getWeapons().get("rocket1").inStock = 0;
+        attacker.getWeapons().get("soldier1").inStock = 0;
+        defender.moneyMillions = 100;
+        for (GameState.WeaponState weapon : defender.getWeapons().values()) {
+            weapon.inStock = 0;
+        }
+        defender.getWeapons().get("rocket1").active = true;
+        defender.getWeapons().get("rocket1").inStock = 1;
         int attackerFundsBefore = attacker.moneyMillions;
         int defenderFundsBefore = defender.moneyMillions;
         int enemyCityBefore = defender.getCity(0).populationMillions;
@@ -1350,8 +1361,9 @@ public final class GameStateTest {
         assertEquals(enemyCityBefore, defender.getCity(0).populationMillions);
         assertEquals(0, state.getWeaponStock(0, "spy1"));
         assertEquals(0, state.getSpyReadiness());
-        assertTrue(state.getWeaponStock(0, "rocket1")
-                + state.getWeaponStock(0, "soldier1") > attackerStarterStock);
+        assertEquals(attackerStarterStock + 1, state.getWeaponStock(0, "rocket1")
+                + state.getWeaponStock(0, "soldier1"));
+        assertEquals(0, state.getWeaponStock(1, "rocket1"));
         assertTrue(attacker.score > 0);
 
         attacker.getWeapons().get("spy1").inStock = 1;
@@ -1518,6 +1530,7 @@ public final class GameStateTest {
         GameState.PlayerState defender = state.getPlayers()[1];
         attacker.religion = 0;
         defender.religion = 0;
+        int defenderPopulationBefore = defender.populationMillions;
         CityState targetCity = defender.getCity(0);
         int targetBefore = targetCity.populationMillions;
         int[] attackerCitiesBefore = new int[5];
@@ -1545,7 +1558,7 @@ public final class GameStateTest {
             expectedPlayerGain += expectedCityGain;
         }
         assertEquals(450 + expectedPlayerGain, attacker.populationMillions);
-        assertEquals(447, defender.populationMillions);
+        assertEquals(defenderPopulationBefore - transfer, defender.populationMillions);
         assertTrue(attacker.score > 0);
     }
 
@@ -2091,7 +2104,9 @@ public final class GameStateTest {
 
     @Test
     public void hardMassMediaCannotRaiseInfluenceAboveOneHundred() {
-        GameState state = new GameState(2);
+        GameState state = new GameState(2, 0L, false);
+        int startingMoney = state.getHuman().moneyMillions;
+        int incomePerTurn = state.getResourceIncomeMillions();
         for (int turn = 0; turn < 5; turn++) {
             state.selectAction(GameState.Action.MASS_MEDIA);
             assertEquals(true, state.acceptSelectedAction());
@@ -2101,7 +2116,7 @@ public final class GameStateTest {
         }
 
         assertEquals(100, state.getHuman().religion);
-        assertEquals(210, state.getHuman().moneyMillions);
+        assertEquals(startingMoney + incomePerTurn * 5, state.getHuman().moneyMillions);
         assertEquals(5, state.getTurn());
     }
 
