@@ -35,6 +35,30 @@ jobs:
           - id: setup-scoring-tests
             check: Game setup and scoring tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameSetupTest" --tests "com.example.worlddomination.game.simulation.FinalScoreBreakdownTest"'
+          - id: resources-economy-tests
+            check: Resources and mass media economy tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.normalResourcesAndMassMediaResolveOneTurn" --tests "com.example.worlddomination.game.simulation.GameStateTest.resourcesAndMassMediaAddTheirSourceHighscoreWeights" --tests "com.example.worlddomination.game.simulation.GameStateTest.resourceYieldUsesDifficultyDividerAndSourceRounding" --tests "com.example.worlddomination.game.simulation.GameStateTest.zeroHighscoreMultiplierDefaultsToOneLikeTheSource"'
+          - id: technology-research-tests
+            check: Technology research parity tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.researchRequiresPrerequisiteAndReservesItsSourceCost" --tests "com.example.worlddomination.game.simulation.GameStateTest.researchCompletesAndActivatesTheCorrespondingWeapon" --tests "com.example.worlddomination.game.simulation.GameStateTest.specialTechnologiesUnlockAfterFourLevelFourTechnologies" --tests "com.example.worlddomination.game.simulation.GameStateTest.researchSelectsMultipleGroupsReservesCombinedCostAndCompletesThem"'
+          - id: production-budget-tests
+            check: Production budget and stock tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.productionReservesBudgetAndTurnsItIntoWeaponStock" --tests "com.example.worlddomination.game.simulation.GameStateTest.productionRejectsLockedTechnologyGroupAndKeepsExistingSelection" --tests "com.example.worlddomination.game.simulation.GameStateTest.productionCanSplitOneHundredPercentAcrossMultipleCategories" --tests "com.example.worlddomination.game.simulation.GameStateTest.productionAllocationCannotExceedSharedHundredPercentLimit" --tests "com.example.worlddomination.game.simulation.GameStateTest.productionReservationRoundsCombinedShareAndRefundsOnRemoval" --tests "com.example.worlddomination.game.simulation.GameStateTest.productionActionReservesAndResolvesEveryAllocatedCategory" --tests "com.example.worlddomination.game.simulation.GameStateTest.researchThenProductionUsesUnlockedUnitAndSourceCostOrder"'
+          - id: direct-combat-tests
+            check: Direct combat and casualty tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.directSoldierAttackConsumesStockAndDamagesSelectedCity" --tests "com.example.worlddomination.game.simulation.GameStateTest.directAttackChangesMutualRegardAndFractionalCeasefireAllyRegard" --tests "com.example.worlddomination.game.simulation.GameStateTest.directAttackRejectsDeadTargetsEmptyCitiesAndUnavailableWeapons" --tests "com.example.worlddomination.game.simulation.GameStateTest.soldierCasualtyRollFloorsSourceRandRangeBeforeRounding"'
+          - id: intelligence-tests
+            check: Spy and intelligence gameplay tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.spyAttackStealsMoneyAndStockThenFollowsReadinessCooldown" --tests "com.example.worlddomination.game.simulation.GameStateTest.queuedSpyMissionResolvesWithoutRecheckingReadiness" --tests "com.example.worlddomination.game.simulation.GameStateTest.spyStealsTechnologyWithoutRemovingEnemyUnitStock" --tests "com.example.worlddomination.game.simulation.GameStateTest.spyTargetsPopulatedCityAndDifficultyCapsStolenFunds" --tests "com.example.worlddomination.game.simulation.GameStateTest.spyCannotSelectAnEmptyCityEvenWhenTheNationStillHasPopulation" --tests "com.example.worlddomination.game.simulation.GameStateTest.specialOpponentUsesDifficultyMoneyCapAndOneLowLevelItem"'
+          - id: prepared-weapon-defense-tests
+            check: Prepared weapons and defense tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.queuedDefenseReservesCounterStockUntilTheOrderIsRemoved" --tests "com.example.worlddomination.game.simulation.GameStateTest.queuedCarrierAndPayloadReservePreparedStrikeStock" --tests "com.example.worlddomination.game.simulation.GameStateTest.queuedShipStrikeReservesEverySelectedPayload" --tests "com.example.worlddomination.game.simulation.GameStateTest.rocketStrikeConsumesCarrierWhenPreparedAndPayloadWhenLaunched" --tests "com.example.worlddomination.game.simulation.GameStateTest.preparedShipRequiresThreeSameNationPayloadCityPairsAndResolvesEach" --tests "com.example.worlddomination.game.simulation.GameStateTest.defenseSelectionConsumesOneMatchingCounter" --tests "com.example.worlddomination.game.simulation.GameStateTest.carrierCounterMappingsAndPayloadLevelsMatchWeaponStock" --tests "com.example.worlddomination.game.simulation.GameStateTest.counterInterceptRuleBlocksEightOfNineSourceRolls"'
+          - id: propaganda-population-tests
+            check: Propaganda and population tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.propagandaTransfersSourceCalculatedCitizensFromChosenCity" --tests "com.example.worlddomination.game.simulation.GameStateTest.combatAndPropagandaUseTheUnchangedTurnStartPopulation" --tests "com.example.worlddomination.game.simulation.GameStateTest.propagandaUsesBattleCasualtiesEvenWhenAttackIsQueuedAfterIt" --tests "com.example.worlddomination.game.simulation.GameStateTest.propagandaDamagesMutualRegardAndMovesThirdPartyRegardFractionally" --tests "com.example.worlddomination.game.simulation.GameStateTest.propagandaHonorsReligionCapAndRejectsInvalidTargets" --tests "com.example.worlddomination.game.simulation.GameStateTest.propagandaUsesStrictPopulationThresholdsAndHumanReligionCap"'
+          - id: diplomacy-relations-tests
+            check: Diplomacy and relations tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.diplomacyOptionsMatchReferenceTableAndReserveOfferFunds" --tests "com.example.worlddomination.game.simulation.GameStateTest.diplomacyOfferIsResolvedByAiAndCreatesTimedSymmetricCeasefire" --tests "com.example.worlddomination.game.simulation.GameStateTest.diplomacyRegardDriftAddsDifficultyBonusOnlyToAiRivalRelations" --tests "com.example.worlddomination.game.simulation.GameStateTest.diplomacyDriftSkipsDeadActorsButUpdatesRelationsTowardThem" --tests "com.example.worlddomination.game.simulation.GameStateTest.rejectedDiplomacyOfferRefundsItsFullCost" --tests "com.example.worlddomination.game.simulation.GameStateTest.diplomacyDemandUsesAiAcceptanceRulesAndTransfersMoney" --tests "com.example.worlddomination.game.simulation.GameStateTest.humanCanRespondToAiOfferAndDemandProposals" --tests "com.example.worlddomination.game.simulation.GameStateTest.diplomacyProposalCooldownBelongsToProposerAndTicksAtTurnStart" --tests "com.example.worlddomination.game.simulation.GameStateTest.acceptedAiOfferSettlesAfterTheRecipientPlansItsTurn"'
           - id: ai-tests
             check: Opponent AI tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.*"'
@@ -87,6 +111,9 @@ jobs:
 
       - name: Run ${{ matrix.check }}
         run: ./gradlew --no-daemon --stacktrace ${{ matrix.task }}
+
+      - name: Verify ${{ matrix.check }} ran tests
+        run: python3 scripts/verify_junit_results.py app/build/test-results/testDebugUnitTest
 
       - name: Upload test reports on failure
         if: failure()
