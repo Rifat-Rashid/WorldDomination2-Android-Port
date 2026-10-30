@@ -2,8 +2,11 @@ package com.example.worlddomination.game.assets;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.util.Base64;
 
+import com.caverock.androidsvg.SVG;
+import com.caverock.androidsvg.SVGParseException;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Pixmap;
@@ -230,7 +233,7 @@ public final class OriginalFlashAnimationAssets implements Disposable {
         String svg = readCompressedUtf8(SHAPE_PATH + shapeId + ".svgz");
         int dataStart = svg.indexOf(WEBP_PREFIX);
         if (dataStart < 0) {
-            throw new IllegalStateException("Flash shape has no embedded WebP: " + shapeId);
+            return decodeVectorShape(svg, shapeId);
         }
         dataStart += WEBP_PREFIX.length();
         int dataEnd = svg.indexOf('"', dataStart);
@@ -244,23 +247,59 @@ public final class OriginalFlashAnimationAssets implements Disposable {
             throw new IllegalStateException("Android could not decode Flash shape " + shapeId);
         }
         try {
-            int width = bitmap.getWidth();
-            int height = bitmap.getHeight();
-            Pixmap pixmap = new Pixmap(width, height, Pixmap.Format.RGBA8888);
-            int[] argbPixels = new int[width * height];
-            bitmap.getPixels(argbPixels, 0, width, 0, 0, width, height);
-            ByteBuffer rgbaPixels = pixmap.getPixels();
-            for (int argb : argbPixels) {
-                rgbaPixels.put((byte) (argb >>> 16));
-                rgbaPixels.put((byte) (argb >>> 8));
-                rgbaPixels.put((byte) argb);
-                rgbaPixels.put((byte) (argb >>> 24));
-            }
-            rgbaPixels.position(0);
-            return pixmap;
+            return copyBitmapToPixmap(bitmap);
         } finally {
             bitmap.recycle();
         }
+    }
+
+    private static Pixmap decodeVectorShape(String source, int shapeId) {
+        final SVG svg;
+        try {
+            svg = SVG.getFromString(source);
+        } catch (SVGParseException error) {
+            throw new IllegalStateException("Could not parse original Flash vector shape "
+                    + shapeId, error);
+        }
+
+        float documentWidth = svg.getDocumentWidth();
+        float documentHeight = svg.getDocumentHeight();
+        if (documentWidth <= 0f || documentHeight <= 0f
+                || Float.isNaN(documentWidth) || Float.isNaN(documentHeight)
+                || Float.isInfinite(documentWidth) || Float.isInfinite(documentHeight)) {
+            throw new IllegalStateException("Original Flash vector shape has invalid dimensions: "
+                    + shapeId);
+        }
+
+        int width = Math.max(1, (int) Math.ceil(documentWidth));
+        int height = Math.max(1, (int) Math.ceil(documentHeight));
+        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        try {
+            svg.renderToCanvas(new Canvas(bitmap));
+            return copyBitmapToPixmap(bitmap);
+        } catch (RuntimeException error) {
+            throw new IllegalStateException("Could not rasterize original Flash vector shape "
+                    + shapeId, error);
+        } finally {
+            bitmap.recycle();
+        }
+    }
+
+    private static Pixmap copyBitmapToPixmap(Bitmap bitmap) {
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+        Pixmap pixmap = new Pixmap(width, height, Pixmap.Format.RGBA8888);
+        int[] argbPixels = new int[width * height];
+        bitmap.getPixels(argbPixels, 0, width, 0, 0, width, height);
+        ByteBuffer rgbaPixels = pixmap.getPixels();
+        for (int argb : argbPixels) {
+            rgbaPixels.put((byte) (argb >>> 16));
+            rgbaPixels.put((byte) (argb >>> 8));
+            rgbaPixels.put((byte) argb);
+            rgbaPixels.put((byte) (argb >>> 24));
+        }
+        rgbaPixels.position(0);
+        return pixmap;
     }
 
     private static String readCompressedUtf8(String path) {
