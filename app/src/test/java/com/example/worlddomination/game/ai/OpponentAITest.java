@@ -615,6 +615,29 @@ public final class OpponentAITest {
     }
 
     @Test
+    public void sourceAllowDirCanRouteAnActiveSpyWithoutSoldiers() {
+        GameState state = gameWithRegularFirstOpponent(5311L);
+        GameState.PlayerState opponent = state.getPlayerState(1);
+        for (GameState.WeaponState weapon : opponent.getWeapons().values()) {
+            weapon.inStock = 0;
+        }
+        GameState.WeaponState spy = opponent.getWeapons().get("spy1");
+        spy.active = true;
+        spy.inStock = 1;
+        opponent.spyReadiness = 0;
+        state.getHuman().moneyMillions = 500;
+
+        OpponentAI.Decision decision = OpponentAI.planAction(state, opponent,
+                GameState.Action.ATTACK, new SequenceRandom(0, 0, 0), 1,
+                Collections.<String, Integer>emptyMap());
+
+        assertNotNull(decision);
+        assertEquals(GameState.Action.ATTACK, decision.action);
+        assertEquals("spy1", decision.weaponName);
+        assertEquals(state.getHuman().id, decision.targetPlayerId);
+    }
+
+    @Test
     public void repeatedReadyAttackPairsPayloadAndConventionalStrike() throws Exception {
         GameState state = gameWithRegularFirstOpponent(533L);
         GameState.PlayerState opponent = state.getPlayerState(1);
