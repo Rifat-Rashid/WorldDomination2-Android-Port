@@ -35,6 +35,7 @@ public final class OpponentAI {
         public final String payloadName;
         public final boolean prepareCarrier;
         public final int diplomacyOption;
+        public final List<GameState.ShipStrike> shipStrikes;
 
         private Decision(int playerId, GameState.Action action,
                          Map<String, Integer> productionBudgets,
@@ -51,6 +52,17 @@ public final class OpponentAI {
                          List<String> technologies, int reservedMillions,
                          int targetPlayerId, int targetCityIndex, String weaponName,
                          String payloadName, boolean prepareCarrier, int diplomacyOption) {
+            this(playerId, action, productionBudgets, technologies, reservedMillions,
+                    targetPlayerId, targetCityIndex, weaponName, payloadName, prepareCarrier,
+                    diplomacyOption, Collections.<GameState.ShipStrike>emptyList());
+        }
+
+        private Decision(int playerId, GameState.Action action,
+                         Map<String, Integer> productionBudgets,
+                         List<String> technologies, int reservedMillions,
+                         int targetPlayerId, int targetCityIndex, String weaponName,
+                         String payloadName, boolean prepareCarrier, int diplomacyOption,
+                         List<GameState.ShipStrike> shipStrikes) {
             this.playerId = playerId;
             this.action = action;
             this.productionBudgets = Collections.unmodifiableMap(
@@ -63,6 +75,7 @@ public final class OpponentAI {
             this.payloadName = payloadName;
             this.prepareCarrier = prepareCarrier;
             this.diplomacyOption = diplomacyOption;
+            this.shipStrikes = Collections.unmodifiableList(new ArrayList<>(shipStrikes));
         }
     }
 
@@ -383,6 +396,11 @@ public final class OpponentAI {
                     Collections.<String, Integer>emptyMap(), Collections.<String>emptyList(),
                     0, -1, -1, carrierName, null, true, -1);
         }
+        GameState.WeaponState carrier = attacker.getWeapons().get(carrierName);
+        if ("ship".equals(carrier.definition.type)) {
+            return planShipPreparedAttack(state, attacker, carrierName, random,
+                    plannedUse);
+        }
         List<String> payloads = state.getAvailablePreparedPayloads(attacker.id, carrierName);
         GameState.WeaponState selectedPayload = null;
         for (String payloadName : payloads) {
@@ -410,6 +428,51 @@ public final class OpponentAI {
                 Collections.<String, Integer>emptyMap(), Collections.<String>emptyList(),
                 0, target.id, cityIndex, carrierName,
                 selectedPayload.definition.name, false, -1);
+    }
+
+    private static Decision planShipPreparedAttack(GameState state,
+                                                   GameState.PlayerState attacker,
+                                                   String carrierName, Random random,
+                                                   Map<String, Integer> plannedWeaponUse) {
+        GameState.PlayerState target = mostHostileTarget(state, attacker, false);
+        if (target == null) {
+            return null;
+        }
+        List<GameState.WeaponState> availablePayloadUnits = new ArrayList<>();
+        for (String payloadName : state.getAvailablePreparedPayloads(
+                attacker.id, carrierName)) {
+            GameState.WeaponState payload = attacker.getWeapons().get(payloadName);
+            int available = availableStock(payload, plannedWeaponUse);
+            for (int stock = 0; stock < available; stock++) {
+                availablePayloadUnits.add(payload);
+            }
+        }
+        availablePayloadUnits.sort(Comparator.comparingInt(
+                (GameState.WeaponState weapon) -> weapon.definition.maxKillsMillions)
+                .reversed());
+        if (availablePayloadUnits.size() < 3) {
+            return null;
+        }
+        List<Integer> populated = new ArrayList<>();
+        for (CityState city : target.getCities()) {
+            if (city.populationMillions > 0) {
+                populated.add(city.index);
+            }
+        }
+        if (populated.isEmpty()) {
+            return null;
+        }
+        List<GameState.ShipStrike> strikes = new ArrayList<>(3);
+        for (int index = 0; index < 3; index++) {
+            GameState.WeaponState payload = availablePayloadUnits.get(index);
+            int cityIndex = populated.get(randomInclusive(random, 0, populated.size() - 1));
+            strikes.add(new GameState.ShipStrike(target.id, cityIndex,
+                    payload.definition.name));
+        }
+        return new Decision(attacker.id, GameState.Action.PREPARED_ATTACK,
+                Collections.<String, Integer>emptyMap(), Collections.<String>emptyList(),
+                0, target.id, strikes.get(0).cityIndex, carrierName,
+                null, false, -1, strikes);
     }
 
     private static Decision planAttack(GameState state, GameState.PlayerState attacker,
