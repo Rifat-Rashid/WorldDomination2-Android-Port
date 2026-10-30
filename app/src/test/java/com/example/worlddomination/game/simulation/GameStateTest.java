@@ -594,12 +594,12 @@ public final class GameStateTest {
     }
 
     @Test
-    public void greatestCasualtyEventKeepsItsAttackerForFlagCredit() {
+    public void casualtyAttributionResetsEachTurnBeforeComparingNewAttacks() {
         GameState state = new GameState(1, 212L, false);
         GameState.PlayerState human = state.getHuman();
         GameState.PlayerState target = state.getPlayerState(1);
         target.lastAttackedByPlayerId = 2;
-        target.largestBattleCasualties = 100;
+        target.lastAttackedByCasualties = 100;
 
         state.selectAction(GameState.Action.ATTACK);
         assertTrue(state.configureAttack(1, 0, "soldier1"));
@@ -608,8 +608,9 @@ public final class GameStateTest {
         assertTrue(state.acceptSelectedAction());
         state.confirmTurn();
 
-        assertEquals(100, target.getLargestBattleCasualties());
-        assertEquals(2, target.getLastAttackedByPlayerId());
+        assertEquals(0, target.getLastAttackedByCasualties());
+        assertEquals("this turn's attack replaces an earlier-turn attribution",
+                0, target.getLastAttackedByPlayerId());
         assertTrue(human.score > 0);
     }
 
@@ -626,7 +627,7 @@ public final class GameStateTest {
         assertTrue(state.acceptSelectedAction());
         state.confirmTurn();
 
-        assertTrue(target.getLargestBattleCasualties() > 0);
+        assertEquals(0, target.getLastAttackedByCasualties());
         assertEquals(0, target.getLastAttackedByPlayerId());
         assertTrue(state.getHuman().score > 3_000_000_000L);
     }

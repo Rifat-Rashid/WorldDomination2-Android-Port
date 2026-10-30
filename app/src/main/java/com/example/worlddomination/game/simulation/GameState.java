@@ -99,7 +99,7 @@ public final class GameState {
         public boolean alive = true;
         int satellitesUsed;
         int lastAttackedByPlayerId;
-        int largestBattleCasualties;
+        int lastAttackedByCasualties;
         private final double[] regardToward = new double[5];
         private final int[] ceasefireTurns = new int[5];
         private final int[] diplomacyOfferedLastTurn = new int[5];
@@ -215,8 +215,8 @@ public final class GameState {
             return lastAttackedByPlayerId;
         }
 
-        public int getLargestBattleCasualties() {
-            return largestBattleCasualties;
+        public int getLastAttackedByCasualties() {
+            return lastAttackedByCasualties;
         }
 
         public CityState getCity(int index) {
@@ -1682,6 +1682,7 @@ public final class GameState {
         }
         for (PlayerState player : players) {
             player.lastTurnActions.clear();
+            player.lastAttackedByCasualties = 0;
         }
         tickDiplomacyOfferCooldowns();
         decayReligion();
@@ -1770,6 +1771,11 @@ public final class GameState {
         updateDiplomacyRelations();
         tickCeasefires();
         refreshMatchStatus();
+        for (PlayerState player : players) {
+            // Presenter.updatePlayerVars_4 clears this comparison value after
+            // all turn results have been applied. Keep the attacker itself.
+            player.lastAttackedByCasualties = 0;
+        }
         reassignDeadAiEnemies();
         turn++;
         getHuman().turnMoneyMillions = getHuman().moneyMillions;
@@ -1939,11 +1945,11 @@ public final class GameState {
         target.regardToward[proposer.id] += adjustment;
     }
 
-    /** Keeps the source's greatest-casualty attacker attribution for each flag. */
+    /** Keeps the source's greatest-casualty attacker attribution for this turn. */
     private static void recordLargestBattle(PlayerState attacker, PlayerState defender,
                                             int casualties) {
-        if (casualties > defender.largestBattleCasualties) {
-            defender.largestBattleCasualties = casualties;
+        if (casualties > defender.lastAttackedByCasualties) {
+            defender.lastAttackedByCasualties = casualties;
             defender.lastAttackedByPlayerId = attacker.id;
         }
     }
