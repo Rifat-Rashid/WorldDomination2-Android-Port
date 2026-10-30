@@ -2549,6 +2549,12 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         } else if (confirmButton.contains(x, y) && game.getQueuedActionCount() == 2) {
             game.confirmTurn();
             audio.play(OriginalAudio.Cue.ACTION_ACCEPT);
+            for (GameState.CombatEvent event : game.getLastTurnCombatEvents()) {
+                OriginalAudio.Cue cue = OriginalAudio.cueForCombatEvent(event);
+                if (cue != null) {
+                    audio.play(cue);
+                }
+            }
             if (game.getPendingHumanDiplomacyProposal() != null) {
                 audio.playAmbient(OriginalAudio.Cue.DIPLOMACY_AMBIENT);
             }
