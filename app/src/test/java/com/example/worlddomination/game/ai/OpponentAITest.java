@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import static org.junit.Assert.assertEquals;
@@ -240,6 +241,43 @@ public final class OpponentAITest {
         assertEquals(GameState.Action.PREPARED_ATTACK, decision.action);
         assertTrue(decision.prepareCarrier);
         assertEquals("rocket1", decision.weaponName);
+    }
+
+    @Test
+    public void stockLevelCountsResearchedWeaponsThatAreTemporarilyInactive()
+            throws Exception {
+        GameState state = new GameState(1, 922L);
+        GameState.PlayerState actor = state.getPlayerState(1);
+        java.lang.reflect.Field desireField = GameState.PlayerState.class
+                .getDeclaredField("desiredStock");
+        desireField.setAccessible(true);
+        @SuppressWarnings("unchecked")
+        Map<String, Integer> desired = (Map<String, Integer>) desireField.get(actor);
+        for (GameState.WeaponState weapon : actor.getWeapons().values()) {
+            weapon.active = false;
+            weapon.inStock = 0;
+            if (weapon.definition.productionGroup != 8) {
+                desired.put(weapon.definition.name, 1);
+            }
+        }
+
+        int researchedWeaponCount = 0;
+        GameState.WeaponState researchedWeapon = null;
+        for (GameState.WeaponState weapon : actor.getWeapons().values()) {
+            if (weapon.definition.productionGroup != 8
+                    && actor.hasTechnology(weapon.definition.technology)) {
+                researchedWeaponCount++;
+                if (researchedWeapon == null) {
+                    researchedWeapon = weapon;
+                }
+            }
+        }
+        assertTrue(researchedWeaponCount > 0);
+        assertNotNull(researchedWeapon);
+        researchedWeapon.inStock = 1;
+
+        assertEquals(100.0 / researchedWeaponCount,
+                OpponentAI.weaponStockLevel(actor), 0.000001);
     }
 
     @Test
