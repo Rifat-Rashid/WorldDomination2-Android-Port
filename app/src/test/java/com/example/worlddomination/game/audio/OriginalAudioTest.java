@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.util.zip.GZIPInputStream;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public final class OriginalAudioTest {
@@ -50,6 +51,51 @@ public final class OriginalAudioTest {
                 OriginalAudio.internalPath(OriginalAudio.Cue.FLAG_BONUS));
         assertEquals("original/runtime/audio/48_Loose.Mp3.mp3",
                 OriginalAudio.internalPath(OriginalAudio.Cue.DEFEAT));
+    }
+
+    @Test
+    public void resolvedCombatEventsUseTheFlashUnitAndExplosionSoundMap() {
+        assertEquals(OriginalAudio.Cue.SOLDIER_GUN,
+                OriginalAudio.cueForCombatEvent(
+                        GameState.CombatEventType.DIRECT_ATTACK, null));
+        assertEquals(OriginalAudio.Cue.EXPLOSION_SMALL3,
+                OriginalAudio.cueForCombatEvent(
+                        GameState.CombatEventType.STRIKE_INTERCEPTED, "warhead4"));
+        assertEquals(OriginalAudio.Cue.EXPLOSION_SMALL3,
+                OriginalAudio.cueForCombatEvent(
+                        GameState.CombatEventType.STRIKE_IMPACT, "warhead1"));
+        assertEquals(OriginalAudio.Cue.EXPLOSION_MEDIUM3,
+                OriginalAudio.cueForCombatEvent(
+                        GameState.CombatEventType.STRIKE_IMPACT, "bioload2"));
+        assertEquals(OriginalAudio.Cue.EXPLOSION_MEDIUM,
+                OriginalAudio.cueForCombatEvent(
+                        GameState.CombatEventType.STRIKE_IMPACT, "warhead3"));
+        assertEquals(OriginalAudio.Cue.EXPLOSION_LARGE2,
+                OriginalAudio.cueForCombatEvent(
+                        GameState.CombatEventType.STRIKE_IMPACT, "warhead4"));
+        assertEquals(OriginalAudio.Cue.EXPLOSION_LARGE,
+                OriginalAudio.cueForCombatEvent(
+                        GameState.CombatEventType.STRIKE_IMPACT, "bioload4"));
+        assertNull(OriginalAudio.cueForCombatEvent(
+                GameState.CombatEventType.STRIKE_IMPACT, "unmapped-payload"));
+        assertNull(OriginalAudio.cueForCombatEvent(null, null));
+        assertNull(OriginalAudio.cueForCombatEvent((GameState.CombatEvent) null));
+    }
+
+    @Test
+    public void combatCuesPointToTheOriginalPackagedSounds() {
+        assertEquals("original/runtime/audio/14_unit_Soldier gun.wav.mp3",
+                OriginalAudio.internalPath(OriginalAudio.Cue.SOLDIER_GUN));
+        assertEquals("original/runtime/audio/98_Explode small3.wav.mp3",
+                OriginalAudio.internalPath(OriginalAudio.Cue.EXPLOSION_SMALL3));
+        assertEquals("original/runtime/audio/71_Explode medium 3.wav.mp3",
+                OriginalAudio.internalPath(OriginalAudio.Cue.EXPLOSION_MEDIUM3));
+        assertEquals("original/runtime/audio/70_explode medium.wav.mp3",
+                OriginalAudio.internalPath(OriginalAudio.Cue.EXPLOSION_MEDIUM));
+        assertEquals("original/runtime/audio/97_Explode large2.wav.mp3",
+                OriginalAudio.internalPath(OriginalAudio.Cue.EXPLOSION_LARGE2));
+        assertEquals("original/runtime/audio/72_Explode large.wav.mp3",
+                OriginalAudio.internalPath(OriginalAudio.Cue.EXPLOSION_LARGE));
     }
 
     @Test

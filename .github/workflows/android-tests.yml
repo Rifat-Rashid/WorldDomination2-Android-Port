@@ -26,6 +26,12 @@ jobs:
           - id: turn-progression-tests
             check: Game state and turn progression tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest"'
+          - id: combat-event-tests
+            check: Combat event resolution tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest"'
+          - id: combat-audio-mapping-tests
+            check: Original combat audio mapping tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.audio.OriginalAudioTest.resolvedCombatEventsUseTheFlashUnitAndExplosionSoundMap" --tests "com.example.worlddomination.game.audio.OriginalAudioTest.combatCuesPointToTheOriginalPackagedSounds"'
           - id: setup-scoring-tests
             check: Game setup and scoring tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameSetupTest" --tests "com.example.worlddomination.game.simulation.FinalScoreBreakdownTest"'
