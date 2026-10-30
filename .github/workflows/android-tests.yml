@@ -98,6 +98,12 @@ jobs:
           - id: apache-marine-playback-tests
             check: Apache and marine playback tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashApacheMarineAnimationTest" --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest.packagedStrikeAndInterceptionSymbolsMatchSourceTimelines" --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.marineDirectAttackUsesTheOriginalSealGunCue"'
+          - id: suicide-bomber-route-tests
+            check: Suicide bomber source route tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.createsSourceSuicideBomberRoutesForEveryAttackerTargetAndCity" --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.rejectsInvalidSuicideBomberRouteData"'
+          - id: suicide-bomber-playback-tests
+            check: Suicide bomber playback tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashSuicideBomberAnimationTest" --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest.packagedStrikeAndInterceptionSymbolsMatchSourceTimelines" --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.suicideBomberAttackUsesTheHatchSlotAndOriginalScreamCue"'
           - id: presentation-rng-isolation-tests
             check: Presentation RNG isolation tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.ReferenceRandomTest.copiedRandomPreservesTheStreamWithoutAdvancingCanonicalState"'

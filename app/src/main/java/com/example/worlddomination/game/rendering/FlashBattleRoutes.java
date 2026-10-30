@@ -80,12 +80,37 @@ public final class FlashBattleRoutes {
         }
     }
 
+    /** Source route for the special-unit suicide bomber. */
+    public static final class SuicideBomberAttack {
+        public final int attackerPlayerId;
+        public final int targetPlayerId;
+        public final int targetCityIndex;
+        public final Point spawn;
+        public final Point[] waypoints;
+
+        private SuicideBomberAttack(int attackerPlayerId, int targetPlayerId,
+                                    int targetCityIndex, Point spawn, Point[] waypoints) {
+            this.attackerPlayerId = attackerPlayerId;
+            this.targetPlayerId = targetPlayerId;
+            this.targetCityIndex = targetCityIndex;
+            this.spawn = spawn;
+            this.waypoints = waypoints;
+        }
+    }
+
     private static final int SOLDIER_COUNT = 3;
     private static final int[][][] SOLDIER_WAYPOINTS = {
             {{0}, {1, 2}, {1, 2, 3}, {1, 6}, {0}},
             {{1}, {1}, {2}, {2, 3, 5}, {4}},
             {{0}, {1}, {1, 2}, {1, 2, 3}, {4}},
             {{0}, {2}, {1, 2}, {1, 2, 3, 5}, {4}},
+            {{0}, {1}, {2, 3}, {2, 3, 4}, {5}}
+    };
+    private static final int[][][] TANK_WAYPOINTS = {
+            {{0}, {1, 2}, {1, 2, 3}, {1, 6}, {1}},
+            {{1}, {1}, {2}, {2, 3, 5}, {4}},
+            {{0}, {1}, {1, 2}, {1, 2, 3}, {4}},
+            {{0}, {0}, {1, 2}, {1, 2, 3}, {4}},
             {{0}, {1}, {2, 3}, {2, 3, 4}, {5}}
     };
     private static final String[][] SOLDIER_END_POSITIONS = {
@@ -106,6 +131,9 @@ public final class FlashBattleRoutes {
     };
     private static final String[] FIRE_POSITION_NAMES = {"LB", "LT", "RT", "R", "B", "L", "T"};
     private static final float[][] LAND_UNIT_POSITIONS = {
+            {420, 420}, {160, 201}, {563, 108}, {260, 500}, {562, 511}
+    };
+    private static final float[][] SUICIDE_SPAWNS = {
             {420, 420}, {160, 201}, {563, 108}, {260, 500}, {562, 511}
     };
     private static final float[][] BOAT_STARTS = {
@@ -148,6 +176,46 @@ public final class FlashBattleRoutes {
         return event != null && event.type == GameState.CombatEventType.DIRECT_ATTACK
                 && "soldier2".equals(event.weaponName)
                 && event.actionBuildingSlot >= 1 && event.actionBuildingSlot <= 2;
+    }
+
+    public static boolean supportsSuicideBomber(GameState.CombatEvent event) {
+        return event != null && event.type == GameState.CombatEventType.DIRECT_ATTACK
+                && "soldier4".equals(event.weaponName);
+    }
+
+    /** Builds the source tank-waypoint path used by the soldier4 suicide unit. */
+    public static SuicideBomberAttack createSuicideBomberAttack(
+            int attackerPlayerId, int targetPlayerId, int targetCityIndex,
+            Map<String, Point> anchors) {
+        validatePlayer(attackerPlayerId);
+        validatePlayer(targetPlayerId);
+        if (targetCityIndex < 0 || targetCityIndex >= BattlefieldCityLayout.CITIES_PER_PLAYER
+                || anchors == null) {
+            throw new IllegalArgumentException("Invalid suicide-bomber presentation data");
+        }
+
+        List<Point> route = new ArrayList<>();
+        int[] sourceWaypoints = TANK_WAYPOINTS[targetPlayerId][targetCityIndex];
+        if (sourceWaypoints[0] != 0) {
+            for (int waypoint : sourceWaypoints) {
+                Point anchor = anchors.get("twp" + targetPlayerId + "_" + waypoint);
+                if (anchor == null) {
+                    throw new IllegalArgumentException("Missing source tank waypoint twp"
+                            + targetPlayerId + "_" + waypoint);
+                }
+                // Battle.createToSpawnUnitsArr omits anchors whose source x coordinate is zero.
+                if (anchor.x != 0f) {
+                    route.add(anchor);
+                }
+            }
+        }
+        Point city = new Point(BattlefieldCityLayout.sourceCityX(targetPlayerId,
+                targetCityIndex), BattlefieldCityLayout.sourceCityY(targetPlayerId,
+                targetCityIndex));
+        route.add(city);
+        return new SuicideBomberAttack(attackerPlayerId, targetPlayerId, targetCityIndex,
+                new Point(SUICIDE_SPAWNS[attackerPlayerId][0],
+                        SUICIDE_SPAWNS[attackerPlayerId][1]), route.toArray(new Point[0]));
     }
 
     /** Returns the source Flash placement for a nation's first or second action building. */

@@ -29,6 +29,7 @@ public final class OriginalAudio {
         FLAG_BONUS("75_Country domination bonus.Mp3.mp3.gz"),
         SOLDIER_GUN("14_unit_Soldier gun.wav.mp3.gz"),
         SEAL_GUN("16_unit_seal gun.wav.mp3.gz"),
+        SUICIDE_SCREAM("7_unit_Suicide scream.wav.mp3.gz"),
         EXPLOSION_SMALL3("98_Explode small3.wav.mp3.gz"),
         EXPLOSION_MEDIUM3("71_Explode medium 3.wav.mp3.gz"),
         EXPLOSION_MEDIUM("70_explode medium.wav.mp3.gz"),
@@ -82,6 +83,7 @@ public final class OriginalAudio {
         preload(Cue.FLAG_BONUS);
         preload(Cue.SOLDIER_GUN);
         preload(Cue.SEAL_GUN);
+        preload(Cue.SUICIDE_SCREAM);
         preload(Cue.EXPLOSION_SMALL3);
         preload(Cue.EXPLOSION_MEDIUM3);
         preload(Cue.EXPLOSION_MEDIUM);
@@ -246,6 +248,11 @@ public final class OriginalAudio {
                 && "soldier2".equals(event.weaponName)) {
             // Unit.soundAction('marine_shoot') attaches the original Seal gun asset.
             return Cue.SEAL_GUN;
+        }
+        if (event.type == GameState.CombatEventType.DIRECT_ATTACK
+                && "soldier4".equals(event.weaponName)) {
+            // Unit.soundAction('suicide_scream') starts as its first source waypoint resolves.
+            return Cue.SUICIDE_SCREAM;
         }
         return cueForCombatEvent(event.type, event.payloadName);
     }
