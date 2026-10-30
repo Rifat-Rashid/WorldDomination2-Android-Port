@@ -471,11 +471,13 @@ public final class GameState {
     private final PlayerState[] players = new PlayerState[5];
     private final List<ActionOrder> queuedActions = new ArrayList<>(MAX_TURN_ACTIONS);
     private final List<String> messages = new ArrayList<>();
+    private List<String> researchChoicesCache = Collections.emptyList();
+    private boolean researchChoicesDirty = true;
     private final Random random;
     private Action selectedAction;
     private String selectedProductionCategory = "soldier";
     private int selectedProductionPercent;
-    private String selectedTechnology;
+    private final Set<String> selectedResearchTechnologies = new LinkedHashSet<>();
     private int selectedTargetPlayer = 1;
     private int selectedTargetCity;
     private String selectedAttackWeapon = "soldier1";
@@ -873,7 +875,7 @@ public final class GameState {
             return;
         }
         selectedAction = action;
-        selectedTechnology = null;
+        selectedResearchTechnologies.clear();
         selectedTargetPlayer = selectedIsland > 0 ? selectedIsland : 1;
         selectedTargetCity = 0;
         selectedAttackWeapon = firstAvailableAttackWeapon();
@@ -902,20 +904,54 @@ public final class GameState {
         selectedProductionPercent = percent;
     }
 
-    /** Selects a technology only when its source prerequisite and funds are satisfied. */
+    /** Toggles the next technology in one research group, as the source interface does. */
     public boolean selectResearchTechnology(String technology) {
-        if (selectedAction != Action.RESEARCH || !isResearchAvailable(technology)) {
+        if (selectedAction != Action.RESEARCH) {
             return false;
         }
-        selectedTechnology = technology;
+        if (selectedResearchTechnologies.remove(technology)) {
+            return true;
+        }
+        TechnologyCatalog.Definition definition = TechnologyCatalog.byName(technology);
+        if (!isResearchChoice(technology)) {
+            return false;
+        }
+        if (definition.group == 7 && !getHuman().allowsSpecialTechnologies()) {
+            messages.add("You need to invent 4 complete technologies before you can start "
+                    + "inventing special weapons.");
+            return false;
+        }
+        if (definition.costMillions > getHuman().turnMoneyMillions
+                - getSelectedResearchCostMillions()) {
+            messages.add("Not enough money!");
+            return false;
+        }
+        selectedResearchTechnologies.add(technology);
         return true;
+    }
+
+    /** Next unresearched entry in each source research group, including locked choices. */
+    public List<String> getResearchChoices() {
+        if (!researchChoicesDirty) {
+            return researchChoicesCache;
+        }
+        List<String> choices = new ArrayList<>(7);
+        for (int group = 1; group <= 7; group++) {
+            String candidate = nextUnresearchedTechnology(group);
+            if (candidate != null) {
+                choices.add(candidate);
+            }
+        }
+        researchChoicesCache = Collections.unmodifiableList(choices);
+        researchChoicesDirty = false;
+        return researchChoicesCache;
     }
 
     public List<String> getAvailableResearch() {
         List<String> available = new ArrayList<>();
-        for (TechnologyCatalog.Definition definition : TechnologyCatalog.all()) {
-            if (isResearchAvailable(definition.name)) {
-                available.add(definition.name);
+        for (String choice : getResearchChoices()) {
+            if (isResearchAvailable(choice)) {
+                available.add(choice);
             }
         }
         return Collections.unmodifiableList(available);
@@ -923,17 +959,61 @@ public final class GameState {
 
     public boolean isResearchAvailable(String technology) {
         TechnologyCatalog.Definition definition = TechnologyCatalog.byName(technology);
-        if (definition == null || getHuman().hasTechnology(definition.name)) {
+        if (definition == null || !isResearchChoice(technology)) {
             return false;
         }
         if (definition.group == 7 && !getHuman().allowsSpecialTechnologies()) {
             return false;
         }
+        if (selectedResearchTechnologies.contains(technology)) {
+            return true;
+        }
+        int remaining = getHuman().turnMoneyMillions;
+        if (selectedAction == Action.RESEARCH) {
+            remaining -= getSelectedResearchCostMillions();
+        }
         if (definition.prerequisite != null
                 && !getHuman().hasTechnology(definition.prerequisite)) {
             return false;
         }
-        return definition.costMillions <= getHuman().turnMoneyMillions;
+        return definition.costMillions <= remaining;
+    }
+
+    private boolean isResearchChoice(String technology) {
+        TechnologyCatalog.Definition definition = TechnologyCatalog.byName(technology);
+        return definition != null && definition.group >= 1 && definition.group <= 7
+                && !getHuman().hasTechnology(definition.name)
+                && technology.equals(nextUnresearchedTechnology(definition.group));
+    }
+
+    private String nextUnresearchedTechnology(int group) {
+        for (TechnologyCatalog.Definition definition : TechnologyCatalog.all()) {
+            if (definition.group == group && !getHuman().hasTechnology(definition.name)) {
+                return definition.name;
+            }
+        }
+        return null;
+    }
+
+    private void invalidateResearchChoices() {
+        researchChoicesDirty = true;
+    }
+
+    public boolean isResearchTechnologySelected(String technology) {
+        return selectedResearchTechnologies.contains(technology);
+    }
+
+    public List<String> getSelectedResearchTechnologies() {
+        return Collections.unmodifiableList(
+                new ArrayList<>(selectedResearchTechnologies));
+    }
+
+    public int getSelectedResearchCostMillions() {
+        int total = 0;
+        for (String technology : selectedResearchTechnologies) {
+            total += getTechnologyCost(technology);
+        }
+        return total;
     }
 
     public int getTechnologyCost(String technology) {
@@ -947,7 +1027,8 @@ public final class GameState {
     }
 
     public String getSelectedTechnology() {
-        return selectedTechnology;
+        return selectedResearchTechnologies.isEmpty()
+                ? null : selectedResearchTechnologies.iterator().next();
     }
 
     public int getSelectedTargetPlayer() {
@@ -1157,9 +1238,9 @@ public final class GameState {
         WeaponState weapon = getHuman().weapons.get(weaponName);
         boolean soldier = weapon != null && "soldier".equals(weapon.definition.type);
         if (!target.alive || totalPopulation(target) <= 0 || city == null
+                || city.populationMillions <= 0
                 || weapon == null || !weapon.active || availableWeaponStock(0, weapon) <= 0
                 || (!soldier && !canUseSpy(getHuman(), weapon))
-                || (soldier && city.populationMillions <= 0)
                 || (soldier && target.hasCeasefireWith(getHuman().id))) {
             return false;
         }
@@ -1523,10 +1604,11 @@ public final class GameState {
         CityState city = target == null ? null : target.getCity(selectedTargetCity);
         WeaponState weapon = getHuman().weapons.get(selectedAttackWeapon);
         return target != null && target.alive && totalPopulation(target) > 0 && city != null
+                && city.populationMillions > 0
                 && weapon != null && weapon.active
                 && availableWeaponStock(0, weapon) > 0
                 && ("soldier".equals(weapon.definition.type)
-                ? city.populationMillions > 0 && !target.hasCeasefireWith(getHuman().id)
+                ? !target.hasCeasefireWith(getHuman().id)
                 : canUseSpy(getHuman(), weapon));
     }
 
@@ -1598,11 +1680,17 @@ public final class GameState {
         }
         int reserved = 0;
         if (selectedAction == Action.RESEARCH) {
-            if (selectedTechnology == null || !isResearchAvailable(selectedTechnology)) {
+            if (selectedResearchTechnologies.isEmpty()) {
                 messages.add("Choose an available technology to research.");
                 return false;
             }
-            reserved = getTechnologyCost(selectedTechnology);
+            for (String technology : selectedResearchTechnologies) {
+                if (!isResearchAvailable(technology)) {
+                    messages.add("Choose an available technology to research.");
+                    return false;
+                }
+            }
+            reserved = getSelectedResearchCostMillions();
         } else if (selectedAction == Action.PRODUCTION) {
             if (selectedProductionPercent > 0) {
                 reserved = getSelectedProductionBudgetMillions();
@@ -1638,8 +1726,12 @@ public final class GameState {
             productionBudgets.put(selectedProductionCategory, reserved);
         }
         List<String> technologies = new ArrayList<>();
-        if (selectedAction == Action.RESEARCH && selectedTechnology != null) {
-            technologies.add(selectedTechnology);
+        if (selectedAction == Action.RESEARCH) {
+            for (TechnologyCatalog.Definition definition : TechnologyCatalog.all()) {
+                if (selectedResearchTechnologies.contains(definition.name)) {
+                    technologies.add(definition.name);
+                }
+            }
         }
         ActionOrder order = new ActionOrder(0, selectedAction, productionBudgets,
                 technologies, reserved,
@@ -1652,10 +1744,13 @@ public final class GameState {
                         && getHuman().preparedCarrierName == null,
                 selectedSpyBuilding, selectedDiplomacyOption, selectedShipStrikes);
         queuedActions.add(order);
+        if (selectedAction == Action.RESEARCH) {
+            invalidateResearchChoices();
+        }
         getHuman().turnMoneyMillions -= reserved;
         messages.add(selectedAction.label + " queued.");
         selectedAction = null;
-        selectedTechnology = null;
+        selectedResearchTechnologies.clear();
         selectedTargetPlayer = selectedIsland > 0 ? selectedIsland : 1;
         selectedTargetCity = 0;
         selectedAttackWeapon = firstAvailableAttackWeapon();
@@ -1669,7 +1764,7 @@ public final class GameState {
 
     public void cancelSelection() {
         selectedAction = null;
-        selectedTechnology = null;
+        selectedResearchTechnologies.clear();
         selectedProductionPercent = 0;
         selectedProductionCategory = "soldier";
         selectedDiplomacyOption = 0;
@@ -1682,6 +1777,9 @@ public final class GameState {
     public void removeQueuedAction(int slot) {
         if (slot >= 0 && slot < queuedActions.size()) {
             ActionOrder removed = queuedActions.remove(slot);
+            if (removed.action == Action.RESEARCH) {
+                invalidateResearchChoices();
+            }
             getHuman().turnMoneyMillions = Math.min(getHuman().moneyMillions,
                     getHuman().turnMoneyMillions + removed.reservedMillions);
             messages.add(removed.action.label + " removed.");
@@ -1690,6 +1788,7 @@ public final class GameState {
 
     public void clearQueuedActions() {
         queuedActions.clear();
+        invalidateResearchChoices();
         getHuman().turnMoneyMillions = getHuman().moneyMillions;
         cancelSelection();
     }
@@ -1876,6 +1975,7 @@ public final class GameState {
         getHuman().turnMoneyMillions = getHuman().moneyMillions;
         messages.add("Turn " + turn + " complete.");
         queuedActions.clear();
+        invalidateResearchChoices();
         cancelSelection();
         trimMessages();
     }
@@ -2181,6 +2281,9 @@ public final class GameState {
                 continue;
             }
             researcher.inventedTechnologies.add(technology.name);
+            if (researcher.id == 0) {
+                invalidateResearchChoices();
+            }
             WeaponState weapon = researcher.weapons.get(technology.name);
             if (weapon != null) {
                 weapon.active = true;
@@ -2600,6 +2703,9 @@ public final class GameState {
             } else {
                 matchingWeapon.active = true;
                 attacker.inventedTechnologies.add(targetWeapon.definition.technology);
+                if (attacker.id == 0) {
+                    invalidateResearchChoices();
+                }
                 messages.add("Spy uncovered " + targetWeapon.definition.technology + " technology.");
             }
             addToHighscore(attacker, 2, 1);
