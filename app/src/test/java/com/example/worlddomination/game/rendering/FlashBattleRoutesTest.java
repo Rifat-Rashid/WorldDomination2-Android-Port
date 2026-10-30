@@ -1,6 +1,8 @@
 package com.example.worlddomination.game.rendering;
 
 import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.utils.JsonReader;
+import com.badlogic.gdx.utils.JsonValue;
 import com.example.worlddomination.game.simulation.ReferenceRandom;
 import com.example.worlddomination.game.ui.BattlefieldCityLayout;
 
@@ -10,8 +12,11 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.zip.GZIPInputStream;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -25,6 +30,64 @@ public final class FlashBattleRoutesTest {
     private static final float[][] LAND_UNIT_POSITIONS = {
             {420f, 420f}, {160f, 201f}, {563f, 108f}, {260f, 500f}, {562f, 511f}
     };
+    private static final float[][] SHIP_PLANE_OFFSETS = {
+            {28f, -26f}, {-9f, -3f}, {-38f, 11f}
+    };
+
+    @Test
+    public void createsThreeSourceCarrierPlaneRoutesForEveryPlayerAndCity() throws Exception {
+        float[][] carrierPositions = loadSourceCarrierPositions();
+        for (int attacker = 0; attacker < BattlefieldCityLayout.PLAYER_COUNT; attacker++) {
+            int target = (attacker + 1) % BattlefieldCityLayout.PLAYER_COUNT;
+            for (int city = 0; city < BattlefieldCityLayout.CITIES_PER_PLAYER; city++) {
+                for (int plane = 0; plane < SHIP_PLANE_OFFSETS.length; plane++) {
+                    FlashBattleRoutes.CarrierPlaneStrike route =
+                            FlashBattleRoutes.createCarrierPlaneStrike(attacker, target,
+                                    city, plane, false);
+                    assertEquals(attacker, route.attackerPlayerId);
+                    assertEquals(target, route.targetPlayerId);
+                    assertEquals(city, route.targetCityIndex);
+                    assertEquals(plane, route.planeIndex);
+                    assertEquals(carrierPositions[attacker][0] + SHIP_PLANE_OFFSETS[plane][0],
+                            route.start.x, 0f);
+                    assertEquals(carrierPositions[attacker][1] + SHIP_PLANE_OFFSETS[plane][1],
+                            route.start.y, 0f);
+                    assertEquals(carrierPositions[attacker][0] - 112f,
+                            route.waypoints[0].x, 0f);
+                    assertEquals(carrierPositions[attacker][1] + 54f,
+                            route.waypoints[0].y, 0f);
+                    assertEquals(BattlefieldCityLayout.sourceCityX(target, city),
+                            route.targetCity.x, 0f);
+                    assertEquals(BattlefieldCityLayout.sourceCityY(target, city),
+                            route.targetCity.y, 0f);
+
+                    boolean sourceDetour = Math.abs(route.waypoints[0].y
+                            - route.targetCity.y) <= 200f
+                            && route.targetCity.x > route.waypoints[0].x;
+                    assertEquals(sourceDetour ? 3 : 2, route.waypoints.length);
+                    FlashBattleRoutes.Point strikePoint =
+                            route.waypoints[route.waypoints.length - 1];
+                    assertEquals(route.targetCity.x, strikePoint.x, 0f);
+                    assertEquals(route.targetCity.y - 100f, strikePoint.y, 0f);
+                }
+            }
+        }
+    }
+
+    @Test
+    public void carrierPlaneRouteMarksInterceptionsAndRejectsInvalidInputs() {
+        FlashBattleRoutes.CarrierPlaneStrike intercepted =
+                FlashBattleRoutes.createCarrierPlaneStrike(2, 4, 3, 1, true);
+        assertTrue(intercepted.intercepted);
+        assertThrows(IllegalArgumentException.class,
+                () -> FlashBattleRoutes.createCarrierPlaneStrike(-1, 4, 0, 0, false));
+        assertThrows(IllegalArgumentException.class,
+                () -> FlashBattleRoutes.createCarrierPlaneStrike(0, 5, 0, 0, false));
+        assertThrows(IllegalArgumentException.class,
+                () -> FlashBattleRoutes.createCarrierPlaneStrike(0, 1, 5, 0, false));
+        assertThrows(IllegalArgumentException.class,
+                () -> FlashBattleRoutes.createCarrierPlaneStrike(0, 1, 0, 3, false));
+    }
 
     @Test
     public void sourceBattleAnchorsIncludeAllSoldierWaypoints() throws Exception {
@@ -482,6 +545,50 @@ public final class FlashBattleRoutesTest {
         Path asset = projectAsset("original/runtime/battle_anchors.json");
         String json = new String(Files.readAllBytes(asset), StandardCharsets.UTF_8);
         return FlashBattleRoutes.parseAnchors(json);
+    }
+
+    private static float[][] loadSourceCarrierPositions() throws Exception {
+        Path asset = projectAsset("original/runtime/scene.json.gz");
+        JsonValue scene;
+        try (InputStream gzip = new GZIPInputStream(Files.newInputStream(asset));
+             InputStreamReader reader = new InputStreamReader(gzip, StandardCharsets.UTF_8)) {
+            scene = new JsonReader().parse(reader);
+        }
+
+        JsonValue symbols = scene.get("symbols");
+        JsonValue battle = null;
+        for (JsonValue symbol = symbols.child; symbol != null; symbol = symbol.next) {
+            if ("battleMC".equals(symbol.getString("linkage", ""))) {
+                battle = symbol;
+                break;
+            }
+        }
+        if (battle == null) {
+            throw new IllegalStateException("Original battle timeline is missing");
+        }
+
+        float[][] positions = new float[BattlefieldCityLayout.PLAYER_COUNT][2];
+        boolean[] found = new boolean[BattlefieldCityLayout.PLAYER_COUNT];
+        JsonValue firstFrame = battle.get("timeline").get("frames").get(0);
+        for (JsonValue operation = firstFrame.child;
+             operation != null; operation = operation.next) {
+            JsonValue values = operation.get("values");
+            String name = values == null ? "" : values.getString("name", "");
+            if (!name.startsWith("carrier")) {
+                continue;
+            }
+            int playerId = Integer.parseInt(name.substring("carrier".length()));
+            JsonValue matrix = values.get("matrix");
+            positions[playerId][0] = matrix.getFloat("tx");
+            positions[playerId][1] = matrix.getFloat("ty");
+            found[playerId] = true;
+        }
+        for (int player = 0; player < found.length; player++) {
+            if (!found[player]) {
+                throw new IllegalStateException("Missing source carrier placement " + player);
+            }
+        }
+        return positions;
     }
 
     private static Path projectAsset(String relative) {

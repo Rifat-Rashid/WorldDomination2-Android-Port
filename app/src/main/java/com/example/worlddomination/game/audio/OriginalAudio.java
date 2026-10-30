@@ -34,6 +34,8 @@ public final class OriginalAudio {
         TANK_GUN("5_unit_Tank gun.wav.mp3.gz"),
         TANK_CHOPPER("6_unit_Tank chopper.wav.mp3.gz"),
         SUICIDE_SCREAM("7_unit_Suicide scream.wav.mp3.gz"),
+        CARRIERJET_FLIGHT("21_unit_Carrierjet flight.wav.mp3.gz"),
+        CARRIERJET_TAKEOFF("76_unit_Carrierjet take off.wav.mp3.gz"),
         EXPLOSION_SMALL3("98_Explode small3.wav.mp3.gz"),
         EXPLOSION_MEDIUM3("71_Explode medium 3.wav.mp3.gz"),
         EXPLOSION_MEDIUM("70_explode medium.wav.mp3.gz"),
@@ -92,6 +94,8 @@ public final class OriginalAudio {
         preload(Cue.TANK_GUN);
         preload(Cue.TANK_CHOPPER);
         preload(Cue.SUICIDE_SCREAM);
+        preload(Cue.CARRIERJET_FLIGHT);
+        preload(Cue.CARRIERJET_TAKEOFF);
         preload(Cue.EXPLOSION_SMALL3);
         preload(Cue.EXPLOSION_MEDIUM3);
         preload(Cue.EXPLOSION_MEDIUM);

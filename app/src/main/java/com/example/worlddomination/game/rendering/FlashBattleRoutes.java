@@ -204,6 +204,34 @@ public final class FlashBattleRoutes {
         }
     }
 
+    /** Source carrier-launched plane path for one of a ship's three payloads. */
+    public static final class CarrierPlaneStrike {
+        public final int attackerPlayerId;
+        public final int targetPlayerId;
+        public final int targetCityIndex;
+        public final int planeIndex;
+        public final boolean intercepted;
+        public final Point start;
+        /** Ordered flight waypoints, ending at the source bomb or interception point. */
+        public final Point[] waypoints;
+        /** Exact city anchor used for the resolved payload explosion. */
+        public final Point targetCity;
+
+        private CarrierPlaneStrike(int attackerPlayerId, int targetPlayerId,
+                                   int targetCityIndex, int planeIndex,
+                                   boolean intercepted, Point start,
+                                   Point[] waypoints, Point targetCity) {
+            this.attackerPlayerId = attackerPlayerId;
+            this.targetPlayerId = targetPlayerId;
+            this.targetCityIndex = targetCityIndex;
+            this.planeIndex = planeIndex;
+            this.intercepted = intercepted;
+            this.start = start;
+            this.waypoints = waypoints;
+            this.targetCity = targetCity;
+        }
+    }
+
     private static final int SOLDIER_COUNT = 3;
     private static final int[][][] SOLDIER_WAYPOINTS = {
             {{0}, {1, 2}, {1, 2, 3}, {1, 6}, {0}},
@@ -268,6 +296,15 @@ public final class FlashBattleRoutes {
             {156.75f, 566.25f, 102.25f, 506.75f},
             {667.75f, 556.75f, 722.75f, 496.75f}
     };
+    // battleMC carrier{player} placements recovered from the source scene timeline.
+    private static final float[][] CARRIER_POSITIONS = {
+            {430.5f, 94.75f}, {325.95f, 94f}, {709.3f, 314.85f},
+            {65.5f, 328.55f}, {112f, 360.25f}
+    };
+    // Sub_model.ship_plane_start_arr offsets, in the source payload attack order.
+    private static final float[][] SHIP_PLANE_START_OFFSETS = {
+            {28f, -26f}, {-9f, -3f}, {-38f, 11f}
+    };
     private static final float[][] BOAT_WAYPOINTS = {
             {380, 156}, {474, 192}, {578, 240}, {655, 307}, {582, 455},
             {493, 498}, {400, 530}, {337, 504}, {254, 411}, {200, 360},
@@ -316,6 +353,48 @@ public final class FlashBattleRoutes {
                 || event.type == GameState.CombatEventType.STRIKE_INTERCEPTED)
                 && event.weaponName != null && event.weaponName.matches("rocket[1-4]")
                 && event.actionBuildingSlot >= 1 && event.actionBuildingSlot <= 2;
+    }
+
+    /** Returns whether the event came from one payload launched by the source ship carrier. */
+    public static boolean supportsCarrierPlaneStrike(GameState.CombatEvent event) {
+        return event != null
+                && (event.type == GameState.CombatEventType.STRIKE_IMPACT
+                || event.type == GameState.CombatEventType.STRIKE_INTERCEPTED)
+                && "ship".equals(event.weaponName);
+    }
+
+    /** Recreates Battle.createToSpawnUnitsArr's carrier, launch offsets, and source waypoints. */
+    public static CarrierPlaneStrike createCarrierPlaneStrike(int attackerPlayerId,
+                                                               int targetPlayerId,
+                                                               int targetCityIndex,
+                                                               int planeIndex,
+                                                               boolean intercepted) {
+        validatePlayer(attackerPlayerId);
+        validatePlayer(targetPlayerId);
+        if (targetCityIndex < 0 || targetCityIndex >= BattlefieldCityLayout.CITIES_PER_PLAYER
+                || planeIndex < 0 || planeIndex >= SHIP_PLANE_START_OFFSETS.length) {
+            throw new IllegalArgumentException("Invalid carrier-plane presentation data");
+        }
+
+        float[] carrier = CARRIER_POSITIONS[attackerPlayerId];
+        float[] offset = SHIP_PLANE_START_OFFSETS[planeIndex];
+        Point start = new Point(carrier[0] + offset[0], carrier[1] + offset[1]);
+        Point departure = new Point(carrier[0] - 112f, carrier[1] + 54f);
+        Point city = new Point(BattlefieldCityLayout.sourceCityX(targetPlayerId,
+                targetCityIndex), BattlefieldCityLayout.sourceCityY(targetPlayerId,
+                targetCityIndex));
+
+        List<Point> waypoints = new ArrayList<>();
+        waypoints.add(departure);
+        float verticalDifference = Math.abs(departure.y - city.y);
+        if (verticalDifference <= 200f && city.x > departure.x) {
+            float detourY = city.y + (departure.y < city.y ? 150f : -150f);
+            waypoints.add(new Point(departure.x, detourY));
+        }
+        // Unit.ship_plane_bomb and Unit.explode both resolve at cityY - 100.
+        waypoints.add(new Point(city.x, city.y - 100f));
+        return new CarrierPlaneStrike(attackerPlayerId, targetPlayerId, targetCityIndex,
+                planeIndex, intercepted, start, waypoints.toArray(new Point[0]), city);
     }
 
     /** Recreates Battle.createToSpawnUnitsArr's source silo, arc, and impact coordinates. */

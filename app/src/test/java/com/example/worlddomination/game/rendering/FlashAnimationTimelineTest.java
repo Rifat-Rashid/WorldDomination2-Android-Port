@@ -190,6 +190,32 @@ public final class FlashAnimationTimelineTest {
     }
 
     @Test
+    public void carrierAircraftUsesItsPackaged24FrameFlashTimelineAndShapes()
+            throws IOException {
+        JsonValue scene = loadSourceScene();
+        FlashAnimationTimeline carrierPlane = FlashAnimationTimeline.fromSymbol(
+                findSymbol(scene, "ship_plane"), scene.getFloat("fps"));
+        JsonValue takeoffSound = scene.get("sound_metadata").get("76");
+
+        assertEquals(24, carrierPlane.getFrameCount());
+        assertEquals("ship_plane", carrierPlane.linkage);
+        assertNotNull("Missing original carrier takeoff sound metadata", takeoffSound);
+        assertEquals("Carrier takeoff sound timing is rounded to source ticks", 37,
+                Math.round(takeoffSound.getFloat("sample_count")
+                        / takeoffSound.getFloat("rate") * scene.getFloat("fps")));
+        for (int frameIndex = 0; frameIndex < carrierPlane.getFrameCount(); frameIndex++) {
+            FlashAnimationTimeline.Frame frame = carrierPlane.getFrame(frameIndex);
+            assertNotNull("Missing carrier aircraft frame " + frameIndex, frame);
+            assertTrue("Carrier aircraft frame must contain original source artwork",
+                    frame.layers.length > 0);
+            for (FlashAnimationTimeline.Layer layer : frame.layers) {
+                assertTrue("Missing source aircraft shape " + layer.shapeId,
+                        Files.isRegularFile(shapeAsset(layer.shapeId)));
+            }
+        }
+    }
+
+    @Test
     public void smokePuffFlashShapeIsPackagedAsVectorArtForNativeRasterization()
             throws IOException {
         String smokeSvg = loadShapeSvg(4936);
