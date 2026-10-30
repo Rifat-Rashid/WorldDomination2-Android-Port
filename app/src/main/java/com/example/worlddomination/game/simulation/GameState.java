@@ -605,9 +605,16 @@ public final class GameState {
                 candidates.add(candidate);
             }
         }
-        // The ActionScript helper falls back to player zero when its filtered list is empty.
-        return candidates.isEmpty() ? 0
-                : candidates.get(random.nextInt(candidates.size())).id;
+        return sourceRandomEnemyNumber(candidates, random);
+    }
+
+    /**
+     * The Flash helper stores the random slot in its filtered opponent list as
+     * the enemy number instead of reading that slot's player number. Preserve
+     * that quirk because these values drive AI target priorities.
+     */
+    static int sourceRandomEnemyNumber(List<PlayerState> candidates, Random random) {
+        return candidates.isEmpty() ? 0 : random.nextInt(candidates.size());
     }
 
     private void reassignDeadAiEnemies() {
