@@ -2002,14 +2002,17 @@ public final class GameState {
         int income = resourceIncome(player);
         player.moneyMillions += income;
         player.turnMoneyMillions += income;
+        addToHighscore(player, 5, income);
         messages.add("Nation " + player.id + " gained $ " + income
                 + ".000.000 from resources.");
     }
 
     private void resolveMassMedia(PlayerState player) {
-        player.religion += getMassMediaGain(player.id);
+        int gain = getMassMediaGain(player.id);
+        player.religion += gain;
+        addToHighscore(player, 6, gain);
         messages.add("Nation " + player.id + " increased influence by "
-                + getMassMediaGain(player.id) + ".");
+                + gain + ".");
     }
 
     private void resolveResearch(ActionOrder order) {
@@ -2752,10 +2755,11 @@ public final class GameState {
         return -1;
     }
 
-    private void addToHighscore(PlayerState player, int actionIndex, int multiplier) {
+    void addToHighscore(PlayerState player, int actionIndex, int multiplier) {
         int[] sourceWeights = {151, 1213, 1001, 2001, 3002, 200, 101, 910};
         long points = sourceWeights[actionIndex] + random.nextInt(51);
-        player.score += points * multiplier * difficulty;
+        int effectiveMultiplier = multiplier == 0 ? 1 : multiplier;
+        player.score += points * effectiveMultiplier * difficulty;
     }
 
     private boolean queuedTechnology(String technology) {
