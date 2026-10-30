@@ -486,8 +486,9 @@ public final class OpponentAI {
             case DIPLOMACY:
                 return planDiplomacy(state, player, random);
             case MASS_MEDIA:
-            case RESOURCES:
                 return simple(player.id, action);
+            case RESOURCES:
+                return player.moneyMillions < 150 ? simple(player.id, action) : null;
             case PRODUCTION:
                 return planProduction(state, player, random);
             case RESEARCH:
