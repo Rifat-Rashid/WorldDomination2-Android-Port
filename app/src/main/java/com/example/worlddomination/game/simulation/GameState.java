@@ -3032,14 +3032,16 @@ public final class GameState {
     private void applyPopulationChanges(TurnPopulationChanges changes) {
         for (PlayerState player : players) {
             for (CityState city : player.cities) {
-                city.populationMillions -= changes.battleCasualtiesFor(city);
+                city.setPopulationMillions(city.populationMillions
+                        - changes.battleCasualtiesFor(city));
                 for (int loss : changes.propagandaLossesFor(city)) {
                     if (city.populationMillions <= 0) {
                         break;
                     }
-                    city.populationMillions -= loss;
+                    city.setPopulationMillions(city.populationMillions - loss);
                 }
-                city.populationMillions += changes.propagandaGainFor(city);
+                city.setPopulationMillions(city.populationMillions
+                        + changes.propagandaGainFor(city));
             }
             player.populationMillions = totalPopulation(player);
         }
@@ -3080,7 +3082,7 @@ public final class GameState {
     private void eliminatePlayer(PlayerState eliminated) {
         messages.add("Nation " + eliminated.id + " has been eliminated.");
         for (CityState city : eliminated.cities) {
-            city.populationMillions = 0;
+            city.setPopulationMillions(0);
             city.bioloaded = false;
         }
         for (PlayerState defeated : players) {

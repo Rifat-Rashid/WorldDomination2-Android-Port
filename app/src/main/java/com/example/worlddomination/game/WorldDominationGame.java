@@ -17,7 +17,9 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.example.worlddomination.game.audio.OriginalAudio;
+import com.example.worlddomination.game.assets.OriginalCityAssets;
 import com.example.worlddomination.game.assets.OriginalUiAssets;
+import com.example.worlddomination.game.rendering.BattlefieldCityRenderer;
 import com.example.worlddomination.game.simulation.GameSetup;
 import com.example.worlddomination.game.simulation.GameState;
 import com.example.worlddomination.game.simulation.CityState;
@@ -162,6 +164,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private ShapeRenderer shapes;
     private BitmapFont font;
     private OriginalUiAssets uiAssets;
+    private OriginalCityAssets cityAssets;
+    private BattlefieldCityRenderer cityRenderer;
     private float accumulator;
     private float worldWidth;
     private float worldHeight;
@@ -242,6 +246,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         font = new BitmapFont();
         font.setColor(Color.WHITE);
         uiAssets = new OriginalUiAssets();
+        cityAssets = new OriginalCityAssets();
+        cityRenderer = new BattlefieldCityRenderer(cityAssets);
         audio.initialize();
         setup = new GameSetup();
         java.util.Random setupRandom = new java.util.Random(System.nanoTime());
@@ -680,6 +686,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         drawPanelTexture(actionPanel);
         batch.draw(uiAssets.battleMap, mapBounds.x, mapBounds.y,
                 mapBounds.width, mapBounds.height);
+        cityRenderer.draw(batch, mapBounds, game);
         drawContained(uiAssets.logo, logoPanel.x + 7f, logoPanel.y + 2f,
                 logoPanel.width - 14f, logoPanel.height - 4f);
         drawPortraits();
@@ -2731,6 +2738,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         audio.dispose();
         if (uiAssets != null) {
             uiAssets.dispose();
+        }
+        if (cityAssets != null) {
+            cityAssets.dispose();
         }
         if (font != null) {
             font.dispose();

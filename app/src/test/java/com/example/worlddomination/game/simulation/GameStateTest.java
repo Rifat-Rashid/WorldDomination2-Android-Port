@@ -1647,6 +1647,8 @@ public final class GameStateTest {
 
         assertFalse(defender.alive);
         assertEquals(0, defender.populationMillions);
+        assertEquals("The one-million city uses its source size-one ruin frame.",
+                10, defender.getCity(0).getArtworkFrame());
         assertTrue(state.getMessages().contains("Propaganda had no effect in the selected city."));
         assertFalse(state.getMessages().contains(
                 "Propaganda cancelled: target city is no longer available."));
