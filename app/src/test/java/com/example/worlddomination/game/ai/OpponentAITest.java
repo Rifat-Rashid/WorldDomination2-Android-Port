@@ -105,6 +105,28 @@ public final class OpponentAITest {
     }
 
     @Test
+    public void aiDiplomacyOfferChecksTurnBudgetWithoutReservingIt() throws Exception {
+        GameState state = findAiWithNeutralHumanRegard();
+        GameState.PlayerState actor = aiWithNeutralHumanRegard(state);
+        actor.moneyMillions = 100;
+        actor.turnMoneyMillions = 100;
+        actor.populationMillions = 1_000;
+        setRegardToward(actor, 0, 51);
+        state.getHuman().moneyMillions = 100;
+
+        OpponentAI.Decision decision = OpponentAI.planDiplomacy(state, actor,
+                new SequenceRandom(0, 0, 0));
+
+        assertNotNull(decision);
+        assertEquals(GameState.Action.DIPLOMACY, decision.action);
+        assertEquals(state.getHuman().id, decision.targetPlayerId);
+        assertEquals(2, decision.diplomacyOption);
+        assertEquals("The Flash planner checks offers against turn money but does not reserve it",
+                0, decision.reservedMillions);
+        assertEquals(100, actor.turnMoneyMillions);
+    }
+
+    @Test
     public void spyTargetsTheRivalWithRequiredPerLevelInventory() {
         GameState state = prepareSpyTargetScenario(false);
         GameState.PlayerState attacker = state.getPlayerState(1);
