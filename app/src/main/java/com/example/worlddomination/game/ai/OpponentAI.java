@@ -708,16 +708,16 @@ public final class OpponentAI {
         }
         String selectedType = availableTypes.get(randomInclusive(random, 0,
                 availableTypes.size() - 1));
-        String highest = null;
         for (String name : carriers) {
             GameState.WeaponState weapon = player.getWeapons().get(name);
-            if (selectedType.equals(weapon.definition.type)
-                    && (highest == null || weapon.definition.level
-                    > player.getWeapons().get(highest).definition.level)) {
-                highest = name;
+            if (selectedType.equals(weapon.definition.type)) {
+                // The source returns the first matching entry in logicalCarrierArr.
+                // That array preserves weapon catalog order, even when a later
+                // carrier of the same type has a higher level.
+                return name;
             }
         }
-        return highest;
+        return null;
     }
 
     private static List<String> sourceActiveCarriers(GameState.PlayerState player,
