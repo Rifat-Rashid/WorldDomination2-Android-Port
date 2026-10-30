@@ -1304,14 +1304,16 @@ public final class OpponentAI {
             for (GameState.WeaponState weapon : player.getWeapons().values()) {
                 if (weapon.definition.productionGroup == group) {
                     active |= weapon.active;
-                    if (weapon.active) {
-                        deficit += Math.max(0, player.getDesiredStock(weapon.definition.name)
-                                - weapon.inStock);
-                    }
+                    deficit += Math.max(0, player.getDesiredStock(weapon.definition.name)
+                            - weapon.inStock);
                 }
             }
             if (active) {
                 activeCategories++;
+            } else {
+                // The Flash source totals every weapon's desire in an active
+                // category, but inactive categories receive a zero deficit.
+                deficit = 0;
             }
             deficits.add(new int[]{group, deficit});
         }

@@ -347,6 +347,43 @@ public final class OpponentAITest {
     }
 
     @Test
+    public void productionDeficitCountsUnresearchedWeaponsOnlyInActiveCategories()
+            throws Exception {
+        GameState state = new GameState(1, 919L);
+        GameState.PlayerState actor = state.getPlayerState(1);
+        java.lang.reflect.Field desireField = GameState.PlayerState.class
+                .getDeclaredField("desiredStock");
+        desireField.setAccessible(true);
+        @SuppressWarnings("unchecked")
+        Map<String, Integer> desired = (Map<String, Integer>) desireField.get(actor);
+
+        for (GameState.WeaponState weapon : actor.getWeapons().values()) {
+            weapon.active = false;
+            weapon.inStock = 0;
+            desired.put(weapon.definition.name, 0);
+        }
+        actor.getWeapons().get("rocket1").active = true;
+        desired.put("rocket2", 2);
+        desired.put("rocket3", 2);
+        desired.put("rocket4", 5);
+        actor.getWeapons().get("soldier1").active = true;
+        desired.put("soldier1", 4);
+        desired.put("warhead1", 100);
+        desired.put("warhead2", 100);
+        desired.put("warhead3", 100);
+        desired.put("warhead4", 100);
+        actor.getWeapons().get("antiAir").inStock = 2;
+        actor.getWeapons().get("antiRocket").inStock = 2;
+
+        OpponentAI.Decision decision = OpponentAI.planProduction(state, actor,
+                new SequenceRandom(0, 0, 0));
+
+        assertEquals(Integer.valueOf(26), decision.productionBudgets.get("rockets"));
+        assertFalse(decision.productionBudgets.containsKey("soldier"));
+        assertFalse(decision.productionBudgets.containsKey("warhead"));
+    }
+
+    @Test
     public void specialAttackScoreReceivesLateBonusWhenShipAndWarheadStocksQualify() {
         GameState state = null;
         for (long seed = 0; seed < 500; seed++) {
