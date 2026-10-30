@@ -2045,6 +2045,14 @@ public final class GameState {
         return Collections.unmodifiableList(lastTurnCombatEvents);
     }
 
+    /**
+     * Copies the reference-compatible RNG state for deterministic battle presentation.
+     * Presentation draws remain isolated from future simulation turns.
+     */
+    public ReferenceRandom createPresentationRandomCopy() {
+        return ((ReferenceRandom) random).copy();
+    }
+
     /** Resolves human and opponent actions using the source turn order. */
     public void confirmTurn() {
         if (queuedActions.size() != MAX_TURN_ACTIONS) {

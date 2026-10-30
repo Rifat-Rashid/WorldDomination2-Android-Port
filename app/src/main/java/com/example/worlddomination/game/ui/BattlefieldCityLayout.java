@@ -59,19 +59,40 @@ public final class BattlefieldCityLayout {
     /** Returns the source city anchor's x-coordinate in libGDX world space. */
     public static float x(Rectangle mapBounds, int playerId, int cityIndex) {
         validateCity(playerId, cityIndex);
-        float scale = sourceScale(mapBounds);
-        float marginX = (mapBounds.width - SOURCE_WIDTH * scale) / 2f;
-        return mapBounds.x + marginX + CITY_X[playerId][cityIndex] * scale
-                + islandShift(playerId, marginX);
+        return sourceX(mapBounds, CITY_X[playerId][cityIndex], playerId);
     }
 
     /** Returns the source city anchor's y-coordinate in libGDX world space. */
     public static float y(Rectangle mapBounds, int playerId, int cityIndex) {
         validateCity(playerId, cityIndex);
+        return sourceY(mapBounds, CITY_Y[playerId][cityIndex]);
+    }
+
+    /** Projects a Flash x-coordinate and applies the owning island's crop offset. */
+    public static float sourceX(Rectangle mapBounds, float sourceX, int playerId) {
+        if (playerId < 0 || playerId >= PLAYER_COUNT) {
+            throw new IllegalArgumentException("Invalid battlefield player");
+        }
+        float scale = sourceScale(mapBounds);
+        float marginX = (mapBounds.width - SOURCE_WIDTH * scale) / 2f;
+        return mapBounds.x + marginX + sourceX * scale + islandShift(playerId, marginX);
+    }
+
+    /** Projects a Flash top-down y-coordinate into libGDX world coordinates. */
+    public static float sourceY(Rectangle mapBounds, float sourceY) {
         float scale = sourceScale(mapBounds);
         float marginY = (mapBounds.height - SOURCE_HEIGHT * scale) / 2f;
-        float topDownY = marginY + CITY_Y[playerId][cityIndex] * scale;
-        return mapBounds.y + mapBounds.height - topDownY;
+        return mapBounds.y + mapBounds.height - marginY - sourceY * scale;
+    }
+
+    public static float sourceCityX(int playerId, int cityIndex) {
+        validateCity(playerId, cityIndex);
+        return CITY_X[playerId][cityIndex];
+    }
+
+    public static float sourceCityY(int playerId, int cityIndex) {
+        validateCity(playerId, cityIndex);
+        return CITY_Y[playerId][cityIndex];
     }
 
     /** Returns the city-selection outline radius in libGDX world space. */
