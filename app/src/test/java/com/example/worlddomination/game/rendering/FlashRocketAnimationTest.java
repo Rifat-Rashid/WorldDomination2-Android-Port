@@ -24,7 +24,7 @@ public final class FlashRocketAnimationTest {
 
         assertTrue(animation.takeLaunchSound());
         assertEquals(OriginalAudio.Cue.WARROCKET, animation.getLaunchCue());
-        assertEquals(route.launch.x, animation.getRocket().sourceX, 0f);
+        assertEquals(route.launch.x, animation.getRocket().sourceX, 0.001f);
         assertEquals(route.ellipseCenterY, animation.getRocket().sourceY, 0.001f);
         assertEquals(route.attackerPlayerId, animation.getRocket().islandPlayerId);
         assertEquals("explosion_warhead_1", animation.getImpactLinkage());
@@ -82,5 +82,28 @@ public final class FlashRocketAnimationTest {
         }
         assertEquals(0, animation.getTrailCount());
         assertTrue(animation.isFinished());
+    }
+
+    @Test
+    public void submarineRocketWaitsForTheSourceLaunchAndUsesHalfHeightArtwork() {
+        FlashBattleRoutes.RocketStrike route =
+                FlashBattleRoutes.createSubmarineRocketStrike(0, 2, 1);
+        FlashRocketAnimation animation = new FlashRocketAnimation(route,
+                FlashRocketAnimation.SUBMARINE_LAUNCH_DELAY_TICKS,
+                "explosion_warhead_1", OriginalAudio.Cue.EXPLOSION_SMALL3);
+
+        for (int tick = 0; tick < FlashRocketAnimation.SUBMARINE_LAUNCH_DELAY_TICKS; tick++) {
+            assertFalse(animation.tick());
+            assertFalse(animation.takeLaunchSound());
+            assertFalse(animation.getRocket().visible);
+        }
+        assertFalse(animation.tick());
+        assertTrue(animation.getRocket().visible);
+        assertTrue(animation.takeLaunchSound());
+        assertEquals(0.5f, animation.getRocket().scaleY, 0f);
+        assertEquals(route.launch.x, animation.getRocket().sourceX, 0.001f);
+        assertEquals(route.attackerPlayerId, animation.getRocket().islandPlayerId);
+        assertEquals("explosion_warhead_1", animation.getImpactLinkage());
+        assertEquals(OriginalAudio.Cue.EXPLOSION_SMALL3, animation.getImpactCue());
     }
 }

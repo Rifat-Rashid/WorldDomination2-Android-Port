@@ -123,6 +123,12 @@ jobs:
           - id: rocket-source-art-tests
             check: Original rocket and trail artwork tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest.rocketAndTrailUseThePackagedFlashTimelinesAndNestedSourceArtwork" --tests "com.example.worlddomination.game.audio.OriginalAudioTest.combatCuesPointToTheOriginalPackagedSounds"'
+          - id: submarine-rocket-route-tests
+            check: Submarine rocket route parity
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.createsSourceSubmarineRocketEllipseForEveryTargetCity" --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.rejectsInvalidSubmarineRocketRoutePlayerAndCity"'
+          - id: submarine-rocket-playback-tests
+            check: Submarine rocket playback parity
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashRocketAnimationTest.submarineRocketWaitsForTheSourceLaunchAndUsesHalfHeightArtwork" --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.resolvedPreparedSubmarineAttackEmitsAPlayablePayloadImpact"'
           - id: flash-vector-shape-tests
             check: Original Flash vector shape artwork tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest.smokePuffFlashShapeIsPackagedAsVectorArtForNativeRasterization"'

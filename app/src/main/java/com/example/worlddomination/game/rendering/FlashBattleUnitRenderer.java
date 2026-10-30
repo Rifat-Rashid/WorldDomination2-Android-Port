@@ -97,14 +97,14 @@ public final class FlashBattleUnitRenderer {
                 drawRocketSprite(batch, mapBounds, smokeShape,
                         trailX, animation.getTrailY(trail), route.attackerPlayerId,
                         route.targetPlayerId, rocketProgress(route, trailX), 0f,
-                        animation.getTrailAlpha(trail), mapScale);
+                        animation.getTrailAlpha(trail), mapScale, 1f);
             }
             FlashRocketAnimation.Actor rocket = animation.getRocket();
             if (rocket.visible) {
                 drawRocketSprite(batch, mapBounds, rocketShape, rocket.sourceX, rocket.sourceY,
                         route.attackerPlayerId, route.targetPlayerId,
                         rocketProgress(route, rocket.sourceX), rocket.rotationDegrees, 1f,
-                        mapScale);
+                        mapScale, rocket.scaleY);
             }
         }
         batch.setColor(com.badlogic.gdx.graphics.Color.WHITE);
@@ -158,7 +158,7 @@ public final class FlashBattleUnitRenderer {
                                          TextureRegion region, float sourceX,
                                          float sourceY, int fromPlayerId, int toPlayerId,
                                          float progress, float rotationDegrees, float alpha,
-                                         float mapScale) {
+                                         float mapScale, float scaleY) {
         float width = region.getRegionWidth() * mapScale;
         float height = region.getRegionHeight() * mapScale;
         float centerX = BattlefieldCityLayout.sourceXBetween(mapBounds, sourceX,
@@ -166,7 +166,7 @@ public final class FlashBattleUnitRenderer {
         float centerY = BattlefieldCityLayout.sourceY(mapBounds, sourceY);
         batch.setColor(1f, 1f, 1f, alpha);
         batch.draw(region, centerX - width / 2f, centerY - height / 2f,
-                width / 2f, height / 2f, width, height, 1f, 1f, rotationDegrees);
+                width / 2f, height / 2f, width, height, 1f, scaleY, rotationDegrees);
     }
 
     private static float rocketProgress(FlashBattleRoutes.RocketStrike route,

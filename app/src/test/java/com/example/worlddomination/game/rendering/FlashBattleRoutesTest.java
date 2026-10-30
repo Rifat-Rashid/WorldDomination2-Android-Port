@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertThrows;
@@ -298,6 +299,60 @@ public final class FlashBattleRoutesTest {
                 () -> FlashBattleRoutes.createRocketStrike(0, 1, 0, 0, false));
         assertThrows(IllegalArgumentException.class,
                 () -> FlashBattleRoutes.createRocketStrike(0, 1, 0, 3, false));
+    }
+
+    @Test
+    public void createsSourceSubmarineRocketEllipseForEveryTargetCity() {
+        float[][] submarines = {
+                {402f, 128f}, {79.4f, 289.3f}, {351.4f, 103.55f},
+                {343.45f, 478f}, {546f, 382f}
+        };
+        for (int attacker = 0; attacker < BattlefieldCityLayout.PLAYER_COUNT; attacker++) {
+            for (int target = 0; target < BattlefieldCityLayout.PLAYER_COUNT; target++) {
+                for (int city = 0; city < BattlefieldCityLayout.CITIES_PER_PLAYER; city++) {
+                    FlashBattleRoutes.RocketStrike route =
+                            FlashBattleRoutes.createSubmarineRocketStrike(attacker, target, city);
+                    float startX = submarines[target][0] + 21f;
+                    float startY = submarines[target][1] + 55f;
+                    float targetX = BattlefieldCityLayout.sourceCityX(target, city);
+                    float targetY = BattlefieldCityLayout.sourceCityY(target, city);
+                    assertEquals(0, route.actionBuildingSlot);
+                    assertEquals(submarines[target][0], route.silo.x, 0f);
+                    assertEquals(submarines[target][1], route.silo.y, 0f);
+                    assertTrue(route.submarineLaunch);
+                    assertFalse(route.intercepted);
+                    assertEquals(startX, route.launch.x, 0f);
+                    assertEquals(startY, route.launch.y, 0f);
+                    assertEquals(targetX, route.target.x, 0f);
+                    assertEquals(targetY, route.target.y, 0f);
+                    assertEquals(Math.min(startX, targetX)
+                                    + Math.abs(startX - targetX) / 2f,
+                            route.ellipseCenterX, 0f);
+                    assertEquals(Math.min(targetY, startY) - 40f,
+                            route.ellipseCenterY, 0f);
+                    assertEquals(Math.abs(startX - targetX) / 2f,
+                            route.ellipseRadiusX, 0f);
+                    assertEquals(170f, route.ellipseRadiusY, 0f);
+                    assertEquals(startX > targetX ? 0f : 180f,
+                            route.startAngle, 0f);
+                    assertEquals(startX > targetX ? 1f : -1f,
+                            route.directionMultiplier, 0f);
+                    assertEquals(startX > targetX ? -180f : 360f,
+                            route.targetAngle, 0f);
+                    assertEquals(targetY, route.explosion.y, 0f);
+                }
+            }
+        }
+    }
+
+    @Test
+    public void rejectsInvalidSubmarineRocketRoutePlayerAndCity() {
+        assertThrows(IllegalArgumentException.class,
+                () -> FlashBattleRoutes.createSubmarineRocketStrike(-1, 1, 0));
+        assertThrows(IllegalArgumentException.class,
+                () -> FlashBattleRoutes.createSubmarineRocketStrike(0, 5, 0));
+        assertThrows(IllegalArgumentException.class,
+                () -> FlashBattleRoutes.createSubmarineRocketStrike(0, 1, 5));
     }
 
     @Test

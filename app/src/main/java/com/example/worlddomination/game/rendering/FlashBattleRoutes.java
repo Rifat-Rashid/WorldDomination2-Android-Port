@@ -156,8 +156,10 @@ public final class FlashBattleRoutes {
         public final int actionBuildingSlot;
         /** Whether the source counter system intercepted this rocket. */
         public final boolean intercepted;
-        /** Flash stage coordinate of the source silo. */
+        /** Flash stage coordinate of the silo or submarine that launches this rocket. */
         public final Point silo;
+        /** True when the source attached a half-height rocket movie clip to a submarine. */
+        public final boolean submarineLaunch;
         /** Flash stage coordinate where the rocket begins. */
         public final Point launch;
         /** Flash stage coordinate of the selected city. */
@@ -181,6 +183,7 @@ public final class FlashBattleRoutes {
 
         private RocketStrike(int attackerPlayerId, int targetPlayerId, int targetCityIndex,
                              int actionBuildingSlot, boolean intercepted, Point silo,
+                             boolean submarineLaunch,
                              Point launch, Point target, Point explosion,
                              float ellipseCenterX, float ellipseCenterY,
                              float ellipseRadiusX, float ellipseRadiusY,
@@ -191,6 +194,7 @@ public final class FlashBattleRoutes {
             this.actionBuildingSlot = actionBuildingSlot;
             this.intercepted = intercepted;
             this.silo = silo;
+            this.submarineLaunch = submarineLaunch;
             this.launch = launch;
             this.target = target;
             this.explosion = explosion;
@@ -301,6 +305,11 @@ public final class FlashBattleRoutes {
             {430.5f, 94.75f}, {325.95f, 94f}, {709.3f, 314.85f},
             {65.5f, 328.55f}, {112f, 360.25f}
     };
+    // battleSrcMC sub_{player}_2 placements recovered from scene.json.gz.
+    private static final float[][] SUBMARINE_POSITIONS = {
+            {402f, 128f}, {79.4f, 289.3f}, {351.4f, 103.55f},
+            {343.45f, 478f}, {546f, 382f}
+    };
     // Sub_model.ship_plane_start_arr offsets, in the source payload attack order.
     private static final float[][] SHIP_PLANE_START_OFFSETS = {
             {28f, -26f}, {-9f, -3f}, {-38f, 11f}
@@ -353,6 +362,12 @@ public final class FlashBattleRoutes {
                 || event.type == GameState.CombatEventType.STRIKE_INTERCEPTED)
                 && event.weaponName != null && event.weaponName.matches("rocket[1-4]")
                 && event.actionBuildingSlot >= 1 && event.actionBuildingSlot <= 2;
+    }
+
+    /** Returns whether the source resolved a payload launched by a submarine. */
+    public static boolean supportsSubmarineRocketStrike(GameState.CombatEvent event) {
+        return event != null && event.type == GameState.CombatEventType.STRIKE_IMPACT
+                && "sub".equals(event.weaponName);
     }
 
     /** Returns whether the event came from one payload launched by the source ship carrier. */
@@ -425,8 +440,37 @@ public final class FlashBattleRoutes {
         Point launch = new Point(startX, startY);
         Point explosion = new Point(target.x, intercepted ? target.y - 100f : target.y);
         return new RocketStrike(attackerPlayerId, targetPlayerId, targetCityIndex,
-                actionBuildingSlot, intercepted, silo, launch, target, explosion,
+                actionBuildingSlot, intercepted, silo, false, launch, target, explosion,
                 ellipseCenterX, ellipseCenterY, Math.abs(startX - target.x) / 2f,
+                170f, startAngle, directionMultiplier, targetAngle);
+    }
+
+    /** Recreates Battle's submarine placement, source launch offset, and 340px ellipse. */
+    public static RocketStrike createSubmarineRocketStrike(int attackerPlayerId,
+                                                            int targetPlayerId,
+                                                            int targetCityIndex) {
+        validatePlayer(attackerPlayerId);
+        validatePlayer(targetPlayerId);
+        if (targetCityIndex < 0 || targetCityIndex >= BattlefieldCityLayout.CITIES_PER_PLAYER) {
+            throw new IllegalArgumentException("Invalid submarine rocket presentation data");
+        }
+
+        float[] submarinePosition = SUBMARINE_POSITIONS[targetPlayerId];
+        Point submarine = new Point(submarinePosition[0], submarinePosition[1]);
+        Point launch = new Point(submarine.x + 21f, submarine.y + 55f);
+        Point target = new Point(BattlefieldCityLayout.sourceCityX(targetPlayerId,
+                targetCityIndex), BattlefieldCityLayout.sourceCityY(targetPlayerId,
+                targetCityIndex));
+        float ellipseCenterX = Math.min(launch.x, target.x)
+                + Math.abs(launch.x - target.x) / 2f;
+        float ellipseCenterY = Math.min(target.y, launch.y) - 40f;
+        boolean launchesFromRight = launch.x > target.x;
+        float startAngle = launchesFromRight ? 0f : 180f;
+        float directionMultiplier = launchesFromRight ? 1f : -1f;
+        float targetAngle = launchesFromRight ? -180f : 360f;
+        return new RocketStrike(attackerPlayerId, targetPlayerId, targetCityIndex,
+                0, false, submarine, true, launch, target, target,
+                ellipseCenterX, ellipseCenterY, Math.abs(launch.x - target.x) / 2f,
                 170f, startAngle, directionMultiplier, targetAngle);
     }
 

@@ -73,6 +73,49 @@ public final class GameStateCombatEventTest {
     }
 
     @Test
+    public void resolvedPreparedSubmarineAttackEmitsAPlayablePayloadImpact() {
+        GameState state = new GameState(1, 1221L, false);
+        GameState.WeaponState submarine = state.getHuman().getWeapons().get("sub");
+        GameState.WeaponState warhead = state.getHuman().getWeapons().get("warhead1");
+        submarine.active = true;
+        submarine.inStock = 1;
+        warhead.active = true;
+        warhead.inStock = 1;
+
+        state.selectAction(GameState.Action.PREPARED_ATTACK);
+        assertTrue(state.configurePreparedCarrier("sub"));
+        assertTrue(state.acceptSelectedAction());
+        queueResources(state);
+        state.confirmTurn();
+
+        state.selectAction(GameState.Action.PREPARED_ATTACK);
+        assertTrue(state.configurePreparedLaunch(1, 2, "warhead1"));
+        assertTrue(state.acceptSelectedAction());
+        queueResources(state);
+        state.confirmTurn();
+
+        List<GameState.CombatEvent> events = state.getLastTurnCombatEvents();
+        assertEquals(1, events.size());
+        GameState.CombatEvent event = events.get(0);
+        assertEquals(GameState.CombatEventType.STRIKE_IMPACT, event.type);
+        assertEquals(0, event.attackerPlayerId);
+        assertEquals(1, event.defenderPlayerId);
+        assertEquals(2, event.cityIndex);
+        assertEquals("sub", event.weaponName);
+        assertEquals("warhead1", event.payloadName);
+        assertTrue(FlashBattleRoutes.supportsSubmarineRocketStrike(event));
+        FlashBattleRoutes.RocketStrike route = FlashBattleRoutes.createSubmarineRocketStrike(
+                event.attackerPlayerId, event.defenderPlayerId, event.cityIndex);
+        assertTrue(route.submarineLaunch);
+        assertEquals(0.5f, new com.example.worlddomination.game.rendering.FlashRocketAnimation(
+                route, 0).getRocket().scaleY, 0f);
+        assertEquals("explosion_warhead_1",
+                com.example.worlddomination.game.rendering.SourceCombatAnimationMapping
+                        .linkageFor(event));
+        assertTrue(event.casualtiesMillions > 0);
+    }
+
+    @Test
     public void shipStrikeEmitsAnImpactForEachResolvedPayload() {
         GameState state = new GameState(1, 122L, false);
         GameState.WeaponState ship = state.getHuman().getWeapons().get("ship");
