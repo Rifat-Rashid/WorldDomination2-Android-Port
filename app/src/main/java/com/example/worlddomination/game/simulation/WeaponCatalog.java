@@ -7,16 +7,16 @@ import java.util.List;
 import java.util.Map;
 
 /** Weapon stock and production metadata recovered from WeaponStock/WeaponSlot. */
-final class WeaponCatalog {
-    static final class Definition {
-        final String name;
-        final String technology;
-        final String type;
-        final int level;
-        final int costMillions;
-        final int productionGroup;
-        final int initialStock;
-        final int maxKillsMillions;
+public final class WeaponCatalog {
+    public static final class Definition {
+        public final String name;
+        public final String technology;
+        public final String type;
+        public final int level;
+        public final int costMillions;
+        public final int productionGroup;
+        public final int initialStock;
+        public final int maxKillsMillions;
 
         Definition(String name, String technology, String type, int level,
                    int costMillions, int productionGroup, int initialStock,
@@ -76,11 +76,11 @@ final class WeaponCatalog {
                 productionGroup, initialStock, maxKillsMillions));
     }
 
-    static List<Definition> all() {
+    public static List<Definition> all() {
         return ALL;
     }
 
-    static Definition byName(String name) {
+    public static Definition byName(String name) {
         return BY_NAME.get(name);
     }
 }

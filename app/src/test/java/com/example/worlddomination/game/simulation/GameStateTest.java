@@ -216,7 +216,7 @@ public final class GameStateTest {
 
     @Test
     public void spyAttackStealsMoneyAndStockThenFollowsReadinessCooldown() {
-        GameState state = new GameState(1, 11L);
+        GameState state = new GameState(1, 11L, false);
         GameState.PlayerState attacker = state.getHuman();
         GameState.PlayerState defender = state.getPlayers()[1];
         int attackerFundsBefore = attacker.moneyMillions;
@@ -285,7 +285,7 @@ public final class GameStateTest {
 
     @Test
     public void spyCanTargetAnEmptyCityAndDifficultyCapsStolenFunds() {
-        GameState state = new GameState(0, 47L);
+        GameState state = new GameState(0, 47L, false);
         GameState.PlayerState attacker = state.getHuman();
         GameState.PlayerState defender = state.getPlayers()[1];
         defender.moneyMillions = 1000;
@@ -491,7 +491,7 @@ public final class GameStateTest {
 
     @Test
     public void diplomacyOfferIsResolvedByAiAndCreatesTimedSymmetricCeasefire() {
-        GameState state = new GameState(1, 18L);
+        GameState state = new GameState(1, 18L, false);
         state.selectAction(GameState.Action.DIPLOMACY);
         assertTrue(state.acceptSelectedAction());
         assertEquals(55, state.getTurnMoneyMillions());
@@ -544,7 +544,7 @@ public final class GameStateTest {
 
     @Test
     public void diplomacyDemandUsesAiAcceptanceRulesAndTransfersMoney() {
-        GameState state = new GameState(1, 20L);
+        GameState state = new GameState(1, 20L, false);
         GameState.PlayerState human = state.getHuman();
         GameState.PlayerState opponent = state.getPlayerState(1);
         human.moneyMillions = 1000;

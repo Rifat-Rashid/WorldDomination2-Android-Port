@@ -7,16 +7,16 @@ import java.util.List;
 import java.util.Map;
 
 /** Technology data recovered from the reference TechTree constructor. */
-final class TechnologyCatalog {
-    static final class Definition {
-        final int id;
-        final String name;
-        final int costMillions;
-        final int group;
-        final int level;
-        final int strengthWeight;
-        final String prerequisite;
-        final String prettyName;
+public final class TechnologyCatalog {
+    public static final class Definition {
+        public final int id;
+        public final String name;
+        public final int costMillions;
+        public final int group;
+        public final int level;
+        public final int strengthWeight;
+        public final String prerequisite;
+        public final String prettyName;
 
         Definition(int id, String name, int costMillions, int group, int level,
                    int strengthWeight, String prerequisite, String prettyName) {
@@ -84,11 +84,11 @@ final class TechnologyCatalog {
         return level == 1 ? "FIGHTER" : "BOMBER";
     }
 
-    static List<Definition> all() {
+    public static List<Definition> all() {
         return ALL;
     }
 
-    static Definition byName(String name) {
+    public static Definition byName(String name) {
         return BY_NAME.get(name);
     }
 }
