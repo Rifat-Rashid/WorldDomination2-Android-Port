@@ -3184,7 +3184,9 @@ public final class GameState {
         int[] sourceWeights = {151, 1213, 1001, 2001, 3002, 200, 101, 910};
         long points = sourceWeights[actionIndex] + random.nextInt(51);
         int effectiveMultiplier = multiplier == 0 ? 1 : multiplier;
-        player.score += points * effectiveMultiplier * difficulty;
+        // The native setup stores difficulty as 0..2, while the Flash game
+        // multiplies high-score awards by its 1..3 difficulty level.
+        player.score += points * effectiveMultiplier * (difficulty + 1);
     }
 
     private static int productionGroup(String category) {
