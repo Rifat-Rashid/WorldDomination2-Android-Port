@@ -21,8 +21,20 @@ jobs:
             check: Android debug assembly
             task: ':app:dependencies :app:assembleDebug'
           - id: unit-tests
-            check: JVM unit tests
+            check: Full JVM unit test suite
             task: ':app:testDebugUnitTest'
+          - id: simulation-tests
+            check: Gameplay simulation tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.*"'
+          - id: ai-tests
+            check: Opponent AI tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.*"'
+          - id: ui-tests
+            check: Touch and presentation tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.*"'
+          - id: asset-audio-tests
+            check: Asset and audio integrity tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.*" --tests "com.example.worlddomination.game.audio.*" --tests "com.example.worlddomination.ExampleUnitTest"'
           - id: lint
             check: Android lint
             task: ':app:lintDebug'
