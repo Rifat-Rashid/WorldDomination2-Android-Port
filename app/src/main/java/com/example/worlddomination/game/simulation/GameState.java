@@ -893,19 +893,26 @@ public final class GameState {
         selectedProductionPercent = 0;
     }
 
-    /** Sets one production row as the original interface's percentage sliders do. */
-    public void configureProduction(String category, int percent) {
+    /** Sets a production row only after its source technology group is unlocked. */
+    public boolean configureProduction(String category, int percent) {
         if (selectedAction != Action.PRODUCTION) {
             throw new IllegalStateException("Select Production before setting its investment");
         }
-        if (productionGroup(category) == 0) {
+        int group = productionGroup(category);
+        if (group == 0) {
             throw new IllegalArgumentException("Unknown production category: " + category);
         }
         if (percent < 0 || percent > 100) {
             throw new IllegalArgumentException("Production percentage must be 0..100");
         }
+        if (!isProductionGroupUnlocked(getHuman(), group)) {
+            messages.add("You have not yet invented this Technology");
+            trimMessages();
+            return false;
+        }
         selectedProductionCategory = category;
         selectedProductionPercent = percent;
+        return true;
     }
 
     /** Selects a technology only when its source prerequisite and funds are satisfied. */
@@ -1578,6 +1585,13 @@ public final class GameState {
             }
             reserved = getTechnologyCost(selectedTechnology);
         } else if (selectedAction == Action.PRODUCTION) {
+            if (selectedProductionPercent > 0
+                    && !isProductionGroupUnlocked(getHuman(),
+                    productionGroup(selectedProductionCategory))) {
+                messages.add("You have not yet invented this Technology");
+                trimMessages();
+                return false;
+            }
             if (selectedProductionPercent > 0) {
                 reserved = getSelectedProductionBudgetMillions();
             }
@@ -2942,6 +2956,18 @@ public final class GameState {
             }
         }
         return 0;
+    }
+
+    private static boolean isProductionGroupUnlocked(PlayerState player, int group) {
+        if (group == 8) {
+            return true;
+        }
+        for (TechnologyCatalog.Definition technology : TechnologyCatalog.all()) {
+            if (technology.group == group && player.hasTechnology(technology.name)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void trimMessages() {
