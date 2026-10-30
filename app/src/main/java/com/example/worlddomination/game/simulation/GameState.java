@@ -84,7 +84,7 @@ public final class GameState {
         public int score;
         public int spyReadiness = 25;
         public boolean alive = true;
-        private final int[] regardToward = new int[5];
+        private final double[] regardToward = new double[5];
         private final int[] ceasefireTurns = new int[5];
         private final int[] diplomacyOfferedLastTurn = new int[5];
         private final DiplomacyProposal[] pendingDiplomacy = new DiplomacyProposal[5];
@@ -196,6 +196,11 @@ public final class GameState {
         }
 
         public int getRegardToward(int playerId) {
+            return (int) getRegardTowardExact(playerId);
+        }
+
+        /** Exact relationship value; combat and third-party reactions can be fractional. */
+        public double getRegardTowardExact(int playerId) {
             if (playerId < 0 || playerId >= regardToward.length) {
                 throw new IllegalArgumentException("Invalid player index");
             }
@@ -1769,7 +1774,7 @@ public final class GameState {
         int accept = 2;
         int reject = 0;
         if (optionIndex < 3) {
-            if (receiver.getRegardToward(proposer.id) > 50) {
+            if (receiver.getRegardTowardExact(proposer.id) > 50) {
                 accept++;
             } else {
                 reject++;
@@ -1787,7 +1792,7 @@ public final class GameState {
                 accept++;
             }
         } else {
-            if (receiver.getRegardToward(proposer.id) > 50) {
+            if (receiver.getRegardTowardExact(proposer.id) > 50) {
                 accept++;
             } else {
                 reject++;
@@ -1863,13 +1868,58 @@ public final class GameState {
         target.regardToward[proposer.id] += adjustment;
     }
 
+    void applyBattleHostilityEffects(PlayerState attacker, PlayerState defender,
+                                     int casualties) {
+        attacker.regardToward[defender.id] -= casualties;
+        defender.regardToward[attacker.id] -= casualties;
+
+        if (defender.specialPerson && !attacker.human) {
+            for (PlayerState player : players) {
+                if (player.alive) {
+                    player.regardToward[attacker.id] -= 7;
+                }
+            }
+        }
+
+        double thirdPartyAdjustment = casualties / 20.0d;
+        for (PlayerState observer : players) {
+            if (!observer.alive || observer == attacker || observer == defender
+                    || !observer.hasCeasefireWith(attacker.id)) {
+                continue;
+            }
+            if (observer.regardToward[defender.id] > observer.regardToward[attacker.id]) {
+                observer.regardToward[attacker.id] -= thirdPartyAdjustment;
+            } else {
+                observer.regardToward[attacker.id] += thirdPartyAdjustment;
+            }
+        }
+    }
+
+    private void applyPropagandaHostilityEffects(PlayerState attacker, PlayerState defender) {
+        int regardLoss = random.nextInt(6) + 5;
+        attacker.regardToward[defender.id] -= regardLoss;
+        defender.regardToward[attacker.id] -= regardLoss;
+
+        double thirdPartyAdjustment = regardLoss / 5.0d;
+        for (PlayerState observer : players) {
+            if (!observer.alive || observer == attacker || observer == defender) {
+                continue;
+            }
+            if (observer.regardToward[attacker.id] > observer.regardToward[defender.id]) {
+                observer.regardToward[attacker.id] += thirdPartyAdjustment;
+            } else {
+                observer.regardToward[attacker.id] -= thirdPartyAdjustment;
+            }
+        }
+    }
+
     private void updateDiplomacyRelations() {
         for (PlayerState player : players) {
             if (!player.alive) {
                 continue;
             }
             for (int otherId = 0; otherId < players.length; otherId++) {
-                int regard = player.regardToward[otherId];
+                double regard = player.regardToward[otherId];
                 if (player.ceasefireTurns[otherId] > 0) {
                     regard += 2;
                 }
@@ -1988,6 +2038,7 @@ public final class GameState {
             casualties = Math.min(city.populationMillions, Math.round(damage));
             city.populationMillions -= casualties;
             defender.populationMillions = totalPopulation(defender);
+            applyBattleHostilityEffects(attacker, defender, casualties);
             if (defender.populationMillions <= 0) {
                 defender.alive = false;
                 messages.add("Nation " + defender.id + " has been eliminated.");
@@ -2078,6 +2129,7 @@ public final class GameState {
         int casualties = Math.min(rolledCasualties, city.populationMillions);
         city.populationMillions -= casualties;
         defender.populationMillions = totalPopulation(defender);
+        applyBattleHostilityEffects(attacker, defender, casualties);
         if (defender.populationMillions <= 0) {
             defender.alive = false;
             messages.add("Nation " + defender.id + " has been eliminated.");
@@ -2150,6 +2202,7 @@ public final class GameState {
         for (ShipStrike strike : order.shipStrikes) {
             attacker.weapons.get(strike.payloadName).inStock--;
         }
+        int totalCasualties = 0;
         for (ShipStrikeResult result : results) {
             ShipStrike strike = result.strike;
             CityState city = defender.getCity(strike.cityIndex);
@@ -2160,6 +2213,7 @@ public final class GameState {
             } else {
                 casualties = Math.min(result.rolledCasualties, city.populationMillions);
                 city.populationMillions -= casualties;
+                totalCasualties += casualties;
                 if (casualties > 0) {
                     addToHighscore(attacker, 1, casualties);
                 }
@@ -2168,6 +2222,7 @@ public final class GameState {
                     + " million casualties in nation " + defender.id + " city "
                     + (city.index + 1) + ".");
         }
+        applyBattleHostilityEffects(attacker, defender, totalCasualties);
         defender.populationMillions = totalPopulation(defender);
         if (defender.populationMillions <= 0) {
             defender.alive = false;
@@ -2423,6 +2478,7 @@ public final class GameState {
             }
             attacker.populationMillions = totalPopulation(attacker);
         }
+        applyPropagandaHostilityEffects(attacker, defender);
         addToHighscore(attacker, 7, transfer);
         if (transfer > 0) {
             messages.add("You gained " + transfer

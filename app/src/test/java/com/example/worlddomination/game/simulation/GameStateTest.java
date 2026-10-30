@@ -419,6 +419,58 @@ public final class GameStateTest {
     }
 
     @Test
+    public void directAttackChangesMutualRegardAndFractionalCeasefireAllyRegard() {
+        GameState state = new GameState(0, 74L, false);
+        GameState.PlayerState human = state.getHuman();
+        GameState.PlayerState defender = state.getPlayerState(1);
+        GameState.PlayerState observer = state.getPlayerState(2);
+        setRegard(human, defender.id, 80);
+        setRegard(defender, human.id, 80);
+        setRegard(observer, human.id, 70);
+        setRegard(observer, defender.id, 80);
+        setCeasefireTurns(observer, human.id, 2);
+        int cityPopulationBefore = state.getCityPopulationMillions(defender.id, 0);
+
+        state.selectAction(GameState.Action.ATTACK);
+        assertTrue(state.configureAttack(defender.id, 0, "soldier1"));
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+
+        int casualties = cityPopulationBefore
+                - state.getCityPopulationMillions(defender.id, 0);
+        assertTrue(casualties >= 2 && casualties <= 4);
+        assertEquals(83 - casualties, human.getRegardTowardExact(defender.id), 0.0);
+        assertEquals(83 - casualties, defender.getRegardTowardExact(human.id), 0.0);
+        assertEquals(75 - casualties / 20.0d,
+                observer.getRegardTowardExact(human.id), 0.000001);
+    }
+
+    @Test
+    public void attackingSpecialLeaderWithAiPenalizesEveryLivingNationTowardAttacker() {
+        GameState state = new GameState(0, 75L, false);
+        GameState.PlayerState attacker = state.getPlayerState(1);
+        GameState.PlayerState specialDefender = state.getPlayerState(2);
+        GameState.PlayerState human = state.getHuman();
+        GameState.PlayerState observer = state.getPlayerState(3);
+        setSpecialPerson(specialDefender, true);
+        setRegard(attacker, attacker.id, 70);
+        setRegard(attacker, specialDefender.id, 80);
+        setRegard(specialDefender, attacker.id, 80);
+        setRegard(human, attacker.id, 70);
+        setRegard(observer, attacker.id, 70);
+
+        state.applyBattleHostilityEffects(attacker, specialDefender, 4);
+
+        assertEquals(76, attacker.getRegardTowardExact(specialDefender.id), 0.0);
+        assertEquals(69, specialDefender.getRegardTowardExact(attacker.id), 0.0);
+        assertEquals(63, attacker.getRegardTowardExact(attacker.id), 0.0);
+        assertEquals(63, human.getRegardTowardExact(attacker.id), 0.0);
+        assertEquals(63, observer.getRegardTowardExact(attacker.id), 0.0);
+    }
+
+    @Test
     public void directAttackRejectsDeadTargetsEmptyCitiesAndUnavailableWeapons() {
         GameState state = new GameState(1, 4L);
         state.selectAction(GameState.Action.ATTACK);
@@ -832,6 +884,38 @@ public final class GameStateTest {
     }
 
     @Test
+    public void propagandaDamagesMutualRegardAndMovesThirdPartyRegardFractionally() {
+        boolean sawFractionalReaction = false;
+        for (long seed = 0; seed < 30; seed++) {
+            GameState state = new GameState(0, seed, false);
+            GameState.PlayerState human = state.getHuman();
+            GameState.PlayerState defender = state.getPlayerState(1);
+            GameState.PlayerState observer = state.getPlayerState(2);
+            setRegard(human, defender.id, 70);
+            setRegard(defender, human.id, 70);
+            setRegard(observer, human.id, 80);
+            setRegard(observer, defender.id, 70);
+            state.selectAction(GameState.Action.PROPAGANDA);
+            assertTrue(state.configurePropaganda(defender.id, 0));
+            assertTrue(state.acceptSelectedAction());
+            state.selectAction(GameState.Action.RESOURCES);
+            assertTrue(state.acceptSelectedAction());
+            state.confirmTurn();
+
+            double regardLoss = 73 - human.getRegardTowardExact(defender.id);
+            assertTrue(regardLoss >= 5 && regardLoss <= 10);
+            assertEquals(73 - regardLoss,
+                    defender.getRegardTowardExact(human.id), 0.000001);
+            assertEquals(83 + regardLoss / 5.0d,
+                    observer.getRegardTowardExact(human.id), 0.000001);
+            sawFractionalReaction |= Math.abs(regardLoss / 5.0d
+                    - Math.rint(regardLoss / 5.0d)) > 0.000001;
+        }
+        assertTrue("source propaganda regard reactions retain fractional values",
+                sawFractionalReaction);
+    }
+
+    @Test
     public void propagandaHonorsReligionCapAndRejectsInvalidTargets() {
         GameState state = new GameState(1, 19L);
         GameState.PlayerState attacker = state.getHuman();
@@ -1108,11 +1192,38 @@ public final class GameStateTest {
     }
 
     private static void setRegard(GameState.PlayerState player, int opponentId, int value) {
+        setRegard(player, opponentId, (double) value);
+    }
+
+    private static void setRegard(GameState.PlayerState player, int opponentId, double value) {
         try {
             java.lang.reflect.Field field = GameState.PlayerState.class
                     .getDeclaredField("regardToward");
             field.setAccessible(true);
-            ((int[]) field.get(player))[opponentId] = value;
+            ((double[]) field.get(player))[opponentId] = value;
+        } catch (ReflectiveOperationException exception) {
+            throw new AssertionError(exception);
+        }
+    }
+
+    private static void setCeasefireTurns(GameState.PlayerState player, int opponentId,
+                                          int turns) {
+        try {
+            java.lang.reflect.Field field = GameState.PlayerState.class
+                    .getDeclaredField("ceasefireTurns");
+            field.setAccessible(true);
+            ((int[]) field.get(player))[opponentId] = turns;
+        } catch (ReflectiveOperationException exception) {
+            throw new AssertionError(exception);
+        }
+    }
+
+    private static void setSpecialPerson(GameState.PlayerState player, boolean specialPerson) {
+        try {
+            java.lang.reflect.Field field = GameState.PlayerState.class
+                    .getDeclaredField("specialPerson");
+            field.setAccessible(true);
+            field.setBoolean(player, specialPerson);
         } catch (ReflectiveOperationException exception) {
             throw new AssertionError(exception);
         }
