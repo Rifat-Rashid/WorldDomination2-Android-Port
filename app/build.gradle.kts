@@ -9,6 +9,7 @@ val generatedNativesDirectory = layout.buildDirectory.dir("generated/gdx-jniLibs
 dependencies {
     implementation("com.badlogicgames.gdx:gdx:$gdxVersion")
     implementation("com.badlogicgames.gdx:gdx-backend-android:$gdxVersion")
+    implementation("com.caverock:androidsvg-aar:1.4")
     add(natives.name, "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-arm64-v8a")
     add(natives.name, "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-armeabi-v7a")
     add(natives.name, "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-x86")

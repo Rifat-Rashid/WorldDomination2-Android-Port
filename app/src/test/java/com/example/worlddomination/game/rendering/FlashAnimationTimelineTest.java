@@ -190,6 +190,16 @@ public final class FlashAnimationTimelineTest {
     }
 
     @Test
+    public void smokePuffFlashShapeIsPackagedAsVectorArtForNativeRasterization()
+            throws IOException {
+        String smokeSvg = loadShapeSvg(4936);
+        assertFalse(smokeSvg.contains("data:image/webp;base64,"));
+        assertTrue("Smoke puff keeps its source SVG path", smokeSvg.contains("<path "));
+        assertTrue("Smoke puff keeps its source radial gradient",
+                smokeSvg.contains("<radialGradient"));
+    }
+
+    @Test
     public void sequencesHonorSourceTickDelaysAndFinishAfterTheLastFrame() {
         JsonValue symbol = new JsonReader().parse("{\"id\":1,\"linkage\":\"two_frames\","
                 + "\"timeline\":{\"frames\":["
@@ -261,6 +271,20 @@ public final class FlashAnimationTimelineTest {
 
     private static Path shapeAsset(int shapeId) {
         return projectAsset("original/runtime/shapes/" + shapeId + ".svgz");
+    }
+
+    private static String loadShapeSvg(int shapeId) throws IOException {
+        try (InputStream file = Files.newInputStream(shapeAsset(shapeId));
+             InputStream gzip = new GZIPInputStream(file);
+             InputStreamReader reader = new InputStreamReader(gzip, StandardCharsets.UTF_8)) {
+            StringBuilder svg = new StringBuilder();
+            char[] buffer = new char[4096];
+            int count;
+            while ((count = reader.read(buffer)) != -1) {
+                svg.append(buffer, 0, count);
+            }
+            return svg.toString();
+        }
     }
 
     private static Path projectAsset(String relative) {
