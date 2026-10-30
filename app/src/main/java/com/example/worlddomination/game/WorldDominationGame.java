@@ -16,6 +16,7 @@ import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.example.worlddomination.game.assets.OriginalUiAssets;
+import com.example.worlddomination.game.simulation.GameSetup;
 import com.example.worlddomination.game.simulation.GameState;
 import com.example.worlddomination.game.simulation.CityState;
 import com.example.worlddomination.game.ui.ScrollPaneState;
@@ -35,6 +36,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             "ROCKETS", "PLANES", "SPECIAL", "WARHEAD", "BIOLOAD", "SOLDIER", "SPY", "DEFENSE"
     };
     private static final int RESEARCH_ROWS_PER_PAGE = 6;
+    private static final String[] DIFFICULTY_LABELS = {"EASY", "NORMAL", "HARD"};
     private static final int GESTURE_NONE = 0;
     private static final int GESTURE_NAV = 1;
     private static final int GESTURE_EQUIPMENT = 2;
@@ -81,7 +83,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             new Color(0.89f, 0.79f, 0.12f, 1f)
     };
 
-    private final GameState game = new GameState(1);
+    private GameState game;
+    private GameSetup setup;
     private final ExtendViewport viewport = new ExtendViewport(BASE_WIDTH, BASE_HEIGHT, 1400f, 800f);
     private final OrthographicCamera camera = new OrthographicCamera();
     private final Rectangle leftPanel = new Rectangle();
@@ -113,6 +116,18 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private final Rectangle modal = new Rectangle();
     private final Rectangle modalAccept = new Rectangle();
     private final Rectangle modalCancel = new Rectangle();
+    private final Rectangle setupPanel = new Rectangle();
+    private final Rectangle setupDifficultyPrevious = new Rectangle();
+    private final Rectangle setupDifficultyNext = new Rectangle();
+    private final Rectangle setupColorPrevious = new Rectangle();
+    private final Rectangle setupColorNext = new Rectangle();
+    private final Rectangle setupBuildingPrevious = new Rectangle();
+    private final Rectangle setupBuildingNext = new Rectangle();
+    private final Rectangle setupLeaderPrevious = new Rectangle();
+    private final Rectangle setupLeaderNext = new Rectangle();
+    private final Rectangle setupLeaderToggle = new Rectangle();
+    private final Rectangle[] setupOpponentSlots = new Rectangle[GameSetup.MAX_OPPONENTS];
+    private final Rectangle setupStartButton = new Rectangle();
     private final Rectangle productionSlider = new Rectangle();
     private final Rectangle researchPrevious = new Rectangle();
     private final Rectangle researchNext = new Rectangle();
@@ -166,6 +181,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private boolean modalOpen;
     private int researchPage;
     private String selectedEquipment = "";
+    private String setupMessage = "SELECT ONE TO FOUR OPPONENTS TO BEGIN";
+    private boolean showSetupMessage;
 
     public WorldDominationGame() {
         for (int i = 0; i < navRows.length; i++) {
@@ -185,6 +202,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         for (int i = 0; i < portraitCards.length; i++) {
             portraitCards[i] = new Rectangle();
+        }
+        for (int i = 0; i < setupOpponentSlots.length; i++) {
+            setupOpponentSlots[i] = new Rectangle();
         }
     }
 
@@ -212,6 +232,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         font = new BitmapFont();
         font.setColor(Color.WHITE);
         uiAssets = new OriginalUiAssets();
+        setup = new GameSetup();
+        java.util.Random setupRandom = new java.util.Random(System.nanoTime());
+        setup.setPlayerColor(setupRandom.nextInt(5) + 1);
+        setup.setStartingBuilding(setupRandom.nextInt(5) + 1);
         Gdx.input.setInputProcessor(this);
         layout(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
     }
@@ -358,6 +382,38 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 modal.y + modal.height * 0.14f, modal.width * 0.38f,
                 Math.min(18f, modal.height * 0.075f));
 
+        setupPanel.set(worldWidth * 0.10f, worldHeight * 0.055f,
+                worldWidth * 0.80f, worldHeight * 0.89f);
+        setupDifficultyPrevious.set(setupPanel.x + setupPanel.width * 0.28f,
+                setupPanel.y + setupPanel.height * 0.68f, 24f, 21f);
+        setupDifficultyNext.set(setupPanel.x + setupPanel.width * 0.68f,
+                setupPanel.y + setupPanel.height * 0.68f, 24f, 21f);
+        setupColorPrevious.set(setupPanel.x + setupPanel.width * 0.28f,
+                setupPanel.y + setupPanel.height * 0.57f, 24f, 21f);
+        setupColorNext.set(setupPanel.x + setupPanel.width * 0.68f,
+                setupPanel.y + setupPanel.height * 0.57f, 24f, 21f);
+        setupBuildingPrevious.set(setupPanel.x + setupPanel.width * 0.28f,
+                setupPanel.y + setupPanel.height * 0.46f, 24f, 21f);
+        setupBuildingNext.set(setupPanel.x + setupPanel.width * 0.68f,
+                setupPanel.y + setupPanel.height * 0.46f, 24f, 21f);
+        setupLeaderPrevious.set(setupPanel.x + setupPanel.width * 0.18f,
+                setupPanel.y + setupPanel.height * 0.35f, 24f, 21f);
+        setupLeaderNext.set(setupPanel.x + setupPanel.width * 0.78f,
+                setupPanel.y + setupPanel.height * 0.35f, 24f, 21f);
+        setupLeaderToggle.set(setupPanel.x + setupPanel.width * 0.35f,
+                setupPanel.y + setupPanel.height * 0.19f,
+                setupPanel.width * 0.30f, 17f);
+        float slotGap = 5f;
+        float slotWidth = (setupPanel.width * 0.76f - slotGap * 3f) / 4f;
+        float slotStartX = setupPanel.x + setupPanel.width * 0.12f;
+        for (int i = 0; i < setupOpponentSlots.length; i++) {
+            setupOpponentSlots[i].set(slotStartX + i * (slotWidth + slotGap),
+                    setupPanel.y + setupPanel.height * 0.105f,
+                    slotWidth, 15f);
+        }
+        setupStartButton.set(setupPanel.x + setupPanel.width * 0.40f,
+                setupPanel.y + 1f, setupPanel.width * 0.20f, 15f);
+
         navigationScroll.setRange(ACTIONS.length * (NAV_ROW_HEIGHT + NAV_ROW_GAP)
                 - NAV_ROW_GAP, navViewport.height);
         equipmentScroll.setRange(equipmentContentHeight(), equipmentViewport.height);
@@ -380,12 +436,16 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         Gdx.gl.glClearColor(0.006f, 0.016f, 0.022f, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         camera.update();
-        drawPanelsAndMap();
-        drawTextAndControls();
-        if (game.getPendingHumanDiplomacyProposal() != null) {
-            drawDiplomacyResponseModal();
-        } else if (modalOpen) {
-            drawActionModal();
+        if (game == null) {
+            drawSetupScreen();
+        } else {
+            drawPanelsAndMap();
+            drawTextAndControls();
+            if (game.getPendingHumanDiplomacyProposal() != null) {
+                drawDiplomacyResponseModal();
+            } else if (modalOpen) {
+                drawActionModal();
+            }
         }
         if (showExitPromptSeconds > 0f) {
             drawExitPrompt();
@@ -405,6 +465,124 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         pendingSafeRight = Math.max(0f, right);
         pendingSafeBottom = Math.max(0f, bottom);
         safeAreaChanged = true;
+    }
+
+    private void drawSetupScreen() {
+        shapes.setProjectionMatrix(camera.combined);
+        shapes.begin(ShapeRenderer.ShapeType.Filled);
+        drawPanelFill(setupPanel);
+        shapes.setColor(MODAL_ORANGE);
+        shapes.rect(setupPanel.x + 3f, setupPanel.y + setupPanel.height - 31f,
+                setupPanel.width - 6f, 27f);
+        drawSetupChoiceBackground(setupDifficultyPrevious, setupDifficultyNext);
+        drawSetupChoiceBackground(setupColorPrevious, setupColorNext);
+        drawSetupChoiceBackground(setupBuildingPrevious, setupBuildingNext);
+        drawSetupChoiceBackground(setupLeaderPrevious, setupLeaderNext);
+        java.util.List<Integer> selectedIds = setup.getSelectedOpponentIds();
+        java.util.List<GameSetup.Leader> selected = setup.getSelectedOpponents();
+        shapes.setColor(selectedIds.contains(setup.getCandidateLeaderId())
+                ? BUTTON_SELECTED : BUTTON);
+        shapes.rect(setupLeaderToggle.x, setupLeaderToggle.y,
+                setupLeaderToggle.width, setupLeaderToggle.height);
+        drawButtonGradient(setupLeaderToggle,
+                selectedIds.contains(setup.getCandidateLeaderId()));
+        for (int i = 0; i < setupOpponentSlots.length; i++) {
+            Rectangle slot = setupOpponentSlots[i];
+            shapes.setColor(i < selected.size() ? BUTTON_SELECTED : BUTTON);
+            shapes.rect(slot.x, slot.y, slot.width, slot.height);
+            drawButtonGradient(slot, i < selected.size());
+        }
+        shapes.setColor(setup.canStart() ? BUTTON_SELECTED : BUTTON);
+        shapes.rect(setupStartButton.x, setupStartButton.y,
+                setupStartButton.width, setupStartButton.height);
+        drawButtonGradient(setupStartButton, setup.canStart());
+        shapes.end();
+
+        batch.setProjectionMatrix(camera.combined);
+        batch.begin();
+        drawPanelTexture(setupPanel);
+        batch.draw(uiAssets.logo, setupPanel.x + setupPanel.width * 0.19f,
+                setupPanel.y + setupPanel.height - 28f, 21f, 24f);
+        font.setColor(Color.WHITE);
+        drawCentered("WORLD DOMINATION 2", setupPanel.x + setupPanel.width * 0.52f,
+                setupPanel.y + setupPanel.height - 13f, 13f);
+        font.setColor(TITLE_TEXT);
+        drawCentered("SELECT DIFFICULTY", setupPanel.x + setupPanel.width * 0.13f,
+                setupDifficultyPrevious.y + 9f, 7f);
+        drawCentered(DIFFICULTY_LABELS[setup.getDifficulty()],
+                setupPanel.x + setupPanel.width * 0.50f,
+                setupDifficultyPrevious.y + 10f, 8f);
+        drawCentered("PLAYER COLOR", setupPanel.x + setupPanel.width * 0.13f,
+                setupColorPrevious.y + 9f, 7f);
+        drawCentered(setup.getPlayerColorName().toUpperCase(java.util.Locale.US),
+                setupPanel.x + setupPanel.width * 0.50f,
+                setupColorPrevious.y + 10f, 8f);
+        drawCentered("BUILDING", setupPanel.x + setupPanel.width * 0.13f,
+                setupBuildingPrevious.y + 9f, 7f);
+        drawCentered(setup.getStartingBuildingName().toUpperCase(java.util.Locale.US)
+                        + " | " + setup.getHumanReligionCode().toUpperCase(java.util.Locale.US),
+                setupPanel.x + setupPanel.width * 0.50f,
+                setupBuildingPrevious.y + 10f, 8f);
+        drawSetupArrows(setupDifficultyPrevious, setupDifficultyNext);
+        drawSetupArrows(setupColorPrevious, setupColorNext);
+        drawSetupArrows(setupBuildingPrevious, setupBuildingNext);
+        GameSetup.Leader candidate = setup.getCandidateLeader();
+        drawSetupArrows(setupLeaderPrevious, setupLeaderNext);
+        drawCentered(candidate.name, setupPanel.x + setupPanel.width * 0.50f,
+                setupLeaderPrevious.y + 12f, 9f);
+        font.setColor(SUBTITLE_TEXT);
+        String candidateDetails = "LEADER " + (candidate.id + 1) + " OF 19 | "
+                + candidate.displayReligionCode;
+        drawCentered(showSetupMessage ? setupMessage : candidateDetails,
+                setupPanel.x + setupPanel.width * 0.50f,
+                setupLeaderPrevious.y + 2f, 6.5f);
+        font.setColor(TITLE_TEXT);
+        drawCentered((selectedIds.contains(candidate.id) ? "REMOVE RIVAL " : "ADD RIVAL ")
+                        + selected.size() + "/4",
+                setupLeaderToggle.x + setupLeaderToggle.width / 2f,
+                setupLeaderToggle.y + setupLeaderToggle.height / 2f + 3f, 7.5f);
+        for (int i = 0; i < setupOpponentSlots.length; i++) {
+            String label = i < selected.size() ? selected.get(i).name : "EMPTY";
+            Rectangle slot = setupOpponentSlots[i];
+            drawCentered(label, slot.x + slot.width / 2f,
+                    slot.y + slot.height / 2f + 3f, 6.4f);
+        }
+        font.setColor(setup.canStart() ? Color.WHITE : DISABLED_TEXT);
+        drawCentered("START GAME", setupStartButton.x + setupStartButton.width / 2f,
+                setupStartButton.y + setupStartButton.height / 2f + 4f, 9f);
+        batch.end();
+
+        shapes.begin(ShapeRenderer.ShapeType.Line);
+        drawPanelEdges(setupPanel);
+        drawButtonEdges(setupDifficultyPrevious);
+        drawButtonEdges(setupDifficultyNext);
+        drawButtonEdges(setupColorPrevious);
+        drawButtonEdges(setupColorNext);
+        drawButtonEdges(setupBuildingPrevious);
+        drawButtonEdges(setupBuildingNext);
+        drawButtonEdges(setupLeaderPrevious);
+        drawButtonEdges(setupLeaderNext);
+        drawButtonEdges(setupLeaderToggle);
+        for (Rectangle slot : setupOpponentSlots) {
+            drawButtonEdges(slot);
+        }
+        drawButtonEdges(setupStartButton);
+        shapes.end();
+    }
+
+    private void drawSetupChoiceBackground(Rectangle previous, Rectangle next) {
+        shapes.setColor(BUTTON);
+        shapes.rect(previous.x, previous.y, previous.width, previous.height);
+        shapes.rect(next.x, next.y, next.width, next.height);
+        drawButtonGradient(previous, false);
+        drawButtonGradient(next, false);
+    }
+
+    private void drawSetupArrows(Rectangle previous, Rectangle next) {
+        drawCentered("<", previous.x + previous.width / 2f,
+                previous.y + previous.height / 2f + 3f, 8f);
+        drawCentered(">", next.x + next.width / 2f,
+                next.y + next.height / 2f + 3f, 8f);
     }
 
     private void drawPanelsAndMap() {
@@ -1687,6 +1865,63 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
     }
 
+    private void activateSetupAt(float x, float y) {
+        if (setupDifficultyPrevious.contains(x, y)) {
+            setup.setDifficulty(Math.floorMod(setup.getDifficulty() - 1, 3));
+            showSetupMessage = false;
+        } else if (setupDifficultyNext.contains(x, y)) {
+            setup.setDifficulty(Math.floorMod(setup.getDifficulty() + 1, 3));
+            showSetupMessage = false;
+        } else if (setupColorPrevious.contains(x, y)) {
+            setup.setPlayerColor(Math.floorMod(setup.getPlayerColor() - 2, 5) + 1);
+            showSetupMessage = false;
+        } else if (setupColorNext.contains(x, y)) {
+            setup.setPlayerColor(Math.floorMod(setup.getPlayerColor(), 5) + 1);
+            showSetupMessage = false;
+        } else if (setupBuildingPrevious.contains(x, y)) {
+            setup.setStartingBuilding(Math.floorMod(setup.getStartingBuilding() - 2, 5) + 1);
+            showSetupMessage = false;
+        } else if (setupBuildingNext.contains(x, y)) {
+            setup.setStartingBuilding(Math.floorMod(setup.getStartingBuilding(), 5) + 1);
+            showSetupMessage = false;
+        } else if (setupLeaderPrevious.contains(x, y)) {
+            setup.cycleCandidateLeader(-1);
+            showSetupMessage = false;
+        } else if (setupLeaderNext.contains(x, y)) {
+            setup.cycleCandidateLeader(1);
+            showSetupMessage = false;
+        } else if (setupLeaderToggle.contains(x, y)) {
+            int leaderId = setup.getCandidateLeaderId();
+            boolean alreadySelected = setup.getSelectedOpponentIds().contains(leaderId);
+            if (setup.toggleOpponent(leaderId)) {
+                setupMessage = alreadySelected ? "RIVAL REMOVED FROM THE MATCH"
+                        : "RIVAL ADDED TO THE MATCH";
+            } else {
+                setupMessage = "THE SOURCE ALLOWS UP TO FOUR RIVALS";
+            }
+            showSetupMessage = true;
+        } else if (setupStartButton.contains(x, y)) {
+            if (setup.canStart()) {
+                game = new GameState(setup, System.nanoTime());
+                modalOpen = false;
+                accumulator = 0f;
+            } else {
+                setupMessage = "SELECT AT LEAST ONE RIVAL BEFORE STARTING";
+                showSetupMessage = true;
+            }
+        } else {
+            for (int i = 0; i < setupOpponentSlots.length; i++) {
+                if (setupOpponentSlots[i].contains(x, y)) {
+                    if (setup.removeOpponentAt(i)) {
+                        setupMessage = "RIVAL REMOVED FROM THE MATCH";
+                        showSetupMessage = true;
+                    }
+                    return;
+                }
+            }
+        }
+    }
+
     private void initializePreparedAttackSelection() {
         String preparedCarrier = game.getPreparedCarrierName(0);
         if (preparedCarrier == null) {
@@ -1886,6 +2121,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     }
 
     private void activateAt(float x, float y) {
+        if (game == null) {
+            activateSetupAt(x, y);
+            return;
+        }
         if (game.getPendingHumanDiplomacyProposal() != null) {
             if (modalAccept.contains(x, y)) {
                 if (game.respondToDiplomacyProposal(true)) {
@@ -2083,6 +2322,14 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     }
 
     private boolean handleBack() {
+        if (game == null) {
+            if (showExitPromptSeconds > 0f) {
+                Gdx.app.exit();
+            } else {
+                showExitPromptSeconds = 2.4f;
+            }
+            return true;
+        }
         if (game.getPendingHumanDiplomacyProposal() != null) {
             return true;
         }

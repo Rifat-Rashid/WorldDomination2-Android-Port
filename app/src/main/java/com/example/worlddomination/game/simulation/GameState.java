@@ -70,6 +70,9 @@ public final class GameState {
     public static final class PlayerState {
         public final int id;
         public final boolean human;
+        private final int leaderId;
+        private final String religionCode;
+        private final int playerColor;
         public int populationMillions;
         public int moneyMillions;
         public int turnMoneyMillions;
@@ -91,9 +94,13 @@ public final class GameState {
         private boolean bioloaded;
 
         private PlayerState(int id, boolean human, int populationMillions,
-                            int moneyMillions, int religion) {
+                            int moneyMillions, int religion, int leaderId,
+                            String religionCode, int playerColor) {
             this.id = id;
             this.human = human;
+            this.leaderId = leaderId;
+            this.religionCode = religionCode;
+            this.playerColor = playerColor;
             this.populationMillions = populationMillions;
             this.moneyMillions = moneyMillions;
             this.turnMoneyMillions = moneyMillions;
@@ -102,6 +109,18 @@ public final class GameState {
 
         public boolean hasTechnology(String name) {
             return inventedTechnologies.contains(name);
+        }
+
+        public int getLeaderId() {
+            return leaderId;
+        }
+
+        public String getReligionCode() {
+            return religionCode;
+        }
+
+        public int getPlayerColor() {
+            return playerColor;
         }
 
         public Set<String> getInventedTechnologies() {
@@ -337,27 +356,63 @@ public final class GameState {
 
     /** Difficulty indices follow the recovered source: 0 easy, 1 normal, 2 hard. */
     public GameState(int difficulty) {
-        this(difficulty, 0L, true);
+        this(difficulty, 0L, true, null);
     }
 
     /** Seed injection keeps gameplay rules reproducible in JVM tests. */
     public GameState(int difficulty, long seed) {
-        this(difficulty, seed, true);
+        this(difficulty, seed, true, null);
+    }
+
+    /** Builds a match from the native setup selections. */
+    public GameState(GameSetup setup, long seed) {
+        this(setupDifficulty(setup), seed, true, setup);
     }
 
     /** Package-private quiet-opponent mode isolates player-rule tests from AI turns. */
     GameState(int difficulty, long seed, boolean opponentTurnsEnabled) {
+        this(difficulty, seed, opponentTurnsEnabled, null);
+    }
+
+    private GameState(int difficulty, long seed, boolean opponentTurnsEnabled,
+                      GameSetup setup) {
         if (difficulty < 0 || difficulty > 2) {
             throw new IllegalArgumentException("Difficulty must be 0, 1 or 2");
+        }
+        if (setup != null && !setup.canStart()) {
+            throw new IllegalArgumentException("Select at least one opponent before starting");
         }
         this.difficulty = difficulty;
         this.opponentTurnsEnabled = opponentTurnsEnabled;
         this.random = new Random(seed);
         players[0] = new PlayerState(0, true, PLAYER_START_POPULATION[difficulty],
-                PLAYER_START_MONEY[difficulty], PLAYER_START_MONEY[difficulty]);
+                PLAYER_START_MONEY[difficulty], PLAYER_START_MONEY[difficulty], -1,
+                setup == null ? "chr" : setup.getHumanReligionCode(),
+                setup == null ? 1 : setup.getPlayerColor());
+        List<Integer> opponentIds = setup == null
+                ? Collections.<Integer>emptyList() : setup.getSelectedOpponentIds();
+        List<Integer> availableColors = new ArrayList<>(5);
+        for (int color = 1; color <= 5; color++) {
+            if (color != players[0].playerColor) {
+                availableColors.add(color);
+            }
+        }
         for (int i = 1; i < players.length; i++) {
+            boolean active = setup == null || i <= opponentIds.size();
+            int leaderId = setup == null ? -1 : active ? opponentIds.get(i - 1) : -1;
+            String religionCode = setup == null ? "chr"
+                    : active ? GameSetup.leader(leaderId).religionCode : "chr";
+            int color = setup == null ? i + 1
+                    : active ? availableColors.remove(random.nextInt(availableColors.size())) : 0;
             players[i] = new PlayerState(i, false, ENEMY_START_POPULATION[difficulty],
-                    ENEMY_START_MONEY[difficulty], new int[]{30, 40, 60}[difficulty]);
+                    ENEMY_START_MONEY[difficulty], new int[]{30, 40, 60}[difficulty],
+                    leaderId, religionCode, color);
+            if (!active) {
+                players[i].alive = false;
+                players[i].populationMillions = 0;
+                players[i].moneyMillions = 0;
+                players[i].turnMoneyMillions = 0;
+            }
         }
         for (PlayerState player : players) {
             for (int other = 0; other < players.length; other++) {
@@ -367,11 +422,18 @@ public final class GameState {
             initializeCities(player);
         }
         for (PlayerState player : players) {
-            if (!player.human) {
+            if (!player.human && player.alive) {
                 initializeAiDesires(player);
             }
         }
         messages.add("Welcome, commander. Select two actions.");
+    }
+
+    private static int setupDifficulty(GameSetup setup) {
+        if (setup == null) {
+            throw new IllegalArgumentException("Game setup cannot be null");
+        }
+        return setup.getDifficulty();
     }
 
     private void initializeAiDesires(PlayerState player) {

@@ -19,6 +19,36 @@ public final class GameStateTest {
     }
 
     @Test
+    public void setupCreatesOnlySelectedRivalsWithTheirSourceIdentity() {
+        GameSetup setup = new GameSetup();
+        setup.setDifficulty(2);
+        setup.setPlayerColor(2);
+        setup.setStartingBuilding(5);
+        assertTrue(setup.toggleOpponent(3));
+        assertTrue(setup.toggleOpponent(18));
+        GameState state = new GameState(setup, 41L);
+
+        assertEquals(2, state.getDifficulty());
+        assertEquals("mus", state.getHuman().getReligionCode());
+        assertEquals(2, state.getHuman().getPlayerColor());
+        GameState.PlayerState first = state.getPlayerState(1);
+        GameState.PlayerState second = state.getPlayerState(2);
+        assertEquals(3, first.getLeaderId());
+        assertEquals("bhu", first.getReligionCode());
+        assertEquals(18, second.getLeaderId());
+        assertEquals("mus", second.getReligionCode());
+        assertTrue(first.alive);
+        assertTrue(second.alive);
+        assertTrue(first.getPlayerColor() != 2);
+        assertTrue(second.getPlayerColor() != 2);
+        assertTrue(first.getPlayerColor() != second.getPlayerColor());
+        assertFalse(state.getPlayerState(3).alive);
+        assertFalse(state.getPlayerState(4).alive);
+        assertEquals(0, state.getPlayerState(3).populationMillions);
+        assertEquals(GameState.MatchStatus.ONGOING, state.getMatchStatus());
+    }
+
+    @Test
     public void normalResourcesAndMassMediaResolveOneTurn() {
         GameState state = new GameState(1);
         assertEquals(65, state.getHuman().moneyMillions);
