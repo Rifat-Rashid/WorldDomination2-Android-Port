@@ -86,6 +86,10 @@ public final class OriginalAudioTest {
     public void combatCuesPointToTheOriginalPackagedSounds() {
         assertEquals("original/runtime/audio/14_unit_Soldier gun.wav.mp3",
                 OriginalAudio.internalPath(OriginalAudio.Cue.SOLDIER_GUN));
+        assertEquals("original/runtime/audio/16_unit_seal gun.wav.mp3",
+                OriginalAudio.internalPath(OriginalAudio.Cue.SEAL_GUN));
+        assertEquals("original/runtime/audio/7_unit_Suicide scream.wav.mp3",
+                OriginalAudio.internalPath(OriginalAudio.Cue.SUICIDE_SCREAM));
         assertEquals("original/runtime/audio/98_Explode small3.wav.mp3",
                 OriginalAudio.internalPath(OriginalAudio.Cue.EXPLOSION_SMALL3));
         assertEquals("original/runtime/audio/71_Explode medium 3.wav.mp3",

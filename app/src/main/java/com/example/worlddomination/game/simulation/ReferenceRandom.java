@@ -69,6 +69,14 @@ public final class ReferenceRandom extends Random {
         return nextInt(2) != 0;
     }
 
+    /** Returns an isolated copy for presentation code that must not advance game RNG. */
+    public synchronized ReferenceRandom copy() {
+        ReferenceRandom copy = new ReferenceRandom(0L);
+        System.arraycopy(state, 0, copy.state, 0, STATE_SIZE);
+        copy.stateIndex = stateIndex;
+        return copy;
+    }
+
     private void seedFromInteger(long seed) {
         BigInteger remaining = BigInteger.valueOf(seed).abs();
         List<Integer> words = new ArrayList<>(2);

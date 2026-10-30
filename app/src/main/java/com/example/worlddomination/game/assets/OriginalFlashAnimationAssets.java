@@ -37,7 +37,11 @@ public final class OriginalFlashAnimationAssets implements Disposable {
     private static final String[] REQUIRED_LINKAGES = {
             "explosion_warhead_1", "explosion_warhead_2", "explosion_warhead_3",
             "explosion_warhead_4", "explosion_bioload_1", "explosion_bioload_2",
-            "explosion_bioload_3", "explosion_bioload_4", "explosion002", "explosion003"
+            "explosion_bioload_3", "explosion_bioload_4", "explosion001", "explosion002",
+            "explosion003",
+            "boat001", "soldier", "soldier001_shoot", "chinook", "apache",
+            "apache_shadow", "apache_tint", "marine", "soldier001_tint",
+            "soldier001_shoot_tint", "suicide_bomber", "suicide_bomber_tint"
     };
 
     private final Object loadLock = new Object();
@@ -201,7 +205,12 @@ public final class OriginalFlashAnimationAssets implements Disposable {
             for (int i = 0; i < timeline.getFrameCount(); i++) {
                 FlashAnimationTimeline.Frame frame = timeline.getFrame(i);
                 if (frame != null) {
-                    shapeIds.add(frame.shapeId);
+                    for (FlashAnimationTimeline.Layer layer : frame.layers) {
+                        String shapePath = SHAPE_PATH + layer.shapeId + ".svgz";
+                        if (Gdx.files.internal(shapePath).exists()) {
+                            shapeIds.add(layer.shapeId);
+                        }
+                    }
                 }
             }
         }

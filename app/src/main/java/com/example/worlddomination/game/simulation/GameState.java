@@ -35,18 +35,28 @@ public final class GameState {
         public final String payloadName;
         public final String counterWeaponName;
         public final int casualtiesMillions;
+        /** Source action-building slot used to launch a soldier2 Apache attack (1 or 2). */
+        public final int actionBuildingSlot;
 
         private CombatEvent(CombatEventType type, int attackerPlayerId,
                             int defenderPlayerId, int cityIndex, String weaponName,
                             String payloadName, int casualtiesMillions) {
             this(type, attackerPlayerId, defenderPlayerId, cityIndex, weaponName,
-                    payloadName, casualtiesMillions, null);
+                    payloadName, casualtiesMillions, null, -1);
         }
 
         private CombatEvent(CombatEventType type, int attackerPlayerId,
                             int defenderPlayerId, int cityIndex, String weaponName,
                             String payloadName, int casualtiesMillions,
                             String counterWeaponName) {
+            this(type, attackerPlayerId, defenderPlayerId, cityIndex, weaponName,
+                    payloadName, casualtiesMillions, counterWeaponName, -1);
+        }
+
+        private CombatEvent(CombatEventType type, int attackerPlayerId,
+                            int defenderPlayerId, int cityIndex, String weaponName,
+                            String payloadName, int casualtiesMillions,
+                            String counterWeaponName, int actionBuildingSlot) {
             this.type = type;
             this.attackerPlayerId = attackerPlayerId;
             this.defenderPlayerId = defenderPlayerId;
@@ -55,6 +65,7 @@ public final class GameState {
             this.payloadName = payloadName;
             this.casualtiesMillions = casualtiesMillions;
             this.counterWeaponName = counterWeaponName;
+            this.actionBuildingSlot = actionBuildingSlot;
         }
     }
 
@@ -352,6 +363,7 @@ public final class GameState {
         final String spyBuilding;
         final int diplomacyOption;
         final List<ShipStrike> shipStrikes;
+        int actionBuildingSlot = -1;
 
         ActionOrder(int playerId, Action action,
                     Map<String, Integer> productionBudgets, List<String> technologies,
@@ -2045,6 +2057,14 @@ public final class GameState {
         return Collections.unmodifiableList(lastTurnCombatEvents);
     }
 
+    /**
+     * Copies the reference-compatible RNG state for deterministic battle presentation.
+     * Presentation draws remain isolated from future simulation turns.
+     */
+    public ReferenceRandom createPresentationRandomCopy() {
+        return ((ReferenceRandom) random).copy();
+    }
+
     /** Resolves human and opponent actions using the source turn order. */
     public void confirmTurn() {
         if (queuedActions.size() != MAX_TURN_ACTIONS) {
@@ -2085,6 +2105,7 @@ public final class GameState {
                 player.lastTurnActions.add(decision.action);
             }
         }
+        assignDirectAttackBuildingSlots(turnOrders);
         for (AiDiplomacyResponse response : diplomacyResponses) {
             resolveDiplomacyResponse(response.target, response.proposal,
                     response.accepted, false);
@@ -2519,7 +2540,7 @@ public final class GameState {
                     sourceDirectAttackCasualties(weapon.definition.maxKillsMillions, random));
             lastTurnCombatEvents.add(new CombatEvent(CombatEventType.DIRECT_ATTACK,
                     attacker.id, defender.id, city.index, weapon.definition.name, null,
-                    casualties));
+                    casualties, null, order.actionBuildingSlot));
             recordLargestBattle(attacker, defender, casualties);
             applyBattleHostilityEffects(attacker, defender, casualties);
             if (casualties > 0) {
@@ -2531,6 +2552,57 @@ public final class GameState {
         weapon.inStock--;
         messages.add(casualties + " citizens lost in nation " + defender.id
                 + " city " + (city.index + 1) + ".");
+    }
+
+    /**
+     * Assigns the two native action-building positions using Battle.createToShowABArray's
+     * source order: unique non-fixed direct-attack buildings advance Player.nextActionBuilding.
+     */
+    private void assignDirectAttackBuildingSlots(List<ActionOrder> turnOrders) {
+        @SuppressWarnings("unchecked")
+        Map<String, Integer>[] slotsByPlayer = new Map[players.length];
+        int[] nextSlotByPlayer = new int[players.length];
+        for (ActionOrder order : turnOrders) {
+            if (order.action != Action.ATTACK || order.playerId < 0
+                    || order.playerId >= players.length) {
+                continue;
+            }
+            WeaponState weapon = playerById(order.playerId).weapons.get(order.weaponName);
+            if (weapon == null || !"soldier".equals(weapon.definition.type)) {
+                continue;
+            }
+            String frame = sourceDirectAttackBuildingFrame(weapon.definition.name);
+            if (frame == null) {
+                continue;
+            }
+            Map<String, Integer> slots = slotsByPlayer[order.playerId];
+            if (slots == null) {
+                slots = new LinkedHashMap<>();
+                slotsByPlayer[order.playerId] = slots;
+            }
+            Integer existingSlot = slots.get(frame);
+            if (existingSlot != null) {
+                order.actionBuildingSlot = existingSlot;
+            } else {
+                int slot = nextSlotByPlayer[order.playerId] == 0 ? 1 : 2;
+                nextSlotByPlayer[order.playerId]++;
+                slots.put(frame, slot);
+                order.actionBuildingSlot = slot;
+            }
+        }
+    }
+
+    private static String sourceDirectAttackBuildingFrame(String weaponName) {
+        if ("soldier1".equals(weaponName)) {
+            return "base";
+        }
+        if ("soldier2".equals(weaponName) || "soldier3".equals(weaponName)) {
+            return "helipad";
+        }
+        if ("soldier4".equals(weaponName)) {
+            return "hatch";
+        }
+        return null;
     }
 
     private void resolveDefense(ActionOrder order, List<ActionOrder> resolvedDefenses) {
