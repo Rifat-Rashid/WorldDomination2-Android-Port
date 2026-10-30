@@ -23,6 +23,9 @@ jobs:
           - id: simulation-tests
             check: Gameplay simulation tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.*"'
+          - id: source-rng-tests
+            check: Seeded RNG parity tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.ReferenceRandomTest"'
           - id: turn-progression-tests
             check: Game state and turn progression tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest"'
