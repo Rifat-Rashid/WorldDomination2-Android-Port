@@ -571,7 +571,7 @@ public final class OpponentAI {
 
     static Decision planAttack(GameState state, GameState.PlayerState attacker,
                                Random random, Map<String, Integer> plannedUse) {
-        GameState.PlayerState conventionalTarget = mostHostileTarget(state, attacker, false);
+        GameState.PlayerState conventionalTarget = attackTarget(state, attacker, random);
         GameState.WeaponState selected = null;
         for (GameState.WeaponState weapon : attacker.getWeapons().values()) {
             if (!weapon.active || availableStock(weapon, plannedUse) <= 0
@@ -962,6 +962,54 @@ public final class OpponentAI {
             }
         }
         return best;
+    }
+
+    static GameState.PlayerState attackTarget(GameState state,
+                                              GameState.PlayerState actor,
+                                              Random random) {
+        GameState.PlayerState[] players = state.getPlayers();
+        List<GameState.PlayerState> activePlayers = new ArrayList<>(players.length);
+        List<GameState.PlayerState> candidates = new ArrayList<>(players.length - 1);
+        for (GameState.PlayerState player : players) {
+            if (player == null || !player.alive) {
+                continue;
+            }
+            activePlayers.add(player);
+            if (player.id != actor.id && !actor.hasCeasefireWith(player.id)) {
+                candidates.add(player);
+            }
+        }
+
+        GameState.PlayerState target = null;
+        int highestHostility = 0;
+        for (GameState.PlayerState candidate : candidates) {
+            int hostility = 100 - actor.getRegardToward(candidate.id)
+                    + (candidate.id == actor.getPrimaryEnemyId() ? 1 : 0);
+            if (hostility > highestHostility) {
+                highestHostility = hostility;
+                target = candidate;
+            }
+        }
+        if (target != null) {
+            return target;
+        }
+
+        // The source iterates a filtered rival array but indexes activePlayerArr.
+        // Preserve that selection order and its population filter for full parity.
+        int lowestRegard = 100;
+        for (int index = 0; index < candidates.size(); index++) {
+            GameState.PlayerState indexed = activePlayers.get(index);
+            if (indexed.id != actor.id && indexed.populationMillions > 0
+                    && actor.getRegardToward(indexed.id) <= lowestRegard
+                    && !actor.hasCeasefireWith(indexed.id)) {
+                lowestRegard = actor.getRegardToward(indexed.id);
+                target = indexed;
+            }
+        }
+        if (target == null && !candidates.isEmpty()) {
+            target = candidates.get(randomInclusive(random, 0, candidates.size() - 1));
+        }
+        return target;
     }
 
     private static CityState largestCity(GameState.PlayerState player) {
