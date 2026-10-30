@@ -18,6 +18,9 @@ public final class OpponentAI {
     private static final int[] ATTACK_BASE = {80, 86, 90};
     private static final int[] SPY_ALERT_MONEY = {180, 150, 100};
     private static final int[] AI_SPY_STOCK_REQUIREMENTS = {10, 8, 5, 3};
+    private static final String[] SPY_BUILDINGS = {
+            "spyCenter", "tech", "religion", "resources", "factory"
+    };
     private static final String[] PRODUCTION_CATEGORIES = {
             "rockets", "warhead", "bioload", "soldier", "spy", "planes", "special"
     };
@@ -38,6 +41,7 @@ public final class OpponentAI {
         public final boolean prepareCarrier;
         public final int diplomacyOption;
         public final List<GameState.ShipStrike> shipStrikes;
+        public final String spyBuilding;
 
         private Decision(int playerId, GameState.Action action,
                          Map<String, Integer> productionBudgets,
@@ -56,7 +60,7 @@ public final class OpponentAI {
                          String payloadName, boolean prepareCarrier, int diplomacyOption) {
             this(playerId, action, productionBudgets, technologies, reservedMillions,
                     targetPlayerId, targetCityIndex, weaponName, payloadName, prepareCarrier,
-                    diplomacyOption, Collections.<GameState.ShipStrike>emptyList());
+                    diplomacyOption, Collections.<GameState.ShipStrike>emptyList(), null);
         }
 
         private Decision(int playerId, GameState.Action action,
@@ -65,6 +69,17 @@ public final class OpponentAI {
                          int targetPlayerId, int targetCityIndex, String weaponName,
                          String payloadName, boolean prepareCarrier, int diplomacyOption,
                          List<GameState.ShipStrike> shipStrikes) {
+            this(playerId, action, productionBudgets, technologies, reservedMillions,
+                    targetPlayerId, targetCityIndex, weaponName, payloadName, prepareCarrier,
+                    diplomacyOption, shipStrikes, null);
+        }
+
+        private Decision(int playerId, GameState.Action action,
+                         Map<String, Integer> productionBudgets,
+                         List<String> technologies, int reservedMillions,
+                         int targetPlayerId, int targetCityIndex, String weaponName,
+                         String payloadName, boolean prepareCarrier, int diplomacyOption,
+                         List<GameState.ShipStrike> shipStrikes, String spyBuilding) {
             this.playerId = playerId;
             this.action = action;
             this.productionBudgets = Collections.unmodifiableMap(
@@ -78,6 +93,7 @@ public final class OpponentAI {
             this.prepareCarrier = prepareCarrier;
             this.diplomacyOption = diplomacyOption;
             this.shipStrikes = Collections.unmodifiableList(new ArrayList<>(shipStrikes));
+            this.spyBuilding = spyBuilding;
         }
     }
 
@@ -868,9 +884,21 @@ public final class OpponentAI {
 
     private static Decision attackDecision(int playerId, int targetId, int cityIndex,
                                            String weaponName) {
+        return attackDecision(playerId, targetId, cityIndex, weaponName, null);
+    }
+
+    private static Decision attackDecision(int playerId, int targetId, int cityIndex,
+                                           String weaponName, String spyBuilding) {
         return new Decision(playerId, GameState.Action.ATTACK,
                 Collections.<String, Integer>emptyMap(), Collections.<String>emptyList(),
-                0, targetId, cityIndex, weaponName, -1);
+                0, targetId, cityIndex, weaponName, null, false, -1,
+                Collections.<GameState.ShipStrike>emptyList(), spyBuilding);
+    }
+
+    private static String randomSpyBuilding(Random random) {
+        // Model.getTarget uses randRange(1, 5); the source array's index zero
+        // is a sentinel followed by these five mission-building names.
+        return SPY_BUILDINGS[randomInclusive(random, 0, SPY_BUILDINGS.length - 1)];
     }
 
     private static Decision planDirectAttackForTarget(GameState state,
@@ -907,6 +935,9 @@ public final class OpponentAI {
             selected = attacker.getWeapons().get("spy" + spyTarget.spyLevel);
             target = state.getPlayerState(spyTarget.playerId);
             initialCity = randomPopulatedCity(target, random);
+            String spyBuilding = randomSpyBuilding(random);
+            return initialCity < 0 ? null : attackDecision(attacker.id, target.id,
+                    initialCity, selected.definition.name, spyBuilding);
         }
         return selected == null || initialCity < 0 ? null
                 : attackDecision(attacker.id, target.id, initialCity,
@@ -1080,6 +1111,7 @@ public final class OpponentAI {
         boolean useSpy = spyTarget != null
                 && (selected == null || randomInclusive(random, 0, 6) == 3);
         GameState.PlayerState target = conventionalTarget;
+        String spyBuilding = null;
         if (useSpy) {
             selected = attacker.getWeapons().get("spy" + spyTarget.spyLevel);
             target = state.getPlayerState(spyTarget.playerId);
@@ -1093,13 +1125,19 @@ public final class OpponentAI {
                 populated.add(city.index);
             }
         }
-        if (populated.isEmpty()) {
+        int cityIndex = populated.isEmpty() ? -1
+                : populated.get(randomInclusive(random, 0, populated.size() - 1));
+        if (useSpy) {
+            // The Flash chooses the mission building after it picks a city.
+            spyBuilding = randomSpyBuilding(random);
+        }
+        if (cityIndex < 0) {
             return null;
         }
-        int cityIndex = populated.get(randomInclusive(random, 0, populated.size() - 1));
         return new Decision(attacker.id, GameState.Action.ATTACK,
                 Collections.<String, Integer>emptyMap(), Collections.<String>emptyList(),
-                0, target.id, cityIndex, selected.definition.name, -1);
+                0, target.id, cityIndex, selected.definition.name, null, false,
+                -1, Collections.<GameState.ShipStrike>emptyList(), spyBuilding);
     }
 
     private static SpyTarget findSpyTarget(GameState state, GameState.PlayerState attacker,

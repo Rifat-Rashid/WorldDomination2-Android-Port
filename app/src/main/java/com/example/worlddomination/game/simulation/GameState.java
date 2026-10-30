@@ -2033,7 +2033,8 @@ public final class GameState {
                         decision.reservedMillions, decision.targetPlayerId,
                         decision.targetCityIndex,
                         decision.weaponName,
-                        decision.payloadName, decision.prepareCarrier, "spyCenter",
+                        decision.payloadName, decision.prepareCarrier,
+                        decision.spyBuilding == null ? "spyCenter" : decision.spyBuilding,
                         decision.diplomacyOption, decision.shipStrikes));
                 player.lastTurnActions.add(decision.action);
             }
