@@ -32,6 +32,9 @@ jobs:
           - id: ai-tests
             check: Opponent AI tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.*"'
+          - id: ai-planning-matrix
+            check: AI planning scenario matrix
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.AiPlanningScenarioMatrixTest"'
           - id: ui-tests
             check: Touch and presentation tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.*"'
