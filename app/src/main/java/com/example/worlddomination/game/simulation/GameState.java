@@ -568,15 +568,31 @@ public final class GameState {
 
     private GameState(int difficulty, long seed, boolean opponentTurnsEnabled,
                       GameSetup setup) {
+        this(difficulty, new ReferenceRandom(seed), opponentTurnsEnabled, setup);
+    }
+
+    /**
+     * Builds a simulation with a caller-supplied random stream for deterministic
+     * parity tests and reproducible simulations.
+     */
+    public GameState(int difficulty, Random random) {
+        this(difficulty, random, true, null);
+    }
+
+    private GameState(int difficulty, Random random, boolean opponentTurnsEnabled,
+                      GameSetup setup) {
         if (difficulty < 0 || difficulty > 2) {
             throw new IllegalArgumentException("Difficulty must be 0, 1 or 2");
+        }
+        if (random == null) {
+            throw new IllegalArgumentException("Random stream cannot be null");
         }
         if (setup != null && !setup.canStart()) {
             throw new IllegalArgumentException("Select at least one opponent before starting");
         }
         this.difficulty = difficulty;
         this.opponentTurnsEnabled = opponentTurnsEnabled;
-        this.random = new ReferenceRandom(seed);
+        this.random = random;
         players[0] = new PlayerState(0, true, PLAYER_START_POPULATION[difficulty],
                 PLAYER_START_MONEY[difficulty], PLAYER_START_MONEY[difficulty], -1,
                 setup == null ? "chr" : setup.getHumanReligionCode(),
