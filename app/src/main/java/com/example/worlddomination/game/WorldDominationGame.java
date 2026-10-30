@@ -514,6 +514,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private void fixedUpdate(float seconds) {
         navigationScroll.tick(seconds);
         equipmentScroll.tick(seconds);
+        cityRenderer.tick(game);
         showExitPromptSeconds = Math.max(0f, showExitPromptSeconds - seconds);
         advanceBattleAnimations();
         advanceOutcomeSequence();
@@ -2194,6 +2195,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         } else if (setupStartButton.contains(x, y)) {
             if (setup.canStart()) {
                 game = new GameState(setup, System.nanoTime());
+                cityRenderer.reset(game);
                 battleAnimations.clear();
                 soldierBattleAnimations.clear();
                 pendingBattleAnimations.clear();

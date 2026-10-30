@@ -77,6 +77,9 @@ jobs:
           - id: city-rendering-tests
             check: Battlefield city art and ruin-frame tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.OriginalCityAssetsTest" --tests "com.example.worlddomination.game.rendering.CitySpriteLayoutTest" --tests "com.example.worlddomination.game.simulation.CityStateTest" --tests "com.example.worlddomination.game.simulation.GameStateTest.laterActionStillResolvesWhenEarlierAttackWillEliminateTargetCity"'
+          - id: city-shrink-sequence-tests
+            check: City shrink animation sequence tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.CityShrinkSequenceTest"'
           - id: source-animation-tests
             check: Source animation timeline tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest" --tests "com.example.worlddomination.game.rendering.SourceCombatAnimationMappingTest"'
