@@ -523,6 +523,91 @@ public final class GameStateTest {
     }
 
     @Test
+    public void spaceLaunchCountsSatelliteAndTerminalScoreIncludesSourceFlagBonus() {
+        GameState state = new GameState(1, 211L, false);
+        GameState.PlayerState human = state.getHuman();
+        GameState.WeaponState space = human.getWeapons().get("space");
+        GameState.WeaponState specialLoad = human.getWeapons().get("specialLoad");
+        space.active = true;
+        space.inStock = 1;
+        specialLoad.active = true;
+        specialLoad.inStock = 1;
+
+        state.selectAction(GameState.Action.PREPARED_ATTACK);
+        assertTrue(state.configurePreparedCarrier("space"));
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+        assertEquals("preparing a carrier does not count as using a satellite",
+                0, human.getSatellitesUsed());
+
+        state.selectAction(GameState.Action.PREPARED_ATTACK);
+        assertTrue(state.configurePreparedLaunch(1, 0, "specialLoad"));
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+        assertEquals(1, human.getSatellitesUsed());
+
+        human.score = 125;
+        state.getPlayerState(1).lastAttackedByPlayerId = 2;
+        for (int playerId = 1; playerId < 5; playerId++) {
+            GameState.PlayerState rival = state.getPlayerState(playerId);
+            rival.alive = false;
+            for (CityState city : rival.getCities()) {
+                city.populationMillions = 0;
+            }
+        }
+        completeTurnWithResourcesAndMedia(state);
+
+        assertEquals(GameState.MatchStatus.VICTORY, state.getMatchStatus());
+        FinalScoreBreakdown breakdown = state.getFinalScoreBreakdown();
+        assertEquals(125L, breakdown.getBaseScore());
+        assertEquals(1, breakdown.getSatelliteCount());
+        assertEquals(4, breakdown.getFlagBonusCount());
+        assertEquals(1_000_250L, state.getFinalScore());
+    }
+
+    @Test
+    public void greatestCasualtyEventKeepsItsAttackerForFlagCredit() {
+        GameState state = new GameState(1, 212L, false);
+        GameState.PlayerState human = state.getHuman();
+        GameState.PlayerState target = state.getPlayerState(1);
+        target.lastAttackedByPlayerId = 2;
+        target.largestBattleCasualties = 100;
+
+        state.selectAction(GameState.Action.ATTACK);
+        assertTrue(state.configureAttack(1, 0, "soldier1"));
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+
+        assertEquals(100, target.getLargestBattleCasualties());
+        assertEquals(2, target.getLastAttackedByPlayerId());
+        assertTrue(human.score > 0);
+    }
+
+    @Test
+    public void battleCasualtiesAssignTheNationFlagToTheAttacker() {
+        GameState state = new GameState(1, 213L, false);
+        GameState.PlayerState target = state.getPlayerState(1);
+        state.getHuman().score = 3_000_000_000L;
+
+        state.selectAction(GameState.Action.ATTACK);
+        assertTrue(state.configureAttack(1, 0, "soldier1"));
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+
+        assertTrue(target.getLargestBattleCasualties() > 0);
+        assertEquals(0, target.getLastAttackedByPlayerId());
+        assertTrue(state.getHuman().score > 3_000_000_000L);
+    }
+
+    @Test
     public void preparedLaunchRejectsIncompatiblePayload() {
         GameState state = new GameState(1, 202L, false);
         GameState.PlayerState human = state.getHuman();

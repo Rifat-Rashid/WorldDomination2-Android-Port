@@ -1276,7 +1276,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         font.draw(batch, latestMessage(), messagePanel.x + 10f,
                 messagePanel.y + messagePanel.height - 15f);
         font.setColor(TITLE_TEXT);
-        drawCentered(Integer.toString(game.getHuman().score),
+        drawCentered(Long.toString(game.getHuman().score),
                 scorePanel.x + scorePanel.width / 2f, scorePanel.y + scorePanel.height / 2f + 2f, 13f);
         drawCentered("FIRST ACTION", actionSlots[0].x + actionSlots[0].width / 2f,
                 actionPanel.y + actionPanel.height - 15f, 7f);
@@ -1708,7 +1708,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 modal.x + modal.width / 2f, modal.y + modal.height * 0.67f, 8f);
         drawCentered("FINAL SCORE", modal.x + modal.width / 2f,
                 modal.y + modal.height * 0.48f, 8f);
-        drawCentered(MatchOutcomePresentation.formatScore(game.getHuman().score),
+        drawCentered(MatchOutcomePresentation.formatScore(game.getFinalScore()),
                 modal.x + modal.width / 2f, modal.y + modal.height * 0.37f, 15f);
         drawCentered("NEW GAME", modalAccept.x + modalAccept.width / 2f,
                 modalAccept.y + modalAccept.height / 2f + 3f, 8f);

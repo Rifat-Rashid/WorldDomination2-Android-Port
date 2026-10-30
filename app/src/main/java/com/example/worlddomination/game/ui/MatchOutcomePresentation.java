@@ -34,6 +34,10 @@ public final class MatchOutcomePresentation {
 
     /** The reference end screen formats score groups with periods. */
     public static String formatScore(int score) {
-        return String.format(Locale.US, "%,d", Math.max(0, score)).replace(',', '.');
+        return formatScore((long) score);
+    }
+
+    public static String formatScore(long score) {
+        return String.format(Locale.US, "%,d", Math.max(0L, score)).replace(',', '.');
     }
 }
