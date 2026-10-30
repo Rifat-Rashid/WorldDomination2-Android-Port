@@ -27,22 +27,25 @@ public final class BattleExplosionRenderer {
             if (frame == null) {
                 continue;
             }
-            if (frame.b != 0f || frame.c != 0f) {
-                throw new IllegalStateException("Unsupported rotated Flash effect frame in "
-                        + animation.timeline.linkage);
+            for (FlashAnimationTimeline.Layer layer : frame.layers) {
+                if (layer.b != 0f || layer.c != 0f) {
+                    throw new IllegalStateException("Unsupported rotated Flash effect frame in "
+                            + animation.timeline.linkage);
+                }
+                TextureRegion region = assets.getShape(layer.shapeId);
+                if (region == null) {
+                    throw new IllegalStateException("No texture for Flash shape "
+                            + layer.shapeId);
+                }
+                float width = region.getRegionWidth() * mapScale;
+                float height = region.getRegionHeight() * mapScale;
+                float x = BattlefieldCityLayout.x(mapBounds, animation.targetPlayerId,
+                        animation.cityIndex) + layer.tx * mapScale;
+                float top = BattlefieldCityLayout.y(mapBounds, animation.targetPlayerId,
+                        animation.cityIndex) - layer.ty * mapScale;
+                batch.draw(region, x, top - height, 0f, 0f, width, height,
+                        layer.a, layer.d, 0f);
             }
-            TextureRegion region = assets.getShape(frame.shapeId);
-            if (region == null) {
-                throw new IllegalStateException("No texture for Flash shape " + frame.shapeId);
-            }
-            float width = region.getRegionWidth() * mapScale;
-            float height = region.getRegionHeight() * mapScale;
-            float x = BattlefieldCityLayout.x(mapBounds, animation.targetPlayerId,
-                    animation.cityIndex) + frame.tx * mapScale;
-            float top = BattlefieldCityLayout.y(mapBounds, animation.targetPlayerId,
-                    animation.cityIndex) - frame.ty * mapScale;
-            batch.draw(region, x, top - height, 0f, 0f, width, height,
-                    frame.a, frame.d, 0f);
         }
     }
 }

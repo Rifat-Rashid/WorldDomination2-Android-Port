@@ -2,12 +2,13 @@ package com.example.worlddomination.game.rendering;
 
 import com.badlogic.gdx.utils.JsonValue;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
-/** Reconstructed single-layer Flash symbol timeline, in source stage coordinates. */
+/** Reconstructed Flash symbol display-list timeline in source stage coordinates. */
 public final class FlashAnimationTimeline {
-    public static final class Frame {
+    /** One drawable Flash display-list entry at a particular depth. */
+    public static final class Layer {
         public final int shapeId;
         public final float a;
         public final float b;
@@ -16,7 +17,7 @@ public final class FlashAnimationTimeline {
         public final float tx;
         public final float ty;
 
-        private Frame(DisplayObject object) {
+        private Layer(DisplayObject object) {
             shapeId = object.shapeId;
             a = object.a;
             b = object.b;
@@ -24,6 +25,30 @@ public final class FlashAnimationTimeline {
             d = object.d;
             tx = object.tx;
             ty = object.ty;
+        }
+    }
+
+    public static final class Frame {
+        /** Layers in Flash display-list depth order, lowest depth first. */
+        public final Layer[] layers;
+        public final int shapeId;
+        public final float a;
+        public final float b;
+        public final float c;
+        public final float d;
+        public final float tx;
+        public final float ty;
+
+        private Frame(Layer[] layers) {
+            this.layers = layers;
+            Layer primary = layers[0];
+            shapeId = primary.shapeId;
+            a = primary.a;
+            b = primary.b;
+            c = primary.c;
+            d = primary.d;
+            tx = primary.tx;
+            ty = primary.ty;
         }
     }
 
@@ -62,7 +87,7 @@ public final class FlashAnimationTimeline {
         }
 
         Frame[] frames = new Frame[sourceFrames.size];
-        Map<Integer, DisplayObject> displayList = new HashMap<>();
+        Map<Integer, DisplayObject> displayList = new TreeMap<>();
         for (int frameIndex = 0; frameIndex < sourceFrames.size; frameIndex++) {
             JsonValue operations = sourceFrames.get(frameIndex);
             for (JsonValue operation = operations.child;
@@ -98,14 +123,20 @@ public final class FlashAnimationTimeline {
                 }
             }
 
-            if (displayList.size() > 1) {
-                throw new IllegalArgumentException("Flash effect "
-                        + symbol.getString("linkage")
-                        + " contains multiple display layers");
+            Layer[] layers = new Layer[displayList.size()];
+            int layerIndex = 0;
+            for (DisplayObject object : displayList.values()) {
+                if (object.shapeId > 0) {
+                    layers[layerIndex++] = new Layer(object);
+                }
             }
-            DisplayObject visible = displayList.get(1);
-            if (visible != null && visible.shapeId > 0) {
-                frames[frameIndex] = new Frame(visible);
+            if (layerIndex > 0) {
+                if (layerIndex != layers.length) {
+                    Layer[] visibleLayers = new Layer[layerIndex];
+                    System.arraycopy(layers, 0, visibleLayers, 0, layerIndex);
+                    layers = visibleLayers;
+                }
+                frames[frameIndex] = new Frame(layers);
             }
         }
 

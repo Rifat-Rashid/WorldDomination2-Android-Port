@@ -38,7 +38,7 @@ public final class OriginalFlashAnimationAssets implements Disposable {
             "explosion_warhead_1", "explosion_warhead_2", "explosion_warhead_3",
             "explosion_warhead_4", "explosion_bioload_1", "explosion_bioload_2",
             "explosion_bioload_3", "explosion_bioload_4", "explosion002", "explosion003",
-            "boat001", "soldier", "soldier001_shoot"
+            "boat001", "soldier", "soldier001_shoot", "chinook"
     };
 
     private final Object loadLock = new Object();
@@ -202,7 +202,12 @@ public final class OriginalFlashAnimationAssets implements Disposable {
             for (int i = 0; i < timeline.getFrameCount(); i++) {
                 FlashAnimationTimeline.Frame frame = timeline.getFrame(i);
                 if (frame != null) {
-                    shapeIds.add(frame.shapeId);
+                    for (FlashAnimationTimeline.Layer layer : frame.layers) {
+                        String shapePath = SHAPE_PATH + layer.shapeId + ".svgz";
+                        if (Gdx.files.internal(shapePath).exists()) {
+                            shapeIds.add(layer.shapeId);
+                        }
+                    }
                 }
             }
         }
