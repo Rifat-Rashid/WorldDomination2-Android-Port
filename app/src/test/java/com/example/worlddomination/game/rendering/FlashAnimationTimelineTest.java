@@ -88,6 +88,7 @@ public final class FlashAnimationTimelineTest {
         expectedFrameCounts.put("explosion_bioload_4", 87);
         expectedFrameCounts.put("explosion002", 51);
         expectedFrameCounts.put("explosion003", 22);
+        expectedFrameCounts.put("explosion001", 21);
         expectedFrameCounts.put("chinook", 37);
         expectedFrameCounts.put("apache", 37);
         expectedFrameCounts.put("apache_tint", 37);
@@ -96,6 +97,8 @@ public final class FlashAnimationTimelineTest {
         expectedFrameCounts.put("soldier001_tint", 217);
         expectedFrameCounts.put("soldier001_shoot", 73);
         expectedFrameCounts.put("soldier001_shoot_tint", 73);
+        expectedFrameCounts.put("suicide_bomber", 216);
+        expectedFrameCounts.put("suicide_bomber_tint", 432);
 
         Map<Integer, String> sourceSymbolsById = new LinkedHashMap<>();
         JsonValue sourceSymbols = scene.get("symbols");

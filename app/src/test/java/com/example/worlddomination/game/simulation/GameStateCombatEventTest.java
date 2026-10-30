@@ -166,6 +166,20 @@ public final class GameStateCombatEventTest {
                 OriginalAudio.cueForCombatEvent(state.getLastTurnCombatEvents().get(0)));
     }
 
+    @Test
+    public void suicideBomberAttackUsesTheHatchSlotAndOriginalScreamCue() {
+        GameState state = new GameState(1, 127L, false);
+        activateWeapon(state, "soldier4", 1);
+        queueAttack(state, 1, 0, "soldier4");
+        queueResources(state);
+        state.confirmTurn();
+
+        GameState.CombatEvent event = state.getLastTurnCombatEvents().get(0);
+        assertEquals(1, event.actionBuildingSlot);
+        assertEquals(OriginalAudio.Cue.SUICIDE_SCREAM,
+                OriginalAudio.cueForCombatEvent(event));
+    }
+
     private static void activateWeapon(GameState state, String name, int stock) {
         GameState.WeaponState weapon = state.getHuman().getWeapons().get(name);
         weapon.active = true;

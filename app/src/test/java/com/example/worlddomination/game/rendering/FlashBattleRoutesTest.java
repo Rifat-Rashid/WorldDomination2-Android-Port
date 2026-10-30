@@ -181,6 +181,69 @@ public final class FlashBattleRoutesTest {
                 () -> FlashBattleRoutes.actionBuildingPosition(0, 3));
     }
 
+    @Test
+    public void createsSourceSuicideBomberRoutesForEveryAttackerTargetAndCity()
+            throws Exception {
+        int[][][] tankWaypoints = {
+                {{0}, {1, 2}, {1, 2, 3}, {1, 6}, {1}},
+                {{1}, {1}, {2}, {2, 3, 5}, {4}},
+                {{0}, {1}, {1, 2}, {1, 2, 3}, {4}},
+                {{0}, {0}, {1, 2}, {1, 2, 3}, {4}},
+                {{0}, {1}, {2, 3}, {2, 3, 4}, {5}}
+        };
+        float[][] spawnPositions = {
+                {420f, 420f}, {160f, 201f}, {563f, 108f}, {260f, 500f}, {562f, 511f}
+        };
+        Map<String, FlashBattleRoutes.Point> anchors = loadAnchors();
+
+        for (int attacker = 0; attacker < BattlefieldCityLayout.PLAYER_COUNT; attacker++) {
+            for (int target = 0; target < BattlefieldCityLayout.PLAYER_COUNT; target++) {
+                for (int city = 0; city < BattlefieldCityLayout.CITIES_PER_PLAYER; city++) {
+                    FlashBattleRoutes.SuicideBomberAttack route =
+                            FlashBattleRoutes.createSuicideBomberAttack(
+                                    attacker, target, city, anchors);
+                    assertEquals(attacker, route.attackerPlayerId);
+                    assertEquals(target, route.targetPlayerId);
+                    assertEquals(city, route.targetCityIndex);
+                    assertEquals(spawnPositions[attacker][0], route.spawn.x, 0f);
+                    assertEquals(spawnPositions[attacker][1], route.spawn.y, 0f);
+
+                    int[] sourceWaypoints = tankWaypoints[target][city];
+                    int routeIndex = 0;
+                    if (sourceWaypoints[0] != 0) {
+                        for (int waypoint : sourceWaypoints) {
+                            FlashBattleRoutes.Point source =
+                                    anchors.get("twp" + target + "_" + waypoint);
+                            if (source.x != 0f) {
+                                assertEquals(source.x, route.waypoints[routeIndex].x, 0f);
+                                assertEquals(source.y, route.waypoints[routeIndex].y, 0f);
+                                routeIndex++;
+                            }
+                        }
+                    }
+                    assertEquals(routeIndex + 1, route.waypoints.length);
+                    assertEquals(BattlefieldCityLayout.sourceCityX(target, city),
+                            route.waypoints[routeIndex].x, 0f);
+                    assertEquals(BattlefieldCityLayout.sourceCityY(target, city),
+                            route.waypoints[routeIndex].y, 0f);
+                }
+            }
+        }
+    }
+
+    @Test
+    public void rejectsInvalidSuicideBomberRouteData() throws Exception {
+        Map<String, FlashBattleRoutes.Point> anchors = loadAnchors();
+        org.junit.Assert.assertThrows(IllegalArgumentException.class,
+                () -> FlashBattleRoutes.createSuicideBomberAttack(-1, 0, 0, anchors));
+        org.junit.Assert.assertThrows(IllegalArgumentException.class,
+                () -> FlashBattleRoutes.createSuicideBomberAttack(0, 5, 0, anchors));
+        org.junit.Assert.assertThrows(IllegalArgumentException.class,
+                () -> FlashBattleRoutes.createSuicideBomberAttack(0, 1, 5, anchors));
+        org.junit.Assert.assertThrows(IllegalArgumentException.class,
+                () -> FlashBattleRoutes.createSuicideBomberAttack(0, 1, 1, null));
+    }
+
     private static boolean hasSourceWaypoint(int player, int waypoint) {
         return (player == 0 && (waypoint == 1 || waypoint == 2 || waypoint == 3
                 || waypoint == 4 || waypoint == 5 || waypoint == 6))

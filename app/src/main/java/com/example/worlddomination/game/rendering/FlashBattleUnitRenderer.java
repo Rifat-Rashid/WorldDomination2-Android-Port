@@ -46,6 +46,21 @@ public final class FlashBattleUnitRenderer {
         }
     }
 
+    public void drawSuicideBomber(SpriteBatch batch, Rectangle mapBounds,
+                                  List<FlashSuicideBomberAnimation> animations) {
+        if (!assets.isLoaded()) {
+            return;
+        }
+        for (FlashSuicideBomberAnimation animation : animations) {
+            for (int index = 0; index < animation.getActorCount(); index++) {
+                FlashSuicideBomberAnimation.Actor actor = animation.getActor(index);
+                drawActor(batch, mapBounds, actor.linkage, actor.sourceFrame,
+                        actor.sourceX, actor.sourceY, actor.islandPlayerId,
+                        1f, actor.alpha, actor.visible);
+            }
+        }
+    }
+
     private void drawActor(SpriteBatch batch, Rectangle mapBounds, String linkage,
                            int sourceFrame, float sourceX, float sourceY,
                            int islandPlayerId, float actorScale, float actorAlpha,
