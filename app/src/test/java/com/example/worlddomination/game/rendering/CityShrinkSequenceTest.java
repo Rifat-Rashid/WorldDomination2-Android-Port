@@ -3,6 +3,8 @@ package com.example.worlddomination.game.rendering;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public final class CityShrinkSequenceTest {
     @Test
@@ -109,5 +111,21 @@ public final class CityShrinkSequenceTest {
         assertEquals(6, sequence.getFrameNumber());
         assertEquals(100, sequence.getAlpha());
         assertEquals(CityShrinkSequence.Phase.IDLE, sequence.getPhase());
+        assertFalse(sequence.isAnimating());
+    }
+
+    @Test
+    public void animationActivityIsReportedUntilTheFinalSourceTick() {
+        CityShrinkSequence sequence = new CityShrinkSequence();
+        sequence.reset(2);
+        sequence.target(4);
+        assertTrue(sequence.isAnimating());
+
+        while (sequence.isAnimating()) {
+            sequence.tick();
+        }
+
+        assertEquals(4, sequence.getFrameNumber());
+        assertFalse(sequence.isAnimating());
     }
 }

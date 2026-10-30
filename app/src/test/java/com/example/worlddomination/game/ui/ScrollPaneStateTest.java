@@ -3,6 +3,7 @@ package com.example.worlddomination.game.ui;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public final class ScrollPaneStateTest {
@@ -98,13 +99,29 @@ public final class ScrollPaneStateTest {
         ScrollPaneState pane = new ScrollPaneState();
         pane.setRange(800f, 200f);
         pane.endGesture(-600f);
+        assertTrue(pane.hasMotion());
         pane.tick(0.1f);
         assertTrue(pane.getOffset() > 0f);
+        assertTrue(pane.hasMotion());
 
         pane.dragBy(-15f);
         float draggedOffset = pane.getOffset();
+        assertFalse(pane.hasMotion());
         pane.tick(0.5f);
 
         assertEquals(draggedOffset, pane.getOffset(), 0.001f);
+    }
+
+    @Test
+    public void flingMotionEndsWhenItReachesTheScrollBoundary() {
+        ScrollPaneState pane = new ScrollPaneState();
+        pane.setRange(500f, 200f);
+        pane.endGesture(-1200f);
+        assertTrue(pane.hasMotion());
+
+        pane.tick(1f);
+
+        assertEquals(pane.getLimit(), pane.getOffset(), 0.001f);
+        assertFalse(pane.hasMotion());
     }
 }

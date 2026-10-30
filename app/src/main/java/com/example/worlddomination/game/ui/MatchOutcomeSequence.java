@@ -252,6 +252,10 @@ public final class MatchOutcomeSequence {
         return phase == Phase.COMPLETE;
     }
 
+    public boolean isAnimating() {
+        return phase != Phase.INACTIVE && phase != Phase.COMPLETE;
+    }
+
     public long getScoreCount() {
         return scoreCount;
     }

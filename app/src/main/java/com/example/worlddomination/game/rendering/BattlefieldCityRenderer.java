@@ -36,8 +36,8 @@ public final class BattlefieldCityRenderer {
         }
     }
 
-    /** Tracks model frame changes and advances each transition by one 24 Hz tick. */
-    public void tick(GameState game) {
+    /** Starts transitions for any changed city frames without consuming a source tick. */
+    public void updateTargets(GameState game) {
         if (game == null) {
             return;
         }
@@ -48,8 +48,27 @@ public final class BattlefieldCityRenderer {
                 citySequences[address].target(targetFrame);
                 trackedTargets[address] = targetFrame;
             }
-            citySequences[address].tick();
         }
+    }
+
+    /** Tracks model changes and advances each transition by one 24 Hz tick. */
+    public void tick(GameState game) {
+        if (game == null) {
+            return;
+        }
+        updateTargets(game);
+        for (CityShrinkSequence sequence : citySequences) {
+            sequence.tick();
+        }
+    }
+
+    public boolean isAnimating() {
+        for (CityShrinkSequence sequence : citySequences) {
+            if (sequence.isAnimating()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void draw(SpriteBatch batch, Rectangle mapBounds, GameState game) {

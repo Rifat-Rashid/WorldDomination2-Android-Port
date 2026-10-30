@@ -11,6 +11,21 @@ import static org.junit.Assert.assertTrue;
 
 public final class MatchOutcomeSequenceTest {
     @Test
+    public void outcomeActivityEndsOnlyAfterTheScoreSequenceCompletes() {
+        MatchOutcomeSequence sequence = new MatchOutcomeSequence(7L);
+        assertFalse(sequence.isAnimating());
+        sequence.begin(GameState.MatchStatus.VICTORY,
+                FinalScoreBreakdown.calculate(0L, 0, 0));
+        assertTrue(sequence.isAnimating());
+
+        while (!sequence.isComplete()) {
+            sequence.tick();
+        }
+
+        assertFalse(sequence.isAnimating());
+    }
+
+    @Test
     public void sourceDelaysTheEndgameByThreeSecondsAndScoreByTwoMore() {
         MatchOutcomeSequence sequence = new MatchOutcomeSequence(7L);
         sequence.begin(GameState.MatchStatus.DEFEAT,

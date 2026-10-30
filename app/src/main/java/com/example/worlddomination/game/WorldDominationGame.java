@@ -32,6 +32,7 @@ import com.example.worlddomination.game.rendering.FlashSuicideBomberAnimation;
 import com.example.worlddomination.game.rendering.FlashRocketAnimation;
 import com.example.worlddomination.game.rendering.FlashSoldierOneAnimation;
 import com.example.worlddomination.game.rendering.FlashAnimationTimeline;
+import com.example.worlddomination.game.rendering.RenderLoopPolicy;
 import com.example.worlddomination.game.rendering.SourceCombatAnimationMapping;
 import com.example.worlddomination.game.simulation.GameSetup;
 import com.example.worlddomination.game.simulation.GameState;
@@ -232,6 +233,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private boolean dragging;
     private boolean modalOpen;
     private boolean continuousRenderingEnabled = true;
+    private boolean renderingFrame;
+    private boolean skipNextFrameDelta;
     private int researchPage;
     private String selectedEquipment = "";
     private String setupMessage = "SELECT ONE TO FOUR OPPONENTS TO BEGIN";
@@ -451,6 +454,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     @Override
     public void render() {
+        renderingFrame = true;
         if (safeAreaChanged) {
             layout(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         }
@@ -458,7 +462,17 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             flashAnimationAssets.update();
             preparePendingBattleAnimations();
         }
-        float frameSeconds = Math.min(Gdx.graphics.getDeltaTime(), 0.25f);
+        if (cityRenderer != null) {
+            cityRenderer.updateTargets(game);
+        }
+        synchronizeOutcomeSequence();
+        boolean discardElapsedTime = skipNextFrameDelta || !continuousRenderingEnabled;
+        skipNextFrameDelta = false;
+        if (discardElapsedTime) {
+            accumulator = 0f;
+        }
+        float frameSeconds = discardElapsedTime
+                ? 0f : Math.min(Gdx.graphics.getDeltaTime(), 0.25f);
         accumulator = Math.min(accumulator + frameSeconds, FIXED_STEP * 6f);
         while (accumulator >= FIXED_STEP) {
             fixedUpdate(FIXED_STEP);
@@ -487,9 +501,31 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         if (showExitPromptSeconds > 0f) {
             drawExitPrompt();
         }
-        if (game == null && showExitPromptSeconds <= 0f && continuousRenderingEnabled) {
-            setContinuousRendering(false);
+        setContinuousRendering(RenderLoopPolicy.shouldRenderContinuously(game != null,
+                showExitPromptSeconds > 0f, hasActivePresentation()));
+        renderingFrame = false;
+    }
+
+    private boolean hasActivePresentation() {
+        if (game == null) {
+            return false;
         }
+        if (flashAnimationAssets != null && !flashAnimationAssets.isLoaded()) {
+            return true;
+        }
+        if ((cityRenderer != null && cityRenderer.isAnimating())
+                || !battleAnimations.isEmpty()
+                || !soldierBattleAnimations.isEmpty()
+                || !apacheMarineAnimations.isEmpty()
+                || !chinookTankAnimations.isEmpty()
+                || !suicideBomberAnimations.isEmpty()
+                || !rocketBattleAnimations.isEmpty()
+                || !carrierPlaneAnimations.isEmpty()
+                || !pendingBattleAnimations.isEmpty()
+                || outcomeSequence.isAnimating()) {
+            return true;
+        }
+        return navigationScroll.hasMotion() || equipmentScroll.hasMotion();
     }
 
     private void fixedUpdate(float seconds) {
@@ -640,6 +676,13 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     }
 
     private void advanceOutcomeSequence() {
+        synchronizeOutcomeSequence();
+        if (outcomeSequence.isAnimating()) {
+            playOutcomeEvents(outcomeSequence.tick());
+        }
+    }
+
+    private void synchronizeOutcomeSequence() {
         if (game == null || !MatchOutcomePresentation.isFinished(game.getMatchStatus())) {
             if (outcomeSequence.getPhase() != MatchOutcomeSequence.Phase.INACTIVE) {
                 stopScoreCounterSound();
@@ -654,7 +697,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             modalOpen = false;
             audio.stopAmbient();
         }
-        playOutcomeEvents(outcomeSequence.tick());
     }
 
     private void playOutcomeEvents(int events) {
@@ -2478,7 +2520,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         if (setupLayout.startButton.contains(x, y)) {
             if (setup.canStart()) {
                 game = new GameState(setup);
-                setContinuousRendering(true);
                 cityRenderer.reset(game);
                 battleAnimations.clear();
                 soldierBattleAnimations.clear();
@@ -3218,12 +3259,17 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         accumulator = 0f;
         audio.resume();
         Gdx.input.setInputProcessor(this);
-        setContinuousRendering(game != null || showExitPromptSeconds > 0f);
+        setContinuousRendering(RenderLoopPolicy.shouldRenderContinuously(game != null,
+                showExitPromptSeconds > 0f, hasActivePresentation()));
         Gdx.graphics.requestRendering();
     }
 
     private void setContinuousRendering(boolean enabled) {
         if (continuousRenderingEnabled != enabled) {
+            if (enabled && !renderingFrame) {
+                accumulator = 0f;
+                skipNextFrameDelta = true;
+            }
             Gdx.graphics.setContinuousRendering(enabled);
             continuousRenderingEnabled = enabled;
         }
