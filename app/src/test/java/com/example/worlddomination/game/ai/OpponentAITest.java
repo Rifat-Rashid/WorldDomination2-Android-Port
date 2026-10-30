@@ -656,6 +656,38 @@ public final class OpponentAITest {
     }
 
     @Test
+    public void sourceStrengthCountsTechnologyCombatStockAndFundsButNotCounters() {
+        GameState state = new GameState(1, 9231L);
+        GameState.PlayerState actor = state.getPlayerState(1);
+        int expected = actor.moneyMillions;
+        for (String technologyName : actor.getInventedTechnologies()) {
+            TechnologyCatalog.Definition technology = TechnologyCatalog.byName(technologyName);
+            if (technology != null) {
+                expected += technology.strengthWeight;
+            }
+        }
+        for (GameState.WeaponState weapon : actor.getWeapons().values()) {
+            if (!"anti".equals(weapon.definition.type)) {
+                expected += weapon.inStock * weapon.definition.level;
+            }
+        }
+
+        assertEquals(expected, actor.getStrength());
+    }
+
+    @Test
+    public void sourceStrengthDoesNotChangeWhenCounterStockChanges() {
+        GameState state = new GameState(1, 9232L);
+        GameState.PlayerState actor = state.getPlayerState(1);
+        int sourceStrength = actor.getStrength();
+
+        actor.getWeapons().get("antiAir").inStock += 100;
+        actor.getWeapons().get("antiRocket").inStock += 100;
+
+        assertEquals(sourceStrength, actor.getStrength());
+    }
+
+    @Test
     public void preparedDefenseTriesNextEqualScoreThreatWhenStrongestHasNoCounter()
             throws Exception {
         GameState state = new GameState(1, 923L);
