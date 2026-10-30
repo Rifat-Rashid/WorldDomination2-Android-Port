@@ -1,6 +1,7 @@
 package com.example.worlddomination.game.simulation;
 
 import com.example.worlddomination.game.audio.OriginalAudio;
+import com.example.worlddomination.game.rendering.FlashBattleRoutes;
 import org.junit.Test;
 
 import java.util.List;
@@ -103,6 +104,11 @@ public final class GameStateCombatEventTest {
             assertEquals(cityIndex, event.cityIndex);
             assertEquals("ship", event.weaponName);
             assertEquals("warhead1", event.payloadName);
+            assertTrue(FlashBattleRoutes.supportsCarrierPlaneStrike(event));
+            FlashBattleRoutes.CarrierPlaneStrike route =
+                    FlashBattleRoutes.createCarrierPlaneStrike(event.attackerPlayerId,
+                            event.defenderPlayerId, event.cityIndex, cityIndex, false);
+            assertEquals(cityIndex, route.planeIndex);
             assertTrue(event.casualtiesMillions > 0);
         }
     }

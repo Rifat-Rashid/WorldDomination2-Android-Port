@@ -110,6 +110,50 @@ public final class FlashBattleUnitRenderer {
         batch.setColor(com.badlogic.gdx.graphics.Color.WHITE);
     }
 
+    /** Draws ship-launched aircraft from the original 24-frame Flash linkage. */
+    public void drawCarrierPlanes(SpriteBatch batch, Rectangle mapBounds,
+                                  List<FlashCarrierPlaneAnimation> animations) {
+        if (!assets.isLoaded()) {
+            return;
+        }
+        FlashAnimationTimeline timeline = assets.getTimeline("ship_plane");
+        if (timeline == null) {
+            return;
+        }
+        float mapScale = BattlefieldCityLayout.sourceScale(mapBounds);
+        for (FlashCarrierPlaneAnimation animation : animations) {
+            FlashCarrierPlaneAnimation.Actor actor = animation.getActor();
+            if (!actor.visible) {
+                continue;
+            }
+            FlashAnimationTimeline.Frame frame = timeline.getFrame(actor.sourceFrame);
+            if (frame == null) {
+                continue;
+            }
+            FlashBattleRoutes.CarrierPlaneStrike route = animation.getRoute();
+            batch.setColor(com.badlogic.gdx.graphics.Color.WHITE);
+            for (FlashAnimationTimeline.Layer layer : frame.layers) {
+                TextureRegion region = assets.getShape(layer.shapeId);
+                if (region == null) {
+                    continue;
+                }
+                float width = region.getRegionWidth() * mapScale;
+                float height = region.getRegionHeight() * mapScale;
+                float x = BattlefieldCityLayout.sourceXBetween(mapBounds,
+                        actor.sourceX + layer.tx, route.attackerPlayerId,
+                        route.targetPlayerId, actor.routeProgress);
+                float top = BattlefieldCityLayout.sourceY(mapBounds, actor.sourceY + layer.ty);
+                FlashSpriteTransform transform = FlashSpriteTransform.fromMatrix(
+                        layer.a, layer.b, layer.c, layer.d);
+                float direction = actor.flippedHorizontally ? -1f : 1f;
+                batch.draw(region, x, top - height, 0f, height, width, height,
+                        transform.scaleX * direction, transform.scaleY,
+                        transform.rotationDegrees);
+            }
+        }
+        batch.setColor(com.badlogic.gdx.graphics.Color.WHITE);
+    }
+
     private static void drawRocketSprite(SpriteBatch batch, Rectangle mapBounds,
                                          TextureRegion region, float sourceX,
                                          float sourceY, int fromPlayerId, int toPlayerId,

@@ -48,6 +48,7 @@ public final class OriginalFlashAnimationAssets implements Disposable {
             "explosion_bioload_3", "explosion_bioload_4", "explosion001", "explosion002",
             "explosion003",
             "rocket", "trail",
+            "ship_plane",
             "boat001", "soldier", "soldier001_shoot", "chinook", "chinook_shadow", "apache",
             "apache_shadow", "apache_tint", "marine", "soldier001_tint",
             "soldier001_shoot_tint", "suicide_bomber", "suicide_bomber_tint",
