@@ -212,11 +212,8 @@ public final class OpponentAI {
             largestPopulation = 1;
         }
 
-        int lowestRegard = 100;
-        for (GameState.PlayerState other : alive) {
-            lowestRegard = Math.min(lowestRegard, player.getRegardToward(other.id));
-        }
-        double attack = Math.max(0, ATTACK_BASE[state.getDifficulty()] - lowestRegard / 2.0);
+        int lowestRegard = lowestRegardForScore(state, player);
+        double attack = baseAttackScore(state, player, lowestRegard);
         double attackTransferredToProduction = 0;
         if (!hasAvailableAttack(player, Collections.<String, Integer>emptyMap())) {
             attackTransferredToProduction = attack;
@@ -351,6 +348,25 @@ public final class OpponentAI {
     /** The reference uses its current turn directly; its calculated 60-turn cap is unused. */
     static double researchTurnRatio(int turn, int technologyCount) {
         return turn / (double) Math.max(1, technologyCount) * 9;
+    }
+
+    static double baseAttackScore(GameState state, GameState.PlayerState player) {
+        return baseAttackScore(state, player, lowestRegardForScore(state, player));
+    }
+
+    private static double baseAttackScore(GameState state, GameState.PlayerState player,
+                                          int lowestRegard) {
+        return Math.max(0, ATTACK_BASE[state.getDifficulty()] - lowestRegard / 2.0);
+    }
+
+    private static int lowestRegardForScore(GameState state, GameState.PlayerState player) {
+        int lowestRegard = 100;
+        for (GameState.PlayerState other : state.getPlayers()) {
+            if (other != null) {
+                lowestRegard = Math.min(lowestRegard, player.getRegardToward(other.id));
+            }
+        }
+        return lowestRegard;
     }
 
     static double preCounterScore(GameState state, GameState.PlayerState defender,

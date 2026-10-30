@@ -187,6 +187,17 @@ public final class OpponentAITest {
     }
 
     @Test
+    public void attackScoreRetainsLowestRegardForAnEliminatedRival() throws Exception {
+        GameState state = new GameState(1, 915L);
+        GameState.PlayerState actor = state.getPlayerState(1);
+        setFriendlyRelationsAndNoPrimaryEnemy(actor);
+        setRegardToward(actor, 4, 10);
+        state.getPlayerState(4).alive = false;
+
+        assertEquals(81.0, OpponentAI.baseAttackScore(state, actor), 0.0);
+    }
+
+    @Test
     public void preCounterScoreUsesTheThreateningEnemyRegardAndLowPopulationBonus() {
         GameState state = null;
         for (long seed = 0; seed < 500; seed++) {
@@ -724,6 +735,14 @@ public final class OpponentAITest {
                 .getDeclaredField("primaryEnemyId");
         enemyField.setAccessible(true);
         enemyField.setInt(actor, -1);
+    }
+
+    private static void setRegardToward(GameState.PlayerState actor, int playerId, int regard)
+            throws Exception {
+        java.lang.reflect.Field regardField = GameState.PlayerState.class
+                .getDeclaredField("regardToward");
+        regardField.setAccessible(true);
+        ((int[]) regardField.get(actor))[playerId] = regard;
     }
 
     private static final class SequenceRandom extends Random {
