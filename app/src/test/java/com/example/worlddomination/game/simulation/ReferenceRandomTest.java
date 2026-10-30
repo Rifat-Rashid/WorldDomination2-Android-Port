@@ -48,6 +48,25 @@ public final class ReferenceRandomTest {
     }
 
     @Test
+    public void copiedRandomPreservesTheStreamWithoutAdvancingCanonicalState() {
+        ReferenceRandom canonical = new ReferenceRandom(2026L);
+        ReferenceRandom expectedCanonical = new ReferenceRandom(2026L);
+        for (int index = 0; index < 7; index++) {
+            canonical.nextDouble();
+            expectedCanonical.nextDouble();
+        }
+
+        ReferenceRandom presentation = canonical.copy();
+        double canonicalNext = expectedCanonical.nextDouble();
+        assertEquals(canonicalNext, canonical.nextDouble(), 0.0);
+        assertEquals(canonicalNext, presentation.nextDouble(), 0.0);
+
+        presentation.nextInt(1000);
+        assertEquals(expectedCanonical.nextInt(1000), canonical.nextInt(1000));
+        assertEquals(expectedCanonical.nextDouble(), canonical.nextDouble(), 0.0);
+    }
+
+    @Test
     public void boundedDrawRejectsNonPositiveRanges() {
         assertThrows(IllegalArgumentException.class,
                 () -> new ReferenceRandom(1L).nextInt(0));

@@ -27,6 +27,14 @@ public final class OriginalAudio {
         SCORE_COUNTER("31_Score counter.Mp3.mp3.gz"),
         SATELLITE_MULTIPLIER("34_Satelite multiplier.Mp3.mp3.gz"),
         FLAG_BONUS("75_Country domination bonus.Mp3.mp3.gz"),
+        SOLDIER_GUN("14_unit_Soldier gun.wav.mp3.gz"),
+        SEAL_GUN("16_unit_seal gun.wav.mp3.gz"),
+        SUICIDE_SCREAM("7_unit_Suicide scream.wav.mp3.gz"),
+        EXPLOSION_SMALL3("98_Explode small3.wav.mp3.gz"),
+        EXPLOSION_MEDIUM3("71_Explode medium 3.wav.mp3.gz"),
+        EXPLOSION_MEDIUM("70_explode medium.wav.mp3.gz"),
+        EXPLOSION_LARGE2("97_Explode large2.wav.mp3.gz"),
+        EXPLOSION_LARGE("72_Explode large.wav.mp3.gz"),
         DEFEAT("48_Loose.Mp3.mp3.gz"),
         GAME_AMBIENT("65_General ambient.wav.mp3.gz"),
         RESOURCES_AMBIENT("35_Resources ambient loop.wav.mp3.gz"),
@@ -73,6 +81,14 @@ public final class OriginalAudio {
         preload(Cue.SCORE_COUNTER);
         preload(Cue.SATELLITE_MULTIPLIER);
         preload(Cue.FLAG_BONUS);
+        preload(Cue.SOLDIER_GUN);
+        preload(Cue.SEAL_GUN);
+        preload(Cue.SUICIDE_SCREAM);
+        preload(Cue.EXPLOSION_SMALL3);
+        preload(Cue.EXPLOSION_MEDIUM3);
+        preload(Cue.EXPLOSION_MEDIUM);
+        preload(Cue.EXPLOSION_LARGE2);
+        preload(Cue.EXPLOSION_LARGE);
         preload(Cue.DEFEAT);
         preload(Cue.GAME_AMBIENT);
         preload(Cue.RESOURCES_AMBIENT);
@@ -220,6 +236,67 @@ public final class OriginalAudio {
                 return Cue.DEFENSE_AMBIENT;
             default:
                 return Cue.GAME_AMBIENT;
+        }
+    }
+
+    /** Maps resolved combat results to the original Flash unit and explosion cues. */
+    public static Cue cueForCombatEvent(GameState.CombatEvent event) {
+        if (event == null) {
+            return null;
+        }
+        if (event.type == GameState.CombatEventType.DIRECT_ATTACK
+                && "soldier2".equals(event.weaponName)) {
+            // Unit.soundAction('marine_shoot') attaches the original Seal gun asset.
+            return Cue.SEAL_GUN;
+        }
+        if (event.type == GameState.CombatEventType.DIRECT_ATTACK
+                && "soldier4".equals(event.weaponName)) {
+            // Unit.soundAction('suicide_scream') starts as its first source waypoint resolves.
+            return Cue.SUICIDE_SCREAM;
+        }
+        return cueForCombatEvent(event.type, event.payloadName);
+    }
+
+    /** Maps the source event kind and Flash payload identifier to an original cue. */
+    public static Cue cueForCombatEvent(GameState.CombatEventType type,
+                                        String payloadName) {
+        if (type == null) {
+            return null;
+        }
+        switch (type) {
+            case DIRECT_ATTACK:
+                // Unit.soundAction('soldier_shoot') attaches this original asset.
+                return Cue.SOLDIER_GUN;
+            case STRIKE_INTERCEPTED:
+                // explosion002/explosion003 both map to "Explode small3.wav".
+                return Cue.EXPLOSION_SMALL3;
+            case STRIKE_IMPACT:
+                return explosionForPayload(payloadName);
+            default:
+                return null;
+        }
+    }
+
+    private static Cue explosionForPayload(String payloadName) {
+        if (payloadName == null) {
+            return null;
+        }
+        switch (payloadName) {
+            case "warhead1":
+            case "bioload1":
+                return Cue.EXPLOSION_SMALL3;
+            case "warhead2":
+            case "bioload2":
+                return Cue.EXPLOSION_MEDIUM3;
+            case "warhead3":
+            case "bioload3":
+                return Cue.EXPLOSION_MEDIUM;
+            case "warhead4":
+                return Cue.EXPLOSION_LARGE2;
+            case "bioload4":
+                return Cue.EXPLOSION_LARGE;
+            default:
+                return null;
         }
     }
 
