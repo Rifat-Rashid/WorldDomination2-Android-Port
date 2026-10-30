@@ -42,6 +42,8 @@ public final class GameStateTest {
     @Test
     public void sourceTurnRequiresTwoActions() {
         GameState state = new GameState(1);
+        int funds = state.getHuman().moneyMillions;
+        int influence = state.getHuman().religion;
         state.selectAction(GameState.Action.RESOURCES);
         state.acceptSelectedAction();
         try {
@@ -50,6 +52,9 @@ public final class GameStateTest {
         } catch (IllegalStateException expected) {
             assertEquals(0, state.getTurn());
         }
+        assertEquals(funds, state.getHuman().moneyMillions);
+        assertEquals(influence, state.getHuman().religion);
+        assertEquals(1, state.getQueuedActionCount());
     }
 
     @Test
@@ -599,5 +604,126 @@ public final class GameStateTest {
         } catch (ReflectiveOperationException exception) {
             throw new AssertionError(exception);
         }
+    }
+
+    @Test
+    public void unportedActionsCannotBeSelectedOrQueued() {
+        GameState state = new GameState(1);
+        GameState.Action[] unportedActions = {
+                GameState.Action.PREPARED_ATTACK,
+                GameState.Action.DEFENSE
+        };
+        for (GameState.Action action : unportedActions) {
+            state.selectAction(action);
+            assertNull(state.getSelectedAction());
+            assertEquals(0, state.getQueuedActionCount());
+        }
+    }
+
+    @Test
+    public void cancellingCurrentSelectionPreservesAcceptedAction() {
+        GameState state = new GameState(1);
+        state.selectAction(GameState.Action.RESOURCES);
+        assertEquals(true, state.acceptSelectedAction());
+        state.selectAction(GameState.Action.MASS_MEDIA);
+
+        state.cancelSelection();
+
+        assertNull(state.getSelectedAction());
+        assertEquals(1, state.getQueuedActionCount());
+        assertEquals(GameState.Action.RESOURCES, state.getQueuedAction(0));
+    }
+
+    @Test
+    public void hardMassMediaCannotRaiseInfluenceAboveOneHundred() {
+        GameState state = new GameState(2);
+        for (int turn = 0; turn < 5; turn++) {
+            state.selectAction(GameState.Action.MASS_MEDIA);
+            assertEquals(true, state.acceptSelectedAction());
+            state.selectAction(GameState.Action.RESOURCES);
+            assertEquals(true, state.acceptSelectedAction());
+            state.confirmTurn();
+        }
+
+        assertEquals(100, state.getHuman().religion);
+        assertEquals(210, state.getHuman().moneyMillions);
+        assertEquals(5, state.getTurn());
+    }
+
+    @Test
+    public void confirmingHumanActionsAppliesSourceReligionDecayToOpponents() {
+        GameState state = new GameState(1, 0L);
+        GameState.PlayerState opponent = state.getPlayers()[1];
+        int opponentMoney = opponent.moneyMillions;
+        int opponentReligion = opponent.religion;
+
+        state.selectAction(GameState.Action.RESOURCES);
+        state.acceptSelectedAction();
+        state.selectAction(GameState.Action.MASS_MEDIA);
+        state.acceptSelectedAction();
+        state.confirmTurn();
+
+        assertEquals(opponentMoney, opponent.moneyMillions);
+        assertTrue(opponent.religion <= opponentReligion - 5);
+        assertTrue(opponent.religion >= opponentReligion - 10);
+    }
+
+    @Test
+    public void sourceDifficultyTablesInitializeHumanAndOpponent() {
+        int[] humanMoney = {80, 65, 55};
+        int[] humanPopulation = {500, 450, 400};
+        int[] humanReligion = {80, 65, 55};
+        int[] enemyMoney = {50, 65, 60};
+        int[] enemyReligion = {30, 40, 60};
+
+        for (int difficulty = 0; difficulty < 3; difficulty++) {
+            GameState state = new GameState(difficulty);
+            GameState.PlayerState[] players = state.getPlayers();
+            assertEquals(humanMoney[difficulty], players[0].moneyMillions);
+            assertEquals(humanPopulation[difficulty], players[0].populationMillions);
+            assertEquals(humanReligion[difficulty], players[0].religion);
+            assertEquals(enemyMoney[difficulty], players[1].moneyMillions);
+            assertEquals(450, players[1].populationMillions);
+            assertEquals(enemyReligion[difficulty], players[1].religion);
+        }
+    }
+
+    @Test
+    public void difficultyOutsideSourceTableIsRejected() {
+        for (int difficulty : new int[]{-1, 3}) {
+            try {
+                new GameState(difficulty);
+                fail("Unsupported difficulty should be rejected: " + difficulty);
+            } catch (IllegalArgumentException expected) {
+                assertTrue(expected.getMessage().contains("Difficulty"));
+            }
+        }
+    }
+
+    @Test
+    public void queuedResourcesDoNotChangeFundsBeforeTurnConfirmation() {
+        GameState state = new GameState(1);
+        int startingFunds = state.getHuman().moneyMillions;
+
+        state.selectAction(GameState.Action.RESOURCES);
+        state.acceptSelectedAction();
+        assertEquals(startingFunds, state.getHuman().moneyMillions);
+        state.selectAction(GameState.Action.MASS_MEDIA);
+        assertEquals(startingFunds, state.getHuman().moneyMillions);
+    }
+
+    @Test
+    public void clearingTurnActionsRemovesQueuedAndPendingActions() {
+        GameState state = new GameState(1);
+        state.selectAction(GameState.Action.RESOURCES);
+        state.acceptSelectedAction();
+        state.selectAction(GameState.Action.MASS_MEDIA);
+
+        state.clearQueuedActions();
+
+        assertEquals(0, state.getQueuedActionCount());
+        assertNull(state.getSelectedAction());
+        assertEquals(65, state.getHuman().moneyMillions);
+        assertEquals(65, state.getHuman().religion);
     }
 }
