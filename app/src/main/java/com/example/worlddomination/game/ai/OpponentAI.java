@@ -575,8 +575,8 @@ public final class OpponentAI {
         List<String> carriers = sourceActiveCarriers(attacker, plannedUse);
         List<String> logicalCarriers = sourceLogicalCarriers(attacker);
         boolean allowPre = !carriers.isEmpty();
-        boolean allowDir = hasAvailableSoldier(attacker, plannedUse);
         boolean hasSpy = hasAvailableSpy(attacker, plannedUse);
+        boolean allowDir = hasAvailableSoldier(attacker, plannedUse) || hasSpy;
         if (!allowDir && !allowPre && !hasSpy) {
             return decisions;
         }
@@ -1122,18 +1122,52 @@ public final class OpponentAI {
                                                 GameState.PlayerState player) {
         String preparedCarrier = player.getPreparedCarrierName();
         if (preparedCarrier != null) {
-            return !state.getAvailablePreparedPayloads(player.id, preparedCarrier).isEmpty();
+            GameState.WeaponState carrier = player.getWeapons().get(preparedCarrier);
+            return carrier != null && sourcePayloadAvailable(player, carrier);
         }
         for (GameState.WeaponState weapon : player.getWeapons().values()) {
-            if (weapon.active && weapon.inStock > 0
-                    && ("soldier".equals(weapon.definition.type)
-                    // The source gates action scoring with spyAvailable, which
-                    // deliberately ignores readiness; getTarget checks readiness later.
-                    || "spy".equals(weapon.definition.type))) {
+            if (!weapon.active || weapon.inStock <= 0
+                    || "anti".equals(weapon.definition.type)
+                    || isSourceCarrier(weapon)) {
+                continue;
+            }
+            if ("spy".equals(weapon.definition.type)) {
+                // WeaponStock.spyAvailable is active stock, independent of readiness.
+                return true;
+            }
+            if ("rocketload".equals(weapon.definition.type)) {
+                if (sourcePayloadHasCarrierStock(player, weapon)) {
+                    return true;
+                }
+            } else if ("specialLoad".equals(weapon.definition.type)) {
+                GameState.WeaponState space = player.getWeapons().get("space");
+                if (space != null && space.inStock > 0) {
+                    return true;
+                }
+            } else {
+                // The source includes active stocked non-carrier weapons here.
                 return true;
             }
         }
-        return !state.getAvailablePreparedCarriers(player.id).isEmpty();
+        return false;
+    }
+
+    private static boolean sourcePayloadHasCarrierStock(GameState.PlayerState player,
+                                                        GameState.WeaponState payload) {
+        int level = payload.definition.level;
+        GameState.WeaponState carrier = player.getWeapons().get("rocket" + level);
+        if (carrier != null && carrier.inStock > 0) {
+            return true;
+        }
+        for (String carrierName : new String[]{"plane1", "plane2", "ship", "sub"}) {
+            carrier = player.getWeapons().get(carrierName);
+            if (carrier != null && carrier.inStock > 0
+                    && ("ship".equals(carrierName) || "sub".equals(carrierName)
+                    || level <= carrier.definition.level)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static Decision planPropaganda(GameState state,
