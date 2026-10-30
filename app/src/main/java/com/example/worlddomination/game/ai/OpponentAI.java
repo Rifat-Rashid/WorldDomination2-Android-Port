@@ -215,7 +215,15 @@ public final class OpponentAI {
         int lowestRegard = lowestRegardForScore(state, player);
         double attack = baseAttackScore(state, player, lowestRegard);
         double attackTransferredToProduction = 0;
-        if (!hasAvailableAttackForScoring(state, player)) {
+        String preparedCarrier = player.getPreparedCarrierName();
+        if (preparedCarrier != null) {
+            if (state.getAvailablePreparedPayloads(player.id, preparedCarrier).isEmpty()) {
+                attackTransferredToProduction = attack;
+                attack = -999;
+            } else {
+                attack += 200;
+            }
+        } else if (!hasAvailableAttackForScoring(state, player)) {
             attackTransferredToProduction = attack;
             attack = -999;
         }
@@ -234,13 +242,9 @@ public final class OpponentAI {
                 state.getPreparedThreatPlayerIds(player.id));
         double preparedAttack = Math.max(0,
                 ATTACK_BASE[state.getDifficulty()] - lowestRegard / 2.0);
-        if (player.getPreparedCarrierName() != null) {
-            if (state.getAvailablePreparedPayloads(player.id,
-                    player.getPreparedCarrierName()).isEmpty()) {
-                preparedAttack = -999;
-            } else {
-                preparedAttack += 200;
-            }
+        if (preparedCarrier != null) {
+            // A ready strike is represented by the source's boosted attack action.
+            preparedAttack = -999;
         } else if (state.getAvailablePreparedCarriers(player.id).isEmpty()) {
             preparedAttack = -999;
         } else {
@@ -449,6 +453,9 @@ public final class OpponentAI {
         }
         switch (action) {
             case ATTACK:
+                if (player.getPreparedCarrierName() != null) {
+                    return planPreparedAttack(state, player, random, plannedWeaponUse);
+                }
                 Decision attack = planAttack(state, player, random, plannedWeaponUse);
                 if (attack != null) {
                     return attack;

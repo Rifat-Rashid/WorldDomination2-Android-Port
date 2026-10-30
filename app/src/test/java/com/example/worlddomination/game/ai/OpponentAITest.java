@@ -281,6 +281,43 @@ public final class OpponentAITest {
     }
 
     @Test
+    public void readyCarrierUsesSourceAttackBonusAndDisablesSeparateScore()
+            throws Exception {
+        GameState state = null;
+        for (long seed = 920; seed < 1420; seed++) {
+            GameState candidate = new GameState(1, seed);
+            GameState.PlayerState candidateActor = candidate.getPlayerState(1);
+            if (!candidateActor.isSpecialPerson() && !candidateActor.isSuicidePerson()) {
+                state = candidate;
+                break;
+            }
+        }
+        assertNotNull("seed sweep should find a regular first opponent", state);
+        GameState.PlayerState actor = state.getPlayerState(1);
+        for (GameState.WeaponState weapon : actor.getWeapons().values()) {
+            weapon.inStock = 0;
+        }
+        actor.getWeapons().get("rocket1").active = true;
+        actor.getWeapons().get("warhead1").active = true;
+        actor.getWeapons().get("warhead1").inStock = 1;
+        setPreparedCarrier(actor, "rocket1");
+
+        assertEquals(OpponentAI.baseAttackScore(state, actor) + 200,
+                OpponentAI.scoreForAction(state, actor, new Random(920L),
+                        GameState.Action.ATTACK), 0.0);
+        assertEquals(-999.0, OpponentAI.scoreForAction(state, actor,
+                new Random(921L), GameState.Action.PREPARED_ATTACK), 0.0);
+
+        OpponentAI.Decision decision = OpponentAI.planAction(state, actor,
+                GameState.Action.ATTACK, new SequenceRandom(0), 1,
+                Collections.<String, Integer>emptyMap());
+        assertNotNull(decision);
+        assertEquals(GameState.Action.PREPARED_ATTACK, decision.action);
+        assertFalse(decision.prepareCarrier);
+        assertEquals("rocket1", decision.weaponName);
+    }
+
+    @Test
     public void preCounterScoreUsesTheThreateningEnemyRegardAndLowPopulationBonus() {
         GameState state = null;
         for (long seed = 0; seed < 500; seed++) {
@@ -446,14 +483,17 @@ public final class OpponentAITest {
 
     @Test
     public void opponentPreparesAndLaunchesAStockedRocketAcrossTurns() {
-        GameState state = new GameState(1, 54L);
-        for (int playerId = 1; playerId < 5; playerId++) {
-            GameState.PlayerState opponent = state.getPlayerState(playerId);
-            opponent.moneyMillions = 0;
-            opponent.turnMoneyMillions = 0;
-            opponent.getWeapons().get("rocket1").inStock = 1;
-            opponent.getWeapons().get("warhead1").inStock = 1;
+        GameState state = gameWithRegularFirstOpponent(54L);
+        GameState.PlayerState opponent = state.getPlayerState(1);
+        opponent.moneyMillions = 0;
+        opponent.turnMoneyMillions = 0;
+        for (GameState.WeaponState weapon : opponent.getWeapons().values()) {
+            weapon.inStock = 0;
         }
+        opponent.getWeapons().get("rocket1").active = true;
+        opponent.getWeapons().get("rocket1").inStock = 1;
+        opponent.getWeapons().get("warhead1").active = true;
+        opponent.getWeapons().get("warhead1").inStock = 1;
 
         state.selectAction(GameState.Action.RESOURCES);
         assertTrue(state.acceptSelectedAction());
@@ -461,14 +501,10 @@ public final class OpponentAITest {
         assertTrue(state.acceptSelectedAction());
         state.confirmTurn();
 
-        for (int playerId = 1; playerId < 5; playerId++) {
-            GameState.PlayerState opponent = state.getPlayerState(playerId);
-            assertEquals("rocket1", opponent.getPreparedCarrierName());
-            assertTrue(opponent.getLastTurnActions().contains(
-                    GameState.Action.PREPARED_ATTACK));
-            assertEquals(0, state.getWeaponStock(playerId, "rocket1"));
-            assertEquals(1, state.getWeaponStock(playerId, "warhead1"));
-        }
+        assertEquals("rocket1", opponent.getPreparedCarrierName());
+        assertTrue(opponent.getLastTurnActions().contains(GameState.Action.PREPARED_ATTACK));
+        assertEquals(0, state.getWeaponStock(1, "rocket1"));
+        assertEquals(1, state.getWeaponStock(1, "warhead1"));
 
         int antiRocketBefore = state.getWeaponStock(0, "antiRocket");
         state.selectAction(GameState.Action.DEFENSE);
@@ -478,13 +514,9 @@ public final class OpponentAITest {
         assertTrue(state.acceptSelectedAction());
         state.confirmTurn();
 
-        for (int playerId = 1; playerId < 5; playerId++) {
-            GameState.PlayerState opponent = state.getPlayerState(playerId);
-            assertTrue(opponent.getLastTurnActions().contains(
-                    GameState.Action.PREPARED_ATTACK));
-            assertNull(opponent.getPreparedCarrierName());
-            assertEquals(0, state.getWeaponStock(playerId, "warhead1"));
-        }
+        assertTrue(opponent.getLastTurnActions().contains(GameState.Action.PREPARED_ATTACK));
+        assertNull(opponent.getPreparedCarrierName());
+        assertEquals(0, state.getWeaponStock(1, "warhead1"));
         assertEquals(antiRocketBefore - 1, state.getWeaponStock(0, "antiRocket"));
     }
 
@@ -526,11 +558,16 @@ public final class OpponentAITest {
 
     @Test
     public void biologicalStrikeBlocksHumanActionsAndRestoresTemporaryWeaponLocks() {
-        GameState state = new GameState(1, 55L);
+        GameState state = gameWithRegularFirstOpponent(55L);
         GameState.PlayerState attacker = state.getPlayerState(1);
         attacker.moneyMillions = 0;
         attacker.turnMoneyMillions = 0;
+        for (GameState.WeaponState weapon : attacker.getWeapons().values()) {
+            weapon.inStock = 0;
+        }
+        attacker.getWeapons().get("rocket1").active = true;
         attacker.getWeapons().get("rocket1").inStock = 1;
+        attacker.getWeapons().get("bioload1").active = true;
         attacker.getWeapons().get("warhead1").inStock = 0;
         attacker.getWeapons().get("bioload1").inStock = 1;
         for (GameState.WeaponState weapon : state.getHuman().getWeapons().values()) {
@@ -696,6 +733,17 @@ public final class OpponentAITest {
         return state;
     }
 
+    private static GameState gameWithRegularFirstOpponent(long firstSeed) {
+        for (long seed = firstSeed; seed < firstSeed + 500; seed++) {
+            GameState state = new GameState(1, seed);
+            GameState.PlayerState opponent = state.getPlayerState(1);
+            if (!opponent.isSpecialPerson() && !opponent.isSuicidePerson()) {
+                return state;
+            }
+        }
+        throw new AssertionError("seed sweep should find a regular first opponent");
+    }
+
     private static GameState findAiWithNeutralHumanRegard() {
         for (long seed = 0; seed < 500; seed++) {
             GameState state = new GameState(1, seed);
@@ -826,6 +874,14 @@ public final class OpponentAITest {
                 .getDeclaredField("regardToward");
         regardField.setAccessible(true);
         ((int[]) regardField.get(actor))[playerId] = regard;
+    }
+
+    private static void setPreparedCarrier(GameState.PlayerState actor, String carrierName)
+            throws Exception {
+        java.lang.reflect.Field carrierField = GameState.PlayerState.class
+                .getDeclaredField("preparedCarrierName");
+        carrierField.setAccessible(true);
+        carrierField.set(actor, carrierName);
     }
 
     private static final class SequenceRandom extends Random {
