@@ -139,6 +139,37 @@ public final class OpponentAITest {
     }
 
     @Test
+    public void attackTargetUsesSourcePopulationFallbackWhenHostilityIsZero() throws Exception {
+        GameState state = new GameState(1, 912L);
+        GameState.PlayerState attacker = state.getPlayerState(1);
+        setFriendlyRelationsAndNoPrimaryEnemy(attacker);
+
+        GameState.PlayerState target = OpponentAI.attackTarget(state, attacker,
+                new SequenceRandom(0));
+
+        assertNotNull(target);
+        // The Flash loop indexes activePlayerArr with the filtered rival-array index.
+        assertEquals(3, target.id);
+    }
+
+    @Test
+    public void attackTargetUsesSourceRandomFallbackWhenPopulationFallbackHasNoMatch()
+            throws Exception {
+        GameState state = new GameState(1, 913L);
+        GameState.PlayerState attacker = state.getPlayerState(1);
+        setFriendlyRelationsAndNoPrimaryEnemy(attacker);
+        state.getPlayerState(0).populationMillions = 0;
+        state.getPlayerState(2).populationMillions = 0;
+        state.getPlayerState(3).populationMillions = 0;
+
+        GameState.PlayerState target = OpponentAI.attackTarget(state, attacker,
+                new SequenceRandom(3));
+
+        assertNotNull(target);
+        assertEquals(4, target.id);
+    }
+
+    @Test
     public void preCounterScoreUsesTheThreateningEnemyRegardAndLowPopulationBonus() {
         GameState state = null;
         for (long seed = 0; seed < 500; seed++) {
@@ -651,6 +682,18 @@ public final class OpponentAITest {
         }
         state.getPlayerState(4).getWeapons().get("warhead4").inStock = 8;
         return state;
+    }
+
+    private static void setFriendlyRelationsAndNoPrimaryEnemy(GameState.PlayerState actor)
+            throws Exception {
+        java.lang.reflect.Field regardField = GameState.PlayerState.class
+                .getDeclaredField("regardToward");
+        regardField.setAccessible(true);
+        Arrays.fill((int[]) regardField.get(actor), 100);
+        java.lang.reflect.Field enemyField = GameState.PlayerState.class
+                .getDeclaredField("primaryEnemyId");
+        enemyField.setAccessible(true);
+        enemyField.setInt(actor, -1);
     }
 
     private static final class SequenceRandom extends Random {
