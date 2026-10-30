@@ -8,6 +8,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Random;
 
@@ -47,6 +48,43 @@ public final class GameStateTest {
         assertFalse(state.getPlayerState(4).alive);
         assertEquals(0, state.getPlayerState(3).populationMillions);
         assertEquals(GameState.MatchStatus.ONGOING, state.getMatchStatus());
+    }
+
+    @Test
+    public void aiEnemySetupStoresFilteredOpponentSlotAsSourcePlayerNumber() {
+        GameSetup setup = new GameSetup();
+        assertTrue(setup.toggleOpponent(0));
+        assertTrue(setup.toggleOpponent(1));
+        GameState state = new GameState(setup, 1L);
+        ArrayList<GameState.PlayerState> candidates = new ArrayList<>();
+        candidates.add(state.getPlayerState(0));
+        candidates.add(state.getPlayerState(2));
+
+        int selectedNumber = GameState.sourceRandomEnemyNumber(candidates,
+                new FixedIndexRandom(1));
+
+        assertEquals("source stores the filtered array slot as player number",
+                1, selectedNumber);
+        assertEquals("slot one is the AI itself in this filtered list",
+                1, state.getPlayerState(1).id);
+        assertEquals("the source result is not the selected player's actual ID",
+                2, candidates.get(1).id);
+    }
+
+    @Test
+    public void aiInitializationCanAssignTheActorAsItsSourceEnemyNumber() {
+        GameSetup setup = new GameSetup();
+        assertTrue(setup.toggleOpponent(0));
+        assertTrue(setup.toggleOpponent(1));
+        boolean foundSelfNumber = false;
+
+        for (long seed = 0; seed < 128 && !foundSelfNumber; seed++) {
+            GameState state = new GameState(setup, seed);
+            foundSelfNumber = state.getPlayerState(1).getPrimaryEnemyId() == 1;
+        }
+
+        assertTrue("filtered slot one is stored as player one, the selecting AI",
+                foundSelfNumber);
     }
 
     @Test
@@ -106,7 +144,7 @@ public final class GameStateTest {
     }
 
     @Test
-    public void aiEnemiesAreSeededAsDistinctLivingTargetsWithSourceRegard() {
+    public void aiEnemiesAreSeededFromFilteredListSlotsWithSourceRegard() {
         GameState state = new GameState(1, 85L);
         GameState repeated = new GameState(1, 85L);
         for (int playerId = 1; playerId < 5; playerId++) {
@@ -117,15 +155,13 @@ public final class GameStateTest {
 
             assertEquals(sameSeed.getPrimaryEnemyId(), primaryId);
             assertEquals(sameSeed.getSecondaryEnemyId(), secondaryId);
-            assertTrue(primaryId >= 0 && primaryId < 5);
-            assertTrue(secondaryId >= 0 && secondaryId < 5);
-            assertTrue(primaryId != playerId);
-            assertTrue(secondaryId != playerId);
-            assertTrue(primaryId != secondaryId);
+            assertTrue(primaryId >= 0 && primaryId < 4);
+            assertTrue(secondaryId >= 0 && secondaryId < 4);
             assertTrue(state.getPlayerState(primaryId).alive);
             assertTrue(state.getPlayerState(secondaryId).alive);
             if (!player.isSpecialPerson()) {
-                assertEquals(45, player.getRegardToward(primaryId));
+                assertEquals(primaryId == secondaryId ? 50 : 45,
+                        player.getRegardToward(primaryId));
                 assertEquals(50, player.getRegardToward(secondaryId));
             }
         }
@@ -160,13 +196,13 @@ public final class GameStateTest {
     }
 
     @Test
-    public void defeatedAiTargetsAreReplacedWithoutDuplicates() {
+    public void defeatedAiTargetsAreReassignedUsingFilteredListSlots() {
         GameState state = null;
         for (long seed = 0; seed < 500; seed++) {
             GameState candidate = new GameState(1, seed, false);
             int primary = candidate.getPlayerState(1).getPrimaryEnemyId();
             int secondary = candidate.getPlayerState(1).getSecondaryEnemyId();
-            if (primary > 1 && secondary > 1) {
+            if (primary > 1 && secondary > 1 && primary != secondary) {
                 state = candidate;
                 break;
             }
@@ -190,11 +226,10 @@ public final class GameStateTest {
         assertTrue(state.acceptSelectedAction());
         state.confirmTurn();
 
-        assertTrue(state.getPlayerState(attacker.getPrimaryEnemyId()).alive);
-        assertTrue(state.getPlayerState(attacker.getSecondaryEnemyId()).alive);
         assertTrue(attacker.getPrimaryEnemyId() != oldPrimary);
         assertTrue(attacker.getSecondaryEnemyId() != oldSecondary);
-        assertTrue(attacker.getPrimaryEnemyId() != attacker.getSecondaryEnemyId());
+        assertTrue(attacker.getPrimaryEnemyId() >= 0 && attacker.getPrimaryEnemyId() < 2);
+        assertTrue(attacker.getSecondaryEnemyId() >= 0 && attacker.getSecondaryEnemyId() < 2);
     }
 
     @Test
@@ -1288,7 +1323,8 @@ public final class GameStateTest {
         assertEquals(96, state.getHuman().moneyMillions);
         assertEquals(65, state.getPlayerState(1).moneyMillions);
         assertEquals(67, state.getHuman().getRegardToward(1));
-        assertEquals(opponentRegardBeforeOffer + 3,
+        assertEquals("the offer remains pending until next-turn response; relation drift is +2",
+                opponentRegardBeforeOffer + 2,
                 state.getPlayerState(1).getRegardToward(0));
         assertEquals(0, state.getPendingDiplomacyProposal(1).proposerId);
 
@@ -1514,6 +1550,19 @@ public final class GameStateTest {
             field.setBoolean(player, specialPerson);
         } catch (ReflectiveOperationException exception) {
             throw new AssertionError(exception);
+        }
+    }
+
+    private static final class FixedIndexRandom extends Random {
+        private final int value;
+
+        FixedIndexRandom(int value) {
+            this.value = value;
+        }
+
+        @Override
+        public int nextInt(int bound) {
+            return value % bound;
         }
     }
 }
