@@ -734,6 +734,24 @@ public final class OpponentAITest {
     }
 
     @Test
+    public void sourceCarrierSelectionUsesFirstLogicalCarrierOfChosenType() {
+        GameState state = gameWithRegularFirstOpponent(531L);
+        GameState.PlayerState opponent = state.getPlayerState(1);
+        configureSourcePreparationScenario(opponent, "rocket1");
+        GameState.WeaponState laterRocket = opponent.getWeapons().get("rocket4");
+        laterRocket.active = true;
+        laterRocket.inStock = 1;
+
+        OpponentAI.Decision decision = OpponentAI.planAction(state, opponent,
+                GameState.Action.ATTACK, new SequenceRandom(0, 0), 1,
+                Collections.<String, Integer>emptyMap());
+
+        assertNotNull(decision);
+        assertTrue(decision.prepareCarrier);
+        assertEquals("rocket1", decision.weaponName);
+    }
+
+    @Test
     public void sourceAllowDirCanRouteAnActiveSpyWithoutSoldiers() {
         GameState state = gameWithRegularFirstOpponent(5311L);
         GameState.PlayerState opponent = state.getPlayerState(1);
