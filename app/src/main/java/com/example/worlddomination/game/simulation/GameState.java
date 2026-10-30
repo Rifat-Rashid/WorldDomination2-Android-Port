@@ -73,6 +73,7 @@ public final class GameState {
         private final Set<String> inventedTechnologies = new LinkedHashSet<>();
         private final Map<String, WeaponState> weapons = new LinkedHashMap<>();
         private final Map<String, Integer> desiredStock = new LinkedHashMap<>();
+        private String preparedCarrierName;
 
         private PlayerState(int id, boolean human, int populationMillions,
                             int moneyMillions, int religion) {
@@ -152,6 +153,11 @@ public final class GameState {
             }
             return pendingDiplomacy[playerId];
         }
+
+        /** The source's consumed carrier that is staged for a prepared strike. */
+        public String getPreparedCarrierName() {
+            return preparedCarrierName;
+        }
     }
 
     public static final class WeaponState {
@@ -175,14 +181,16 @@ public final class GameState {
         final int targetPlayerId;
         final int targetCityIndex;
         final String weaponName;
+        final String payloadName;
+        final boolean prepareCarrier;
         final String spyBuilding;
         final int diplomacyOption;
 
         ActionOrder(int playerId, Action action,
                     Map<String, Integer> productionBudgets, List<String> technologies,
                     int reservedMillions, int targetPlayerId,
-                    int targetCityIndex, String weaponName, String spyBuilding,
-                    int diplomacyOption) {
+                    int targetCityIndex, String weaponName, String payloadName,
+                    boolean prepareCarrier, String spyBuilding, int diplomacyOption) {
             this.playerId = playerId;
             this.action = action;
             this.productionBudgets = productionBudgets;
@@ -191,6 +199,8 @@ public final class GameState {
             this.targetPlayerId = targetPlayerId;
             this.targetCityIndex = targetCityIndex;
             this.weaponName = weaponName;
+            this.payloadName = payloadName;
+            this.prepareCarrier = prepareCarrier;
             this.spyBuilding = spyBuilding;
             this.diplomacyOption = diplomacyOption;
         }
@@ -242,6 +252,9 @@ public final class GameState {
     private int selectedTargetPlayer = 1;
     private int selectedTargetCity;
     private String selectedAttackWeapon = "soldier1";
+    private String selectedPreparedCarrier;
+    private String selectedPreparedPayload;
+    private String selectedDefenseWeapon;
     private String selectedSpyBuilding = "spyCenter";
     private int selectedDiplomacyOption;
     private int turn;
@@ -391,7 +404,8 @@ public final class GameState {
         if (matchStatus != MatchStatus.ONGOING) {
             return;
         }
-        if (action == null || !action.isPorted()) {
+        if (action == null || (!action.isPorted() && action != Action.PREPARED_ATTACK
+                && action != Action.DEFENSE)) {
             cancelSelection();
             return;
         }
@@ -415,6 +429,9 @@ public final class GameState {
         selectedTargetPlayer = selectedIsland > 0 ? selectedIsland : 1;
         selectedTargetCity = 0;
         selectedAttackWeapon = firstAvailableAttackWeapon();
+        selectedPreparedCarrier = null;
+        selectedPreparedPayload = null;
+        selectedDefenseWeapon = firstAvailableDefenseWeapon();
         selectedSpyBuilding = "spyCenter";
         selectedDiplomacyOption = 0;
         selectedProductionCategory = "soldier";
@@ -702,6 +719,175 @@ public final class GameState {
         return true;
     }
 
+    /** Available carrier stock that can be paired with a researched payload. */
+    public List<String> getAvailablePreparedCarriers(int playerId) {
+        PlayerState player = playerById(playerId);
+        List<String> available = new ArrayList<>();
+        for (WeaponState weapon : player.weapons.values()) {
+            if (isCarrier(weapon) && weapon.active && weapon.inStock > 0
+                    && !getAvailablePreparedPayloads(playerId,
+                    weapon.definition.name).isEmpty()) {
+                available.add(weapon.definition.name);
+            }
+        }
+        return Collections.unmodifiableList(available);
+    }
+
+    /** Compatible stocked payloads for a carrier, in source catalog order. */
+    public List<String> getAvailablePreparedPayloads(int playerId, String carrierName) {
+        PlayerState player = playerById(playerId);
+        WeaponState carrier = player.weapons.get(carrierName);
+        List<String> available = new ArrayList<>();
+        if (!isCarrier(carrier)) {
+            return Collections.unmodifiableList(available);
+        }
+        for (WeaponState payload : player.weapons.values()) {
+            if (isCompatiblePayload(carrier, payload) && payload.active
+                    && payload.inStock > 0) {
+                available.add(payload.definition.name);
+            }
+        }
+        return Collections.unmodifiableList(available);
+    }
+
+    /** Anti-air and anti-rocket stocks available for a source defense action. */
+    public List<String> getAvailableDefenseWeapons(int playerId) {
+        PlayerState player = playerById(playerId);
+        List<String> available = new ArrayList<>(2);
+        addAvailableDefense(player, "antiAir", available);
+        addAvailableDefense(player, "antiRocket", available);
+        return Collections.unmodifiableList(available);
+    }
+
+    /** Best stocked counter for any enemy carrier currently in launch-ready state. */
+    public String getCounterWeaponForPreparedThreat(int defenderId) {
+        PlayerState defender = playerById(defenderId);
+        for (PlayerState attacker : players) {
+            if (!attacker.alive || attacker.id == defenderId
+                    || defender.hasCeasefireWith(attacker.id)
+                    || attacker.preparedCarrierName == null) {
+                continue;
+            }
+            WeaponState carrier = attacker.weapons.get(attacker.preparedCarrierName);
+            if (carrier == null || carrier.definition.counteredBy.isEmpty()) {
+                continue;
+            }
+            WeaponState counter = defender.weapons.get(carrier.definition.counteredBy);
+            if (counter != null && counter.active && counter.inStock > 0) {
+                return counter.definition.name;
+            }
+        }
+        return null;
+    }
+
+    private static void addAvailableDefense(PlayerState player, String name,
+                                            List<String> destination) {
+        WeaponState weapon = player.weapons.get(name);
+        if (weapon != null && weapon.active && weapon.inStock > 0) {
+            destination.add(name);
+        }
+    }
+
+    private String firstAvailableDefenseWeapon() {
+        List<String> available = getAvailableDefenseWeapons(0);
+        return available.isEmpty() ? "" : available.get(0);
+    }
+
+    /** Selects a carrier for the first half of a strike. */
+    public boolean configurePreparedCarrier(String carrierName) {
+        if (selectedAction != Action.PREPARED_ATTACK || getHuman().preparedCarrierName != null
+                || !getAvailablePreparedCarriers(0).contains(carrierName)) {
+            return false;
+        }
+        selectedPreparedCarrier = carrierName;
+        selectedPreparedPayload = null;
+        return true;
+    }
+
+    /** Selects the target and payload for a previously prepared strike. */
+    public boolean configurePreparedLaunch(int targetPlayerId, int cityIndex,
+                                           String payloadName) {
+        if (selectedAction != Action.PREPARED_ATTACK
+                || getHuman().preparedCarrierName == null
+                || targetPlayerId <= 0 || targetPlayerId >= players.length
+                || cityIndex < 0 || cityIndex >= 5) {
+            return false;
+        }
+        PlayerState target = players[targetPlayerId];
+        CityState city = target.getCity(cityIndex);
+        WeaponState carrier = getHuman().weapons.get(getHuman().preparedCarrierName);
+        WeaponState payload = getHuman().weapons.get(payloadName);
+        if (!target.alive || city == null || city.populationMillions <= 0
+                || target.hasCeasefireWith(0)
+                || !isCompatiblePayload(carrier, payload) || !payload.active
+                || payload.inStock <= 0) {
+            return false;
+        }
+        selectedPreparedCarrier = getHuman().preparedCarrierName;
+        selectedPreparedPayload = payloadName;
+        selectedTargetPlayer = targetPlayerId;
+        selectedTargetCity = cityIndex;
+        return true;
+    }
+
+    /** Chooses an anti-air or anti-rocket device for this turn's defense slot. */
+    public boolean configureDefense(String weaponName) {
+        if (selectedAction != Action.DEFENSE
+                || !getAvailableDefenseWeapons(0).contains(weaponName)) {
+            return false;
+        }
+        selectedDefenseWeapon = weaponName;
+        return true;
+    }
+
+    public boolean canAcceptPreparedAttack() {
+        if (selectedAction != Action.PREPARED_ATTACK) {
+            return false;
+        }
+        if (getHuman().preparedCarrierName == null) {
+            return selectedPreparedCarrier != null
+                    && getAvailablePreparedCarriers(0).contains(selectedPreparedCarrier);
+        }
+        PlayerState target = selectedTargetPlayer > 0 && selectedTargetPlayer < players.length
+                ? players[selectedTargetPlayer] : null;
+        CityState city = target == null ? null : target.getCity(selectedTargetCity);
+        WeaponState carrier = getHuman().weapons.get(getHuman().preparedCarrierName);
+        WeaponState payload = getHuman().weapons.get(selectedPreparedPayload);
+        return target != null && target.alive && city != null && city.populationMillions > 0
+                && !target.hasCeasefireWith(0)
+                && isCompatiblePayload(carrier, payload) && payload.active && payload.inStock > 0;
+    }
+
+    public boolean canAcceptDefense() {
+        return selectedAction == Action.DEFENSE && selectedDefenseWeapon != null
+                && getAvailableDefenseWeapons(0).contains(selectedDefenseWeapon);
+    }
+
+    private static boolean isCarrier(WeaponState weapon) {
+        if (weapon == null) {
+            return false;
+        }
+        String type = weapon.definition.type;
+        return "rocket".equals(type) || "plane".equals(type) || "sub".equals(type)
+                || "ship".equals(type) || "space".equals(type);
+    }
+
+    private static boolean isCompatiblePayload(WeaponState carrier, WeaponState payload) {
+        if (!isCarrier(carrier) || payload == null) {
+            return false;
+        }
+        if ("space".equals(carrier.definition.type)) {
+            return "specialLoad".equals(payload.definition.type);
+        }
+        // A source ship strike requires three separately selected payload/city pairs.
+        if ("ship".equals(carrier.definition.type)) {
+            return false;
+        }
+        String payloadType = payload.definition.type;
+        return "rocketload".equals(payloadType)
+                && payload.definition.level <= carrier.definition.level;
+    }
+
     public void cycleAttackTarget(int direction) {
         if (direction == 0 || selectedAction != Action.ATTACK) {
             return;
@@ -820,6 +1006,15 @@ public final class GameState {
         } else if (selectedAction == Action.ATTACK && !canAcceptAttack()) {
             messages.add("Choose a living target city and an available unit.");
             return false;
+        } else if (selectedAction == Action.PREPARED_ATTACK
+                && !canAcceptPreparedAttack()) {
+            messages.add(getHuman().preparedCarrierName == null
+                    ? "Choose an available carrier to prepare."
+                    : "Choose a living target city and compatible payload.");
+            return false;
+        } else if (selectedAction == Action.DEFENSE && !canAcceptDefense()) {
+            messages.add("Choose available anti-air or anti-rocket defense stock.");
+            return false;
         } else if (selectedAction == Action.PROPAGANDA && !canAcceptPropaganda()) {
             messages.add("Choose a living opponent and a populated city.");
             return false;
@@ -844,7 +1039,13 @@ public final class GameState {
         }
         ActionOrder order = new ActionOrder(0, selectedAction, productionBudgets,
                 technologies, reserved,
-                selectedTargetPlayer, selectedTargetCity, selectedAttackWeapon,
+                selectedTargetPlayer, selectedTargetCity,
+                selectedAction == Action.PREPARED_ATTACK
+                        ? selectedPreparedCarrier : (selectedAction == Action.DEFENSE
+                        ? selectedDefenseWeapon : selectedAttackWeapon),
+                selectedPreparedPayload,
+                selectedAction == Action.PREPARED_ATTACK
+                        && getHuman().preparedCarrierName == null,
                 selectedSpyBuilding, selectedDiplomacyOption);
         queuedActions.add(order);
         getHuman().turnMoneyMillions -= reserved;
@@ -854,6 +1055,9 @@ public final class GameState {
         selectedTargetPlayer = selectedIsland > 0 ? selectedIsland : 1;
         selectedTargetCity = 0;
         selectedAttackWeapon = firstAvailableAttackWeapon();
+        selectedPreparedCarrier = null;
+        selectedPreparedPayload = null;
+        selectedDefenseWeapon = firstAvailableDefenseWeapon();
         selectedDiplomacyOption = 0;
         return true;
     }
@@ -864,6 +1068,9 @@ public final class GameState {
         selectedProductionPercent = 0;
         selectedProductionCategory = "soldier";
         selectedDiplomacyOption = 0;
+        selectedPreparedCarrier = null;
+        selectedPreparedPayload = null;
+        selectedDefenseWeapon = null;
     }
 
     public void removeQueuedAction(int slot) {
@@ -979,9 +1186,17 @@ public final class GameState {
                 turnOrders.add(new ActionOrder(player.id, decision.action,
                         decision.productionBudgets, decision.technologies,
                         decision.reservedMillions, decision.targetPlayerId,
-                        decision.targetCityIndex, decision.weaponName, "spyCenter",
+                        decision.targetCityIndex,
+                        decision.weaponName,
+                        decision.payloadName, decision.prepareCarrier, "spyCenter",
                         decision.diplomacyOption));
                 player.lastTurnActions.add(decision.action);
+            }
+        }
+        List<ActionOrder> resolvedDefenses = new ArrayList<>();
+        for (ActionOrder order : turnOrders) {
+            if (order.action == Action.DEFENSE) {
+                resolveDefense(order, resolvedDefenses);
             }
         }
         for (ActionOrder order : turnOrders) {
@@ -1005,6 +1220,11 @@ public final class GameState {
                 case ATTACK:
                     resolveAttack(order, turnOrders);
                     break;
+                case PREPARED_ATTACK:
+                    resolvePreparedAttack(order, resolvedDefenses);
+                    break;
+                case DEFENSE:
+                    break;
                 case PROPAGANDA:
                     resolvePropaganda(order);
                     break;
@@ -1016,6 +1236,7 @@ public final class GameState {
                             + order.action);
             }
         }
+        clearExpiredPreparedAttacks(turnOrders);
         for (PlayerState player : players) {
             player.religion = Math.min(100, Math.max(0, player.religion));
             player.turnMoneyMillions = player.moneyMillions;
@@ -1300,6 +1521,122 @@ public final class GameState {
         weapon.inStock--;
         messages.add(casualties + " citizens lost in nation " + defender.id
                 + " city " + (city.index + 1) + ".");
+    }
+
+    private void resolveDefense(ActionOrder order, List<ActionOrder> resolvedDefenses) {
+        PlayerState defender = playerById(order.playerId);
+        WeaponState counter = defender.weapons.get(order.weaponName);
+        if (counter == null || !counter.active || counter.inStock <= 0
+                || !"anti".equals(counter.definition.type)) {
+            messages.add("Defense cancelled: counter stock is no longer available.");
+            return;
+        }
+        counter.inStock--;
+        resolvedDefenses.add(order);
+        messages.add("Nation " + defender.id + " used " + order.weaponName + " defense.");
+    }
+
+    private void resolvePreparedAttack(ActionOrder order,
+                                       List<ActionOrder> resolvedDefenses) {
+        PlayerState attacker = playerById(order.playerId);
+        if (order.prepareCarrier) {
+            WeaponState carrier = attacker.weapons.get(order.weaponName);
+            if (attacker.preparedCarrierName != null || !isCarrier(carrier)
+                    || !carrier.active || carrier.inStock <= 0
+                    || getAvailablePreparedPayloads(attacker.id, order.weaponName).isEmpty()) {
+                messages.add("Strike preparation cancelled: carrier or payload is unavailable.");
+                return;
+            }
+            carrier.inStock--;
+            attacker.preparedCarrierName = order.weaponName;
+            messages.add("Nation " + attacker.id + " prepared " + order.weaponName + ".");
+            return;
+        }
+
+        PlayerState defender = playerById(order.targetPlayerId);
+        CityState city = defender.getCity(order.targetCityIndex);
+        WeaponState carrier = attacker.weapons.get(order.weaponName);
+        WeaponState payload = attacker.weapons.get(order.payloadName);
+        if (!order.weaponName.equals(attacker.preparedCarrierName)
+                || !defender.alive || city == null || city.populationMillions <= 0
+                || defender.hasCeasefireWith(attacker.id)
+                || !isCompatiblePayload(carrier, payload) || !payload.active
+                || payload.inStock <= 0) {
+            messages.add("Prepared strike cancelled: target or payload is unavailable.");
+            return;
+        }
+
+        attacker.preparedCarrierName = null;
+        payload.inStock--;
+        boolean intercepted = false;
+        String counterName = carrier.definition.counteredBy;
+        if (!counterName.isEmpty()) {
+            for (ActionOrder defense : resolvedDefenses) {
+                if (defense.playerId == defender.id && counterName.equals(defense.weaponName)) {
+                    intercepted = counterIntercepts(random);
+                    break;
+                }
+            }
+        }
+        if (intercepted) {
+            messages.add("Nation " + defender.id + " intercepted the prepared strike.");
+            return;
+        }
+
+        int casualties = sourceStrikeCasualties(payload.definition.maxKillsMillions,
+                attacker.human, defender.human);
+        casualties = Math.min(casualties, city.populationMillions);
+        city.populationMillions -= casualties;
+        defender.populationMillions = totalPopulation(defender);
+        if (defender.populationMillions <= 0) {
+            defender.alive = false;
+            messages.add("Nation " + defender.id + " has been eliminated.");
+        }
+        if (casualties > 0) {
+            addToHighscore(attacker, 1, casualties);
+        }
+        messages.add(order.payloadName + " strike caused " + casualties
+                + " million casualties in nation " + defender.id + " city "
+                + (city.index + 1) + ".");
+    }
+
+    /** Source Tools.randRange(1, 9) != 5: eight outcomes intercept. */
+    static boolean counterIntercepts(Random random) {
+        return random.nextInt(9) + 1 != 5;
+    }
+
+    /** Mirrors Flash's inclusive integer randRange followed by Math.round. */
+    static int sourceStrikeCasualties(int maximum, boolean attackerIsHuman,
+                                     boolean targetIsHuman, Random random) {
+        boolean aiAttackingHuman = targetIsHuman && !attackerIsHuman;
+        float minimum = aiAttackingHuman ? maximum : maximum / 1.5f;
+        float upper = aiAttackingHuman ? maximum * 1.2f : maximum;
+        int offset = (int) Math.floor(random.nextFloat() * (upper - minimum + 1f));
+        return Math.round(minimum + offset);
+    }
+
+    private int sourceStrikeCasualties(int maximum, boolean attackerIsHuman,
+                                       boolean targetIsHuman) {
+        return sourceStrikeCasualties(maximum, attackerIsHuman, targetIsHuman, random);
+    }
+
+    private void clearExpiredPreparedAttacks(List<ActionOrder> turnOrders) {
+        for (PlayerState player : players) {
+            if (player.preparedCarrierName == null) {
+                continue;
+            }
+            boolean usedPreparedAttackAction = false;
+            for (ActionOrder order : turnOrders) {
+                if (order.playerId == player.id && order.action == Action.PREPARED_ATTACK) {
+                    usedPreparedAttackAction = true;
+                    break;
+                }
+            }
+            if (!usedPreparedAttackAction) {
+                player.preparedCarrierName = null;
+                messages.add("Nation " + player.id + " cancelled its unused prepared strike.");
+            }
+        }
     }
 
     private void resolveSpyAttack(PlayerState attacker, PlayerState defender,

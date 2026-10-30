@@ -8,6 +8,8 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
+import java.util.Random;
+
 public final class GameStateTest {
     @Test
     public void normalResourcesAndMassMediaResolveOneTurn() {
@@ -210,6 +212,142 @@ public final class GameStateTest {
     }
 
     @Test
+    public void rocketStrikeConsumesCarrierWhenPreparedAndPayloadWhenLaunched() {
+        GameState state = new GameState(1, 201L, false);
+        GameState.PlayerState human = state.getHuman();
+        human.getWeapons().get("warhead1").inStock = 1;
+        int cityBefore = state.getCityPopulationMillions(1, 0);
+
+        state.selectAction(GameState.Action.PREPARED_ATTACK);
+        assertTrue(state.getAvailablePreparedCarriers(0).contains("rocket1"));
+        assertTrue(state.configurePreparedCarrier("rocket1"));
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+
+        assertEquals(0, state.getWeaponStock(0, "rocket1"));
+        assertEquals(1, state.getWeaponStock(0, "warhead1"));
+        assertEquals("rocket1", human.getPreparedCarrierName());
+        assertEquals("antiRocket", state.getCounterWeaponForPreparedThreat(1));
+
+        state.selectAction(GameState.Action.PREPARED_ATTACK);
+        assertTrue(state.getAvailablePreparedPayloads(0, "rocket1").contains("warhead1"));
+        assertTrue(state.configurePreparedLaunch(1, 0, "warhead1"));
+        assertTrue(state.canAcceptPreparedAttack());
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+
+        int casualties = cityBefore - state.getCityPopulationMillions(1, 0);
+        assertTrue("human rocket damage follows source 10..15M roll: " + casualties,
+                casualties >= 10 && casualties <= 15);
+        assertEquals(0, state.getWeaponStock(0, "warhead1"));
+        assertNull(human.getPreparedCarrierName());
+    }
+
+    @Test
+    public void preparedLaunchRejectsIncompatiblePayload() {
+        GameState state = new GameState(1, 202L, false);
+        GameState.PlayerState human = state.getHuman();
+        human.getWeapons().get("warhead1").inStock = 1;
+        human.getWeapons().get("plane1").inStock = 1;
+        state.selectAction(GameState.Action.PREPARED_ATTACK);
+        assertTrue(state.configurePreparedCarrier("rocket1"));
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+
+        state.selectAction(GameState.Action.PREPARED_ATTACK);
+        assertFalse(state.configurePreparedLaunch(1, 0, "plane1"));
+        assertFalse(state.canAcceptPreparedAttack());
+    }
+
+    @Test
+    public void defenseSelectionConsumesOneMatchingCounter() {
+        GameState state = new GameState(1, 203L, false);
+        assertTrue(state.getAvailableDefenseWeapons(0).contains("antiRocket"));
+        state.selectAction(GameState.Action.DEFENSE);
+        assertTrue(state.configureDefense("antiRocket"));
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+
+        assertEquals(1, state.getWeaponStock(0, "antiRocket"));
+        assertTrue(state.getLatestMessage().contains("complete"));
+    }
+
+    @Test
+    public void carrierCounterMappingsAndPayloadLevelsMatchWeaponStock() {
+        assertEquals("antiRocket", WeaponCatalog.byName("rocket4").counteredBy);
+        assertEquals("antiAir", WeaponCatalog.byName("plane1").counteredBy);
+        assertEquals("antiAir", WeaponCatalog.byName("ship").counteredBy);
+        assertEquals(2, WeaponCatalog.byName("plane1").level);
+        assertEquals(4, WeaponCatalog.byName("plane2").level);
+
+        GameState state = new GameState(1, 206L, false);
+        GameState.PlayerState human = state.getHuman();
+        human.getWeapons().get("plane1").inStock = 1;
+        human.getWeapons().get("warhead2").active = true;
+        human.getWeapons().get("warhead2").inStock = 1;
+        assertTrue(state.getAvailablePreparedPayloads(0, "plane1")
+                .contains("warhead2"));
+        human.getWeapons().get("ship").active = true;
+        human.getWeapons().get("ship").inStock = 1;
+        assertFalse(state.getAvailablePreparedCarriers(0).contains("ship"));
+    }
+
+    @Test
+    public void counterInterceptRuleBlocksEightOfNineSourceRolls() {
+        for (int roll = 1; roll <= 9; roll++) {
+            final int sourceRoll = roll;
+            Random fixed = new Random(0L) {
+                @Override
+                public int nextInt(int bound) {
+                    assertEquals(9, bound);
+                    return sourceRoll - 1;
+                }
+            };
+            assertEquals(roll != 5, GameState.counterIntercepts(fixed));
+        }
+    }
+
+    @Test
+    public void preparedStrikeCasualtyRangesMatchSourceAttackerAndTargetCases() {
+        Random random = new Random(204L);
+        for (int i = 0; i < 100; i++) {
+            int humanToAi = GameState.sourceStrikeCasualties(15, true, false, random);
+            assertTrue(humanToAi >= 10 && humanToAi <= 15);
+            int aiToHuman = GameState.sourceStrikeCasualties(15, false, true, random);
+            assertTrue(aiToHuman >= 15 && aiToHuman <= 18);
+        }
+    }
+
+    @Test
+    public void unusedPreparedStrikeExpiresAtEndOfTheFollowingTurn() {
+        GameState state = new GameState(1, 205L, false);
+        state.getHuman().getWeapons().get("warhead1").inStock = 1;
+        state.selectAction(GameState.Action.PREPARED_ATTACK);
+        assertTrue(state.configurePreparedCarrier("rocket1"));
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+        assertEquals("rocket1", state.getHuman().getPreparedCarrierName());
+
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.MASS_MEDIA);
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+
+        assertNull(state.getHuman().getPreparedCarrierName());
+    }
+
+    @Test
     public void spyAttackStealsMoneyAndStockThenFollowsReadinessCooldown() {
         GameState state = new GameState(1, 11L, false);
         GameState.PlayerState attacker = state.getHuman();
@@ -256,7 +394,7 @@ public final class GameStateTest {
 
     @Test
     public void spyStealsTechnologyWithoutRemovingEnemyUnitStock() {
-        GameState state = new GameState(1, 14L);
+        GameState state = new GameState(1, 14L, false);
         GameState.PlayerState attacker = state.getHuman();
         GameState.PlayerState defender = state.getPlayers()[1];
         GameState.WeaponState attackerSoldier = attacker.getWeapons().get("soldier1");
