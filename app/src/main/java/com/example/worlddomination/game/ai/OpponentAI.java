@@ -160,21 +160,78 @@ public final class OpponentAI {
                     decisions.add(precedingOrder);
                     reserve(player, precedingOrder);
                     markPlannedUse(precedingOrder, plannedWeaponUse);
+                    List<Decision> retryAttackPlan = planSourceAttack(state, player,
+                            random, false, plannedWeaponUse);
+                    if (!retryAttackPlan.isEmpty()) {
+                        for (Decision decision : retryAttackPlan) {
+                            if (decisions.size() == 2) {
+                                break;
+                            }
+                            addPlannedDecision(player, decision, decisions,
+                                    plannedWeaponUse);
+                        }
+                        return decisions;
+                    }
+                    return planRemainingRankedActions(state, player, scores, random,
+                            decisions, plannedWeaponUse, 2);
                 }
-                return decisions;
             }
         }
 
-        for (int slot = 0; slot < 2; slot++) {
-            Decision decision = planRankedAction(state, player, scores.get(slot),
-                    random, slot + 1, plannedWeaponUse);
+        return planRemainingRankedActions(state, player, scores, random,
+                decisions, plannedWeaponUse, 0);
+    }
+
+    /**
+     * The Flash planner advances through its ranked actions whenever getTarget
+     * rejects an unavailable order. Keep trying lower-ranked orders until both
+     * slots are filled or the source action list is exhausted.
+     */
+    private static List<Decision> planRemainingRankedActions(
+            GameState state, GameState.PlayerState player, List<ScoredAction> scores,
+            Random random, List<Decision> decisions,
+            Map<String, Integer> plannedWeaponUse, int firstActionIndex) {
+        for (int index = firstActionIndex; index < scores.size()
+                && decisions.size() < 2; index++) {
+            ScoredAction scored = scores.get(index);
+            if (scored.action == GameState.Action.ATTACK) {
+                boolean duplicateAttack = index == 0 && scores.size() > 1
+                        && scored.score - 50 > scores.get(1).score;
+                List<Decision> attackPlan = planSourceAttack(state, player, random,
+                        duplicateAttack, plannedWeaponUse);
+                for (Decision decision : attackPlan) {
+                    if (decisions.size() == 2) {
+                        break;
+                    }
+                    addPlannedDecision(player, decision, decisions, plannedWeaponUse);
+                    if (decision.action == GameState.Action.PREPARED_ATTACK
+                            && decision.prepareCarrier) {
+                        return decisions;
+                    }
+                }
+                continue;
+            }
+
+            Decision decision = planRankedAction(state, player, scored, random,
+                    decisions.size() + 1, plannedWeaponUse);
             if (decision != null) {
-                decisions.add(decision);
-                reserve(player, decision);
-                markPlannedUse(decision, plannedWeaponUse);
+                addPlannedDecision(player, decision, decisions, plannedWeaponUse);
+                if (decision.action == GameState.Action.PREPARED_ATTACK
+                        && decision.prepareCarrier) {
+                    return decisions;
+                }
             }
         }
         return decisions;
+    }
+
+    private static void addPlannedDecision(GameState.PlayerState player,
+                                           Decision decision,
+                                           List<Decision> decisions,
+                                           Map<String, Integer> plannedWeaponUse) {
+        decisions.add(decision);
+        reserve(player, decision);
+        markPlannedUse(decision, plannedWeaponUse);
     }
 
     private static Decision planRankedAction(GameState state,

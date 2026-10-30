@@ -26,6 +26,40 @@ public final class OpponentAITest {
     }
 
     @Test
+    public void plannerFallsThroughUnavailableTopActionsToFillBothSlots() throws Exception {
+        GameState state = gameWithRegularFirstOpponent(7401L);
+        GameState.PlayerState actor = state.getPlayerState(1);
+        actor.moneyMillions = 0;
+        actor.turnMoneyMillions = 0;
+        actor.religion = 100;
+        for (GameState.WeaponState weapon : actor.getWeapons().values()) {
+            weapon.inStock = 0;
+        }
+        setDesiredStock(actor, 0);
+        setCeasefireTurns(actor, 3);
+        assertNull(OpponentAI.planDiplomacy(state, actor, new SequenceRandom(80, 0)));
+        assertNull(OpponentAI.planAction(state, actor, GameState.Action.PROPAGANDA,
+                new SequenceRandom(0), 1, Collections.<String, Integer>emptyMap()));
+        assertNull(OpponentAI.planAction(state, actor, GameState.Action.RESEARCH,
+                new SequenceRandom(0), 1, Collections.<String, Integer>emptyMap()));
+        assertNull(OpponentAI.planAction(state, actor, GameState.Action.ATTACK,
+                new SequenceRandom(0, 0), 1, Collections.<String, Integer>emptyMap()));
+        assertNull(OpponentAI.planAction(state, actor, GameState.Action.DEFENSE,
+                new SequenceRandom(0), 1, Collections.<String, Integer>emptyMap()));
+
+        List<OpponentAI.Decision> decisions = OpponentAI.plan(state, actor,
+                new SequenceRandom(80, 0));
+
+        assertEquals("unavailable diplomacy, propaganda and research must not consume slots",
+                2, decisions.size());
+        for (OpponentAI.Decision decision : decisions) {
+            assertTrue(decision.action == GameState.Action.PRODUCTION
+                    || decision.action == GameState.Action.RESOURCES
+                    || decision.action == GameState.Action.MASS_MEDIA);
+        }
+    }
+
+    @Test
     public void resourcesActionRequiresFundsBelowTheFlashThreshold() {
         GameState state = new GameState(1, 121L);
         GameState.PlayerState actor = state.getPlayerState(1);
@@ -1116,6 +1150,29 @@ public final class OpponentAITest {
                 .getDeclaredField("regardToward");
         regardField.setAccessible(true);
         ((double[]) regardField.get(actor))[playerId] = regard;
+    }
+
+    private static void setCeasefireTurns(GameState.PlayerState actor, int turns)
+            throws Exception {
+        java.lang.reflect.Field ceasefireField = GameState.PlayerState.class
+                .getDeclaredField("ceasefireTurns");
+        ceasefireField.setAccessible(true);
+        int[] ceasefireTurns = (int[]) ceasefireField.get(actor);
+        Arrays.fill(ceasefireTurns, turns);
+        ceasefireTurns[actor.id] = 0;
+    }
+
+    private static void setDesiredStock(GameState.PlayerState actor, int value)
+            throws Exception {
+        java.lang.reflect.Field desiredStockField = GameState.PlayerState.class
+                .getDeclaredField("desiredStock");
+        desiredStockField.setAccessible(true);
+        @SuppressWarnings("unchecked")
+        Map<String, Integer> desiredStock =
+                (Map<String, Integer>) desiredStockField.get(actor);
+        for (String weaponName : desiredStock.keySet()) {
+            desiredStock.put(weaponName, value);
+        }
     }
 
     private static void configureSourcePreparationScenario(
