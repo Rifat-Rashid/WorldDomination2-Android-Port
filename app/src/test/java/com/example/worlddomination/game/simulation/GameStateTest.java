@@ -2,6 +2,7 @@ package com.example.worlddomination.game.simulation;
 
 import org.junit.Test;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -175,6 +176,54 @@ public final class GameStateTest {
         assertEquals(5, player.getDesiredStock("soldier4"));
         assertEquals("carrier, payload, then conventional-unit draws", 3,
                 random.drawCount);
+    }
+
+    @Test
+    public void startingCityAllocationUsesFractionalQuarterAndConsumesFiveDraws() {
+        SequenceDoubleRandom random = new SequenceDoubleRandom(
+                Math.nextDown(1.0), 0.0, 0.0, 0.0, 0.0);
+
+        int[] populations = GameState.sourceStartingCityPopulations(450, true, random);
+
+        assertArrayEquals(new int[]{113, 40, 40, 40, 217}, populations);
+        assertEquals(450, populations[0] + populations[1] + populations[2]
+                + populations[3] + populations[4]);
+        assertEquals("The last source randRange result is discarded", 5,
+                random.doubleDraws);
+    }
+
+    @Test
+    public void inactivePlayerSlotsDoNotConsumeStartingCityPopulationDraws() {
+        SequenceDoubleRandom random = new SequenceDoubleRandom();
+
+        int[] populations = GameState.sourceStartingCityPopulations(0, false, random);
+
+        assertArrayEquals(new int[5], populations);
+        assertEquals(0, random.doubleDraws);
+    }
+
+    @Test
+    public void selectedOpponentSetupDistributesPopulationAcrossItsFiveCities() {
+        GameSetup setup = new GameSetup();
+        assertTrue(setup.toggleOpponent(0));
+
+        GameState state = new GameState(setup, 17L);
+
+        for (int playerId = 0; playerId < 2; playerId++) {
+            GameState.PlayerState player = state.getPlayerState(playerId);
+            int cityPopulation = 0;
+            for (CityState city : player.getCities()) {
+                cityPopulation += city.populationMillions;
+            }
+            assertEquals(player.populationMillions, cityPopulation);
+        }
+        for (int playerId = 2; playerId < 5; playerId++) {
+            GameState.PlayerState inactive = state.getPlayerState(playerId);
+            assertFalse(inactive.alive);
+            for (CityState city : inactive.getCities()) {
+                assertEquals(0, city.populationMillions);
+            }
+        }
     }
 
     @Test
@@ -2388,6 +2437,23 @@ public final class GameStateTest {
                 throw new AssertionError("scripted random value outside bound");
             }
             return value;
+        }
+    }
+
+    private static final class SequenceDoubleRandom extends Random {
+        private final double[] values;
+        private int doubleDraws;
+
+        SequenceDoubleRandom(double... values) {
+            this.values = values.clone();
+        }
+
+        @Override
+        public double nextDouble() {
+            if (doubleDraws >= values.length) {
+                throw new AssertionError("unexpected random draw");
+            }
+            return values[doubleDraws++];
         }
     }
 }

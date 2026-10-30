@@ -29,6 +29,9 @@ jobs:
           - id: ai-initialization-rng-tests
             check: AI initialization RNG parity tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.emptySourceEnemySelectionStillConsumesItsRandomDraw" --tests "com.example.worlddomination.game.simulation.GameStateTest.aiDesireChoicesUseTheFirstValueOfSourceOneToTwoDraws"'
+          - id: source-city-population-tests
+            check: Source starting city population tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.startingCityAllocationUsesFractionalQuarterAndConsumesFiveDraws" --tests "com.example.worlddomination.game.simulation.GameStateTest.inactivePlayerSlotsDoNotConsumeStartingCityPopulationDraws" --tests "com.example.worlddomination.game.simulation.GameStateTest.selectedOpponentSetupDistributesPopulationAcrossItsFiveCities"'
           - id: turn-progression-tests
             check: Game state and turn progression tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest"'
