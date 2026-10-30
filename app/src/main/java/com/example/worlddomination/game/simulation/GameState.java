@@ -852,24 +852,41 @@ public final class GameState {
         }
     }
 
-    /** The source distributes each nation's starting population across five cities. */
+    /** The source distributes each active nation's starting population across five cities. */
     private void initializeCities(PlayerState player) {
-        int remaining = player.populationMillions;
-        int initial = remaining;
+        int[] populations = sourceStartingCityPopulations(player.populationMillions,
+                player.alive, random);
         for (int cityIndex = 0; cityIndex < 5; cityIndex++) {
-            int population;
-            if (cityIndex == 4) {
-                population = remaining;
-            } else {
-                int minimum = Math.min(40, remaining);
-                int maximum = Math.min(initial / 4, remaining);
-                population = maximum <= minimum
-                        ? minimum : minimum + random.nextInt(maximum - minimum + 1);
-                remaining -= population;
-            }
             player.cities.add(new CityState(player.id * 5 + cityIndex,
-                    player.id, cityIndex, population));
+                    player.id, cityIndex, populations[cityIndex]));
         }
+    }
+
+    /** Mirrors the source's five randRange calls, including the discarded final draw. */
+    static int[] sourceStartingCityPopulations(int initialPopulation, boolean active,
+                                              Random random) {
+        if (initialPopulation < 0) {
+            throw new IllegalArgumentException("Starting population cannot be negative");
+        }
+        int[] populations = new int[5];
+        if (!active) {
+            return populations;
+        }
+
+        int remaining = initialPopulation;
+        for (int cityIndex = 0; cityIndex < populations.length; cityIndex++) {
+            int minimum = Math.min(40, remaining);
+            double maximum = Math.min(initialPopulation / 4.0, remaining);
+            int drawnPopulation = (int) Math.floor(
+                    random.nextDouble() * (maximum - minimum + 1.0)) + minimum;
+            if (cityIndex < populations.length - 1) {
+                populations[cityIndex] = drawnPopulation;
+                remaining -= drawnPopulation;
+            } else {
+                populations[cityIndex] = remaining;
+            }
+        }
+        return populations;
     }
 
     public int getDifficulty() {
