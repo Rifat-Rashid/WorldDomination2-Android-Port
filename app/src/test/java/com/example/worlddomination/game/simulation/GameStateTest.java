@@ -673,6 +673,42 @@ public final class GameStateTest {
     }
 
     @Test
+    public void eliminatingNationTransfersItsFlagCreditToItsAttacker() {
+        GameState state = new GameState(1, 214L, false);
+        GameState.PlayerState target = state.getPlayerState(1);
+        GameState.PlayerState previouslyDefeated = state.getPlayerState(2);
+        for (GameState.PlayerState rival : state.getPlayers()) {
+            if (rival.id == 0) {
+                continue;
+            }
+            for (CityState city : rival.getCities()) {
+                city.populationMillions = 0;
+            }
+            rival.populationMillions = 0;
+            if (rival.id != target.id) {
+                rival.alive = false;
+            }
+        }
+        target.getCities().get(0).populationMillions = 1;
+        target.getCities().get(1).populationMillions = -5;
+        target.populationMillions = 1;
+        previouslyDefeated.lastAttackedByPlayerId = target.id;
+
+        state.selectAction(GameState.Action.ATTACK);
+        assertTrue(state.configureAttack(target.id, 0, "soldier1"));
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+
+        assertFalse(target.alive);
+        assertEquals(0, target.populationMillions);
+        assertEquals(0, target.getCities().get(1).populationMillions);
+        assertEquals(0, previouslyDefeated.getLastAttackedByPlayerId());
+        assertEquals(5, state.getFinalScoreBreakdown().getFlagBonusCount());
+    }
+
+    @Test
     public void preparedLaunchRejectsIncompatiblePayload() {
         GameState state = new GameState(1, 202L, false);
         GameState.PlayerState human = state.getHuman();
