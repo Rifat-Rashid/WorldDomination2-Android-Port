@@ -19,10 +19,12 @@ import static org.junit.Assert.assertTrue;
 
 public final class OpponentAITest {
     @Test
-    public void researchTurnBonusContinuesPastTheUnusedSixtyTurnCap() {
+    public void researchTurnBonusStopsGrowingAtTheSourceSixtyTurnCap() {
+        assertEquals(0.0, OpponentAI.researchTurnRatio(0, 5), 0.0);
+        assertEquals(54.0, OpponentAI.researchTurnRatio(30, 5), 0.0);
         assertEquals(108.0, OpponentAI.researchTurnRatio(60, 5), 0.0);
-        assertEquals(216.0, OpponentAI.researchTurnRatio(120, 5), 0.0);
-        assertEquals(108.0, OpponentAI.researchTurnRatio(120, 10), 0.0);
+        assertEquals(108.0, OpponentAI.researchTurnRatio(120, 5), 0.0);
+        assertEquals(54.0, OpponentAI.researchTurnRatio(120, 10), 0.0);
     }
 
     @Test

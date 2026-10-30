@@ -84,6 +84,9 @@ jobs:
           - id: ai-tests
             check: Opponent AI tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.*"'
+          - id: ai-research-turn-cap-tests
+            check: AI research turn cap parity
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.OpponentAITest.researchTurnBonusStopsGrowingAtTheSourceSixtyTurnCap"'
           - id: ai-diplomacy-target-score-tests
             check: AI diplomacy source score selection
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.OpponentAITest.diplomacyTargetScoreUsesStrictGreaterAndKeepsFirstRivalOnTies"'

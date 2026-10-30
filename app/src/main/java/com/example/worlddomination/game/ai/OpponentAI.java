@@ -437,9 +437,9 @@ public final class OpponentAI {
         throw new IllegalArgumentException("Action is not scored: " + action);
     }
 
-    /** The reference uses its current turn directly; its calculated 60-turn cap is unused. */
+    /** The reference caps the research time contribution at 60 turns. */
     static double researchTurnRatio(int turn, int technologyCount) {
-        return turn / (double) Math.max(1, technologyCount) * 9;
+        return Math.min(60, turn) / (double) Math.max(1, technologyCount) * 9;
     }
 
     static double baseAttackScore(GameState state, GameState.PlayerState player) {
