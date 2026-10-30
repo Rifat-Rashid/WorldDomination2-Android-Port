@@ -1,0 +1,86 @@
+package com.example.worlddomination.game.simulation;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+/** Weapon stock and production metadata recovered from WeaponStock/WeaponSlot. */
+final class WeaponCatalog {
+    static final class Definition {
+        final String name;
+        final String technology;
+        final String type;
+        final int level;
+        final int costMillions;
+        final int productionGroup;
+        final int initialStock;
+        final int maxKillsMillions;
+
+        Definition(String name, String technology, String type, int level,
+                   int costMillions, int productionGroup, int initialStock,
+                   int maxKillsMillions) {
+            this.name = name;
+            this.technology = technology;
+            this.type = type;
+            this.level = level;
+            this.costMillions = costMillions;
+            this.productionGroup = productionGroup;
+            this.initialStock = initialStock;
+            this.maxKillsMillions = maxKillsMillions;
+        }
+    }
+
+    private static final Map<String, Definition> BY_NAME = new LinkedHashMap<>();
+    private static final List<Definition> ALL;
+
+    static {
+        addLine("rocket", "rocket", "rocket", 1, new int[]{5, 10, 15, 20},
+                new int[]{0, 0, 0, 0});
+        addLine("warhead", "warhead", "rocketload", 2, new int[]{5, 10, 15, 20},
+                new int[]{15, 40, 90, 150});
+        addLine("bioload", "bioload", "rocketload", 3, new int[]{5, 10, 15, 20},
+                new int[]{10, 35, 60, 80});
+        addLine("soldier", "soldier", "soldier", 4, new int[]{5, 10, 15, 20},
+                new int[]{4, 10, 21, 35});
+        addLine("spy", "spy", "spy", 5, new int[]{5, 10, 15, 20},
+                new int[]{0, 0, 0, 0});
+        add("plane1", "plane1", "plane", 1, 5, 6, 0, 0);
+        add("plane2", "plane2", "plane", 2, 10, 6, 0, 0);
+        add("sub", "sub", "sub", 1, 50, 7, 0, 0);
+        add("ship", "ship", "ship", 2, 65, 7, 0, 0);
+        add("space", "space", "space", 3, 70, 7, 0, 0);
+        add("specialLoad", "specialLoad", "space", 4, 80, 7, 0, 200000);
+        add("antiAir", "antiAir", "anti", 1, 15, 8, 2, 0);
+        add("antiRocket", "antiRocket", "anti", 1, 15, 8, 2, 0);
+        ALL = Collections.unmodifiableList(new ArrayList<>(BY_NAME.values()));
+    }
+
+    private WeaponCatalog() { }
+
+    private static void addLine(String stem, String technologyStem, String type,
+                                int productionGroup, int[] costs, int[] maxKills) {
+        for (int index = 0; index < costs.length; index++) {
+            String name = stem + (index + 1);
+            add(name, technologyStem + (index + 1), type, index + 1,
+                    costs[index], productionGroup,
+                    index == 0 ? 1 : 0, maxKills[index]);
+        }
+    }
+
+    private static void add(String name, String technology, String type, int level,
+                            int cost, int productionGroup, int initialStock,
+                            int maxKillsMillions) {
+        BY_NAME.put(name, new Definition(name, technology, type, level, cost,
+                productionGroup, initialStock, maxKillsMillions));
+    }
+
+    static List<Definition> all() {
+        return ALL;
+    }
+
+    static Definition byName(String name) {
+        return BY_NAME.get(name);
+    }
+}

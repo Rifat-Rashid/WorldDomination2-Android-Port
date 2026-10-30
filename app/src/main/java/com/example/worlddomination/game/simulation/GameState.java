@@ -2,10 +2,21 @@ package com.example.worlddomination.game.simulation;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
 
-/** Platform-independent state for the first source-driven Android rules slice. */
+/** Platform independent state and deterministic rules for the native game. */
 public final class GameState {
+    public enum MatchStatus {
+        ONGOING,
+        VICTORY,
+        DEFEAT
+    }
+
     public enum Action {
         RESOURCES("Resources"),
         PRODUCTION("Production"),
@@ -24,17 +35,23 @@ public final class GameState {
         }
 
         public boolean isPorted() {
-            return this == RESOURCES || this == MASS_MEDIA;
+            return this == RESOURCES || this == PRODUCTION || this == RESEARCH
+                    || this == MASS_MEDIA || this == ATTACK;
         }
     }
 
     public static final class PlayerState {
         public final int id;
         public final boolean human;
-        public final int populationMillions;
+        public int populationMillions;
         public int moneyMillions;
+        public int turnMoneyMillions;
         public int religion;
         public int score;
+        public boolean alive = true;
+        private final List<CityState> cities = new ArrayList<>(5);
+        private final Set<String> inventedTechnologies = new LinkedHashSet<>();
+        private final Map<String, WeaponState> weapons = new LinkedHashMap<>();
 
         private PlayerState(int id, boolean human, int populationMillions,
                             int moneyMillions, int religion) {
@@ -42,7 +59,64 @@ public final class GameState {
             this.human = human;
             this.populationMillions = populationMillions;
             this.moneyMillions = moneyMillions;
+            this.turnMoneyMillions = moneyMillions;
             this.religion = religion;
+        }
+
+        public boolean hasTechnology(String name) {
+            return inventedTechnologies.contains(name);
+        }
+
+        public Set<String> getInventedTechnologies() {
+            return Collections.unmodifiableSet(inventedTechnologies);
+        }
+
+        public Map<String, WeaponState> getWeapons() {
+            return Collections.unmodifiableMap(weapons);
+        }
+
+        public List<CityState> getCities() {
+            return Collections.unmodifiableList(cities);
+        }
+
+        public CityState getCity(int index) {
+            return index < 0 || index >= cities.size() ? null : cities.get(index);
+        }
+    }
+
+    public static final class WeaponState {
+        public final WeaponCatalog.Definition definition;
+        public int inStock;
+        public int investmentMillions;
+        public boolean active;
+
+        private WeaponState(WeaponCatalog.Definition definition) {
+            this.definition = definition;
+            this.inStock = definition.initialStock;
+        }
+    }
+
+    private static final class ActionOrder {
+        final Action action;
+        final String productionCategory;
+        final int productionPercent;
+        final String technology;
+        final int reservedMillions;
+        final int targetPlayerId;
+        final int targetCityIndex;
+        final String weaponName;
+
+        ActionOrder(Action action, String productionCategory, int productionPercent,
+                    String technology, int reservedMillions, int targetPlayerId,
+                    int targetCityIndex, String weaponName) {
+            this.action = action;
+            this.productionCategory = productionCategory;
+            this.productionPercent = productionPercent;
+            this.technology = technology;
+            this.reservedMillions = reservedMillions;
+            this.targetPlayerId = targetPlayerId;
+            this.targetCityIndex = targetCityIndex;
+            this.weaponName = weaponName;
         }
     }
 
@@ -50,33 +124,89 @@ public final class GameState {
     private static final int[] ENEMY_START_MONEY = {50, 65, 60};
     private static final int[] PLAYER_START_POPULATION = {500, 450, 400};
     private static final int[] ENEMY_START_POPULATION = {450, 450, 450};
-    private static final int[] PLAYER_START_RELIGION = {80, 60, 20};
-    private static final int[] ENEMY_START_RELIGION = {30, 40, 60};
     private static final int[] PLAYER_RESOURCE_DIVISOR = {9, 11, 13};
+    private static final int[] ENEMY_RESOURCE_DIVISOR = {9, 10, 12};
     private static final int[] PLAYER_RELIGION_ADDITION = {30, 30, 25};
+    private static final int[] ENEMY_RELIGION_ADDITION = {45, 35, 25};
+    private static final String[] STARTING_TECHNOLOGIES = {
+            "rocket1", "warhead1", "bioload1", "soldier1", "spy1", "plane1",
+            "antiAir", "antiRocket"
+    };
+    private static final String[] STARTING_PRODUCTION_CATEGORIES = {
+            "rockets", "warhead", "bioload", "soldier", "spy", "planes", "special", "defense"
+    };
+    private static final int[] PRODUCTION_GROUPS = {1, 2, 3, 4, 5, 6, 7, 8};
+    private static final int PLAYER_STOCK_CAP = 4;
     private static final int MAX_TURN_ACTIONS = 2;
 
     private final int difficulty;
     private final PlayerState[] players = new PlayerState[5];
-    private final List<Action> queuedActions = new ArrayList<>(MAX_TURN_ACTIONS);
+    private final List<ActionOrder> queuedActions = new ArrayList<>(MAX_TURN_ACTIONS);
     private final List<String> messages = new ArrayList<>();
+    private final Random random;
     private Action selectedAction;
+    private String selectedProductionCategory = "soldier";
+    private int selectedProductionPercent;
+    private String selectedTechnology;
+    private int selectedTargetPlayer = 1;
+    private int selectedTargetCity;
+    private String selectedAttackWeapon = "soldier1";
     private int turn;
     private int selectedIsland = -1;
+    private MatchStatus matchStatus = MatchStatus.ONGOING;
 
-    /** Difficulty indices match the recovered source: 0 easy, 1 normal, 2 hard. */
+    /** Difficulty indices follow the recovered source: 0 easy, 1 normal, 2 hard. */
     public GameState(int difficulty) {
+        this(difficulty, 0L);
+    }
+
+    /** Seed injection keeps gameplay rules reproducible in JVM tests. */
+    public GameState(int difficulty, long seed) {
         if (difficulty < 0 || difficulty > 2) {
             throw new IllegalArgumentException("Difficulty must be 0, 1 or 2");
         }
         this.difficulty = difficulty;
+        this.random = new Random(seed);
         players[0] = new PlayerState(0, true, PLAYER_START_POPULATION[difficulty],
-                PLAYER_START_MONEY[difficulty], PLAYER_START_RELIGION[difficulty]);
+                PLAYER_START_MONEY[difficulty], PLAYER_START_MONEY[difficulty]);
         for (int i = 1; i < players.length; i++) {
             players[i] = new PlayerState(i, false, ENEMY_START_POPULATION[difficulty],
-                    ENEMY_START_MONEY[difficulty], ENEMY_START_RELIGION[difficulty]);
+                    ENEMY_START_MONEY[difficulty], new int[]{30, 40, 60}[difficulty]);
+        }
+        for (PlayerState player : players) {
+            initializeInventory(player);
+            initializeCities(player);
         }
         messages.add("Welcome, commander. Select two actions.");
+    }
+
+    private static void initializeInventory(PlayerState player) {
+        Collections.addAll(player.inventedTechnologies, STARTING_TECHNOLOGIES);
+        for (WeaponCatalog.Definition definition : WeaponCatalog.all()) {
+            WeaponState weapon = new WeaponState(definition);
+            weapon.active = player.inventedTechnologies.contains(definition.technology);
+            player.weapons.put(definition.name, weapon);
+        }
+    }
+
+    /** The source distributes each nation's starting population across five cities. */
+    private void initializeCities(PlayerState player) {
+        int remaining = player.populationMillions;
+        int initial = remaining;
+        for (int cityIndex = 0; cityIndex < 5; cityIndex++) {
+            int population;
+            if (cityIndex == 4) {
+                population = remaining;
+            } else {
+                int minimum = Math.min(40, remaining);
+                int maximum = Math.min(initial / 4, remaining);
+                population = maximum <= minimum
+                        ? minimum : minimum + random.nextInt(maximum - minimum + 1);
+                remaining -= population;
+            }
+            player.cities.add(new CityState(player.id * 5 + cityIndex,
+                    player.id, cityIndex, population));
+        }
     }
 
     public int getDifficulty() {
@@ -87,12 +217,20 @@ public final class GameState {
         return turn;
     }
 
+    public MatchStatus getMatchStatus() {
+        return matchStatus;
+    }
+
     public PlayerState getHuman() {
         return players[0];
     }
 
     public PlayerState[] getPlayers() {
         return players.clone();
+    }
+
+    public PlayerState getPlayerState(int playerId) {
+        return playerById(playerId);
     }
 
     public Action getSelectedAction() {
@@ -111,18 +249,20 @@ public final class GameState {
     }
 
     public void selectAction(Action action) {
+        if (matchStatus != MatchStatus.ONGOING) {
+            return;
+        }
         if (action == null || !action.isPorted()) {
-            selectedAction = null;
+            cancelSelection();
             return;
         }
         if (selectedAction == action) {
-            selectedAction = null;
+            cancelSelection();
             return;
         }
-        int queuedIndex = queuedActions.indexOf(action);
+        int queuedIndex = queuedActionIndex(action);
         if (queuedIndex >= 0) {
-            queuedActions.remove(queuedIndex);
-            messages.add(action.label + " removed.");
+            removeQueuedAction(queuedIndex);
             selectedAction = null;
             return;
         }
@@ -132,32 +272,274 @@ public final class GameState {
             return;
         }
         selectedAction = action;
+        selectedTechnology = null;
+        selectedTargetPlayer = selectedIsland > 0 ? selectedIsland : 1;
+        selectedTargetCity = 0;
+        selectedAttackWeapon = firstAvailableAttackWeapon();
+        selectedProductionCategory = "soldier";
+        selectedProductionPercent = 0;
+    }
+
+    /** Sets one production row as the original interface's percentage sliders do. */
+    public void configureProduction(String category, int percent) {
+        if (selectedAction != Action.PRODUCTION) {
+            throw new IllegalStateException("Select Production before setting its investment");
+        }
+        if (productionGroup(category) == 0) {
+            throw new IllegalArgumentException("Unknown production category: " + category);
+        }
+        if (percent < 0 || percent > 100) {
+            throw new IllegalArgumentException("Production percentage must be 0..100");
+        }
+        selectedProductionCategory = category;
+        selectedProductionPercent = percent;
+    }
+
+    /** Selects a technology only when its source prerequisite and funds are satisfied. */
+    public boolean selectResearchTechnology(String technology) {
+        if (selectedAction != Action.RESEARCH || !isResearchAvailable(technology)) {
+            return false;
+        }
+        selectedTechnology = technology;
+        return true;
+    }
+
+    public List<String> getAvailableResearch() {
+        List<String> available = new ArrayList<>();
+        for (TechnologyCatalog.Definition definition : TechnologyCatalog.all()) {
+            if (isResearchAvailable(definition.name)) {
+                available.add(definition.name);
+            }
+        }
+        return Collections.unmodifiableList(available);
+    }
+
+    public boolean isResearchAvailable(String technology) {
+        TechnologyCatalog.Definition definition = TechnologyCatalog.byName(technology);
+        if (definition == null || getHuman().hasTechnology(definition.name)) {
+            return false;
+        }
+        if (queuedTechnology(technology)) {
+            return false;
+        }
+        if (definition.prerequisite != null
+                && !getHuman().hasTechnology(definition.prerequisite)) {
+            return false;
+        }
+        return definition.costMillions <= getHuman().turnMoneyMillions;
+    }
+
+    public int getTechnologyCost(String technology) {
+        TechnologyCatalog.Definition definition = TechnologyCatalog.byName(technology);
+        return definition == null ? 0 : definition.costMillions;
+    }
+
+    public String getTechnologyLabel(String technology) {
+        TechnologyCatalog.Definition definition = TechnologyCatalog.byName(technology);
+        return definition == null ? technology : definition.prettyName;
+    }
+
+    public String getSelectedTechnology() {
+        return selectedTechnology;
+    }
+
+    public int getSelectedTargetPlayer() {
+        return selectedTargetPlayer;
+    }
+
+    public int getSelectedTargetCity() {
+        return selectedTargetCity;
+    }
+
+    public String getSelectedAttackWeapon() {
+        return selectedAttackWeapon;
+    }
+
+    public List<String> getAvailableAttackWeapons() {
+        List<String> available = new ArrayList<>();
+        for (WeaponState weapon : getHuman().weapons.values()) {
+            String type = weapon.definition.type;
+            if (weapon.active && weapon.inStock > 0 && "soldier".equals(type)) {
+                available.add(weapon.definition.name);
+            }
+        }
+        return Collections.unmodifiableList(available);
+    }
+
+    public boolean configureAttack(int targetPlayerId, int cityIndex, String weaponName) {
+        if (selectedAction != Action.ATTACK || targetPlayerId <= 0
+                || targetPlayerId >= players.length || cityIndex < 0 || cityIndex >= 5) {
+            return false;
+        }
+        PlayerState target = players[targetPlayerId];
+        CityState city = target.getCity(cityIndex);
+        WeaponState weapon = getHuman().weapons.get(weaponName);
+        if (!target.alive || city == null || city.populationMillions <= 0
+                || weapon == null || !weapon.active || weapon.inStock <= 0
+                || !"soldier".equals(weapon.definition.type)) {
+            return false;
+        }
+        selectedTargetPlayer = targetPlayerId;
+        selectedTargetCity = cityIndex;
+        selectedAttackWeapon = weaponName;
+        return true;
+    }
+
+    public void cycleAttackTarget(int direction) {
+        if (direction == 0 || selectedAction != Action.ATTACK) {
+            return;
+        }
+        for (int step = 1; step < players.length; step++) {
+            int candidate = 1 + Math.floorMod(selectedTargetPlayer - 1
+                    + Integer.signum(direction) * step, players.length - 1);
+            PlayerState player = players[candidate];
+            if (!player.alive) {
+                continue;
+            }
+            int cityIndex = firstPopulatedCity(player, selectedTargetCity);
+            if (cityIndex >= 0) {
+                configureAttack(candidate, cityIndex, selectedAttackWeapon);
+                return;
+            }
+        }
+    }
+
+    public void cycleAttackCity(int direction) {
+        if (direction == 0 || selectedAction != Action.ATTACK) {
+            return;
+        }
+        PlayerState target = players[selectedTargetPlayer];
+        for (int step = 1; step <= target.cities.size(); step++) {
+            int cityIndex = Math.floorMod(selectedTargetCity
+                    + Integer.signum(direction) * step, target.cities.size());
+            CityState city = target.getCity(cityIndex);
+            if (city.populationMillions > 0) {
+                configureAttack(selectedTargetPlayer, cityIndex, selectedAttackWeapon);
+                return;
+            }
+        }
+    }
+
+    public void cycleAttackWeapon(int direction) {
+        if (direction == 0 || selectedAction != Action.ATTACK) {
+            return;
+        }
+        List<String> available = getAvailableAttackWeapons();
+        if (available.isEmpty()) {
+            return;
+        }
+        int current = available.indexOf(selectedAttackWeapon);
+        int next = Math.floorMod((current < 0 ? 0 : current)
+                + Integer.signum(direction), available.size());
+        configureAttack(selectedTargetPlayer, selectedTargetCity, available.get(next));
+    }
+
+    private static int firstPopulatedCity(PlayerState player, int preferredIndex) {
+        for (int offset = 0; offset < player.cities.size(); offset++) {
+            int index = Math.floorMod(preferredIndex + offset, player.cities.size());
+            if (player.getCity(index).populationMillions > 0) {
+                return index;
+            }
+        }
+        return -1;
+    }
+
+    public boolean canAcceptAttack() {
+        PlayerState target = selectedTargetPlayer > 0 && selectedTargetPlayer < players.length
+                ? players[selectedTargetPlayer] : null;
+        CityState city = target == null ? null : target.getCity(selectedTargetCity);
+        WeaponState weapon = getHuman().weapons.get(selectedAttackWeapon);
+        return target != null && target.alive && city != null && city.populationMillions > 0
+                && weapon != null && weapon.active && weapon.inStock > 0
+                && "soldier".equals(weapon.definition.type);
+    }
+
+    private String firstAvailableAttackWeapon() {
+        List<String> available = getAvailableAttackWeapons();
+        return available.isEmpty() ? "" : available.get(0);
+    }
+
+    public int getCityPopulationMillions(int playerId, int cityIndex) {
+        CityState city = playerById(playerId).getCity(cityIndex);
+        if (city == null) {
+            throw new IllegalArgumentException("Invalid city index");
+        }
+        return city.populationMillions;
+    }
+
+    public String getSelectedProductionCategory() {
+        return selectedProductionCategory;
+    }
+
+    public int getSelectedProductionPercent() {
+        return selectedProductionPercent;
+    }
+
+    public int getSelectedProductionBudgetMillions() {
+        return getHuman().turnMoneyMillions * selectedProductionPercent / 100;
+    }
+
+    public int getTurnMoneyMillions() {
+        return getHuman().turnMoneyMillions;
     }
 
     public boolean acceptSelectedAction() {
         if (selectedAction == null || queuedActions.size() >= MAX_TURN_ACTIONS) {
             return false;
         }
-        queuedActions.add(selectedAction);
+        int reserved = 0;
+        if (selectedAction == Action.RESEARCH) {
+            if (selectedTechnology == null || !isResearchAvailable(selectedTechnology)) {
+                messages.add("Choose an available technology to research.");
+                return false;
+            }
+            reserved = getTechnologyCost(selectedTechnology);
+        } else if (selectedAction == Action.PRODUCTION) {
+            if (selectedProductionPercent > 0) {
+                reserved = getSelectedProductionBudgetMillions();
+            }
+        } else if (selectedAction == Action.ATTACK && !canAcceptAttack()) {
+            messages.add("Choose a living target city and an available unit.");
+            return false;
+        }
+        if (reserved > getHuman().turnMoneyMillions) {
+            messages.add("The selected action exceeds the remaining budget.");
+            return false;
+        }
+        ActionOrder order = new ActionOrder(selectedAction, selectedProductionCategory,
+                selectedProductionPercent, selectedTechnology, reserved,
+                selectedTargetPlayer, selectedTargetCity, selectedAttackWeapon);
+        queuedActions.add(order);
+        getHuman().turnMoneyMillions -= reserved;
         messages.add(selectedAction.label + " queued.");
         selectedAction = null;
+        selectedTechnology = null;
+        selectedTargetPlayer = selectedIsland > 0 ? selectedIsland : 1;
+        selectedTargetCity = 0;
+        selectedAttackWeapon = firstAvailableAttackWeapon();
         return true;
     }
 
     public void cancelSelection() {
         selectedAction = null;
+        selectedTechnology = null;
+        selectedProductionPercent = 0;
+        selectedProductionCategory = "soldier";
     }
 
     public void removeQueuedAction(int slot) {
         if (slot >= 0 && slot < queuedActions.size()) {
-            Action removed = queuedActions.remove(slot);
-            messages.add(removed.label + " removed.");
+            ActionOrder removed = queuedActions.remove(slot);
+            getHuman().turnMoneyMillions = Math.min(getHuman().moneyMillions,
+                    getHuman().turnMoneyMillions + removed.reservedMillions);
+            messages.add(removed.action.label + " removed.");
         }
     }
 
     public void clearQueuedActions() {
         queuedActions.clear();
-        selectedAction = null;
+        getHuman().turnMoneyMillions = getHuman().moneyMillions;
+        cancelSelection();
     }
 
     public int getQueuedActionCount() {
@@ -165,16 +547,59 @@ public final class GameState {
     }
 
     public Action getQueuedAction(int slot) {
-        return slot >= 0 && slot < queuedActions.size() ? queuedActions.get(slot) : null;
+        return slot >= 0 && slot < queuedActions.size()
+                ? queuedActions.get(slot).action : null;
     }
 
     public int getResourceIncomeMillions() {
-        return Math.round((float) players[0].populationMillions
-                / PLAYER_RESOURCE_DIVISOR[difficulty]);
+        return resourceIncome(players[0]);
+    }
+
+    public int getResourceIncomeMillions(int playerId) {
+        if (playerId < 0 || playerId >= players.length) {
+            throw new IllegalArgumentException("Invalid player index");
+        }
+        return resourceIncome(players[playerId]);
+    }
+
+    private int resourceIncome(PlayerState player) {
+        int[] divisors = player.human ? PLAYER_RESOURCE_DIVISOR : ENEMY_RESOURCE_DIVISOR;
+        return Math.round((float) player.populationMillions / divisors[difficulty]);
     }
 
     public int getMassMediaGain() {
         return PLAYER_RELIGION_ADDITION[difficulty];
+    }
+
+    public int getMassMediaGain(int playerId) {
+        if (playerId < 0 || playerId >= players.length) {
+            throw new IllegalArgumentException("Invalid player index");
+        }
+        return (players[playerId].human ? PLAYER_RELIGION_ADDITION : ENEMY_RELIGION_ADDITION)
+                [difficulty];
+    }
+
+    public int getWeaponStock(int playerId, String name) {
+        PlayerState player = playerById(playerId);
+        WeaponState weapon = player.weapons.get(name);
+        return weapon == null ? 0 : weapon.inStock;
+    }
+
+    public boolean isWeaponActive(int playerId, String name) {
+        PlayerState player = playerById(playerId);
+        WeaponState weapon = player.weapons.get(name);
+        return weapon != null && weapon.active;
+    }
+
+    public int getWeaponStock(String name) {
+        return getWeaponStock(0, name);
+    }
+
+    private PlayerState playerById(int playerId) {
+        if (playerId < 0 || playerId >= players.length) {
+            throw new IllegalArgumentException("Invalid player index");
+        }
+        return players[playerId];
     }
 
     public List<String> getMessages() {
@@ -186,32 +611,246 @@ public final class GameState {
                 : messages.get(messages.size() - 1);
     }
 
-    /** Resolves only the two currently ported source actions. */
+    /** Resolves the supported actions in their queued order using source tables. */
     public void confirmTurn() {
         if (queuedActions.size() != MAX_TURN_ACTIONS) {
             throw new IllegalStateException("Choose two actions before confirming the turn");
         }
-        int resourcesGained = 0;
-        int massMediaGained = 0;
-        for (Action action : queuedActions) {
-            if (action == Action.RESOURCES) {
-                resourcesGained += getResourceIncomeMillions();
-            } else if (action == Action.MASS_MEDIA) {
-                massMediaGained += getMassMediaGain();
+        decayReligion();
+        for (ActionOrder order : queuedActions) {
+            switch (order.action) {
+                case RESOURCES:
+                    resolveResources(getHuman());
+                    break;
+                case MASS_MEDIA:
+                    resolveMassMedia(getHuman());
+                    break;
+                case PRODUCTION:
+                    resolveProduction(order);
+                    break;
+                case RESEARCH:
+                    resolveResearch(order);
+                    break;
+                case ATTACK:
+                    resolveAttack(order);
+                    break;
+                default:
+                    throw new IllegalStateException("Unported action entered the turn queue: "
+                            + order.action);
             }
         }
-        players[0].moneyMillions += resourcesGained;
-        players[0].religion = Math.min(100, players[0].religion + massMediaGained);
-        if (resourcesGained > 0) {
-            messages.add("You GAINED $ " + resourcesGained + ".000.000 from resources");
+        for (PlayerState player : players) {
+            player.religion = Math.min(100, Math.max(0, player.religion));
         }
-        if (massMediaGained > 0) {
-            messages.add("Mass Media increased influence by " + massMediaGained + ".");
-        }
+        refreshMatchStatus();
         turn++;
+        getHuman().turnMoneyMillions = getHuman().moneyMillions;
         messages.add("Turn " + turn + " complete.");
         queuedActions.clear();
-        selectedAction = null;
+        cancelSelection();
+        trimMessages();
+    }
+
+    private void decayReligion() {
+        for (PlayerState player : players) {
+            if (player.religion > 11) {
+                player.religion -= 5 + random.nextInt(6);
+            }
+        }
+    }
+
+    private void resolveResources(PlayerState player) {
+        int income = resourceIncome(player);
+        player.moneyMillions += income;
+        player.turnMoneyMillions += income;
+        messages.add("You GAINED $ " + income + ".000.000 from resources");
+    }
+
+    private void resolveMassMedia(PlayerState player) {
+        player.religion += getMassMediaGain(player.id);
+        messages.add("Mass Media increased influence by " + getMassMediaGain(player.id) + ".");
+    }
+
+    private void resolveResearch(ActionOrder order) {
+        TechnologyCatalog.Definition technology = TechnologyCatalog.byName(order.technology);
+        if (technology == null || getHuman().hasTechnology(technology.name)
+                || getHuman().moneyMillions < technology.costMillions
+                || (technology.prerequisite != null
+                && !getHuman().hasTechnology(technology.prerequisite))) {
+            messages.add("Research could not be completed: " + order.technology + ".");
+            return;
+        }
+        getHuman().inventedTechnologies.add(technology.name);
+        WeaponState weapon = getHuman().weapons.get(technology.name);
+        if (weapon != null) {
+            weapon.active = true;
+        }
+        getHuman().moneyMillions -= technology.costMillions;
+        addToHighscore(getHuman(), 4, technology.level);
+        messages.add("Technologies invented: " + technology.name.toUpperCase());
+    }
+
+    /** Source attack casualties are a rounded random 50%-100% of unit maxKills. */
+    private void resolveAttack(ActionOrder order) {
+        PlayerState attacker = getHuman();
+        PlayerState defender = playerById(order.targetPlayerId);
+        CityState city = defender.getCity(order.targetCityIndex);
+        WeaponState weapon = attacker.weapons.get(order.weaponName);
+        if (!defender.alive || city == null || city.populationMillions <= 0
+                || weapon == null || !weapon.active || weapon.inStock <= 0) {
+            messages.add("Attack cancelled: target or weapon is no longer available.");
+            return;
+        }
+        int casualties = 0;
+        if ("soldier".equals(weapon.definition.type)) {
+            float minimum = weapon.definition.maxKillsMillions / 2f;
+            float damage = minimum + random.nextFloat() * minimum;
+            casualties = Math.min(city.populationMillions, Math.round(damage));
+            city.populationMillions -= casualties;
+            defender.populationMillions = totalPopulation(defender);
+            if (defender.populationMillions <= 0) {
+                defender.alive = false;
+                messages.add("Nation " + defender.id + " has been eliminated.");
+            }
+            if (casualties > 0) {
+                addToHighscore(attacker, 1, casualties);
+            }
+        } else {
+            throw new IllegalStateException("Direct attack only supports soldier units");
+        }
+        weapon.inStock--;
+        messages.add(casualties + " citizens lost in nation " + defender.id
+                + " city " + (city.index + 1) + ".");
+    }
+
+    private static int totalPopulation(PlayerState player) {
+        int population = 0;
+        for (CityState city : player.cities) {
+            population += Math.max(0, city.populationMillions);
+        }
+        return population;
+    }
+
+    private void refreshMatchStatus() {
+        for (PlayerState player : players) {
+            player.populationMillions = totalPopulation(player);
+            if (player.populationMillions <= 0) {
+                player.alive = false;
+            }
+        }
+        if (!getHuman().alive) {
+            matchStatus = MatchStatus.DEFEAT;
+            messages.add("Your nation has been defeated.");
+            return;
+        }
+        for (int playerId = 1; playerId < players.length; playerId++) {
+            if (players[playerId].alive) {
+                return;
+            }
+        }
+        matchStatus = MatchStatus.VICTORY;
+        messages.add("Victory. All rival nations have fallen.");
+    }
+
+    private void resolveProduction(ActionOrder order) {
+        int group = productionGroup(order.productionCategory);
+        int budget = order.reservedMillions;
+        if (group == 0 || budget <= 0) {
+            return;
+        }
+        List<WeaponState> candidates = new ArrayList<>();
+        int minimumCost = Integer.MAX_VALUE;
+        for (WeaponState weapon : getHuman().weapons.values()) {
+            WeaponCatalog.Definition definition = weapon.definition;
+            if (definition.productionGroup == group && weapon.active
+                    && weapon.inStock < PLAYER_STOCK_CAP
+                    && (group == 7 || definition.costMillions < budget)) {
+                candidates.add(weapon);
+                minimumCost = Math.min(minimumCost, definition.costMillions);
+            }
+        }
+        int remaining = budget;
+        int attempts = 0;
+        Map<String, Integer> bought = new LinkedHashMap<>();
+        while (!candidates.isEmpty() && attempts <= 30) {
+            WeaponState weapon = candidates.get(random.nextInt(candidates.size()));
+            if (weapon.inStock <= PLAYER_STOCK_CAP) {
+                if (group == 7) {
+                    int investment = Math.round((float) remaining / (2 + random.nextInt(24)));
+                    weapon.investmentMillions += investment;
+                    getHuman().moneyMillions -= investment;
+                    remaining -= investment;
+                    int unitsBought = 0;
+                    while (weapon.investmentMillions >= weapon.definition.costMillions
+                            && unitsBought < 15) {
+                        weapon.inStock++;
+                        weapon.investmentMillions -= weapon.definition.costMillions;
+                        Integer count = bought.get(weapon.definition.name);
+                        bought.put(weapon.definition.name, count == null ? 1 : count + 1);
+                        addToHighscore(getHuman(), 3, weapon.definition.level);
+                        unitsBought++;
+                    }
+                } else if (weapon.definition.costMillions <= remaining) {
+                    weapon.inStock++;
+                    getHuman().moneyMillions -= weapon.definition.costMillions;
+                    remaining -= weapon.definition.costMillions;
+                    Integer count = bought.get(weapon.definition.name);
+                    bought.put(weapon.definition.name, count == null ? 1 : count + 1);
+                    addToHighscore(getHuman(), 3, weapon.definition.level);
+                }
+            }
+            attempts++;
+            if ((group == 7 ? remaining <= 0 : remaining < minimumCost) || attempts > 30) {
+                break;
+            }
+        }
+        if (!bought.isEmpty()) {
+            StringBuilder summary = new StringBuilder("Weapons produced:");
+            for (Map.Entry<String, Integer> entry : bought.entrySet()) {
+                summary.append(' ').append(entry.getKey()).append(" x")
+                        .append(entry.getValue()).append(';');
+            }
+            messages.add(summary.toString());
+        }
+        if (remaining > 0 && !candidates.isEmpty()) {
+            messages.add("Money returned from production: " + remaining + ".000.000");
+        }
+    }
+
+    private int queuedActionIndex(Action action) {
+        for (int index = 0; index < queuedActions.size(); index++) {
+            if (queuedActions.get(index).action == action) {
+                return index;
+            }
+        }
+        return -1;
+    }
+
+    private void addToHighscore(PlayerState player, int actionIndex, int multiplier) {
+        int[] sourceWeights = {151, 1213, 1001, 2001, 3002, 200, 101, 910};
+        int points = sourceWeights[actionIndex] + random.nextInt(51);
+        player.score += points * multiplier * difficulty;
+    }
+
+    private boolean queuedTechnology(String technology) {
+        for (ActionOrder order : queuedActions) {
+            if (order.action == Action.RESEARCH && technology.equals(order.technology)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static int productionGroup(String category) {
+        for (int index = 0; index < STARTING_PRODUCTION_CATEGORIES.length; index++) {
+            if (STARTING_PRODUCTION_CATEGORIES[index].equals(category)) {
+                return PRODUCTION_GROUPS[index];
+            }
+        }
+        return 0;
+    }
+
+    private void trimMessages() {
         while (messages.size() > 4) {
             messages.remove(0);
         }
