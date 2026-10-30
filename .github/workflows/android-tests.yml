@@ -50,6 +50,9 @@ jobs:
           - id: setup-scoring-tests
             check: Game setup and scoring tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameSetupTest" --tests "com.example.worlddomination.game.simulation.FinalScoreBreakdownTest"'
+          - id: setup-rng-stream-tests
+            check: Setup selection RNG stream parity
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameSetupTest.seededSetupUsesSourceMenuDrawsAndNormalDifficulty" --tests "com.example.worlddomination.game.simulation.GameSetupTest.restartedSetupContinuesMenuRandomStreamIndependentOfMatchDraws"'
           - id: final-score-tests
             check: Final score breakdown tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.FinalScoreBreakdownTest"'

@@ -69,6 +69,28 @@ public final class GameSetup {
     private int playerColor = 1;
     private int startingBuilding = 2;
     private int candidateLeaderId;
+    private ReferenceRandom gameplayRandom;
+
+    /** Keeps the deterministic setup fixture used by non-UI simulation tests. */
+    public GameSetup() {
+    }
+
+    /**
+     * Initializes the full-version setup selections from the source RNG. The
+     * remaining random stream continues into game initialization.
+     */
+    public GameSetup(long seed) {
+        this(new ReferenceRandom(seed));
+    }
+
+    GameSetup(ReferenceRandom random) {
+        if (random == null) {
+            throw new IllegalArgumentException("Random stream cannot be null");
+        }
+        gameplayRandom = random;
+        playerColor = random.nextInt(COLORS.length) + 1;
+        startingBuilding = random.nextInt(BUILDING_NAMES.length) + 1;
+    }
 
     public static List<Leader> leaders() {
         return LEADER_VIEW;
@@ -185,5 +207,20 @@ public final class GameSetup {
 
     public boolean canStart() {
         return !selectedOpponentIds.isEmpty();
+    }
+
+    ReferenceRandom copyGameplayRandom() {
+        if (gameplayRandom == null) {
+            throw new IllegalStateException("Seeded setup is required to continue its random stream");
+        }
+        return gameplayRandom.copy();
+    }
+
+    /**
+     * Restarts the setup menu from its own source RNG stream. The match receives
+     * a copy of this stream, so gameplay draws must not affect the next menu.
+     */
+    public GameSetup createNextSetup() {
+        return new GameSetup(copyGameplayRandom());
     }
 }
