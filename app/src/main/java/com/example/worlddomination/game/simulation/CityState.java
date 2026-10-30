@@ -6,6 +6,8 @@ public final class CityState {
     public final int ownerId;
     public final int index;
     public int populationMillions;
+    /** True while a successful biological strike's contamination is shown. */
+    public boolean bioloaded;
 
     CityState(int id, int ownerId, int index, int populationMillions) {
         this.id = id;

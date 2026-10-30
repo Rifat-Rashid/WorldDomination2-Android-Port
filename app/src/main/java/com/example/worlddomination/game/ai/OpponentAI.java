@@ -114,9 +114,7 @@ public final class OpponentAI {
             }
 
             if (chosen == null) {
-                // The source always maintains two turn slots. Religion has no
-                // target or cost and is its final safe fallback.
-                chosen = simple(player.id, GameState.Action.MASS_MEDIA);
+                chosen = fallbackAction(state, player, random, slot, plannedWeaponUse);
             }
             decisions.add(chosen);
             if (slot == 1) {
@@ -138,6 +136,30 @@ public final class OpponentAI {
             }
         }
         return decisions;
+    }
+
+    private static Decision fallbackAction(GameState state, GameState.PlayerState player,
+                                           Random random, int slot,
+                                           Map<String, Integer> plannedWeaponUse) {
+        GameState.Action[] fallbackOrder = {
+                GameState.Action.MASS_MEDIA, GameState.Action.RESOURCES,
+                GameState.Action.ATTACK, GameState.Action.PREPARED_ATTACK,
+                GameState.Action.DEFENSE, GameState.Action.PROPAGANDA,
+                GameState.Action.DIPLOMACY, GameState.Action.PRODUCTION,
+                GameState.Action.RESEARCH
+        };
+        for (GameState.Action action : fallbackOrder) {
+            if (state.isActionBioloaded(player.id, action)) {
+                continue;
+            }
+            Decision fallback = planAction(state, player, action, random, slot,
+                    plannedWeaponUse);
+            if (fallback != null) {
+                return fallback;
+            }
+        }
+        // Combat actions are never bio-disabled; a no-target defense resolves as a safe no-op.
+        return simple(player.id, GameState.Action.DEFENSE);
     }
 
     private static void reserve(GameState.PlayerState player, Decision decision) {
@@ -258,6 +280,12 @@ public final class OpponentAI {
         scores.add(new ScoredAction(GameState.Action.RESOURCES, resources));
         scores.add(new ScoredAction(GameState.Action.PRODUCTION, production));
         scores.add(new ScoredAction(GameState.Action.RESEARCH, research));
+        for (int index = 0; index < scores.size(); index++) {
+            ScoredAction scored = scores.get(index);
+            if (state.isActionBioloaded(player.id, scored.action)) {
+                scores.set(index, new ScoredAction(scored.action, -999));
+            }
+        }
         return scores;
     }
 
@@ -291,6 +319,9 @@ public final class OpponentAI {
     private static Decision planAction(GameState state, GameState.PlayerState player,
                                        GameState.Action action, Random random, int slot,
                                        Map<String, Integer> plannedWeaponUse) {
+        if (state.isActionBioloaded(player.id, action)) {
+            return null;
+        }
         switch (action) {
             case ATTACK:
                 return planAttack(state, player, random, plannedWeaponUse);
