@@ -1,5 +1,6 @@
 package com.example.worlddomination.game.audio;
 
+import com.example.worlddomination.game.simulation.GameState;
 import org.junit.Test;
 
 import java.io.File;
@@ -8,14 +9,17 @@ import java.io.InputStream;
 import java.util.zip.GZIPInputStream;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public final class OriginalAudioTest {
     @Test
     public void everyMappedCueIsAnOriginalGzipWrappedMp3Asset() throws Exception {
         for (OriginalAudio.Cue cue : OriginalAudio.Cue.values()) {
-            assertTrue(OriginalAudio.internalPath(cue).endsWith(".mp3.gz"));
-            File asset = locateAsset(OriginalAudio.internalPath(cue));
+            assertTrue(OriginalAudio.internalPath(cue).endsWith(".mp3"));
+            assertEquals(OriginalAudio.internalPath(cue) + ".gz",
+                    OriginalAudio.sourceAssetPath(cue));
+            File asset = locateAsset(OriginalAudio.sourceAssetPath(cue));
             assertTrue("Missing original audio asset: " + cue.name(), asset.isFile());
             try (InputStream gzip = new GZIPInputStream(new FileInputStream(asset))) {
                 int first = gzip.read();
@@ -33,8 +37,111 @@ public final class OriginalAudioTest {
 
     @Test
     public void themeUsesTheRecoveredWorldDominationTrack() {
-        assertEquals("original/runtime/audio/2_WDTheme.wav.mp3.gz",
+        assertEquals("original/runtime/audio/2_WDTheme.wav.mp3",
                 OriginalAudio.internalPath(OriginalAudio.Cue.THEME));
+    }
+
+    @Test
+    public void endgameUsesRecoveredCounterAndBonusSounds() {
+        assertEquals("original/runtime/audio/31_Score counter.Mp3.mp3",
+                OriginalAudio.internalPath(OriginalAudio.Cue.SCORE_COUNTER));
+        assertEquals("original/runtime/audio/34_Satelite multiplier.Mp3.mp3",
+                OriginalAudio.internalPath(OriginalAudio.Cue.SATELLITE_MULTIPLIER));
+        assertEquals("original/runtime/audio/75_Country domination bonus.Mp3.mp3",
+                OriginalAudio.internalPath(OriginalAudio.Cue.FLAG_BONUS));
+        assertEquals("original/runtime/audio/48_Loose.Mp3.mp3",
+                OriginalAudio.internalPath(OriginalAudio.Cue.DEFEAT));
+    }
+
+    @Test
+    public void resolvedCombatEventsUseTheFlashUnitAndExplosionSoundMap() {
+        assertEquals(OriginalAudio.Cue.SOLDIER_GUN,
+                OriginalAudio.cueForCombatEvent(
+                        GameState.CombatEventType.DIRECT_ATTACK, null));
+        assertEquals(OriginalAudio.Cue.EXPLOSION_SMALL3,
+                OriginalAudio.cueForCombatEvent(
+                        GameState.CombatEventType.STRIKE_INTERCEPTED, "warhead4"));
+        assertEquals(OriginalAudio.Cue.EXPLOSION_SMALL3,
+                OriginalAudio.cueForCombatEvent(
+                        GameState.CombatEventType.STRIKE_IMPACT, "warhead1"));
+        assertEquals(OriginalAudio.Cue.EXPLOSION_MEDIUM3,
+                OriginalAudio.cueForCombatEvent(
+                        GameState.CombatEventType.STRIKE_IMPACT, "bioload2"));
+        assertEquals(OriginalAudio.Cue.EXPLOSION_MEDIUM,
+                OriginalAudio.cueForCombatEvent(
+                        GameState.CombatEventType.STRIKE_IMPACT, "warhead3"));
+        assertEquals(OriginalAudio.Cue.EXPLOSION_LARGE2,
+                OriginalAudio.cueForCombatEvent(
+                        GameState.CombatEventType.STRIKE_IMPACT, "warhead4"));
+        assertEquals(OriginalAudio.Cue.EXPLOSION_LARGE,
+                OriginalAudio.cueForCombatEvent(
+                        GameState.CombatEventType.STRIKE_IMPACT, "bioload4"));
+        assertNull(OriginalAudio.cueForCombatEvent(
+                GameState.CombatEventType.STRIKE_IMPACT, "unmapped-payload"));
+        assertNull(OriginalAudio.cueForCombatEvent(null, null));
+        assertNull(OriginalAudio.cueForCombatEvent((GameState.CombatEvent) null));
+    }
+
+    @Test
+    public void combatCuesPointToTheOriginalPackagedSounds() {
+        assertEquals("original/runtime/audio/14_unit_Soldier gun.wav.mp3",
+                OriginalAudio.internalPath(OriginalAudio.Cue.SOLDIER_GUN));
+        assertEquals("original/runtime/audio/16_unit_seal gun.wav.mp3",
+                OriginalAudio.internalPath(OriginalAudio.Cue.SEAL_GUN));
+        assertEquals("original/runtime/audio/7_unit_Suicide scream.wav.mp3",
+                OriginalAudio.internalPath(OriginalAudio.Cue.SUICIDE_SCREAM));
+        assertEquals("original/runtime/audio/98_Explode small3.wav.mp3",
+                OriginalAudio.internalPath(OriginalAudio.Cue.EXPLOSION_SMALL3));
+        assertEquals("original/runtime/audio/71_Explode medium 3.wav.mp3",
+                OriginalAudio.internalPath(OriginalAudio.Cue.EXPLOSION_MEDIUM3));
+        assertEquals("original/runtime/audio/70_explode medium.wav.mp3",
+                OriginalAudio.internalPath(OriginalAudio.Cue.EXPLOSION_MEDIUM));
+        assertEquals("original/runtime/audio/97_Explode large2.wav.mp3",
+                OriginalAudio.internalPath(OriginalAudio.Cue.EXPLOSION_LARGE2));
+        assertEquals("original/runtime/audio/72_Explode large.wav.mp3",
+                OriginalAudio.internalPath(OriginalAudio.Cue.EXPLOSION_LARGE));
+    }
+
+    @Test
+    public void actionPanelsUseTheirOriginalAmbientSoundAssignments() {
+        assertEquals(OriginalAudio.Cue.RESOURCES_AMBIENT,
+                OriginalAudio.ambientForAction(GameState.Action.RESOURCES));
+        assertEquals(OriginalAudio.Cue.PRODUCTION_AMBIENT,
+                OriginalAudio.ambientForAction(GameState.Action.PRODUCTION));
+        assertEquals(OriginalAudio.Cue.TECHNOLOGY_AMBIENT,
+                OriginalAudio.ambientForAction(GameState.Action.RESEARCH));
+        assertEquals(OriginalAudio.Cue.MASS_MEDIA_AMBIENT,
+                OriginalAudio.ambientForAction(GameState.Action.MASS_MEDIA));
+        assertEquals(OriginalAudio.Cue.DIPLOMACY_AMBIENT,
+                OriginalAudio.ambientForAction(GameState.Action.DIPLOMACY));
+        assertEquals(OriginalAudio.Cue.DEFENSE_AMBIENT,
+                OriginalAudio.ambientForAction(GameState.Action.DEFENSE));
+        assertEquals(OriginalAudio.Cue.GAME_AMBIENT,
+                OriginalAudio.ambientForAction(GameState.Action.ATTACK));
+        assertEquals(OriginalAudio.Cue.GAME_AMBIENT,
+                OriginalAudio.ambientForAction(GameState.Action.PREPARED_ATTACK));
+        assertEquals(OriginalAudio.Cue.GAME_AMBIENT,
+                OriginalAudio.ambientForAction(GameState.Action.PROPAGANDA));
+        assertEquals(OriginalAudio.Cue.GAME_AMBIENT,
+                OriginalAudio.ambientForAction(null));
+    }
+
+    @Test
+    public void ambienceCuePathsMatchTheOriginalMenuMappings() {
+        assertEquals("original/runtime/audio/65_General ambient.wav.mp3",
+                OriginalAudio.internalPath(OriginalAudio.Cue.GAME_AMBIENT));
+        assertEquals("original/runtime/audio/35_Resources ambient loop.wav.mp3",
+                OriginalAudio.internalPath(OriginalAudio.Cue.RESOURCES_AMBIENT));
+        assertEquals("original/runtime/audio/41_Production Ambient loop.wav.mp3",
+                OriginalAudio.internalPath(OriginalAudio.Cue.PRODUCTION_AMBIENT));
+        assertEquals("original/runtime/audio/96_Ambience Diplomacy.wav.mp3",
+                OriginalAudio.internalPath(OriginalAudio.Cue.DIPLOMACY_AMBIENT));
+        assertEquals("original/runtime/audio/74_Defence.wav.mp3",
+                OriginalAudio.internalPath(OriginalAudio.Cue.DEFENSE_AMBIENT));
+        assertEquals("original/runtime/audio/47_Massmedia ambient loop.wav.mp3",
+                OriginalAudio.internalPath(OriginalAudio.Cue.MASS_MEDIA_AMBIENT));
+        assertEquals("original/runtime/audio/28_Technology ambient loop.wav.mp3",
+                OriginalAudio.internalPath(OriginalAudio.Cue.TECHNOLOGY_AMBIENT));
     }
 
     private static File locateAsset(String relativePath) {

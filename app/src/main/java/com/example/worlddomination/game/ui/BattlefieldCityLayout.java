@@ -27,6 +27,7 @@ public final class BattlefieldCityLayout {
             {590.05f, 490.25f, 433.70f, 418.70f, 585.15f},
             {577.75f, 502.50f, 429.70f, 397.90f, 573.90f}
     };
+    private static final int[] CITY_RENDER_ORDER = createCityRenderOrder();
 
     private BattlefieldCityLayout() { }
 
@@ -58,19 +59,40 @@ public final class BattlefieldCityLayout {
     /** Returns the source city anchor's x-coordinate in libGDX world space. */
     public static float x(Rectangle mapBounds, int playerId, int cityIndex) {
         validateCity(playerId, cityIndex);
-        float scale = sourceScale(mapBounds);
-        float marginX = (mapBounds.width - SOURCE_WIDTH * scale) / 2f;
-        return mapBounds.x + marginX + CITY_X[playerId][cityIndex] * scale
-                + islandShift(playerId, marginX);
+        return sourceX(mapBounds, CITY_X[playerId][cityIndex], playerId);
     }
 
     /** Returns the source city anchor's y-coordinate in libGDX world space. */
     public static float y(Rectangle mapBounds, int playerId, int cityIndex) {
         validateCity(playerId, cityIndex);
+        return sourceY(mapBounds, CITY_Y[playerId][cityIndex]);
+    }
+
+    /** Projects a Flash x-coordinate and applies the owning island's crop offset. */
+    public static float sourceX(Rectangle mapBounds, float sourceX, int playerId) {
+        if (playerId < 0 || playerId >= PLAYER_COUNT) {
+            throw new IllegalArgumentException("Invalid battlefield player");
+        }
+        float scale = sourceScale(mapBounds);
+        float marginX = (mapBounds.width - SOURCE_WIDTH * scale) / 2f;
+        return mapBounds.x + marginX + sourceX * scale + islandShift(playerId, marginX);
+    }
+
+    /** Projects a Flash top-down y-coordinate into libGDX world coordinates. */
+    public static float sourceY(Rectangle mapBounds, float sourceY) {
         float scale = sourceScale(mapBounds);
         float marginY = (mapBounds.height - SOURCE_HEIGHT * scale) / 2f;
-        float topDownY = marginY + CITY_Y[playerId][cityIndex] * scale;
-        return mapBounds.y + mapBounds.height - topDownY;
+        return mapBounds.y + mapBounds.height - marginY - sourceY * scale;
+    }
+
+    public static float sourceCityX(int playerId, int cityIndex) {
+        validateCity(playerId, cityIndex);
+        return CITY_X[playerId][cityIndex];
+    }
+
+    public static float sourceCityY(int playerId, int cityIndex) {
+        validateCity(playerId, cityIndex);
+        return CITY_Y[playerId][cityIndex];
     }
 
     /** Returns the city-selection outline radius in libGDX world space. */
@@ -79,11 +101,46 @@ public final class BattlefieldCityLayout {
                 * sourceScale(mapBounds));
     }
 
-    private static float sourceScale(Rectangle mapBounds) {
+    /** Source image transform used by both map sprites and city sprite offsets. */
+    public static float sourceScale(Rectangle mapBounds) {
         if (mapBounds.width <= 0f || mapBounds.height <= 0f) {
             throw new IllegalArgumentException("Map bounds must have positive dimensions");
         }
         return Math.min(mapBounds.width / SOURCE_WIDTH, mapBounds.height / SOURCE_HEIGHT);
+    }
+
+    /** Source City image depths, sorted back-to-front once and reused by the renderer. */
+    public static int[] cityRenderOrder() {
+        return CITY_RENDER_ORDER.clone();
+    }
+
+    private static int[] createCityRenderOrder() {
+        int[] order = new int[PLAYER_COUNT * CITIES_PER_PLAYER];
+        for (int cityAddress = 0; cityAddress < order.length; cityAddress++) {
+            order[cityAddress] = cityAddress;
+        }
+        for (int i = 1; i < order.length; i++) {
+            int cityAddress = order[i];
+            int depth = sourceDepth(cityAddress);
+            int destination = i;
+            while (destination > 0 && sourceDepth(order[destination - 1]) > depth) {
+                order[destination] = order[destination - 1];
+                destination--;
+            }
+            order[destination] = cityAddress;
+        }
+        return order;
+    }
+
+    public static int sourceDepth(int cityAddress) {
+        if (cityAddress < 0 || cityAddress >= PLAYER_COUNT * CITIES_PER_PLAYER) {
+            throw new IllegalArgumentException("Invalid battlefield city address");
+        }
+        int playerId = cityAddress / CITIES_PER_PLAYER;
+        int cityIndex = cityAddress % CITIES_PER_PLAYER;
+        int sourceCityId = cityAddress + 1;
+        return (int) Math.floor((CITY_Y[playerId][cityIndex] + 15f) / 10f) * 500
+                + 4 + sourceCityId;
     }
 
     private static float islandShift(int playerId, float marginX) {

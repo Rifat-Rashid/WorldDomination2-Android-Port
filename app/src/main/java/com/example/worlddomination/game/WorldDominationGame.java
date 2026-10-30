@@ -14,15 +14,33 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.example.worlddomination.game.audio.OriginalAudio;
+import com.example.worlddomination.game.assets.OriginalCityAssets;
+import com.example.worlddomination.game.assets.OriginalFlashAnimationAssets;
 import com.example.worlddomination.game.assets.OriginalUiAssets;
+import com.example.worlddomination.game.rendering.BattleAnimationSequence;
+import com.example.worlddomination.game.rendering.BattleExplosionRenderer;
+import com.example.worlddomination.game.rendering.BattlefieldCityRenderer;
+import com.example.worlddomination.game.rendering.FlashBattleRoutes;
+import com.example.worlddomination.game.rendering.FlashBattleUnitRenderer;
+import com.example.worlddomination.game.rendering.FlashApacheMarineAnimation;
+import com.example.worlddomination.game.rendering.FlashSuicideBomberAnimation;
+import com.example.worlddomination.game.rendering.FlashSoldierOneAnimation;
+import com.example.worlddomination.game.rendering.FlashAnimationTimeline;
+import com.example.worlddomination.game.rendering.SourceCombatAnimationMapping;
 import com.example.worlddomination.game.simulation.GameSetup;
 import com.example.worlddomination.game.simulation.GameState;
 import com.example.worlddomination.game.simulation.CityState;
+import com.example.worlddomination.game.simulation.ReferenceRandom;
 import com.example.worlddomination.game.ui.BattlefieldCityLayout;
 import com.example.worlddomination.game.ui.MatchOutcomePresentation;
+import com.example.worlddomination.game.ui.MatchOutcomeSequence;
 import com.example.worlddomination.game.ui.ScrollPaneState;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /** Native OpenGL ES game screen; it loads no Python, browser, or network runtime. */
 public final class WorldDominationGame extends ApplicationAdapter implements InputProcessor {
@@ -87,9 +105,27 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             new Color(0.89f, 0.79f, 0.12f, 1f)
     };
 
+    private static final class PendingBattleAnimation {
+        final GameState.CombatEvent event;
+        final int order;
+
+        PendingBattleAnimation(GameState.CombatEvent event, int order) {
+            this.event = event;
+            this.order = order;
+        }
+    }
+
     private GameState game;
     private GameSetup setup;
     private final OriginalAudio audio = new OriginalAudio();
+    private final List<BattleAnimationSequence> battleAnimations = new ArrayList<>();
+    private final List<FlashSoldierOneAnimation> soldierBattleAnimations = new ArrayList<>();
+    private final List<FlashApacheMarineAnimation> apacheMarineAnimations = new ArrayList<>();
+    private final List<FlashSuicideBomberAnimation> suicideBomberAnimations = new ArrayList<>();
+    private final List<PendingBattleAnimation> pendingBattleAnimations = new ArrayList<>();
+    private final MatchOutcomeSequence outcomeSequence =
+            new MatchOutcomeSequence(System.nanoTime());
+    private long scoreCounterSoundId = -1L;
     private final ExtendViewport viewport = new ExtendViewport(BASE_WIDTH, BASE_HEIGHT, 1400f, 800f);
     private final OrthographicCamera camera = new OrthographicCamera();
     private final Rectangle leftPanel = new Rectangle();
@@ -157,6 +193,12 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private ShapeRenderer shapes;
     private BitmapFont font;
     private OriginalUiAssets uiAssets;
+    private OriginalCityAssets cityAssets;
+    private OriginalFlashAnimationAssets flashAnimationAssets;
+    private BattlefieldCityRenderer cityRenderer;
+    private BattleExplosionRenderer explosionRenderer;
+    private FlashBattleUnitRenderer battleUnitRenderer;
+    private java.util.Map<String, FlashBattleRoutes.Point> battleAnchors;
     private float accumulator;
     private float worldWidth;
     private float worldHeight;
@@ -237,6 +279,14 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         font = new BitmapFont();
         font.setColor(Color.WHITE);
         uiAssets = new OriginalUiAssets();
+        cityAssets = new OriginalCityAssets();
+        cityRenderer = new BattlefieldCityRenderer(cityAssets);
+        flashAnimationAssets = new OriginalFlashAnimationAssets();
+        explosionRenderer = new BattleExplosionRenderer(flashAnimationAssets);
+        battleUnitRenderer = new FlashBattleUnitRenderer(flashAnimationAssets);
+        battleAnchors = FlashBattleRoutes.parseAnchors(
+                Gdx.files.internal("original/runtime/battle_anchors.json")
+                        .readString("UTF-8"));
         audio.initialize();
         setup = new GameSetup();
         java.util.Random setupRandom = new java.util.Random(System.nanoTime());
@@ -430,6 +480,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         if (safeAreaChanged) {
             layout(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         }
+        if (flashAnimationAssets != null) {
+            flashAnimationAssets.update();
+            preparePendingBattleAnimations();
+        }
         float frameSeconds = Math.min(Gdx.graphics.getDeltaTime(), 0.25f);
         accumulator = Math.min(accumulator + frameSeconds, FIXED_STEP * 6f);
         while (accumulator >= FIXED_STEP) {
@@ -444,6 +498,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         camera.update();
         if (game == null) {
             drawSetupScreen();
+        } else if (MatchOutcomePresentation.isFinished(game.getMatchStatus())
+                && outcomeSequence.isEndgameVisible()) {
+            drawEndgameOverlay();
         } else {
             drawPanelsAndMap();
             drawTextAndControls();
@@ -451,9 +508,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 drawDiplomacyResponseModal();
             } else if (modalOpen) {
                 drawActionModal();
-            }
-            if (MatchOutcomePresentation.isFinished(game.getMatchStatus())) {
-                drawEndgameOverlay();
             }
         }
         if (showExitPromptSeconds > 0f) {
@@ -464,7 +518,123 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private void fixedUpdate(float seconds) {
         navigationScroll.tick(seconds);
         equipmentScroll.tick(seconds);
+        cityRenderer.tick(game);
         showExitPromptSeconds = Math.max(0f, showExitPromptSeconds - seconds);
+        advanceBattleAnimations();
+        advanceOutcomeSequence();
+    }
+
+    private void advanceBattleAnimations() {
+        if (flashAnimationAssets == null || !flashAnimationAssets.isLoaded()) {
+            return;
+        }
+        for (int i = battleAnimations.size() - 1; i >= 0; i--) {
+            BattleAnimationSequence animation = battleAnimations.get(i);
+            if (animation.tick() && animation.audioCue != null) {
+                audio.play(animation.audioCue);
+            }
+            if (animation.isFinished()) {
+                battleAnimations.remove(i);
+            }
+        }
+        for (int i = soldierBattleAnimations.size() - 1; i >= 0; i--) {
+            FlashSoldierOneAnimation animation = soldierBattleAnimations.get(i);
+            animation.tick();
+            while (animation.takeAudioCue()) {
+                audio.play(animation.getAudioCue());
+            }
+            if (animation.isFinished()) {
+                soldierBattleAnimations.remove(i);
+            }
+        }
+        for (int i = apacheMarineAnimations.size() - 1; i >= 0; i--) {
+            FlashApacheMarineAnimation animation = apacheMarineAnimations.get(i);
+            animation.tick();
+            while (animation.takeAudioCue()) {
+                audio.play(animation.getAudioCue());
+            }
+            if (animation.isFinished()) {
+                apacheMarineAnimations.remove(i);
+            }
+        }
+        for (int i = suicideBomberAnimations.size() - 1; i >= 0; i--) {
+            FlashSuicideBomberAnimation animation = suicideBomberAnimations.get(i);
+            animation.tick();
+            while (animation.takeAudioCue()) {
+                audio.play(animation.getAudioCue());
+            }
+            if (animation.isFinished()) {
+                suicideBomberAnimations.remove(i);
+            }
+        }
+    }
+
+    private void preparePendingBattleAnimations() {
+        for (int i = 0; i < pendingBattleAnimations.size();) {
+            PendingBattleAnimation pending = pendingBattleAnimations.get(i);
+            String linkage = SourceCombatAnimationMapping.linkageFor(pending.event);
+            FlashAnimationTimeline timeline = linkage == null ? null
+                    : flashAnimationAssets.getTimeline(linkage);
+            if (timeline != null) {
+                battleAnimations.add(new BattleAnimationSequence(timeline,
+                        pending.event.defenderPlayerId, pending.event.cityIndex,
+                        pending.order * 36,
+                        OriginalAudio.cueForCombatEvent(pending.event)));
+                pendingBattleAnimations.remove(i);
+            } else if (flashAnimationAssets.isLoaded()) {
+                OriginalAudio.Cue cue = OriginalAudio.cueForCombatEvent(pending.event);
+                if (cue != null) {
+                    audio.play(cue);
+                }
+                pendingBattleAnimations.remove(i);
+            } else {
+                i++;
+            }
+        }
+    }
+
+    private void advanceOutcomeSequence() {
+        if (game == null || !MatchOutcomePresentation.isFinished(game.getMatchStatus())) {
+            if (outcomeSequence.getPhase() != MatchOutcomeSequence.Phase.INACTIVE) {
+                stopScoreCounterSound();
+                outcomeSequence.reset();
+            }
+            return;
+        }
+
+        if (outcomeSequence.getOutcome() != game.getMatchStatus()) {
+            stopScoreCounterSound();
+            outcomeSequence.begin(game.getMatchStatus(), game.getFinalScoreBreakdown());
+            modalOpen = false;
+            audio.stopAmbient();
+        }
+        playOutcomeEvents(outcomeSequence.tick());
+    }
+
+    private void playOutcomeEvents(int events) {
+        if ((events & MatchOutcomeSequence.EVENT_DEFEAT) != 0) {
+            audio.play(OriginalAudio.Cue.DEFEAT);
+        }
+        if ((events & MatchOutcomeSequence.EVENT_START_SCORE_COUNTER) != 0) {
+            stopScoreCounterSound();
+            scoreCounterSoundId = audio.loop(OriginalAudio.Cue.SCORE_COUNTER);
+        }
+        if ((events & MatchOutcomeSequence.EVENT_STOP_SCORE_COUNTER) != 0) {
+            stopScoreCounterSound();
+        }
+        if ((events & MatchOutcomeSequence.EVENT_SATELLITE_BONUS) != 0) {
+            audio.play(OriginalAudio.Cue.SATELLITE_MULTIPLIER);
+        }
+        if ((events & MatchOutcomeSequence.EVENT_FLAG_BONUS) != 0) {
+            audio.play(OriginalAudio.Cue.FLAG_BONUS);
+        }
+    }
+
+    private void stopScoreCounterSound() {
+        if (scoreCounterSoundId >= 0L) {
+            audio.stop(OriginalAudio.Cue.SCORE_COUNTER, scoreCounterSoundId);
+            scoreCounterSoundId = -1L;
+        }
     }
 
     /** Safe insets arrive from the Android UI thread and are applied on the game thread. */
@@ -630,6 +800,11 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         drawPanelTexture(actionPanel);
         batch.draw(uiAssets.battleMap, mapBounds.x, mapBounds.y,
                 mapBounds.width, mapBounds.height);
+        cityRenderer.draw(batch, mapBounds, game);
+        battleUnitRenderer.draw(batch, mapBounds, soldierBattleAnimations);
+        battleUnitRenderer.drawApacheMarine(batch, mapBounds, apacheMarineAnimations);
+        battleUnitRenderer.drawSuicideBomber(batch, mapBounds, suicideBomberAnimations);
+        explosionRenderer.draw(batch, mapBounds, battleAnimations);
         drawContained(uiAssets.logo, logoPanel.x + 7f, logoPanel.y + 2f,
                 logoPanel.width - 14f, logoPanel.height - 4f);
         drawPortraits();
@@ -1702,7 +1877,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     }
 
     private void drawEndgameOverlay() {
-        GameState.MatchStatus outcome = game.getMatchStatus();
+        GameState.MatchStatus outcome = outcomeSequence.getOutcome();
+        boolean scoreStarted = outcomeSequence.isScoreStarted();
         shapes.setProjectionMatrix(camera.combined);
         shapes.begin(ShapeRenderer.ShapeType.Filled);
         shapes.setColor(0f, 0f, 0f, 0.70f);
@@ -1711,42 +1887,77 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         shapes.setColor(MODAL_ORANGE);
         shapes.rect(modal.x + 3f, modal.y + modal.height - 29f,
                 modal.width - 6f, 25f);
-        shapes.rect(modal.x + 3f, modal.y + 3f,
-                modal.width - 6f, 25f);
+        if (scoreStarted) {
+            shapes.rect(modal.x + 3f, modal.y + 3f,
+                    modal.width - 6f, 25f);
+        }
         shapes.end();
 
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
         drawPanelTexture(modal);
-        drawOriginalButton(modalAccept);
+        if (scoreStarted) {
+            drawOriginalButton(modalAccept);
+        }
         batch.end();
 
-        shapes.begin(ShapeRenderer.ShapeType.Filled);
-        drawButtonGradient(modalAccept, true);
-        shapes.end();
+        if (scoreStarted) {
+            shapes.begin(ShapeRenderer.ShapeType.Filled);
+            drawButtonGradient(modalAccept, true);
+            shapes.end();
+        }
 
         batch.begin();
         font.setColor(Color.WHITE);
         drawCentered(MatchOutcomePresentation.title(outcome),
                 modal.x + modal.width / 2f, modal.y + modal.height - 12f, 12f);
         font.setColor(TITLE_TEXT);
-        drawCentered(MatchOutcomePresentation.message(outcome),
-                modal.x + modal.width / 2f, modal.y + modal.height * 0.67f, 8f);
-        drawCentered("FINAL SCORE", modal.x + modal.width / 2f,
-                modal.y + modal.height * 0.48f, 8f);
-        drawCentered(MatchOutcomePresentation.formatScore(game.getFinalScore()),
-                modal.x + modal.width / 2f, modal.y + modal.height * 0.37f, 15f);
-        drawCentered("NEW GAME", modalAccept.x + modalAccept.width / 2f,
-                modalAccept.y + modalAccept.height / 2f + 3f, 8f);
+        if (scoreStarted) {
+            drawWrappedCentered(MatchOutcomePresentation.message(outcome),
+                    modal.x + 9f, modal.y + modal.height * 0.70f,
+                    modal.width - 18f, 8f);
+            drawCentered("FINAL SCORE", modal.x + modal.width / 2f,
+                    modal.y + modal.height * 0.48f, 8f);
+            if (outcomeSequence.isScoreVisible()) {
+                drawCentered(outcomeSequence.getScoreText(),
+                        modal.x + modal.width / 2f, modal.y + modal.height * 0.37f, 15f);
+            }
+            if (!outcomeSequence.getSatelliteBonusText().isEmpty()) {
+                drawCentered(outcomeSequence.getSatelliteBonusText(),
+                        modal.x + modal.width / 2f, modal.y + modal.height * 0.25f, 7f);
+            }
+            if (!outcomeSequence.getFlagBonusText().isEmpty()) {
+                drawCentered(outcomeSequence.getFlagBonusText(),
+                        modal.x + modal.width / 2f, modal.y + modal.height * 0.18f, 7f);
+            }
+        }
+        if (scoreStarted) {
+            drawCentered("NEW GAME", modalAccept.x + modalAccept.width / 2f,
+                    modalAccept.y + modalAccept.height / 2f + 3f, 8f);
+        }
         batch.end();
 
         shapes.begin(ShapeRenderer.ShapeType.Line);
         drawPanelEdges(modal);
-        drawButtonEdges(modalAccept);
+        if (scoreStarted) {
+            drawButtonEdges(modalAccept);
+        }
         shapes.end();
     }
 
+    private void drawWrappedCentered(String text, float x, float baselineY,
+                                     float targetWidth, float targetHeight) {
+        float originalScale = font.getScaleX();
+        float scale = targetHeight / Math.max(font.getLineHeight(), 1f);
+        font.getData().setScale(scale);
+        font.draw(batch, text, x, baselineY, targetWidth, Align.center, true);
+        font.getData().setScale(originalScale);
+    }
+
     private void beginNewGameSetup() {
+        stopScoreCounterSound();
+        audio.stopAmbient();
+        outcomeSequence.reset();
         setup = new GameSetup();
         java.util.Random setupRandom = new java.util.Random(System.nanoTime());
         setup.setPlayerColor(setupRandom.nextInt(5) + 1);
@@ -1757,6 +1968,11 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         showExitPromptSeconds = 0f;
         accumulator = 0f;
         game = null;
+        battleAnimations.clear();
+        soldierBattleAnimations.clear();
+        apacheMarineAnimations.clear();
+        suicideBomberAnimations.clear();
+        pendingBattleAnimations.clear();
     }
 
     private void drawDiplomacyResponseModal() {
@@ -1927,6 +2143,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             if (!action.isPorted()) {
                 audio.play(OriginalAudio.Cue.ACTION_SWITCH);
                 game.cancelSelection();
+                audio.playAmbient(OriginalAudio.Cue.GAME_AMBIENT);
                 continue;
             }
             if (game.getSelectedAction() == action) {
@@ -1934,6 +2151,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 game.cancelSelection();
                 modalOpen = false;
                 audio.play(OriginalAudio.Cue.ACTION_CLOSE);
+                audio.playAmbient(OriginalAudio.Cue.GAME_AMBIENT);
             } else {
                 audio.play(OriginalAudio.Cue.ACTION_SWITCH);
                 game.selectAction(action);
@@ -1944,6 +2162,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 if (modalOpen) {
                     audio.play(OriginalAudio.Cue.ACTION_OPEN);
                 }
+                audio.playAmbient(modalOpen
+                        ? OriginalAudio.ambientForAction(action)
+                        : OriginalAudio.Cue.GAME_AMBIENT);
                 if (modalOpen && action == GameState.Action.PREPARED_ATTACK) {
                     initializePreparedAttackSelection();
                 } else if (modalOpen && action == GameState.Action.DEFENSE) {
@@ -2002,9 +2223,16 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         } else if (setupStartButton.contains(x, y)) {
             if (setup.canStart()) {
                 game = new GameState(setup, System.nanoTime());
+                cityRenderer.reset(game);
+                battleAnimations.clear();
+                soldierBattleAnimations.clear();
+                apacheMarineAnimations.clear();
+                suicideBomberAnimations.clear();
+                pendingBattleAnimations.clear();
                 modalOpen = false;
                 accumulator = 0f;
                 audio.play(OriginalAudio.Cue.ACTION_ACCEPT);
+                audio.playAmbient(OriginalAudio.Cue.GAME_AMBIENT);
             } else {
                 setupMessage = "SELECT AT LEAST ONE RIVAL BEFORE STARTING";
                 showSetupMessage = true;
@@ -2233,15 +2461,19 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             activateSetupAt(x, y);
             return;
         }
-        if (muteButton.contains(x, y)) {
-            audio.toggleMuted();
+        if (MatchOutcomePresentation.isFinished(game.getMatchStatus())) {
+            if (outcomeSequence.isEndgameVisible()) {
+                if (outcomeSequence.isScoreStarted() && modalAccept.contains(x, y)) {
+                    beginNewGameSetup();
+                    audio.play(OriginalAudio.Cue.ACTION_CLOSE);
+                }
+            } else if (muteButton.contains(x, y)) {
+                audio.toggleMuted();
+            }
             return;
         }
-        if (MatchOutcomePresentation.isFinished(game.getMatchStatus())) {
-            if (modalAccept.contains(x, y)) {
-                beginNewGameSetup();
-                audio.play(OriginalAudio.Cue.ACTION_CLOSE);
-            }
+        if (muteButton.contains(x, y)) {
+            audio.toggleMuted();
             return;
         }
         if (game.getPendingHumanDiplomacyProposal() != null) {
@@ -2250,12 +2482,14 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                     game.cancelSelection();
                     modalOpen = false;
                     audio.play(OriginalAudio.Cue.ACTION_ACCEPT);
+                    audio.playAmbient(OriginalAudio.Cue.GAME_AMBIENT);
                 }
             } else if (modalCancel.contains(x, y)) {
                 if (game.respondToDiplomacyProposal(false)) {
                     game.cancelSelection();
                     modalOpen = false;
                     audio.play(OriginalAudio.Cue.ACTION_CLOSE);
+                    audio.playAmbient(OriginalAudio.Cue.GAME_AMBIENT);
                 }
             }
             return;
@@ -2424,11 +2658,13 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 if (game.acceptSelectedAction()) {
                     modalOpen = false;
                     audio.play(OriginalAudio.Cue.ACTION_ACCEPT);
+                    audio.playAmbient(OriginalAudio.Cue.GAME_AMBIENT);
                 }
             } else if (modalCancel.contains(x, y)) {
                 game.cancelSelection();
                 modalOpen = false;
                 audio.play(OriginalAudio.Cue.ACTION_CLOSE);
+                audio.playAmbient(OriginalAudio.Cue.GAME_AMBIENT);
             }
             return;
         }
@@ -2442,6 +2678,60 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         } else if (confirmButton.contains(x, y) && game.getQueuedActionCount() == 2) {
             game.confirmTurn();
             audio.play(OriginalAudio.Cue.ACTION_ACCEPT);
+            int animationIndex = 0;
+            ReferenceRandom presentationRandom = game.createPresentationRandomCopy();
+            for (GameState.CombatEvent event : game.getLastTurnCombatEvents()) {
+                OriginalAudio.Cue cue = OriginalAudio.cueForCombatEvent(event);
+                if (FlashBattleRoutes.supports(event)) {
+                    FlashBattleRoutes.SoldierOneAttack route =
+                            FlashBattleRoutes.createSoldierOneAttack(
+                                    event.attackerPlayerId, event.defenderPlayerId,
+                                    event.cityIndex, battleAnchors, presentationRandom);
+                    soldierBattleAnimations.add(new FlashSoldierOneAnimation(route,
+                            presentationRandom, cue, animationIndex * 36));
+                    animationIndex++;
+                    continue;
+                }
+                if (FlashBattleRoutes.supportsApacheMarine(event)) {
+                    FlashBattleRoutes.ApacheMarineAttack route =
+                            FlashBattleRoutes.createSoldierTwoAttack(
+                                    event.attackerPlayerId, event.defenderPlayerId,
+                                    event.cityIndex, event.actionBuildingSlot,
+                                    battleAnchors, presentationRandom);
+                    apacheMarineAnimations.add(new FlashApacheMarineAnimation(route,
+                            presentationRandom, cue, animationIndex * 36));
+                    animationIndex++;
+                    continue;
+                }
+                if (FlashBattleRoutes.supportsSuicideBomber(event)) {
+                    FlashBattleRoutes.SuicideBomberAttack route =
+                            FlashBattleRoutes.createSuicideBomberAttack(
+                                    event.attackerPlayerId, event.defenderPlayerId,
+                                    event.cityIndex, event.actionBuildingSlot, battleAnchors);
+                    suicideBomberAnimations.add(new FlashSuicideBomberAnimation(route,
+                            cue, animationIndex * 36));
+                    animationIndex++;
+                    continue;
+                }
+                String linkage = SourceCombatAnimationMapping.linkageFor(event);
+                FlashAnimationTimeline timeline = linkage == null ? null
+                        : flashAnimationAssets.getTimeline(linkage);
+                if (timeline != null) {
+                    battleAnimations.add(new BattleAnimationSequence(timeline,
+                            event.defenderPlayerId, event.cityIndex,
+                            animationIndex * 36, cue));
+                    animationIndex++;
+                } else if (linkage != null && !flashAnimationAssets.isLoaded()) {
+                    pendingBattleAnimations.add(new PendingBattleAnimation(event,
+                            animationIndex));
+                    animationIndex++;
+                } else if (cue != null) {
+                    audio.play(cue);
+                }
+            }
+            if (game.getPendingHumanDiplomacyProposal() != null) {
+                audio.playAmbient(OriginalAudio.Cue.DIPLOMACY_AMBIENT);
+            }
         } else if (actionSlots[0].contains(x, y)) {
             game.removeQueuedAction(0);
             audio.play(OriginalAudio.Cue.ACTION_CLOSE);
@@ -2501,6 +2791,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         if (modalOpen) {
             modalOpen = false;
             game.cancelSelection();
+            audio.playAmbient(OriginalAudio.Cue.GAME_AMBIENT);
             return true;
         }
         if (game.getQueuedActionCount() > 0) {
@@ -2625,8 +2916,19 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     @Override
     public void dispose() {
         audio.dispose();
+        battleAnimations.clear();
+        soldierBattleAnimations.clear();
+        apacheMarineAnimations.clear();
+        suicideBomberAnimations.clear();
+        pendingBattleAnimations.clear();
         if (uiAssets != null) {
             uiAssets.dispose();
+        }
+        if (cityAssets != null) {
+            cityAssets.dispose();
+        }
+        if (flashAnimationAssets != null) {
+            flashAnimationAssets.dispose();
         }
         if (font != null) {
             font.dispose();

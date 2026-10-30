@@ -24,10 +24,11 @@ public final class MatchOutcomePresentation {
 
     public static String message(GameState.MatchStatus status) {
         if (status == GameState.MatchStatus.VICTORY) {
-            return "Your rivals have fallen. Your nation rules the world.";
+            return "After killing most of the world's population, your country stands "
+                    + "victorious in its quest for world domination.";
         }
         if (status == GameState.MatchStatus.DEFEAT) {
-            return "Your nation was destroyed and the war is lost.";
+            return "Your country was destroyed. You lost the war for World Domination.";
         }
         return "";
     }

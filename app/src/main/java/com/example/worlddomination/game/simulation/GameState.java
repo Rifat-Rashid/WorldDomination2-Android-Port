@@ -19,6 +19,56 @@ public final class GameState {
         DEFEAT
     }
 
+    /** Resolved combat outcomes consumed by the native presentation layer. */
+    public enum CombatEventType {
+        DIRECT_ATTACK,
+        STRIKE_IMPACT,
+        STRIKE_INTERCEPTED
+    }
+
+    public static final class CombatEvent {
+        public final CombatEventType type;
+        public final int attackerPlayerId;
+        public final int defenderPlayerId;
+        public final int cityIndex;
+        public final String weaponName;
+        public final String payloadName;
+        public final String counterWeaponName;
+        public final int casualtiesMillions;
+        /** Source action-building slot used to launch a soldier2 Apache attack (1 or 2). */
+        public final int actionBuildingSlot;
+
+        private CombatEvent(CombatEventType type, int attackerPlayerId,
+                            int defenderPlayerId, int cityIndex, String weaponName,
+                            String payloadName, int casualtiesMillions) {
+            this(type, attackerPlayerId, defenderPlayerId, cityIndex, weaponName,
+                    payloadName, casualtiesMillions, null, -1);
+        }
+
+        private CombatEvent(CombatEventType type, int attackerPlayerId,
+                            int defenderPlayerId, int cityIndex, String weaponName,
+                            String payloadName, int casualtiesMillions,
+                            String counterWeaponName) {
+            this(type, attackerPlayerId, defenderPlayerId, cityIndex, weaponName,
+                    payloadName, casualtiesMillions, counterWeaponName, -1);
+        }
+
+        private CombatEvent(CombatEventType type, int attackerPlayerId,
+                            int defenderPlayerId, int cityIndex, String weaponName,
+                            String payloadName, int casualtiesMillions,
+                            String counterWeaponName, int actionBuildingSlot) {
+            this.type = type;
+            this.attackerPlayerId = attackerPlayerId;
+            this.defenderPlayerId = defenderPlayerId;
+            this.cityIndex = cityIndex;
+            this.weaponName = weaponName;
+            this.payloadName = payloadName;
+            this.casualtiesMillions = casualtiesMillions;
+            this.counterWeaponName = counterWeaponName;
+            this.actionBuildingSlot = actionBuildingSlot;
+        }
+    }
+
     public enum Action {
         RESOURCES("Resources"),
         PRODUCTION("Production"),
@@ -313,6 +363,7 @@ public final class GameState {
         final String spyBuilding;
         final int diplomacyOption;
         final List<ShipStrike> shipStrikes;
+        int actionBuildingSlot = -1;
 
         ActionOrder(int playerId, Action action,
                     Map<String, Integer> productionBudgets, List<String> technologies,
@@ -471,6 +522,7 @@ public final class GameState {
     private final PlayerState[] players = new PlayerState[5];
     private final List<ActionOrder> queuedActions = new ArrayList<>(MAX_TURN_ACTIONS);
     private final List<String> messages = new ArrayList<>();
+    private final List<CombatEvent> lastTurnCombatEvents = new ArrayList<>();
     private List<String> researchChoicesCache = Collections.emptyList();
     private boolean researchChoicesDirty = true;
     private final Random random;
@@ -524,7 +576,7 @@ public final class GameState {
         }
         this.difficulty = difficulty;
         this.opponentTurnsEnabled = opponentTurnsEnabled;
-        this.random = new Random(seed);
+        this.random = new ReferenceRandom(seed);
         players[0] = new PlayerState(0, true, PLAYER_START_POPULATION[difficulty],
                 PLAYER_START_MONEY[difficulty], PLAYER_START_MONEY[difficulty], -1,
                 setup == null ? "chr" : setup.getHumanReligionCode(),
@@ -2000,11 +2052,25 @@ public final class GameState {
                 : messages.get(messages.size() - 1);
     }
 
+    /** Returns the combat outcomes from the most recently resolved turn. */
+    public List<CombatEvent> getLastTurnCombatEvents() {
+        return Collections.unmodifiableList(lastTurnCombatEvents);
+    }
+
+    /**
+     * Copies the reference-compatible RNG state for deterministic battle presentation.
+     * Presentation draws remain isolated from future simulation turns.
+     */
+    public ReferenceRandom createPresentationRandomCopy() {
+        return ((ReferenceRandom) random).copy();
+    }
+
     /** Resolves human and opponent actions using the source turn order. */
     public void confirmTurn() {
         if (queuedActions.size() != MAX_TURN_ACTIONS) {
             throw new IllegalStateException("Choose two actions before confirming the turn");
         }
+        lastTurnCombatEvents.clear();
         for (PlayerState player : players) {
             player.lastTurnActions.clear();
             player.lastAttackedByCasualties = 0;
@@ -2033,11 +2099,13 @@ public final class GameState {
                         decision.reservedMillions, decision.targetPlayerId,
                         decision.targetCityIndex,
                         decision.weaponName,
-                        decision.payloadName, decision.prepareCarrier, "spyCenter",
+                        decision.payloadName, decision.prepareCarrier,
+                        decision.spyBuilding == null ? "spyCenter" : decision.spyBuilding,
                         decision.diplomacyOption, decision.shipStrikes));
                 player.lastTurnActions.add(decision.action);
             }
         }
+        assignDirectAttackBuildingSlots(turnOrders);
         for (AiDiplomacyResponse response : diplomacyResponses) {
             resolveDiplomacyResponse(response.target, response.proposal,
                     response.accepted, false);
@@ -2470,6 +2538,9 @@ public final class GameState {
         if ("soldier".equals(weapon.definition.type)) {
             casualties = populationChanges.addBattleCasualties(city,
                     sourceDirectAttackCasualties(weapon.definition.maxKillsMillions, random));
+            lastTurnCombatEvents.add(new CombatEvent(CombatEventType.DIRECT_ATTACK,
+                    attacker.id, defender.id, city.index, weapon.definition.name, null,
+                    casualties, null, order.actionBuildingSlot));
             recordLargestBattle(attacker, defender, casualties);
             applyBattleHostilityEffects(attacker, defender, casualties);
             if (casualties > 0) {
@@ -2481,6 +2552,57 @@ public final class GameState {
         weapon.inStock--;
         messages.add(casualties + " citizens lost in nation " + defender.id
                 + " city " + (city.index + 1) + ".");
+    }
+
+    /**
+     * Assigns the two native action-building positions using Battle.createToShowABArray's
+     * source order: unique non-fixed direct-attack buildings advance Player.nextActionBuilding.
+     */
+    private void assignDirectAttackBuildingSlots(List<ActionOrder> turnOrders) {
+        @SuppressWarnings("unchecked")
+        Map<String, Integer>[] slotsByPlayer = new Map[players.length];
+        int[] nextSlotByPlayer = new int[players.length];
+        for (ActionOrder order : turnOrders) {
+            if (order.action != Action.ATTACK || order.playerId < 0
+                    || order.playerId >= players.length) {
+                continue;
+            }
+            WeaponState weapon = playerById(order.playerId).weapons.get(order.weaponName);
+            if (weapon == null || !"soldier".equals(weapon.definition.type)) {
+                continue;
+            }
+            String frame = sourceDirectAttackBuildingFrame(weapon.definition.name);
+            if (frame == null) {
+                continue;
+            }
+            Map<String, Integer> slots = slotsByPlayer[order.playerId];
+            if (slots == null) {
+                slots = new LinkedHashMap<>();
+                slotsByPlayer[order.playerId] = slots;
+            }
+            Integer existingSlot = slots.get(frame);
+            if (existingSlot != null) {
+                order.actionBuildingSlot = existingSlot;
+            } else {
+                int slot = nextSlotByPlayer[order.playerId] == 0 ? 1 : 2;
+                nextSlotByPlayer[order.playerId]++;
+                slots.put(frame, slot);
+                order.actionBuildingSlot = slot;
+            }
+        }
+    }
+
+    private static String sourceDirectAttackBuildingFrame(String weaponName) {
+        if ("soldier1".equals(weaponName)) {
+            return "base";
+        }
+        if ("soldier2".equals(weaponName) || "soldier3".equals(weaponName)) {
+            return "helipad";
+        }
+        if ("soldier4".equals(weaponName)) {
+            return "hatch";
+        }
+        return null;
     }
 
     private void resolveDefense(ActionOrder order, List<ActionOrder> resolvedDefenses) {
@@ -2551,6 +2673,9 @@ public final class GameState {
             }
         }
         if (intercepted) {
+            lastTurnCombatEvents.add(new CombatEvent(CombatEventType.STRIKE_INTERCEPTED,
+                    attacker.id, defender.id, city.index, carrier.definition.name,
+                    payload.definition.name, 0, counterName));
             messages.add("Nation " + defender.id + " intercepted the prepared strike.");
             return;
         }
@@ -2560,6 +2685,9 @@ public final class GameState {
             biologicalEffects.add(createBiologicalEffect(defender, city, bioLevel));
         }
         int casualties = populationChanges.addBattleCasualties(city, rolledCasualties);
+        lastTurnCombatEvents.add(new CombatEvent(CombatEventType.STRIKE_IMPACT,
+                attacker.id, defender.id, city.index, carrier.definition.name,
+                payload.definition.name, casualties));
         recordLargestBattle(attacker, defender, casualties);
         applyBattleHostilityEffects(attacker, defender, casualties);
         if (casualties > 0) {
@@ -2638,10 +2766,17 @@ public final class GameState {
             int casualties;
             if (result.intercepted) {
                 casualties = 0;
+                lastTurnCombatEvents.add(new CombatEvent(
+                        CombatEventType.STRIKE_INTERCEPTED, attacker.id, defender.id,
+                        city.index, carrier.definition.name, result.payloadName, 0,
+                        counterName));
                 messages.add("Nation " + defender.id + " intercepted one ship payload.");
             } else {
                 casualties = populationChanges.addBattleCasualties(city,
                         result.rolledCasualties);
+                lastTurnCombatEvents.add(new CombatEvent(CombatEventType.STRIKE_IMPACT,
+                        attacker.id, defender.id, city.index, carrier.definition.name,
+                        result.payloadName, casualties));
                 totalCasualties += casualties;
                 recordLargestBattle(attacker, defender, casualties);
                 if (casualties > 0) {
@@ -2687,8 +2822,8 @@ public final class GameState {
 
     /** Flash Tools.randRange floors an inclusive random offset before Math.round. */
     private static int sourceRandRangeRounded(float minimum, float maximum, Random random) {
-        int offset = (int) Math.floor(random.nextFloat() * (maximum - minimum + 1f));
-        return Math.round(minimum + offset);
+        int offset = (int) Math.floor(random.nextDouble() * (maximum - minimum + 1.0));
+        return (int) Math.floor(minimum + offset + 0.5);
     }
 
     private int sourceStrikeCasualties(int maximum, boolean attackerIsHuman,
@@ -3031,14 +3166,16 @@ public final class GameState {
     private void applyPopulationChanges(TurnPopulationChanges changes) {
         for (PlayerState player : players) {
             for (CityState city : player.cities) {
-                city.populationMillions -= changes.battleCasualtiesFor(city);
+                city.setPopulationMillions(city.populationMillions
+                        - changes.battleCasualtiesFor(city));
                 for (int loss : changes.propagandaLossesFor(city)) {
                     if (city.populationMillions <= 0) {
                         break;
                     }
-                    city.populationMillions -= loss;
+                    city.setPopulationMillions(city.populationMillions - loss);
                 }
-                city.populationMillions += changes.propagandaGainFor(city);
+                city.setPopulationMillions(city.populationMillions
+                        + changes.propagandaGainFor(city));
             }
             player.populationMillions = totalPopulation(player);
         }
@@ -3079,7 +3216,7 @@ public final class GameState {
     private void eliminatePlayer(PlayerState eliminated) {
         messages.add("Nation " + eliminated.id + " has been eliminated.");
         for (CityState city : eliminated.cities) {
-            city.populationMillions = 0;
+            city.setPopulationMillions(0);
             city.bioloaded = false;
         }
         for (PlayerState defeated : players) {
@@ -3184,6 +3321,8 @@ public final class GameState {
         int[] sourceWeights = {151, 1213, 1001, 2001, 3002, 200, 101, 910};
         long points = sourceWeights[actionIndex] + random.nextInt(51);
         int effectiveMultiplier = multiplier == 0 ? 1 : multiplier;
+        // The source difficulty buttons are numbered 1..3, but the menu stores
+        // button number minus one. Preserve that source 0..2 multiplier here.
         player.score += points * effectiveMultiplier * difficulty;
     }
 

@@ -18,6 +18,9 @@ public final class OpponentAI {
     private static final int[] ATTACK_BASE = {80, 86, 90};
     private static final int[] SPY_ALERT_MONEY = {180, 150, 100};
     private static final int[] AI_SPY_STOCK_REQUIREMENTS = {10, 8, 5, 3};
+    private static final String[] SPY_BUILDINGS = {
+            "spyCenter", "tech", "religion", "resources", "factory"
+    };
     private static final String[] PRODUCTION_CATEGORIES = {
             "rockets", "warhead", "bioload", "soldier", "spy", "planes", "special"
     };
@@ -38,6 +41,7 @@ public final class OpponentAI {
         public final boolean prepareCarrier;
         public final int diplomacyOption;
         public final List<GameState.ShipStrike> shipStrikes;
+        public final String spyBuilding;
 
         private Decision(int playerId, GameState.Action action,
                          Map<String, Integer> productionBudgets,
@@ -56,7 +60,7 @@ public final class OpponentAI {
                          String payloadName, boolean prepareCarrier, int diplomacyOption) {
             this(playerId, action, productionBudgets, technologies, reservedMillions,
                     targetPlayerId, targetCityIndex, weaponName, payloadName, prepareCarrier,
-                    diplomacyOption, Collections.<GameState.ShipStrike>emptyList());
+                    diplomacyOption, Collections.<GameState.ShipStrike>emptyList(), null);
         }
 
         private Decision(int playerId, GameState.Action action,
@@ -65,6 +69,17 @@ public final class OpponentAI {
                          int targetPlayerId, int targetCityIndex, String weaponName,
                          String payloadName, boolean prepareCarrier, int diplomacyOption,
                          List<GameState.ShipStrike> shipStrikes) {
+            this(playerId, action, productionBudgets, technologies, reservedMillions,
+                    targetPlayerId, targetCityIndex, weaponName, payloadName, prepareCarrier,
+                    diplomacyOption, shipStrikes, null);
+        }
+
+        private Decision(int playerId, GameState.Action action,
+                         Map<String, Integer> productionBudgets,
+                         List<String> technologies, int reservedMillions,
+                         int targetPlayerId, int targetCityIndex, String weaponName,
+                         String payloadName, boolean prepareCarrier, int diplomacyOption,
+                         List<GameState.ShipStrike> shipStrikes, String spyBuilding) {
             this.playerId = playerId;
             this.action = action;
             this.productionBudgets = Collections.unmodifiableMap(
@@ -78,6 +93,7 @@ public final class OpponentAI {
             this.prepareCarrier = prepareCarrier;
             this.diplomacyOption = diplomacyOption;
             this.shipStrikes = Collections.unmodifiableList(new ArrayList<>(shipStrikes));
+            this.spyBuilding = spyBuilding;
         }
     }
 
@@ -160,21 +176,78 @@ public final class OpponentAI {
                     decisions.add(precedingOrder);
                     reserve(player, precedingOrder);
                     markPlannedUse(precedingOrder, plannedWeaponUse);
+                    List<Decision> retryAttackPlan = planSourceAttack(state, player,
+                            random, false, plannedWeaponUse);
+                    if (!retryAttackPlan.isEmpty()) {
+                        for (Decision decision : retryAttackPlan) {
+                            if (decisions.size() == 2) {
+                                break;
+                            }
+                            addPlannedDecision(player, decision, decisions,
+                                    plannedWeaponUse);
+                        }
+                        return decisions;
+                    }
+                    return planRemainingRankedActions(state, player, scores, random,
+                            decisions, plannedWeaponUse, 2);
                 }
-                return decisions;
             }
         }
 
-        for (int slot = 0; slot < 2; slot++) {
-            Decision decision = planRankedAction(state, player, scores.get(slot),
-                    random, slot + 1, plannedWeaponUse);
+        return planRemainingRankedActions(state, player, scores, random,
+                decisions, plannedWeaponUse, 0);
+    }
+
+    /**
+     * The Flash planner advances through its ranked actions whenever getTarget
+     * rejects an unavailable order. Keep trying lower-ranked orders until both
+     * slots are filled or the source action list is exhausted.
+     */
+    private static List<Decision> planRemainingRankedActions(
+            GameState state, GameState.PlayerState player, List<ScoredAction> scores,
+            Random random, List<Decision> decisions,
+            Map<String, Integer> plannedWeaponUse, int firstActionIndex) {
+        for (int index = firstActionIndex; index < scores.size()
+                && decisions.size() < 2; index++) {
+            ScoredAction scored = scores.get(index);
+            if (scored.action == GameState.Action.ATTACK) {
+                boolean duplicateAttack = index == 0 && scores.size() > 1
+                        && scored.score - 50 > scores.get(1).score;
+                List<Decision> attackPlan = planSourceAttack(state, player, random,
+                        duplicateAttack, plannedWeaponUse);
+                for (Decision decision : attackPlan) {
+                    if (decisions.size() == 2) {
+                        break;
+                    }
+                    addPlannedDecision(player, decision, decisions, plannedWeaponUse);
+                    if (decision.action == GameState.Action.PREPARED_ATTACK
+                            && decision.prepareCarrier) {
+                        return decisions;
+                    }
+                }
+                continue;
+            }
+
+            Decision decision = planRankedAction(state, player, scored, random,
+                    decisions.size() + 1, plannedWeaponUse);
             if (decision != null) {
-                decisions.add(decision);
-                reserve(player, decision);
-                markPlannedUse(decision, plannedWeaponUse);
+                addPlannedDecision(player, decision, decisions, plannedWeaponUse);
+                if (decision.action == GameState.Action.PREPARED_ATTACK
+                        && decision.prepareCarrier) {
+                    return decisions;
+                }
             }
         }
         return decisions;
+    }
+
+    private static void addPlannedDecision(GameState.PlayerState player,
+                                           Decision decision,
+                                           List<Decision> decisions,
+                                           Map<String, Integer> plannedWeaponUse) {
+        decisions.add(decision);
+        reserve(player, decision);
+        markPlannedUse(decision, plannedWeaponUse);
     }
 
     private static Decision planRankedAction(GameState state,
@@ -651,16 +724,16 @@ public final class OpponentAI {
         }
         String selectedType = availableTypes.get(randomInclusive(random, 0,
                 availableTypes.size() - 1));
-        String highest = null;
         for (String name : carriers) {
             GameState.WeaponState weapon = player.getWeapons().get(name);
-            if (selectedType.equals(weapon.definition.type)
-                    && (highest == null || weapon.definition.level
-                    > player.getWeapons().get(highest).definition.level)) {
-                highest = name;
+            if (selectedType.equals(weapon.definition.type)) {
+                // The source returns the first matching entry in logicalCarrierArr.
+                // That array preserves weapon catalog order, even when a later
+                // carrier of the same type has a higher level.
+                return name;
             }
         }
-        return highest;
+        return null;
     }
 
     private static List<String> sourceActiveCarriers(GameState.PlayerState player,
@@ -811,9 +884,21 @@ public final class OpponentAI {
 
     private static Decision attackDecision(int playerId, int targetId, int cityIndex,
                                            String weaponName) {
+        return attackDecision(playerId, targetId, cityIndex, weaponName, null);
+    }
+
+    private static Decision attackDecision(int playerId, int targetId, int cityIndex,
+                                           String weaponName, String spyBuilding) {
         return new Decision(playerId, GameState.Action.ATTACK,
                 Collections.<String, Integer>emptyMap(), Collections.<String>emptyList(),
-                0, targetId, cityIndex, weaponName, -1);
+                0, targetId, cityIndex, weaponName, null, false, -1,
+                Collections.<GameState.ShipStrike>emptyList(), spyBuilding);
+    }
+
+    private static String randomSpyBuilding(Random random) {
+        // Model.getTarget uses randRange(1, 5); the source array's index zero
+        // is a sentinel followed by these five mission-building names.
+        return SPY_BUILDINGS[randomInclusive(random, 0, SPY_BUILDINGS.length - 1)];
     }
 
     private static Decision planDirectAttackForTarget(GameState state,
@@ -850,6 +935,9 @@ public final class OpponentAI {
             selected = attacker.getWeapons().get("spy" + spyTarget.spyLevel);
             target = state.getPlayerState(spyTarget.playerId);
             initialCity = randomPopulatedCity(target, random);
+            String spyBuilding = randomSpyBuilding(random);
+            return initialCity < 0 ? null : attackDecision(attacker.id, target.id,
+                    initialCity, selected.definition.name, spyBuilding);
         }
         return selected == null || initialCity < 0 ? null
                 : attackDecision(attacker.id, target.id, initialCity,
@@ -1023,6 +1111,7 @@ public final class OpponentAI {
         boolean useSpy = spyTarget != null
                 && (selected == null || randomInclusive(random, 0, 6) == 3);
         GameState.PlayerState target = conventionalTarget;
+        String spyBuilding = null;
         if (useSpy) {
             selected = attacker.getWeapons().get("spy" + spyTarget.spyLevel);
             target = state.getPlayerState(spyTarget.playerId);
@@ -1036,13 +1125,19 @@ public final class OpponentAI {
                 populated.add(city.index);
             }
         }
-        if (populated.isEmpty()) {
+        int cityIndex = populated.isEmpty() ? -1
+                : populated.get(randomInclusive(random, 0, populated.size() - 1));
+        if (useSpy) {
+            // The Flash chooses the mission building after it picks a city.
+            spyBuilding = randomSpyBuilding(random);
+        }
+        if (cityIndex < 0) {
             return null;
         }
-        int cityIndex = populated.get(randomInclusive(random, 0, populated.size() - 1));
         return new Decision(attacker.id, GameState.Action.ATTACK,
                 Collections.<String, Integer>emptyMap(), Collections.<String>emptyList(),
-                0, target.id, cityIndex, selected.definition.name, -1);
+                0, target.id, cityIndex, selected.definition.name, null, false,
+                -1, Collections.<GameState.ShipStrike>emptyList(), spyBuilding);
     }
 
     private static SpyTarget findSpyTarget(GameState state, GameState.PlayerState attacker,
@@ -1277,7 +1372,10 @@ public final class OpponentAI {
         if (option < 0) {
             return null;
         }
-        int reserved = chooseOffer ? state.getDiplomacyOptionAmount(option) : 0;
+        // Model.getTarget checks an offer against turnMoney but does not deduct
+        // it there. The Presenter deducts the cash only when the proposal is
+        // submitted, so the AI may still plan its second action from this budget.
+        int reserved = 0;
         return new Decision(actor.id, GameState.Action.DIPLOMACY,
                 Collections.<String, Integer>emptyMap(), Collections.<String>emptyList(),
                 reserved, target.id, -1, null, option);

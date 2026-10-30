@@ -1,0 +1,156 @@
+name: Android test suites
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    name: ${{ matrix.check }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - id: unit-tests
+            check: JVM unit tests
+            task: ':app:testDebugUnitTest'
+          - id: simulation-tests
+            check: Gameplay simulation tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.*"'
+          - id: source-rng-tests
+            check: Seeded RNG parity tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.ReferenceRandomTest"'
+          - id: turn-progression-tests
+            check: Game state and turn progression tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest"'
+          - id: combat-event-tests
+            check: Combat event resolution tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.resolvedSoldierAttackEmitsOneDirectAttackEvent" --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.resolvedPreparedRocketAttackEmitsPayloadImpactEvent" --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.shipStrikeEmitsAnImpactForEachResolvedPayload" --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.attackThatBecomesUnavailableDoesNotEmitCombatEvent"'
+          - id: apache-building-slot-tests
+            check: Apache action-building slot tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.directAttacksUseSourceUniqueBuildingOrderForApacheLaunchSlot" --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.repeatedApacheAttacksReuseTheDeduplicatedHelipadSlot"'
+          - id: combat-audio-mapping-tests
+            check: Original combat audio mapping tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.audio.OriginalAudioTest.resolvedCombatEventsUseTheFlashUnitAndExplosionSoundMap" --tests "com.example.worlddomination.game.audio.OriginalAudioTest.combatCuesPointToTheOriginalPackagedSounds"'
+          - id: setup-scoring-tests
+            check: Game setup and scoring tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameSetupTest" --tests "com.example.worlddomination.game.simulation.FinalScoreBreakdownTest"'
+          - id: resources-economy-tests
+            check: Resources and mass media economy tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.normalResourcesAndMassMediaResolveOneTurn" --tests "com.example.worlddomination.game.simulation.GameStateTest.resourcesAndMassMediaAddTheirSourceHighscoreWeights" --tests "com.example.worlddomination.game.simulation.GameStateTest.resourceYieldUsesDifficultyDividerAndSourceRounding" --tests "com.example.worlddomination.game.simulation.GameStateTest.zeroHighscoreMultiplierDefaultsToOneLikeTheSource"'
+          - id: technology-research-tests
+            check: Technology research parity tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.researchRequiresPrerequisiteAndReservesItsSourceCost" --tests "com.example.worlddomination.game.simulation.GameStateTest.researchCompletesAndActivatesTheCorrespondingWeapon" --tests "com.example.worlddomination.game.simulation.GameStateTest.specialTechnologiesUnlockAfterFourLevelFourTechnologies" --tests "com.example.worlddomination.game.simulation.GameStateTest.researchSelectsMultipleGroupsReservesCombinedCostAndCompletesThem"'
+          - id: production-budget-tests
+            check: Production budget and stock tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.productionReservesBudgetAndTurnsItIntoWeaponStock" --tests "com.example.worlddomination.game.simulation.GameStateTest.productionRejectsLockedTechnologyGroupAndKeepsExistingSelection" --tests "com.example.worlddomination.game.simulation.GameStateTest.productionCanSplitOneHundredPercentAcrossMultipleCategories" --tests "com.example.worlddomination.game.simulation.GameStateTest.productionAllocationCannotExceedSharedHundredPercentLimit" --tests "com.example.worlddomination.game.simulation.GameStateTest.productionReservationRoundsCombinedShareAndRefundsOnRemoval" --tests "com.example.worlddomination.game.simulation.GameStateTest.productionActionReservesAndResolvesEveryAllocatedCategory" --tests "com.example.worlddomination.game.simulation.GameStateTest.researchThenProductionUsesUnlockedUnitAndSourceCostOrder"'
+          - id: direct-combat-tests
+            check: Direct combat and casualty tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.directSoldierAttackConsumesStockAndDamagesSelectedCity" --tests "com.example.worlddomination.game.simulation.GameStateTest.directAttackChangesMutualRegardAndFractionalCeasefireAllyRegard" --tests "com.example.worlddomination.game.simulation.GameStateTest.directAttackRejectsDeadTargetsEmptyCitiesAndUnavailableWeapons" --tests "com.example.worlddomination.game.simulation.GameStateTest.soldierCasualtyRollFloorsSourceRandRangeBeforeRounding"'
+          - id: intelligence-tests
+            check: Spy and intelligence gameplay tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.spyAttackStealsMoneyAndStockThenFollowsReadinessCooldown" --tests "com.example.worlddomination.game.simulation.GameStateTest.queuedSpyMissionResolvesWithoutRecheckingReadiness" --tests "com.example.worlddomination.game.simulation.GameStateTest.spyStealsTechnologyWithoutRemovingEnemyUnitStock" --tests "com.example.worlddomination.game.simulation.GameStateTest.spyTargetsPopulatedCityAndDifficultyCapsStolenFunds" --tests "com.example.worlddomination.game.simulation.GameStateTest.spyCannotSelectAnEmptyCityEvenWhenTheNationStillHasPopulation" --tests "com.example.worlddomination.game.simulation.GameStateTest.specialOpponentUsesDifficultyMoneyCapAndOneLowLevelItem"'
+          - id: prepared-weapon-defense-tests
+            check: Prepared weapons and defense tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.queuedDefenseReservesCounterStockUntilTheOrderIsRemoved" --tests "com.example.worlddomination.game.simulation.GameStateTest.queuedCarrierAndPayloadReservePreparedStrikeStock" --tests "com.example.worlddomination.game.simulation.GameStateTest.queuedShipStrikeReservesEverySelectedPayload" --tests "com.example.worlddomination.game.simulation.GameStateTest.rocketStrikeConsumesCarrierWhenPreparedAndPayloadWhenLaunched" --tests "com.example.worlddomination.game.simulation.GameStateTest.preparedShipRequiresThreeSameNationPayloadCityPairsAndResolvesEach" --tests "com.example.worlddomination.game.simulation.GameStateTest.defenseSelectionConsumesOneMatchingCounter" --tests "com.example.worlddomination.game.simulation.GameStateTest.carrierCounterMappingsAndPayloadLevelsMatchWeaponStock" --tests "com.example.worlddomination.game.simulation.GameStateTest.counterInterceptRuleBlocksEightOfNineSourceRolls"'
+          - id: propaganda-population-tests
+            check: Propaganda and population tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.propagandaTransfersSourceCalculatedCitizensFromChosenCity" --tests "com.example.worlddomination.game.simulation.GameStateTest.combatAndPropagandaUseTheUnchangedTurnStartPopulation" --tests "com.example.worlddomination.game.simulation.GameStateTest.propagandaUsesBattleCasualtiesEvenWhenAttackIsQueuedAfterIt" --tests "com.example.worlddomination.game.simulation.GameStateTest.propagandaDamagesMutualRegardAndMovesThirdPartyRegardFractionally" --tests "com.example.worlddomination.game.simulation.GameStateTest.propagandaHonorsReligionCapAndRejectsInvalidTargets" --tests "com.example.worlddomination.game.simulation.GameStateTest.propagandaUsesStrictPopulationThresholdsAndHumanReligionCap"'
+          - id: diplomacy-relations-tests
+            check: Diplomacy and relations tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.diplomacyOptionsMatchReferenceTableAndReserveOfferFunds" --tests "com.example.worlddomination.game.simulation.GameStateTest.diplomacyOfferIsResolvedByAiAndCreatesTimedSymmetricCeasefire" --tests "com.example.worlddomination.game.simulation.GameStateTest.diplomacyRegardDriftAddsDifficultyBonusOnlyToAiRivalRelations" --tests "com.example.worlddomination.game.simulation.GameStateTest.diplomacyDriftSkipsDeadActorsButUpdatesRelationsTowardThem" --tests "com.example.worlddomination.game.simulation.GameStateTest.rejectedDiplomacyOfferRefundsItsFullCost" --tests "com.example.worlddomination.game.simulation.GameStateTest.diplomacyDemandUsesAiAcceptanceRulesAndTransfersMoney" --tests "com.example.worlddomination.game.simulation.GameStateTest.humanCanRespondToAiOfferAndDemandProposals" --tests "com.example.worlddomination.game.simulation.GameStateTest.diplomacyProposalCooldownBelongsToProposerAndTicksAtTurnStart" --tests "com.example.worlddomination.game.simulation.GameStateTest.acceptedAiOfferSettlesAfterTheRecipientPlansItsTurn"'
+          - id: ai-tests
+            check: Opponent AI tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.*"'
+          - id: ui-tests
+            check: Touch and presentation tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.*"'
+          - id: scroll-pane-tests
+            check: Independent panel scrolling tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.ScrollPaneStateTest"'
+          - id: battlefield-layout-tests
+            check: Battlefield layout tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.BattlefieldCityLayoutTest"'
+          - id: city-rendering-tests
+            check: Battlefield city art and ruin-frame tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.OriginalCityAssetsTest" --tests "com.example.worlddomination.game.rendering.CitySpriteLayoutTest" --tests "com.example.worlddomination.game.simulation.CityStateTest" --tests "com.example.worlddomination.game.simulation.GameStateTest.laterActionStillResolvesWhenEarlierAttackWillEliminateTargetCity"'
+          - id: city-shrink-sequence-tests
+            check: City shrink animation sequence tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.CityShrinkSequenceTest"'
+          - id: source-animation-tests
+            check: Source animation timeline tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest" --tests "com.example.worlddomination.game.rendering.SourceCombatAnimationMappingTest"'
+          - id: source-battle-route-tests
+            check: Source soldier battle route tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.sourceBattleAnchorsIncludeAllSoldierWaypoints" --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.createsBoatAndThreeInfantryRoutesForEveryTargetCity" --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.rejectsInvalidPlayersCitiesAndMissingSourceAnchors"'
+          - id: apache-marine-route-tests
+            check: Apache and marine route tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.createsApacheAndThreeMarineRoutesForEveryTargetCityAndActionSlot" --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.actionBuildingSlotsMatchTheOriginalFlashSceneCoordinates" --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.rejectsInvalidApacheSlot"'
+          - id: source-battle-playback-tests
+            check: Source soldier battle playback tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashSoldierOneAnimationTest"'
+          - id: apache-marine-playback-tests
+            check: Apache and marine playback tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashApacheMarineAnimationTest" --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest.packagedStrikeAndInterceptionSymbolsMatchSourceTimelines" --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.marineDirectAttackUsesTheOriginalSealGunCue"'
+          - id: suicide-bomber-route-tests
+            check: Suicide bomber source route tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.createsSourceSuicideBomberRoutesForEveryAttackerTargetAndCity" --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.rejectsInvalidSuicideBomberRouteData" --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.suicideBomberLaunchPositionUsesItsSourceActionBuildingSlot"'
+          - id: suicide-bomber-playback-tests
+            check: Suicide bomber playback tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashSuicideBomberAnimationTest" --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest.packagedStrikeAndInterceptionSymbolsMatchSourceTimelines" --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.suicideBomberAttackUsesTheHatchSlotAndOriginalScreamCue"'
+          - id: presentation-rng-isolation-tests
+            check: Presentation RNG isolation tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.ReferenceRandomTest.copiedRandomPreservesTheStreamWithoutAdvancingCanonicalState"'
+          - id: match-outcome-tests
+            check: Match outcome sequence tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.MatchOutcomeSequenceTest" --tests "com.example.worlddomination.game.ui.MatchOutcomePresentationTest"'
+          - id: asset-audio-tests
+            check: Asset and audio integrity tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.*" --tests "com.example.worlddomination.game.audio.*" --tests "com.example.worlddomination.ExampleUnitTest"'
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v5
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Use preinstalled Android SDK and install compile packages
+        shell: bash
+        run: |
+          sdk_root="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          sdkmanager="$sdk_root/cmdline-tools/latest/bin/sdkmanager"
+          if [[ ! -x "$sdkmanager" ]]; then
+            echo "Preinstalled Android SDK manager not found at $sdkmanager" >&2
+            exit 1
+          fi
+          echo "$sdk_root/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
+          set +o pipefail
+          yes | "$sdkmanager" --licenses
+          set -o pipefail
+          "$sdkmanager" 'platform-tools' 'platforms;android-37.0' 'build-tools;36.0.0'
+
+      - name: Run ${{ matrix.check }}
+        run: ./gradlew --no-daemon --stacktrace ${{ matrix.task }}
+
+      - name: Verify ${{ matrix.check }} ran tests
+        run: python3 scripts/verify_junit_results.py app/build/test-results/testDebugUnitTest
+
+      - name: Upload test reports on failure
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: android-${{ matrix.id }}-failure-reports
+          path: |
+            app/build/reports/
+            app/build/test-results/
+          if-no-files-found: ignore

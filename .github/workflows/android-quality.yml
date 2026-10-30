@@ -1,4 +1,4 @@
-name: Android validation
+name: Android quality checks
 
 on:
   push:
@@ -10,22 +10,9 @@ permissions:
   contents: read
 
 jobs:
-  android:
-    name: ${{ matrix.check }}
+  lint:
+    name: Android lint
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - id: assemble
-            check: Android debug assembly
-            task: ':app:dependencies :app:assembleDebug'
-          - id: unit-tests
-            check: JVM unit tests
-            task: ':app:testDebugUnitTest'
-          - id: lint
-            check: Android lint
-            task: ':app:lintDebug'
     steps:
       - name: Check out source
         uses: actions/checkout@v5
@@ -52,15 +39,23 @@ jobs:
           set -o pipefail
           "$sdkmanager" 'platform-tools' 'platforms;android-37.0' 'build-tools;36.0.0'
 
-      - name: Run ${{ matrix.check }}
-        run: ./gradlew --no-daemon --stacktrace ${{ matrix.task }}
+      - name: Run Android lint
+        run: ./gradlew --no-daemon --stacktrace :app:lintDebug
 
-      - name: Upload validation reports on failure
+      - name: Upload lint reports on failure
         if: failure()
         uses: actions/upload-artifact@v6
         with:
-          name: android-${{ matrix.id }}-failure-reports
-          path: |
-            app/build/reports/
-            app/build/test-results/
+          name: android-lint-failure-reports
+          path: app/build/reports/
           if-no-files-found: ignore
+
+  android-platform-contract:
+    name: Android-only platform contract
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v5
+
+      - name: Verify native Android project requirements
+        run: python3 scripts/check_android_contract.py

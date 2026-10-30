@@ -10,6 +10,7 @@ import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Random;
 
 public final class GameStateTest {
@@ -323,8 +324,9 @@ public final class GameStateTest {
 
             completeTurnWithResourcesAndMedia(state);
 
-            long minimum = difficulty * (200L * income + 101L * mediaGain);
-            long maximum = difficulty * (250L * income + 151L * mediaGain);
+            int sourceDifficulty = difficulty;
+            long minimum = sourceDifficulty * (200L * income + 101L * mediaGain);
+            long maximum = sourceDifficulty * (250L * income + 151L * mediaGain);
             assertTrue("score " + state.getHuman().score + " outside source range "
                             + minimum + ".." + maximum,
                     state.getHuman().score >= minimum && state.getHuman().score <= maximum);
@@ -333,12 +335,17 @@ public final class GameStateTest {
 
     @Test
     public void zeroHighscoreMultiplierDefaultsToOneLikeTheSource() {
-        GameState state = new GameState(1, 75L, false);
+        for (int difficulty = 0; difficulty <= 2; difficulty++) {
+            GameState state = new GameState(difficulty, 75L + difficulty, false);
 
-        state.addToHighscore(state.getHuman(), 5, 0);
+            state.addToHighscore(state.getHuman(), 5, 0);
 
-        assertTrue(state.getHuman().score >= 200L);
-        assertTrue(state.getHuman().score <= 250L);
+            long sourceDifficulty = difficulty;
+            assertTrue("difficulty " + difficulty + " score " + state.getHuman().score,
+                    state.getHuman().score >= sourceDifficulty * 200L);
+            assertTrue("difficulty " + difficulty + " score " + state.getHuman().score,
+                    state.getHuman().score <= sourceDifficulty * 250L);
+        }
     }
 
     @Test
@@ -1032,7 +1039,8 @@ public final class GameStateTest {
         assertTrue(breakdown.getBaseScore() > 125L);
         assertEquals(1, breakdown.getSatelliteCount());
         assertEquals(4, breakdown.getFlagBonusCount());
-        assertEquals(breakdown.getBaseScore() * 2L + 1_000_000L,
+        assertEquals(breakdown.getBaseScore() * 2L
+                        + FinalScoreBreakdown.calculateFlagBonusPoints(4),
                 state.getFinalScore());
     }
 
@@ -1195,14 +1203,14 @@ public final class GameStateTest {
         }
         Random minimum = new Random(0L) {
             @Override
-            public float nextFloat() {
+            public double nextDouble() {
                 return 0f;
             }
         };
         Random maximum = new Random(0L) {
             @Override
-            public float nextFloat() {
-                return 0.9999f;
+            public double nextDouble() {
+                return 0.9999;
             }
         };
         assertEquals(8, GameState.sourceShipStrikeCasualties(15, minimum));
@@ -1213,16 +1221,16 @@ public final class GameStateTest {
     public void soldierCasualtyRollFloorsSourceRandRangeBeforeRounding() {
         Random upperOffset = new Random(0L) {
             @Override
-            public float nextFloat() {
-                return 0.667f;
+            public double nextDouble() {
+                return 0.667;
             }
         };
         assertEquals(4, GameState.sourceDirectAttackCasualties(4, upperOffset));
 
         Random oddMaximum = new Random(0L) {
             @Override
-            public float nextFloat() {
-                return 0.9999f;
+            public double nextDouble() {
+                return 0.9999;
             }
         };
         // The source's half-integer lower bound and inclusive roll can round
@@ -1317,6 +1325,17 @@ public final class GameStateTest {
         GameState state = new GameState(1, 11L, false);
         GameState.PlayerState attacker = state.getHuman();
         GameState.PlayerState defender = state.getPlayers()[1];
+        attacker.getWeapons().get("spy1").active = true;
+        attacker.getWeapons().get("spy1").inStock = 1;
+        attacker.getWeapons().get("rocket1").active = true;
+        attacker.getWeapons().get("rocket1").inStock = 0;
+        attacker.getWeapons().get("soldier1").inStock = 0;
+        defender.moneyMillions = 100;
+        for (GameState.WeaponState weapon : defender.getWeapons().values()) {
+            weapon.inStock = 0;
+        }
+        defender.getWeapons().get("rocket1").active = true;
+        defender.getWeapons().get("rocket1").inStock = 1;
         int attackerFundsBefore = attacker.moneyMillions;
         int defenderFundsBefore = defender.moneyMillions;
         int enemyCityBefore = defender.getCity(0).populationMillions;
@@ -1342,8 +1361,9 @@ public final class GameStateTest {
         assertEquals(enemyCityBefore, defender.getCity(0).populationMillions);
         assertEquals(0, state.getWeaponStock(0, "spy1"));
         assertEquals(0, state.getSpyReadiness());
-        assertTrue(state.getWeaponStock(0, "rocket1")
-                + state.getWeaponStock(0, "soldier1") > attackerStarterStock);
+        assertEquals(attackerStarterStock + 1, state.getWeaponStock(0, "rocket1")
+                + state.getWeaponStock(0, "soldier1"));
+        assertEquals(0, state.getWeaponStock(1, "rocket1"));
         assertTrue(attacker.score > 0);
 
         attacker.getWeapons().get("spy1").inStock = 1;
@@ -1510,6 +1530,7 @@ public final class GameStateTest {
         GameState.PlayerState defender = state.getPlayers()[1];
         attacker.religion = 0;
         defender.religion = 0;
+        int defenderPopulationBefore = defender.populationMillions;
         CityState targetCity = defender.getCity(0);
         int targetBefore = targetCity.populationMillions;
         int[] attackerCitiesBefore = new int[5];
@@ -1537,7 +1558,7 @@ public final class GameStateTest {
             expectedPlayerGain += expectedCityGain;
         }
         assertEquals(450 + expectedPlayerGain, attacker.populationMillions);
-        assertEquals(447, defender.populationMillions);
+        assertEquals(defenderPopulationBefore - transfer, defender.populationMillions);
         assertTrue(attacker.score > 0);
     }
 
@@ -1626,6 +1647,8 @@ public final class GameStateTest {
 
         assertFalse(defender.alive);
         assertEquals(0, defender.populationMillions);
+        assertEquals("The one-million city uses its source size-one ruin frame.",
+                10, defender.getCity(0).getArtworkFrame());
         assertTrue(state.getMessages().contains("Propaganda had no effect in the selected city."));
         assertFalse(state.getMessages().contains(
                 "Propaganda cancelled: target city is no longer available."));
@@ -2083,7 +2106,9 @@ public final class GameStateTest {
 
     @Test
     public void hardMassMediaCannotRaiseInfluenceAboveOneHundred() {
-        GameState state = new GameState(2);
+        GameState state = new GameState(2, 0L, false);
+        int startingMoney = state.getHuman().moneyMillions;
+        int incomePerTurn = state.getResourceIncomeMillions();
         for (int turn = 0; turn < 5; turn++) {
             state.selectAction(GameState.Action.MASS_MEDIA);
             assertEquals(true, state.acceptSelectedAction());
@@ -2093,7 +2118,7 @@ public final class GameStateTest {
         }
 
         assertEquals(100, state.getHuman().religion);
-        assertEquals(210, state.getHuman().moneyMillions);
+        assertEquals(startingMoney + incomePerTurn * 5, state.getHuman().moneyMillions);
         assertEquals(5, state.getTurn());
     }
 
@@ -2172,5 +2197,133 @@ public final class GameStateTest {
         assertNull(state.getSelectedAction());
         assertEquals(65, state.getHuman().moneyMillions);
         assertEquals(65, state.getHuman().religion);
+    }
+
+    @Test
+    public void originalAiRemainsStableAcrossFortyTurnDifficultyAndSeedCases() {
+        int[][] cases = {{0, 0}, {0, 9}, {1, 0}, {1, 9}, {2, 0}, {2, 9}};
+        for (int[] testCase : cases) {
+            int difficulty = testCase[0];
+            long seed = testCase[1];
+            GameState state = new GameState(difficulty, seed);
+            int completedTurns = 0;
+
+            for (int turn = 0; turn < 40
+                    && state.getHuman().alive
+                    && state.getMatchStatus() == GameState.MatchStatus.ONGOING; turn++) {
+                List<GameState.Action> humanActions = new ArrayList<>(2);
+                for (int slot = 0; slot < 2; slot++) {
+                    GameState.Action action = queueNextAvailableAction(state, humanActions);
+                    assertTrue("A legal human action should remain available at difficulty "
+                            + difficulty + " seed " + seed + " turn " + turn,
+                            action != null);
+                    humanActions.add(action);
+                }
+                state.confirmTurn();
+                completedTurns++;
+
+                assertEquals(completedTurns, state.getTurn());
+                for (GameState.PlayerState player : state.getPlayers()) {
+                    int cityPopulation = 0;
+                    for (CityState city : player.getCities()) {
+                        assertTrue("city population must not be negative",
+                                city.populationMillions >= 0);
+                        cityPopulation += city.populationMillions;
+                    }
+                    assertEquals("nation population must equal its five cities",
+                            cityPopulation, player.populationMillions);
+                    assertEquals("only living nations retain population",
+                            player.populationMillions > 0, player.alive);
+                    assertTrue("AI should schedule at most two actions",
+                            player.getLastTurnActions().size() <= 2);
+                }
+            }
+            assertTrue("each case should run forty turns or reach a terminal result",
+                    completedTurns == 40
+                            || state.getMatchStatus() != GameState.MatchStatus.ONGOING);
+        }
+    }
+
+    private static GameState.Action queueNextAvailableAction(
+            GameState state, List<GameState.Action> alreadyQueued) {
+        GameState.Action[] candidates = {
+                GameState.Action.RESOURCES,
+                GameState.Action.MASS_MEDIA,
+                GameState.Action.PRODUCTION,
+                GameState.Action.DIPLOMACY,
+                GameState.Action.PROPAGANDA,
+                GameState.Action.ATTACK,
+                GameState.Action.DEFENSE,
+                GameState.Action.RESEARCH
+        };
+        for (GameState.Action action : candidates) {
+            if (alreadyQueued.contains(action) || state.isActionBioloaded(0, action)) {
+                continue;
+            }
+            state.selectAction(action);
+            if (configureStabilityAction(state, action)
+                    && state.acceptSelectedAction()) {
+                return action;
+            }
+            state.cancelSelection();
+        }
+        return null;
+    }
+
+    private static boolean configureStabilityAction(GameState state,
+                                                    GameState.Action action) {
+        if (action == GameState.Action.RESOURCES || action == GameState.Action.MASS_MEDIA
+                || action == GameState.Action.PRODUCTION) {
+            return true;
+        }
+        if (action == GameState.Action.DIPLOMACY) {
+            return state.canAcceptDiplomacy();
+        }
+        if (action == GameState.Action.RESEARCH) {
+            for (String technology : state.getResearchChoices()) {
+                if (state.selectResearchTechnology(technology)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        if (action == GameState.Action.DEFENSE) {
+            for (String weapon : state.getAvailableDefenseWeapons(0)) {
+                if (state.configureDefense(weapon)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        if (action == GameState.Action.ATTACK) {
+            for (String weapon : state.getAvailableAttackWeapons()) {
+                for (int targetId = 1; targetId < 5; targetId++) {
+                    GameState.PlayerState target = state.getPlayerState(targetId);
+                    if (!target.alive) {
+                        continue;
+                    }
+                    for (int cityIndex = 0; cityIndex < 5; cityIndex++) {
+                        if (state.configureAttack(targetId, cityIndex, weapon)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+        if (action == GameState.Action.PROPAGANDA) {
+            for (int targetId = 1; targetId < 5; targetId++) {
+                GameState.PlayerState target = state.getPlayerState(targetId);
+                if (!target.alive) {
+                    continue;
+                }
+                for (int cityIndex = 0; cityIndex < 5; cityIndex++) {
+                    if (state.configurePropaganda(targetId, cityIndex)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 }
