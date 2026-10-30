@@ -258,6 +258,29 @@ public final class OpponentAITest {
     }
 
     @Test
+    public void specialAttackScoreDoesNotReceiveBonusAppliedAfterSourceActionArray() {
+        GameState state = null;
+        for (long seed = 0; seed < 500; seed++) {
+            GameState candidate = new GameState(1, seed);
+            if (candidate.getPlayerState(1).isSpecialPerson()) {
+                state = candidate;
+                break;
+            }
+        }
+        assertNotNull("seed sweep should find a special first opponent", state);
+
+        GameState.PlayerState actor = state.getPlayerState(1);
+        for (GameState.WeaponState weapon : actor.getWeapons().values()) {
+            weapon.inStock = 0;
+        }
+        actor.getWeapons().get("ship").inStock = 1;
+        actor.getWeapons().get("warhead3").inStock = 2;
+
+        assertEquals(-999.0, OpponentAI.scoreForAction(state, actor,
+                new Random(919L), GameState.Action.ATTACK), 0.0);
+    }
+
+    @Test
     public void preCounterScoreUsesTheThreateningEnemyRegardAndLowPopulationBonus() {
         GameState state = null;
         for (long seed = 0; seed < 500; seed++) {

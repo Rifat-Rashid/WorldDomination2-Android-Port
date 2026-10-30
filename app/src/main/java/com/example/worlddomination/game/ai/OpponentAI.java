@@ -246,11 +246,6 @@ public final class OpponentAI {
         } else {
             preparedAttack += 30;
         }
-        if (player.isSpecialPerson() && player.getWeaponStockByName("ship") > 0
-                && player.getWeaponStockByName("warhead3") > 1) {
-            attack += 50;
-        }
-
         double religion = 20 + Math.round(player.populationMillions
                 / (double) largestPopulation * 100) - player.religion * 2.0;
         double propaganda = 42;
@@ -343,6 +338,16 @@ public final class OpponentAI {
             }
         }
         return scores;
+    }
+
+    static double scoreForAction(GameState state, GameState.PlayerState player,
+                                 Random random, GameState.Action action) {
+        for (ScoredAction scored : scoreActions(state, player, random)) {
+            if (scored.action == action) {
+                return scored.score;
+            }
+        }
+        throw new IllegalArgumentException("Action is not scored: " + action);
     }
 
     /** The reference uses its current turn directly; its calculated 60-turn cap is unused. */
