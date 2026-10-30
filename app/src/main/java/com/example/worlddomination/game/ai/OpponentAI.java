@@ -331,14 +331,8 @@ public final class OpponentAI {
             research = -100;
         }
 
-        // The Flash source applies this special leader's attack bonus after
-        // building the action array, even when an earlier rule set attack to
-        // -999. The later bioload filter still overrides the score if needed.
-        if (player.isSpecialPerson() && player.getWeaponStockByName("ship") > 0
-                && player.getWeaponStockByName("warhead3") > 1) {
-            attack += 50;
-        }
-
+        // Model.calcPoints snapshots actionArr before adding 50 to a local attack
+        // accumulator. That late source bonus does not change the ranked score.
         List<ScoredAction> scores = new ArrayList<>(8);
         scores.add(new ScoredAction(GameState.Action.ATTACK, attack));
         scores.add(new ScoredAction(GameState.Action.DEFENSE, preCounter));

@@ -385,7 +385,7 @@ public final class OpponentAITest {
     }
 
     @Test
-    public void specialAttackScoreReceivesLateBonusWhenShipAndWarheadStocksQualify() {
+    public void specialAttackScoreUsesTheSourceSnapshotBeforeItsLateLocalBonus() {
         GameState state = null;
         for (long seed = 0; seed < 500; seed++) {
             GameState candidate = new GameState(1, seed);
@@ -404,7 +404,7 @@ public final class OpponentAITest {
         actor.getWeapons().get("ship").inStock = 1;
         actor.getWeapons().get("warhead3").inStock = 2;
 
-        assertEquals(-949.0, OpponentAI.scoreForAction(state, actor,
+        assertEquals(-999.0, OpponentAI.scoreForAction(state, actor,
                 new Random(919L), GameState.Action.ATTACK), 0.0);
     }
 
