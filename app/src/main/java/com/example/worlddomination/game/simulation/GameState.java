@@ -565,6 +565,16 @@ public final class GameState {
         this(setupDifficulty(setup), seed, true, setup);
     }
 
+    /** Starts a match with the source random stream advanced by setup choices. */
+    public GameState(GameSetup setup) {
+        this(setupDifficulty(setup), setup.copyGameplayRandom(), true, setup);
+    }
+
+    /** Package-private explicit stream injection for setup parity tests. */
+    GameState(GameSetup setup, Random random) {
+        this(setupDifficulty(setup), random, true, setup);
+    }
+
     /** Package-private quiet-opponent mode isolates player-rule tests from AI turns. */
     GameState(int difficulty, long seed, boolean opponentTurnsEnabled) {
         this(difficulty, seed, opponentTurnsEnabled, null);

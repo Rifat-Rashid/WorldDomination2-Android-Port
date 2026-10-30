@@ -292,10 +292,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 Gdx.files.internal("original/runtime/battle_anchors.json")
                         .readString("UTF-8"));
         audio.initialize();
-        setup = new GameSetup();
-        java.util.Random setupRandom = new java.util.Random(System.nanoTime());
-        setup.setPlayerColor(setupRandom.nextInt(5) + 1);
-        setup.setStartingBuilding(setupRandom.nextInt(5) + 1);
+        setup = new GameSetup(System.nanoTime());
         Gdx.input.setInputProcessor(this);
         layout(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
     }
@@ -1994,13 +1991,12 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     }
 
     private void beginNewGameSetup() {
+        GameSetup nextSetup = setup == null
+                ? new GameSetup(System.nanoTime()) : setup.createNextSetup();
         stopScoreCounterSound();
         audio.stopAmbient();
         outcomeSequence.reset();
-        setup = new GameSetup();
-        java.util.Random setupRandom = new java.util.Random(System.nanoTime());
-        setup.setPlayerColor(setupRandom.nextInt(5) + 1);
-        setup.setStartingBuilding(setupRandom.nextInt(5) + 1);
+        setup = nextSetup;
         setupMessage = "SELECT ONE TO FOUR OPPONENTS TO BEGIN";
         showSetupMessage = false;
         modalOpen = false;
@@ -2263,7 +2259,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             showSetupMessage = true;
         } else if (setupStartButton.contains(x, y)) {
             if (setup.canStart()) {
-                game = new GameState(setup, System.nanoTime());
+                game = new GameState(setup);
                 cityRenderer.reset(game);
                 battleAnimations.clear();
                 soldierBattleAnimations.clear();

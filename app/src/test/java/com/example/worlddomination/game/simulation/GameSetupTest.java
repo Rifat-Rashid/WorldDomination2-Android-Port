@@ -63,4 +63,29 @@ public final class GameSetupTest {
         org.junit.Assert.assertThrows(IllegalArgumentException.class,
                 () -> GameSetup.colorName(6));
     }
+
+    @Test
+    public void seededSetupUsesSourceMenuDrawsAndNormalDifficulty() {
+        GameSetup actualSetup = new GameSetup(0L);
+        assertEquals(5, actualSetup.getPlayerColor());
+        assertEquals(4, actualSetup.getStartingBuilding());
+        assertEquals(1, actualSetup.getDifficulty());
+    }
+
+    @Test
+    public void restartedSetupContinuesMenuRandomStreamIndependentOfMatchDraws() {
+        GameSetup actualSetup = new GameSetup(0L);
+        assertTrue(actualSetup.toggleOpponent(0));
+        GameState actualGame = new GameState(actualSetup);
+        assertTrue(actualGame.getPlayerState(1).alive);
+        GameSetup actualRematch = actualSetup.createNextSetup();
+
+        ReferenceRandom expectedMenuRandom = new ReferenceRandom(0L);
+        expectedMenuRandom.nextInt(5);
+        expectedMenuRandom.nextInt(5);
+        GameSetup expectedRematch = new GameSetup(expectedMenuRandom);
+        assertEquals(expectedRematch.getPlayerColor(), actualRematch.getPlayerColor());
+        assertEquals(expectedRematch.getStartingBuilding(), actualRematch.getStartingBuilding());
+        assertFalse(actualRematch.canStart());
+    }
 }
