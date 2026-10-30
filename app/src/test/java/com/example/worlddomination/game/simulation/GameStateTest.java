@@ -1297,6 +1297,25 @@ public final class GameStateTest {
         assertTrue(demandState.getPlayerState(1).hasCeasefireWith(0));
     }
 
+    @Test
+    public void diplomacyProposalCooldownBelongsToProposerAndTicksAtTurnStart() {
+        GameState state = new GameState(1, 501L, false);
+        assertTrue(state.submitDiplomacyProposal(1, 0, 5));
+        assertTrue(state.respondToDiplomacyProposal(false));
+        assertFalse("the AI proposer cannot immediately resend",
+                state.submitDiplomacyProposal(1, 0, 5));
+
+        completeTurnWithResourcesAndMedia(state);
+
+        assertFalse("one start-of-turn tick leaves the cooldown active",
+                state.submitDiplomacyProposal(1, 0, 5));
+
+        completeTurnWithResourcesAndMedia(state);
+
+        assertTrue("the proposer can resend after two source turn-start ticks",
+                state.submitDiplomacyProposal(1, 0, 5));
+    }
+
     private static void completeTurnWithResourcesAndMedia(GameState state) {
         state.selectAction(GameState.Action.RESOURCES);
         assertTrue(state.acceptSelectedAction());
