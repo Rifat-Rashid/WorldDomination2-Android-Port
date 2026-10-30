@@ -352,6 +352,99 @@ public final class GameStateTest {
     }
 
     @Test
+    public void researchSelectsMultipleGroupsReservesCombinedCostAndCompletesThem() {
+        GameState state = new GameState(1, 33L);
+        state.selectAction(GameState.Action.RESEARCH);
+        java.util.List<String> choices = state.getResearchChoices();
+        assertTrue(choices.size() >= 2);
+        String first = choices.get(0);
+        String second = choices.get(1);
+        assertTrue(state.selectResearchTechnology(first));
+        assertTrue(state.selectResearchTechnology(second));
+
+        int reserved = state.getTechnologyCost(first) + state.getTechnologyCost(second);
+        assertEquals(reserved, state.getSelectedResearchCostMillions());
+        assertEquals(2, state.getSelectedResearchTechnologies().size());
+        int initialTurnMoney = state.getTurnMoneyMillions();
+        assertTrue(state.acceptSelectedAction());
+        assertEquals(initialTurnMoney - reserved, state.getTurnMoneyMillions());
+        assertEquals(0, state.getSelectedResearchCostMillions());
+
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+
+        assertTrue(state.getHuman().hasTechnology(first));
+        assertTrue(state.getHuman().hasTechnology(second));
+    }
+
+    @Test
+    public void cancelingMultiTechnologyResearchRefundsAllReservedFunds() {
+        GameState state = new GameState(1, 34L);
+        state.selectAction(GameState.Action.RESEARCH);
+        java.util.List<String> choices = state.getResearchChoices();
+        String first = choices.get(0);
+        String second = choices.get(1);
+        int initialTurnMoney = state.getTurnMoneyMillions();
+
+        assertTrue(state.selectResearchTechnology(first));
+        assertTrue(state.selectResearchTechnology(second));
+        assertTrue(state.selectResearchTechnology(first));
+        assertEquals(state.getTechnologyCost(second), state.getSelectedResearchCostMillions());
+        assertTrue(state.selectResearchTechnology(first));
+        assertEquals(state.getTechnologyCost(first) + state.getTechnologyCost(second),
+                state.getSelectedResearchCostMillions());
+        assertTrue(state.acceptSelectedAction());
+        assertEquals(initialTurnMoney - state.getTechnologyCost(first)
+                - state.getTechnologyCost(second), state.getTurnMoneyMillions());
+
+        state.removeQueuedAction(0);
+        assertEquals(initialTurnMoney, state.getTurnMoneyMillions());
+        assertFalse(state.getHuman().hasTechnology(first));
+        assertFalse(state.getHuman().hasTechnology(second));
+    }
+
+    @Test
+    public void researchChoicesStayVisibleWhenUnaffordableOrSpecialLocked() {
+        GameState state = new GameState(1, 35L);
+        state.selectAction(GameState.Action.RESEARCH);
+        String ordinaryChoice = state.getResearchChoices().get(0);
+        state.getHuman().turnMoneyMillions = 0;
+        assertTrue(state.getResearchChoices().contains(ordinaryChoice));
+        assertFalse(state.getAvailableResearch().contains(ordinaryChoice));
+        assertFalse(state.selectResearchTechnology(ordinaryChoice));
+        assertEquals("Not enough money!", state.getLatestMessage());
+        assertTrue(state.getSelectedResearchTechnologies().isEmpty());
+
+        GameState locked = new GameState(1, 36L);
+        locked.selectAction(GameState.Action.RESEARCH);
+        assertTrue(locked.getResearchChoices().contains("sub"));
+        assertFalse(locked.isResearchAvailable("sub"));
+        assertFalse(locked.selectResearchTechnology("sub"));
+        assertTrue(locked.getLatestMessage().contains("4 complete technologies"));
+        assertTrue(locked.getSelectedResearchTechnologies().isEmpty());
+    }
+
+    @Test
+    public void researchSelectionEnforcesTheCombinedRemainingBudget() {
+        GameState state = new GameState(1, 37L);
+        state.selectAction(GameState.Action.RESEARCH);
+        java.util.List<String> choices = state.getResearchChoices();
+        String first = choices.get(0);
+        String second = choices.get(1);
+        int firstCost = state.getTechnologyCost(first);
+        int secondCost = state.getTechnologyCost(second);
+        state.getHuman().turnMoneyMillions = firstCost + secondCost - 1;
+
+        assertTrue(state.selectResearchTechnology(first));
+        assertFalse(state.selectResearchTechnology(second));
+        assertEquals(firstCost, state.getSelectedResearchCostMillions());
+        assertTrue(state.getResearchChoices().contains(second));
+        assertFalse(state.getAvailableResearch().contains(second));
+        assertEquals("Not enough money!", state.getLatestMessage());
+    }
+
+    @Test
     public void specialTechnologiesUnlockAfterFourLevelFourTechnologies() {
         GameState state = new GameState(1, 71L, false);
         GameState.PlayerState human = state.getHuman();
