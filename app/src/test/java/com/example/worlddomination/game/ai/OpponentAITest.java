@@ -452,7 +452,7 @@ public final class OpponentAITest {
     }
 
     @Test
-    public void everyLivingOpponentPlansTwoActionsDuringTurnResolution() {
+    public void opponentActionCountTracksWhetherAttackResetsTheOtherSlot() {
         GameState state = new GameState(1, 901L);
         state.selectAction(GameState.Action.RESOURCES);
         assertTrue(state.acceptSelectedAction());
@@ -464,7 +464,9 @@ public final class OpponentAITest {
         boolean opponentUsedAnotherSystem = false;
         for (int playerId = 1; playerId < 5; playerId++) {
             GameState.PlayerState opponent = state.getPlayerState(playerId);
-            assertEquals("nation " + playerId, 2, opponent.getLastTurnActions().size());
+            assertTrue("nation " + playerId + " should plan one or two source actions",
+                    opponent.getLastTurnActions().size() >= 1
+                            && opponent.getLastTurnActions().size() <= 2);
             assertFalse(opponent.getLastTurnActions().contains(null));
             assertTrue(opponent.turnMoneyMillions >= 0);
             for (GameState.Action action : opponent.getLastTurnActions()) {
@@ -528,13 +530,10 @@ public final class OpponentAITest {
     public void plannerCanPrepareACompatibleCarrierWithoutDuplicatingTheSlot() {
         GameState state = new GameState(1, 53L);
         GameState.PlayerState opponent = state.getPlayerState(1);
-        opponent.moneyMillions = 0;
-        opponent.turnMoneyMillions = 0;
-        opponent.getWeapons().get("rocket1").inStock = 1;
-        opponent.getWeapons().get("warhead1").inStock = 1;
+        configureSourcePreparationScenario(opponent, "rocket1");
 
         List<OpponentAI.Decision> decisions = OpponentAI.plan(state, opponent,
-                new Random(22L));
+                new SequenceRandom(0, 0, 0, 0, 0, 0));
         int preparedActions = 0;
         for (OpponentAI.Decision decision : decisions) {
             if (decision.action == GameState.Action.PREPARED_ATTACK) {
@@ -544,9 +543,56 @@ public final class OpponentAITest {
                 assertNull(decision.payloadName);
             }
         }
-        assertEquals(2, decisions.size());
+        assertEquals("source preparation resets the companion action slot",
+                1, decisions.size());
         assertTrue("planner should use the available strike option", preparedActions > 0);
         assertEquals(1, preparedActions);
+    }
+
+    @Test
+    public void sourceAttackRouteRollChoosesPreparationOrDirectAttack() {
+        GameState state = gameWithRegularFirstOpponent(531L);
+        GameState.PlayerState opponent = state.getPlayerState(1);
+        configureSourcePreparationScenario(opponent, "rocket1");
+        GameState.WeaponState soldier = opponent.getWeapons().get("soldier1");
+        soldier.active = true;
+        soldier.inStock = 1;
+
+        OpponentAI.Decision prepared = OpponentAI.planAction(state, opponent,
+                GameState.Action.ATTACK, new SequenceRandom(0, 0, 0), 1,
+                Collections.<String, Integer>emptyMap());
+        assertNotNull(prepared);
+        assertEquals(GameState.Action.PREPARED_ATTACK, prepared.action);
+        assertTrue(prepared.prepareCarrier);
+
+        OpponentAI.Decision direct = OpponentAI.planAction(state, opponent,
+                GameState.Action.ATTACK, new SequenceRandom(1, 0, 0), 1,
+                Collections.<String, Integer>emptyMap());
+        assertNotNull(direct);
+        assertEquals(GameState.Action.ATTACK, direct.action);
+        assertEquals("soldier1", direct.weaponName);
+    }
+
+    @Test
+    public void repeatedReadyAttackPairsPayloadAndConventionalStrike() throws Exception {
+        GameState state = gameWithRegularFirstOpponent(533L);
+        GameState.PlayerState opponent = state.getPlayerState(1);
+        configureSourcePreparationScenario(opponent, "rocket1");
+        opponent.getWeapons().get("rocket1").inStock = 0;
+        opponent.getWeapons().get("soldier1").active = true;
+        opponent.getWeapons().get("soldier1").inStock = 1;
+        setPreparedCarrier(opponent, "rocket1");
+
+        List<OpponentAI.Decision> decisions = OpponentAI.plan(state, opponent,
+                new SequenceRandom(0, 0, 0, 0, 0, 0));
+
+        assertEquals(2, decisions.size());
+        assertEquals(GameState.Action.PREPARED_ATTACK, decisions.get(0).action);
+        assertEquals(GameState.Action.ATTACK, decisions.get(1).action);
+        assertFalse(decisions.get(0).prepareCarrier);
+        assertEquals("rocket1", decisions.get(0).weaponName);
+        assertEquals("soldier1", decisions.get(1).weaponName);
+        assertEquals(decisions.get(0).targetPlayerId, decisions.get(1).targetPlayerId);
     }
 
     @Test
@@ -589,7 +635,8 @@ public final class OpponentAITest {
     }
 
     @Test
-    public void opponentShipLaunchConsumesThreePayloadUnitsAcrossItsStrikeArray() {
+    public void readyOpponentShipLaunchConsumesThreePayloadUnitsAcrossItsStrikeArray()
+            throws Exception {
         GameState state = null;
         for (long seed = 0; seed < 500; seed++) {
             GameState candidate = new GameState(1, seed);
@@ -601,17 +648,12 @@ public final class OpponentAITest {
         }
         assertNotNull("seed sweep should find a regular first opponent", state);
         GameState.PlayerState attacker = state.getPlayerState(1);
+        configureSourcePreparationScenario(attacker, "ship");
         attacker.getWeapons().get("ship").active = true;
-        attacker.getWeapons().get("ship").inStock = 1;
+        attacker.getWeapons().get("ship").inStock = 0;
         attacker.getWeapons().get("warhead1").inStock = 2;
         attacker.getWeapons().get("bioload1").inStock = 1;
-
-        state.selectAction(GameState.Action.RESOURCES);
-        assertTrue(state.acceptSelectedAction());
-        state.selectAction(GameState.Action.MASS_MEDIA);
-        assertTrue(state.acceptSelectedAction());
-        state.confirmTurn();
-        assertEquals("ship", attacker.getPreparedCarrierName());
+        setPreparedCarrier(attacker, "ship");
 
         state.selectAction(GameState.Action.RESOURCES);
         assertTrue(state.acceptSelectedAction());
@@ -942,6 +984,36 @@ public final class OpponentAITest {
                 .getDeclaredField("regardToward");
         regardField.setAccessible(true);
         ((int[]) regardField.get(actor))[playerId] = regard;
+    }
+
+    private static void configureSourcePreparationScenario(
+            GameState.PlayerState actor, String selectedCarrier) {
+        actor.moneyMillions = 0;
+        actor.turnMoneyMillions = 0;
+        actor.religion = 100;
+        for (GameState.WeaponState weapon : actor.getWeapons().values()) {
+            String type = weapon.definition.type;
+            if ("anti".equals(type) || "soldier".equals(type) || "spy".equals(type)
+                    || "rocket".equals(type) || "plane".equals(type)
+                    || "sub".equals(type) || "ship".equals(type)
+                    || "space".equals(type)) {
+                weapon.inStock = 0;
+            } else {
+                weapon.inStock = actor.hasTechnology(weapon.definition.technology)
+                        ? actor.getDesiredStock(weapon.definition.name) : 0;
+            }
+        }
+        GameState.WeaponState carrier = actor.getWeapons().get(selectedCarrier);
+        carrier.active = true;
+        carrier.inStock = 1;
+        GameState.WeaponState warhead = actor.getWeapons().get("warhead1");
+        warhead.active = true;
+        warhead.inStock = "ship".equals(selectedCarrier) ? 2 : 1;
+        if ("ship".equals(selectedCarrier)) {
+            GameState.WeaponState bio = actor.getWeapons().get("bioload1");
+            bio.active = true;
+            bio.inStock = 1;
+        }
     }
 
     private static void setPreparedCarrier(GameState.PlayerState actor, String carrierName)
