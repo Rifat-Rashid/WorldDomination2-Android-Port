@@ -23,10 +23,11 @@ public final class MatchOutcomePresentationTest {
                 MatchOutcomePresentation.title(GameState.MatchStatus.VICTORY));
         assertEquals("NATION DEFEATED",
                 MatchOutcomePresentation.title(GameState.MatchStatus.DEFEAT));
-        assertTrue(MatchOutcomePresentation.message(GameState.MatchStatus.VICTORY)
-                .contains("rules the world"));
-        assertTrue(MatchOutcomePresentation.message(GameState.MatchStatus.DEFEAT)
-                .contains("war is lost"));
+        assertEquals("After killing most of the world's population, your country stands "
+                        + "victorious in its quest for world domination.",
+                MatchOutcomePresentation.message(GameState.MatchStatus.VICTORY));
+        assertEquals("Your country was destroyed. You lost the war for World Domination.",
+                MatchOutcomePresentation.message(GameState.MatchStatus.DEFEAT));
     }
 
     @Test

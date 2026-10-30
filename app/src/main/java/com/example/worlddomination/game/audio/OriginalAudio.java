@@ -10,7 +10,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.EnumMap;
 import java.util.Map;
-import java.util.zip.GZIPInputStream;
 
 /** Plays the original Flash-exported MP3 assets through libGDX's Android audio backend. */
 public final class OriginalAudio {
@@ -23,7 +22,11 @@ public final class OriginalAudio {
         UNIT_SELECT("59_interface_select unit bleep.wav.mp3.gz"),
         ACTION_ACCEPT("64_interface_Accept action bleep.wav.mp3.gz"),
         ACTION_OPEN("61_interface_openactiondevice.wav.mp3.gz"),
-        ACTION_CLOSE("63_interface_closeactiondevice.wav.mp3.gz");
+        ACTION_CLOSE("63_interface_closeactiondevice.wav.mp3.gz"),
+        SCORE_COUNTER("31_Score counter.Mp3.mp3.gz"),
+        SATELLITE_MULTIPLIER("34_Satelite multiplier.Mp3.mp3.gz"),
+        FLAG_BONUS("75_Country domination bonus.Mp3.mp3.gz"),
+        DEFEAT("48_Loose.Mp3.mp3.gz");
 
         private final String compressedAsset;
 
@@ -57,6 +60,10 @@ public final class OriginalAudio {
         preload(Cue.ACTION_ACCEPT);
         preload(Cue.ACTION_OPEN);
         preload(Cue.ACTION_CLOSE);
+        preload(Cue.SCORE_COUNTER);
+        preload(Cue.SATELLITE_MULTIPLIER);
+        preload(Cue.FLAG_BONUS);
+        preload(Cue.DEFEAT);
         play(Cue.STARTUP);
         if (theme != null && !muted) {
             theme.setLooping(true);
@@ -93,16 +100,44 @@ public final class OriginalAudio {
         }
     }
 
+    /** Starts a looping original cue and returns its libGDX sound instance id. */
+    public long loop(Cue cue) {
+        if (muted || cue == Cue.THEME) {
+            return -1L;
+        }
+        Sound sound = sounds.get(cue);
+        if (sound == null) {
+            sound = loadSound(cue);
+        }
+        return sound == null ? -1L : sound.loop(EFFECT_VOLUME);
+    }
+
+    public void stop(Cue cue, long soundId) {
+        if (soundId < 0L) {
+            return;
+        }
+        Sound sound = sounds.get(cue);
+        if (sound != null) {
+            sound.stop(soundId);
+        }
+    }
+
     public void pause() {
         resumeMusicAfterPause = theme != null && theme.isPlaying();
         if (resumeMusicAfterPause) {
             theme.pause();
+        }
+        for (Sound sound : sounds.values()) {
+            sound.pause();
         }
     }
 
     public void resume() {
         if (resumeMusicAfterPause && !muted && theme != null) {
             theme.play();
+        }
+        for (Sound sound : sounds.values()) {
+            sound.resume();
         }
         resumeMusicAfterPause = false;
     }
@@ -120,7 +155,16 @@ public final class OriginalAudio {
     }
 
     static String internalPath(Cue cue) {
+        return INTERNAL_ROOT + packagedAssetName(cue);
+    }
+
+    static String sourceAssetPath(Cue cue) {
         return INTERNAL_ROOT + cue.compressedAsset;
+    }
+
+    private static String packagedAssetName(Cue cue) {
+        return cue.compressedAsset.substring(0,
+                cue.compressedAsset.length() - ".gz".length());
     }
 
     static String cachePath(Cue cue) {
@@ -172,8 +216,8 @@ public final class OriginalAudio {
         if (cached.exists() && cached.length() > 0) {
             return cached;
         }
-        FileHandle compressed = Gdx.files.internal(internalPath(cue));
-        try (InputStream input = new GZIPInputStream(compressed.read());
+        FileHandle packagedAsset = Gdx.files.internal(internalPath(cue));
+        try (InputStream input = packagedAsset.read();
              OutputStream output = cached.write(false)) {
             byte[] buffer = new byte[16 * 1024];
             int count;
