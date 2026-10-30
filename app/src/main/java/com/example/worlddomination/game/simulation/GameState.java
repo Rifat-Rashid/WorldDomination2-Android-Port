@@ -33,11 +33,20 @@ public final class GameState {
         public final int cityIndex;
         public final String weaponName;
         public final String payloadName;
+        public final String counterWeaponName;
         public final int casualtiesMillions;
 
         private CombatEvent(CombatEventType type, int attackerPlayerId,
                             int defenderPlayerId, int cityIndex, String weaponName,
                             String payloadName, int casualtiesMillions) {
+            this(type, attackerPlayerId, defenderPlayerId, cityIndex, weaponName,
+                    payloadName, casualtiesMillions, null);
+        }
+
+        private CombatEvent(CombatEventType type, int attackerPlayerId,
+                            int defenderPlayerId, int cityIndex, String weaponName,
+                            String payloadName, int casualtiesMillions,
+                            String counterWeaponName) {
             this.type = type;
             this.attackerPlayerId = attackerPlayerId;
             this.defenderPlayerId = defenderPlayerId;
@@ -45,6 +54,7 @@ public final class GameState {
             this.weaponName = weaponName;
             this.payloadName = payloadName;
             this.casualtiesMillions = casualtiesMillions;
+            this.counterWeaponName = counterWeaponName;
         }
     }
 
@@ -2593,7 +2603,7 @@ public final class GameState {
         if (intercepted) {
             lastTurnCombatEvents.add(new CombatEvent(CombatEventType.STRIKE_INTERCEPTED,
                     attacker.id, defender.id, city.index, carrier.definition.name,
-                    payload.definition.name, 0));
+                    payload.definition.name, 0, counterName));
             messages.add("Nation " + defender.id + " intercepted the prepared strike.");
             return;
         }
@@ -2686,7 +2696,8 @@ public final class GameState {
                 casualties = 0;
                 lastTurnCombatEvents.add(new CombatEvent(
                         CombatEventType.STRIKE_INTERCEPTED, attacker.id, defender.id,
-                        city.index, carrier.definition.name, result.payloadName, 0));
+                        city.index, carrier.definition.name, result.payloadName, 0,
+                        counterName));
                 messages.add("Nation " + defender.id + " intercepted one ship payload.");
             } else {
                 casualties = populationChanges.addBattleCasualties(city,
