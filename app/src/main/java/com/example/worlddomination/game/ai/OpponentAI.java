@@ -101,7 +101,7 @@ public final class OpponentAI {
         }
     }
 
-    /** Plans the two source-style actions before any nation's actions resolve. */
+    /** Plans the source-ranked action slots before any nation's actions resolve. */
     public static List<Decision> plan(GameState state, GameState.PlayerState player,
                                       Random random) {
         List<ScoredAction> scores = scoreActions(state, player, random);
@@ -109,82 +109,98 @@ public final class OpponentAI {
 
         List<Decision> decisions = new ArrayList<>(2);
         Map<String, Integer> plannedWeaponUse = new LinkedHashMap<>();
-        int firstValidScoreIndex = -1;
-        for (int slot = 1; slot <= 2; slot++) {
-            Decision chosen = null;
-            int chosenIndex = -1;
+        ScoredAction first = scores.get(0);
+        ScoredAction second = scores.get(1);
+        boolean duplicateAttack = first.action == GameState.Action.ATTACK
+                && first.score - 50 > second.score;
+        int attackSlot = first.action == GameState.Action.ATTACK ? 0
+                : second.action == GameState.Action.ATTACK ? 1 : -1;
 
-            boolean sourceAttackRepeat = slot == 2 && firstValidScoreIndex == 0
-                    && scores.get(0).action == GameState.Action.ATTACK
-                    && scores.get(0).score - 50 > scores.get(1).score;
-            if (sourceAttackRepeat) {
-                chosen = planAttack(state, player, random, plannedWeaponUse);
-                if (chosen != null) {
-                    chosenIndex = 0;
-                }
-            }
-
-            if (chosen == null) {
-                int startIndex = slot == 1 ? 0 : firstValidScoreIndex + 1;
-                for (int index = startIndex; index < scores.size(); index++) {
-                    ScoredAction candidate = scores.get(index);
-                    Decision decision = planAction(state, player, candidate.action,
-                            random, slot, plannedWeaponUse);
-                    if (decision != null) {
-                        chosen = decision;
-                        chosenIndex = index;
-                        break;
+        if (attackSlot >= 0) {
+            ScoredAction companion = duplicateAttack ? null
+                    : scores.get(1 - attackSlot);
+            Decision precedingOrder = attackSlot == 1 && companion != null
+                    ? planRankedAction(state, player, companion, random, 1,
+                    plannedWeaponUse) : null;
+            List<Decision> attackPlan = planSourceAttack(state, player, random,
+                    duplicateAttack, plannedWeaponUse);
+            if (!attackPlan.isEmpty()) {
+                boolean readySingleAttack = player.getPreparedCarrierName() != null
+                        && !"ship".equals(player.getWeapons().get(
+                        player.getPreparedCarrierName()).definition.type)
+                        && attackPlan.size() == 1;
+                if (attackSlot == 1 && companion != null && readySingleAttack) {
+                    if (precedingOrder != null) {
+                        decisions.add(precedingOrder);
+                        reserve(player, precedingOrder);
+                        markPlannedUse(precedingOrder, plannedWeaponUse);
                     }
                 }
+                for (Decision decision : attackPlan) {
+                    decisions.add(decision);
+                    reserve(player, decision);
+                    markPlannedUse(decision, plannedWeaponUse);
+                }
+                // A not-ready attack resets its companion slot in the reference.
+                // A ready carrier's single attack leaves the other scored action intact.
+                boolean attackResetsCompanion = !readySingleAttack;
+                if (attackSlot == 0 && companion != null && !attackResetsCompanion) {
+                    Decision secondOrder = planRankedAction(state, player, companion,
+                            random, 2, plannedWeaponUse);
+                    if (secondOrder != null) {
+                        decisions.add(secondOrder);
+                        reserve(player, secondOrder);
+                        markPlannedUse(secondOrder, plannedWeaponUse);
+                    }
+                }
+                return decisions;
             }
+            if (attackSlot == 1) {
+                if (precedingOrder != null) {
+                    decisions.add(precedingOrder);
+                    reserve(player, precedingOrder);
+                    markPlannedUse(precedingOrder, plannedWeaponUse);
+                }
+                return decisions;
+            }
+        }
 
-            if (chosen == null) {
-                chosen = fallbackAction(state, player, random, slot, plannedWeaponUse);
-            }
-            decisions.add(chosen);
-            if (slot == 1) {
-                firstValidScoreIndex = chosenIndex;
-            }
-            reserve(player, chosen);
-            if (chosen.action == GameState.Action.ATTACK && chosen.weaponName != null) {
-                Integer count = plannedWeaponUse.get(chosen.weaponName);
-                plannedWeaponUse.put(chosen.weaponName, count == null ? 1 : count + 1);
-            } else if (chosen.action == GameState.Action.PREPARED_ATTACK
-                    && chosen.prepareCarrier && chosen.weaponName != null) {
-                Integer count = plannedWeaponUse.get(chosen.weaponName);
-                plannedWeaponUse.put(chosen.weaponName, count == null ? 1 : count + 1);
-            }
-            if (chosen.action == GameState.Action.PREPARED_ATTACK) {
-                plannedWeaponUse.put("@prepared", 1);
-            } else if (chosen.action == GameState.Action.DEFENSE) {
-                plannedWeaponUse.put("@defense", 1);
+        for (int slot = 0; slot < 2; slot++) {
+            Decision decision = planRankedAction(state, player, scores.get(slot),
+                    random, slot + 1, plannedWeaponUse);
+            if (decision != null) {
+                decisions.add(decision);
+                reserve(player, decision);
+                markPlannedUse(decision, plannedWeaponUse);
             }
         }
         return decisions;
     }
 
-    private static Decision fallbackAction(GameState state, GameState.PlayerState player,
-                                           Random random, int slot,
-                                           Map<String, Integer> plannedWeaponUse) {
-        GameState.Action[] fallbackOrder = {
-                GameState.Action.MASS_MEDIA, GameState.Action.RESOURCES,
-                GameState.Action.ATTACK, GameState.Action.PREPARED_ATTACK,
-                GameState.Action.DEFENSE, GameState.Action.PROPAGANDA,
-                GameState.Action.DIPLOMACY, GameState.Action.PRODUCTION,
-                GameState.Action.RESEARCH
-        };
-        for (GameState.Action action : fallbackOrder) {
-            if (state.isActionBioloaded(player.id, action)) {
-                continue;
-            }
-            Decision fallback = planAction(state, player, action, random, slot,
-                    plannedWeaponUse);
-            if (fallback != null) {
-                return fallback;
-            }
+    private static Decision planRankedAction(GameState state,
+                                             GameState.PlayerState player,
+                                             ScoredAction scored, Random random,
+                                             int slot,
+                                             Map<String, Integer> plannedWeaponUse) {
+        if (scored.action == GameState.Action.ATTACK) {
+            return null;
         }
-        // Combat actions are never bio-disabled; a no-target defense resolves as a safe no-op.
-        return simple(player.id, GameState.Action.DEFENSE);
+        return planAction(state, player, scored.action, random, slot, plannedWeaponUse);
+    }
+
+    private static void markPlannedUse(Decision decision,
+                                       Map<String, Integer> plannedWeaponUse) {
+        if (decision.weaponName != null && (decision.action == GameState.Action.ATTACK
+                || decision.action == GameState.Action.PREPARED_ATTACK
+                && decision.prepareCarrier)) {
+            Integer count = plannedWeaponUse.get(decision.weaponName);
+            plannedWeaponUse.put(decision.weaponName, count == null ? 1 : count + 1);
+        }
+        if (decision.action == GameState.Action.PREPARED_ATTACK) {
+            plannedWeaponUse.put("@prepared", 1);
+        } else if (decision.action == GameState.Action.DEFENSE) {
+            plannedWeaponUse.put("@defense", 1);
+        }
     }
 
     private static void reserve(GameState.PlayerState player, Decision decision) {
@@ -240,16 +256,6 @@ public final class OpponentAI {
 
         double preCounter = preCounterScore(state, player,
                 state.getPreparedThreatPlayerIds(player.id));
-        double preparedAttack = Math.max(0,
-                ATTACK_BASE[state.getDifficulty()] - lowestRegard / 2.0);
-        if (preparedCarrier != null) {
-            // A ready strike is represented by the source's boosted attack action.
-            preparedAttack = -999;
-        } else if (state.getAvailablePreparedCarriers(player.id).isEmpty()) {
-            preparedAttack = -999;
-        } else {
-            preparedAttack += 30;
-        }
         double religion = 20 + Math.round(player.populationMillions
                 / (double) largestPopulation * 100) - player.religion * 2.0;
         double propaganda = 42;
@@ -325,9 +331,8 @@ public final class OpponentAI {
             research = -100;
         }
 
-        List<ScoredAction> scores = new ArrayList<>(9);
+        List<ScoredAction> scores = new ArrayList<>(8);
         scores.add(new ScoredAction(GameState.Action.ATTACK, attack));
-        scores.add(new ScoredAction(GameState.Action.PREPARED_ATTACK, preparedAttack));
         scores.add(new ScoredAction(GameState.Action.DEFENSE, preCounter));
         scores.add(new ScoredAction(GameState.Action.PROPAGANDA, propaganda));
         scores.add(new ScoredAction(GameState.Action.DIPLOMACY, diplomacy));
@@ -346,6 +351,9 @@ public final class OpponentAI {
 
     static double scoreForAction(GameState state, GameState.PlayerState player,
                                  Random random, GameState.Action action) {
+        if (action == GameState.Action.PREPARED_ATTACK) {
+            return -999;
+        }
         for (ScoredAction scored : scoreActions(state, player, random)) {
             if (scored.action == action) {
                 return scored.score;
@@ -463,15 +471,9 @@ public final class OpponentAI {
         }
         switch (action) {
             case ATTACK:
-                if (player.getPreparedCarrierName() != null) {
-                    return planPreparedAttack(state, player, random, plannedWeaponUse);
-                }
-                Decision attack = planAttack(state, player, random, plannedWeaponUse);
-                if (attack != null) {
-                    return attack;
-                }
-                return plannedWeaponUse.containsKey("@prepared") ? null
-                        : planPreparedAttack(state, player, random, plannedWeaponUse);
+                List<Decision> sourceAttack = planSourceAttack(state, player, random,
+                        false, plannedWeaponUse);
+                return sourceAttack.isEmpty() ? null : sourceAttack.get(0);
             case PREPARED_ATTACK:
                 return planPreparedAttack(state, player, random, plannedWeaponUse);
             case DEFENSE:
@@ -490,6 +492,364 @@ public final class OpponentAI {
             default:
                 return null;
         }
+    }
+
+    /** Applies getTarget's carrier/direct choice and companion-slot behavior. */
+    private static List<Decision> planSourceAttack(GameState state,
+                                                   GameState.PlayerState attacker,
+                                                   Random random,
+                                                   boolean duplicateAttack,
+                                                   Map<String, Integer> plannedUse) {
+        List<Decision> decisions = new ArrayList<>(2);
+        GameState.PlayerState target = attackTarget(state, attacker, random);
+        if (target == null) {
+            return decisions;
+        }
+
+        String readyCarrier = attacker.getPreparedCarrierName();
+        if (readyCarrier != null) {
+            List<String> payloads = state.getAvailablePreparedPayloads(
+                    attacker.id, readyCarrier);
+            if (payloads.isEmpty()) {
+                return decisions;
+            }
+            GameState.WeaponState carrier = attacker.getWeapons().get(readyCarrier);
+            if ("ship".equals(carrier.definition.type)) {
+                Decision ship = planShipPreparedAttack(state, attacker, readyCarrier,
+                        target, random, plannedUse);
+                if (ship == null) {
+                    return decisions;
+                }
+                decisions.add(ship);
+                GameState.WeaponState conventional = strongestAvailableSoldier(
+                        attacker, plannedUse);
+                Integer cityIndex = firstPopulatedCity(target);
+                if (conventional != null && cityIndex != null) {
+                    decisions.add(attackDecision(attacker.id, target.id, cityIndex,
+                            conventional.definition.name));
+                }
+                return decisions;
+            }
+
+            GameState.WeaponState payload = highestKillPayload(state, attacker,
+                    readyCarrier, plannedUse);
+            if (payload == null) {
+                return decisions;
+            }
+            GameState.WeaponState conventional = strongestAvailableSoldier(
+                    attacker, plannedUse);
+            if (duplicateAttack && conventional != null) {
+                CityState pairedCity = largestCityBelowCombinedKills(target,
+                        payload.definition.maxKillsMillions
+                                + conventional.definition.maxKillsMillions);
+                int preparedCity;
+                int conventionalCity;
+                if (pairedCity != null) {
+                    preparedCity = pairedCity.index;
+                    conventionalCity = pairedCity.index;
+                } else {
+                    preparedCity = randomPopulatedCity(target, random);
+                    conventionalCity = randomPopulatedCity(target, random);
+                }
+                if (preparedCity >= 0 && conventionalCity >= 0) {
+                    decisions.add(preparedDecision(attacker.id, target.id, preparedCity,
+                            readyCarrier, payload.definition.name));
+                    decisions.add(attackDecision(attacker.id, target.id, conventionalCity,
+                            conventional.definition.name));
+                    return decisions;
+                }
+            }
+
+            int cityIndex = lastCityAtOrBelowKills(target,
+                    payload.definition.maxKillsMillions);
+            if (cityIndex < 0) {
+                cityIndex = randomPopulatedCity(target, random);
+            }
+            if (cityIndex >= 0) {
+                decisions.add(preparedDecision(attacker.id, target.id, cityIndex,
+                        readyCarrier, payload.definition.name));
+            }
+            return decisions;
+        }
+
+        List<String> carriers = sourceActiveCarriers(attacker, plannedUse);
+        List<String> logicalCarriers = sourceLogicalCarriers(attacker);
+        boolean allowPre = !carriers.isEmpty();
+        boolean allowDir = hasAvailableSoldier(attacker, plannedUse);
+        boolean hasSpy = hasAvailableSpy(attacker, plannedUse);
+        if (!allowDir && !allowPre && !hasSpy) {
+            return decisions;
+        }
+
+        int selectedRoute = allowPre && allowDir ? randomInclusive(random, 1, 2)
+                : allowPre ? 1 : 2;
+        if (selectedRoute == 1) {
+            String carrierName = randomAvailableCarrier(attacker, random, logicalCarriers);
+            if (carrierName != null) {
+                decisions.add(new Decision(attacker.id, GameState.Action.PREPARED_ATTACK,
+                        Collections.<String, Integer>emptyMap(),
+                        Collections.<String>emptyList(), 0, -1, -1,
+                        carrierName, null, true, -1));
+            }
+        } else {
+            Decision direct = planDirectAttackForTarget(state, attacker, target,
+                    random, plannedUse);
+            if (direct != null) {
+                decisions.add(direct);
+            }
+        }
+        return decisions;
+    }
+
+    private static boolean hasAvailableSoldier(GameState.PlayerState player,
+                                               Map<String, Integer> plannedUse) {
+        for (GameState.WeaponState weapon : player.getWeapons().values()) {
+            if (weapon.active && availableStock(weapon, plannedUse) > 0
+                    && "soldier".equals(weapon.definition.type)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean hasAvailableSpy(GameState.PlayerState player,
+                                           Map<String, Integer> plannedUse) {
+        for (GameState.WeaponState weapon : player.getWeapons().values()) {
+            if (weapon.active && availableStock(weapon, plannedUse) > 0
+                    && "spy".equals(weapon.definition.type)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static String randomAvailableCarrier(GameState.PlayerState player,
+                                                 Random random,
+                                                 List<String> carriers) {
+        // WeaponStock.randomAvailableCarrier performs this unused draw first.
+        randomInclusive(random, 1, 3);
+        if (carriers.isEmpty()) {
+            return null;
+        }
+        String[] typeOrder = {"rocket", "plane", "sub", "ship", "space"};
+        List<String> availableTypes = new ArrayList<>(typeOrder.length);
+        for (String type : typeOrder) {
+            for (String name : carriers) {
+                GameState.WeaponState weapon = player.getWeapons().get(name);
+                if (type.equals(weapon.definition.type)) {
+                    availableTypes.add(type);
+                    break;
+                }
+            }
+        }
+        if (availableTypes.isEmpty()) {
+            return null;
+        }
+        String selectedType = availableTypes.get(randomInclusive(random, 0,
+                availableTypes.size() - 1));
+        String highest = null;
+        for (String name : carriers) {
+            GameState.WeaponState weapon = player.getWeapons().get(name);
+            if (selectedType.equals(weapon.definition.type)
+                    && (highest == null || weapon.definition.level
+                    > player.getWeapons().get(highest).definition.level)) {
+                highest = name;
+            }
+        }
+        return highest;
+    }
+
+    private static List<String> sourceActiveCarriers(GameState.PlayerState player,
+                                                     Map<String, Integer> plannedUse) {
+        List<String> carriers = new ArrayList<>();
+        for (GameState.WeaponState weapon : player.getWeapons().values()) {
+            if (isSourceCarrier(weapon) && weapon.active
+                    && availableStock(weapon, plannedUse) > 0) {
+                carriers.add(weapon.definition.name);
+            }
+        }
+        return carriers;
+    }
+
+    private static List<String> sourceLogicalCarriers(GameState.PlayerState player) {
+        List<String> carriers = new ArrayList<>();
+        for (GameState.WeaponState carrier : player.getWeapons().values()) {
+            if (isSourceCarrier(carrier) && carrier.inStock > 0
+                    && sourcePayloadAvailable(player, carrier)) {
+                carriers.add(carrier.definition.name);
+            }
+        }
+        return carriers;
+    }
+
+    private static boolean sourcePayloadAvailable(GameState.PlayerState player,
+                                                  GameState.WeaponState carrier) {
+        String type = carrier.definition.type;
+        if ("rocket".equals(type)) {
+            // WeaponStock's rocket branch checks level without checking the stock
+            // or category of the candidate weapon.
+            for (GameState.WeaponState weapon : player.getWeapons().values()) {
+                if (weapon.definition.level >= carrier.definition.level) {
+                    return true;
+                }
+            }
+        } else if ("plane".equals(type)) {
+            for (GameState.WeaponState payload : player.getWeapons().values()) {
+                if (isSourcePayload(payload) && payload.inStock > 0
+                        && carrier.definition.level >= payload.definition.level) {
+                    return true;
+                }
+            }
+        } else if ("sub".equals(type) || "ship".equals(type)) {
+            for (GameState.WeaponState payload : player.getWeapons().values()) {
+                if (isSourcePayload(payload) && payload.inStock > 0) {
+                    return true;
+                }
+            }
+        } else if ("space".equals(type)) {
+            GameState.WeaponState specialLoad = player.getWeapons().get("specialLoad");
+            return specialLoad != null && specialLoad.inStock > 0;
+        }
+        return false;
+    }
+
+    private static boolean isSourceCarrier(GameState.WeaponState weapon) {
+        String type = weapon.definition.type;
+        return "rocket".equals(type) || "plane".equals(type) || "sub".equals(type)
+                || "ship".equals(type) || "space".equals(type);
+    }
+
+    private static boolean isSourcePayload(GameState.WeaponState weapon) {
+        return "rocketload".equals(weapon.definition.type);
+    }
+
+    private static GameState.WeaponState highestKillPayload(GameState state,
+                                                            GameState.PlayerState player,
+                                                            String carrierName,
+                                                            Map<String, Integer> plannedUse) {
+        GameState.WeaponState highest = null;
+        for (String name : state.getAvailablePreparedPayloads(player.id, carrierName)) {
+            GameState.WeaponState payload = player.getWeapons().get(name);
+            if (availableStock(payload, plannedUse) > 0 && (highest == null
+                    || payload.definition.maxKillsMillions
+                    > highest.definition.maxKillsMillions)) {
+                highest = payload;
+            }
+        }
+        return highest;
+    }
+
+    private static GameState.WeaponState strongestAvailableSoldier(
+            GameState.PlayerState player, Map<String, Integer> plannedUse) {
+        GameState.WeaponState strongest = null;
+        for (GameState.WeaponState weapon : player.getWeapons().values()) {
+            if (!weapon.active || availableStock(weapon, plannedUse) <= 0
+                    || !"soldier".equals(weapon.definition.type)) {
+                continue;
+            }
+            if (strongest == null || weapon.definition.maxKillsMillions
+                    > strongest.definition.maxKillsMillions) {
+                strongest = weapon;
+            }
+        }
+        return strongest;
+    }
+
+    private static int lastCityAtOrBelowKills(GameState.PlayerState target, int maxKills) {
+        int selected = -1;
+        for (CityState city : target.getCities()) {
+            if (city.populationMillions <= maxKills && city.populationMillions > 0) {
+                selected = city.index;
+            }
+        }
+        return selected;
+    }
+
+    private static CityState largestCityBelowCombinedKills(GameState.PlayerState target,
+                                                            int combinedKills) {
+        CityState selected = null;
+        for (CityState city : target.getCities()) {
+            if (city.populationMillions > 0 && city.populationMillions < combinedKills
+                    && (selected == null || city.populationMillions
+                    > selected.populationMillions)) {
+                selected = city;
+            }
+        }
+        return selected;
+    }
+
+    private static Integer firstPopulatedCity(GameState.PlayerState target) {
+        for (CityState city : target.getCities()) {
+            if (city.populationMillions > 0) {
+                return city.index;
+            }
+        }
+        return null;
+    }
+
+    private static int randomPopulatedCity(GameState.PlayerState target, Random random) {
+        List<Integer> populated = new ArrayList<>();
+        for (CityState city : target.getCities()) {
+            if (city.populationMillions > 0) {
+                populated.add(city.index);
+            }
+        }
+        return populated.isEmpty() ? -1
+                : populated.get(randomInclusive(random, 0, populated.size() - 1));
+    }
+
+    private static Decision preparedDecision(int playerId, int targetId, int cityIndex,
+                                             String carrierName, String payloadName) {
+        return new Decision(playerId, GameState.Action.PREPARED_ATTACK,
+                Collections.<String, Integer>emptyMap(), Collections.<String>emptyList(),
+                0, targetId, cityIndex, carrierName, payloadName, false, -1);
+    }
+
+    private static Decision attackDecision(int playerId, int targetId, int cityIndex,
+                                           String weaponName) {
+        return new Decision(playerId, GameState.Action.ATTACK,
+                Collections.<String, Integer>emptyMap(), Collections.<String>emptyList(),
+                0, targetId, cityIndex, weaponName, -1);
+    }
+
+    private static Decision planDirectAttackForTarget(GameState state,
+                                                       GameState.PlayerState attacker,
+                                                       GameState.PlayerState target,
+                                                       Random random,
+                                                       Map<String, Integer> plannedUse) {
+        List<GameState.WeaponState> availableSoldiers = new ArrayList<>(4);
+        for (GameState.WeaponState weapon : attacker.getWeapons().values()) {
+            if (weapon.active && availableStock(weapon, plannedUse) > 0
+                    && "soldier".equals(weapon.definition.type)) {
+                availableSoldiers.add(weapon);
+            }
+        }
+        availableSoldiers.sort(Comparator.comparingInt(
+                (GameState.WeaponState item) -> item.definition.maxKillsMillions)
+                .reversed());
+        GameState.WeaponState selected = null;
+        int initialCity = -1;
+        if (!availableSoldiers.isEmpty()) {
+            initialCity = randomPopulatedCity(target, random);
+            if (initialCity < 0) {
+                return null;
+            }
+            int sourceIndex = randomInclusive(random, 0, 3);
+            if (sourceIndex < availableSoldiers.size()) {
+                selected = availableSoldiers.get(sourceIndex);
+            }
+        }
+        SpyTarget spyTarget = findSpyTarget(state, attacker, random);
+        boolean useSpy = spyTarget != null
+                && (selected == null || randomInclusive(random, 0, 6) == 3);
+        if (useSpy) {
+            selected = attacker.getWeapons().get("spy" + spyTarget.spyLevel);
+            target = state.getPlayerState(spyTarget.playerId);
+            initialCity = randomPopulatedCity(target, random);
+        }
+        return selected == null || initialCity < 0 ? null
+                : attackDecision(attacker.id, target.id, initialCity,
+                selected.definition.name);
     }
 
     static Decision planDefense(GameState state, GameState.PlayerState defender,
@@ -576,6 +936,16 @@ public final class OpponentAI {
                                                    String carrierName, Random random,
                                                    Map<String, Integer> plannedWeaponUse) {
         GameState.PlayerState target = mostHostileTarget(state, attacker, false);
+        return planShipPreparedAttack(state, attacker, carrierName, target, random,
+                plannedWeaponUse);
+    }
+
+    private static Decision planShipPreparedAttack(GameState state,
+                                                   GameState.PlayerState attacker,
+                                                   String carrierName,
+                                                   GameState.PlayerState target,
+                                                   Random random,
+                                                   Map<String, Integer> plannedWeaponUse) {
         if (target == null) {
             return null;
         }
