@@ -33,6 +33,8 @@ public final class MatchOutcomePresentationTest {
     public void finalScoreUsesPeriodGroupedThousandsAndNeverGoesNegative() {
         assertEquals("0", MatchOutcomePresentation.formatScore(0));
         assertEquals("124.562", MatchOutcomePresentation.formatScore(124562));
+        assertEquals("1.000.000.250",
+                MatchOutcomePresentation.formatScore(1_000_000_250L));
         assertEquals("0", MatchOutcomePresentation.formatScore(-100));
     }
 }

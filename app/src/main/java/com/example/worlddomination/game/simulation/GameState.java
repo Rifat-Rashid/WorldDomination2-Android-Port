@@ -81,9 +81,12 @@ public final class GameState {
         public int moneyMillions;
         public int turnMoneyMillions;
         public int religion;
-        public int score;
+        public long score;
         public int spyReadiness = 25;
         public boolean alive = true;
+        int satellitesUsed;
+        int lastAttackedByPlayerId;
+        int largestBattleCasualties;
         private final double[] regardToward = new double[5];
         private final int[] ceasefireTurns = new int[5];
         private final int[] diplomacyOfferedLastTurn = new int[5];
@@ -189,6 +192,18 @@ public final class GameState {
         public int getWeaponStockByName(String weaponName) {
             WeaponState weapon = weapons.get(weaponName);
             return weapon == null ? 0 : weapon.inStock;
+        }
+
+        public int getSatellitesUsed() {
+            return satellitesUsed;
+        }
+
+        public int getLastAttackedByPlayerId() {
+            return lastAttackedByPlayerId;
+        }
+
+        public int getLargestBattleCasualties() {
+            return largestBattleCasualties;
         }
 
         public CityState getCity(int index) {
@@ -405,6 +420,7 @@ public final class GameState {
     private int turn;
     private int selectedIsland = -1;
     private MatchStatus matchStatus = MatchStatus.ONGOING;
+    private FinalScoreBreakdown finalScoreBreakdown;
 
     /** Difficulty indices follow the recovered source: 0 easy, 1 normal, 2 hard. */
     public GameState(int difficulty) {
@@ -711,6 +727,16 @@ public final class GameState {
 
     public MatchStatus getMatchStatus() {
         return matchStatus;
+    }
+
+    public FinalScoreBreakdown getFinalScoreBreakdown() {
+        return finalScoreBreakdown;
+    }
+
+    /** Returns the score shown on the end screen, including source bonuses. */
+    public long getFinalScore() {
+        return finalScoreBreakdown == null
+                ? Math.max(0L, getHuman().score) : finalScoreBreakdown.getFinalScore();
     }
 
     public PlayerState getHuman() {
@@ -1868,6 +1894,15 @@ public final class GameState {
         target.regardToward[proposer.id] += adjustment;
     }
 
+    /** Keeps the source's greatest-casualty attacker attribution for each flag. */
+    private static void recordLargestBattle(PlayerState attacker, PlayerState defender,
+                                            int casualties) {
+        if (casualties > defender.largestBattleCasualties) {
+            defender.largestBattleCasualties = casualties;
+            defender.lastAttackedByPlayerId = attacker.id;
+        }
+    }
+
     void applyBattleHostilityEffects(PlayerState attacker, PlayerState defender,
                                      int casualties) {
         attacker.regardToward[defender.id] -= casualties;
@@ -2038,6 +2073,7 @@ public final class GameState {
             casualties = Math.min(city.populationMillions, Math.round(damage));
             city.populationMillions -= casualties;
             defender.populationMillions = totalPopulation(defender);
+            recordLargestBattle(attacker, defender, casualties);
             applyBattleHostilityEffects(attacker, defender, casualties);
             if (defender.populationMillions <= 0) {
                 defender.alive = false;
@@ -2105,6 +2141,9 @@ public final class GameState {
 
         attacker.preparedCarrierName = null;
         payload.inStock--;
+        if ("space".equals(carrier.definition.type)) {
+            attacker.satellitesUsed++;
+        }
         int rolledCasualties = sourceStrikeCasualties(payload.definition.maxKillsMillions,
                 attacker.human, defender.human);
         boolean intercepted = false;
@@ -2129,6 +2168,7 @@ public final class GameState {
         int casualties = Math.min(rolledCasualties, city.populationMillions);
         city.populationMillions -= casualties;
         defender.populationMillions = totalPopulation(defender);
+        recordLargestBattle(attacker, defender, casualties);
         applyBattleHostilityEffects(attacker, defender, casualties);
         if (defender.populationMillions <= 0) {
             defender.alive = false;
@@ -2214,6 +2254,7 @@ public final class GameState {
                 casualties = Math.min(result.rolledCasualties, city.populationMillions);
                 city.populationMillions -= casualties;
                 totalCasualties += casualties;
+                recordLargestBattle(attacker, defender, casualties);
                 if (casualties > 0) {
                     addToHighscore(attacker, 1, casualties);
                 }
@@ -2600,6 +2641,7 @@ public final class GameState {
         }
         if (!getHuman().alive) {
             matchStatus = MatchStatus.DEFEAT;
+            captureFinalScore();
             messages.add("Your nation has been defeated.");
             return;
         }
@@ -2609,7 +2651,22 @@ public final class GameState {
             }
         }
         matchStatus = MatchStatus.VICTORY;
+        captureFinalScore();
         messages.add("Victory. All rival nations have fallen.");
+    }
+
+    private void captureFinalScore() {
+        if (finalScoreBreakdown != null) {
+            return;
+        }
+        int humanCreditedFlags = 0;
+        for (PlayerState player : players) {
+            if (player.lastAttackedByPlayerId == 0) {
+                humanCreditedFlags++;
+            }
+        }
+        finalScoreBreakdown = FinalScoreBreakdown.calculate(getHuman().score,
+                getHuman().satellitesUsed, humanCreditedFlags);
     }
 
     private void resolveProduction(ActionOrder order) {
@@ -2697,7 +2754,7 @@ public final class GameState {
 
     private void addToHighscore(PlayerState player, int actionIndex, int multiplier) {
         int[] sourceWeights = {151, 1213, 1001, 2001, 3002, 200, 101, 910};
-        int points = sourceWeights[actionIndex] + random.nextInt(51);
+        long points = sourceWeights[actionIndex] + random.nextInt(51);
         player.score += points * multiplier * difficulty;
     }
 
