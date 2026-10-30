@@ -2123,9 +2123,8 @@ public final class GameState {
         }
         int casualties = 0;
         if ("soldier".equals(weapon.definition.type)) {
-            float minimum = weapon.definition.maxKillsMillions / 2f;
-            float damage = minimum + random.nextFloat() * minimum;
-            casualties = Math.min(city.populationMillions, Math.round(damage));
+            casualties = Math.min(city.populationMillions,
+                    sourceDirectAttackCasualties(weapon.definition.maxKillsMillions, random));
             city.populationMillions -= casualties;
             defender.populationMillions = totalPopulation(defender);
             recordLargestBattle(attacker, defender, casualties);
@@ -2331,11 +2330,15 @@ public final class GameState {
         return random.nextInt(3) + 1 == 2;
     }
 
+    /** Source soldier casualties: Math.round(Tools.randRange(maxKills/2, maxKills)). */
+    static int sourceDirectAttackCasualties(int maximum, Random random) {
+        return sourceRandRangeRounded(maximum / 2f, maximum, random);
+    }
+
     /** Source Tools.randRange(maxKills/2, maxKills), followed by Math.round. */
     static int sourceShipStrikeCasualties(int maximum, Random random) {
         float minimum = maximum / 2f;
-        int offset = (int) Math.floor(random.nextFloat() * (maximum - minimum + 1f));
-        return Math.round(minimum + offset);
+        return sourceRandRangeRounded(minimum, maximum, random);
     }
 
     /** Source Tools.randRange(1, 9) != 5: eight outcomes intercept. */
@@ -2349,7 +2352,12 @@ public final class GameState {
         boolean aiAttackingHuman = targetIsHuman && !attackerIsHuman;
         float minimum = aiAttackingHuman ? maximum : maximum / 1.5f;
         float upper = aiAttackingHuman ? maximum * 1.2f : maximum;
-        int offset = (int) Math.floor(random.nextFloat() * (upper - minimum + 1f));
+        return sourceRandRangeRounded(minimum, upper, random);
+    }
+
+    /** Flash Tools.randRange floors an inclusive random offset before Math.round. */
+    private static int sourceRandRangeRounded(float minimum, float maximum, Random random) {
+        int offset = (int) Math.floor(random.nextFloat() * (maximum - minimum + 1f));
         return Math.round(minimum + offset);
     }
 

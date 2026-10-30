@@ -730,6 +730,27 @@ public final class GameStateTest {
     }
 
     @Test
+    public void soldierCasualtyRollFloorsSourceRandRangeBeforeRounding() {
+        Random upperOffset = new Random(0L) {
+            @Override
+            public float nextFloat() {
+                return 0.667f;
+            }
+        };
+        assertEquals(4, GameState.sourceDirectAttackCasualties(4, upperOffset));
+
+        Random oddMaximum = new Random(0L) {
+            @Override
+            public float nextFloat() {
+                return 0.9999f;
+            }
+        };
+        // The source's half-integer lower bound and inclusive roll can round
+        // one above an odd maxKills value; preserve that original edge case.
+        assertEquals(22, GameState.sourceDirectAttackCasualties(21, oddMaximum));
+    }
+
+    @Test
     public void defenseSelectionConsumesOneMatchingCounter() {
         GameState state = new GameState(1, 203L, false);
         assertTrue(state.getAvailableDefenseWeapons(0).contains("antiRocket"));
