@@ -403,8 +403,9 @@ public final class GameStateTest {
         state.selectAction(GameState.Action.PRODUCTION);
         state.configureProduction("soldier", 50);
         assertEquals(32, state.getSelectedProductionBudgetMillions());
+        assertEquals(33, state.getSelectedProductionTotalBudgetMillions());
         assertTrue(state.acceptSelectedAction());
-        assertEquals(33, state.getTurnMoneyMillions());
+        assertEquals(32, state.getTurnMoneyMillions());
         state.selectAction(GameState.Action.RESOURCES);
         assertTrue(state.acceptSelectedAction());
         state.confirmTurn();
@@ -412,6 +413,85 @@ public final class GameStateTest {
         assertTrue(state.getWeaponStock("soldier1") > 1);
         assertTrue(state.getHuman().moneyMillions < 106);
         assertEquals(state.getHuman().moneyMillions, state.getTurnMoneyMillions());
+    }
+
+    @Test
+    public void productionCanSplitOneHundredPercentAcrossMultipleCategories() {
+        GameState state = new GameState(1, 0L, false);
+        state.selectAction(GameState.Action.PRODUCTION);
+        state.configureProduction("soldier", 50);
+
+        state.selectProductionCategory("rockets");
+        assertEquals(0, state.getSelectedProductionPercent());
+        assertEquals(50, state.getSelectedProductionMaximumPercent());
+        state.configureProduction("rockets", 50);
+
+        assertEquals(100, state.getSelectedProductionAllocatedPercent());
+        assertEquals(50, state.getProductionPercent("soldier"));
+        assertEquals(50, state.getProductionPercent("rockets"));
+        assertEquals(32, state.getSelectedProductionBudgetMillions());
+        assertEquals(65, state.getSelectedProductionTotalBudgetMillions());
+
+        state.selectProductionCategory("soldier");
+        assertEquals(50, state.getSelectedProductionPercent());
+        assertEquals(50, state.getSelectedProductionMaximumPercent());
+    }
+
+    @Test
+    public void productionAllocationCannotExceedSharedHundredPercentLimit() {
+        GameState state = new GameState(1, 0L, false);
+        state.selectAction(GameState.Action.PRODUCTION);
+        state.configureProduction("soldier", 70);
+        state.selectProductionCategory("rockets");
+        assertEquals(30, state.getSelectedProductionMaximumPercent());
+
+        try {
+            state.configureProduction("rockets", 31);
+            fail("Expected allocation above the remaining share to be rejected");
+        } catch (IllegalArgumentException expected) {
+            assertEquals(70, state.getProductionPercent("soldier"));
+            assertEquals(0, state.getProductionPercent("rockets"));
+        }
+
+        state.selectProductionCategory("soldier");
+        state.configureProduction("soldier", 20);
+        state.selectProductionCategory("rockets");
+        assertEquals(80, state.getSelectedProductionMaximumPercent());
+        state.configureProduction("rockets", 80);
+        assertEquals(100, state.getSelectedProductionAllocatedPercent());
+    }
+
+    @Test
+    public void productionReservationRoundsCombinedShareAndRefundsOnRemoval() {
+        GameState state = new GameState(1, 0L, false);
+        state.selectAction(GameState.Action.PRODUCTION);
+        state.configureProduction("soldier", 10);
+        state.configureProduction("rockets", 10);
+
+        assertEquals(6, state.getSelectedProductionBudgetMillions());
+        assertEquals(13, state.getSelectedProductionTotalBudgetMillions());
+        assertTrue(state.acceptSelectedAction());
+        assertEquals(52, state.getTurnMoneyMillions());
+
+        state.removeQueuedAction(0);
+        assertEquals(65, state.getTurnMoneyMillions());
+    }
+
+    @Test
+    public void productionActionReservesAndResolvesEveryAllocatedCategory() {
+        GameState state = new GameState(1, 0L, false);
+        state.selectAction(GameState.Action.PRODUCTION);
+        state.configureProduction("soldier", 50);
+        state.configureProduction("rockets", 50);
+
+        assertTrue(state.acceptSelectedAction());
+        assertEquals(0, state.getTurnMoneyMillions());
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+
+        assertTrue(state.getWeaponStock("soldier1") > 1);
+        assertTrue(state.getWeaponStock("rocket1") > 1);
     }
 
     @Test

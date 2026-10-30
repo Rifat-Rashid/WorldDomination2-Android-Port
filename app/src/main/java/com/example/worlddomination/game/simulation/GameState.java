@@ -474,7 +474,7 @@ public final class GameState {
     private final Random random;
     private Action selectedAction;
     private String selectedProductionCategory = "soldier";
-    private int selectedProductionPercent;
+    private final Map<String, Integer> selectedProductionPercentages = new LinkedHashMap<>();
     private String selectedTechnology;
     private int selectedTargetPlayer = 1;
     private int selectedTargetCity;
@@ -889,11 +889,21 @@ public final class GameState {
         selectedDefenseWeapon = firstAvailableDefenseWeapon();
         selectedSpyBuilding = "spyCenter";
         selectedDiplomacyOption = 0;
-        selectedProductionCategory = "soldier";
-        selectedProductionPercent = 0;
+        resetProductionSelection();
     }
 
-    /** Sets one production row as the original interface's percentage sliders do. */
+    /** Selects one production row without changing its already allocated share. */
+    public void selectProductionCategory(String category) {
+        if (selectedAction != Action.PRODUCTION) {
+            throw new IllegalStateException("Select Production before choosing a category");
+        }
+        if (productionGroup(category) == 0) {
+            throw new IllegalArgumentException("Unknown production category: " + category);
+        }
+        selectedProductionCategory = category;
+    }
+
+    /** Sets one category's share while preserving the total 100 percent source budget. */
     public void configureProduction(String category, int percent) {
         if (selectedAction != Action.PRODUCTION) {
             throw new IllegalStateException("Select Production before setting its investment");
@@ -905,7 +915,14 @@ public final class GameState {
             throw new IllegalArgumentException("Production percentage must be 0..100");
         }
         selectedProductionCategory = category;
-        selectedProductionPercent = percent;
+        if (percent > getSelectedProductionMaximumPercent()) {
+            throw new IllegalArgumentException("Production allocations cannot exceed 100 percent");
+        }
+        if (percent == 0) {
+            selectedProductionPercentages.remove(category);
+        } else {
+            selectedProductionPercentages.put(category, percent);
+        }
     }
 
     /** Selects a technology only when its source prerequisite and funds are satisfied. */
@@ -1551,11 +1568,44 @@ public final class GameState {
     }
 
     public int getSelectedProductionPercent() {
-        return selectedProductionPercent;
+        return getProductionPercent(selectedProductionCategory);
+    }
+
+    public int getProductionPercent(String category) {
+        Integer percent = selectedProductionPercentages.get(category);
+        return percent == null ? 0 : percent;
+    }
+
+    public int getSelectedProductionMaximumPercent() {
+        int allocatedElsewhere = 0;
+        for (Map.Entry<String, Integer> allocation : selectedProductionPercentages.entrySet()) {
+            if (!allocation.getKey().equals(selectedProductionCategory)) {
+                allocatedElsewhere += allocation.getValue();
+            }
+        }
+        return Math.max(0, 100 - allocatedElsewhere);
+    }
+
+    public int getSelectedProductionAllocatedPercent() {
+        int total = 0;
+        for (Integer percent : selectedProductionPercentages.values()) {
+            total += percent;
+        }
+        return total;
+    }
+
+    public Map<String, Integer> getSelectedProductionInvestments() {
+        return Collections.unmodifiableMap(
+                new LinkedHashMap<>(selectedProductionPercentages));
     }
 
     public int getSelectedProductionBudgetMillions() {
-        return getHuman().turnMoneyMillions * selectedProductionPercent / 100;
+        return getHuman().turnMoneyMillions * getSelectedProductionPercent() / 100;
+    }
+
+    public int getSelectedProductionTotalBudgetMillions() {
+        return (int) Math.round(getHuman().turnMoneyMillions
+                * (double) getSelectedProductionAllocatedPercent() / 100.0d);
     }
 
     public int getTurnMoneyMillions() {
@@ -1578,8 +1628,8 @@ public final class GameState {
             }
             reserved = getTechnologyCost(selectedTechnology);
         } else if (selectedAction == Action.PRODUCTION) {
-            if (selectedProductionPercent > 0) {
-                reserved = getSelectedProductionBudgetMillions();
+            if (!selectedProductionPercentages.isEmpty()) {
+                reserved = getSelectedProductionTotalBudgetMillions();
             }
         } else if (selectedAction == Action.ATTACK && !canAcceptAttack()) {
             messages.add("Choose a living target city and an available unit.");
@@ -1608,8 +1658,14 @@ public final class GameState {
             return false;
         }
         Map<String, Integer> productionBudgets = new LinkedHashMap<>();
-        if (selectedAction == Action.PRODUCTION && reserved > 0) {
-            productionBudgets.put(selectedProductionCategory, reserved);
+        if (selectedAction == Action.PRODUCTION) {
+            for (String category : STARTING_PRODUCTION_CATEGORIES) {
+                int percent = getProductionPercent(category);
+                if (percent > 0) {
+                    productionBudgets.put(category,
+                            getHuman().turnMoneyMillions * percent / 100);
+                }
+            }
         }
         List<String> technologies = new ArrayList<>();
         if (selectedAction == Action.RESEARCH && selectedTechnology != null) {
@@ -1638,19 +1694,24 @@ public final class GameState {
         selectedShipStrikes.clear();
         selectedDefenseWeapon = firstAvailableDefenseWeapon();
         selectedDiplomacyOption = 0;
+        resetProductionSelection();
         return true;
     }
 
     public void cancelSelection() {
         selectedAction = null;
         selectedTechnology = null;
-        selectedProductionPercent = 0;
-        selectedProductionCategory = "soldier";
+        resetProductionSelection();
         selectedDiplomacyOption = 0;
         selectedPreparedCarrier = null;
         selectedPreparedPayload = null;
         selectedShipStrikes.clear();
         selectedDefenseWeapon = null;
+    }
+
+    private void resetProductionSelection() {
+        selectedProductionPercentages.clear();
+        selectedProductionCategory = "soldier";
     }
 
     public void removeQueuedAction(int slot) {
