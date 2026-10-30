@@ -933,7 +933,7 @@ public final class GameStateTest {
     }
 
     @Test
-    public void specialOpponentLimitsSpyTheftToTwentyMillionAndOneLowLevelItem() {
+    public void specialOpponentUsesDifficultyMoneyCapAndOneLowLevelItem() {
         long seed = -1L;
         for (long candidate = 0; candidate < 500; candidate++) {
             GameState probe = new GameState(1, candidate, false);
@@ -963,8 +963,8 @@ public final class GameStateTest {
         assertTrue(state.acceptSelectedAction());
         state.confirmTurn();
 
-        assertEquals(980, defender.moneyMillions);
-        assertEquals(attackerFundsBefore + 20, attacker.moneyMillions);
+        assertEquals(880, defender.moneyMillions);
+        assertEquals(attackerFundsBefore + 120, attacker.moneyMillions);
         assertEquals(1, defender.getWeaponStockByName("warhead2"));
         assertEquals(1, defender.getWeaponStockByName("soldier3"));
         int stolenItems = 0;

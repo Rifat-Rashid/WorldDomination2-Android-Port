@@ -2516,8 +2516,8 @@ public final class GameState {
         long moneyAmount = Math.round((defender.moneyMillions / 100.0d) * moneyPercent);
         moneyAmount = Math.min(moneyAmount, SPY_MONEY_CAP[difficulty]);
         if (defender.specialPerson) {
+            // The source stores the money amount before its later local $20M adjustment.
             weaponCount = 1;
-            moneyAmount = Math.min(moneyAmount, 20L);
         }
 
         List<String> availableSpyActions = new ArrayList<>();
