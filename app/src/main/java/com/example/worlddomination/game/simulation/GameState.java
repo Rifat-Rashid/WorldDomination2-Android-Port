@@ -39,7 +39,7 @@ public final class GameState {
         public boolean isPorted() {
             return this == RESOURCES || this == PRODUCTION || this == RESEARCH
                     || this == MASS_MEDIA || this == ATTACK || this == PROPAGANDA
-                    || this == DIPLOMACY;
+                    || this == DIPLOMACY || this == PREPARED_ATTACK || this == DEFENSE;
         }
     }
 
@@ -457,6 +457,10 @@ public final class GameState {
 
     public PlayerState getPlayerState(int playerId) {
         return playerById(playerId);
+    }
+
+    public String getPreparedCarrierName(int playerId) {
+        return playerById(playerId).preparedCarrierName;
     }
 
     public boolean isActionBioloaded(int playerId, Action action) {
