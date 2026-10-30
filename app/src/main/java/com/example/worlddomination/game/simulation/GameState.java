@@ -73,6 +73,8 @@ public final class GameState {
         private final int leaderId;
         private final String religionCode;
         private final int playerColor;
+        private boolean specialPerson;
+        private boolean suicidePerson;
         public int populationMillions;
         public int moneyMillions;
         public int turnMoneyMillions;
@@ -111,6 +113,17 @@ public final class GameState {
             return inventedTechnologies.contains(name);
         }
 
+        /** Mirrors TechTree.allow_special from the reference game's unlock rule. */
+        public boolean allowsSpecialTechnologies() {
+            int unlockedSpecialTechCount = hasTechnology("plane2") ? 1 : 0;
+            for (TechnologyCatalog.Definition technology : TechnologyCatalog.all()) {
+                if (technology.level == 4 && hasTechnology(technology.name)) {
+                    unlockedSpecialTechCount++;
+                }
+            }
+            return unlockedSpecialTechCount >= 4;
+        }
+
         public int getLeaderId() {
             return leaderId;
         }
@@ -121,6 +134,14 @@ public final class GameState {
 
         public int getPlayerColor() {
             return playerColor;
+        }
+
+        public boolean isSpecialPerson() {
+            return specialPerson;
+        }
+
+        public boolean isSuicidePerson() {
+            return suicidePerson;
         }
 
         public Set<String> getInventedTechnologies() {
@@ -397,6 +418,8 @@ public final class GameState {
                 availableColors.add(color);
             }
         }
+        boolean specialPersonAssigned = false;
+        boolean suicidePersonAssigned = false;
         for (int i = 1; i < players.length; i++) {
             boolean active = setup == null || i <= opponentIds.size();
             int leaderId = setup == null ? -1 : active ? opponentIds.get(i - 1) : -1;
@@ -412,14 +435,35 @@ public final class GameState {
                 players[i].populationMillions = 0;
                 players[i].moneyMillions = 0;
                 players[i].turnMoneyMillions = 0;
+            } else {
+                // Presenter_gameMenu.init_main_interface assigns at most one
+                // special and one suicide AI, in player order, using 1-in-3 rolls.
+                if (random.nextInt(3) + 1 == 2 && !specialPersonAssigned) {
+                    players[i].specialPerson = true;
+                    specialPersonAssigned = true;
+                } else if (random.nextInt(3) + 1 == 2 && !suicidePersonAssigned) {
+                    players[i].suicidePerson = true;
+                    suicidePersonAssigned = true;
+                }
             }
         }
         for (PlayerState player : players) {
             for (int other = 0; other < players.length; other++) {
-                player.regardToward[other] = STARTING_REGARD[difficulty];
+                player.regardToward[other] = player.specialPerson
+                        ? 70 : STARTING_REGARD[difficulty];
             }
             initializeInventory(player);
             initializeCities(player);
+        }
+        for (PlayerState special : players) {
+            if (!special.specialPerson || !special.alive) {
+                continue;
+            }
+            for (PlayerState other : players) {
+                if (other.alive) {
+                    other.regardToward[special.id] = 70;
+                }
+            }
         }
         for (PlayerState player : players) {
             if (!player.human && player.alive) {
@@ -460,6 +504,32 @@ public final class GameState {
         player.desiredStock.put("ship", 1);
         player.desiredStock.put("space", 5);
         player.desiredStock.put("specialLoad", 5);
+        if (player.specialPerson) {
+            setPersonalityDesires(player, new int[]{
+                    0, 0, 0, 0, 1, 1, 15, 0, 0, 0, 0, 0, 0,
+                    0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 15, 0, 0
+            });
+        } else if (player.suicidePerson) {
+            setPersonalityDesires(player, new int[]{
+                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+                    1, 1, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+            });
+        }
+    }
+
+    private static void setPersonalityDesires(PlayerState player, int[] sourceDesires) {
+        int index = 0;
+        for (WeaponCatalog.Definition definition : WeaponCatalog.all()) {
+            if (definition.productionGroup == 8) {
+                continue;
+            }
+            int desire = sourceDesires[index++];
+            player.desiredStock.put(definition.name, desire);
+            player.desiredStock.put(definition.technology, desire);
+        }
+        if (index != sourceDesires.length) {
+            throw new IllegalStateException("AI personality desire table does not match weapon catalog");
+        }
     }
 
     private static void setDesireLine(PlayerState player, String prefix, int[] desires) {
@@ -625,6 +695,9 @@ public final class GameState {
     public boolean isResearchAvailable(String technology) {
         TechnologyCatalog.Definition definition = TechnologyCatalog.byName(technology);
         if (definition == null || getHuman().hasTechnology(definition.name)) {
+            return false;
+        }
+        if (definition.group == 7 && !getHuman().allowsSpecialTechnologies()) {
             return false;
         }
         if (queuedTechnology(technology)) {
@@ -1428,6 +1501,10 @@ public final class GameState {
                 continue;
             }
             player.turnMoneyMillions = player.moneyMillions;
+            if (player.specialPerson) {
+                player.moneyMillions += 3;
+                player.turnMoneyMillions += 3;
+            }
             List<OpponentAI.Decision> decisions = OpponentAI.plan(this, player, random);
             for (OpponentAI.Decision decision : decisions) {
                 turnOrders.add(new ActionOrder(player.id, decision.action,
@@ -1704,6 +1781,7 @@ public final class GameState {
         for (String technologyName : order.technologies) {
             TechnologyCatalog.Definition technology = TechnologyCatalog.byName(technologyName);
             if (technology == null || researcher.hasTechnology(technology.name)
+                    || (technology.group == 7 && !researcher.allowsSpecialTechnologies())
                     || researcher.moneyMillions < technology.costMillions
                     || (technology.prerequisite != null
                     && !researcher.hasTechnology(technology.prerequisite))) {
@@ -2072,6 +2150,10 @@ public final class GameState {
                 + random.nextInt(statistics[1] - level * 10 + 1);
         long moneyAmount = Math.round((defender.moneyMillions / 100.0d) * moneyPercent);
         moneyAmount = Math.min(moneyAmount, SPY_MONEY_CAP[difficulty]);
+        if (defender.specialPerson) {
+            weaponCount = 1;
+            moneyAmount = Math.min(moneyAmount, 20L);
+        }
 
         List<String> availableSpyActions = new ArrayList<>();
         Collections.addAll(availableSpyActions, SPY_ACTION_CATEGORIES);
@@ -2091,7 +2173,8 @@ public final class GameState {
 
         List<WeaponState> availableTargets = new ArrayList<>();
         for (WeaponState targetWeapon : defender.weapons.values()) {
-            if (targetWeapon.inStock > 0 && targetWeapon.definition.level <= level
+            int maximumTargetLevel = defender.specialPerson ? 1 : level;
+            if (targetWeapon.inStock > 0 && targetWeapon.definition.level <= maximumTargetLevel
                     && !"spy".equals(targetWeapon.definition.type)) {
                 availableTargets.add(targetWeapon);
             }

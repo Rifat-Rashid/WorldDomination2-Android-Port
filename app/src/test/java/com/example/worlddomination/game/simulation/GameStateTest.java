@@ -49,6 +49,62 @@ public final class GameStateTest {
     }
 
     @Test
+    public void seededAiPersonalitiesAreUniqueAndUseTheOriginalDesireProfiles() {
+        boolean foundSpecial = false;
+        boolean foundSuicide = false;
+        for (long seed = 0; seed < 500 && !(foundSpecial && foundSuicide); seed++) {
+            GameState state = new GameState(1, seed);
+            GameState repeated = new GameState(1, seed);
+            int specialCount = 0;
+            int suicideCount = 0;
+            for (int playerId = 1; playerId < 5; playerId++) {
+                GameState.PlayerState player = state.getPlayerState(playerId);
+                GameState.PlayerState sameSeed = repeated.getPlayerState(playerId);
+                assertEquals(sameSeed.isSpecialPerson(), player.isSpecialPerson());
+                assertEquals(sameSeed.isSuicidePerson(), player.isSuicidePerson());
+                assertFalse(player.isSpecialPerson() && player.isSuicidePerson());
+                if (player.isSpecialPerson()) {
+                    specialCount++;
+                    foundSpecial = true;
+                    assertEquals(70, player.getRegardToward(0));
+                    assertFalse(player.allowsSpecialTechnologies());
+                    assertEquals(1, player.getDesiredStock("warhead1"));
+                    assertEquals(1, player.getDesiredStock("warhead2"));
+                    assertEquals(15, player.getDesiredStock("warhead3"));
+                    assertEquals(1, player.getDesiredStock("sub"));
+                    assertEquals(15, player.getDesiredStock("ship"));
+                    assertEquals(0, player.getDesiredStock("space"));
+                }
+                if (player.isSuicidePerson()) {
+                    suicideCount++;
+                    foundSuicide = true;
+                    assertEquals(1, player.getDesiredStock("soldier1"));
+                    assertEquals(1, player.getDesiredStock("soldier2"));
+                    assertEquals(1, player.getDesiredStock("soldier3"));
+                    assertEquals(4, player.getDesiredStock("soldier4"));
+                }
+            }
+            assertTrue(specialCount <= 1);
+            assertTrue(suicideCount <= 1);
+            if (specialCount == 1) {
+                int specialPlayerId = -1;
+                for (int playerId = 1; playerId < 5; playerId++) {
+                    if (state.getPlayerState(playerId).isSpecialPerson()) {
+                        specialPlayerId = playerId;
+                        break;
+                    }
+                }
+                for (int playerId = 0; playerId < 5; playerId++) {
+                    assertEquals(70, state.getPlayerState(playerId)
+                            .getRegardToward(specialPlayerId));
+                }
+            }
+        }
+        assertTrue("seed sweep should exercise the special profile", foundSpecial);
+        assertTrue("seed sweep should exercise the suicide profile", foundSuicide);
+    }
+
+    @Test
     public void normalResourcesAndMassMediaResolveOneTurn() {
         GameState state = new GameState(1);
         assertEquals(65, state.getHuman().moneyMillions);
@@ -138,6 +194,35 @@ public final class GameStateTest {
         assertEquals(55, state.getTurnMoneyMillions());
         assertEquals(65, state.getHuman().moneyMillions);
         assertFalse(state.getHuman().hasTechnology("soldier2"));
+    }
+
+    @Test
+    public void specialTechnologiesUnlockAfterFourLevelFourTechnologies() {
+        GameState state = new GameState(1, 71L, false);
+        GameState.PlayerState human = state.getHuman();
+        assertFalse(human.allowsSpecialTechnologies());
+        assertFalse(state.isResearchAvailable("sub"));
+        human.moneyMillions = 500;
+        human.turnMoneyMillions = 500;
+
+        String[] researchByTurn = {
+                "rocket2", "rocket3", "rocket4",
+                "warhead2", "warhead3", "warhead4",
+                "bioload2", "bioload3", "bioload4",
+                "soldier2", "soldier3", "soldier4"
+        };
+        for (String technology : researchByTurn) {
+            state.selectAction(GameState.Action.RESEARCH);
+            assertTrue("research should accept " + technology,
+                    state.selectResearchTechnology(technology));
+            assertTrue(state.acceptSelectedAction());
+            state.selectAction(GameState.Action.RESOURCES);
+            assertTrue(state.acceptSelectedAction());
+            state.confirmTurn();
+        }
+
+        assertTrue(human.allowsSpecialTechnologies());
+        assertTrue(state.isResearchAvailable("sub"));
     }
 
     @Test
@@ -566,6 +651,50 @@ public final class GameStateTest {
         assertEquals(defenderPopulationBefore, defender.populationMillions);
         assertEquals(0, state.getWeaponStock(0, "spy1"));
         assertEquals(0, state.getSpyReadiness());
+    }
+
+    @Test
+    public void specialOpponentLimitsSpyTheftToTwentyMillionAndOneLowLevelItem() {
+        long seed = -1L;
+        for (long candidate = 0; candidate < 500; candidate++) {
+            GameState probe = new GameState(1, candidate, false);
+            if (probe.getPlayerState(1).isSpecialPerson()) {
+                seed = candidate;
+                break;
+            }
+        }
+        assertTrue("seed sweep should find a special first opponent", seed >= 0L);
+
+        GameState state = new GameState(1, seed, false);
+        GameState.PlayerState attacker = state.getHuman();
+        GameState.PlayerState defender = state.getPlayerState(1);
+        attacker.spyReadiness = 100;
+        GameState.WeaponState spy = attacker.getWeapons().get("spy4");
+        spy.active = true;
+        spy.inStock = 1;
+        defender.moneyMillions = 1000;
+        defender.getWeapons().get("warhead2").inStock = 1;
+        defender.getWeapons().get("soldier3").inStock = 1;
+        int attackerFundsBefore = attacker.moneyMillions;
+
+        state.selectAction(GameState.Action.ATTACK);
+        assertTrue(state.configureAttack(defender.id, 0, "spy4"));
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.MASS_MEDIA);
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+
+        assertEquals(980, defender.moneyMillions);
+        assertEquals(attackerFundsBefore + 20, attacker.moneyMillions);
+        assertEquals(1, defender.getWeaponStockByName("warhead2"));
+        assertEquals(1, defender.getWeaponStockByName("soldier3"));
+        int stolenItems = 0;
+        for (String message : state.getMessages()) {
+            if (message.startsWith("Spy stole ") || message.startsWith("Spy uncovered ")) {
+                stolenItems++;
+            }
+        }
+        assertEquals(1, stolenItems);
     }
 
     @Test
