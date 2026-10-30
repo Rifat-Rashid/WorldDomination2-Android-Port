@@ -24,6 +24,37 @@ public final class OpponentAITest {
     }
 
     @Test
+    public void diplomacyDoesNotSkipPoorestRivalForARicherRival() {
+        GameState state = findAiWithNeutralHumanRegard();
+        GameState.PlayerState actor = aiWithNeutralHumanRegard(state);
+        GameState.PlayerState poorest = anotherRival(state, actor.id, -1);
+        GameState.PlayerState richer = anotherRival(state, actor.id, poorest.id);
+        configureDiplomacyPopulationAndFunds(state, actor, poorest, richer);
+        poorest.moneyMillions = 50;
+        richer.moneyMillions = 200;
+
+        assertNull(OpponentAI.planDiplomacy(state, actor, new Random(81L)));
+    }
+
+    @Test
+    public void diplomacyDemandsFromThePoorestRivalWhenThatRivalHasMoreFunds() {
+        GameState state = findAiWithNeutralHumanRegard();
+        GameState.PlayerState actor = aiWithNeutralHumanRegard(state);
+        GameState.PlayerState poorest = anotherRival(state, actor.id, -1);
+        GameState.PlayerState richer = anotherRival(state, actor.id, poorest.id);
+        configureDiplomacyPopulationAndFunds(state, actor, poorest, richer);
+        poorest.moneyMillions = 150;
+        richer.moneyMillions = 200;
+
+        OpponentAI.Decision decision = OpponentAI.planDiplomacy(state, actor,
+                new Random(82L));
+        assertNotNull(decision);
+        assertEquals(GameState.Action.DIPLOMACY, decision.action);
+        assertEquals(poorest.id, decision.targetPlayerId);
+        assertEquals(5, decision.diplomacyOption);
+    }
+
+    @Test
     public void specialOpponentUsesItsPrimaryEnemyToBreakEqualHostilityTies() {
         GameState state = null;
         for (long seed = 0; seed < 500; seed++) {
@@ -455,5 +486,60 @@ public final class OpponentAITest {
         assertTrue(state.acceptSelectedAction());
         state.confirmTurn();
         return state;
+    }
+
+    private static GameState findAiWithNeutralHumanRegard() {
+        for (long seed = 0; seed < 500; seed++) {
+            GameState state = new GameState(1, seed);
+            for (int playerId = 1; playerId < 5; playerId++) {
+                GameState.PlayerState player = state.getPlayerState(playerId);
+                if (player.alive && !player.isSpecialPerson()
+                        && player.getRegardToward(0) == 50) {
+                    return state;
+                }
+            }
+        }
+        throw new AssertionError("seed sweep should find an AI with 50 regard toward the human");
+    }
+
+    private static GameState.PlayerState aiWithNeutralHumanRegard(GameState state) {
+        for (int playerId = 1; playerId < 5; playerId++) {
+            GameState.PlayerState player = state.getPlayerState(playerId);
+            if (player.alive && !player.isSpecialPerson()
+                    && player.getRegardToward(0) == 50) {
+                return player;
+            }
+        }
+        throw new AssertionError("the selected game must include a neutral-regard AI");
+    }
+
+    private static GameState.PlayerState anotherRival(GameState state, int actorId,
+                                                       int excludedId) {
+        for (int playerId = 1; playerId < 5; playerId++) {
+            if (playerId != actorId && playerId != excludedId
+                    && state.getPlayerState(playerId).alive) {
+                return state.getPlayerState(playerId);
+            }
+        }
+        throw new AssertionError("the selected game must include two other active rivals");
+    }
+
+    private static void configureDiplomacyPopulationAndFunds(GameState state,
+                                                              GameState.PlayerState actor,
+                                                              GameState.PlayerState poorest,
+                                                              GameState.PlayerState richer) {
+        actor.moneyMillions = 100;
+        actor.turnMoneyMillions = 100;
+        actor.populationMillions = 1_000;
+        state.getHuman().populationMillions = 500;
+        state.getHuman().moneyMillions = 100;
+        for (GameState.PlayerState target : state.getPlayers()) {
+            if (target.alive && target.id != 0 && target.id != actor.id) {
+                target.populationMillions = 500;
+                target.moneyMillions = 50;
+            }
+        }
+        poorest.populationMillions = 100;
+        richer.populationMillions = 200;
     }
 }
