@@ -2785,11 +2785,8 @@ public final class GameState {
     private void refreshMatchStatus() {
         for (PlayerState player : players) {
             player.populationMillions = totalPopulation(player);
-            if (player.populationMillions <= 0) {
-                if (player.alive) {
-                    messages.add("Nation " + player.id + " has been eliminated.");
-                }
-                player.alive = false;
+            if (player.populationMillions <= 0 && player.alive) {
+                eliminatePlayer(player);
             }
         }
         if (!getHuman().alive) {
@@ -2806,6 +2803,23 @@ public final class GameState {
         matchStatus = MatchStatus.VICTORY;
         captureFinalScore();
         messages.add("Victory. All rival nations have fallen.");
+    }
+
+    /** Matches Model.killPlayer cleanup and transfers flags from its prior victims. */
+    private void eliminatePlayer(PlayerState eliminated) {
+        messages.add("Nation " + eliminated.id + " has been eliminated.");
+        for (CityState city : eliminated.cities) {
+            city.populationMillions = 0;
+            city.bioloaded = false;
+        }
+        for (PlayerState defeated : players) {
+            if (!defeated.alive
+                    && defeated.lastAttackedByPlayerId == eliminated.id) {
+                defeated.lastAttackedByPlayerId = eliminated.lastAttackedByPlayerId;
+            }
+        }
+        eliminated.populationMillions = 0;
+        eliminated.alive = false;
     }
 
     private void captureFinalScore() {
