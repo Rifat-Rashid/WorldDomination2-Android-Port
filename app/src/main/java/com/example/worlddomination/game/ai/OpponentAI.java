@@ -32,6 +32,8 @@ public final class OpponentAI {
         public final int targetPlayerId;
         public final int targetCityIndex;
         public final String weaponName;
+        public final String payloadName;
+        public final boolean prepareCarrier;
         public final int diplomacyOption;
 
         private Decision(int playerId, GameState.Action action,
@@ -39,6 +41,16 @@ public final class OpponentAI {
                          List<String> technologies, int reservedMillions,
                          int targetPlayerId, int targetCityIndex, String weaponName,
                          int diplomacyOption) {
+            this(playerId, action, productionBudgets, technologies, reservedMillions,
+                    targetPlayerId, targetCityIndex, weaponName, null, false,
+                    diplomacyOption);
+        }
+
+        private Decision(int playerId, GameState.Action action,
+                         Map<String, Integer> productionBudgets,
+                         List<String> technologies, int reservedMillions,
+                         int targetPlayerId, int targetCityIndex, String weaponName,
+                         String payloadName, boolean prepareCarrier, int diplomacyOption) {
             this.playerId = playerId;
             this.action = action;
             this.productionBudgets = Collections.unmodifiableMap(
@@ -48,6 +60,8 @@ public final class OpponentAI {
             this.targetPlayerId = targetPlayerId;
             this.targetCityIndex = targetCityIndex;
             this.weaponName = weaponName;
+            this.payloadName = payloadName;
+            this.prepareCarrier = prepareCarrier;
             this.diplomacyOption = diplomacyOption;
         }
     }
@@ -112,6 +126,15 @@ public final class OpponentAI {
             if (chosen.action == GameState.Action.ATTACK && chosen.weaponName != null) {
                 Integer count = plannedWeaponUse.get(chosen.weaponName);
                 plannedWeaponUse.put(chosen.weaponName, count == null ? 1 : count + 1);
+            } else if (chosen.action == GameState.Action.PREPARED_ATTACK
+                    && chosen.prepareCarrier && chosen.weaponName != null) {
+                Integer count = plannedWeaponUse.get(chosen.weaponName);
+                plannedWeaponUse.put(chosen.weaponName, count == null ? 1 : count + 1);
+            }
+            if (chosen.action == GameState.Action.PREPARED_ATTACK) {
+                plannedWeaponUse.put("@prepared", 1);
+            } else if (chosen.action == GameState.Action.DEFENSE) {
+                plannedWeaponUse.put("@defense", 1);
             }
         }
         return decisions;
@@ -153,9 +176,27 @@ public final class OpponentAI {
             attack = -999;
         }
 
-        // No prepared-launch or counter state exists in the current Java model.
-        // Keep the source decision slot at zero; target selection retries lower scores.
         double preCounter = 0;
+        if (state.getCounterWeaponForPreparedThreat(player.id) != null) {
+            preCounter = 86 - lowestRegard;
+            if (player.populationMillions < 20) {
+                preCounter += 10;
+            }
+        }
+        double preparedAttack = Math.max(0,
+                ATTACK_BASE[state.getDifficulty()] - lowestRegard / 2.0);
+        if (player.getPreparedCarrierName() != null) {
+            if (state.getAvailablePreparedPayloads(player.id,
+                    player.getPreparedCarrierName()).isEmpty()) {
+                preparedAttack = -999;
+            } else {
+                preparedAttack += 200;
+            }
+        } else if (state.getAvailablePreparedCarriers(player.id).isEmpty()) {
+            preparedAttack = -999;
+        } else {
+            preparedAttack += 30;
+        }
 
         double religion = 20 + Math.round(player.populationMillions
                 / (double) largestPopulation * 100) - player.religion * 2.0;
@@ -207,9 +248,10 @@ public final class OpponentAI {
             research = 10;
         }
 
-        List<ScoredAction> scores = new ArrayList<>(8);
+        List<ScoredAction> scores = new ArrayList<>(9);
         scores.add(new ScoredAction(GameState.Action.ATTACK, attack));
-        scores.add(new ScoredAction(GameState.Action.PREPARED_ATTACK, preCounter));
+        scores.add(new ScoredAction(GameState.Action.PREPARED_ATTACK, preparedAttack));
+        scores.add(new ScoredAction(GameState.Action.DEFENSE, preCounter));
         scores.add(new ScoredAction(GameState.Action.PROPAGANDA, propaganda));
         scores.add(new ScoredAction(GameState.Action.DIPLOMACY, diplomacy));
         scores.add(new ScoredAction(GameState.Action.MASS_MEDIA, religion));
@@ -253,8 +295,9 @@ public final class OpponentAI {
             case ATTACK:
                 return planAttack(state, player, random, plannedWeaponUse);
             case PREPARED_ATTACK:
+                return planPreparedAttack(state, player, random, plannedWeaponUse);
             case DEFENSE:
-                return null;
+                return planDefense(state, player, plannedWeaponUse);
             case PROPAGANDA:
                 return planPropaganda(state, player);
             case DIPLOMACY:
@@ -269,6 +312,73 @@ public final class OpponentAI {
             default:
                 return null;
         }
+    }
+
+    private static Decision planDefense(GameState state, GameState.PlayerState defender,
+                                        Map<String, Integer> plannedUse) {
+        if (plannedUse.containsKey("@defense")) {
+            return null;
+        }
+        String counter = state.getCounterWeaponForPreparedThreat(defender.id);
+        return counter == null ? null : new Decision(defender.id, GameState.Action.DEFENSE,
+                Collections.<String, Integer>emptyMap(), Collections.<String>emptyList(),
+                0, -1, -1, counter, -1);
+    }
+
+    private static Decision planPreparedAttack(GameState state,
+                                               GameState.PlayerState attacker,
+                                               Random random,
+                                               Map<String, Integer> plannedUse) {
+        if (plannedUse.containsKey("@prepared")) {
+            return null;
+        }
+        String carrierName = attacker.getPreparedCarrierName();
+        boolean prepare = carrierName == null;
+        if (prepare) {
+            for (String candidate : state.getAvailablePreparedCarriers(attacker.id)) {
+                GameState.WeaponState carrier = attacker.getWeapons().get(candidate);
+                if (availableStock(carrier, plannedUse) > 0
+                        && (carrierName == null || carrier.definition.level
+                        > attacker.getWeapons().get(carrierName).definition.level)) {
+                    carrierName = candidate;
+                }
+            }
+        }
+        if (carrierName == null) {
+            return null;
+        }
+        if (prepare) {
+            return new Decision(attacker.id, GameState.Action.PREPARED_ATTACK,
+                    Collections.<String, Integer>emptyMap(), Collections.<String>emptyList(),
+                    0, -1, -1, carrierName, null, true, -1);
+        }
+        List<String> payloads = state.getAvailablePreparedPayloads(attacker.id, carrierName);
+        GameState.WeaponState selectedPayload = null;
+        for (String payloadName : payloads) {
+            GameState.WeaponState payload = attacker.getWeapons().get(payloadName);
+            if (selectedPayload == null || payload.definition.maxKillsMillions
+                    > selectedPayload.definition.maxKillsMillions) {
+                selectedPayload = payload;
+            }
+        }
+        GameState.PlayerState target = mostHostileTarget(state, attacker, false);
+        if (selectedPayload == null || target == null) {
+            return null;
+        }
+        List<Integer> populated = new ArrayList<>();
+        for (CityState city : target.getCities()) {
+            if (city.populationMillions > 0) {
+                populated.add(city.index);
+            }
+        }
+        if (populated.isEmpty()) {
+            return null;
+        }
+        int cityIndex = populated.get(randomInclusive(random, 0, populated.size() - 1));
+        return new Decision(attacker.id, GameState.Action.PREPARED_ATTACK,
+                Collections.<String, Integer>emptyMap(), Collections.<String>emptyList(),
+                0, target.id, cityIndex, carrierName,
+                selectedPayload.definition.name, false, -1);
     }
 
     private static Decision planAttack(GameState state, GameState.PlayerState attacker,

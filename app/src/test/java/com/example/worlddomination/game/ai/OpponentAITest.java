@@ -9,6 +9,7 @@ import java.util.Random;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public final class OpponentAITest {
@@ -83,6 +84,75 @@ public final class OpponentAITest {
         assertEquals(2, decisions.size());
         assertEquals(startingFunds - reserved, opponent.turnMoneyMillions);
         assertTrue(opponent.turnMoneyMillions >= 0);
+    }
+
+    @Test
+    public void plannerCanPrepareACompatibleCarrierWithoutDuplicatingTheSlot() {
+        GameState state = new GameState(1, 53L);
+        GameState.PlayerState opponent = state.getPlayerState(1);
+        opponent.moneyMillions = 0;
+        opponent.turnMoneyMillions = 0;
+        opponent.getWeapons().get("rocket1").inStock = 1;
+        opponent.getWeapons().get("warhead1").inStock = 1;
+
+        List<OpponentAI.Decision> decisions = OpponentAI.plan(state, opponent,
+                new Random(22L));
+        int preparedActions = 0;
+        for (OpponentAI.Decision decision : decisions) {
+            if (decision.action == GameState.Action.PREPARED_ATTACK) {
+                preparedActions++;
+                assertTrue(decision.prepareCarrier);
+                assertEquals("rocket1", decision.weaponName);
+                assertNull(decision.payloadName);
+            }
+        }
+        assertEquals(2, decisions.size());
+        assertTrue("planner should use the available strike option", preparedActions > 0);
+        assertEquals(1, preparedActions);
+    }
+
+    @Test
+    public void opponentPreparesAndLaunchesAStockedRocketAcrossTurns() {
+        GameState state = new GameState(1, 54L);
+        for (int playerId = 1; playerId < 5; playerId++) {
+            GameState.PlayerState opponent = state.getPlayerState(playerId);
+            opponent.moneyMillions = 0;
+            opponent.turnMoneyMillions = 0;
+            opponent.getWeapons().get("rocket1").inStock = 1;
+            opponent.getWeapons().get("warhead1").inStock = 1;
+        }
+
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.MASS_MEDIA);
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+
+        for (int playerId = 1; playerId < 5; playerId++) {
+            GameState.PlayerState opponent = state.getPlayerState(playerId);
+            assertEquals("rocket1", opponent.getPreparedCarrierName());
+            assertTrue(opponent.getLastTurnActions().contains(
+                    GameState.Action.PREPARED_ATTACK));
+            assertEquals(0, state.getWeaponStock(playerId, "rocket1"));
+            assertEquals(1, state.getWeaponStock(playerId, "warhead1"));
+        }
+
+        int antiRocketBefore = state.getWeaponStock(0, "antiRocket");
+        state.selectAction(GameState.Action.DEFENSE);
+        assertTrue(state.configureDefense("antiRocket"));
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+
+        for (int playerId = 1; playerId < 5; playerId++) {
+            GameState.PlayerState opponent = state.getPlayerState(playerId);
+            assertTrue(opponent.getLastTurnActions().contains(
+                    GameState.Action.PREPARED_ATTACK));
+            assertNull(opponent.getPreparedCarrierName());
+            assertEquals(0, state.getWeaponStock(playerId, "warhead1"));
+        }
+        assertEquals(antiRocketBefore - 1, state.getWeaponStock(0, "antiRocket"));
     }
 
     @Test
