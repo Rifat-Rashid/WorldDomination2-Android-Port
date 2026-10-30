@@ -208,10 +208,109 @@ public final class GameStateTest {
         assertFalse(state.configureAttack(0, 0, "soldier1"));
         assertFalse(state.configureAttack(1, 5, "soldier1"));
         assertFalse(state.configureAttack(1, 0, "soldier2"));
-        assertFalse(state.configureAttack(1, 0, "spy1"));
+        assertTrue(state.configureAttack(1, 0, "spy1"));
         assertTrue(state.configureAttack(1, 0, "soldier1"));
         assertTrue(state.acceptSelectedAction());
         assertEquals(GameState.Action.ATTACK, state.getQueuedAction(0));
+    }
+
+    @Test
+    public void spyAttackStealsMoneyAndStockThenFollowsReadinessCooldown() {
+        GameState state = new GameState(1, 11L);
+        GameState.PlayerState attacker = state.getHuman();
+        GameState.PlayerState defender = state.getPlayers()[1];
+        int attackerFundsBefore = attacker.moneyMillions;
+        int defenderFundsBefore = defender.moneyMillions;
+        int enemyCityBefore = defender.getCity(0).populationMillions;
+        int attackerStarterStock = state.getWeaponStock(0, "rocket1")
+                + state.getWeaponStock(0, "soldier1");
+
+        state.selectAction(GameState.Action.ATTACK);
+        assertTrue(state.getAvailableAttackWeapons().contains("spy1"));
+        assertFalse(state.getAvailableAttackWeapons().contains("spy2"));
+        assertFalse(state.configureAttack(1, 0, "spy2"));
+        assertTrue(state.configureAttack(1, 0, "spy1"));
+        state.cycleSpyBuilding(1);
+        assertEquals("tech", state.getSelectedSpyBuilding());
+        assertTrue(state.canAcceptAttack());
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+
+        assertTrue(attacker.moneyMillions > attackerFundsBefore
+                + state.getResourceIncomeMillions());
+        assertTrue(defender.moneyMillions < defenderFundsBefore);
+        assertEquals(enemyCityBefore, defender.getCity(0).populationMillions);
+        assertEquals(0, state.getWeaponStock(0, "spy1"));
+        assertEquals(0, state.getSpyReadiness());
+        assertTrue(state.getWeaponStock(0, "rocket1")
+                + state.getWeaponStock(0, "soldier1") > attackerStarterStock);
+        assertTrue(attacker.score > 0);
+
+        attacker.getWeapons().get("spy1").inStock = 1;
+        assertFalse(state.getAvailableAttackWeapons().contains("spy1"));
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.MASS_MEDIA);
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+        assertEquals(25, state.getSpyReadiness());
+        assertTrue(state.getAvailableAttackWeapons().contains("spy1"));
+    }
+
+    @Test
+    public void spyStealsTechnologyWithoutRemovingEnemyUnitStock() {
+        GameState state = new GameState(1, 14L);
+        GameState.PlayerState attacker = state.getHuman();
+        GameState.PlayerState defender = state.getPlayers()[1];
+        GameState.WeaponState attackerSoldier = attacker.getWeapons().get("soldier1");
+        GameState.WeaponState defenderSoldier = defender.getWeapons().get("soldier1");
+        attackerSoldier.active = false;
+        defender.getWeapons().get("rocket1").inStock = 0;
+        defenderSoldier.inStock = 1;
+
+        state.selectAction(GameState.Action.ATTACK);
+        assertTrue(state.configureAttack(1, 0, "spy1"));
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+
+        assertTrue(attackerSoldier.active);
+        assertEquals(1, defenderSoldier.inStock);
+        assertEquals(0, state.getWeaponStock(0, "spy1"));
+        assertTrue(attacker.score > 0);
+    }
+
+    @Test
+    public void spyCanTargetAnEmptyCityAndDifficultyCapsStolenFunds() {
+        GameState state = new GameState(0, 47L);
+        GameState.PlayerState attacker = state.getHuman();
+        GameState.PlayerState defender = state.getPlayers()[1];
+        defender.moneyMillions = 1000;
+        int emptiedCityPopulation = defender.getCity(0).populationMillions;
+        defender.getCity(0).populationMillions = 0;
+        int defenderPopulationBefore = defender.populationMillions - emptiedCityPopulation;
+        defender.populationMillions = defenderPopulationBefore;
+        int attackerFundsBefore = attacker.moneyMillions;
+        int resourceIncome = state.getResourceIncomeMillions();
+
+        state.selectAction(GameState.Action.ATTACK);
+        assertFalse(state.configureAttack(1, 0, "soldier1"));
+        assertTrue(state.configureAttack(1, 0, "spy1"));
+        assertTrue(state.canAcceptAttack());
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+
+        assertEquals(910, defender.moneyMillions);
+        assertEquals(attackerFundsBefore + 90 + resourceIncome, attacker.moneyMillions);
+        assertEquals(0, defender.getCity(0).populationMillions);
+        assertEquals(defenderPopulationBefore, defender.populationMillions);
+        assertEquals(0, state.getWeaponStock(0, "spy1"));
+        assertEquals(0, state.getSpyReadiness());
     }
 
     @Test
