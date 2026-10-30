@@ -914,6 +914,34 @@ public final class GameStateTest {
     }
 
     @Test
+    public void queuedSpyMissionResolvesWithoutRecheckingReadiness() {
+        GameState state = new GameState(1, 933L, false);
+        GameState.PlayerState attacker = state.getHuman();
+        GameState.PlayerState defender = state.getPlayerState(1);
+        GameState.WeaponState spy = attacker.getWeapons().get("spy4");
+        spy.active = true;
+        spy.inStock = 1;
+        attacker.spyReadiness = 100;
+        defender.moneyMillions = 1_000;
+
+        state.selectAction(GameState.Action.ATTACK);
+        assertTrue(state.configureAttack(defender.id, 0, "spy4"));
+        assertTrue(state.acceptSelectedAction());
+        // The source resolves submitted missions without checking readiness again.
+        // Keep the queued order above the readiness available at turn resolution.
+        attacker.spyReadiness = 0;
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+
+        assertEquals(0, spy.inStock);
+        assertEquals(0, attacker.spyReadiness);
+        assertTrue(defender.moneyMillions < 1_000);
+        assertTrue(state.getMessages().contains(
+                "Spy operation completed against nation 1."));
+    }
+
+    @Test
     public void spyStealsTechnologyWithoutRemovingEnemyUnitStock() {
         GameState state = new GameState(1, 14L, false);
         GameState.PlayerState attacker = state.getHuman();
