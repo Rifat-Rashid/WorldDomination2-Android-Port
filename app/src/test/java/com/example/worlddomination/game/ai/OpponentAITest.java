@@ -92,6 +92,7 @@ public final class OpponentAITest {
     public void highHumanFundsOverrideChoosesTheHighestAvailableSpyAgainstHuman() {
         GameState state = prepareSpyTargetScenario(false);
         GameState.PlayerState attacker = state.getPlayerState(1);
+        attacker.spyReadiness = 0;
         attacker.getWeapons().get("spy2").active = true;
         attacker.getWeapons().get("spy2").inStock = 1;
         state.getHuman().moneyMillions = 10_000;

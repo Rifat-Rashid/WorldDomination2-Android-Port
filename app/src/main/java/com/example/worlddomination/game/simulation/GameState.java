@@ -2179,10 +2179,12 @@ public final class GameState {
         CityState city = defender.getCity(order.targetCityIndex);
         WeaponState weapon = attacker.weapons.get(order.weaponName);
         boolean spyMission = weapon != null && "spy".equals(weapon.definition.type);
+        // Readiness constrains mission selection. The source's high-cash spy-alert
+        // override can dispatch the highest stocked spy regardless of readiness, and
+        // the battle result handler does not revalidate readiness for queued missions.
         if (!defender.alive || city == null
                 || (!spyMission && city.populationMillions <= 0)
-                || weapon == null || !weapon.active || weapon.inStock <= 0
-                || (spyMission && !canUseSpy(attacker, weapon))) {
+                || weapon == null || !weapon.active || weapon.inStock <= 0) {
             messages.add("Attack cancelled: target or weapon is no longer available.");
             return;
         }
