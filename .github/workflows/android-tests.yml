@@ -26,6 +26,9 @@ jobs:
           - id: source-rng-tests
             check: Seeded RNG parity tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.ReferenceRandomTest"'
+          - id: ai-initialization-rng-tests
+            check: AI initialization RNG parity tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.emptySourceEnemySelectionStillConsumesItsRandomDraw" --tests "com.example.worlddomination.game.simulation.GameStateTest.aiDesireChoicesUseTheFirstValueOfSourceOneToTwoDraws"'
           - id: turn-progression-tests
             check: Game state and turn progression tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest"'

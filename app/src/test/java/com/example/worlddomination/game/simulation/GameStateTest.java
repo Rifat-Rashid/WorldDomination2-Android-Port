@@ -148,6 +148,36 @@ public final class GameStateTest {
     }
 
     @Test
+    public void emptySourceEnemySelectionStillConsumesItsRandomDraw() {
+        CountingDoubleRandom random = new CountingDoubleRandom();
+
+        int selected = GameState.sourceRandomEnemyNumber(
+                Collections.<GameState.PlayerState>emptyList(), random);
+
+        assertEquals(0, selected);
+        assertEquals("Tools.randRange(0, -1) consumes Math.random()", 1,
+                random.doubleDraws);
+    }
+
+    @Test
+    public void aiDesireChoicesUseTheFirstValueOfSourceOneToTwoDraws() {
+        GameState state = new GameState(1, 0L);
+        GameState.PlayerState player = state.getHuman();
+        SequenceRandom random = new SequenceRandom(0, 1, 0);
+
+        GameState.initializeAiDesires(player, random);
+
+        assertEquals(2, player.getDesiredStock("rocket1"));
+        assertEquals(5, player.getDesiredStock("rocket4"));
+        assertEquals(0, player.getDesiredStock("warhead1"));
+        assertEquals(2, player.getDesiredStock("bioload1"));
+        assertEquals(1, player.getDesiredStock("soldier1"));
+        assertEquals(5, player.getDesiredStock("soldier4"));
+        assertEquals("carrier, payload, then conventional-unit draws", 3,
+                random.drawCount);
+    }
+
+    @Test
     public void seededAiPersonalitiesAreUniqueAndUseTheOriginalDesireProfiles() {
         boolean foundSpecial = false;
         boolean foundSuicide = false;
@@ -2325,5 +2355,39 @@ public final class GameStateTest {
             }
         }
         return false;
+    }
+
+    private static final class CountingDoubleRandom extends Random {
+        private int doubleDraws;
+
+        @Override
+        public double nextDouble() {
+            doubleDraws++;
+            return 0.5;
+        }
+    }
+
+    private static final class SequenceRandom extends Random {
+        private final int[] values;
+        private int drawCount;
+
+        SequenceRandom(int... values) {
+            this.values = values.clone();
+        }
+
+        @Override
+        public int nextInt(int bound) {
+            if (bound <= 0) {
+                throw new IllegalArgumentException("bound must be positive");
+            }
+            if (drawCount >= values.length) {
+                throw new AssertionError("unexpected random draw");
+            }
+            int value = values[drawCount++];
+            if (value < 0 || value >= bound) {
+                throw new AssertionError("scripted random value outside bound");
+            }
+            return value;
+        }
     }
 }

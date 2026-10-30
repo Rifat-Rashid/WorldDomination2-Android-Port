@@ -643,7 +643,7 @@ public final class GameState {
         }
         for (PlayerState player : players) {
             if (!player.human && player.alive) {
-                initializeAiDesires(player);
+                initializeAiDesires(player, random);
                 initializeAiEnemies(player);
             }
         }
@@ -686,7 +686,13 @@ public final class GameState {
      * that quirk because these values drive AI target priorities.
      */
     static int sourceRandomEnemyNumber(List<PlayerState> candidates, Random random) {
-        return candidates.isEmpty() ? 0 : random.nextInt(candidates.size());
+        if (candidates.isEmpty()) {
+            // Model.get_random_set_enemy still calls Tools.randRange(0, -1).
+            // Its zero-width range returns slot zero after consuming Math.random().
+            random.nextDouble();
+            return 0;
+        }
+        return random.nextInt(candidates.size());
     }
 
     private void reassignDeadAiEnemies() {
@@ -777,10 +783,12 @@ public final class GameState {
         return setup.getDifficulty();
     }
 
-    private void initializeAiDesires(PlayerState player) {
-        boolean rocketCarrier = random.nextBoolean();
-        boolean warheadPayload = random.nextBoolean();
-        boolean conventionalUnits = random.nextBoolean();
+    static void initializeAiDesires(PlayerState player, Random random) {
+        // The source asks randRange(1, 2) and selects its first option for 1.
+        // nextInt(2) is the zero-based equivalent of that inclusive draw.
+        boolean rocketCarrier = random.nextInt(2) == 0;
+        boolean warheadPayload = random.nextInt(2) == 0;
+        boolean conventionalUnits = random.nextInt(2) == 0;
         for (WeaponState weapon : player.weapons.values()) {
             player.desiredStock.put(weapon.definition.name, 0);
         }
