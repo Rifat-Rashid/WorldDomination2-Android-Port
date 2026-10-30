@@ -323,8 +323,9 @@ public final class GameStateTest {
 
             completeTurnWithResourcesAndMedia(state);
 
-            long minimum = difficulty * (200L * income + 101L * mediaGain);
-            long maximum = difficulty * (250L * income + 151L * mediaGain);
+            int sourceDifficulty = difficulty + 1;
+            long minimum = sourceDifficulty * (200L * income + 101L * mediaGain);
+            long maximum = sourceDifficulty * (250L * income + 151L * mediaGain);
             assertTrue("score " + state.getHuman().score + " outside source range "
                             + minimum + ".." + maximum,
                     state.getHuman().score >= minimum && state.getHuman().score <= maximum);
@@ -333,12 +334,17 @@ public final class GameStateTest {
 
     @Test
     public void zeroHighscoreMultiplierDefaultsToOneLikeTheSource() {
-        GameState state = new GameState(1, 75L, false);
+        for (int difficulty = 0; difficulty <= 2; difficulty++) {
+            GameState state = new GameState(difficulty, 75L + difficulty, false);
 
-        state.addToHighscore(state.getHuman(), 5, 0);
+            state.addToHighscore(state.getHuman(), 5, 0);
 
-        assertTrue(state.getHuman().score >= 200L);
-        assertTrue(state.getHuman().score <= 250L);
+            long sourceDifficulty = difficulty + 1L;
+            assertTrue("difficulty " + difficulty + " score " + state.getHuman().score,
+                    state.getHuman().score >= sourceDifficulty * 200L);
+            assertTrue("difficulty " + difficulty + " score " + state.getHuman().score,
+                    state.getHuman().score <= sourceDifficulty * 250L);
+        }
     }
 
     @Test
