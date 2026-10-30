@@ -215,7 +215,7 @@ public final class OpponentAI {
         int lowestRegard = lowestRegardForScore(state, player);
         double attack = baseAttackScore(state, player, lowestRegard);
         double attackTransferredToProduction = 0;
-        if (!hasAvailableAttackForScoring(player)) {
+        if (!hasAvailableAttackForScoring(state, player)) {
             attackTransferredToProduction = attack;
             attack = -999;
         }
@@ -436,15 +436,20 @@ public final class OpponentAI {
         return best;
     }
 
-    private static Decision planAction(GameState state, GameState.PlayerState player,
-                                       GameState.Action action, Random random, int slot,
-                                       Map<String, Integer> plannedWeaponUse) {
+    static Decision planAction(GameState state, GameState.PlayerState player,
+                               GameState.Action action, Random random, int slot,
+                               Map<String, Integer> plannedWeaponUse) {
         if (state.isActionBioloaded(player.id, action)) {
             return null;
         }
         switch (action) {
             case ATTACK:
-                return planAttack(state, player, random, plannedWeaponUse);
+                Decision attack = planAttack(state, player, random, plannedWeaponUse);
+                if (attack != null) {
+                    return attack;
+                }
+                return plannedWeaponUse.containsKey("@prepared") ? null
+                        : planPreparedAttack(state, player, random, plannedWeaponUse);
             case PREPARED_ATTACK:
                 return planPreparedAttack(state, player, random, plannedWeaponUse);
             case DEFENSE:
@@ -717,7 +722,12 @@ public final class OpponentAI {
         return weapon.inStock - (reserved == null ? 0 : reserved);
     }
 
-    static boolean hasAvailableAttackForScoring(GameState.PlayerState player) {
+    static boolean hasAvailableAttackForScoring(GameState state,
+                                                GameState.PlayerState player) {
+        String preparedCarrier = player.getPreparedCarrierName();
+        if (preparedCarrier != null) {
+            return !state.getAvailablePreparedPayloads(player.id, preparedCarrier).isEmpty();
+        }
         for (GameState.WeaponState weapon : player.getWeapons().values()) {
             if (weapon.active && weapon.inStock > 0
                     && ("soldier".equals(weapon.definition.type)
@@ -727,7 +737,7 @@ public final class OpponentAI {
                 return true;
             }
         }
-        return false;
+        return !state.getAvailablePreparedCarriers(player.id).isEmpty();
     }
 
     private static Decision planPropaganda(GameState state,

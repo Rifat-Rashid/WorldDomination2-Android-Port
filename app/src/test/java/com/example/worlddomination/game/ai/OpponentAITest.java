@@ -209,10 +209,36 @@ public final class OpponentAITest {
         spy.active = true;
         spy.inStock = 1;
 
-        assertTrue(OpponentAI.hasAvailableAttackForScoring(actor));
+        assertTrue(OpponentAI.hasAvailableAttackForScoring(state, actor));
 
         spy.active = false;
-        assertFalse(OpponentAI.hasAvailableAttackForScoring(actor));
+        assertFalse(OpponentAI.hasAvailableAttackForScoring(state, actor));
+    }
+
+    @Test
+    public void attackScoreAvailabilityIncludesPayloadForAStockedCarrier() {
+        GameState state = new GameState(1, 917L);
+        GameState.PlayerState actor = state.getPlayerState(1);
+        for (GameState.WeaponState weapon : actor.getWeapons().values()) {
+            weapon.inStock = 0;
+        }
+        GameState.WeaponState carrier = actor.getWeapons().get("rocket1");
+        carrier.active = true;
+        carrier.inStock = 1;
+        GameState.WeaponState payload = actor.getWeapons().get("warhead1");
+        payload.active = true;
+        payload.inStock = 1;
+
+        assertTrue(state.getAvailablePreparedCarriers(actor.id).contains("rocket1"));
+        assertTrue(OpponentAI.hasAvailableAttackForScoring(state, actor));
+
+        OpponentAI.Decision decision = OpponentAI.planAction(state, actor,
+                GameState.Action.ATTACK, new Random(917L), 1,
+                Collections.<String, Integer>emptyMap());
+        assertNotNull(decision);
+        assertEquals(GameState.Action.PREPARED_ATTACK, decision.action);
+        assertTrue(decision.prepareCarrier);
+        assertEquals("rocket1", decision.weaponName);
     }
 
     @Test
