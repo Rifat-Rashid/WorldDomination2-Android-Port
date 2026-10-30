@@ -20,6 +20,7 @@ import com.example.worlddomination.game.assets.OriginalUiAssets;
 import com.example.worlddomination.game.simulation.GameSetup;
 import com.example.worlddomination.game.simulation.GameState;
 import com.example.worlddomination.game.simulation.CityState;
+import com.example.worlddomination.game.ui.BattlefieldCityLayout;
 import com.example.worlddomination.game.ui.MatchOutcomePresentation;
 import com.example.worlddomination.game.ui.ScrollPaneState;
 
@@ -1252,6 +1253,20 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         shapes.setColor(GREEN);
         shapes.circle(cx, cy, 17f, 24);
         shapes.circle(cx, cy, 22f, 24);
+        int selectedCityOwner = game.getSelectedMapCityOwner();
+        int selectedCityIndex = game.getSelectedMapCityIndex();
+        if (selectedCityOwner >= 0 && selectedCityIndex >= 0) {
+            GameState.PlayerState owner = game.getPlayerState(selectedCityOwner);
+            CityState city = owner.getCity(selectedCityIndex);
+            if (owner.alive && city != null && city.populationMillions > 0) {
+                float cityX = BattlefieldCityLayout.x(mapBounds,
+                        selectedCityOwner, selectedCityIndex);
+                float cityY = BattlefieldCityLayout.y(mapBounds,
+                        selectedCityOwner, selectedCityIndex);
+                shapes.circle(cityX, cityY,
+                        BattlefieldCityLayout.selectionRadius(mapBounds), 24);
+            }
+        }
         shapes.end();
     }
 
@@ -2185,6 +2200,13 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         if (!mapBounds.contains(x, y)) {
             return;
         }
+        int selectedCity = BattlefieldCityLayout.hitTest(x, y, mapBounds);
+        if (selectedCity >= 0 && game.selectBattlefieldCity(
+                selectedCity / BattlefieldCityLayout.CITIES_PER_PLAYER,
+                selectedCity % BattlefieldCityLayout.CITIES_PER_PLAYER)) {
+            audio.play(OriginalAudio.Cue.UNIT_SELECT);
+            return;
+        }
         int best = -1;
         float bestDistance = Float.MAX_VALUE;
         for (int i = 0; i < ISLAND_CENTERS.length; i++) {
@@ -2240,6 +2262,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         if (modalOpen) {
             GameState.Action action = game.getSelectedAction();
+            if (selectMapTargetCity(action, x, y)) {
+                return;
+            }
             if (action == GameState.Action.PREPARED_ATTACK) {
                 if (game.getPreparedCarrierName(0) == null) {
                     if (attackWeaponPrevious.contains(x, y)) {
@@ -2424,6 +2449,33 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             game.removeQueuedAction(1);
             audio.play(OriginalAudio.Cue.ACTION_CLOSE);
         }
+    }
+
+    private boolean selectMapTargetCity(GameState.Action action, float x, float y) {
+        boolean targetAction = action == GameState.Action.ATTACK
+                || action == GameState.Action.PROPAGANDA;
+        if (action == GameState.Action.PREPARED_ATTACK) {
+            String carrier = game.getPreparedCarrierName(0);
+            targetAction = carrier != null && !isPreparedShipCarrier();
+        }
+        if (!targetAction || !mapBounds.contains(x, y)) {
+            return false;
+        }
+        int address = BattlefieldCityLayout.hitTest(x, y, mapBounds);
+        if (address < 0) {
+            return false;
+        }
+        int playerId = address / BattlefieldCityLayout.CITIES_PER_PLAYER;
+        int cityIndex = address % BattlefieldCityLayout.CITIES_PER_PLAYER;
+        if (playerId > 0 && !(action == GameState.Action.ATTACK
+                && game.isSelectedAttackSpy())
+                && game.getHuman().hasCeasefireWith(playerId)) {
+            return true;
+        }
+        if (playerId > 0 && game.selectBattlefieldCity(playerId, cityIndex)) {
+            audio.play(OriginalAudio.Cue.UNIT_SELECT);
+        }
+        return true;
     }
 
     private boolean handleBack() {

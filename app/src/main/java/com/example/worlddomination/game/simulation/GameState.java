@@ -489,6 +489,8 @@ public final class GameState {
     private int selectedDiplomacyOption;
     private int turn;
     private int selectedIsland = -1;
+    private int selectedMapCityOwner = -1;
+    private int selectedMapCityIndex = -1;
     private MatchStatus matchStatus = MatchStatus.ONGOING;
     private FinalScoreBreakdown finalScoreBreakdown;
 
@@ -844,11 +846,41 @@ public final class GameState {
         return selectedIsland;
     }
 
+    public int getSelectedMapCityOwner() {
+        return selectedMapCityOwner;
+    }
+
+    public int getSelectedMapCityIndex() {
+        return selectedMapCityIndex;
+    }
+
     public void selectIsland(int island) {
         if (island < 0 || island >= 5) {
             throw new IllegalArgumentException("Island index must be between 0 and 4");
         }
         selectedIsland = island;
+        selectedMapCityOwner = -1;
+        selectedMapCityIndex = -1;
+    }
+
+    /** Selects a populated, living city tapped on the original battlefield. */
+    public boolean selectBattlefieldCity(int playerId, int cityIndex) {
+        if (playerId < 0 || playerId >= players.length || cityIndex < 0 || cityIndex >= 5) {
+            return false;
+        }
+        PlayerState owner = players[playerId];
+        CityState city = owner.getCity(cityIndex);
+        if (!owner.alive || city == null || city.populationMillions <= 0) {
+            return false;
+        }
+        selectedIsland = playerId;
+        selectedMapCityOwner = playerId;
+        selectedMapCityIndex = cityIndex;
+        if (playerId > 0) {
+            selectedTargetPlayer = playerId;
+            selectedTargetCity = cityIndex;
+        }
+        return true;
     }
 
     public void selectAction(Action action) {
@@ -876,8 +908,7 @@ public final class GameState {
         }
         selectedAction = action;
         selectedResearchTechnologies.clear();
-        selectedTargetPlayer = selectedIsland > 0 ? selectedIsland : 1;
-        selectedTargetCity = 0;
+        resetTargetFromMapSelection();
         selectedAttackWeapon = firstAvailableAttackWeapon();
         selectedPreparedCarrier = null;
         selectedPreparedPayload = null;
@@ -1827,8 +1858,7 @@ public final class GameState {
         messages.add(selectedAction.label + " queued.");
         selectedAction = null;
         selectedResearchTechnologies.clear();
-        selectedTargetPlayer = selectedIsland > 0 ? selectedIsland : 1;
-        selectedTargetCity = 0;
+        resetTargetFromMapSelection();
         selectedAttackWeapon = firstAvailableAttackWeapon();
         selectedPreparedCarrier = null;
         selectedPreparedPayload = null;
@@ -1853,6 +1883,33 @@ public final class GameState {
     private void resetProductionSelection() {
         selectedProductionPercentages.clear();
         selectedProductionCategory = "soldier";
+    }
+
+    private void resetTargetFromMapSelection() {
+        CityState mapCity = selectedMapCityOwner > 0
+                && selectedMapCityOwner < players.length
+                && selectedMapCityIndex >= 0 && selectedMapCityIndex < 5
+                ? players[selectedMapCityOwner].getCity(selectedMapCityIndex) : null;
+        boolean mapCityIsTargetable = mapCity != null
+                && players[selectedMapCityOwner].alive && mapCity.populationMillions > 0;
+        if (mapCityIsTargetable) {
+            selectedTargetPlayer = selectedMapCityOwner;
+            selectedTargetCity = selectedMapCityIndex;
+            return;
+        }
+        selectedTargetPlayer = selectedIsland > 0 && selectedIsland < players.length
+                && players[selectedIsland].alive
+                ? selectedIsland : firstLivingOpponentId();
+        selectedTargetCity = 0;
+    }
+
+    private int firstLivingOpponentId() {
+        for (int playerId = 1; playerId < players.length; playerId++) {
+            if (players[playerId].alive) {
+                return playerId;
+            }
+        }
+        return 1;
     }
 
     public void removeQueuedAction(int slot) {
