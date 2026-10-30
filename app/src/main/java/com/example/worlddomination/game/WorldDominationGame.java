@@ -1540,7 +1540,11 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                     modal.y + modal.height - 37f, 8f);
             for (int i = 0; i < productionCategoryRows.length; i++) {
                 Rectangle row = productionCategoryRows[i];
-                drawCentered(PRODUCTION_CATEGORIES[i], row.x + row.width / 2f,
+                String category = PRODUCTION_CATEGORIES[i].toLowerCase(
+                        java.util.Locale.US);
+                drawCentered(PRODUCTION_CATEGORIES[i] + " "
+                                + game.getProductionPercent(category) + "%",
+                        row.x + row.width / 2f,
                         row.y + row.height / 2f + 2.5f, 7f);
             }
             drawCentered(game.getSelectedProductionPercent() + "%    Budget: $"
@@ -2288,16 +2292,17 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             } else if (action == GameState.Action.PRODUCTION) {
                 for (int i = 0; i < productionCategoryRows.length; i++) {
                     if (productionCategoryRows[i].contains(x, y)) {
-                        game.configureProduction(
-                                PRODUCTION_CATEGORIES[i].toLowerCase(java.util.Locale.US),
-                                game.getSelectedProductionPercent());
+                        game.selectProductionCategory(PRODUCTION_CATEGORIES[i]
+                                .toLowerCase(java.util.Locale.US));
                         return;
                     }
                 }
                 if (productionSlider.contains(x, y)) {
                     float sliderX = Math.max(productionSlider.x,
                             Math.min(x, productionSlider.x + productionSlider.width));
-                    int percent = Math.round(100f * (sliderX - productionSlider.x)
+                    int maximumPercent = game.getSelectedProductionMaximumPercent();
+                    int percent = Math.round(maximumPercent
+                            * (sliderX - productionSlider.x)
                             / productionSlider.width);
                     game.configureProduction(game.getSelectedProductionCategory(), percent);
                     return;
