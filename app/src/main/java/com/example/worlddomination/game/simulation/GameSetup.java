@@ -164,6 +164,12 @@ public final class GameSetup {
         return leader(candidateLeaderId);
     }
 
+    /** Selects the leader displayed in the source setup menu's portrait carousel. */
+    public void selectCandidateLeader(int leaderId) {
+        leader(leaderId);
+        candidateLeaderId = leaderId;
+    }
+
     public void cycleCandidateLeader(int direction) {
         if (direction != 0) {
             candidateLeaderId = Math.floorMod(candidateLeaderId + Integer.signum(direction),

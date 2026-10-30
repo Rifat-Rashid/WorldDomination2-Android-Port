@@ -216,6 +216,24 @@ public final class FlashAnimationTimelineTest {
     }
 
     @Test
+    public void setupPortraitTimelineContainsEverySelectableOriginalLeaderPortrait()
+            throws IOException {
+        JsonValue scene = loadSourceScene();
+        FlashAnimationTimeline faces = FlashAnimationTimeline.fromSymbol(
+                findSymbol(scene, "faces"), scene.getFloat("fps"));
+
+        assertEquals(20, faces.getFrameCount());
+        for (int frameIndex = 0; frameIndex < 19; frameIndex++) {
+            FlashAnimationTimeline.Frame frame = faces.getFrame(frameIndex);
+            assertNotNull("Missing original leader portrait frame " + frameIndex, frame);
+            for (FlashAnimationTimeline.Layer layer : frame.layers) {
+                assertTrue("Missing original leader portrait shape " + layer.shapeId,
+                        Files.isRegularFile(shapeAsset(layer.shapeId)));
+            }
+        }
+    }
+
+    @Test
     public void smokePuffFlashShapeIsPackagedAsVectorArtForNativeRasterization()
             throws IOException {
         String smokeSvg = loadShapeSvg(4936);

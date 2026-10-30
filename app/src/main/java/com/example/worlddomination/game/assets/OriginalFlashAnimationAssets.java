@@ -32,7 +32,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.zip.GZIPInputStream;
 
-/** Loads original combat timelines in the background and caches their WebP shapes in an atlas. */
+/** Loads original Flash timelines and caches their shapes, prioritizing setup portraits. */
 public final class OriginalFlashAnimationAssets implements Disposable {
     /** Body artwork nested in the source Flash rocket movie clip. */
     public static final int ROCKET_BODY_SHAPE_ID = 792;
@@ -43,6 +43,7 @@ public final class OriginalFlashAnimationAssets implements Disposable {
     private static final String SHAPE_PATH = "original/runtime/shapes/";
     private static final String WEBP_PREFIX = "data:image/webp;base64,";
     private static final String[] REQUIRED_LINKAGES = {
+            "faces",
             "explosion_warhead_1", "explosion_warhead_2", "explosion_warhead_3",
             "explosion_warhead_4", "explosion_bioload_1", "explosion_bioload_2",
             "explosion_bioload_3", "explosion_bioload_4", "explosion001", "explosion002",
@@ -59,12 +60,17 @@ public final class OriginalFlashAnimationAssets implements Disposable {
     private final Object loadLock = new Object();
     private volatile Map<String, FlashAnimationTimeline> timelines = Collections.emptyMap();
     private volatile Map<Integer, TextureRegion> shapeRegions = Collections.emptyMap();
+    private volatile Map<Integer, TextureRegion> setupPortraitRegions = Collections.emptyMap();
     private volatile RuntimeException loadFailure;
     private volatile boolean disposed;
     private volatile boolean loaded;
+    private volatile boolean setupPortraitsLoaded;
     private boolean sourceReady;
+    private boolean setupPortraitSourceReady;
     private PixmapPacker pendingPacker;
+    private PixmapPacker pendingSetupPortraitPacker;
     private TextureAtlas atlas;
+    private TextureAtlas setupPortraitAtlas;
     private final Thread loaderThread;
 
     public OriginalFlashAnimationAssets() {
@@ -83,6 +89,7 @@ public final class OriginalFlashAnimationAssets implements Disposable {
         if (failure != null) {
             throw failure;
         }
+        uploadSetupPortraitAtlas();
         if (loaded) {
             return true;
         }
@@ -106,7 +113,9 @@ public final class OriginalFlashAnimationAssets implements Disposable {
         }
 
         Map<Integer, TextureRegion> generatedRegions = new LinkedHashMap<>();
-        for (int shapeId : collectShapeIds(timelines)) {
+        Set<Integer> battleShapeIds = collectShapeIds(timelines);
+        battleShapeIds.removeAll(collectSetupPortraitShapeIds(timelines));
+        for (int shapeId : battleShapeIds) {
             TextureRegion region = generatedAtlas.findRegion(regionName(shapeId));
             if (region == null) {
                 generatedAtlas.dispose();
@@ -132,18 +141,26 @@ public final class OriginalFlashAnimationAssets implements Disposable {
         return loaded;
     }
 
+    /** True when the small setup-only portrait atlas is ready for rendering. */
+    public boolean areSetupPortraitsLoaded() {
+        return setupPortraitsLoaded;
+    }
+
     public FlashAnimationTimeline getTimeline(String linkage) {
         return timelines.get(linkage);
     }
 
     public TextureRegion getShape(int shapeId) {
-        return shapeRegions.get(shapeId);
+        TextureRegion portrait = setupPortraitRegions.get(shapeId);
+        return portrait != null ? portrait : shapeRegions.get(shapeId);
     }
 
     private void loadInBackground() {
-        PixmapPacker packer = new PixmapPacker(1024, 1024,
+        PixmapPacker portraitPacker = new PixmapPacker(1024, 1024,
                 Pixmap.Format.RGBA8888, 2, true);
-        boolean transferred = false;
+        PixmapPacker packer = null;
+        boolean portraitTransferred = false;
+        boolean battleTransferred = false;
         try {
             Map<String, FlashAnimationTimeline> loadedTimelines = loadTimelines();
             synchronized (loadLock) {
@@ -153,18 +170,23 @@ public final class OriginalFlashAnimationAssets implements Disposable {
                 timelines = Collections.unmodifiableMap(loadedTimelines);
             }
 
-            Set<Integer> shapeIds = collectShapeIds(loadedTimelines);
-            for (int shapeId : shapeIds) {
+            Set<Integer> portraitShapeIds = collectSetupPortraitShapeIds(loadedTimelines);
+            packShapes(portraitPacker, portraitShapeIds);
+            synchronized (loadLock) {
                 if (disposed) {
                     return;
                 }
-                Pixmap pixmap = decodeShape(shapeId);
-                try {
-                    packer.pack(regionName(shapeId), pixmap);
-                } finally {
-                    pixmap.dispose();
-                }
+                pendingSetupPortraitPacker = portraitPacker;
+                setupPortraitSourceReady = true;
+                portraitTransferred = true;
             }
+            Gdx.graphics.requestRendering();
+
+            packer = new PixmapPacker(1024, 1024,
+                    Pixmap.Format.RGBA8888, 2, true);
+            Set<Integer> battleShapeIds = collectShapeIds(loadedTimelines);
+            battleShapeIds.removeAll(portraitShapeIds);
+            packShapes(packer, battleShapeIds);
 
             synchronized (loadLock) {
                 if (disposed) {
@@ -172,7 +194,7 @@ public final class OriginalFlashAnimationAssets implements Disposable {
                 }
                 pendingPacker = packer;
                 sourceReady = true;
-                transferred = true;
+                battleTransferred = true;
             }
         } catch (RuntimeException error) {
             synchronized (loadLock) {
@@ -181,10 +203,105 @@ public final class OriginalFlashAnimationAssets implements Disposable {
                 }
             }
         } finally {
-            if (!transferred) {
+            if (!portraitTransferred) {
+                portraitPacker.dispose();
+            }
+            if (packer != null && !battleTransferred) {
                 packer.dispose();
             }
         }
+    }
+
+    private void uploadSetupPortraitAtlas() {
+        PixmapPacker packer;
+        synchronized (loadLock) {
+            if (!setupPortraitSourceReady || pendingSetupPortraitPacker == null || disposed) {
+                return;
+            }
+            packer = pendingSetupPortraitPacker;
+            pendingSetupPortraitPacker = null;
+            setupPortraitSourceReady = false;
+        }
+
+        TextureAtlas generatedAtlas;
+        try {
+            generatedAtlas = packer.generateTextureAtlas(TextureFilter.Linear,
+                    TextureFilter.Linear, false);
+        } finally {
+            packer.dispose();
+        }
+
+        Map<Integer, TextureRegion> generatedRegions = new LinkedHashMap<>();
+        for (int shapeId : collectSetupPortraitShapeIds(timelines)) {
+            TextureRegion region = generatedAtlas.findRegion(regionName(shapeId));
+            if (region == null) {
+                generatedAtlas.dispose();
+                throw new IllegalStateException("Missing setup portrait atlas region for Flash shape "
+                        + shapeId);
+            }
+            generatedRegions.put(shapeId, region);
+        }
+
+        synchronized (loadLock) {
+            if (disposed) {
+                generatedAtlas.dispose();
+                return;
+            }
+            setupPortraitAtlas = generatedAtlas;
+            setupPortraitRegions = Collections.unmodifiableMap(generatedRegions);
+            setupPortraitsLoaded = true;
+        }
+    }
+
+    private void packShapes(PixmapPacker packer, Set<Integer> shapeIds) {
+        for (int shapeId : shapeIds) {
+            if (disposed) {
+                return;
+            }
+            Pixmap pixmap = decodeShape(shapeId);
+            try {
+                packer.pack(regionName(shapeId), pixmap);
+            } finally {
+                pixmap.dispose();
+            }
+        }
+    }
+
+    private static Set<Integer> collectSetupPortraitShapeIds(
+            Map<String, FlashAnimationTimeline> timelines) {
+        FlashAnimationTimeline faces = timelines.get("faces");
+        Map<String, FlashAnimationTimeline> setupTimelines = new LinkedHashMap<>();
+        if (faces != null) {
+            setupTimelines.put("faces", faces);
+        }
+        return collectShapeIds(setupTimelines, false);
+    }
+
+    private static Set<Integer> collectShapeIds(
+            Map<String, FlashAnimationTimeline> timelines) {
+        return collectShapeIds(timelines, true);
+    }
+
+    private static Set<Integer> collectShapeIds(
+            Map<String, FlashAnimationTimeline> timelines, boolean includeRocketTrail) {
+        Set<Integer> shapeIds = new LinkedHashSet<>();
+        if (includeRocketTrail) {
+            shapeIds.add(ROCKET_TRAIL_SHAPE_ID);
+        }
+        for (FlashAnimationTimeline timeline : timelines.values()) {
+            for (int i = 0; i < timeline.getFrameCount(); i++) {
+                FlashAnimationTimeline.Frame frame = timeline.getFrame(i);
+                if (frame != null) {
+                    for (FlashAnimationTimeline.Layer layer : frame.layers) {
+                        String shapePath = SHAPE_PATH + layer.shapeId + ".svgz";
+                        if (Gdx.files.internal(shapePath).exists()) {
+                            shapeIds.add(layer.shapeId);
+                        }
+                    }
+                }
+            }
+        }
+        return shapeIds;
     }
 
     private static Map<String, FlashAnimationTimeline> loadTimelines() {
@@ -208,26 +325,6 @@ public final class OriginalFlashAnimationAssets implements Disposable {
             }
         }
         return result;
-    }
-
-    private static Set<Integer> collectShapeIds(
-            Map<String, FlashAnimationTimeline> timelines) {
-        Set<Integer> shapeIds = new LinkedHashSet<>();
-        shapeIds.add(ROCKET_TRAIL_SHAPE_ID);
-        for (FlashAnimationTimeline timeline : timelines.values()) {
-            for (int i = 0; i < timeline.getFrameCount(); i++) {
-                FlashAnimationTimeline.Frame frame = timeline.getFrame(i);
-                if (frame != null) {
-                    for (FlashAnimationTimeline.Layer layer : frame.layers) {
-                        String shapePath = SHAPE_PATH + layer.shapeId + ".svgz";
-                        if (Gdx.files.internal(shapePath).exists()) {
-                            shapeIds.add(layer.shapeId);
-                        }
-                    }
-                }
-            }
-        }
-        return shapeIds;
     }
 
     private static Pixmap decodeShape(int shapeId) {
@@ -346,11 +443,21 @@ public final class OriginalFlashAnimationAssets implements Disposable {
                 pendingPacker.dispose();
                 pendingPacker = null;
             }
+            if (pendingSetupPortraitPacker != null) {
+                pendingSetupPortraitPacker.dispose();
+                pendingSetupPortraitPacker = null;
+            }
             if (atlas != null) {
                 atlas.dispose();
                 atlas = null;
             }
+            if (setupPortraitAtlas != null) {
+                setupPortraitAtlas.dispose();
+                setupPortraitAtlas = null;
+            }
             shapeRegions = Collections.emptyMap();
+            setupPortraitRegions = Collections.emptyMap();
+            setupPortraitsLoaded = false;
             timelines = Collections.emptyMap();
         }
         loaderThread.interrupt();

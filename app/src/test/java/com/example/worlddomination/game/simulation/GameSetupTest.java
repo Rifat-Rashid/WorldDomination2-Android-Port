@@ -52,6 +52,28 @@ public final class GameSetupTest {
     }
 
     @Test
+    public void selectingCarouselLeaderChangesCandidateWithoutChangingOpponentRoster() {
+        GameSetup setup = new GameSetup();
+        assertTrue(setup.toggleOpponent(2));
+
+        setup.selectCandidateLeader(18);
+
+        assertEquals(18, setup.getCandidateLeaderId());
+        assertEquals("Bossi Isasad", setup.getCandidateLeader().name);
+        assertEquals(Arrays.asList(2), setup.getSelectedOpponentIds());
+    }
+
+    @Test
+    public void selectingCarouselLeaderRejectsIdsOutsideOriginalRoster() {
+        GameSetup setup = new GameSetup();
+        org.junit.Assert.assertThrows(IllegalArgumentException.class,
+                () -> setup.selectCandidateLeader(-1));
+        org.junit.Assert.assertThrows(IllegalArgumentException.class,
+                () -> setup.selectCandidateLeader(19));
+        assertEquals(0, setup.getCandidateLeaderId());
+    }
+
+    @Test
     public void sourcePlayerColorIdsMapToTankTurretLibraryNames() {
         assertEquals("blue", GameSetup.colorName(1));
         assertEquals("red", GameSetup.colorName(2));

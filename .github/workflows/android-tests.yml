@@ -102,6 +102,15 @@ jobs:
           - id: ui-tests
             check: Touch and presentation tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.*"'
+          - id: setup-screen-layout-tests
+            check: Setup screen responsive layout
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.SetupScreenLayoutTest"'
+          - id: setup-leader-selection-tests
+            check: Setup leader selection behavior
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameSetupTest.selectingCarouselLeaderChangesCandidateWithoutChangingOpponentRoster" --tests "com.example.worlddomination.game.simulation.GameSetupTest.selectingCarouselLeaderRejectsIdsOutsideOriginalRoster"'
+          - id: setup-source-artwork-tests
+            check: Original setup portrait and building artwork
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest.setupPortraitTimelineContainsEverySelectableOriginalLeaderPortrait" --tests "com.example.worlddomination.game.assets.OriginalCityAssetsTest"'
           - id: scroll-pane-tests
             check: Independent panel scrolling tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.ScrollPaneStateTest"'

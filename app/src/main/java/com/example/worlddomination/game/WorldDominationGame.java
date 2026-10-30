@@ -41,6 +41,7 @@ import com.example.worlddomination.game.ui.BattlefieldCityLayout;
 import com.example.worlddomination.game.ui.MatchOutcomePresentation;
 import com.example.worlddomination.game.ui.MatchOutcomeSequence;
 import com.example.worlddomination.game.ui.ScrollPaneState;
+import com.example.worlddomination.game.ui.SetupScreenLayout;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,7 +61,15 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             "ROCKETS", "PLANES", "SPECIAL", "WARHEAD", "BIOLOAD", "SOLDIER", "SPY", "DEFENSE"
     };
     private static final int RESEARCH_ROWS_PER_PAGE = 6;
-    private static final String[] DIFFICULTY_LABELS = {"EASY", "NORMAL", "HARD"};
+    private static final String[] DIFFICULTY_LABELS = {"EASY", "MEDIUM", "HARD"};
+    private static final Color[] SETUP_PLAYER_COLORS = {
+            new Color(0.10f, 0.20f, 0.58f, 1f),
+            new Color(0.72f, 0.08f, 0.08f, 1f),
+            new Color(0.68f, 0.39f, 0.06f, 1f),
+            new Color(0.72f, 0.69f, 0.04f, 1f),
+            new Color(0.02f, 0.78f, 0.13f, 1f)
+    };
+    private static final String[] SETUP_BUILDING_RELIGIONS = {"bhu", "chr", "com", "jew", "mus"};
     private static final int GESTURE_NONE = 0;
     private static final int GESTURE_NAV = 1;
     private static final int GESTURE_EQUIPMENT = 2;
@@ -163,18 +172,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private final Rectangle modal = new Rectangle();
     private final Rectangle modalAccept = new Rectangle();
     private final Rectangle modalCancel = new Rectangle();
-    private final Rectangle setupPanel = new Rectangle();
-    private final Rectangle setupDifficultyPrevious = new Rectangle();
-    private final Rectangle setupDifficultyNext = new Rectangle();
-    private final Rectangle setupColorPrevious = new Rectangle();
-    private final Rectangle setupColorNext = new Rectangle();
-    private final Rectangle setupBuildingPrevious = new Rectangle();
-    private final Rectangle setupBuildingNext = new Rectangle();
-    private final Rectangle setupLeaderPrevious = new Rectangle();
-    private final Rectangle setupLeaderNext = new Rectangle();
-    private final Rectangle setupLeaderToggle = new Rectangle();
-    private final Rectangle[] setupOpponentSlots = new Rectangle[GameSetup.MAX_OPPONENTS];
-    private final Rectangle setupStartButton = new Rectangle();
+    private final SetupScreenLayout setupLayout = new SetupScreenLayout();
     private final Rectangle productionSlider = new Rectangle();
     private final Rectangle researchPrevious = new Rectangle();
     private final Rectangle researchNext = new Rectangle();
@@ -230,8 +228,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private int preparedCityIndex;
     private int preparedPayloadIndex;
     private int defenseWeaponIndex;
+    private int setupLeaderListStart;
     private boolean dragging;
     private boolean modalOpen;
+    private boolean continuousRenderingEnabled = true;
     private int researchPage;
     private String selectedEquipment = "";
     private String setupMessage = "SELECT ONE TO FOUR OPPONENTS TO BEGIN";
@@ -256,9 +256,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         for (int i = 0; i < portraitCards.length; i++) {
             portraitCards[i] = new Rectangle();
         }
-        for (int i = 0; i < setupOpponentSlots.length; i++) {
-            setupOpponentSlots[i] = new Rectangle();
-        }
     }
 
     private static float equipmentContentHeight() {
@@ -279,6 +276,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     public void create() {
         Gdx.graphics.setForegroundFPS(60);
         Gdx.graphics.setVSync(true);
+        Gdx.graphics.setContinuousRendering(false);
+        continuousRenderingEnabled = false;
         Gdx.input.setCatchKey(Input.Keys.BACK, true);
         batch = new SpriteBatch();
         shapes = new ShapeRenderer();
@@ -297,6 +296,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         setup = new GameSetup(System.nanoTime());
         Gdx.input.setInputProcessor(this);
         layout(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+        Gdx.graphics.requestRendering();
     }
 
     @Override
@@ -305,6 +305,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             return;
         }
         layout(width, height);
+        Gdx.graphics.requestRendering();
     }
 
     private void layout(int width, int height) {
@@ -441,37 +442,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 modal.y + modal.height * 0.14f, modal.width * 0.38f,
                 Math.min(18f, modal.height * 0.075f));
 
-        setupPanel.set(worldWidth * 0.10f, worldHeight * 0.055f,
-                worldWidth * 0.80f, worldHeight * 0.89f);
-        setupDifficultyPrevious.set(setupPanel.x + setupPanel.width * 0.28f,
-                setupPanel.y + setupPanel.height * 0.68f, 24f, 21f);
-        setupDifficultyNext.set(setupPanel.x + setupPanel.width * 0.68f,
-                setupPanel.y + setupPanel.height * 0.68f, 24f, 21f);
-        setupColorPrevious.set(setupPanel.x + setupPanel.width * 0.28f,
-                setupPanel.y + setupPanel.height * 0.57f, 24f, 21f);
-        setupColorNext.set(setupPanel.x + setupPanel.width * 0.68f,
-                setupPanel.y + setupPanel.height * 0.57f, 24f, 21f);
-        setupBuildingPrevious.set(setupPanel.x + setupPanel.width * 0.28f,
-                setupPanel.y + setupPanel.height * 0.46f, 24f, 21f);
-        setupBuildingNext.set(setupPanel.x + setupPanel.width * 0.68f,
-                setupPanel.y + setupPanel.height * 0.46f, 24f, 21f);
-        setupLeaderPrevious.set(setupPanel.x + setupPanel.width * 0.18f,
-                setupPanel.y + setupPanel.height * 0.35f, 24f, 21f);
-        setupLeaderNext.set(setupPanel.x + setupPanel.width * 0.78f,
-                setupPanel.y + setupPanel.height * 0.35f, 24f, 21f);
-        setupLeaderToggle.set(setupPanel.x + setupPanel.width * 0.35f,
-                setupPanel.y + setupPanel.height * 0.19f,
-                setupPanel.width * 0.30f, 17f);
-        float slotGap = 5f;
-        float slotWidth = (setupPanel.width * 0.76f - slotGap * 3f) / 4f;
-        float slotStartX = setupPanel.x + setupPanel.width * 0.12f;
-        for (int i = 0; i < setupOpponentSlots.length; i++) {
-            setupOpponentSlots[i].set(slotStartX + i * (slotWidth + slotGap),
-                    setupPanel.y + setupPanel.height * 0.105f,
-                    slotWidth, 15f);
-        }
-        setupStartButton.set(setupPanel.x + setupPanel.width * 0.40f,
-                setupPanel.y + 1f, setupPanel.width * 0.20f, 15f);
+        setupLayout.update(worldWidth, worldHeight, safeLeft, safeTop, safeRight, safeBottom);
 
         navigationScroll.setRange(ACTIONS.length * (NAV_ROW_HEIGHT + NAV_ROW_GAP)
                 - NAV_ROW_GAP, navViewport.height);
@@ -515,6 +486,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         if (showExitPromptSeconds > 0f) {
             drawExitPrompt();
+        }
+        if (game == null && showExitPromptSeconds <= 0f && continuousRenderingEnabled) {
+            setContinuousRendering(false);
         }
     }
 
@@ -716,124 +690,303 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         pendingSafeRight = Math.max(0f, right);
         pendingSafeBottom = Math.max(0f, bottom);
         safeAreaChanged = true;
+        Gdx.graphics.requestRendering();
     }
 
     private void drawSetupScreen() {
+        batch.setProjectionMatrix(camera.combined);
+        batch.begin();
+        batch.setColor(0.42f, 0.56f, 0.61f, 0.52f);
+        batch.draw(uiAssets.metalPanel, 0f, 0f, worldWidth, worldHeight,
+                0f, 0f, worldWidth / 240f, worldHeight / 168f);
+        batch.setColor(Color.WHITE);
+        batch.end();
+
         shapes.setProjectionMatrix(camera.combined);
         shapes.begin(ShapeRenderer.ShapeType.Filled);
-        drawPanelFill(setupPanel);
-        shapes.setColor(MODAL_ORANGE);
-        shapes.rect(setupPanel.x + 3f, setupPanel.y + setupPanel.height - 31f,
-                setupPanel.width - 6f, 27f);
-        drawSetupChoiceBackground(setupDifficultyPrevious, setupDifficultyNext);
-        drawSetupChoiceBackground(setupColorPrevious, setupColorNext);
-        drawSetupChoiceBackground(setupBuildingPrevious, setupBuildingNext);
-        drawSetupChoiceBackground(setupLeaderPrevious, setupLeaderNext);
+        drawPanelFill(setupLayout.difficultyPanel);
+        drawPanelFill(setupLayout.playerStylePanel);
+        drawPanelFill(setupLayout.enemiesPanel);
+        drawPanelFill(setupLayout.leaderCarouselPanel);
+        drawPanelFill(setupLayout.startPanel);
         java.util.List<Integer> selectedIds = setup.getSelectedOpponentIds();
-        java.util.List<GameSetup.Leader> selected = setup.getSelectedOpponents();
-        shapes.setColor(selectedIds.contains(setup.getCandidateLeaderId())
-                ? BUTTON_SELECTED : BUTTON);
-        shapes.rect(setupLeaderToggle.x, setupLeaderToggle.y,
-                setupLeaderToggle.width, setupLeaderToggle.height);
-        drawButtonGradient(setupLeaderToggle,
-                selectedIds.contains(setup.getCandidateLeaderId()));
-        for (int i = 0; i < setupOpponentSlots.length; i++) {
-            Rectangle slot = setupOpponentSlots[i];
-            shapes.setColor(i < selected.size() ? BUTTON_SELECTED : BUTTON);
-            shapes.rect(slot.x, slot.y, slot.width, slot.height);
-            drawButtonGradient(slot, i < selected.size());
-        }
-        shapes.setColor(setup.canStart() ? BUTTON_SELECTED : BUTTON);
-        shapes.rect(setupStartButton.x, setupStartButton.y,
-                setupStartButton.width, setupStartButton.height);
-        drawButtonGradient(setupStartButton, setup.canStart());
         shapes.end();
 
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
-        drawPanelTexture(setupPanel);
-        batch.draw(uiAssets.logo, setupPanel.x + setupPanel.width * 0.19f,
-                setupPanel.y + setupPanel.height - 28f, 21f, 24f);
-        font.setColor(Color.WHITE);
-        drawCentered("WORLD DOMINATION 2", setupPanel.x + setupPanel.width * 0.52f,
-                setupPanel.y + setupPanel.height - 13f, 13f);
-        font.setColor(TITLE_TEXT);
-        drawCentered("SELECT DIFFICULTY", setupPanel.x + setupPanel.width * 0.13f,
-                setupDifficultyPrevious.y + 9f, 7f);
-        drawCentered(DIFFICULTY_LABELS[setup.getDifficulty()],
-                setupPanel.x + setupPanel.width * 0.50f,
-                setupDifficultyPrevious.y + 10f, 8f);
-        drawCentered("PLAYER COLOR", setupPanel.x + setupPanel.width * 0.13f,
-                setupColorPrevious.y + 9f, 7f);
-        drawCentered(setup.getPlayerColorName().toUpperCase(java.util.Locale.US),
-                setupPanel.x + setupPanel.width * 0.50f,
-                setupColorPrevious.y + 10f, 8f);
-        drawCentered("BUILDING", setupPanel.x + setupPanel.width * 0.13f,
-                setupBuildingPrevious.y + 9f, 7f);
-        drawCentered(setup.getStartingBuildingName().toUpperCase(java.util.Locale.US)
-                        + " | " + setup.getHumanReligionCode().toUpperCase(java.util.Locale.US),
-                setupPanel.x + setupPanel.width * 0.50f,
-                setupBuildingPrevious.y + 10f, 8f);
-        drawSetupArrows(setupDifficultyPrevious, setupDifficultyNext);
-        drawSetupArrows(setupColorPrevious, setupColorNext);
-        drawSetupArrows(setupBuildingPrevious, setupBuildingNext);
-        GameSetup.Leader candidate = setup.getCandidateLeader();
-        drawSetupArrows(setupLeaderPrevious, setupLeaderNext);
-        drawCentered(candidate.name, setupPanel.x + setupPanel.width * 0.50f,
-                setupLeaderPrevious.y + 12f, 9f);
-        font.setColor(SUBTITLE_TEXT);
-        String candidateDetails = "LEADER " + (candidate.id + 1) + " OF 19 | "
-                + candidate.displayReligionCode;
-        drawCentered(showSetupMessage ? setupMessage : candidateDetails,
-                setupPanel.x + setupPanel.width * 0.50f,
-                setupLeaderPrevious.y + 2f, 6.5f);
-        font.setColor(TITLE_TEXT);
-        drawCentered((selectedIds.contains(candidate.id) ? "REMOVE RIVAL " : "ADD RIVAL ")
-                        + selected.size() + "/4",
-                setupLeaderToggle.x + setupLeaderToggle.width / 2f,
-                setupLeaderToggle.y + setupLeaderToggle.height / 2f + 3f, 7.5f);
-        for (int i = 0; i < setupOpponentSlots.length; i++) {
-            String label = i < selected.size() ? selected.get(i).name : "EMPTY";
-            Rectangle slot = setupOpponentSlots[i];
-            drawCentered(label, slot.x + slot.width / 2f,
-                    slot.y + slot.height / 2f + 3f, 6.4f);
+        drawPanelTexture(setupLayout.difficultyPanel);
+        drawPanelTexture(setupLayout.playerStylePanel);
+        drawPanelTexture(setupLayout.enemiesPanel);
+        drawPanelTexture(setupLayout.leaderCarouselPanel);
+        drawPanelTexture(setupLayout.startPanel);
+        batch.end();
+
+        batch.begin();
+        for (Rectangle button : setupLayout.difficultyButtons) {
+            drawOriginalButton(button);
         }
+        for (Rectangle button : setupLayout.colorSwatches) {
+            drawOriginalButton(button);
+        }
+        for (Rectangle button : setupLayout.buildingButtons) {
+            drawOriginalButton(button);
+        }
+        for (Rectangle button : setupLayout.opponentSlots) {
+            drawOriginalButton(button);
+        }
+        for (Rectangle button : setupLayout.leaderCards) {
+            drawOriginalButton(button);
+        }
+        drawOriginalButton(setupLayout.leaderPrevious);
+        drawOriginalButton(setupLayout.leaderNext);
+        drawOriginalButton(setupLayout.startButton);
+        batch.end();
+
+        shapes.begin(ShapeRenderer.ShapeType.Filled);
+        for (int i = 0; i < setupLayout.difficultyButtons.length; i++) {
+            Rectangle button = setupLayout.difficultyButtons[i];
+            if (i == setup.getDifficulty()) {
+                drawSetupOrangeGradient(button);
+            } else {
+                drawSetupButtonGradient(button, false);
+            }
+        }
+        for (int i = 0; i < setupLayout.colorSwatches.length; i++) {
+            Rectangle swatch = setupLayout.colorSwatches[i];
+            drawSetupButtonGradient(swatch, i + 1 == setup.getPlayerColor());
+            shapes.setColor(SETUP_PLAYER_COLORS[i]);
+            shapes.rect(swatch.x + 5f, swatch.y + 5f,
+                    swatch.width - 10f, swatch.height - 10f);
+        }
+        for (int i = 0; i < setupLayout.buildingButtons.length; i++) {
+            drawSetupButtonGradient(setupLayout.buildingButtons[i],
+                    i + 1 == setup.getStartingBuilding());
+        }
+        for (int i = 0; i < setupLayout.opponentSlots.length; i++) {
+            Rectangle slot = setupLayout.opponentSlots[i];
+            boolean occupied = i < selectedIds.size();
+            shapes.setColor(occupied ? BUTTON_SELECTED : BUTTON);
+            shapes.rect(slot.x, slot.y, slot.width, slot.height);
+            drawSetupButtonGradient(slot, occupied);
+            if (!occupied) {
+                shapes.setColor(0.09f, 0.17f, 0.20f, 1f);
+                shapes.circle(slot.x + slot.width / 2f,
+                        slot.y + slot.height * 0.66f, slot.height * 0.15f, 16);
+                shapes.ellipse(slot.x + slot.width * 0.22f,
+                        slot.y + slot.height * 0.08f,
+                        slot.width * 0.56f, slot.height * 0.48f);
+            }
+        }
+        for (int i = 0; i < setupLayout.leaderCards.length; i++) {
+            int leaderId = SetupScreenLayout.leaderIdAt(setupLeaderListStart, i,
+                    GameSetup.leaders().size());
+            drawSetupButtonGradient(setupLayout.leaderCards[i], selectedIds.contains(leaderId));
+        }
+        drawSetupButtonGradient(setupLayout.leaderPrevious, false);
+        drawSetupButtonGradient(setupLayout.leaderNext, false);
+        drawSetupButtonGradient(setupLayout.startButton, setup.canStart());
+        shapes.end();
+
+        batch.begin();
+
+        font.setColor(Color.WHITE);
+        drawContained(uiAssets.logo, setupLayout.logo.x + 2f,
+                setupLayout.logo.y + 1f, setupLayout.logo.width - 4f,
+                setupLayout.logo.height - 2f);
+
+        font.setColor(TITLE_TEXT);
+        drawSetupText("GAME DIFFICULTY", setupLayout.difficultyPanel.x + 18f,
+                setupLayout.difficultyPanel.y + setupLayout.difficultyPanel.height - 12f, 7f);
+        for (int i = 0; i < setupLayout.difficultyButtons.length; i++) {
+            Rectangle button = setupLayout.difficultyButtons[i];
+            drawCentered(DIFFICULTY_LABELS[i], button.x + button.width / 2f,
+                    button.y + button.height / 2f + 3f, 8f);
+        }
+
+        drawSetupText("PLAYER STYLE", setupLayout.playerStylePanel.x + 18f,
+                setupLayout.playerStylePanel.y + setupLayout.playerStylePanel.height - 10f, 7f);
+        drawCentered("SELECT YOUR COLOR",
+                setupLayout.playerStylePanel.x + setupLayout.playerStylePanel.width * 0.29f,
+                setupLayout.playerStylePanel.y + setupLayout.playerStylePanel.height * 0.76f,
+                6.5f);
+        drawCentered("SELECT YOUR BUILDINGS",
+                setupLayout.playerStylePanel.x + setupLayout.playerStylePanel.width * 0.76f,
+                setupLayout.playerStylePanel.y + setupLayout.playerStylePanel.height * 0.76f,
+                6.5f);
+        for (int i = 0; i < setupLayout.buildingButtons.length; i++) {
+            OriginalCityAssets.Frame building = cityAssets.getFrame(
+                    SETUP_BUILDING_RELIGIONS[i], 6);
+            Rectangle button = setupLayout.buildingButtons[i];
+            if (building != null) {
+                drawContained(building.region, button.x + 4f, button.y + 8f,
+                        button.width - 8f, button.height - 12f);
+            }
+        }
+
+        drawSetupText("ENEMIES", setupLayout.enemiesPanel.x + 18f,
+                setupLayout.enemiesPanel.y + setupLayout.enemiesPanel.height - 12f, 7f);
+        drawCentered("SELECT YOUR ENEMIES",
+                setupLayout.leaderCarouselPanel.x + setupLayout.leaderCarouselPanel.width / 2f,
+                setupLayout.leaderCarouselPanel.y + setupLayout.leaderCarouselPanel.height - 7f,
+                6f);
+        drawCentered("<", setupLayout.leaderPrevious.x
+                        + setupLayout.leaderPrevious.width / 2f,
+                setupLayout.leaderPrevious.y + setupLayout.leaderPrevious.height / 2f + 3f,
+                10f);
+        drawCentered(">", setupLayout.leaderNext.x + setupLayout.leaderNext.width / 2f,
+                setupLayout.leaderNext.y + setupLayout.leaderNext.height / 2f + 3f, 10f);
+        for (int i = 0; i < setupLayout.leaderCards.length; i++) {
+            int leaderId = SetupScreenLayout.leaderIdAt(setupLeaderListStart, i,
+                    GameSetup.leaders().size());
+            Rectangle card = setupLayout.leaderCards[i];
+            drawSetupLeaderPortrait(leaderId, card.x + 3f, card.y + 3f,
+                    card.width - 6f, card.height - 6f);
+        }
+        for (int i = 0; i < selectedIds.size(); i++) {
+            Rectangle slot = setupLayout.opponentSlots[i];
+            drawSetupLeaderPortrait(selectedIds.get(i), slot.x + 3f, slot.y + 3f,
+                    slot.width - 6f, slot.height - 6f);
+        }
+        GameSetup.Leader candidate = setup.getCandidateLeader();
+        font.setColor(showSetupMessage ? GOLD : TITLE_TEXT);
+        drawCentered(showSetupMessage ? setupMessage
+                        : candidate.displayName + "  |  " + candidate.displayReligionCode,
+                setupLayout.leaderDescription.x + setupLayout.leaderDescription.width / 2f,
+                setupLayout.leaderDescription.y + setupLayout.leaderDescription.height / 2f + 2f,
+                6f);
+
+        font.setColor(TITLE_TEXT);
+        drawSetupText("START", setupLayout.startPanel.x + 14f,
+                setupLayout.startPanel.y + setupLayout.startPanel.height / 2f + 3f, 7f);
         font.setColor(setup.canStart() ? Color.WHITE : DISABLED_TEXT);
-        drawCentered("START GAME", setupStartButton.x + setupStartButton.width / 2f,
-                setupStartButton.y + setupStartButton.height / 2f + 4f, 9f);
+        drawCentered("START GAME", setupLayout.startButton.x
+                        + setupLayout.startButton.width / 2f,
+                setupLayout.startButton.y + setupLayout.startButton.height / 2f + 4f, 8f);
         batch.end();
 
         shapes.begin(ShapeRenderer.ShapeType.Line);
-        drawPanelEdges(setupPanel);
-        drawButtonEdges(setupDifficultyPrevious);
-        drawButtonEdges(setupDifficultyNext);
-        drawButtonEdges(setupColorPrevious);
-        drawButtonEdges(setupColorNext);
-        drawButtonEdges(setupBuildingPrevious);
-        drawButtonEdges(setupBuildingNext);
-        drawButtonEdges(setupLeaderPrevious);
-        drawButtonEdges(setupLeaderNext);
-        drawButtonEdges(setupLeaderToggle);
-        for (Rectangle slot : setupOpponentSlots) {
+        drawPanelEdges(setupLayout.difficultyPanel);
+        drawPanelEdges(setupLayout.playerStylePanel);
+        drawPanelEdges(setupLayout.enemiesPanel);
+        drawPanelEdges(setupLayout.leaderCarouselPanel);
+        drawPanelEdges(setupLayout.startPanel);
+        shapes.setColor(PANEL_EDGE);
+        shapes.line(setupLayout.playerStylePanel.x
+                        + setupLayout.playerStylePanel.width * 0.52f,
+                setupLayout.playerStylePanel.y + setupLayout.playerStylePanel.height * 0.12f,
+                setupLayout.playerStylePanel.x
+                        + setupLayout.playerStylePanel.width * 0.52f,
+                setupLayout.playerStylePanel.y + setupLayout.playerStylePanel.height * 0.73f);
+        for (int i = 0; i < setupLayout.difficultyButtons.length; i++) {
+            drawButtonEdges(setupLayout.difficultyButtons[i]);
+        }
+        for (int i = 0; i < setupLayout.colorSwatches.length; i++) {
+            Rectangle swatch = setupLayout.colorSwatches[i];
+            drawButtonEdges(swatch);
+            if (i + 1 == setup.getPlayerColor()) {
+                shapes.setColor(GOLD);
+                shapes.rect(swatch.x - 1f, swatch.y - 1f,
+                        swatch.width + 2f, swatch.height + 2f);
+            }
+        }
+        for (int i = 0; i < setupLayout.buildingButtons.length; i++) {
+            Rectangle button = setupLayout.buildingButtons[i];
+            drawButtonEdges(button);
+            if (i + 1 == setup.getStartingBuilding()) {
+                shapes.setColor(GOLD);
+                shapes.rect(button.x - 1f, button.y - 1f,
+                        button.width + 2f, button.height + 2f);
+            }
+        }
+        for (int i = 0; i < setupLayout.leaderCards.length; i++) {
+            Rectangle card = setupLayout.leaderCards[i];
+            drawButtonEdges(card);
+            int leaderId = SetupScreenLayout.leaderIdAt(setupLeaderListStart, i,
+                    GameSetup.leaders().size());
+            if (setup.getSelectedOpponentIds().contains(leaderId)) {
+                shapes.setColor(MODAL_ORANGE);
+                shapes.rect(card.x - 1f, card.y - 1f,
+                        card.width + 2f, card.height + 2f);
+            }
+        }
+        drawButtonEdges(setupLayout.leaderPrevious);
+        drawButtonEdges(setupLayout.leaderNext);
+        for (Rectangle slot : setupLayout.opponentSlots) {
             drawButtonEdges(slot);
         }
-        drawButtonEdges(setupStartButton);
+        drawButtonEdges(setupLayout.startButton);
         shapes.end();
     }
 
-    private void drawSetupChoiceBackground(Rectangle previous, Rectangle next) {
-        shapes.setColor(BUTTON);
-        shapes.rect(previous.x, previous.y, previous.width, previous.height);
-        shapes.rect(next.x, next.y, next.width, next.height);
-        drawButtonGradient(previous, false);
-        drawButtonGradient(next, false);
+    private void drawSetupOrangeGradient(Rectangle rectangle) {
+        float left = rectangle.x + 3f;
+        float bottom = rectangle.y + 3f;
+        float width = rectangle.width - 6f;
+        float height = rectangle.height - 6f;
+        int bands = 20;
+        for (int i = 0; i < bands; i++) {
+            float t = i / (float) (bands - 1);
+            shapes.setColor(0.82f + 0.18f * t,
+                    0.24f + 0.46f * t, 0.025f + 0.055f * t, 1f);
+            float bandHeight = height / bands;
+            shapes.rect(left, bottom + i * bandHeight, width, bandHeight + 0.25f);
+        }
+        shapes.setColor(1f, 0.84f, 0.57f, 1f);
+        shapes.rect(rectangle.x + 6f, rectangle.y + rectangle.height - 5f,
+                rectangle.width - 12f, 1f);
     }
 
-    private void drawSetupArrows(Rectangle previous, Rectangle next) {
-        drawCentered("<", previous.x + previous.width / 2f,
-                previous.y + previous.height / 2f + 3f, 8f);
-        drawCentered(">", next.x + next.width / 2f,
-                next.y + next.height / 2f + 3f, 8f);
+    private void drawSetupButtonGradient(Rectangle rectangle, boolean selected) {
+        float left = rectangle.x + 2.5f;
+        float bottom = rectangle.y + 3f;
+        float width = rectangle.width - 5f;
+        float height = rectangle.height - 6f;
+        float[] top = selected ? BUTTON_SELECTED_TOP : BUTTON_NORMAL_TOP;
+        float[] end = selected ? BUTTON_SELECTED_BOTTOM : BUTTON_NORMAL_BOTTOM;
+        int bands = 16;
+        for (int i = 0; i < bands; i++) {
+            float t = i / (float) (bands - 1);
+            shapes.setColor(end[0] + (top[0] - end[0]) * t,
+                    end[1] + (top[1] - end[1]) * t,
+                    end[2] + (top[2] - end[2]) * t, 1f);
+            float bandHeight = height / bands;
+            shapes.rect(left, bottom + i * bandHeight, width, bandHeight + 0.25f);
+        }
+        shapes.setColor(0.56f, 0.70f, 0.75f, 1f);
+        shapes.rect(rectangle.x + 5f, rectangle.y + rectangle.height - 5.2f,
+                rectangle.width - 10f, 1f);
+        shapes.setColor(0.015f, 0.035f, 0.045f, 1f);
+        shapes.rect(rectangle.x + 4f, rectangle.y + 3.5f,
+                rectangle.width - 8f, 1f);
+    }
+
+    private void drawSetupText(String text, float x, float baselineY, float targetHeight) {
+        float oldScale = font.getScaleX();
+        font.getData().setScale(targetHeight / Math.max(font.getLineHeight(), 1f));
+        font.draw(batch, text, x, baselineY);
+        font.getData().setScale(oldScale);
+    }
+
+    private void drawSetupLeaderPortrait(int leaderId, float x, float y,
+                                         float width, float height) {
+        if (leaderId < uiAssets.portraits.length) {
+            drawContained(uiAssets.portraits[leaderId], x, y, width, height);
+            return;
+        }
+        if (flashAnimationAssets != null && flashAnimationAssets.areSetupPortraitsLoaded()) {
+            FlashAnimationTimeline faces = flashAnimationAssets.getTimeline("faces");
+            GameSetup.Leader leader = GameSetup.leader(leaderId);
+            FlashAnimationTimeline.Frame frame = faces == null ? null
+                    : faces.getFrame(leader.portraitFrame - 1);
+            if (frame != null) {
+                com.badlogic.gdx.graphics.g2d.TextureRegion region =
+                        flashAnimationAssets.getShape(frame.shapeId);
+                if (region != null) {
+                    drawContained(region, x, y, width, height);
+                    return;
+                }
+            }
+        }
     }
 
     private void drawPanelsAndMap() {
@@ -2036,6 +2189,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         audio.stopAmbient();
         outcomeSequence.reset();
         setup = nextSetup;
+        setupLeaderListStart = 0;
         setupMessage = "SELECT ONE TO FOUR OPPONENTS TO BEGIN";
         showSetupMessage = false;
         modalOpen = false;
@@ -2263,43 +2417,68 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     }
 
     private void activateSetupAt(float x, float y) {
-        if (setupDifficultyPrevious.contains(x, y)) {
-            setup.setDifficulty(Math.floorMod(setup.getDifficulty() - 1, 3));
-            showSetupMessage = false;
-        } else if (setupDifficultyNext.contains(x, y)) {
-            setup.setDifficulty(Math.floorMod(setup.getDifficulty() + 1, 3));
-            showSetupMessage = false;
-        } else if (setupColorPrevious.contains(x, y)) {
-            setup.setPlayerColor(Math.floorMod(setup.getPlayerColor() - 2, 5) + 1);
-            showSetupMessage = false;
-        } else if (setupColorNext.contains(x, y)) {
-            setup.setPlayerColor(Math.floorMod(setup.getPlayerColor(), 5) + 1);
-            showSetupMessage = false;
-        } else if (setupBuildingPrevious.contains(x, y)) {
-            setup.setStartingBuilding(Math.floorMod(setup.getStartingBuilding() - 2, 5) + 1);
-            showSetupMessage = false;
-        } else if (setupBuildingNext.contains(x, y)) {
-            setup.setStartingBuilding(Math.floorMod(setup.getStartingBuilding(), 5) + 1);
-            showSetupMessage = false;
-        } else if (setupLeaderPrevious.contains(x, y)) {
-            setup.cycleCandidateLeader(-1);
-            showSetupMessage = false;
-        } else if (setupLeaderNext.contains(x, y)) {
-            setup.cycleCandidateLeader(1);
-            showSetupMessage = false;
-        } else if (setupLeaderToggle.contains(x, y)) {
-            int leaderId = setup.getCandidateLeaderId();
-            boolean alreadySelected = setup.getSelectedOpponentIds().contains(leaderId);
-            if (setup.toggleOpponent(leaderId)) {
-                setupMessage = alreadySelected ? "RIVAL REMOVED FROM THE MATCH"
-                        : "RIVAL ADDED TO THE MATCH";
-            } else {
-                setupMessage = "THE SOURCE ALLOWS UP TO FOUR RIVALS";
+        for (int i = 0; i < setupLayout.difficultyButtons.length; i++) {
+            if (setupLayout.difficultyButtons[i].contains(x, y)) {
+                setup.setDifficulty(i);
+                showSetupMessage = false;
+                return;
             }
-            showSetupMessage = true;
-        } else if (setupStartButton.contains(x, y)) {
+        }
+        for (int i = 0; i < setupLayout.colorSwatches.length; i++) {
+            if (setupLayout.colorSwatches[i].contains(x, y)) {
+                setup.setPlayerColor(i + 1);
+                showSetupMessage = false;
+                return;
+            }
+        }
+        for (int i = 0; i < setupLayout.buildingButtons.length; i++) {
+            if (setupLayout.buildingButtons[i].contains(x, y)) {
+                setup.setStartingBuilding(i + 1);
+                showSetupMessage = false;
+                return;
+            }
+        }
+        if (setupLayout.leaderPrevious.contains(x, y)) {
+            setupLeaderListStart = Math.floorMod(setupLeaderListStart - 1,
+                    GameSetup.leaders().size());
+            showSetupMessage = false;
+            return;
+        }
+        if (setupLayout.leaderNext.contains(x, y)) {
+            setupLeaderListStart = Math.floorMod(setupLeaderListStart + 1,
+                    GameSetup.leaders().size());
+            showSetupMessage = false;
+            return;
+        }
+        for (int i = 0; i < setupLayout.leaderCards.length; i++) {
+            if (setupLayout.leaderCards[i].contains(x, y)) {
+                int leaderId = SetupScreenLayout.leaderIdAt(setupLeaderListStart, i,
+                        GameSetup.leaders().size());
+                setup.selectCandidateLeader(leaderId);
+                if (setup.getSelectedOpponentIds().contains(leaderId)) {
+                    setupMessage = "TAP A SELECTED PORTRAIT ABOVE TO REMOVE IT";
+                } else if (setup.toggleOpponent(leaderId)) {
+                    setupMessage = "RIVAL ADDED TO THE MATCH";
+                } else {
+                    setupMessage = "THE SOURCE ALLOWS UP TO FOUR RIVALS";
+                }
+                showSetupMessage = true;
+                return;
+            }
+        }
+        for (int i = 0; i < setupLayout.opponentSlots.length; i++) {
+            if (setupLayout.opponentSlots[i].contains(x, y)) {
+                if (setup.removeOpponentAt(i)) {
+                    setupMessage = "RIVAL REMOVED FROM THE MATCH";
+                    showSetupMessage = true;
+                }
+                return;
+            }
+        }
+        if (setupLayout.startButton.contains(x, y)) {
             if (setup.canStart()) {
                 game = new GameState(setup);
+                setContinuousRendering(true);
                 cityRenderer.reset(game);
                 battleAnimations.clear();
                 soldierBattleAnimations.clear();
@@ -2316,16 +2495,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             } else {
                 setupMessage = "SELECT AT LEAST ONE RIVAL BEFORE STARTING";
                 showSetupMessage = true;
-            }
-        } else {
-            for (int i = 0; i < setupOpponentSlots.length; i++) {
-                if (setupOpponentSlots[i].contains(x, y)) {
-                    if (setup.removeOpponentAt(i)) {
-                        setupMessage = "RIVAL REMOVED FROM THE MATCH";
-                        showSetupMessage = true;
-                    }
-                    return;
-                }
             }
         }
     }
@@ -2903,6 +3072,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 Gdx.app.exit();
             } else {
                 showExitPromptSeconds = 2.4f;
+                setContinuousRendering(true);
             }
             return true;
         }
@@ -2937,7 +3107,11 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     @Override
     public boolean keyDown(int keycode) {
-        return keycode == Input.Keys.BACK && handleBack();
+        boolean handled = keycode == Input.Keys.BACK && handleBack();
+        if (handled) {
+            Gdx.graphics.requestRendering();
+        }
+        return handled;
     }
 
     @Override
@@ -2974,6 +3148,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         gestureArea = GESTURE_NONE;
         dragging = false;
+        Gdx.graphics.requestRendering();
         return true;
     }
 
@@ -3010,6 +3185,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             gestureVelocityY = -delta / seconds;
             lastPointerTime = now;
             lastPointerY = pointer.y;
+            Gdx.graphics.requestRendering();
         }
         return true;
     }
@@ -3019,10 +3195,12 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         unproject(Gdx.input.getX(), Gdx.input.getY());
         if (navViewport.contains(pointer.x, pointer.y)) {
             navigationScroll.moveBy(amountY * NAV_ROW_HEIGHT);
+            Gdx.graphics.requestRendering();
             return true;
         }
         if (equipmentViewport.contains(pointer.x, pointer.y)) {
             equipmentScroll.moveBy(amountY * EQUIPMENT_ROW_HEIGHT);
+            Gdx.graphics.requestRendering();
             return true;
         }
         return false;
@@ -3040,6 +3218,15 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         accumulator = 0f;
         audio.resume();
         Gdx.input.setInputProcessor(this);
+        setContinuousRendering(game != null || showExitPromptSeconds > 0f);
+        Gdx.graphics.requestRendering();
+    }
+
+    private void setContinuousRendering(boolean enabled) {
+        if (continuousRenderingEnabled != enabled) {
+            Gdx.graphics.setContinuousRendering(enabled);
+            continuousRenderingEnabled = enabled;
+        }
     }
 
     @Override
