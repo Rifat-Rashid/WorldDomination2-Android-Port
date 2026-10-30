@@ -15,6 +15,7 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
+import com.example.worlddomination.game.audio.OriginalAudio;
 import com.example.worlddomination.game.assets.OriginalUiAssets;
 import com.example.worlddomination.game.simulation.GameSetup;
 import com.example.worlddomination.game.simulation.GameState;
@@ -86,6 +87,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     private GameState game;
     private GameSetup setup;
+    private final OriginalAudio audio = new OriginalAudio();
     private final ExtendViewport viewport = new ExtendViewport(BASE_WIDTH, BASE_HEIGHT, 1400f, 800f);
     private final OrthographicCamera camera = new OrthographicCamera();
     private final Rectangle leftPanel = new Rectangle();
@@ -233,6 +235,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         font = new BitmapFont();
         font.setColor(Color.WHITE);
         uiAssets = new OriginalUiAssets();
+        audio.initialize();
         setup = new GameSetup();
         java.util.Random setupRandom = new java.util.Random(System.nanoTime());
         setup.setPlayerColor(setupRandom.nextInt(5) + 1);
@@ -1896,18 +1899,25 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             }
             GameState.Action action = ACTIONS[i];
             if (!action.isPorted()) {
+                audio.play(OriginalAudio.Cue.ACTION_SWITCH);
                 game.cancelSelection();
                 continue;
             }
             if (game.getSelectedAction() == action) {
+                audio.play(OriginalAudio.Cue.ACTION_SWITCH_OFF);
                 game.cancelSelection();
                 modalOpen = false;
+                audio.play(OriginalAudio.Cue.ACTION_CLOSE);
             } else {
+                audio.play(OriginalAudio.Cue.ACTION_SWITCH);
                 game.selectAction(action);
                 if (action == GameState.Action.RESEARCH) {
                     researchPage = 0;
                 }
                 modalOpen = game.getSelectedAction() != null;
+                if (modalOpen) {
+                    audio.play(OriginalAudio.Cue.ACTION_OPEN);
+                }
                 if (modalOpen && action == GameState.Action.PREPARED_ATTACK) {
                     initializePreparedAttackSelection();
                 } else if (modalOpen && action == GameState.Action.DEFENSE) {
@@ -1922,6 +1932,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         for (int i = 0; i < equipmentRows.length; i++) {
             if (!isEquipmentHeading(i) && equipmentRows[i].contains(x, y)) {
                 selectedEquipment = EQUIPMENT_ROWS[i];
+                audio.play(OriginalAudio.Cue.STOCK_SELECT);
                 return;
             }
         }
@@ -1967,6 +1978,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 game = new GameState(setup, System.nanoTime());
                 modalOpen = false;
                 accumulator = 0f;
+                audio.play(OriginalAudio.Cue.ACTION_ACCEPT);
             } else {
                 setupMessage = "SELECT AT LEAST ONE RIVAL BEFORE STARTING";
                 showSetupMessage = true;
@@ -2179,6 +2191,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         float hitRadius = Math.max(26f, mapBounds.height * 0.13f);
         if (best >= 0 && bestDistance <= hitRadius * hitRadius) {
             game.selectIsland(best);
+            audio.play(OriginalAudio.Cue.UNIT_SELECT);
         }
     }
 
@@ -2187,9 +2200,14 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             activateSetupAt(x, y);
             return;
         }
+        if (muteButton.contains(x, y)) {
+            audio.toggleMuted();
+            return;
+        }
         if (MatchOutcomePresentation.isFinished(game.getMatchStatus())) {
             if (modalAccept.contains(x, y)) {
                 beginNewGameSetup();
+                audio.play(OriginalAudio.Cue.ACTION_CLOSE);
             }
             return;
         }
@@ -2198,11 +2216,13 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 if (game.respondToDiplomacyProposal(true)) {
                     game.cancelSelection();
                     modalOpen = false;
+                    audio.play(OriginalAudio.Cue.ACTION_ACCEPT);
                 }
             } else if (modalCancel.contains(x, y)) {
                 if (game.respondToDiplomacyProposal(false)) {
                     game.cancelSelection();
                     modalOpen = false;
+                    audio.play(OriginalAudio.Cue.ACTION_CLOSE);
                 }
             }
             return;
@@ -2366,10 +2386,12 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             if (modalAccept.contains(x, y)) {
                 if (game.acceptSelectedAction()) {
                     modalOpen = false;
+                    audio.play(OriginalAudio.Cue.ACTION_ACCEPT);
                 }
             } else if (modalCancel.contains(x, y)) {
                 game.cancelSelection();
                 modalOpen = false;
+                audio.play(OriginalAudio.Cue.ACTION_CLOSE);
             }
             return;
         }
@@ -2382,10 +2404,13 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             activateIsland(x, y);
         } else if (confirmButton.contains(x, y) && game.getQueuedActionCount() == 2) {
             game.confirmTurn();
+            audio.play(OriginalAudio.Cue.ACTION_ACCEPT);
         } else if (actionSlots[0].contains(x, y)) {
             game.removeQueuedAction(0);
+            audio.play(OriginalAudio.Cue.ACTION_CLOSE);
         } else if (actionSlots[1].contains(x, y)) {
             game.removeQueuedAction(1);
+            audio.play(OriginalAudio.Cue.ACTION_CLOSE);
         }
     }
 
@@ -2522,17 +2547,20 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     @Override
     public void pause() {
         accumulator = 0f;
+        audio.pause();
         Gdx.input.setInputProcessor(null);
     }
 
     @Override
     public void resume() {
         accumulator = 0f;
+        audio.resume();
         Gdx.input.setInputProcessor(this);
     }
 
     @Override
     public void dispose() {
+        audio.dispose();
         if (uiAssets != null) {
             uiAssets.dispose();
         }
