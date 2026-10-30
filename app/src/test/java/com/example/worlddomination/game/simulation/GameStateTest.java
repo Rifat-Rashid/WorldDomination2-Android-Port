@@ -1311,6 +1311,54 @@ public final class GameStateTest {
                 state.submitDiplomacyProposal(1, 0, 5));
     }
 
+    @Test
+    public void acceptedAiOfferSettlesAfterTheRecipientPlansItsTurn() {
+        GameSetup setup = new GameSetup();
+        assertTrue(setup.toggleOpponent(3));
+        boolean exercisedProduction = false;
+        for (long seed = 0; seed < 24; seed++) {
+            GameState withoutOffer = new GameState(setup, seed);
+            GameState withOffer = new GameState(setup, seed);
+            GameState.PlayerState baselineAi = withoutOffer.getPlayerState(1);
+            GameState.PlayerState offerAi = withOffer.getPlayerState(1);
+            for (GameState.WeaponState weapon : baselineAi.getWeapons().values()) {
+                weapon.inStock = 0;
+            }
+            for (GameState.WeaponState weapon : offerAi.getWeapons().values()) {
+                weapon.inStock = 0;
+            }
+
+            withoutOffer.getHuman().moneyMillions = 110;
+            withoutOffer.getHuman().turnMoneyMillions = 110;
+            withOffer.getHuman().moneyMillions = 200;
+            assertTrue(withOffer.submitDiplomacyProposal(0, 1, 2));
+            withOffer.getHuman().turnMoneyMillions = 110;
+            setRegard(baselineAi, 0, 70);
+            setRegard(withoutOffer.getHuman(), 1, 70);
+            setRegard(offerAi, 0, 70);
+            setRegard(withOffer.getHuman(), 1, 70);
+
+            completeTurnWithResourcesAndMedia(withoutOffer);
+            completeTurnWithResourcesAndMedia(withOffer);
+
+            assertEquals("accepted offer should not influence turn plan at seed " + seed,
+                    baselineAi.getLastTurnActions(), offerAi.getLastTurnActions());
+            assertEquals("the offer should be accepted at seed " + seed,
+                    withoutOffer.getHuman().moneyMillions,
+                    withOffer.getHuman().moneyMillions);
+            exercisedProduction |= baselineAi.getLastTurnActions()
+                    .contains(GameState.Action.PRODUCTION);
+            for (String weaponName : baselineAi.getWeapons().keySet()) {
+                assertEquals("planned production should use pre-offer funds at seed " + seed
+                                + " for " + weaponName,
+                        baselineAi.getWeaponStockByName(weaponName),
+                        offerAi.getWeaponStockByName(weaponName));
+            }
+        }
+        assertTrue("the scenario should exercise an AI production plan",
+                exercisedProduction);
+    }
+
     private static void completeTurnWithResourcesAndMedia(GameState state) {
         state.selectAction(GameState.Action.RESOURCES);
         assertTrue(state.acceptSelectedAction());
