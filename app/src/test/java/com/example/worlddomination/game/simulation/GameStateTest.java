@@ -12,6 +12,13 @@ import java.util.Random;
 
 public final class GameStateTest {
     @Test
+    public void implementedActionsAreAvailableFromTheNativeNavigationPanel() {
+        for (GameState.Action action : GameState.Action.values()) {
+            assertTrue(action.label, action.isPorted());
+        }
+    }
+
+    @Test
     public void normalResourcesAndMassMediaResolveOneTurn() {
         GameState state = new GameState(1);
         assertEquals(65, state.getHuman().moneyMillions);
