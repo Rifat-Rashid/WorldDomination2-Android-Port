@@ -89,6 +89,21 @@ public final class FlashAnimationTimelineTest {
         expectedFrameCounts.put("explosion002", 51);
         expectedFrameCounts.put("explosion003", 22);
         expectedFrameCounts.put("chinook", 37);
+        expectedFrameCounts.put("apache", 37);
+        expectedFrameCounts.put("apache_tint", 37);
+        expectedFrameCounts.put("apache_shadow", 1);
+        expectedFrameCounts.put("marine", 432);
+        expectedFrameCounts.put("soldier001_tint", 217);
+        expectedFrameCounts.put("soldier001_shoot", 73);
+        expectedFrameCounts.put("soldier001_shoot_tint", 73);
+
+        Map<Integer, String> sourceSymbolsById = new LinkedHashMap<>();
+        JsonValue sourceSymbols = scene.get("symbols");
+        for (JsonValue sourceSymbol = sourceSymbols.child; sourceSymbol != null;
+             sourceSymbol = sourceSymbol.next) {
+            sourceSymbolsById.put(sourceSymbol.getInt("id"),
+                    sourceSymbol.getString("linkage", ""));
+        }
 
         for (Map.Entry<String, Integer> expected : expectedFrameCounts.entrySet()) {
             JsonValue symbol = findSymbol(scene, expected.getKey());
@@ -109,8 +124,13 @@ public final class FlashAnimationTimelineTest {
                 for (FlashAnimationTimeline.Layer layer : frame.layers) {
                     assertTrue("Unexpected rotated source frame in " + expected.getKey(),
                             layer.b == 0f && layer.c == 0f);
-                    assertTrue("Missing original shape " + layer.shapeId,
-                            Files.isRegularFile(shapeAsset(layer.shapeId)));
+                    if (!Files.isRegularFile(shapeAsset(layer.shapeId))) {
+                        String nestedLinkage = sourceSymbolsById.get(layer.shapeId);
+                        assertNotNull("Missing original shape or nested symbol "
+                                + layer.shapeId, nestedLinkage);
+                        assertTrue("Nested movie clip is not loaded: " + nestedLinkage,
+                                expectedFrameCounts.containsKey(nestedLinkage));
+                    }
                 }
             }
             assertTrue("Source animation has no visible frames: " + expected.getKey(),

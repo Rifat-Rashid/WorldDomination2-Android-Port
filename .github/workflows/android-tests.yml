@@ -31,7 +31,10 @@ jobs:
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest"'
           - id: combat-event-tests
             check: Combat event resolution tests
-            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest"'
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.resolvedSoldierAttackEmitsOneDirectAttackEvent" --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.resolvedPreparedRocketAttackEmitsPayloadImpactEvent" --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.shipStrikeEmitsAnImpactForEachResolvedPayload" --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.attackThatBecomesUnavailableDoesNotEmitCombatEvent"'
+          - id: apache-building-slot-tests
+            check: Apache action-building slot tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.directAttacksUseSourceUniqueBuildingOrderForApacheLaunchSlot" --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.repeatedApacheAttacksReuseTheDeduplicatedHelipadSlot"'
           - id: combat-audio-mapping-tests
             check: Original combat audio mapping tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.audio.OriginalAudioTest.resolvedCombatEventsUseTheFlashUnitAndExplosionSoundMap" --tests "com.example.worlddomination.game.audio.OriginalAudioTest.combatCuesPointToTheOriginalPackagedSounds"'
@@ -85,10 +88,16 @@ jobs:
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest" --tests "com.example.worlddomination.game.rendering.SourceCombatAnimationMappingTest"'
           - id: source-battle-route-tests
             check: Source soldier battle route tests
-            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest"'
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.sourceBattleAnchorsIncludeAllSoldierWaypoints" --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.createsBoatAndThreeInfantryRoutesForEveryTargetCity" --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.rejectsInvalidPlayersCitiesAndMissingSourceAnchors"'
+          - id: apache-marine-route-tests
+            check: Apache and marine route tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.createsApacheAndThreeMarineRoutesForEveryTargetCityAndActionSlot" --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.actionBuildingSlotsMatchTheOriginalFlashSceneCoordinates" --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.rejectsInvalidApacheSlot"'
           - id: source-battle-playback-tests
             check: Source soldier battle playback tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashSoldierOneAnimationTest"'
+          - id: apache-marine-playback-tests
+            check: Apache and marine playback tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashApacheMarineAnimationTest" --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest.packagedStrikeAndInterceptionSymbolsMatchSourceTimelines" --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.marineDirectAttackUsesTheOriginalSealGunCue"'
           - id: presentation-rng-isolation-tests
             check: Presentation RNG isolation tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.ReferenceRandomTest.copiedRandomPreservesTheStreamWithoutAdvancingCanonicalState"'

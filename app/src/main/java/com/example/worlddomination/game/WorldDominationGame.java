@@ -25,6 +25,7 @@ import com.example.worlddomination.game.rendering.BattleExplosionRenderer;
 import com.example.worlddomination.game.rendering.BattlefieldCityRenderer;
 import com.example.worlddomination.game.rendering.FlashBattleRoutes;
 import com.example.worlddomination.game.rendering.FlashBattleUnitRenderer;
+import com.example.worlddomination.game.rendering.FlashApacheMarineAnimation;
 import com.example.worlddomination.game.rendering.FlashSoldierOneAnimation;
 import com.example.worlddomination.game.rendering.FlashAnimationTimeline;
 import com.example.worlddomination.game.rendering.SourceCombatAnimationMapping;
@@ -118,6 +119,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private final OriginalAudio audio = new OriginalAudio();
     private final List<BattleAnimationSequence> battleAnimations = new ArrayList<>();
     private final List<FlashSoldierOneAnimation> soldierBattleAnimations = new ArrayList<>();
+    private final List<FlashApacheMarineAnimation> apacheMarineAnimations = new ArrayList<>();
     private final List<PendingBattleAnimation> pendingBattleAnimations = new ArrayList<>();
     private final MatchOutcomeSequence outcomeSequence =
             new MatchOutcomeSequence(System.nanoTime());
@@ -543,6 +545,16 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 soldierBattleAnimations.remove(i);
             }
         }
+        for (int i = apacheMarineAnimations.size() - 1; i >= 0; i--) {
+            FlashApacheMarineAnimation animation = apacheMarineAnimations.get(i);
+            animation.tick();
+            while (animation.takeAudioCue()) {
+                audio.play(animation.getAudioCue());
+            }
+            if (animation.isFinished()) {
+                apacheMarineAnimations.remove(i);
+            }
+        }
     }
 
     private void preparePendingBattleAnimations() {
@@ -778,6 +790,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 mapBounds.width, mapBounds.height);
         cityRenderer.draw(batch, mapBounds, game);
         battleUnitRenderer.draw(batch, mapBounds, soldierBattleAnimations);
+        battleUnitRenderer.drawApacheMarine(batch, mapBounds, apacheMarineAnimations);
         explosionRenderer.draw(batch, mapBounds, battleAnimations);
         drawContained(uiAssets.logo, logoPanel.x + 7f, logoPanel.y + 2f,
                 logoPanel.width - 14f, logoPanel.height - 4f);
@@ -1944,6 +1957,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         game = null;
         battleAnimations.clear();
         soldierBattleAnimations.clear();
+        apacheMarineAnimations.clear();
         pendingBattleAnimations.clear();
     }
 
@@ -2198,6 +2212,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 cityRenderer.reset(game);
                 battleAnimations.clear();
                 soldierBattleAnimations.clear();
+                apacheMarineAnimations.clear();
                 pendingBattleAnimations.clear();
                 modalOpen = false;
                 accumulator = 0f;
@@ -2662,6 +2677,17 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                     animationIndex++;
                     continue;
                 }
+                if (FlashBattleRoutes.supportsApacheMarine(event)) {
+                    FlashBattleRoutes.ApacheMarineAttack route =
+                            FlashBattleRoutes.createSoldierTwoAttack(
+                                    event.attackerPlayerId, event.defenderPlayerId,
+                                    event.cityIndex, event.actionBuildingSlot,
+                                    battleAnchors, presentationRandom);
+                    apacheMarineAnimations.add(new FlashApacheMarineAnimation(route,
+                            presentationRandom, cue, animationIndex * 36));
+                    animationIndex++;
+                    continue;
+                }
                 String linkage = SourceCombatAnimationMapping.linkageFor(event);
                 FlashAnimationTimeline timeline = linkage == null ? null
                         : flashAnimationAssets.getTimeline(linkage);
@@ -2867,6 +2893,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         audio.dispose();
         battleAnimations.clear();
         soldierBattleAnimations.clear();
+        apacheMarineAnimations.clear();
         pendingBattleAnimations.clear();
         if (uiAssets != null) {
             uiAssets.dispose();

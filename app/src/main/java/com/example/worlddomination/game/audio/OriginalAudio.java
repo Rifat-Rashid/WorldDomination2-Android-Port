@@ -28,6 +28,7 @@ public final class OriginalAudio {
         SATELLITE_MULTIPLIER("34_Satelite multiplier.Mp3.mp3.gz"),
         FLAG_BONUS("75_Country domination bonus.Mp3.mp3.gz"),
         SOLDIER_GUN("14_unit_Soldier gun.wav.mp3.gz"),
+        SEAL_GUN("16_unit_seal gun.wav.mp3.gz"),
         EXPLOSION_SMALL3("98_Explode small3.wav.mp3.gz"),
         EXPLOSION_MEDIUM3("71_Explode medium 3.wav.mp3.gz"),
         EXPLOSION_MEDIUM("70_explode medium.wav.mp3.gz"),
@@ -80,6 +81,7 @@ public final class OriginalAudio {
         preload(Cue.SATELLITE_MULTIPLIER);
         preload(Cue.FLAG_BONUS);
         preload(Cue.SOLDIER_GUN);
+        preload(Cue.SEAL_GUN);
         preload(Cue.EXPLOSION_SMALL3);
         preload(Cue.EXPLOSION_MEDIUM3);
         preload(Cue.EXPLOSION_MEDIUM);
@@ -239,6 +241,11 @@ public final class OriginalAudio {
     public static Cue cueForCombatEvent(GameState.CombatEvent event) {
         if (event == null) {
             return null;
+        }
+        if (event.type == GameState.CombatEventType.DIRECT_ATTACK
+                && "soldier2".equals(event.weaponName)) {
+            // Unit.soundAction('marine_shoot') attaches the original Seal gun asset.
+            return Cue.SEAL_GUN;
         }
         return cueForCombatEvent(event.type, event.payloadName);
     }
