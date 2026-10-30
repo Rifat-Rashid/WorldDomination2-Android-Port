@@ -100,7 +100,7 @@ jobs:
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashApacheMarineAnimationTest" --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest.packagedStrikeAndInterceptionSymbolsMatchSourceTimelines" --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.marineDirectAttackUsesTheOriginalSealGunCue"'
           - id: suicide-bomber-route-tests
             check: Suicide bomber source route tests
-            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.createsSourceSuicideBomberRoutesForEveryAttackerTargetAndCity" --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.rejectsInvalidSuicideBomberRouteData"'
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.createsSourceSuicideBomberRoutesForEveryAttackerTargetAndCity" --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.rejectsInvalidSuicideBomberRouteData" --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.suicideBomberLaunchPositionUsesItsSourceActionBuildingSlot"'
           - id: suicide-bomber-playback-tests
             check: Suicide bomber playback tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashSuicideBomberAnimationTest" --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest.packagedStrikeAndInterceptionSymbolsMatchSourceTimelines" --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.suicideBomberAttackUsesTheHatchSlotAndOriginalScreamCue"'

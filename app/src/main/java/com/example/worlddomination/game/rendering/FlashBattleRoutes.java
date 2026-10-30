@@ -85,14 +85,24 @@ public final class FlashBattleRoutes {
         public final int attackerPlayerId;
         public final int targetPlayerId;
         public final int targetCityIndex;
+        public final int actionBuildingSlot;
+        public final Point actionBuilding;
+        public final Point initialPosition;
+        public final Point disappearPosition;
         public final Point spawn;
         public final Point[] waypoints;
 
         private SuicideBomberAttack(int attackerPlayerId, int targetPlayerId,
-                                    int targetCityIndex, Point spawn, Point[] waypoints) {
+                                    int targetCityIndex, int actionBuildingSlot,
+                                    Point actionBuilding, Point initialPosition,
+                                    Point disappearPosition, Point spawn, Point[] waypoints) {
             this.attackerPlayerId = attackerPlayerId;
             this.targetPlayerId = targetPlayerId;
             this.targetCityIndex = targetCityIndex;
+            this.actionBuildingSlot = actionBuildingSlot;
+            this.actionBuilding = actionBuilding;
+            this.initialPosition = initialPosition;
+            this.disappearPosition = disappearPosition;
             this.spawn = spawn;
             this.waypoints = waypoints;
         }
@@ -187,10 +197,18 @@ public final class FlashBattleRoutes {
     public static SuicideBomberAttack createSuicideBomberAttack(
             int attackerPlayerId, int targetPlayerId, int targetCityIndex,
             Map<String, Point> anchors) {
+        return createSuicideBomberAttack(attackerPlayerId, targetPlayerId, targetCityIndex,
+                1, anchors);
+    }
+
+    /** Builds the source unit route, including its launch-building fade-out position. */
+    public static SuicideBomberAttack createSuicideBomberAttack(
+            int attackerPlayerId, int targetPlayerId, int targetCityIndex,
+            int actionBuildingSlot, Map<String, Point> anchors) {
         validatePlayer(attackerPlayerId);
         validatePlayer(targetPlayerId);
         if (targetCityIndex < 0 || targetCityIndex >= BattlefieldCityLayout.CITIES_PER_PLAYER
-                || anchors == null) {
+                || actionBuildingSlot < 1 || actionBuildingSlot > 2 || anchors == null) {
             throw new IllegalArgumentException("Invalid suicide-bomber presentation data");
         }
 
@@ -213,7 +231,14 @@ public final class FlashBattleRoutes {
                 targetCityIndex), BattlefieldCityLayout.sourceCityY(targetPlayerId,
                 targetCityIndex));
         route.add(city);
+        Point actionBuilding = actionBuildingPosition(attackerPlayerId, actionBuildingSlot);
+        // View.showActionBuildingFromObj stores heliStart at (buildingX - 15, buildingY + 25).
+        // The suicide unit starts at heliStart + (25, -50) and fades toward (heliStartX,
+        // heliStartY - 70) before it disappears and reappears at its home island.
+        Point initialPosition = new Point(actionBuilding.x + 10f, actionBuilding.y - 25f);
+        Point disappearPosition = new Point(actionBuilding.x - 15f, actionBuilding.y - 45f);
         return new SuicideBomberAttack(attackerPlayerId, targetPlayerId, targetCityIndex,
+                actionBuildingSlot, actionBuilding, initialPosition, disappearPosition,
                 new Point(SUICIDE_SPAWNS[attackerPlayerId][0],
                         SUICIDE_SPAWNS[attackerPlayerId][1]), route.toArray(new Point[0]));
     }

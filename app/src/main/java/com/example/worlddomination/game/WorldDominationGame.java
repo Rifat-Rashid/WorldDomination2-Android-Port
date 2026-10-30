@@ -2707,7 +2707,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                     FlashBattleRoutes.SuicideBomberAttack route =
                             FlashBattleRoutes.createSuicideBomberAttack(
                                     event.attackerPlayerId, event.defenderPlayerId,
-                                    event.cityIndex, battleAnchors);
+                                    event.cityIndex, event.actionBuildingSlot, battleAnchors);
                     suicideBomberAnimations.add(new FlashSuicideBomberAnimation(route,
                             cue, animationIndex * 36));
                     animationIndex++;
