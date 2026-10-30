@@ -1020,6 +1020,96 @@ public final class GameStateTest {
     }
 
     @Test
+    public void combatAndPropagandaUseTheUnchangedTurnStartPopulation() {
+        GameState state = new GameState(1, 38L, false);
+        GameState.PlayerState attacker = state.getHuman();
+        GameState.PlayerState defender = state.getPlayerState(1);
+        for (GameState.PlayerState player : state.getPlayers()) {
+            player.religion = 11;
+        }
+        attacker.populationMillions = 470;
+        for (CityState city : attacker.getCities()) {
+            city.populationMillions = 94;
+        }
+        int[] defenderCities = {80, 100, 100, 85, 85};
+        for (int index = 0; index < defenderCities.length; index++) {
+            defender.getCity(index).populationMillions = defenderCities[index];
+        }
+        defender.populationMillions = 450;
+        assertEquals(3, state.getPropagandaTransferEstimate(defender.id, 1));
+
+        state.selectAction(GameState.Action.ATTACK);
+        assertTrue(state.configureAttack(defender.id, 0, "soldier1"));
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.PROPAGANDA);
+        assertTrue(state.configurePropaganda(defender.id, 1));
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+
+        assertEquals("the 20M start-of-turn population gap has no source penalty",
+                97, defender.getCity(1).populationMillions);
+        assertTrue(defender.populationMillions < 447);
+        assertEquals(475, attacker.populationMillions);
+    }
+
+    @Test
+    public void propagandaUsesBattleCasualtiesEvenWhenAttackIsQueuedAfterIt() {
+        GameState state = new GameState(1, 40L, false);
+        GameState.PlayerState attacker = state.getHuman();
+        GameState.PlayerState defender = state.getPlayerState(1);
+        for (GameState.PlayerState player : state.getPlayers()) {
+            player.religion = 11;
+        }
+        int originalCityPopulation = defender.getCity(0).populationMillions;
+        defender.getCity(0).populationMillions = 91;
+        defender.getCity(1).populationMillions += originalCityPopulation - 91;
+        defender.populationMillions = 450;
+        assertEquals(3, state.getPropagandaTransferEstimate(defender.id, 0));
+
+        state.selectAction(GameState.Action.PROPAGANDA);
+        assertTrue(state.configurePropaganda(defender.id, 0));
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.ATTACK);
+        assertTrue(state.configureAttack(defender.id, 0, "soldier1"));
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+
+        int battleCasualties = 91 - 2 - defender.getCity(0).populationMillions;
+        assertTrue(battleCasualties >= 2 && battleCasualties <= 4);
+        assertEquals(450 - battleCasualties - 2, defender.populationMillions);
+        assertEquals("a two million transfer rounds to zero across five cities",
+                450, attacker.populationMillions);
+    }
+
+    @Test
+    public void laterActionStillResolvesWhenEarlierAttackWillEliminateTargetCity() {
+        GameState state = new GameState(1, 39L, false);
+        GameState.PlayerState defender = state.getPlayerState(1);
+        for (GameState.PlayerState player : state.getPlayers()) {
+            player.religion = 11;
+        }
+        for (CityState city : defender.getCities()) {
+            city.populationMillions = 0;
+        }
+        defender.getCity(0).populationMillions = 1;
+        defender.populationMillions = 1;
+
+        state.selectAction(GameState.Action.ATTACK);
+        assertTrue(state.configureAttack(defender.id, 0, "soldier1"));
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.PROPAGANDA);
+        assertTrue(state.configurePropaganda(defender.id, 0));
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+
+        assertFalse(defender.alive);
+        assertEquals(0, defender.populationMillions);
+        assertTrue(state.getMessages().contains("Propaganda had no effect in the selected city."));
+        assertFalse(state.getMessages().contains(
+                "Propaganda cancelled: target city is no longer available."));
+    }
+
+    @Test
     public void propagandaDamagesMutualRegardAndMovesThirdPartyRegardFractionally() {
         boolean sawFractionalReaction = false;
         for (long seed = 0; seed < 30; seed++) {
