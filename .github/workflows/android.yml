@@ -35,12 +35,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # These three names are required branch-protection contexts on main.
         include:
           - id: assemble
             check: Android debug assembly
             task: ':app:assembleDebug'
           - id: unit-tests
-            check: Full JVM unit test suite
+            check: JVM unit tests
             task: ':app:testDebugUnitTest'
           - id: simulation-tests
             check: Gameplay simulation tests
