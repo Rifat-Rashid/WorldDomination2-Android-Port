@@ -168,6 +168,28 @@ public final class FlashAnimationTimelineTest {
     }
 
     @Test
+    public void rocketAndTrailUseThePackagedFlashTimelinesAndNestedSourceArtwork()
+            throws IOException {
+        JsonValue scene = loadSourceScene();
+        FlashAnimationTimeline rocket = FlashAnimationTimeline.fromSymbol(
+                findSymbol(scene, "rocket"), scene.getFloat("fps"));
+        FlashAnimationTimeline trail = FlashAnimationTimeline.fromSymbol(
+                findSymbol(scene, "trail"), scene.getFloat("fps"));
+        assertEquals(3, rocket.getFrameCount());
+        assertEquals(1, trail.getFrameCount());
+        assertTrue("Rocket body art is part of the original source symbol",
+                containsShape(rocket, 792));
+        assertTrue(Files.isRegularFile(shapeAsset(792)));
+
+        JsonValue smokeSymbol = findSymbolById(scene, 4937);
+        assertNotNull(smokeSymbol);
+        assertTrue(containsShape(FlashAnimationTimeline.fromSymbol(
+                smokeSymbol, scene.getFloat("fps")), 4936));
+        assertTrue("The trail uses its original Flash smoke puff artwork",
+                Files.isRegularFile(shapeAsset(4936)));
+    }
+
+    @Test
     public void sequencesHonorSourceTickDelaysAndFinishAfterTheLastFrame() {
         JsonValue symbol = new JsonReader().parse("{\"id\":1,\"linkage\":\"two_frames\","
                 + "\"timeline\":{\"frames\":["
@@ -211,6 +233,30 @@ public final class FlashAnimationTimelineTest {
             }
         }
         return null;
+    }
+
+    private static JsonValue findSymbolById(JsonValue scene, int id) {
+        JsonValue symbols = scene.get("symbols");
+        for (JsonValue symbol = symbols.child; symbol != null; symbol = symbol.next) {
+            if (symbol.getInt("id") == id) {
+                return symbol;
+            }
+        }
+        return null;
+    }
+
+    private static boolean containsShape(FlashAnimationTimeline timeline, int shapeId) {
+        for (int frameIndex = 0; frameIndex < timeline.getFrameCount(); frameIndex++) {
+            FlashAnimationTimeline.Frame frame = timeline.getFrame(frameIndex);
+            if (frame != null) {
+                for (FlashAnimationTimeline.Layer layer : frame.layers) {
+                    if (layer.shapeId == shapeId) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     private static Path shapeAsset(int shapeId) {

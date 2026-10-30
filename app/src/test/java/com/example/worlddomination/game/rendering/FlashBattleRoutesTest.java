@@ -1,5 +1,6 @@
 package com.example.worlddomination.game.rendering;
 
+import com.badlogic.gdx.math.Rectangle;
 import com.example.worlddomination.game.simulation.ReferenceRandom;
 import com.example.worlddomination.game.ui.BattlefieldCityLayout;
 
@@ -171,6 +172,92 @@ public final class FlashBattleRoutesTest {
                 assertEquals(expected[player][offset + 1], actual.y, 0f);
             }
         }
+    }
+
+    @Test
+    public void createsSourceRocketEllipseFromEverySiloAndTargetCity() {
+        for (int attacker = 0; attacker < BattlefieldCityLayout.PLAYER_COUNT; attacker++) {
+            for (int slot = 1; slot <= 2; slot++) {
+                FlashBattleRoutes.Point silo =
+                        FlashBattleRoutes.actionBuildingPosition(attacker, slot);
+                for (int target = 0; target < BattlefieldCityLayout.PLAYER_COUNT; target++) {
+                    for (int city = 0; city < BattlefieldCityLayout.CITIES_PER_PLAYER; city++) {
+                        FlashBattleRoutes.RocketStrike route =
+                                FlashBattleRoutes.createRocketStrike(attacker, target, city,
+                                        slot, false);
+                        float startX = silo.x + 10f;
+                        float preStartY = silo.y + 25f;
+                        float targetX = BattlefieldCityLayout.sourceCityX(target, city);
+                        float targetY = BattlefieldCityLayout.sourceCityY(target, city);
+                        assertEquals(slot, route.actionBuildingSlot);
+                        assertEquals(silo.x, route.silo.x, 0f);
+                        assertEquals(silo.y, route.silo.y, 0f);
+                        assertEquals(startX, route.launch.x, 0f);
+                        assertEquals(preStartY - 21f, route.launch.y, 0f);
+                        assertEquals(targetX, route.target.x, 0f);
+                        assertEquals(targetY, route.target.y, 0f);
+                        assertEquals(Math.min(startX, targetX)
+                                        + Math.abs(startX - targetX) / 2f,
+                                route.ellipseCenterX, 0f);
+                        assertEquals(Math.min(targetY, preStartY - 42f) - 40f,
+                                route.ellipseCenterY, 0f);
+                        assertEquals(Math.abs(startX - targetX) / 2f,
+                                route.ellipseRadiusX, 0f);
+                        assertEquals(170f, route.ellipseRadiusY, 0f);
+                        assertEquals(startX > targetX ? 0f : 180f,
+                                route.startAngle, 0f);
+                        assertEquals(startX > targetX ? 1f : -1f,
+                                route.directionMultiplier, 0f);
+                        assertEquals(startX > targetX ? -180f : 360f,
+                                route.targetAngle, 0f);
+                        assertEquals(targetY, route.explosion.y, 0f);
+
+                        FlashBattleRoutes.RocketStrike intercepted =
+                                FlashBattleRoutes.createRocketStrike(attacker, target, city,
+                                        slot, true);
+                        assertEquals(targetY - 100f, intercepted.explosion.y, 0f);
+                        assertTrue(intercepted.intercepted);
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    public void rejectsInvalidRocketRoutePlayerCityAndSiloSlot() {
+        assertThrows(IllegalArgumentException.class,
+                () -> FlashBattleRoutes.createRocketStrike(-1, 1, 0, 1, false));
+        assertThrows(IllegalArgumentException.class,
+                () -> FlashBattleRoutes.createRocketStrike(0, 5, 0, 1, false));
+        assertThrows(IllegalArgumentException.class,
+                () -> FlashBattleRoutes.createRocketStrike(0, 1, 5, 1, false));
+        assertThrows(IllegalArgumentException.class,
+                () -> FlashBattleRoutes.createRocketStrike(0, 1, 0, 0, false));
+        assertThrows(IllegalArgumentException.class,
+                () -> FlashBattleRoutes.createRocketStrike(0, 1, 0, 3, false));
+    }
+
+    @Test
+    public void rocketStageXBlendsBetweenTheAttackerAndTargetIslandCrops() {
+        Rectangle mapBounds = new Rectangle(10f, 20f, 1250f, 500f);
+        FlashBattleRoutes.RocketStrike route =
+                FlashBattleRoutes.createRocketStrike(0, 1, 0, 1, false);
+        assertEquals(BattlefieldCityLayout.sourceX(mapBounds, route.launch.x,
+                        route.attackerPlayerId),
+                BattlefieldCityLayout.sourceXBetween(mapBounds, route.launch.x,
+                        route.attackerPlayerId, route.targetPlayerId, 0f), 0.001f);
+        assertEquals(BattlefieldCityLayout.sourceX(mapBounds, route.target.x,
+                        route.targetPlayerId),
+                BattlefieldCityLayout.sourceXBetween(mapBounds, route.target.x,
+                        route.attackerPlayerId, route.targetPlayerId, 1f), 0.001f);
+
+        float attacker = BattlefieldCityLayout.sourceX(mapBounds, route.target.x,
+                route.attackerPlayerId);
+        float target = BattlefieldCityLayout.sourceX(mapBounds, route.target.x,
+                route.targetPlayerId);
+        assertEquals((attacker + target) / 2f,
+                BattlefieldCityLayout.sourceXBetween(mapBounds, route.target.x,
+                        route.attackerPlayerId, route.targetPlayerId, 0.5f), 0.001f);
     }
 
     @Test

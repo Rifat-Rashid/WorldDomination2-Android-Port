@@ -144,6 +144,66 @@ public final class FlashBattleRoutes {
         }
     }
 
+    /** Source route for a silo launched rocket strike. */
+    public static final class RocketStrike {
+        /** Nation that launches the rocket. */
+        public final int attackerPlayerId;
+        /** Nation whose city is targeted. */
+        public final int targetPlayerId;
+        /** Zero based target city index. */
+        public final int targetCityIndex;
+        /** One of the attacker's two source silo placements. */
+        public final int actionBuildingSlot;
+        /** Whether the source counter system intercepted this rocket. */
+        public final boolean intercepted;
+        /** Flash stage coordinate of the source silo. */
+        public final Point silo;
+        /** Flash stage coordinate where the rocket begins. */
+        public final Point launch;
+        /** Flash stage coordinate of the selected city. */
+        public final Point target;
+        /** Source final waypoint used by the city or self explosion action. */
+        public final Point explosion;
+        /** Horizontal center of the Flash ellipse. */
+        public final float ellipseCenterX;
+        /** Vertical center of the Flash ellipse. */
+        public final float ellipseCenterY;
+        /** Horizontal radius of the Flash ellipse. */
+        public final float ellipseRadiusX;
+        /** Vertical radius of the Flash ellipse. */
+        public final float ellipseRadiusY;
+        /** Initial Flash ellipse angle in degrees. */
+        public final float startAngle;
+        /** Flash source multiplier used to choose the half ellipse direction. */
+        public final float directionMultiplier;
+        /** Flash target angle at which the rocket switches to its drop action. */
+        public final float targetAngle;
+
+        private RocketStrike(int attackerPlayerId, int targetPlayerId, int targetCityIndex,
+                             int actionBuildingSlot, boolean intercepted, Point silo,
+                             Point launch, Point target, Point explosion,
+                             float ellipseCenterX, float ellipseCenterY,
+                             float ellipseRadiusX, float ellipseRadiusY,
+                             float startAngle, float directionMultiplier, float targetAngle) {
+            this.attackerPlayerId = attackerPlayerId;
+            this.targetPlayerId = targetPlayerId;
+            this.targetCityIndex = targetCityIndex;
+            this.actionBuildingSlot = actionBuildingSlot;
+            this.intercepted = intercepted;
+            this.silo = silo;
+            this.launch = launch;
+            this.target = target;
+            this.explosion = explosion;
+            this.ellipseCenterX = ellipseCenterX;
+            this.ellipseCenterY = ellipseCenterY;
+            this.ellipseRadiusX = ellipseRadiusX;
+            this.ellipseRadiusY = ellipseRadiusY;
+            this.startAngle = startAngle;
+            this.directionMultiplier = directionMultiplier;
+            this.targetAngle = targetAngle;
+        }
+    }
+
     private static final int SOLDIER_COUNT = 3;
     private static final int[][][] SOLDIER_WAYPOINTS = {
             {{0}, {1, 2}, {1, 2, 3}, {1, 6}, {0}},
@@ -247,6 +307,48 @@ public final class FlashBattleRoutes {
         return event != null && event.type == GameState.CombatEventType.DIRECT_ATTACK
                 && "soldier3".equals(event.weaponName)
                 && event.actionBuildingSlot >= 1 && event.actionBuildingSlot <= 2;
+    }
+
+    /** Returns whether the event has the source carrier and silo data for rocket playback. */
+    public static boolean supportsRocketStrike(GameState.CombatEvent event) {
+        return event != null
+                && (event.type == GameState.CombatEventType.STRIKE_IMPACT
+                || event.type == GameState.CombatEventType.STRIKE_INTERCEPTED)
+                && event.weaponName != null && event.weaponName.matches("rocket[1-4]")
+                && event.actionBuildingSlot >= 1 && event.actionBuildingSlot <= 2;
+    }
+
+    /** Recreates Battle.createToSpawnUnitsArr's source silo, arc, and impact coordinates. */
+    public static RocketStrike createRocketStrike(int attackerPlayerId, int targetPlayerId,
+                                                   int targetCityIndex,
+                                                   int actionBuildingSlot,
+                                                   boolean intercepted) {
+        validatePlayer(attackerPlayerId);
+        validatePlayer(targetPlayerId);
+        if (targetCityIndex < 0 || targetCityIndex >= BattlefieldCityLayout.CITIES_PER_PLAYER
+                || actionBuildingSlot < 1 || actionBuildingSlot > 2) {
+            throw new IllegalArgumentException("Invalid rocket presentation data");
+        }
+
+        Point silo = actionBuildingPosition(attackerPlayerId, actionBuildingSlot);
+        float preStartY = silo.y + 25f;
+        float startX = silo.x + 10f;
+        float startY = preStartY - 21f;
+        Point target = new Point(BattlefieldCityLayout.sourceCityX(targetPlayerId,
+                targetCityIndex), BattlefieldCityLayout.sourceCityY(targetPlayerId,
+                targetCityIndex));
+        float ellipseCenterX = Math.min(startX, target.x)
+                + Math.abs(startX - target.x) / 2f;
+        float ellipseCenterY = Math.min(target.y, preStartY - 42f) - 40f;
+        float startAngle = startX > target.x ? 0f : 180f;
+        float directionMultiplier = startX > target.x ? 1f : -1f;
+        float targetAngle = startAngle == 0f ? -180f : 360f;
+        Point launch = new Point(startX, startY);
+        Point explosion = new Point(target.x, intercepted ? target.y - 100f : target.y);
+        return new RocketStrike(attackerPlayerId, targetPlayerId, targetCityIndex,
+                actionBuildingSlot, intercepted, silo, launch, target, explosion,
+                ellipseCenterX, ellipseCenterY, Math.abs(startX - target.x) / 2f,
+                170f, startAngle, directionMultiplier, targetAngle);
     }
 
     /** Builds the source soldier3 Chinook, tank path, and color-specific turret linkage. */

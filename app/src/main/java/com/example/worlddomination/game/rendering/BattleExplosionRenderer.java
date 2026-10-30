@@ -39,10 +39,17 @@ public final class BattleExplosionRenderer {
                 }
                 float width = region.getRegionWidth() * mapScale;
                 float height = region.getRegionHeight() * mapScale;
-                float x = BattlefieldCityLayout.x(mapBounds, animation.targetPlayerId,
-                        animation.cityIndex) + layer.tx * mapScale;
-                float top = BattlefieldCityLayout.y(mapBounds, animation.targetPlayerId,
-                        animation.cityIndex) - layer.ty * mapScale;
+                float anchorX = animation.hasSourcePosition
+                        ? BattlefieldCityLayout.sourceX(mapBounds, animation.sourceX,
+                        animation.targetPlayerId)
+                        : BattlefieldCityLayout.x(mapBounds, animation.targetPlayerId,
+                        animation.cityIndex);
+                float anchorY = animation.hasSourcePosition
+                        ? BattlefieldCityLayout.sourceY(mapBounds, animation.sourceY)
+                        : BattlefieldCityLayout.y(mapBounds, animation.targetPlayerId,
+                        animation.cityIndex);
+                float x = anchorX + layer.tx * mapScale;
+                float top = anchorY - layer.ty * mapScale;
                 batch.draw(region, x, top - height, 0f, 0f, width, height,
                         layer.a, layer.d, 0f);
             }
