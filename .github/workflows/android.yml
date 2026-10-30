@@ -45,12 +45,27 @@ jobs:
           - id: simulation-tests
             check: Gameplay simulation tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.*"'
+          - id: turn-progression-tests
+            check: Game state and turn progression tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest"'
+          - id: setup-scoring-tests
+            check: Game setup and scoring tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameSetupTest" --tests "com.example.worlddomination.game.simulation.FinalScoreBreakdownTest"'
           - id: ai-tests
             check: Opponent AI tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.*"'
           - id: ui-tests
             check: Touch and presentation tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.*"'
+          - id: scroll-pane-tests
+            check: Independent panel scrolling tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.ScrollPaneStateTest"'
+          - id: battlefield-layout-tests
+            check: Battlefield layout tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.BattlefieldCityLayoutTest"'
+          - id: match-outcome-tests
+            check: Match outcome sequence tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.MatchOutcomeSequenceTest" --tests "com.example.worlddomination.game.ui.MatchOutcomePresentationTest"'
           - id: asset-audio-tests
             check: Asset and audio integrity tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.*" --tests "com.example.worlddomination.game.audio.*" --tests "com.example.worlddomination.ExampleUnitTest"'
@@ -104,6 +119,16 @@ jobs:
             app/build/reports/
             app/build/test-results/
           if-no-files-found: ignore
+
+  android-platform-contract:
+    name: Android-only platform contract
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v5
+
+      - name: Verify native Android project requirements
+        run: python3 scripts/check_android_contract.py
 
   package-integrity:
     name: APK asset and native library integrity
