@@ -167,6 +167,21 @@ public final class GameStateCombatEventTest {
     }
 
     @Test
+    public void tankDirectAttackUsesItsSourceSlotAndChinookSound() {
+        GameState state = new GameState(1, 128L, false);
+        activateWeapon(state, "soldier3", 1);
+        queueAttack(state, 1, 0, "soldier3");
+        queueResources(state);
+        state.confirmTurn();
+
+        GameState.CombatEvent event = state.getLastTurnCombatEvents().get(0);
+        assertEquals("soldier3", event.weaponName);
+        assertEquals(1, event.actionBuildingSlot);
+        assertEquals(OriginalAudio.Cue.TANK_CHOPPER,
+                OriginalAudio.cueForCombatEvent(event));
+    }
+
+    @Test
     public void suicideBomberAttackUsesTheHatchSlotAndOriginalScreamCue() {
         GameState state = new GameState(1, 127L, false);
         activateWeapon(state, "soldier4", 1);

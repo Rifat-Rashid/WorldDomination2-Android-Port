@@ -107,6 +107,12 @@ jobs:
           - id: suicide-bomber-playback-tests
             check: Suicide bomber playback tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashSuicideBomberAnimationTest" --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest.packagedStrikeAndInterceptionSymbolsMatchSourceTimelines" --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.suicideBomberAttackUsesTheHatchSlotAndOriginalScreamCue"'
+          - id: chinook-tank-route-tests
+            check: Chinook and tank source route tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.createsChinookAndTankRoutesForEveryPlayerCityAndActionSlot" --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.rejectsInvalidChinookTankRouteData"'
+          - id: chinook-tank-playback-tests
+            check: Chinook and tank source playback tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashChinookTankAnimationTest" --tests "com.example.worlddomination.game.rendering.FlashSpriteTransformTest" --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest.packagedStrikeAndInterceptionSymbolsMatchSourceTimelines" --tests "com.example.worlddomination.game.simulation.GameSetupTest.sourcePlayerColorIdsMapToTankTurretLibraryNames" --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.tankDirectAttackUsesItsSourceSlotAndChinookSound" --tests "com.example.worlddomination.game.audio.OriginalAudioTest.tankBattleCuesUseTheRecoveredOriginalSounds"'
           - id: presentation-rng-isolation-tests
             check: Presentation RNG isolation tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.ReferenceRandomTest.copiedRandomPreservesTheStreamWithoutAdvancingCanonicalState"'

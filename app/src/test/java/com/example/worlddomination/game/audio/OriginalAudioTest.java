@@ -103,6 +103,16 @@ public final class OriginalAudioTest {
     }
 
     @Test
+    public void tankBattleCuesUseTheRecoveredOriginalSounds() {
+        assertEquals("original/runtime/audio/4_unit_Tank.wav.mp3",
+                OriginalAudio.internalPath(OriginalAudio.Cue.TANK_DRIVE));
+        assertEquals("original/runtime/audio/5_unit_Tank gun.wav.mp3",
+                OriginalAudio.internalPath(OriginalAudio.Cue.TANK_GUN));
+        assertEquals("original/runtime/audio/6_unit_Tank chopper.wav.mp3",
+                OriginalAudio.internalPath(OriginalAudio.Cue.TANK_CHOPPER));
+    }
+
+    @Test
     public void actionPanelsUseTheirOriginalAmbientSoundAssignments() {
         assertEquals(OriginalAudio.Cue.RESOURCES_AMBIENT,
                 OriginalAudio.ambientForAction(GameState.Action.RESOURCES));

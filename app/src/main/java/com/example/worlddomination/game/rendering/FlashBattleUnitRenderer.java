@@ -61,6 +61,21 @@ public final class FlashBattleUnitRenderer {
         }
     }
 
+    public void drawChinookTank(SpriteBatch batch, Rectangle mapBounds,
+                                List<FlashChinookTankAnimation> animations) {
+        if (!assets.isLoaded()) {
+            return;
+        }
+        for (FlashChinookTankAnimation animation : animations) {
+            for (int index = 0; index < animation.getActorCount(); index++) {
+                FlashChinookTankAnimation.Actor actor = animation.getActor(index);
+                drawActor(batch, mapBounds, actor.linkage, actor.sourceFrame,
+                        actor.sourceX, actor.sourceY, actor.islandPlayerId,
+                        1f, 1f, actor.visible);
+            }
+        }
+    }
+
     private void drawActor(SpriteBatch batch, Rectangle mapBounds, String linkage,
                            int sourceFrame, float sourceX, float sourceY,
                            int islandPlayerId, float actorScale, float actorAlpha,
@@ -88,8 +103,11 @@ public final class FlashBattleUnitRenderer {
             float x = BattlefieldCityLayout.sourceX(mapBounds,
                     sourceX + layer.tx, islandPlayerId);
             float top = BattlefieldCityLayout.sourceY(mapBounds, sourceY + layer.ty);
-            batch.draw(region, x, top - height, 0f, 0f, width, height,
-                    layer.a * actorScale, layer.d * actorScale, 0f);
+            FlashSpriteTransform transform = FlashSpriteTransform.fromMatrix(
+                    layer.a, layer.b, layer.c, layer.d);
+            batch.draw(region, x, top - height, 0f, height, width, height,
+                    transform.scaleX * actorScale, transform.scaleY * actorScale,
+                    transform.rotationDegrees);
         }
         batch.setColor(com.badlogic.gdx.graphics.Color.WHITE);
     }

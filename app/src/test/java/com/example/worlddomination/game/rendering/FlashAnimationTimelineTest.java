@@ -90,6 +90,15 @@ public final class FlashAnimationTimelineTest {
         expectedFrameCounts.put("explosion003", 22);
         expectedFrameCounts.put("explosion001", 21);
         expectedFrameCounts.put("chinook", 37);
+        expectedFrameCounts.put("chinook_shadow", 1);
+        expectedFrameCounts.put("tankBase", 18);
+        expectedFrameCounts.put("tank_noshade", 18);
+        expectedFrameCounts.put("tankNoShade_shadow", 1);
+        expectedFrameCounts.put("tankTop_blue", 37);
+        expectedFrameCounts.put("tankTop_red", 37);
+        expectedFrameCounts.put("tankTop_orange", 37);
+        expectedFrameCounts.put("tankTop_yellow", 37);
+        expectedFrameCounts.put("tankTop_green", 36);
         expectedFrameCounts.put("apache", 37);
         expectedFrameCounts.put("apache_tint", 37);
         expectedFrameCounts.put("apache_shadow", 1);
@@ -125,14 +134,20 @@ public final class FlashAnimationTimelineTest {
                 }
                 visibleFrames++;
                 for (FlashAnimationTimeline.Layer layer : frame.layers) {
-                    assertTrue("Unexpected rotated source frame in " + expected.getKey(),
-                            layer.b == 0f && layer.c == 0f);
+                    float determinant = layer.a * layer.d - layer.b * layer.c;
+                    assertTrue("Unexpected singular source frame in " + expected.getKey(),
+                            Math.abs(determinant) > 0.0001f);
+                    assertEquals("Source artwork uses rotation and reflection transforms only: "
+                                    + expected.getKey(),
+                            0f, layer.a * layer.c + layer.b * layer.d, 0.01f);
                     if (!Files.isRegularFile(shapeAsset(layer.shapeId))) {
                         String nestedLinkage = sourceSymbolsById.get(layer.shapeId);
                         assertNotNull("Missing original shape or nested symbol "
                                 + layer.shapeId, nestedLinkage);
-                        assertTrue("Nested movie clip is not loaded: " + nestedLinkage,
-                                expectedFrameCounts.containsKey(nestedLinkage));
+                        if (!nestedLinkage.isEmpty()) {
+                            assertTrue("Nested movie clip is not loaded: " + nestedLinkage,
+                                    expectedFrameCounts.containsKey(nestedLinkage));
+                        }
                     }
                 }
             }

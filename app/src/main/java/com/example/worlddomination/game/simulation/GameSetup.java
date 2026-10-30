@@ -107,6 +107,14 @@ public final class GameSetup {
         return COLORS[playerColor - 1];
     }
 
+    /** Resolves the source color id stored on each player to its Flash library suffix. */
+    public static String colorName(int playerColor) {
+        if (playerColor < 1 || playerColor > COLORS.length) {
+            throw new IllegalArgumentException("Player color must be 1..5");
+        }
+        return COLORS[playerColor - 1];
+    }
+
     public int getStartingBuilding() {
         return startingBuilding;
     }
