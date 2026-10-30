@@ -4,8 +4,9 @@ import com.example.worlddomination.game.simulation.GameState;
 import com.example.worlddomination.game.simulation.TechnologyCatalog;
 import org.junit.Test;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
@@ -239,6 +240,21 @@ public final class OpponentAITest {
         assertEquals(GameState.Action.PREPARED_ATTACK, decision.action);
         assertTrue(decision.prepareCarrier);
         assertEquals("rocket1", decision.weaponName);
+    }
+
+    @Test
+    public void productionConsumesRandomDrawsInSourceOrder() {
+        GameState state = new GameState(1, 918L);
+        GameState.PlayerState actor = state.getPlayerState(1);
+        actor.getWeapons().get("antiAir").inStock = 0;
+        actor.getWeapons().get("antiRocket").inStock = 0;
+        BoundRecordingRandom random = new BoundRecordingRandom();
+
+        assertNotNull(OpponentAI.planProduction(state, actor, random));
+
+        assertEquals(Integer.valueOf(4), random.bounds.get(0));
+        assertEquals(Integer.valueOf(16), random.bounds.get(1));
+        assertEquals(Integer.valueOf(21), random.bounds.get(2));
     }
 
     @Test
@@ -801,6 +817,16 @@ public final class OpponentAITest {
         public int nextInt(int bound) {
             int value = index < values.length ? values[index++] : 0;
             return Math.floorMod(value, bound);
+        }
+    }
+
+    private static final class BoundRecordingRandom extends Random {
+        final List<Integer> bounds = new ArrayList<>();
+
+        @Override
+        public int nextInt(int bound) {
+            bounds.add(bound);
+            return 0;
         }
     }
 }
