@@ -178,12 +178,15 @@ public final class OpponentAITest {
     @Test
     public void spyReplacesConventionalAttackOnlyOnSourceOneInSevenRoll() {
         GameState spyState = prepareSpyTargetScenario(true);
+        SequenceRandom spyRandom = new SequenceRandom(0, 0, 3, 0, 4);
         OpponentAI.Decision spyDecision = OpponentAI.planAttack(spyState,
-                spyState.getPlayerState(1), new SequenceRandom(0, 0, 3, 0),
+                spyState.getPlayerState(1), spyRandom,
                 Collections.<String, Integer>emptyMap());
         assertNotNull(spyDecision);
         assertEquals("spy4", spyDecision.weaponName);
         assertEquals(4, spyDecision.targetPlayerId);
+        assertEquals("factory", spyDecision.spyBuilding);
+        assertEquals(5, spyRandom.getDrawCount());
 
         GameState soldierState = prepareSpyTargetScenario(true);
         OpponentAI.Decision soldierDecision = OpponentAI.planAttack(soldierState,
@@ -764,14 +767,18 @@ public final class OpponentAITest {
         opponent.spyReadiness = 0;
         state.getHuman().moneyMillions = 500;
 
+        SequenceRandom random = new SequenceRandom(0, 0, 4);
         OpponentAI.Decision decision = OpponentAI.planAction(state, opponent,
-                GameState.Action.ATTACK, new SequenceRandom(0, 0, 0), 1,
+                GameState.Action.ATTACK, random, 1,
                 Collections.<String, Integer>emptyMap());
 
         assertNotNull(decision);
         assertEquals(GameState.Action.ATTACK, decision.action);
         assertEquals("spy1", decision.weaponName);
         assertEquals(state.getHuman().id, decision.targetPlayerId);
+        assertEquals("factory", decision.spyBuilding);
+        assertEquals("Source consumes alert, city, then building draws", 3,
+                random.getDrawCount());
     }
 
     @Test
@@ -1271,8 +1278,13 @@ public final class OpponentAITest {
 
         @Override
         public int nextInt(int bound) {
-            int value = index < values.length ? values[index++] : 0;
+            int value = index < values.length ? values[index] : 0;
+            index++;
             return Math.floorMod(value, bound);
+        }
+
+        int getDrawCount() {
+            return index;
         }
     }
 
