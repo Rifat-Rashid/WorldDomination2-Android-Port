@@ -1979,12 +1979,15 @@ public final class GameState {
     public void cancelSelection() {
         selectedAction = null;
         selectedResearchTechnologies.clear();
+        resetTargetFromMapSelection();
+        selectedAttackWeapon = firstAvailableAttackWeapon();
         resetProductionSelection();
         selectedDiplomacyOption = 0;
         selectedPreparedCarrier = null;
         selectedPreparedPayload = null;
         selectedShipStrikes.clear();
         selectedDefenseWeapon = null;
+        selectedSpyBuilding = "spyCenter";
     }
 
     private void resetProductionSelection() {
