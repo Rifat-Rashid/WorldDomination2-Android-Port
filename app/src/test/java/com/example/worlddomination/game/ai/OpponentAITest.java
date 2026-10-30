@@ -156,14 +156,109 @@ public final class OpponentAITest {
     }
 
     @Test
+    public void biologicalStrikeBlocksHumanActionsAndRestoresTemporaryWeaponLocks() {
+        GameState state = new GameState(1, 55L);
+        GameState.PlayerState attacker = state.getPlayerState(1);
+        attacker.moneyMillions = 0;
+        attacker.turnMoneyMillions = 0;
+        attacker.getWeapons().get("rocket1").inStock = 1;
+        attacker.getWeapons().get("warhead1").inStock = 0;
+        attacker.getWeapons().get("bioload1").inStock = 1;
+        for (GameState.WeaponState weapon : state.getHuman().getWeapons().values()) {
+            if (weapon.definition.productionGroup != 8) {
+                weapon.active = true;
+            }
+        }
+
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.MASS_MEDIA);
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+        assertEquals("rocket1", attacker.getPreparedCarrierName());
+
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.MASS_MEDIA);
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+
+        GameState.PlayerState human = state.getHuman();
+        assertTrue(human.isBioloaded());
+        boolean contaminatedCityFound = false;
+        for (int cityIndex = 0; cityIndex < 5; cityIndex++) {
+            contaminatedCityFound |= human.getCity(cityIndex).bioloaded;
+        }
+        assertTrue(contaminatedCityFound);
+        assertFalse(human.getBioloadedActions().isEmpty());
+        GameState.Action blocked = human.getBioloadedActions().iterator().next();
+        state.selectAction(blocked);
+        assertNull(state.getSelectedAction());
+        assertTrue(state.getLatestMessage().contains("biological contamination"));
+        String disabledWeapon = null;
+        for (GameState.WeaponState weapon : human.getWeapons().values()) {
+            if (weapon.bioloaded) {
+                assertFalse(weapon.active);
+                disabledWeapon = weapon.definition.name;
+                break;
+            }
+        }
+        assertTrue("source hazard attempts should disable active weapon stock",
+                disabledWeapon != null);
+
+        state.selectAction(GameState.Action.DEFENSE);
+        assertTrue(state.configureDefense("antiAir"));
+        assertTrue(state.acceptSelectedAction());
+        queueAvailableActions(state);
+        state.confirmTurn();
+
+        assertFalse(human.isBioloaded());
+        assertTrue(human.getBioloadedActions().isEmpty());
+        for (int cityIndex = 0; cityIndex < 5; cityIndex++) {
+            assertFalse(human.getCity(cityIndex).bioloaded);
+        }
+        assertFalse(human.getWeapons().get(disabledWeapon).bioloaded);
+        assertTrue(human.getWeapons().get(disabledWeapon).active);
+    }
+
+    @Test
+    public void biologicalEffectsAlsoKeepContaminatedOpponentFromChoosingDisabledActions() {
+        GameState state = new GameState(1, 552L);
+        GameState.PlayerState human = state.getHuman();
+        GameState.PlayerState target = state.getPlayerState(1);
+        human.getWeapons().get("rocket1").inStock = 1;
+        human.getWeapons().get("bioload1").inStock = 1;
+        target.getWeapons().get("antiRocket").inStock = 0;
+
+        state.selectAction(GameState.Action.PREPARED_ATTACK);
+        assertTrue(state.configurePreparedCarrier("rocket1"));
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+
+        state.selectAction(GameState.Action.PREPARED_ATTACK);
+        assertTrue(state.configurePreparedLaunch(1, 0, "bioload1"));
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+
+        assertTrue(target.isBioloaded());
+        assertFalse(target.getBioloadedActions().isEmpty());
+        List<OpponentAI.Decision> decisions = OpponentAI.plan(state, target, new Random(553L));
+        for (OpponentAI.Decision decision : decisions) {
+            assertFalse("AI selected bio-disabled action " + decision.action,
+                    target.isActionBioloaded(decision.action));
+        }
+    }
+
+    @Test
     public void repeatedTurnsKeepOpponentFundsAndCitiesWithinValidRanges() {
         GameState state = new GameState(2, 119L);
         for (int turn = 0; turn < 15 && state.getMatchStatus() == GameState.MatchStatus.ONGOING;
              turn++) {
-            state.selectAction(GameState.Action.RESOURCES);
-            assertTrue(state.acceptSelectedAction());
-            state.selectAction(GameState.Action.MASS_MEDIA);
-            assertTrue(state.acceptSelectedAction());
+            queueAvailableActions(state);
             state.confirmTurn();
 
             for (int playerId = 0; playerId < 5; playerId++) {
@@ -175,6 +270,49 @@ public final class OpponentAITest {
                     cityPopulation += player.getCity(cityIndex).populationMillions;
                 }
                 assertEquals(cityPopulation, player.populationMillions);
+            }
+        }
+    }
+
+    private static void queueAvailableActions(GameState state) {
+        GameState.Action[] candidates = {
+                GameState.Action.RESOURCES,
+                GameState.Action.MASS_MEDIA,
+                GameState.Action.PRODUCTION,
+                GameState.Action.PROPAGANDA,
+                GameState.Action.DIPLOMACY,
+                GameState.Action.RESEARCH
+        };
+        for (GameState.Action action : candidates) {
+            if (state.getQueuedActionCount() >= 2) {
+                return;
+            }
+            if (state.isActionBioloaded(0, action)) {
+                continue;
+            }
+            state.selectAction(action);
+            if (action == GameState.Action.PRODUCTION) {
+                state.configureProduction("soldier", 0);
+            } else if (action == GameState.Action.PROPAGANDA) {
+                boolean configured = false;
+                for (int targetId = 1; targetId < 5 && !configured; targetId++) {
+                    configured = state.configurePropaganda(targetId, 0);
+                }
+                if (!configured) {
+                    state.cancelSelection();
+                    continue;
+                }
+            } else if (action == GameState.Action.DIPLOMACY) {
+                // The default proposal is affordable and targets the selected living island.
+            } else if (action == GameState.Action.RESEARCH) {
+                List<String> available = state.getAvailableResearch();
+                if (available.isEmpty() || !state.selectResearchTechnology(available.get(0))) {
+                    state.cancelSelection();
+                    continue;
+                }
+            }
+            if (!state.acceptSelectedAction()) {
+                state.cancelSelection();
             }
         }
     }

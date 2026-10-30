@@ -73,7 +73,9 @@ public final class GameState {
         private final Set<String> inventedTechnologies = new LinkedHashSet<>();
         private final Map<String, WeaponState> weapons = new LinkedHashMap<>();
         private final Map<String, Integer> desiredStock = new LinkedHashMap<>();
+        private final Set<Action> bioloadedActions = new LinkedHashSet<>();
         private String preparedCarrierName;
+        private boolean bioloaded;
 
         private PlayerState(int id, boolean human, int populationMillions,
                             int moneyMillions, int religion) {
@@ -158,6 +160,18 @@ public final class GameState {
         public String getPreparedCarrierName() {
             return preparedCarrierName;
         }
+
+        public boolean isBioloaded() {
+            return bioloaded;
+        }
+
+        public boolean isActionBioloaded(Action action) {
+            return bioloadedActions.contains(action);
+        }
+
+        public Set<Action> getBioloadedActions() {
+            return Collections.unmodifiableSet(bioloadedActions);
+        }
     }
 
     public static final class WeaponState {
@@ -165,6 +179,7 @@ public final class GameState {
         public int inStock;
         public int investmentMillions;
         public boolean active;
+        public boolean bioloaded;
 
         private WeaponState(WeaponCatalog.Definition definition) {
             this.definition = definition;
@@ -206,6 +221,18 @@ public final class GameState {
         }
     }
 
+    private static final class BiologicalEffect {
+        final int targetPlayerId;
+        final int cityIndex;
+        final Set<Action> disabledActions = new LinkedHashSet<>();
+        final Set<String> disabledWeapons = new LinkedHashSet<>();
+
+        BiologicalEffect(int targetPlayerId, int cityIndex) {
+            this.targetPlayerId = targetPlayerId;
+            this.cityIndex = cityIndex;
+        }
+    }
+
     private static final int[] PLAYER_START_MONEY = {80, 65, 55};
     private static final int[] ENEMY_START_MONEY = {50, 65, 60};
     private static final int[] PLAYER_START_POPULATION = {500, 450, 400};
@@ -238,6 +265,11 @@ public final class GameState {
     private static final String[] SPY_ACTION_CATEGORIES = {
             "diplomacy", "factory", "tech", "religion", "resources"
     };
+    private static final Action[] BIO_DISABLED_ACTIONS = {
+            Action.RESOURCES, Action.PRODUCTION, Action.RESEARCH, Action.MASS_MEDIA,
+            Action.PROPAGANDA, Action.DIPLOMACY
+    };
+    private static final int[] BIO_DISABLED_STOCK_ATTEMPTS = {0, 6, 10, 17, 30};
 
     private final int difficulty;
     private final boolean opponentTurnsEnabled;
@@ -385,6 +417,10 @@ public final class GameState {
         return playerById(playerId);
     }
 
+    public boolean isActionBioloaded(int playerId, Action action) {
+        return action != null && playerById(playerId).bioloadedActions.contains(action);
+    }
+
     public Action getSelectedAction() {
         return selectedAction;
     }
@@ -407,6 +443,11 @@ public final class GameState {
         if (action == null || (!action.isPorted() && action != Action.PREPARED_ATTACK
                 && action != Action.DEFENSE)) {
             cancelSelection();
+            return;
+        }
+        if (isActionBioloaded(0, action)) {
+            selectedAction = null;
+            messages.add(action.label + " is unavailable due to biological contamination.");
             return;
         }
         if (selectedAction == action) {
@@ -992,6 +1033,10 @@ public final class GameState {
         if (selectedAction == null || queuedActions.size() >= MAX_TURN_ACTIONS) {
             return false;
         }
+        if (isActionBioloaded(0, selectedAction)) {
+            messages.add(selectedAction.label + " is unavailable due to biological contamination.");
+            return false;
+        }
         int reserved = 0;
         if (selectedAction == Action.RESEARCH) {
             if (selectedTechnology == null || !isResearchAvailable(selectedTechnology)) {
@@ -1193,7 +1238,9 @@ public final class GameState {
                 player.lastTurnActions.add(decision.action);
             }
         }
+        clearPreviousBiologicalEffects();
         List<ActionOrder> resolvedDefenses = new ArrayList<>();
+        List<BiologicalEffect> biologicalEffects = new ArrayList<>();
         for (ActionOrder order : turnOrders) {
             if (order.action == Action.DEFENSE) {
                 resolveDefense(order, resolvedDefenses);
@@ -1221,7 +1268,7 @@ public final class GameState {
                     resolveAttack(order, turnOrders);
                     break;
                 case PREPARED_ATTACK:
-                    resolvePreparedAttack(order, resolvedDefenses);
+                    resolvePreparedAttack(order, resolvedDefenses, biologicalEffects);
                     break;
                 case DEFENSE:
                     break;
@@ -1236,6 +1283,7 @@ public final class GameState {
                             + order.action);
             }
         }
+        applyBiologicalEffects(biologicalEffects);
         clearExpiredPreparedAttacks(turnOrders);
         for (PlayerState player : players) {
             player.religion = Math.min(100, Math.max(0, player.religion));
@@ -1537,7 +1585,8 @@ public final class GameState {
     }
 
     private void resolvePreparedAttack(ActionOrder order,
-                                       List<ActionOrder> resolvedDefenses) {
+                                       List<ActionOrder> resolvedDefenses,
+                                       List<BiologicalEffect> biologicalEffects) {
         PlayerState attacker = playerById(order.playerId);
         if (order.prepareCarrier) {
             WeaponState carrier = attacker.weapons.get(order.weaponName);
@@ -1595,6 +1644,10 @@ public final class GameState {
         if (casualties > 0) {
             addToHighscore(attacker, 1, casualties);
         }
+        if (order.payloadName.startsWith("bioload")) {
+            int bioLevel = order.payloadName.charAt(order.payloadName.length() - 1) - '0';
+            biologicalEffects.add(createBiologicalEffect(defender, city, bioLevel));
+        }
         messages.add(order.payloadName + " strike caused " + casualties
                 + " million casualties in nation " + defender.id + " city "
                 + (city.index + 1) + ".");
@@ -1618,6 +1671,73 @@ public final class GameState {
     private int sourceStrikeCasualties(int maximum, boolean attackerIsHuman,
                                        boolean targetIsHuman) {
         return sourceStrikeCasualties(maximum, attackerIsHuman, targetIsHuman, random);
+    }
+
+    private BiologicalEffect createBiologicalEffect(PlayerState target, CityState city,
+                                                    int level) {
+        if (level < 1 || level >= BIO_DISABLED_STOCK_ATTEMPTS.length) {
+            level = 1;
+        }
+        BiologicalEffect effect = new BiologicalEffect(target.id, city.index);
+        for (int i = 0; i < level; i++) {
+            effect.disabledActions.add(BIO_DISABLED_ACTIONS[random.nextInt(
+                    BIO_DISABLED_ACTIONS.length)]);
+        }
+
+        // Sub_model.createBioHazardArr samples the local human's 26-entry weaponArr;
+        // Presenter then applies those IDs to the contaminated target's stock.
+        List<WeaponState> sourceWeaponArray = new ArrayList<>(26);
+        for (WeaponState weapon : getHuman().weapons.values()) {
+            if (weapon.definition.productionGroup != 8) {
+                sourceWeaponArray.add(weapon);
+            }
+        }
+        int attempts = BIO_DISABLED_STOCK_ATTEMPTS[level];
+        for (int i = 0; i < attempts && !sourceWeaponArray.isEmpty(); i++) {
+            WeaponState weapon = sourceWeaponArray.get(random.nextInt(sourceWeaponArray.size()));
+            if (weapon.active) {
+                effect.disabledWeapons.add(weapon.definition.name);
+            }
+        }
+        return effect;
+    }
+
+    private void applyBiologicalEffects(List<BiologicalEffect> effects) {
+        for (BiologicalEffect effect : effects) {
+            PlayerState target = playerById(effect.targetPlayerId);
+            CityState city = target.getCity(effect.cityIndex);
+            target.bioloaded = true;
+            target.bioloadedActions.addAll(effect.disabledActions);
+            for (String weaponName : effect.disabledWeapons) {
+                WeaponState weapon = target.weapons.get(weaponName);
+                if (weapon != null) {
+                    weapon.active = false;
+                    weapon.bioloaded = true;
+                }
+            }
+            if (city != null) {
+                city.bioloaded = true;
+            }
+            messages.add("Biological agents contaminated nation " + target.id
+                    + " after a bioload strike.");
+        }
+    }
+
+    /** The source clears last turn's temporary action/weapon contamination before resolving. */
+    private void clearPreviousBiologicalEffects() {
+        for (PlayerState player : players) {
+            player.bioloadedActions.clear();
+            player.bioloaded = false;
+            for (WeaponState weapon : player.weapons.values()) {
+                if (weapon.bioloaded) {
+                    weapon.bioloaded = false;
+                    weapon.active = true;
+                }
+            }
+            for (CityState city : player.cities) {
+                city.bioloaded = false;
+            }
+        }
     }
 
     private void clearExpiredPreparedAttacks(List<ActionOrder> turnOrders) {
