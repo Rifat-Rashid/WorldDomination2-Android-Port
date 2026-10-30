@@ -855,8 +855,8 @@ public final class OpponentAI {
                 && !actor.hasCeasefireWith(target.id);
     }
 
-    private static Decision planProduction(GameState state, GameState.PlayerState player,
-                                           Random random) {
+    static Decision planProduction(GameState state, GameState.PlayerState player,
+                                   Random random) {
         List<int[]> deficits = new ArrayList<>(8);
         int activeCategories = 0;
         for (int group = 1; group <= 7; group++) {
@@ -878,18 +878,18 @@ public final class OpponentAI {
         }
         deficits.sort((left, right) -> Integer.compare(right[1], left[1]));
 
-        int defensePercent = 0;
-        if (player.getWeaponStockByName("antiAir") < 1
-                || player.getWeaponStockByName("antiRocket") < 1) {
-            defensePercent = randomInclusive(random, 20, 35);
-        }
-        int targetPercent = (int) Math.round(randomInclusive(random, 80, 100) / 10.0) * 10;
         int categoryCount = randomInclusive(random, 1, 4);
         if (player.isSpecialPerson()) {
             categoryCount = 2;
         } else if (player.isSuicidePerson()) {
             categoryCount = 1;
         }
+        int defensePercent = 0;
+        if (player.getWeaponStockByName("antiAir") < 1
+                || player.getWeaponStockByName("antiRocket") < 1) {
+            defensePercent = randomInclusive(random, 20, 35);
+        }
+        int targetPercent = (int) Math.round(randomInclusive(random, 80, 100) / 10.0) * 10;
         int percentAssigned = defensePercent;
         Map<String, Integer> percentages = new LinkedHashMap<>();
         for (int index = 0; index < categoryCount; index++) {
