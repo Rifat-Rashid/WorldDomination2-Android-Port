@@ -228,7 +228,7 @@ public final class OpponentAI {
             largestPopulation = 1;
         }
 
-        int lowestRegard = lowestRegardForScore(state, player);
+        double lowestRegard = lowestRegardForScore(state, player);
         double attack = baseAttackScore(state, player, lowestRegard);
         double attackTransferredToProduction = 0;
         String preparedCarrier = player.getPreparedCarrierName();
@@ -372,15 +372,16 @@ public final class OpponentAI {
     }
 
     private static double baseAttackScore(GameState state, GameState.PlayerState player,
-                                          int lowestRegard) {
+                                          double lowestRegard) {
         return Math.max(0, ATTACK_BASE[state.getDifficulty()] - lowestRegard / 2.0);
     }
 
-    private static int lowestRegardForScore(GameState state, GameState.PlayerState player) {
-        int lowestRegard = 100;
+    private static double lowestRegardForScore(GameState state, GameState.PlayerState player) {
+        double lowestRegard = 100;
         for (GameState.PlayerState other : state.getPlayers()) {
             if (other != null) {
-                lowestRegard = Math.min(lowestRegard, player.getRegardToward(other.id));
+                lowestRegard = Math.min(lowestRegard,
+                        player.getRegardTowardExact(other.id));
             }
         }
         return lowestRegard;
@@ -428,7 +429,7 @@ public final class OpponentAI {
                                               GameState.PlayerState defender,
                                               int threatPlayerId) {
         GameState.PlayerState threat = state.getPlayerState(threatPlayerId);
-        double score = 86 - defender.getRegardToward(threat.id);
+        double score = 86 - defender.getRegardTowardExact(threat.id);
         if (defender.populationMillions < 20) {
             score += 10;
         }
@@ -1185,7 +1186,7 @@ public final class OpponentAI {
                 continue;
             }
             double value = 100 - target.religion + largest.populationMillions
-                    - attacker.getRegardToward(target.id);
+                    - attacker.getRegardTowardExact(target.id);
             if (value > bestValue) {
                 bestValue = value;
                 bestTarget = target;
@@ -1242,10 +1243,10 @@ public final class OpponentAI {
         GameState.PlayerState human = state.getHuman();
         if (!actor.hasCeasefireWith(human.id)
                 && actor.getDiplomacyOfferedLastTurn(human.id) == 0) {
-            if (human.moneyMillions > 50 && actor.getRegardToward(human.id) < 50) {
+            if (human.moneyMillions > 50 && actor.getRegardTowardExact(human.id) < 50) {
                 demandTarget = human;
             }
-            if (actor.moneyMillions > 50 && actor.getRegardToward(human.id) > 50) {
+            if (actor.moneyMillions > 50 && actor.getRegardTowardExact(human.id) > 50) {
                 offerTarget = human;
             }
         }
@@ -1418,13 +1419,13 @@ public final class OpponentAI {
                                                    GameState.PlayerState actor,
                                                    boolean includeCeasefire) {
         GameState.PlayerState best = null;
-        int bestHostility = Integer.MIN_VALUE;
+        double bestHostility = Double.NEGATIVE_INFINITY;
         for (GameState.PlayerState target : state.getPlayers()) {
             if (!target.alive || target.id == actor.id
                     || (!includeCeasefire && actor.hasCeasefireWith(target.id))) {
                 continue;
             }
-            int hostility = 100 - actor.getRegardToward(target.id)
+            double hostility = 100 - actor.getRegardTowardExact(target.id)
                     + (target.id == actor.getPrimaryEnemyId() ? 1 : 0);
             if (hostility > bestHostility) {
                 bestHostility = hostility;
@@ -1451,9 +1452,9 @@ public final class OpponentAI {
         }
 
         GameState.PlayerState target = null;
-        int highestHostility = 0;
+        double highestHostility = 0;
         for (GameState.PlayerState candidate : candidates) {
-            int hostility = 100 - actor.getRegardToward(candidate.id)
+            double hostility = 100 - actor.getRegardTowardExact(candidate.id)
                     + (candidate.id == actor.getPrimaryEnemyId() ? 1 : 0);
             if (hostility > highestHostility) {
                 highestHostility = hostility;
@@ -1466,13 +1467,13 @@ public final class OpponentAI {
 
         // The source iterates a filtered rival array but indexes activePlayerArr.
         // Preserve that selection order and its population filter for full parity.
-        int lowestRegard = 100;
+        double lowestRegard = 100;
         for (int index = 0; index < candidates.size(); index++) {
             GameState.PlayerState indexed = activePlayers.get(index);
             if (indexed.id != actor.id && indexed.populationMillions > 0
-                    && actor.getRegardToward(indexed.id) <= lowestRegard
+                    && actor.getRegardTowardExact(indexed.id) <= lowestRegard
                     && !actor.hasCeasefireWith(indexed.id)) {
-                lowestRegard = actor.getRegardToward(indexed.id);
+                lowestRegard = actor.getRegardTowardExact(indexed.id);
                 target = indexed;
             }
         }

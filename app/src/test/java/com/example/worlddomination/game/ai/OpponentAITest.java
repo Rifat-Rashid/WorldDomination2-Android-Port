@@ -200,6 +200,16 @@ public final class OpponentAITest {
     }
 
     @Test
+    public void attackScoreRetainsFractionalRegardPrecision() throws Exception {
+        GameState state = new GameState(1, 916L);
+        GameState.PlayerState actor = state.getPlayerState(1);
+        setFriendlyRelationsAndNoPrimaryEnemy(actor);
+        setRegardToward(actor, 4, 40.5);
+
+        assertEquals(65.75, OpponentAI.baseAttackScore(state, actor), 0.0);
+    }
+
+    @Test
     public void attackScoreAvailabilityCountsAnyActiveSpyStockBeforeReadiness() {
         GameState state = new GameState(1, 916L);
         GameState.PlayerState actor = state.getPlayerState(1);
@@ -1035,7 +1045,7 @@ public final class OpponentAITest {
         java.lang.reflect.Field regardField = GameState.PlayerState.class
                 .getDeclaredField("regardToward");
         regardField.setAccessible(true);
-        Arrays.fill((int[]) regardField.get(actor), 100);
+        Arrays.fill((double[]) regardField.get(actor), 100);
         java.lang.reflect.Field enemyField = GameState.PlayerState.class
                 .getDeclaredField("primaryEnemyId");
         enemyField.setAccessible(true);
@@ -1044,10 +1054,15 @@ public final class OpponentAITest {
 
     private static void setRegardToward(GameState.PlayerState actor, int playerId, int regard)
             throws Exception {
+        setRegardToward(actor, playerId, (double) regard);
+    }
+
+    private static void setRegardToward(GameState.PlayerState actor, int playerId,
+                                        double regard) throws Exception {
         java.lang.reflect.Field regardField = GameState.PlayerState.class
                 .getDeclaredField("regardToward");
         regardField.setAccessible(true);
-        ((int[]) regardField.get(actor))[playerId] = regard;
+        ((double[]) regardField.get(actor))[playerId] = regard;
     }
 
     private static void configureSourcePreparationScenario(
