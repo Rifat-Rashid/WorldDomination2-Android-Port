@@ -77,6 +77,12 @@ jobs:
           - id: ai-tests
             check: Opponent AI tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.*"'
+          - id: ai-diplomacy-target-score-tests
+            check: AI diplomacy source score selection
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.OpponentAITest.diplomacyTargetScoreUsesStrictGreaterAndKeepsFirstRivalOnTies"'
+          - id: ai-diplomacy-cooldown-tests
+            check: AI diplomacy cooldown RNG parity
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.OpponentAITest.diplomacyCooldownTargetsDoNotConsumeRandomCandidateDraws"'
           - id: ai-planning-matrix
             check: AI planning scenario matrix
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.AiPlanningScenarioMatrixTest"'

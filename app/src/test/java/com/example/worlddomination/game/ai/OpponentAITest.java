@@ -127,6 +127,77 @@ public final class OpponentAITest {
     }
 
     @Test
+    public void diplomacyTargetScoreUsesStrictGreaterAndKeepsFirstRivalOnTies() {
+        GameState state = findAiWithNeutralHumanRegard();
+        GameState.PlayerState actor = aiWithNeutralHumanRegard(state);
+        actor.populationMillions = 1;
+        actor.moneyMillions = 100;
+        actor.turnMoneyMillions = 100;
+        state.getHuman().moneyMillions = 50;
+
+        List<Integer> candidateIds = new ArrayList<>();
+        for (GameState.PlayerState target : state.getPlayers()) {
+            if (target.id == actor.id || !target.alive
+                    || actor.hasCeasefireWith(target.id)) {
+                continue;
+            }
+            target.populationMillions = target.id == 0 ? 2 : 3;
+            target.moneyMillions = 50;
+            candidateIds.add(target.id);
+        }
+        assertTrue("a living rival is required for the source score scan",
+                candidateIds.size() >= 2);
+
+        int[] scoreRolls = new int[candidateIds.size()];
+        Arrays.fill(scoreRolls, 2); // Source randRange(1, 5) produces score 3.
+        scoreRolls[scoreRolls.length - 1] = 3; // A strictly higher score replaces the winner.
+        SequenceRandom random = new SequenceRandom(scoreRolls);
+
+        OpponentAI.Decision decision = OpponentAI.planDiplomacy(state, actor, random);
+
+        assertNotNull(decision);
+        assertEquals(GameState.Action.DIPLOMACY, decision.action);
+        assertEquals("equal scores keep the earlier rival; only a greater score replaces it",
+                candidateIds.get(candidateIds.size() - 1).intValue(), decision.targetPlayerId);
+        assertEquals(2, decision.diplomacyOption);
+        assertEquals(candidateIds.size(), random.getDrawCount());
+    }
+
+    @Test
+    public void diplomacyCooldownTargetsDoNotConsumeRandomCandidateDraws() {
+        GameState state = findAiWithNeutralHumanRegard();
+        GameState.PlayerState actor = aiWithNeutralHumanRegard(state);
+        actor.populationMillions = 2_000;
+        actor.moneyMillions = 200;
+        actor.turnMoneyMillions = 100;
+        state.getHuman().populationMillions = 500;
+        state.getHuman().moneyMillions = 50;
+        GameState.PlayerState cooldownTarget = anotherRival(state, actor.id, -1);
+        for (GameState.PlayerState target : state.getPlayers()) {
+            if (target.id != actor.id && target.alive) {
+                target.populationMillions = 500;
+                target.moneyMillions = 50;
+            }
+        }
+        assertTrue(state.submitDiplomacyProposal(actor.id, cooldownTarget.id, 0));
+
+        int expectedDraws = 0;
+        for (GameState.PlayerState target : state.getPlayers()) {
+            if (target.id != actor.id && target.alive
+                    && !actor.hasCeasefireWith(target.id)
+                    && actor.getDiplomacyOfferedLastTurn(target.id) == 0) {
+                expectedDraws++;
+            }
+        }
+        SequenceRandom random = new SequenceRandom(0, 1, 2, 3);
+
+        assertNull(OpponentAI.planDiplomacy(state, actor, random));
+        assertEquals("the source skips a random draw for each cooling-down target",
+                expectedDraws, random.getDrawCount());
+        assertEquals(2, actor.getDiplomacyOfferedLastTurn(cooldownTarget.id));
+    }
+
+    @Test
     public void spyTargetsTheRivalWithRequiredPerLevelInventory() {
         GameState state = prepareSpyTargetScenario(false);
         GameState.PlayerState attacker = state.getPlayerState(1);
