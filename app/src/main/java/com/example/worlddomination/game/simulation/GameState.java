@@ -899,26 +899,33 @@ public final class GameState {
         selectedProductionCategory = category;
     }
 
-    /** Sets one category's share while preserving the total 100 percent source budget. */
-    public void configureProduction(String category, int percent) {
+    /** Sets one unlocked category's share while preserving the total 100 percent budget. */
+    public boolean configureProduction(String category, int percent) {
         if (selectedAction != Action.PRODUCTION) {
             throw new IllegalStateException("Select Production before setting its investment");
         }
-        if (productionGroup(category) == 0) {
+        int group = productionGroup(category);
+        if (group == 0) {
             throw new IllegalArgumentException("Unknown production category: " + category);
         }
         if (percent < 0 || percent > 100) {
             throw new IllegalArgumentException("Production percentage must be 0..100");
         }
-        selectedProductionCategory = category;
-        if (percent > getSelectedProductionMaximumPercent()) {
+        if (!isProductionGroupUnlocked(getHuman(), group)) {
+            messages.add("You have not yet invented this Technology");
+            trimMessages();
+            return false;
+        }
+        if (percent > getProductionMaximumPercent(category)) {
             throw new IllegalArgumentException("Production allocations cannot exceed 100 percent");
         }
+        selectedProductionCategory = category;
         if (percent == 0) {
             selectedProductionPercentages.remove(category);
         } else {
             selectedProductionPercentages.put(category, percent);
         }
+        return true;
     }
 
     /** Toggles the next technology in one research group, as the source interface does. */
@@ -1685,9 +1692,13 @@ public final class GameState {
     }
 
     public int getSelectedProductionMaximumPercent() {
+        return getProductionMaximumPercent(selectedProductionCategory);
+    }
+
+    private int getProductionMaximumPercent(String category) {
         int allocatedElsewhere = 0;
         for (Map.Entry<String, Integer> allocation : selectedProductionPercentages.entrySet()) {
-            if (!allocation.getKey().equals(selectedProductionCategory)) {
+            if (!allocation.getKey().equals(category)) {
                 allocatedElsewhere += allocation.getValue();
             }
         }
@@ -1743,6 +1754,15 @@ public final class GameState {
             reserved = getSelectedResearchCostMillions();
         } else if (selectedAction == Action.PRODUCTION) {
             if (!selectedProductionPercentages.isEmpty()) {
+                for (Map.Entry<String, Integer> investment
+                        : selectedProductionPercentages.entrySet()) {
+                    if (!isProductionGroupUnlocked(getHuman(),
+                            productionGroup(investment.getKey()))) {
+                        messages.add("You have not yet invented this Technology");
+                        trimMessages();
+                        return false;
+                    }
+                }
                 reserved = getSelectedProductionTotalBudgetMillions();
             }
         } else if (selectedAction == Action.ATTACK && !canAcceptAttack()) {
@@ -3117,6 +3137,18 @@ public final class GameState {
             }
         }
         return 0;
+    }
+
+    private static boolean isProductionGroupUnlocked(PlayerState player, int group) {
+        if (group == 8) {
+            return true;
+        }
+        for (TechnologyCatalog.Definition technology : TechnologyCatalog.all()) {
+            if (technology.group == group && player.hasTechnology(technology.name)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void trimMessages() {

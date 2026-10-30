@@ -533,6 +533,26 @@ public final class GameStateTest {
     }
 
     @Test
+    public void productionRejectsLockedTechnologyGroupAndKeepsExistingSelection() {
+        GameState state = new GameState(1, 0L, false);
+        state.selectAction(GameState.Action.PRODUCTION);
+
+        assertTrue(state.configureProduction("soldier", 30));
+        assertFalse(state.configureProduction("special", 40));
+        assertEquals("soldier", state.getSelectedProductionCategory());
+        assertEquals(30, state.getSelectedProductionPercent());
+        assertEquals("You have not yet invented this Technology",
+                state.getLatestMessage());
+
+        assertTrue("Defense group 8 is always available",
+                state.configureProduction("defense", 30));
+        assertEquals("defense", state.getSelectedProductionCategory());
+        assertEquals(30, state.getProductionPercent("soldier"));
+        assertEquals(30, state.getProductionPercent("defense"));
+        assertEquals(60, state.getSelectedProductionAllocatedPercent());
+    }
+
+    @Test
     public void productionCanSplitOneHundredPercentAcrossMultipleCategories() {
         GameState state = new GameState(1, 0L, false);
         state.selectAction(GameState.Action.PRODUCTION);
