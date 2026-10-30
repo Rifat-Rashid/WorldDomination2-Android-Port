@@ -19,6 +19,7 @@ import com.example.worlddomination.game.assets.OriginalUiAssets;
 import com.example.worlddomination.game.simulation.GameSetup;
 import com.example.worlddomination.game.simulation.GameState;
 import com.example.worlddomination.game.simulation.CityState;
+import com.example.worlddomination.game.ui.MatchOutcomePresentation;
 import com.example.worlddomination.game.ui.ScrollPaneState;
 
 /** Native OpenGL ES game screen; it loads no Python, browser, or network runtime. */
@@ -445,6 +446,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 drawDiplomacyResponseModal();
             } else if (modalOpen) {
                 drawActionModal();
+            }
+            if (MatchOutcomePresentation.isFinished(game.getMatchStatus())) {
+                drawEndgameOverlay();
             }
         }
         if (showExitPromptSeconds > 0f) {
@@ -1668,6 +1672,64 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         batch.end();
     }
 
+    private void drawEndgameOverlay() {
+        GameState.MatchStatus outcome = game.getMatchStatus();
+        shapes.setProjectionMatrix(camera.combined);
+        shapes.begin(ShapeRenderer.ShapeType.Filled);
+        shapes.setColor(0f, 0f, 0f, 0.70f);
+        shapes.rect(0f, 0f, worldWidth, worldHeight);
+        drawPanelFill(modal);
+        shapes.setColor(MODAL_ORANGE);
+        shapes.rect(modal.x + 3f, modal.y + modal.height - 29f,
+                modal.width - 6f, 25f);
+        shapes.rect(modal.x + 3f, modal.y + 3f,
+                modal.width - 6f, 25f);
+        shapes.end();
+
+        batch.setProjectionMatrix(camera.combined);
+        batch.begin();
+        drawPanelTexture(modal);
+        drawOriginalButton(modalAccept);
+        batch.end();
+
+        shapes.begin(ShapeRenderer.ShapeType.Filled);
+        drawButtonGradient(modalAccept, true);
+        shapes.end();
+
+        batch.begin();
+        font.setColor(Color.WHITE);
+        drawCentered(MatchOutcomePresentation.title(outcome),
+                modal.x + modal.width / 2f, modal.y + modal.height - 12f, 12f);
+        font.setColor(TITLE_TEXT);
+        drawCentered(MatchOutcomePresentation.message(outcome),
+                modal.x + modal.width / 2f, modal.y + modal.height * 0.67f, 8f);
+        drawCentered("FINAL SCORE", modal.x + modal.width / 2f,
+                modal.y + modal.height * 0.48f, 8f);
+        drawCentered(MatchOutcomePresentation.formatScore(game.getHuman().score),
+                modal.x + modal.width / 2f, modal.y + modal.height * 0.37f, 15f);
+        drawCentered("NEW GAME", modalAccept.x + modalAccept.width / 2f,
+                modalAccept.y + modalAccept.height / 2f + 3f, 8f);
+        batch.end();
+
+        shapes.begin(ShapeRenderer.ShapeType.Line);
+        drawPanelEdges(modal);
+        drawButtonEdges(modalAccept);
+        shapes.end();
+    }
+
+    private void beginNewGameSetup() {
+        setup = new GameSetup();
+        java.util.Random setupRandom = new java.util.Random(System.nanoTime());
+        setup.setPlayerColor(setupRandom.nextInt(5) + 1);
+        setup.setStartingBuilding(setupRandom.nextInt(5) + 1);
+        setupMessage = "SELECT ONE TO FOUR OPPONENTS TO BEGIN";
+        showSetupMessage = false;
+        modalOpen = false;
+        showExitPromptSeconds = 0f;
+        accumulator = 0f;
+        game = null;
+    }
+
     private void drawDiplomacyResponseModal() {
         GameState.DiplomacyProposal proposal = game.getPendingHumanDiplomacyProposal();
         if (proposal == null) {
@@ -2125,6 +2187,12 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             activateSetupAt(x, y);
             return;
         }
+        if (MatchOutcomePresentation.isFinished(game.getMatchStatus())) {
+            if (modalAccept.contains(x, y)) {
+                beginNewGameSetup();
+            }
+            return;
+        }
         if (game.getPendingHumanDiplomacyProposal() != null) {
             if (modalAccept.contains(x, y)) {
                 if (game.respondToDiplomacyProposal(true)) {
@@ -2323,6 +2391,14 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     private boolean handleBack() {
         if (game == null) {
+            if (showExitPromptSeconds > 0f) {
+                Gdx.app.exit();
+            } else {
+                showExitPromptSeconds = 2.4f;
+            }
+            return true;
+        }
+        if (MatchOutcomePresentation.isFinished(game.getMatchStatus())) {
             if (showExitPromptSeconds > 0f) {
                 Gdx.app.exit();
             } else {
