@@ -54,6 +54,19 @@ public final class GameState {
         }
     }
 
+    private static final class AiDiplomacyResponse {
+        final PlayerState target;
+        final DiplomacyProposal proposal;
+        final boolean accepted;
+
+        AiDiplomacyResponse(PlayerState target, DiplomacyProposal proposal,
+                            boolean accepted) {
+            this.target = target;
+            this.proposal = proposal;
+            this.accepted = accepted;
+        }
+    }
+
     /** One payload/city pair in the original carrier-ship three strike. */
     public static final class ShipStrike {
         public final int targetPlayerId;
@@ -1673,7 +1686,8 @@ public final class GameState {
         tickDiplomacyOfferCooldowns();
         decayReligion();
         advanceSpyReadiness();
-        resolvePendingAiDiplomacy();
+        initializeAiTurnMoney();
+        List<AiDiplomacyResponse> diplomacyResponses = resolvePendingAiDiplomacy();
         List<ActionOrder> turnOrders = new ArrayList<>(players.length * MAX_TURN_ACTIONS);
         for (PlayerState player : players) {
             if (player.human) {
@@ -1686,11 +1700,6 @@ public final class GameState {
             if (!opponentTurnsEnabled || !player.alive) {
                 continue;
             }
-            player.turnMoneyMillions = player.moneyMillions;
-            if (player.specialPerson) {
-                player.moneyMillions += 3;
-                player.turnMoneyMillions += 3;
-            }
             List<OpponentAI.Decision> decisions = OpponentAI.plan(this, player, random);
             for (OpponentAI.Decision decision : decisions) {
                 turnOrders.add(new ActionOrder(player.id, decision.action,
@@ -1702,6 +1711,10 @@ public final class GameState {
                         decision.diplomacyOption, decision.shipStrikes));
                 player.lastTurnActions.add(decision.action);
             }
+        }
+        for (AiDiplomacyResponse response : diplomacyResponses) {
+            resolveDiplomacyResponse(response.target, response.proposal,
+                    response.accepted, false);
         }
         clearPreviousBiologicalEffects();
         List<ActionOrder> resolvedDefenses = new ArrayList<>();
@@ -1779,7 +1792,21 @@ public final class GameState {
                 + " for " + DIPLOMACY_DURATION[order.diplomacyOption] + " turns.");
     }
 
-    private void resolvePendingAiDiplomacy() {
+    private void initializeAiTurnMoney() {
+        for (PlayerState player : players) {
+            if (player.human || !player.alive) {
+                continue;
+            }
+            player.turnMoneyMillions = player.moneyMillions;
+            if (opponentTurnsEnabled && player.specialPerson) {
+                player.moneyMillions += 3;
+                player.turnMoneyMillions += 3;
+            }
+        }
+    }
+
+    private List<AiDiplomacyResponse> resolvePendingAiDiplomacy() {
+        List<AiDiplomacyResponse> responses = new ArrayList<>();
         for (int targetId = 1; targetId < players.length; targetId++) {
             PlayerState target = players[targetId];
             if (!target.alive) {
@@ -1789,10 +1816,15 @@ public final class GameState {
                 DiplomacyProposal proposal = target.pendingDiplomacy[proposerId];
                 if (proposal != null) {
                     boolean accept = shouldAiAccept(target, proposal);
-                    resolveDiplomacyResponse(target, proposal, accept);
+                    if (accept && proposal.optionIndex >= 3) {
+                        target.turnMoneyMillions -= DIPLOMACY_AMOUNT[proposal.optionIndex];
+                    }
+                    target.pendingDiplomacy[proposerId] = null;
+                    responses.add(new AiDiplomacyResponse(target, proposal, accept));
                 }
             }
         }
+        return responses;
     }
 
     private boolean shouldAiAccept(PlayerState receiver, DiplomacyProposal proposal) {
@@ -1851,6 +1883,11 @@ public final class GameState {
 
     private void resolveDiplomacyResponse(PlayerState target, DiplomacyProposal proposal,
                                           boolean accepted) {
+        resolveDiplomacyResponse(target, proposal, accepted, true);
+    }
+
+    private void resolveDiplomacyResponse(PlayerState target, DiplomacyProposal proposal,
+                                          boolean accepted, boolean updateTurnMoney) {
         int proposerId = proposal.proposerId;
         PlayerState proposer = players[proposerId];
         int optionIndex = proposal.optionIndex;
@@ -1864,12 +1901,17 @@ public final class GameState {
             proposer.regardToward[target.id] += DIPLOMACY_BONUS;
             if (optionIndex < 3) {
                 target.moneyMillions += amount;
-                target.turnMoneyMillions += amount;
+                if (updateTurnMoney) {
+                    target.turnMoneyMillions += amount;
+                }
             } else {
                 proposer.moneyMillions += amount;
-                proposer.turnMoneyMillions += amount;
                 target.moneyMillions -= amount;
-                target.turnMoneyMillions = Math.max(0, target.turnMoneyMillions - amount);
+                if (updateTurnMoney) {
+                    proposer.turnMoneyMillions += amount;
+                    target.turnMoneyMillions = Math.max(0,
+                            target.turnMoneyMillions - amount);
+                }
             }
             int duration = DIPLOMACY_DURATION[optionIndex];
             target.ceasefireTurns[proposerId] = duration;
@@ -1881,7 +1923,9 @@ public final class GameState {
             proposer.regardToward[target.id] -= DIPLOMACY_BONUS;
             if (optionIndex < 3) {
                 proposer.moneyMillions += amount;
-                proposer.turnMoneyMillions += amount;
+                if (updateTurnMoney) {
+                    proposer.turnMoneyMillions += amount;
+                }
             }
             messages.add("Nation " + target.id + " rejected diplomacy with nation "
                     + proposer.id + ".");
