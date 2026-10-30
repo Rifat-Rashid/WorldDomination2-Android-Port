@@ -50,6 +50,9 @@ jobs:
           - id: setup-scoring-tests
             check: Game setup and scoring tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameSetupTest" --tests "com.example.worlddomination.game.simulation.FinalScoreBreakdownTest"'
+          - id: final-score-tests
+            check: Final score breakdown tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.FinalScoreBreakdownTest"'
           - id: resources-economy-tests
             check: Resources and mass media economy tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.normalResourcesAndMassMediaResolveOneTurn" --tests "com.example.worlddomination.game.simulation.GameStateTest.resourcesAndMassMediaAddTheirSourceHighscoreWeights" --tests "com.example.worlddomination.game.simulation.GameStateTest.resourceYieldUsesDifficultyDividerAndSourceRounding" --tests "com.example.worlddomination.game.simulation.GameStateTest.zeroHighscoreMultiplierDefaultsToOneLikeTheSource"'
@@ -104,6 +107,9 @@ jobs:
           - id: city-rendering-tests
             check: Battlefield city art and ruin-frame tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.OriginalCityAssetsTest" --tests "com.example.worlddomination.game.rendering.CitySpriteLayoutTest" --tests "com.example.worlddomination.game.simulation.CityStateTest" --tests "com.example.worlddomination.game.simulation.GameStateTest.laterActionStillResolvesWhenEarlierAttackWillEliminateTargetCity"'
+          - id: city-state-tests
+            check: City population and destruction state tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.CityStateTest"'
           - id: city-shrink-sequence-tests
             check: City shrink animation sequence tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.CityShrinkSequenceTest"'
@@ -125,6 +131,9 @@ jobs:
           - id: apache-marine-playback-tests
             check: Apache and marine playback tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashApacheMarineAnimationTest" --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest.packagedStrikeAndInterceptionSymbolsMatchSourceTimelines" --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.marineDirectAttackUsesTheOriginalSealGunCue"'
+          - id: combat-animation-mapping-tests
+            check: Combat event animation mapping tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.SourceCombatAnimationMappingTest"'
           - id: suicide-bomber-route-tests
             check: Suicide bomber source route tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.createsSourceSuicideBomberRoutesForEveryAttackerTargetAndCity" --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.rejectsInvalidSuicideBomberRouteData" --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.suicideBomberLaunchPositionUsesItsSourceActionBuildingSlot"'
@@ -143,6 +152,9 @@ jobs:
           - id: chinook-tank-playback-tests
             check: Chinook and tank source playback tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashChinookTankAnimationTest" --tests "com.example.worlddomination.game.rendering.FlashSpriteTransformTest" --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest.packagedStrikeAndInterceptionSymbolsMatchSourceTimelines" --tests "com.example.worlddomination.game.simulation.GameSetupTest.sourcePlayerColorIdsMapToTankTurretLibraryNames" --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.tankDirectAttackUsesItsSourceSlotAndChinookSound" --tests "com.example.worlddomination.game.audio.OriginalAudioTest.tankBattleCuesUseTheRecoveredOriginalSounds"'
+          - id: sprite-transform-tests
+            check: Flash sprite transform tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashSpriteTransformTest"'
           - id: presentation-rng-isolation-tests
             check: Presentation RNG isolation tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.ReferenceRandomTest.copiedRandomPreservesTheStreamWithoutAdvancingCanonicalState"'
@@ -152,6 +164,9 @@ jobs:
           - id: asset-audio-tests
             check: Asset and audio integrity tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.*" --tests "com.example.worlddomination.game.audio.*" --tests "com.example.worlddomination.ExampleUnitTest"'
+          - id: original-ui-manifest-tests
+            check: Original UI asset manifest tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.OriginalUiAssetManifestTest"'
     steps:
       - name: Check out source
         uses: actions/checkout@v5
