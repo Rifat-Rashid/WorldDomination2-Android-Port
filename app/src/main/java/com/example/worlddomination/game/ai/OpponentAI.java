@@ -802,9 +802,9 @@ public final class OpponentAI {
                 -1, -1, null, -1);
     }
 
-    private static GameState.PlayerState mostHostileTarget(GameState state,
-                                                           GameState.PlayerState actor,
-                                                           boolean includeCeasefire) {
+    static GameState.PlayerState mostHostileTarget(GameState state,
+                                                   GameState.PlayerState actor,
+                                                   boolean includeCeasefire) {
         GameState.PlayerState best = null;
         int bestHostility = Integer.MIN_VALUE;
         for (GameState.PlayerState target : state.getPlayers()) {
@@ -812,7 +812,8 @@ public final class OpponentAI {
                     || (!includeCeasefire && actor.hasCeasefireWith(target.id))) {
                 continue;
             }
-            int hostility = 100 - actor.getRegardToward(target.id);
+            int hostility = 100 - actor.getRegardToward(target.id)
+                    + (target.id == actor.getPrimaryEnemyId() ? 1 : 0);
             if (hostility > bestHostility) {
                 bestHostility = hostility;
                 best = target;

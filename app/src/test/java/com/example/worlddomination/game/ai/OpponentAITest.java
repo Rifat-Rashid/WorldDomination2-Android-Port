@@ -15,6 +15,24 @@ import static org.junit.Assert.assertTrue;
 
 public final class OpponentAITest {
     @Test
+    public void specialOpponentUsesItsPrimaryEnemyToBreakEqualHostilityTies() {
+        GameState state = null;
+        for (long seed = 0; seed < 500; seed++) {
+            GameState candidate = new GameState(1, seed);
+            if (candidate.getPlayerState(1).isSpecialPerson()) {
+                state = candidate;
+                break;
+            }
+        }
+        assertNotNull("seed sweep should find a special first opponent", state);
+
+        GameState.PlayerState special = state.getPlayerState(1);
+        assertEquals(70, special.getRegardToward(0));
+        assertEquals(special.getPrimaryEnemyId(),
+                OpponentAI.mostHostileTarget(state, special, false).id);
+    }
+
+    @Test
     public void everyLivingOpponentPlansTwoActionsDuringTurnResolution() {
         GameState state = new GameState(1, 901L);
         state.selectAction(GameState.Action.RESOURCES);
