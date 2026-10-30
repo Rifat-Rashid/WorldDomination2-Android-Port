@@ -21,6 +21,65 @@ public final class GameStateTest {
     }
 
     @Test
+    public void battlefieldCitySelectionSeedsActionTargetAndRejectsEmptyCities() {
+        GameState state = new GameState(1, 0L, false);
+
+        assertTrue(state.selectBattlefieldCity(2, 3));
+        assertEquals(2, state.getSelectedIsland());
+        assertEquals(2, state.getSelectedMapCityOwner());
+        assertEquals(3, state.getSelectedMapCityIndex());
+
+        state.selectAction(GameState.Action.PROPAGANDA);
+        assertEquals(2, state.getSelectedTargetPlayer());
+        assertEquals(3, state.getSelectedTargetCity());
+        state.cancelSelection();
+
+        state.getPlayerState(3).getCity(2).populationMillions = 0;
+        assertFalse(state.selectBattlefieldCity(3, 2));
+        assertEquals(2, state.getSelectedMapCityOwner());
+        assertEquals(3, state.getSelectedMapCityIndex());
+        assertEquals(2, state.getSelectedTargetPlayer());
+        assertEquals(3, state.getSelectedTargetCity());
+        assertFalse(state.selectBattlefieldCity(-1, 0));
+        assertFalse(state.selectBattlefieldCity(2, 5));
+
+        state.selectIsland(1);
+        assertEquals(-1, state.getSelectedMapCityOwner());
+        assertEquals(-1, state.getSelectedMapCityIndex());
+        state.selectAction(GameState.Action.ATTACK);
+        assertEquals(1, state.getSelectedTargetPlayer());
+        assertEquals(0, state.getSelectedTargetCity());
+    }
+
+    @Test
+    public void battlefieldCitySelectionCannotTargetEliminatedPlayers() {
+        GameSetup setup = new GameSetup();
+        assertTrue(setup.toggleOpponent(0));
+        GameState state = new GameState(setup, 0L);
+
+        assertFalse(state.selectBattlefieldCity(4, 0));
+        assertEquals(-1, state.getSelectedMapCityOwner());
+        assertEquals(-1, state.getSelectedMapCityIndex());
+    }
+
+    @Test
+    public void actionTargetDoesNotKeepADepletedOrEliminatedMapCity() {
+        GameState state = new GameState(1, 0L, false);
+        assertTrue(state.selectBattlefieldCity(2, 3));
+
+        state.getPlayerState(2).getCity(3).populationMillions = 0;
+        state.selectAction(GameState.Action.PROPAGANDA);
+        assertEquals(2, state.getSelectedTargetPlayer());
+        assertEquals(0, state.getSelectedTargetCity());
+        state.cancelSelection();
+
+        state.getPlayerState(2).alive = false;
+        state.selectAction(GameState.Action.ATTACK);
+        assertEquals(1, state.getSelectedTargetPlayer());
+        assertEquals(0, state.getSelectedTargetCity());
+    }
+
+    @Test
     public void setupCreatesOnlySelectedRivalsWithTheirSourceIdentity() {
         GameSetup setup = new GameSetup();
         setup.setDifficulty(2);
