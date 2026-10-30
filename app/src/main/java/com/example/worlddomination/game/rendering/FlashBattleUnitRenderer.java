@@ -36,18 +36,20 @@ public final class FlashBattleUnitRenderer {
                 if (frame == null) {
                     continue;
                 }
-                TextureRegion region = assets.getShape(frame.shapeId);
-                if (region == null) {
-                    continue;
+                for (FlashAnimationTimeline.Layer layer : frame.layers) {
+                    TextureRegion region = assets.getShape(layer.shapeId);
+                    if (region == null) {
+                        continue;
+                    }
+                    float width = region.getRegionWidth() * mapScale;
+                    float height = region.getRegionHeight() * mapScale;
+                    float x = BattlefieldCityLayout.sourceX(mapBounds,
+                            actor.sourceX + layer.tx, actor.islandPlayerId);
+                    float top = BattlefieldCityLayout.sourceY(mapBounds,
+                            actor.sourceY + layer.ty);
+                    batch.draw(region, x, top - height, 0f, 0f, width, height,
+                            layer.a, layer.d, 0f);
                 }
-                float width = region.getRegionWidth() * mapScale;
-                float height = region.getRegionHeight() * mapScale;
-                float x = BattlefieldCityLayout.sourceX(mapBounds,
-                        actor.sourceX + frame.tx, actor.islandPlayerId);
-                float top = BattlefieldCityLayout.sourceY(mapBounds,
-                        actor.sourceY + frame.ty);
-                batch.draw(region, x, top - height, 0f, 0f, width, height,
-                        frame.a, frame.d, 0f);
             }
         }
     }
