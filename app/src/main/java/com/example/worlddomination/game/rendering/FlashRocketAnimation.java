@@ -11,11 +11,16 @@ public final class FlashRocketAnimation {
         public float sourceY;
         /** Sprite orientation in libGDX counterclockwise degrees. */
         public float rotationDegrees;
+        /** Original sub_rocket movie clip uses a 50 percent vertical scale. */
+        public float scaleY = 1f;
         /** Island used to project this actor through the battlefield crop. */
         public int islandPlayerId;
         /** Whether the rocket sprite is currently visible. */
         public boolean visible;
     }
+
+    /** Unit.wait_for_sub_launch releases the rocket after 35 source ticks. */
+    public static final int SUBMARINE_LAUNCH_DELAY_TICKS = 35;
 
     private static final int TRAIL_INTERVAL_TICKS = 5;
     private static final int TRAIL_LIFETIME_TICKS = 50;
@@ -81,6 +86,7 @@ public final class FlashRocketAnimation {
         rocket.sourceX = route.launch.x;
         rocket.sourceY = route.launch.y;
         rocket.islandPlayerId = route.attackerPlayerId;
+        rocket.scaleY = route.submarineLaunch ? 0.5f : 1f;
     }
 
     /** Advances one original 24 Hz source tick and reports the exact impact tick once. */

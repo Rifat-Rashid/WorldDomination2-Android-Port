@@ -2786,6 +2786,18 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                     animationIndex++;
                     continue;
                 }
+                if (FlashBattleRoutes.supportsSubmarineRocketStrike(event)) {
+                    FlashBattleRoutes.RocketStrike route =
+                            FlashBattleRoutes.createSubmarineRocketStrike(
+                                    event.attackerPlayerId, event.defenderPlayerId,
+                                    event.cityIndex);
+                    rocketBattleAnimations.add(new FlashRocketAnimation(route,
+                            animationIndex * 36
+                                    + FlashRocketAnimation.SUBMARINE_LAUNCH_DELAY_TICKS,
+                            SourceCombatAnimationMapping.linkageFor(event), cue));
+                    animationIndex++;
+                    continue;
+                }
                 if (FlashBattleRoutes.supports(event)) {
                     FlashBattleRoutes.SoldierOneAttack route =
                             FlashBattleRoutes.createSoldierOneAttack(
