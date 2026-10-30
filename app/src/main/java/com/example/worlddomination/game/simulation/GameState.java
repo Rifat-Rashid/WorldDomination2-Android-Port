@@ -929,9 +929,6 @@ public final class GameState {
         if (definition.group == 7 && !getHuman().allowsSpecialTechnologies()) {
             return false;
         }
-        if (queuedTechnology(technology)) {
-            return false;
-        }
         if (definition.prerequisite != null
                 && !getHuman().hasTechnology(definition.prerequisite)) {
             return false;
@@ -2944,15 +2941,6 @@ public final class GameState {
         long points = sourceWeights[actionIndex] + random.nextInt(51);
         int effectiveMultiplier = multiplier == 0 ? 1 : multiplier;
         player.score += points * effectiveMultiplier * difficulty;
-    }
-
-    private boolean queuedTechnology(String technology) {
-        for (ActionOrder order : queuedActions) {
-            if (order.action == Action.RESEARCH && order.technologies.contains(technology)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private static int productionGroup(String category) {

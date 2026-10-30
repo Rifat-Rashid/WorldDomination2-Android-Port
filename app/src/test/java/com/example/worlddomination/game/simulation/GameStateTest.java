@@ -352,6 +352,30 @@ public final class GameStateTest {
     }
 
     @Test
+    public void sameUninventedTechnologyCanFillBothSlotsButResearchesOnce() {
+        GameState state = new GameState(1, 55L, false);
+        GameState.PlayerState human = state.getHuman();
+        int startingFunds = human.moneyMillions;
+        int researchCost = state.getTechnologyCost("soldier2");
+
+        for (int slot = 0; slot < 2; slot++) {
+            state.selectAction(GameState.Action.RESEARCH);
+            assertTrue(state.isResearchAvailable("soldier2"));
+            assertTrue(state.selectResearchTechnology("soldier2"));
+            assertTrue(state.acceptSelectedAction());
+            assertEquals(startingFunds - (slot + 1) * researchCost,
+                    state.getTurnMoneyMillions());
+        }
+        assertEquals(2, state.getQueuedActionCount());
+
+        state.confirmTurn();
+
+        assertTrue(human.hasTechnology("soldier2"));
+        assertEquals(startingFunds - researchCost, human.moneyMillions);
+        assertEquals(human.moneyMillions, state.getTurnMoneyMillions());
+    }
+
+    @Test
     public void specialTechnologiesUnlockAfterFourLevelFourTechnologies() {
         GameState state = new GameState(1, 71L, false);
         GameState.PlayerState human = state.getHuman();
