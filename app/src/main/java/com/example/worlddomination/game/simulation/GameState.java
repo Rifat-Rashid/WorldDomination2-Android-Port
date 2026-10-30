@@ -471,11 +471,13 @@ public final class GameState {
     private final PlayerState[] players = new PlayerState[5];
     private final List<ActionOrder> queuedActions = new ArrayList<>(MAX_TURN_ACTIONS);
     private final List<String> messages = new ArrayList<>();
+    private List<String> researchChoicesCache = Collections.emptyList();
+    private boolean researchChoicesDirty = true;
     private final Random random;
     private Action selectedAction;
     private String selectedProductionCategory = "soldier";
-    private int selectedProductionPercent;
-    private String selectedTechnology;
+    private final Map<String, Integer> selectedProductionPercentages = new LinkedHashMap<>();
+    private final Set<String> selectedResearchTechnologies = new LinkedHashSet<>();
     private int selectedTargetPlayer = 1;
     private int selectedTargetCity;
     private String selectedAttackWeapon = "soldier1";
@@ -867,19 +869,13 @@ public final class GameState {
             cancelSelection();
             return;
         }
-        int queuedIndex = queuedActionIndex(action);
-        if (queuedIndex >= 0) {
-            removeQueuedAction(queuedIndex);
-            selectedAction = null;
-            return;
-        }
         if (queuedActions.size() >= MAX_TURN_ACTIONS) {
             messages.add("Both action slots are full. Confirm the turn or clear them.");
             selectedAction = null;
             return;
         }
         selectedAction = action;
-        selectedTechnology = null;
+        selectedResearchTechnologies.clear();
         selectedTargetPlayer = selectedIsland > 0 ? selectedIsland : 1;
         selectedTargetCity = 0;
         selectedAttackWeapon = firstAvailableAttackWeapon();
@@ -889,11 +885,21 @@ public final class GameState {
         selectedDefenseWeapon = firstAvailableDefenseWeapon();
         selectedSpyBuilding = "spyCenter";
         selectedDiplomacyOption = 0;
-        selectedProductionCategory = "soldier";
-        selectedProductionPercent = 0;
+        resetProductionSelection();
     }
 
-    /** Sets a production row only after its source technology group is unlocked. */
+    /** Selects one production row without changing its already allocated share. */
+    public void selectProductionCategory(String category) {
+        if (selectedAction != Action.PRODUCTION) {
+            throw new IllegalStateException("Select Production before choosing a category");
+        }
+        if (productionGroup(category) == 0) {
+            throw new IllegalArgumentException("Unknown production category: " + category);
+        }
+        selectedProductionCategory = category;
+    }
+
+    /** Sets one unlocked category's share while preserving the total 100 percent budget. */
     public boolean configureProduction(String category, int percent) {
         if (selectedAction != Action.PRODUCTION) {
             throw new IllegalStateException("Select Production before setting its investment");
@@ -910,25 +916,66 @@ public final class GameState {
             trimMessages();
             return false;
         }
+        if (percent > getProductionMaximumPercent(category)) {
+            throw new IllegalArgumentException("Production allocations cannot exceed 100 percent");
+        }
         selectedProductionCategory = category;
-        selectedProductionPercent = percent;
+        if (percent == 0) {
+            selectedProductionPercentages.remove(category);
+        } else {
+            selectedProductionPercentages.put(category, percent);
+        }
         return true;
     }
 
-    /** Selects a technology only when its source prerequisite and funds are satisfied. */
+    /** Toggles the next technology in one research group, as the source interface does. */
     public boolean selectResearchTechnology(String technology) {
-        if (selectedAction != Action.RESEARCH || !isResearchAvailable(technology)) {
+        if (selectedAction != Action.RESEARCH) {
             return false;
         }
-        selectedTechnology = technology;
+        if (selectedResearchTechnologies.remove(technology)) {
+            return true;
+        }
+        TechnologyCatalog.Definition definition = TechnologyCatalog.byName(technology);
+        if (!isResearchChoice(technology)) {
+            return false;
+        }
+        if (definition.group == 7 && !getHuman().allowsSpecialTechnologies()) {
+            messages.add("You need to invent 4 complete technologies before you can start "
+                    + "inventing special weapons.");
+            return false;
+        }
+        if (definition.costMillions > getHuman().turnMoneyMillions
+                - getSelectedResearchCostMillions()) {
+            messages.add("Not enough money!");
+            return false;
+        }
+        selectedResearchTechnologies.add(technology);
         return true;
+    }
+
+    /** Next unresearched entry in each source research group, including locked choices. */
+    public List<String> getResearchChoices() {
+        if (!researchChoicesDirty) {
+            return researchChoicesCache;
+        }
+        List<String> choices = new ArrayList<>(7);
+        for (int group = 1; group <= 7; group++) {
+            String candidate = nextUnresearchedTechnology(group);
+            if (candidate != null) {
+                choices.add(candidate);
+            }
+        }
+        researchChoicesCache = Collections.unmodifiableList(choices);
+        researchChoicesDirty = false;
+        return researchChoicesCache;
     }
 
     public List<String> getAvailableResearch() {
         List<String> available = new ArrayList<>();
-        for (TechnologyCatalog.Definition definition : TechnologyCatalog.all()) {
-            if (isResearchAvailable(definition.name)) {
-                available.add(definition.name);
+        for (String choice : getResearchChoices()) {
+            if (isResearchAvailable(choice)) {
+                available.add(choice);
             }
         }
         return Collections.unmodifiableList(available);
@@ -936,20 +983,61 @@ public final class GameState {
 
     public boolean isResearchAvailable(String technology) {
         TechnologyCatalog.Definition definition = TechnologyCatalog.byName(technology);
-        if (definition == null || getHuman().hasTechnology(definition.name)) {
+        if (definition == null || !isResearchChoice(technology)) {
             return false;
         }
         if (definition.group == 7 && !getHuman().allowsSpecialTechnologies()) {
             return false;
         }
-        if (queuedTechnology(technology)) {
-            return false;
+        if (selectedResearchTechnologies.contains(technology)) {
+            return true;
+        }
+        int remaining = getHuman().turnMoneyMillions;
+        if (selectedAction == Action.RESEARCH) {
+            remaining -= getSelectedResearchCostMillions();
         }
         if (definition.prerequisite != null
                 && !getHuman().hasTechnology(definition.prerequisite)) {
             return false;
         }
-        return definition.costMillions <= getHuman().turnMoneyMillions;
+        return definition.costMillions <= remaining;
+    }
+
+    private boolean isResearchChoice(String technology) {
+        TechnologyCatalog.Definition definition = TechnologyCatalog.byName(technology);
+        return definition != null && definition.group >= 1 && definition.group <= 7
+                && !getHuman().hasTechnology(definition.name)
+                && technology.equals(nextUnresearchedTechnology(definition.group));
+    }
+
+    private String nextUnresearchedTechnology(int group) {
+        for (TechnologyCatalog.Definition definition : TechnologyCatalog.all()) {
+            if (definition.group == group && !getHuman().hasTechnology(definition.name)) {
+                return definition.name;
+            }
+        }
+        return null;
+    }
+
+    private void invalidateResearchChoices() {
+        researchChoicesDirty = true;
+    }
+
+    public boolean isResearchTechnologySelected(String technology) {
+        return selectedResearchTechnologies.contains(technology);
+    }
+
+    public List<String> getSelectedResearchTechnologies() {
+        return Collections.unmodifiableList(
+                new ArrayList<>(selectedResearchTechnologies));
+    }
+
+    public int getSelectedResearchCostMillions() {
+        int total = 0;
+        for (String technology : selectedResearchTechnologies) {
+            total += getTechnologyCost(technology);
+        }
+        return total;
     }
 
     public int getTechnologyCost(String technology) {
@@ -963,7 +1051,8 @@ public final class GameState {
     }
 
     public String getSelectedTechnology() {
-        return selectedTechnology;
+        return selectedResearchTechnologies.isEmpty()
+                ? null : selectedResearchTechnologies.iterator().next();
     }
 
     public int getSelectedTargetPlayer() {
@@ -1155,7 +1244,8 @@ public final class GameState {
             boolean soldier = "soldier".equals(type);
             boolean readySpy = "spy".equals(type)
                     && weapon.definition.level <= getHuman().spyReadiness / 25;
-            if (weapon.active && weapon.inStock > 0 && (soldier || readySpy)) {
+            if (weapon.active && availableWeaponStock(0, weapon) > 0
+                    && (soldier || readySpy)) {
                 available.add(weapon.definition.name);
             }
         }
@@ -1172,9 +1262,9 @@ public final class GameState {
         WeaponState weapon = getHuman().weapons.get(weaponName);
         boolean soldier = weapon != null && "soldier".equals(weapon.definition.type);
         if (!target.alive || totalPopulation(target) <= 0 || city == null
-                || weapon == null || !weapon.active || weapon.inStock <= 0
+                || city.populationMillions <= 0
+                || weapon == null || !weapon.active || availableWeaponStock(0, weapon) <= 0
                 || (!soldier && !canUseSpy(getHuman(), weapon))
-                || (soldier && city.populationMillions <= 0)
                 || (soldier && target.hasCeasefireWith(getHuman().id))) {
             return false;
         }
@@ -1189,7 +1279,8 @@ public final class GameState {
         PlayerState player = playerById(playerId);
         List<String> available = new ArrayList<>();
         for (WeaponState weapon : player.weapons.values()) {
-            if (isCarrier(weapon) && weapon.active && weapon.inStock > 0
+            if (isCarrier(weapon) && weapon.active
+                    && availableWeaponStock(playerId, weapon) > 0
                     && !getAvailablePreparedPayloads(playerId,
                     weapon.definition.name).isEmpty()) {
                 available.add(weapon.definition.name);
@@ -1208,7 +1299,7 @@ public final class GameState {
         }
         for (WeaponState payload : player.weapons.values()) {
             if (isCompatiblePayload(carrier, payload) && payload.active
-                    && payload.inStock > 0) {
+                    && availableWeaponStock(playerId, payload) > 0) {
                 available.add(payload.definition.name);
             }
         }
@@ -1270,10 +1361,11 @@ public final class GameState {
         return Collections.unmodifiableList(threats);
     }
 
-    private static void addAvailableDefense(PlayerState player, String name,
-                                            List<String> destination) {
+    private void addAvailableDefense(PlayerState player, String name,
+                                     List<String> destination) {
         WeaponState weapon = player.weapons.get(name);
-        if (weapon != null && weapon.active && weapon.inStock > 0) {
+        if (weapon != null && weapon.active
+                && availableWeaponStock(player.id, weapon) > 0) {
             destination.add(name);
         }
     }
@@ -1312,7 +1404,7 @@ public final class GameState {
                 || target.hasCeasefireWith(0)
                 || carrier == null || "ship".equals(carrier.definition.type)
                 || !isCompatiblePayload(carrier, payload) || !payload.active
-                || payload.inStock <= 0) {
+                || availableWeaponStock(0, payload) <= 0) {
             return false;
         }
         selectedPreparedCarrier = getHuman().preparedCarrierName;
@@ -1370,7 +1462,7 @@ public final class GameState {
         if (replacingOldest && selectedShipStrikes.get(0).payloadName.equals(payloadName)) {
             selected--;
         }
-        return payload.inStock - selected;
+        return availableWeaponStock(0, payload) - selected;
     }
 
     public int getSelectedShipStrikeCount() {
@@ -1409,7 +1501,8 @@ public final class GameState {
         WeaponState payload = getHuman().weapons.get(selectedPreparedPayload);
         return target != null && target.alive && city != null && city.populationMillions > 0
                 && !target.hasCeasefireWith(0)
-                && isCompatiblePayload(carrier, payload) && payload.active && payload.inStock > 0;
+                && isCompatiblePayload(carrier, payload) && payload.active
+                && availableWeaponStock(0, payload) > 0;
     }
 
     private boolean canAcceptPreparedShipAttack() {
@@ -1436,7 +1529,8 @@ public final class GameState {
             selectedPayloads.put(strike.payloadName, count == null ? 1 : count + 1);
         }
         for (Map.Entry<String, Integer> selected : selectedPayloads.entrySet()) {
-            if (getWeaponStock(0, selected.getKey()) < selected.getValue()) {
+            WeaponState payload = getHuman().weapons.get(selected.getKey());
+            if (availableWeaponStock(0, payload) < selected.getValue()) {
                 return false;
             }
         }
@@ -1534,15 +1628,46 @@ public final class GameState {
         CityState city = target == null ? null : target.getCity(selectedTargetCity);
         WeaponState weapon = getHuman().weapons.get(selectedAttackWeapon);
         return target != null && target.alive && totalPopulation(target) > 0 && city != null
-                && weapon != null && weapon.active && weapon.inStock > 0
+                && city.populationMillions > 0
+                && weapon != null && weapon.active
+                && availableWeaponStock(0, weapon) > 0
                 && ("soldier".equals(weapon.definition.type)
-                ? city.populationMillions > 0 && !target.hasCeasefireWith(getHuman().id)
+                ? !target.hasCeasefireWith(getHuman().id)
                 : canUseSpy(getHuman(), weapon));
     }
 
     private String firstAvailableAttackWeapon() {
         List<String> available = getAvailableAttackWeapons();
         return available.isEmpty() ? "" : available.get(0);
+    }
+
+    /** Stock already marked in-use by queued source turn actions. */
+    private int availableWeaponStock(int playerId, WeaponState weapon) {
+        if (weapon == null) {
+            return 0;
+        }
+        int reserved = 0;
+        for (ActionOrder order : queuedActions) {
+            if (order.playerId != playerId) {
+                continue;
+            }
+            if ((order.action == Action.ATTACK || order.action == Action.DEFENSE
+                    || order.action == Action.PREPARED_ATTACK)
+                    && weapon.definition.name.equals(order.weaponName)) {
+                reserved++;
+            }
+            if (order.action == Action.PREPARED_ATTACK) {
+                if (weapon.definition.name.equals(order.payloadName)) {
+                    reserved++;
+                }
+                for (ShipStrike strike : order.shipStrikes) {
+                    if (weapon.definition.name.equals(strike.payloadName)) {
+                        reserved++;
+                    }
+                }
+            }
+        }
+        return Math.max(0, weapon.inStock - reserved);
     }
 
     public int getCityPopulationMillions(int playerId, int cityIndex) {
@@ -1558,11 +1683,48 @@ public final class GameState {
     }
 
     public int getSelectedProductionPercent() {
-        return selectedProductionPercent;
+        return getProductionPercent(selectedProductionCategory);
+    }
+
+    public int getProductionPercent(String category) {
+        Integer percent = selectedProductionPercentages.get(category);
+        return percent == null ? 0 : percent;
+    }
+
+    public int getSelectedProductionMaximumPercent() {
+        return getProductionMaximumPercent(selectedProductionCategory);
+    }
+
+    private int getProductionMaximumPercent(String category) {
+        int allocatedElsewhere = 0;
+        for (Map.Entry<String, Integer> allocation : selectedProductionPercentages.entrySet()) {
+            if (!allocation.getKey().equals(category)) {
+                allocatedElsewhere += allocation.getValue();
+            }
+        }
+        return Math.max(0, 100 - allocatedElsewhere);
+    }
+
+    public int getSelectedProductionAllocatedPercent() {
+        int total = 0;
+        for (Integer percent : selectedProductionPercentages.values()) {
+            total += percent;
+        }
+        return total;
+    }
+
+    public Map<String, Integer> getSelectedProductionInvestments() {
+        return Collections.unmodifiableMap(
+                new LinkedHashMap<>(selectedProductionPercentages));
     }
 
     public int getSelectedProductionBudgetMillions() {
-        return getHuman().turnMoneyMillions * selectedProductionPercent / 100;
+        return getHuman().turnMoneyMillions * getSelectedProductionPercent() / 100;
+    }
+
+    public int getSelectedProductionTotalBudgetMillions() {
+        return (int) Math.round(getHuman().turnMoneyMillions
+                * (double) getSelectedProductionAllocatedPercent() / 100.0d);
     }
 
     public int getTurnMoneyMillions() {
@@ -1579,21 +1741,29 @@ public final class GameState {
         }
         int reserved = 0;
         if (selectedAction == Action.RESEARCH) {
-            if (selectedTechnology == null || !isResearchAvailable(selectedTechnology)) {
+            if (selectedResearchTechnologies.isEmpty()) {
                 messages.add("Choose an available technology to research.");
                 return false;
             }
-            reserved = getTechnologyCost(selectedTechnology);
-        } else if (selectedAction == Action.PRODUCTION) {
-            if (selectedProductionPercent > 0
-                    && !isProductionGroupUnlocked(getHuman(),
-                    productionGroup(selectedProductionCategory))) {
-                messages.add("You have not yet invented this Technology");
-                trimMessages();
-                return false;
+            for (String technology : selectedResearchTechnologies) {
+                if (!isResearchAvailable(technology)) {
+                    messages.add("Choose an available technology to research.");
+                    return false;
+                }
             }
-            if (selectedProductionPercent > 0) {
-                reserved = getSelectedProductionBudgetMillions();
+            reserved = getSelectedResearchCostMillions();
+        } else if (selectedAction == Action.PRODUCTION) {
+            if (!selectedProductionPercentages.isEmpty()) {
+                for (Map.Entry<String, Integer> investment
+                        : selectedProductionPercentages.entrySet()) {
+                    if (!isProductionGroupUnlocked(getHuman(),
+                            productionGroup(investment.getKey()))) {
+                        messages.add("You have not yet invented this Technology");
+                        trimMessages();
+                        return false;
+                    }
+                }
+                reserved = getSelectedProductionTotalBudgetMillions();
             }
         } else if (selectedAction == Action.ATTACK && !canAcceptAttack()) {
             messages.add("Choose a living target city and an available unit.");
@@ -1622,12 +1792,22 @@ public final class GameState {
             return false;
         }
         Map<String, Integer> productionBudgets = new LinkedHashMap<>();
-        if (selectedAction == Action.PRODUCTION && reserved > 0) {
-            productionBudgets.put(selectedProductionCategory, reserved);
+        if (selectedAction == Action.PRODUCTION) {
+            for (String category : STARTING_PRODUCTION_CATEGORIES) {
+                int percent = getProductionPercent(category);
+                if (percent > 0) {
+                    productionBudgets.put(category,
+                            getHuman().turnMoneyMillions * percent / 100);
+                }
+            }
         }
         List<String> technologies = new ArrayList<>();
-        if (selectedAction == Action.RESEARCH && selectedTechnology != null) {
-            technologies.add(selectedTechnology);
+        if (selectedAction == Action.RESEARCH) {
+            for (TechnologyCatalog.Definition definition : TechnologyCatalog.all()) {
+                if (selectedResearchTechnologies.contains(definition.name)) {
+                    technologies.add(definition.name);
+                }
+            }
         }
         ActionOrder order = new ActionOrder(0, selectedAction, productionBudgets,
                 technologies, reserved,
@@ -1640,10 +1820,13 @@ public final class GameState {
                         && getHuman().preparedCarrierName == null,
                 selectedSpyBuilding, selectedDiplomacyOption, selectedShipStrikes);
         queuedActions.add(order);
+        if (selectedAction == Action.RESEARCH) {
+            invalidateResearchChoices();
+        }
         getHuman().turnMoneyMillions -= reserved;
         messages.add(selectedAction.label + " queued.");
         selectedAction = null;
-        selectedTechnology = null;
+        selectedResearchTechnologies.clear();
         selectedTargetPlayer = selectedIsland > 0 ? selectedIsland : 1;
         selectedTargetCity = 0;
         selectedAttackWeapon = firstAvailableAttackWeapon();
@@ -1652,14 +1835,14 @@ public final class GameState {
         selectedShipStrikes.clear();
         selectedDefenseWeapon = firstAvailableDefenseWeapon();
         selectedDiplomacyOption = 0;
+        resetProductionSelection();
         return true;
     }
 
     public void cancelSelection() {
         selectedAction = null;
-        selectedTechnology = null;
-        selectedProductionPercent = 0;
-        selectedProductionCategory = "soldier";
+        selectedResearchTechnologies.clear();
+        resetProductionSelection();
         selectedDiplomacyOption = 0;
         selectedPreparedCarrier = null;
         selectedPreparedPayload = null;
@@ -1667,9 +1850,17 @@ public final class GameState {
         selectedDefenseWeapon = null;
     }
 
+    private void resetProductionSelection() {
+        selectedProductionPercentages.clear();
+        selectedProductionCategory = "soldier";
+    }
+
     public void removeQueuedAction(int slot) {
         if (slot >= 0 && slot < queuedActions.size()) {
             ActionOrder removed = queuedActions.remove(slot);
+            if (removed.action == Action.RESEARCH) {
+                invalidateResearchChoices();
+            }
             getHuman().turnMoneyMillions = Math.min(getHuman().moneyMillions,
                     getHuman().turnMoneyMillions + removed.reservedMillions);
             messages.add(removed.action.label + " removed.");
@@ -1678,6 +1869,7 @@ public final class GameState {
 
     public void clearQueuedActions() {
         queuedActions.clear();
+        invalidateResearchChoices();
         getHuman().turnMoneyMillions = getHuman().moneyMillions;
         cancelSelection();
     }
@@ -1864,6 +2056,7 @@ public final class GameState {
         getHuman().turnMoneyMillions = getHuman().moneyMillions;
         messages.add("Turn " + turn + " complete.");
         queuedActions.clear();
+        invalidateResearchChoices();
         cancelSelection();
         trimMessages();
     }
@@ -2169,6 +2362,9 @@ public final class GameState {
                 continue;
             }
             researcher.inventedTechnologies.add(technology.name);
+            if (researcher.id == 0) {
+                invalidateResearchChoices();
+            }
             WeaponState weapon = researcher.weapons.get(technology.name);
             if (weapon != null) {
                 weapon.active = true;
@@ -2588,6 +2784,9 @@ public final class GameState {
             } else {
                 matchingWeapon.active = true;
                 attacker.inventedTechnologies.add(targetWeapon.definition.technology);
+                if (attacker.id == 0) {
+                    invalidateResearchChoices();
+                }
                 messages.add("Spy uncovered " + targetWeapon.definition.technology + " technology.");
             }
             addToHighscore(attacker, 2, 1);
@@ -2924,29 +3123,11 @@ public final class GameState {
         }
     }
 
-    private int queuedActionIndex(Action action) {
-        for (int index = 0; index < queuedActions.size(); index++) {
-            if (queuedActions.get(index).action == action) {
-                return index;
-            }
-        }
-        return -1;
-    }
-
     void addToHighscore(PlayerState player, int actionIndex, int multiplier) {
         int[] sourceWeights = {151, 1213, 1001, 2001, 3002, 200, 101, 910};
         long points = sourceWeights[actionIndex] + random.nextInt(51);
         int effectiveMultiplier = multiplier == 0 ? 1 : multiplier;
         player.score += points * effectiveMultiplier * difficulty;
-    }
-
-    private boolean queuedTechnology(String technology) {
-        for (ActionOrder order : queuedActions) {
-            if (order.action == Action.RESEARCH && order.technologies.contains(technology)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private static int productionGroup(String category) {

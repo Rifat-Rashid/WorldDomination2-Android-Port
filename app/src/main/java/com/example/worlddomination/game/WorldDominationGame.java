@@ -67,6 +67,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private static final Color PANEL_EDGE = new Color(0.40f, 0.56f, 0.63f, 1f);
     private static final Color BUTTON = new Color(0.10f, 0.20f, 0.26f, 1f);
     private static final Color BUTTON_SELECTED = new Color(0.12f, 0.34f, 0.45f, 1f);
+    private static final Color RESEARCH_UNAVAILABLE_TEXT = new Color(0.95f, 0.36f, 0.25f, 1f);
     private static final Color DISABLED_TEXT = new Color(0.55f, 0.65f, 0.69f, 1f);
     private static final Color GREEN = new Color(0.17f, 0.95f, 0.30f, 1f);
     private static final Color TITLE_TEXT = new Color(0.86f, 0.91f, 0.93f, 1f);
@@ -353,15 +354,15 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         productionSlider.set(modal.x + modal.width * 0.20f, modal.y + modal.height * 0.22f,
                 modal.width * 0.60f, 13f);
         float researchRowHeight = Math.min(18f, (modal.height - 83f) / RESEARCH_ROWS_PER_PAGE);
-        float researchTop = modal.y + modal.height - 44f;
+        float researchTop = modal.y + modal.height - 50f;
         for (int i = 0; i < researchRows.length; i++) {
             researchRows[i].set(modal.x + 9f,
                     researchTop - (i + 1) * researchRowHeight,
                     modal.width - 18f, researchRowHeight - 1.5f);
         }
-        researchPrevious.set(modal.x + modal.width * 0.36f, modal.y + modal.height - 33f,
+        researchPrevious.set(modal.x + modal.width * 0.36f, modal.y + modal.height - 49f,
                 modal.width * 0.10f, 16f);
-        researchNext.set(modal.x + modal.width * 0.54f, modal.y + modal.height - 33f,
+        researchNext.set(modal.x + modal.width * 0.54f, modal.y + modal.height - 49f,
                 modal.width * 0.10f, 16f);
         float attackControlWidth = Math.min(25f, modal.width * 0.12f);
         float attackControlHeight = Math.min(18f, modal.height * 0.085f);
@@ -1430,10 +1431,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             return;
         }
 
-        java.util.List<String> availableResearch = action == GameState.Action.RESEARCH
-                ? game.getAvailableResearch() : java.util.Collections.emptyList();
+        java.util.List<String> researchChoices = action == GameState.Action.RESEARCH
+                ? game.getResearchChoices() : java.util.Collections.emptyList();
         int pageCount = Math.max(1,
-                (availableResearch.size() + RESEARCH_ROWS_PER_PAGE - 1) / RESEARCH_ROWS_PER_PAGE);
+                (researchChoices.size() + RESEARCH_ROWS_PER_PAGE - 1) / RESEARCH_ROWS_PER_PAGE);
         researchPage = Math.min(researchPage, pageCount - 1);
 
         shapes.setProjectionMatrix(camera.combined);
@@ -1474,11 +1475,11 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             font.getData().setScale(0.58f);
             for (int i = 0; i < researchRows.length; i++) {
                 int item = first + i;
-                if (item >= availableResearch.size()) {
+                if (item >= researchChoices.size()) {
                     break;
                 }
-                String technology = availableResearch.get(item);
-                boolean selected = technology.equals(game.getSelectedTechnology());
+                String technology = researchChoices.get(item);
+                boolean selected = game.isResearchTechnologySelected(technology);
                 shapes.setColor(selected ? BUTTON_SELECTED : BUTTON);
                 Rectangle row = researchRows[i];
                 shapes.rect(row.x, row.y, row.width, row.height);
@@ -1539,7 +1540,11 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                     modal.y + modal.height - 37f, 8f);
             for (int i = 0; i < productionCategoryRows.length; i++) {
                 Rectangle row = productionCategoryRows[i];
-                drawCentered(PRODUCTION_CATEGORIES[i], row.x + row.width / 2f,
+                String category = PRODUCTION_CATEGORIES[i].toLowerCase(
+                        java.util.Locale.US);
+                drawCentered(PRODUCTION_CATEGORIES[i] + " "
+                                + game.getProductionPercent(category) + "%",
+                        row.x + row.width / 2f,
                         row.y + row.height / 2f + 2.5f, 7f);
             }
             drawCentered(game.getSelectedProductionPercent() + "%    Budget: $"
@@ -1551,16 +1556,19 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             font.getData().setScale(0.58f);
             for (int i = 0; i < researchRows.length; i++) {
                 int item = first + i;
-                if (item >= availableResearch.size()) {
+                if (item >= researchChoices.size()) {
                     break;
                 }
-                String technology = availableResearch.get(item);
+                String technology = researchChoices.get(item);
                 Rectangle row = researchRows[i];
                 String label = game.getTechnologyLabel(technology) + "   $"
                         + game.getTechnologyCost(technology) + "M";
+                font.setColor(game.isResearchAvailable(technology)
+                        ? Color.WHITE : RESEARCH_UNAVAILABLE_TEXT);
                 font.draw(batch, label, row.x + 7f, row.y + row.height * 0.72f);
             }
             font.getData().setScale(originalScale);
+            font.setColor(TITLE_TEXT);
             drawCentered("PREV", researchPrevious.x + researchPrevious.width / 2f,
                     researchPrevious.y + researchPrevious.height / 2f + 2f, 6.5f);
             drawCentered((researchPage + 1) + " / " + pageCount,
@@ -1568,8 +1576,11 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                     researchPrevious.y + researchPrevious.height / 2f + 2f, 6.5f);
             drawCentered("NEXT", researchNext.x + researchNext.width / 2f,
                     researchNext.y + researchNext.height / 2f + 2f, 6.5f);
-            if (availableResearch.isEmpty()) {
-                drawCentered("No technology can be researched with the current budget.",
+            drawCentered("ESTIMATED TOTAL: $ "
+                            + game.getSelectedResearchCostMillions() + "M",
+                    modal.x + modal.width / 2f, modal.y + 39f, 7f);
+            if (researchChoices.isEmpty()) {
+                drawCentered("No research choices available.",
                         modal.x + modal.width / 2f, modal.y + modal.height / 2f, 8f);
             }
         } else if (action == GameState.Action.ATTACK
@@ -2281,16 +2292,17 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             } else if (action == GameState.Action.PRODUCTION) {
                 for (int i = 0; i < productionCategoryRows.length; i++) {
                     if (productionCategoryRows[i].contains(x, y)) {
-                        game.configureProduction(
-                                PRODUCTION_CATEGORIES[i].toLowerCase(java.util.Locale.US),
-                                game.getSelectedProductionPercent());
+                        game.selectProductionCategory(PRODUCTION_CATEGORIES[i]
+                                .toLowerCase(java.util.Locale.US));
                         return;
                     }
                 }
                 if (productionSlider.contains(x, y)) {
                     float sliderX = Math.max(productionSlider.x,
                             Math.min(x, productionSlider.x + productionSlider.width));
-                    int percent = Math.round(100f * (sliderX - productionSlider.x)
+                    int maximumPercent = game.getSelectedProductionMaximumPercent();
+                    int percent = Math.round(maximumPercent
+                            * (sliderX - productionSlider.x)
                             / productionSlider.width);
                     game.configureProduction(game.getSelectedProductionCategory(), percent);
                     return;
@@ -2300,18 +2312,18 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                     researchPage = Math.max(0, researchPage - 1);
                     return;
                 }
-                int pageCount = Math.max(1, (game.getAvailableResearch().size()
+                int pageCount = Math.max(1, (game.getResearchChoices().size()
                         + RESEARCH_ROWS_PER_PAGE - 1) / RESEARCH_ROWS_PER_PAGE);
                 if (researchNext.contains(x, y)) {
                     researchPage = Math.min(pageCount - 1, researchPage + 1);
                     return;
                 }
-                java.util.List<String> available = game.getAvailableResearch();
+                java.util.List<String> choices = game.getResearchChoices();
                 int first = researchPage * RESEARCH_ROWS_PER_PAGE;
                 for (int i = 0; i < researchRows.length; i++) {
                     int item = first + i;
-                    if (item < available.size() && researchRows[i].contains(x, y)) {
-                        game.selectResearchTechnology(available.get(item));
+                    if (item < choices.size() && researchRows[i].contains(x, y)) {
+                        game.selectResearchTechnology(choices.get(item));
                         return;
                     }
                 }
