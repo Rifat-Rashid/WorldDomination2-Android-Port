@@ -1240,9 +1240,9 @@ public final class GameState {
         WeaponState weapon = getHuman().weapons.get(weaponName);
         boolean soldier = weapon != null && "soldier".equals(weapon.definition.type);
         if (!target.alive || totalPopulation(target) <= 0 || city == null
+                || city.populationMillions <= 0
                 || weapon == null || !weapon.active || weapon.inStock <= 0
                 || (!soldier && !canUseSpy(getHuman(), weapon))
-                || (soldier && city.populationMillions <= 0)
                 || (soldier && target.hasCeasefireWith(getHuman().id))) {
             return false;
         }
@@ -1602,9 +1602,10 @@ public final class GameState {
         CityState city = target == null ? null : target.getCity(selectedTargetCity);
         WeaponState weapon = getHuman().weapons.get(selectedAttackWeapon);
         return target != null && target.alive && totalPopulation(target) > 0 && city != null
+                && city.populationMillions > 0
                 && weapon != null && weapon.active && weapon.inStock > 0
                 && ("soldier".equals(weapon.definition.type)
-                ? city.populationMillions > 0 && !target.hasCeasefireWith(getHuman().id)
+                ? !target.hasCeasefireWith(getHuman().id)
                 : canUseSpy(getHuman(), weapon));
     }
 

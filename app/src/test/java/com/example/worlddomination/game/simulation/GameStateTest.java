@@ -1100,7 +1100,7 @@ public final class GameStateTest {
     }
 
     @Test
-    public void spyCanTargetAnEmptyCityAndDifficultyCapsStolenFunds() {
+    public void spyTargetsPopulatedCityAndDifficultyCapsStolenFunds() {
         GameState state = new GameState(0, 47L, false);
         GameState.PlayerState attacker = state.getHuman();
         GameState.PlayerState defender = state.getPlayers()[1];
@@ -1114,7 +1114,7 @@ public final class GameStateTest {
 
         state.selectAction(GameState.Action.ATTACK);
         assertFalse(state.configureAttack(1, 0, "soldier1"));
-        assertTrue(state.configureAttack(1, 0, "spy1"));
+        assertTrue(state.configureAttack(1, 1, "spy1"));
         assertTrue(state.canAcceptAttack());
         assertTrue(state.acceptSelectedAction());
         state.selectAction(GameState.Action.RESOURCES);
@@ -1127,6 +1127,26 @@ public final class GameStateTest {
         assertEquals(defenderPopulationBefore, defender.populationMillions);
         assertEquals(0, state.getWeaponStock(0, "spy1"));
         assertEquals(0, state.getSpyReadiness());
+    }
+
+    @Test
+    public void spyCannotSelectAnEmptyCityEvenWhenTheNationStillHasPopulation() {
+        GameState state = new GameState(0, 48L, false);
+        GameState.PlayerState defender = state.getPlayerState(1);
+        int firstCityPopulation = defender.getCity(0).populationMillions;
+        defender.getCity(0).populationMillions = 0;
+        defender.populationMillions -= firstCityPopulation;
+
+        state.selectAction(GameState.Action.ATTACK);
+        assertFalse(state.configureAttack(1, 0, "spy1"));
+        assertTrue(state.configureAttack(1, 1, "spy1"));
+        assertTrue(state.canAcceptAttack());
+
+        int selectedCityPopulation = defender.getCity(1).populationMillions;
+        defender.getCity(1).populationMillions = 0;
+        defender.populationMillions -= selectedCityPopulation;
+        assertFalse("a selected city emptied before acceptance is no longer a valid target",
+                state.canAcceptAttack());
     }
 
     @Test
