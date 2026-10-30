@@ -50,4 +50,17 @@ public final class GameSetupTest {
         setup.cycleCandidateLeader(1);
         assertEquals(0, setup.getCandidateLeaderId());
     }
+
+    @Test
+    public void sourcePlayerColorIdsMapToTankTurretLibraryNames() {
+        assertEquals("blue", GameSetup.colorName(1));
+        assertEquals("red", GameSetup.colorName(2));
+        assertEquals("orange", GameSetup.colorName(3));
+        assertEquals("yellow", GameSetup.colorName(4));
+        assertEquals("green", GameSetup.colorName(5));
+        org.junit.Assert.assertThrows(IllegalArgumentException.class,
+                () -> GameSetup.colorName(0));
+        org.junit.Assert.assertThrows(IllegalArgumentException.class,
+                () -> GameSetup.colorName(6));
+    }
 }

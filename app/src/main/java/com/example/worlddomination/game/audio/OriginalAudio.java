@@ -29,6 +29,9 @@ public final class OriginalAudio {
         FLAG_BONUS("75_Country domination bonus.Mp3.mp3.gz"),
         SOLDIER_GUN("14_unit_Soldier gun.wav.mp3.gz"),
         SEAL_GUN("16_unit_seal gun.wav.mp3.gz"),
+        TANK_DRIVE("4_unit_Tank.wav.mp3.gz"),
+        TANK_GUN("5_unit_Tank gun.wav.mp3.gz"),
+        TANK_CHOPPER("6_unit_Tank chopper.wav.mp3.gz"),
         SUICIDE_SCREAM("7_unit_Suicide scream.wav.mp3.gz"),
         EXPLOSION_SMALL3("98_Explode small3.wav.mp3.gz"),
         EXPLOSION_MEDIUM3("71_Explode medium 3.wav.mp3.gz"),
@@ -83,6 +86,9 @@ public final class OriginalAudio {
         preload(Cue.FLAG_BONUS);
         preload(Cue.SOLDIER_GUN);
         preload(Cue.SEAL_GUN);
+        preload(Cue.TANK_DRIVE);
+        preload(Cue.TANK_GUN);
+        preload(Cue.TANK_CHOPPER);
         preload(Cue.SUICIDE_SCREAM);
         preload(Cue.EXPLOSION_SMALL3);
         preload(Cue.EXPLOSION_MEDIUM3);
@@ -248,6 +254,10 @@ public final class OriginalAudio {
                 && "soldier2".equals(event.weaponName)) {
             // Unit.soundAction('marine_shoot') attaches the original Seal gun asset.
             return Cue.SEAL_GUN;
+        }
+        if (event.type == GameState.CombatEventType.DIRECT_ATTACK
+                && "soldier3".equals(event.weaponName)) {
+            return Cue.TANK_CHOPPER;
         }
         if (event.type == GameState.CombatEventType.DIRECT_ATTACK
                 && "soldier4".equals(event.weaponName)) {

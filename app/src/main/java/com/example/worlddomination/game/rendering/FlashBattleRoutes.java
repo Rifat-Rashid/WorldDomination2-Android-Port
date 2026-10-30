@@ -108,6 +108,42 @@ public final class FlashBattleRoutes {
         }
     }
 
+    /** Source route for a Chinook insertion followed by tank base and turret playback. */
+    public static final class ChinookTankAttack {
+        public final int attackerPlayerId;
+        public final int targetPlayerId;
+        public final int targetCityIndex;
+        public final int actionBuildingSlot;
+        public final Point actionBuilding;
+        public final Point chinookStart;
+        public final Point chinookDrop;
+        public final Point tankStart;
+        public final Point turretStart;
+        public final Point tankFirePoint;
+        public final Point[] tankWaypoints;
+        public final String turretLinkage;
+
+        private ChinookTankAttack(int attackerPlayerId, int targetPlayerId,
+                                  int targetCityIndex, int actionBuildingSlot,
+                                  Point actionBuilding, Point chinookStart,
+                                  Point chinookDrop, Point tankStart, Point turretStart,
+                                  Point tankFirePoint, Point[] tankWaypoints,
+                                  String turretLinkage) {
+            this.attackerPlayerId = attackerPlayerId;
+            this.targetPlayerId = targetPlayerId;
+            this.targetCityIndex = targetCityIndex;
+            this.actionBuildingSlot = actionBuildingSlot;
+            this.actionBuilding = actionBuilding;
+            this.chinookStart = chinookStart;
+            this.chinookDrop = chinookDrop;
+            this.tankStart = tankStart;
+            this.turretStart = turretStart;
+            this.tankFirePoint = tankFirePoint;
+            this.tankWaypoints = tankWaypoints;
+            this.turretLinkage = turretLinkage;
+        }
+    }
+
     private static final int SOLDIER_COUNT = 3;
     private static final int[][][] SOLDIER_WAYPOINTS = {
             {{0}, {1, 2}, {1, 2, 3}, {1, 6}, {0}},
@@ -122,6 +158,13 @@ public final class FlashBattleRoutes {
             {{0}, {1}, {1, 2}, {1, 2, 3}, {4}},
             {{0}, {0}, {1, 2}, {1, 2, 3}, {4}},
             {{0}, {1}, {2, 3}, {2, 3, 4}, {5}}
+    };
+    private static final String[][] TANK_END_POSITIONS = {
+            {"RT", "B", "L", "B", "LT"},
+            {"T", "LT", "LT", "LB", "LB"},
+            {"B", "RT", "RT", "LT", "T"},
+            {"L", "LB", "LB", "R", "R"},
+            {"T", "L", "B", "B", "L"}
     };
     private static final String[][] SOLDIER_END_POSITIONS = {
             {"RT", "B", "L", "B", "L"},
@@ -142,6 +185,13 @@ public final class FlashBattleRoutes {
     private static final String[] FIRE_POSITION_NAMES = {"LB", "LT", "RT", "R", "B", "L", "T"};
     private static final float[][] LAND_UNIT_POSITIONS = {
             {420, 420}, {160, 201}, {563, 108}, {260, 500}, {562, 511}
+    };
+    private static final float[][] CHINOOK_STARTS = {
+            {420, 310}, {88, 109}, {708, 91}, {105, 510}, {730, 505}
+    };
+    private static final String[] TANK_FIRE_POSITION_NAMES = {"LB", "LT", "RT", "R", "B", "L", "T"};
+    private static final float[][] TANK_FIRE_OFFSETS = {
+            {-55, 20}, {-55, -25}, {55, -25}, {55, -5}, {0, 25}, {-55, -5}, {0, -20}
     };
     private static final float[][] SUICIDE_SPAWNS = {
             {420, 420}, {160, 201}, {563, 108}, {260, 500}, {562, 511}
@@ -191,6 +241,59 @@ public final class FlashBattleRoutes {
     public static boolean supportsSuicideBomber(GameState.CombatEvent event) {
         return event != null && event.type == GameState.CombatEventType.DIRECT_ATTACK
                 && "soldier4".equals(event.weaponName);
+    }
+
+    public static boolean supportsChinookTank(GameState.CombatEvent event) {
+        return event != null && event.type == GameState.CombatEventType.DIRECT_ATTACK
+                && "soldier3".equals(event.weaponName)
+                && event.actionBuildingSlot >= 1 && event.actionBuildingSlot <= 2;
+    }
+
+    /** Builds the source soldier3 Chinook, tank path, and color-specific turret linkage. */
+    public static ChinookTankAttack createSoldierThreeAttack(
+            int attackerPlayerId, int targetPlayerId, int targetCityIndex,
+            int actionBuildingSlot, String attackerColorName,
+            Map<String, Point> anchors) {
+        validatePlayer(attackerPlayerId);
+        validatePlayer(targetPlayerId);
+        if (targetCityIndex < 0 || targetCityIndex >= BattlefieldCityLayout.CITIES_PER_PLAYER
+                || actionBuildingSlot < 1 || actionBuildingSlot > 2 || anchors == null
+                || !isSupportedTankColor(attackerColorName)) {
+            throw new IllegalArgumentException("Invalid soldier3 presentation data");
+        }
+
+        Point actionBuilding = actionBuildingPosition(attackerPlayerId, actionBuildingSlot);
+        // The source stores heliStart at (_x - 15, _y + 25), then applies (+15, -100).
+        Point chinookStart = new Point(actionBuilding.x, actionBuilding.y - 75f);
+        Point chinookDrop = new Point(LAND_UNIT_POSITIONS[targetPlayerId][0],
+                LAND_UNIT_POSITIONS[targetPlayerId][1] - 40f);
+
+        List<Point> tankPath = new ArrayList<>();
+        int[] sourceWaypoints = TANK_WAYPOINTS[targetPlayerId][targetCityIndex];
+        if (sourceWaypoints[0] != 0) {
+            for (int waypoint : sourceWaypoints) {
+                Point anchor = anchors.get("twp" + targetPlayerId + "_" + waypoint);
+                if (anchor == null) {
+                    throw new IllegalArgumentException("Missing source tank waypoint twp"
+                            + targetPlayerId + "_" + waypoint);
+                }
+                tankPath.add(anchor);
+            }
+        }
+
+        Point fireOffset = tankFireOffset(TANK_END_POSITIONS[targetPlayerId][targetCityIndex]);
+        Point city = new Point(BattlefieldCityLayout.sourceCityX(targetPlayerId, targetCityIndex),
+                BattlefieldCityLayout.sourceCityY(targetPlayerId, targetCityIndex));
+        Point tankFirePoint = new Point(city.x + fireOffset.x, city.y + fireOffset.y);
+        tankPath.add(tankFirePoint);
+
+        float[] start = CHINOOK_STARTS[attackerPlayerId];
+        Point tankStart = new Point(start[0] - 210f, start[1] - 210f);
+        Point turretStart = new Point(start[0] - 40f, start[1] - 40f);
+        return new ChinookTankAttack(attackerPlayerId, targetPlayerId, targetCityIndex,
+                actionBuildingSlot, actionBuilding, chinookStart, chinookDrop,
+                tankStart, turretStart, tankFirePoint, tankPath.toArray(new Point[0]),
+                "tankTop_" + attackerColorName);
     }
 
     /** Builds the source tank-waypoint path used by the soldier4 suicide unit. */
@@ -374,6 +477,21 @@ public final class FlashBattleRoutes {
             }
         }
         throw new IllegalStateException("Unknown source soldier fire position " + position);
+    }
+
+    private static Point tankFireOffset(String position) {
+        for (int index = 0; index < TANK_FIRE_POSITION_NAMES.length; index++) {
+            if (TANK_FIRE_POSITION_NAMES[index].equals(position)) {
+                return new Point(TANK_FIRE_OFFSETS[index][0], TANK_FIRE_OFFSETS[index][1]);
+            }
+        }
+        throw new IllegalStateException("Unknown source tank fire position " + position);
+    }
+
+    private static boolean isSupportedTankColor(String colorName) {
+        return "blue".equals(colorName) || "red".equals(colorName)
+                || "orange".equals(colorName) || "yellow".equals(colorName)
+                || "green".equals(colorName);
     }
 
     private static int nearestIsland(float x, float y) {

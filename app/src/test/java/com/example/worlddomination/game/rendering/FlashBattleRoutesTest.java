@@ -269,6 +269,119 @@ public final class FlashBattleRoutesTest {
         }
     }
 
+    @Test
+    public void createsChinookAndTankRoutesForEveryPlayerCityAndActionSlot() throws Exception {
+        int[][][] tankWaypoints = {
+                {{0}, {1, 2}, {1, 2, 3}, {1, 6}, {1}},
+                {{1}, {1}, {2}, {2, 3, 5}, {4}},
+                {{0}, {1}, {1, 2}, {1, 2, 3}, {4}},
+                {{0}, {0}, {1, 2}, {1, 2, 3}, {4}},
+                {{0}, {1}, {2, 3}, {2, 3, 4}, {5}}
+        };
+        String[][] firePositions = {
+                {"RT", "B", "L", "B", "LT"},
+                {"T", "LT", "LT", "LB", "LB"},
+                {"B", "RT", "RT", "LT", "T"},
+                {"L", "LB", "LB", "R", "R"},
+                {"T", "L", "B", "B", "L"}
+        };
+        float[][] starts = {
+                {420f, 310f}, {88f, 109f}, {708f, 91f}, {105f, 510f}, {730f, 505f}
+        };
+        Map<String, FlashBattleRoutes.Point> anchors = loadAnchors();
+        String[] colors = {"blue", "red", "orange", "yellow", "green"};
+
+        for (int attacker = 0; attacker < BattlefieldCityLayout.PLAYER_COUNT; attacker++) {
+            for (int target = 0; target < BattlefieldCityLayout.PLAYER_COUNT; target++) {
+                for (int city = 0; city < BattlefieldCityLayout.CITIES_PER_PLAYER; city++) {
+                    for (int slot = 1; slot <= 2; slot++) {
+                        FlashBattleRoutes.ChinookTankAttack route =
+                                FlashBattleRoutes.createSoldierThreeAttack(attacker, target,
+                                        city, slot, colors[attacker], anchors);
+                        FlashBattleRoutes.Point building =
+                                FlashBattleRoutes.actionBuildingPosition(attacker, slot);
+                        assertEquals(building.x, route.actionBuilding.x, 0f);
+                        assertEquals(building.x, route.chinookStart.x, 0f);
+                        assertEquals(building.y - 75f, route.chinookStart.y, 0f);
+                        assertEquals(LAND_UNIT_POSITIONS[target][0], route.chinookDrop.x, 0f);
+                        assertEquals(LAND_UNIT_POSITIONS[target][1] - 40f,
+                                route.chinookDrop.y, 0f);
+                        assertEquals(starts[attacker][0] - 210f, route.tankStart.x, 0f);
+                        assertEquals(starts[attacker][1] - 210f, route.tankStart.y, 0f);
+                        assertEquals("tankTop_" + colors[attacker], route.turretLinkage);
+
+                        int[] sourceWaypoints = tankWaypoints[target][city];
+                        int routeIndex = 0;
+                        if (sourceWaypoints[0] != 0) {
+                            for (int waypoint : sourceWaypoints) {
+                                FlashBattleRoutes.Point anchor =
+                                        anchors.get("twp" + target + "_" + waypoint);
+                                assertEquals(anchor.x, route.tankWaypoints[routeIndex].x, 0f);
+                                assertEquals(anchor.y, route.tankWaypoints[routeIndex].y, 0f);
+                                routeIndex++;
+                            }
+                        }
+                        assertEquals(routeIndex + 1, route.tankWaypoints.length);
+                        assertEquals(route.tankFirePoint.x,
+                                route.tankWaypoints[routeIndex].x, 0f);
+                        assertEquals(route.tankFirePoint.y,
+                                route.tankWaypoints[routeIndex].y, 0f);
+                        assertEquals(BattlefieldCityLayout.sourceCityX(target, city)
+                                        + fireOffsetX(firePositions[target][city]),
+                                route.tankFirePoint.x, 0f);
+                        assertEquals(BattlefieldCityLayout.sourceCityY(target, city)
+                                        + fireOffsetY(firePositions[target][city]),
+                                route.tankFirePoint.y, 0f);
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    public void rejectsInvalidChinookTankRouteData() throws Exception {
+        Map<String, FlashBattleRoutes.Point> anchors = loadAnchors();
+        assertThrows(IllegalArgumentException.class, () ->
+                FlashBattleRoutes.createSoldierThreeAttack(-1, 0, 0, 1, "blue", anchors));
+        assertThrows(IllegalArgumentException.class, () ->
+                FlashBattleRoutes.createSoldierThreeAttack(0, 5, 0, 1, "blue", anchors));
+        assertThrows(IllegalArgumentException.class, () ->
+                FlashBattleRoutes.createSoldierThreeAttack(0, 1, 5, 1, "blue", anchors));
+        assertThrows(IllegalArgumentException.class, () ->
+                FlashBattleRoutes.createSoldierThreeAttack(0, 1, 0, 3, "blue", anchors));
+        assertThrows(IllegalArgumentException.class, () ->
+                FlashBattleRoutes.createSoldierThreeAttack(0, 1, 0, 1, "purple", anchors));
+        assertThrows(IllegalArgumentException.class, () ->
+                FlashBattleRoutes.createSoldierThreeAttack(0, 1, 0, 1, "blue", null));
+    }
+
+    private static float fireOffsetX(String position) {
+        switch (position) {
+            case "LB":
+            case "LT":
+            case "L":
+                return -55f;
+            case "RT":
+            case "R":
+                return 55f;
+            default:
+                return 0f;
+        }
+    }
+
+    private static float fireOffsetY(String position) {
+        switch (position) {
+            case "LB": return 20f;
+            case "LT": return -25f;
+            case "RT": return -25f;
+            case "R": return -5f;
+            case "B": return 25f;
+            case "L": return -5f;
+            case "T": return -20f;
+            default: throw new AssertionError(position);
+        }
+    }
+
     private static boolean hasSourceWaypoint(int player, int waypoint) {
         return (player == 0 && (waypoint == 1 || waypoint == 2 || waypoint == 3
                 || waypoint == 4 || waypoint == 5 || waypoint == 6))

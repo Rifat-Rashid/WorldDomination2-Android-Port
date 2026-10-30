@@ -25,6 +25,7 @@ import com.example.worlddomination.game.rendering.BattleExplosionRenderer;
 import com.example.worlddomination.game.rendering.BattlefieldCityRenderer;
 import com.example.worlddomination.game.rendering.FlashBattleRoutes;
 import com.example.worlddomination.game.rendering.FlashBattleUnitRenderer;
+import com.example.worlddomination.game.rendering.FlashChinookTankAnimation;
 import com.example.worlddomination.game.rendering.FlashApacheMarineAnimation;
 import com.example.worlddomination.game.rendering.FlashSuicideBomberAnimation;
 import com.example.worlddomination.game.rendering.FlashSoldierOneAnimation;
@@ -121,6 +122,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private final List<BattleAnimationSequence> battleAnimations = new ArrayList<>();
     private final List<FlashSoldierOneAnimation> soldierBattleAnimations = new ArrayList<>();
     private final List<FlashApacheMarineAnimation> apacheMarineAnimations = new ArrayList<>();
+    private final List<FlashChinookTankAnimation> chinookTankAnimations = new ArrayList<>();
     private final List<FlashSuicideBomberAnimation> suicideBomberAnimations = new ArrayList<>();
     private final List<PendingBattleAnimation> pendingBattleAnimations = new ArrayList<>();
     private final MatchOutcomeSequence outcomeSequence =
@@ -557,6 +559,16 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 apacheMarineAnimations.remove(i);
             }
         }
+        for (int i = chinookTankAnimations.size() - 1; i >= 0; i--) {
+            FlashChinookTankAnimation animation = chinookTankAnimations.get(i);
+            animation.tick();
+            while (animation.takeAudioCue()) {
+                audio.play(animation.getAudioCue());
+            }
+            if (animation.isFinished()) {
+                chinookTankAnimations.remove(i);
+            }
+        }
         for (int i = suicideBomberAnimations.size() - 1; i >= 0; i--) {
             FlashSuicideBomberAnimation animation = suicideBomberAnimations.get(i);
             animation.tick();
@@ -803,6 +815,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         cityRenderer.draw(batch, mapBounds, game);
         battleUnitRenderer.draw(batch, mapBounds, soldierBattleAnimations);
         battleUnitRenderer.drawApacheMarine(batch, mapBounds, apacheMarineAnimations);
+        battleUnitRenderer.drawChinookTank(batch, mapBounds, chinookTankAnimations);
         battleUnitRenderer.drawSuicideBomber(batch, mapBounds, suicideBomberAnimations);
         explosionRenderer.draw(batch, mapBounds, battleAnimations);
         drawContained(uiAssets.logo, logoPanel.x + 7f, logoPanel.y + 2f,
@@ -1971,6 +1984,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         battleAnimations.clear();
         soldierBattleAnimations.clear();
         apacheMarineAnimations.clear();
+        chinookTankAnimations.clear();
         suicideBomberAnimations.clear();
         pendingBattleAnimations.clear();
     }
@@ -2227,6 +2241,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 battleAnimations.clear();
                 soldierBattleAnimations.clear();
                 apacheMarineAnimations.clear();
+                chinookTankAnimations.clear();
                 suicideBomberAnimations.clear();
                 pendingBattleAnimations.clear();
                 modalOpen = false;
@@ -2703,6 +2718,19 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                     animationIndex++;
                     continue;
                 }
+                if (FlashBattleRoutes.supportsChinookTank(event)) {
+                    String colorName = GameSetup.colorName(
+                            game.getPlayerState(event.attackerPlayerId).getPlayerColor());
+                    FlashBattleRoutes.ChinookTankAttack route =
+                            FlashBattleRoutes.createSoldierThreeAttack(
+                                    event.attackerPlayerId, event.defenderPlayerId,
+                                    event.cityIndex, event.actionBuildingSlot,
+                                    colorName, battleAnchors);
+                    chinookTankAnimations.add(new FlashChinookTankAnimation(route,
+                            animationIndex * 36));
+                    animationIndex++;
+                    continue;
+                }
                 if (FlashBattleRoutes.supportsSuicideBomber(event)) {
                     FlashBattleRoutes.SuicideBomberAttack route =
                             FlashBattleRoutes.createSuicideBomberAttack(
@@ -2919,6 +2947,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         battleAnimations.clear();
         soldierBattleAnimations.clear();
         apacheMarineAnimations.clear();
+        chinookTankAnimations.clear();
         suicideBomberAnimations.clear();
         pendingBattleAnimations.clear();
         if (uiAssets != null) {
