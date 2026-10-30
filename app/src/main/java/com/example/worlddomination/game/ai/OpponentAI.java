@@ -1334,7 +1334,10 @@ public final class OpponentAI {
         if (option < 0) {
             return null;
         }
-        int reserved = chooseOffer ? state.getDiplomacyOptionAmount(option) : 0;
+        // Model.getTarget checks an offer against turnMoney but does not deduct
+        // it there. The Presenter deducts the cash only when the proposal is
+        // submitted, so the AI may still plan its second action from this budget.
+        int reserved = 0;
         return new Decision(actor.id, GameState.Action.DIPLOMACY,
                 Collections.<String, Integer>emptyMap(), Collections.<String>emptyList(),
                 reserved, target.id, -1, null, option);
