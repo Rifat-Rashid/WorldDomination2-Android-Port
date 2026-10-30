@@ -418,19 +418,20 @@ public final class OpponentAI {
         return score;
     }
 
-    private static double weaponStockLevel(GameState.PlayerState player) {
-        int active = 0;
+    static double weaponStockLevel(GameState.PlayerState player) {
+        int researched = 0;
         int satisfied = 0;
         for (GameState.WeaponState weapon : player.getWeapons().values()) {
-            if (!weapon.active || weapon.definition.productionGroup == 8) {
+            if (weapon.definition.productionGroup == 8
+                    || !player.hasTechnology(weapon.definition.technology)) {
                 continue;
             }
-            active++;
+            researched++;
             if (weapon.inStock >= player.getDesiredStock(weapon.definition.name)) {
                 satisfied++;
             }
         }
-        return active == 0 ? 0 : satisfied / (double) active * 100;
+        return researched == 0 ? 0 : satisfied / (double) researched * 100;
     }
 
     private static int bestInventedPayloadKills(GameState.PlayerState player, String prefix) {
