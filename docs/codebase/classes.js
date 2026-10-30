@@ -11,6 +11,7 @@ const notes = {
   FinalScoreBreakdown:'Holds the components of the final match score.',
   OpponentAI:'Scores options and chooses actions for computer-controlled players.',
   ScrollPaneState:'Tracks drag and scroll behavior independently for each panel.',
+  BattlefieldCityLayout:'Projects source city anchors into the fitted map and hit-tests city touches.',
   MatchOutcomePresentation:'Provides display-ready match outcome information.',
   OriginalUiAssets:'Loads and maps original UI image regions for libGDX rendering.',
   OriginalAudio:'Loads, plays, and disposes the original game audio cues.'
