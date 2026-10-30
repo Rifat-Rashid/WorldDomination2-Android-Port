@@ -867,12 +867,6 @@ public final class GameState {
             cancelSelection();
             return;
         }
-        int queuedIndex = queuedActionIndex(action);
-        if (queuedIndex >= 0) {
-            removeQueuedAction(queuedIndex);
-            selectedAction = null;
-            return;
-        }
         if (queuedActions.size() >= MAX_TURN_ACTIONS) {
             messages.add("Both action slots are full. Confirm the turn or clear them.");
             selectedAction = null;
@@ -1148,7 +1142,8 @@ public final class GameState {
             boolean soldier = "soldier".equals(type);
             boolean readySpy = "spy".equals(type)
                     && weapon.definition.level <= getHuman().spyReadiness / 25;
-            if (weapon.active && weapon.inStock > 0 && (soldier || readySpy)) {
+            if (weapon.active && availableWeaponStock(0, weapon) > 0
+                    && (soldier || readySpy)) {
                 available.add(weapon.definition.name);
             }
         }
@@ -1165,7 +1160,7 @@ public final class GameState {
         WeaponState weapon = getHuman().weapons.get(weaponName);
         boolean soldier = weapon != null && "soldier".equals(weapon.definition.type);
         if (!target.alive || totalPopulation(target) <= 0 || city == null
-                || weapon == null || !weapon.active || weapon.inStock <= 0
+                || weapon == null || !weapon.active || availableWeaponStock(0, weapon) <= 0
                 || (!soldier && !canUseSpy(getHuman(), weapon))
                 || (soldier && city.populationMillions <= 0)
                 || (soldier && target.hasCeasefireWith(getHuman().id))) {
@@ -1182,7 +1177,8 @@ public final class GameState {
         PlayerState player = playerById(playerId);
         List<String> available = new ArrayList<>();
         for (WeaponState weapon : player.weapons.values()) {
-            if (isCarrier(weapon) && weapon.active && weapon.inStock > 0
+            if (isCarrier(weapon) && weapon.active
+                    && availableWeaponStock(playerId, weapon) > 0
                     && !getAvailablePreparedPayloads(playerId,
                     weapon.definition.name).isEmpty()) {
                 available.add(weapon.definition.name);
@@ -1201,7 +1197,7 @@ public final class GameState {
         }
         for (WeaponState payload : player.weapons.values()) {
             if (isCompatiblePayload(carrier, payload) && payload.active
-                    && payload.inStock > 0) {
+                    && availableWeaponStock(playerId, payload) > 0) {
                 available.add(payload.definition.name);
             }
         }
@@ -1263,10 +1259,11 @@ public final class GameState {
         return Collections.unmodifiableList(threats);
     }
 
-    private static void addAvailableDefense(PlayerState player, String name,
-                                            List<String> destination) {
+    private void addAvailableDefense(PlayerState player, String name,
+                                     List<String> destination) {
         WeaponState weapon = player.weapons.get(name);
-        if (weapon != null && weapon.active && weapon.inStock > 0) {
+        if (weapon != null && weapon.active
+                && availableWeaponStock(player.id, weapon) > 0) {
             destination.add(name);
         }
     }
@@ -1305,7 +1302,7 @@ public final class GameState {
                 || target.hasCeasefireWith(0)
                 || carrier == null || "ship".equals(carrier.definition.type)
                 || !isCompatiblePayload(carrier, payload) || !payload.active
-                || payload.inStock <= 0) {
+                || availableWeaponStock(0, payload) <= 0) {
             return false;
         }
         selectedPreparedCarrier = getHuman().preparedCarrierName;
@@ -1363,7 +1360,7 @@ public final class GameState {
         if (replacingOldest && selectedShipStrikes.get(0).payloadName.equals(payloadName)) {
             selected--;
         }
-        return payload.inStock - selected;
+        return availableWeaponStock(0, payload) - selected;
     }
 
     public int getSelectedShipStrikeCount() {
@@ -1402,7 +1399,8 @@ public final class GameState {
         WeaponState payload = getHuman().weapons.get(selectedPreparedPayload);
         return target != null && target.alive && city != null && city.populationMillions > 0
                 && !target.hasCeasefireWith(0)
-                && isCompatiblePayload(carrier, payload) && payload.active && payload.inStock > 0;
+                && isCompatiblePayload(carrier, payload) && payload.active
+                && availableWeaponStock(0, payload) > 0;
     }
 
     private boolean canAcceptPreparedShipAttack() {
@@ -1429,7 +1427,8 @@ public final class GameState {
             selectedPayloads.put(strike.payloadName, count == null ? 1 : count + 1);
         }
         for (Map.Entry<String, Integer> selected : selectedPayloads.entrySet()) {
-            if (getWeaponStock(0, selected.getKey()) < selected.getValue()) {
+            WeaponState payload = getHuman().weapons.get(selected.getKey());
+            if (availableWeaponStock(0, payload) < selected.getValue()) {
                 return false;
             }
         }
@@ -1527,7 +1526,8 @@ public final class GameState {
         CityState city = target == null ? null : target.getCity(selectedTargetCity);
         WeaponState weapon = getHuman().weapons.get(selectedAttackWeapon);
         return target != null && target.alive && totalPopulation(target) > 0 && city != null
-                && weapon != null && weapon.active && weapon.inStock > 0
+                && weapon != null && weapon.active
+                && availableWeaponStock(0, weapon) > 0
                 && ("soldier".equals(weapon.definition.type)
                 ? city.populationMillions > 0 && !target.hasCeasefireWith(getHuman().id)
                 : canUseSpy(getHuman(), weapon));
@@ -1536,6 +1536,35 @@ public final class GameState {
     private String firstAvailableAttackWeapon() {
         List<String> available = getAvailableAttackWeapons();
         return available.isEmpty() ? "" : available.get(0);
+    }
+
+    /** Stock already marked in-use by queued source turn actions. */
+    private int availableWeaponStock(int playerId, WeaponState weapon) {
+        if (weapon == null) {
+            return 0;
+        }
+        int reserved = 0;
+        for (ActionOrder order : queuedActions) {
+            if (order.playerId != playerId) {
+                continue;
+            }
+            if ((order.action == Action.ATTACK || order.action == Action.DEFENSE
+                    || order.action == Action.PREPARED_ATTACK)
+                    && weapon.definition.name.equals(order.weaponName)) {
+                reserved++;
+            }
+            if (order.action == Action.PREPARED_ATTACK) {
+                if (weapon.definition.name.equals(order.payloadName)) {
+                    reserved++;
+                }
+                for (ShipStrike strike : order.shipStrikes) {
+                    if (weapon.definition.name.equals(strike.payloadName)) {
+                        reserved++;
+                    }
+                }
+            }
+        }
+        return Math.max(0, weapon.inStock - reserved);
     }
 
     public int getCityPopulationMillions(int playerId, int cityIndex) {
@@ -2908,15 +2937,6 @@ public final class GameState {
             messages.add("Money returned from nation " + producer.id
                     + " production: " + remaining + ".000.000");
         }
-    }
-
-    private int queuedActionIndex(Action action) {
-        for (int index = 0; index < queuedActions.size(); index++) {
-            if (queuedActions.get(index).action == action) {
-                return index;
-            }
-        }
-        return -1;
     }
 
     void addToHighscore(PlayerState player, int actionIndex, int multiplier) {
