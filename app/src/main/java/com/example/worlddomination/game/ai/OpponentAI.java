@@ -391,20 +391,29 @@ public final class OpponentAI {
     static int mostThreateningPreparedEnemy(GameState state,
                                             GameState.PlayerState defender,
                                             List<Integer> threatPlayerIds) {
-        int bestThreatId = -1;
-        double bestScore = 0;
-        int bestStrength = -1;
+        List<Integer> highestScoringThreats = highestScoringPreparedThreats(
+                state, defender, threatPlayerIds);
+        return highestScoringThreats.isEmpty() ? -1 : highestScoringThreats.get(0);
+    }
+
+    private static List<Integer> highestScoringPreparedThreats(
+            GameState state, GameState.PlayerState defender, List<Integer> threatPlayerIds) {
+        List<Integer> highestScoringThreats = new ArrayList<>();
+        double highestScore = 0;
         for (int threatPlayerId : threatPlayerIds) {
             double score = preparedThreatScore(state, defender, threatPlayerId);
-            int strength = state.getPlayerState(threatPlayerId).getStrength();
-            if (score > bestScore || (score == bestScore && score >= 0
-                    && strength > bestStrength)) {
-                bestScore = score;
-                bestStrength = strength;
-                bestThreatId = threatPlayerId;
+            if (score > highestScore) {
+                highestScore = score;
+                highestScoringThreats.clear();
+                highestScoringThreats.add(threatPlayerId);
+            } else if (score == highestScore && score >= 0) {
+                highestScoringThreats.add(threatPlayerId);
             }
         }
-        return bestThreatId;
+        highestScoringThreats.sort(Comparator.comparingInt(
+                (Integer playerId) -> state.getPlayerState(playerId).getStrength())
+                .reversed());
+        return highestScoringThreats;
     }
 
     private static double preparedThreatScore(GameState state,
@@ -483,18 +492,22 @@ public final class OpponentAI {
         }
     }
 
-    private static Decision planDefense(GameState state, GameState.PlayerState defender,
-                                        Map<String, Integer> plannedUse) {
+    static Decision planDefense(GameState state, GameState.PlayerState defender,
+                                Map<String, Integer> plannedUse) {
         if (plannedUse.containsKey("@defense")) {
             return null;
         }
-        int threatId = mostThreateningPreparedEnemy(state, defender,
+        List<Integer> threats = highestScoringPreparedThreats(state, defender,
                 state.getPreparedThreatPlayerIds(defender.id));
-        String counter = threatId < 0 ? null
-                : state.getCounterWeaponForThreat(defender.id, threatId);
-        return counter == null ? null : new Decision(defender.id, GameState.Action.DEFENSE,
-                Collections.<String, Integer>emptyMap(), Collections.<String>emptyList(),
-                0, -1, -1, counter, -1);
+        for (int threatId : threats) {
+            String counter = state.getCounterWeaponForThreat(defender.id, threatId);
+            if (counter != null) {
+                return new Decision(defender.id, GameState.Action.DEFENSE,
+                        Collections.<String, Integer>emptyMap(),
+                        Collections.<String>emptyList(), 0, -1, -1, counter, -1);
+            }
+        }
+        return null;
     }
 
     private static Decision planPreparedAttack(GameState state,

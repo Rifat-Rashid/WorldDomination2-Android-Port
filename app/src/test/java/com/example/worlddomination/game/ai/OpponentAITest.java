@@ -422,6 +422,36 @@ public final class OpponentAITest {
     }
 
     @Test
+    public void preparedDefenseTriesNextEqualScoreThreatWhenStrongestHasNoCounter()
+            throws Exception {
+        GameState state = new GameState(1, 923L);
+        GameState.PlayerState defender = state.getPlayerState(1);
+        GameState.PlayerState strongest = state.getPlayerState(2);
+        GameState.PlayerState counterable = state.getPlayerState(3);
+        setRegardToward(defender, strongest.id, 20);
+        setRegardToward(defender, counterable.id, 20);
+        strongest.moneyMillions = 1_000;
+        counterable.moneyMillions = 1;
+        setPreparedCarrier(strongest, "rocket1");
+        setPreparedCarrier(counterable, "plane1");
+        defender.getWeapons().get("antiRocket").active = true;
+        defender.getWeapons().get("antiRocket").inStock = 0;
+        defender.getWeapons().get("antiAir").active = true;
+        defender.getWeapons().get("antiAir").inStock = 1;
+
+        assertTrue(strongest.getStrength() > counterable.getStrength());
+        assertNull(state.getCounterWeaponForThreat(defender.id, strongest.id));
+        assertEquals("antiAir", state.getCounterWeaponForThreat(
+                defender.id, counterable.id));
+
+        OpponentAI.Decision decision = OpponentAI.planDefense(state, defender,
+                Collections.<String, Integer>emptyMap());
+        assertNotNull(decision);
+        assertEquals(GameState.Action.DEFENSE, decision.action);
+        assertEquals("antiAir", decision.weaponName);
+    }
+
+    @Test
     public void everyLivingOpponentPlansTwoActionsDuringTurnResolution() {
         GameState state = new GameState(1, 901L);
         state.selectAction(GameState.Action.RESOURCES);
