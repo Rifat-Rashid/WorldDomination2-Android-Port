@@ -11,8 +11,21 @@ permissions:
 
 jobs:
   android:
-    name: Build, unit tests, and lint
+    name: ${{ matrix.check }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - id: assemble
+            check: Android debug assembly
+            task: ':app:dependencies :app:assembleDebug'
+          - id: unit-tests
+            check: JVM unit tests
+            task: ':app:testDebugUnitTest'
+          - id: lint
+            check: Android lint
+            task: ':app:lintDebug'
     steps:
       - name: Check out source
         uses: actions/checkout@v5
@@ -22,6 +35,7 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+          cache: gradle
 
       - name: Use preinstalled Android SDK and install compile packages
         shell: bash
@@ -38,14 +52,14 @@ jobs:
           set -o pipefail
           "$sdkmanager" 'platform-tools' 'platforms;android-37.0' 'build-tools;36.0.0'
 
-      - name: Resolve dependencies, build, test, and lint
-        run: ./gradlew --no-daemon --stacktrace :app:dependencies :app:assembleDebug :app:testDebugUnitTest :app:lintDebug
+      - name: Run ${{ matrix.check }}
+        run: ./gradlew --no-daemon --stacktrace ${{ matrix.task }}
 
       - name: Upload validation reports on failure
         if: failure()
         uses: actions/upload-artifact@v6
         with:
-          name: android-validation-failure-reports
+          name: android-${{ matrix.id }}-failure-reports
           path: |
             app/build/reports/
             app/build/test-results/
