@@ -1,5 +1,6 @@
 package com.example.worlddomination.game.audio;
 
+import com.example.worlddomination.game.simulation.GameState;
 import org.junit.Test;
 
 import java.io.File;
@@ -49,6 +50,48 @@ public final class OriginalAudioTest {
                 OriginalAudio.internalPath(OriginalAudio.Cue.FLAG_BONUS));
         assertEquals("original/runtime/audio/48_Loose.Mp3.mp3",
                 OriginalAudio.internalPath(OriginalAudio.Cue.DEFEAT));
+    }
+
+    @Test
+    public void actionPanelsUseTheirOriginalAmbientSoundAssignments() {
+        assertEquals(OriginalAudio.Cue.RESOURCES_AMBIENT,
+                OriginalAudio.ambientForAction(GameState.Action.RESOURCES));
+        assertEquals(OriginalAudio.Cue.PRODUCTION_AMBIENT,
+                OriginalAudio.ambientForAction(GameState.Action.PRODUCTION));
+        assertEquals(OriginalAudio.Cue.TECHNOLOGY_AMBIENT,
+                OriginalAudio.ambientForAction(GameState.Action.RESEARCH));
+        assertEquals(OriginalAudio.Cue.MASS_MEDIA_AMBIENT,
+                OriginalAudio.ambientForAction(GameState.Action.MASS_MEDIA));
+        assertEquals(OriginalAudio.Cue.DIPLOMACY_AMBIENT,
+                OriginalAudio.ambientForAction(GameState.Action.DIPLOMACY));
+        assertEquals(OriginalAudio.Cue.DEFENSE_AMBIENT,
+                OriginalAudio.ambientForAction(GameState.Action.DEFENSE));
+        assertEquals(OriginalAudio.Cue.GAME_AMBIENT,
+                OriginalAudio.ambientForAction(GameState.Action.ATTACK));
+        assertEquals(OriginalAudio.Cue.GAME_AMBIENT,
+                OriginalAudio.ambientForAction(GameState.Action.PREPARED_ATTACK));
+        assertEquals(OriginalAudio.Cue.GAME_AMBIENT,
+                OriginalAudio.ambientForAction(GameState.Action.PROPAGANDA));
+        assertEquals(OriginalAudio.Cue.GAME_AMBIENT,
+                OriginalAudio.ambientForAction(null));
+    }
+
+    @Test
+    public void ambienceCuePathsMatchTheOriginalMenuMappings() {
+        assertEquals("original/runtime/audio/65_General ambient.wav.mp3",
+                OriginalAudio.internalPath(OriginalAudio.Cue.GAME_AMBIENT));
+        assertEquals("original/runtime/audio/35_Resources ambient loop.wav.mp3",
+                OriginalAudio.internalPath(OriginalAudio.Cue.RESOURCES_AMBIENT));
+        assertEquals("original/runtime/audio/41_Production Ambient loop.wav.mp3",
+                OriginalAudio.internalPath(OriginalAudio.Cue.PRODUCTION_AMBIENT));
+        assertEquals("original/runtime/audio/96_Ambience Diplomacy.wav.mp3",
+                OriginalAudio.internalPath(OriginalAudio.Cue.DIPLOMACY_AMBIENT));
+        assertEquals("original/runtime/audio/74_Defence.wav.mp3",
+                OriginalAudio.internalPath(OriginalAudio.Cue.DEFENSE_AMBIENT));
+        assertEquals("original/runtime/audio/47_Massmedia ambient loop.wav.mp3",
+                OriginalAudio.internalPath(OriginalAudio.Cue.MASS_MEDIA_AMBIENT));
+        assertEquals("original/runtime/audio/28_Technology ambient loop.wav.mp3",
+                OriginalAudio.internalPath(OriginalAudio.Cue.TECHNOLOGY_AMBIENT));
     }
 
     private static File locateAsset(String relativePath) {

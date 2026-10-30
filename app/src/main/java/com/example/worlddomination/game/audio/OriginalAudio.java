@@ -1,5 +1,6 @@
 package com.example.worlddomination.game.audio;
 
+import com.example.worlddomination.game.simulation.GameState;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.audio.Sound;
@@ -26,7 +27,14 @@ public final class OriginalAudio {
         SCORE_COUNTER("31_Score counter.Mp3.mp3.gz"),
         SATELLITE_MULTIPLIER("34_Satelite multiplier.Mp3.mp3.gz"),
         FLAG_BONUS("75_Country domination bonus.Mp3.mp3.gz"),
-        DEFEAT("48_Loose.Mp3.mp3.gz");
+        DEFEAT("48_Loose.Mp3.mp3.gz"),
+        GAME_AMBIENT("65_General ambient.wav.mp3.gz"),
+        RESOURCES_AMBIENT("35_Resources ambient loop.wav.mp3.gz"),
+        PRODUCTION_AMBIENT("41_Production Ambient loop.wav.mp3.gz"),
+        DIPLOMACY_AMBIENT("96_Ambience Diplomacy.wav.mp3.gz"),
+        DEFENSE_AMBIENT("74_Defence.wav.mp3.gz"),
+        MASS_MEDIA_AMBIENT("47_Massmedia ambient loop.wav.mp3.gz"),
+        TECHNOLOGY_AMBIENT("28_Technology ambient loop.wav.mp3.gz");
 
         private final String compressedAsset;
 
@@ -42,6 +50,8 @@ public final class OriginalAudio {
 
     private final Map<Cue, Sound> sounds = new EnumMap<>(Cue.class);
     private Music theme;
+    private Cue ambientCue;
+    private long ambientSoundId = -1L;
     private boolean muted;
     private boolean resumeMusicAfterPause;
     private boolean initialized;
@@ -64,6 +74,13 @@ public final class OriginalAudio {
         preload(Cue.SATELLITE_MULTIPLIER);
         preload(Cue.FLAG_BONUS);
         preload(Cue.DEFEAT);
+        preload(Cue.GAME_AMBIENT);
+        preload(Cue.RESOURCES_AMBIENT);
+        preload(Cue.PRODUCTION_AMBIENT);
+        preload(Cue.DIPLOMACY_AMBIENT);
+        preload(Cue.DEFENSE_AMBIENT);
+        preload(Cue.MASS_MEDIA_AMBIENT);
+        preload(Cue.TECHNOLOGY_AMBIENT);
         play(Cue.STARTUP);
         if (theme != null && !muted) {
             theme.setLooping(true);
@@ -80,11 +97,36 @@ public final class OriginalAudio {
                 theme.play();
             }
         }
+        if (muted) {
+            for (Sound sound : sounds.values()) {
+                sound.stop();
+            }
+            stopAmbientPlayback();
+        } else if (ambientCue != null) {
+            ambientSoundId = loop(ambientCue);
+        }
         return muted;
     }
 
     public boolean isMuted() {
         return muted;
+    }
+
+    /** Starts the requested original ambience loop, replacing the previous one. */
+    public void playAmbient(Cue cue) {
+        if (ambientCue == cue && (muted || ambientSoundId >= 0L)) {
+            return;
+        }
+        stopAmbientPlayback();
+        ambientCue = cue;
+        if (!muted && cue != null) {
+            ambientSoundId = loop(cue);
+        }
+    }
+
+    public void stopAmbient() {
+        stopAmbientPlayback();
+        ambientCue = null;
     }
 
     public void play(Cue cue) {
@@ -136,8 +178,10 @@ public final class OriginalAudio {
         if (resumeMusicAfterPause && !muted && theme != null) {
             theme.play();
         }
-        for (Sound sound : sounds.values()) {
-            sound.resume();
+        if (!muted) {
+            for (Sound sound : sounds.values()) {
+                sound.resume();
+            }
         }
         resumeMusicAfterPause = false;
     }
@@ -151,7 +195,32 @@ public final class OriginalAudio {
             sound.dispose();
         }
         sounds.clear();
+        ambientCue = null;
+        ambientSoundId = -1L;
         initialized = false;
+    }
+
+    /** Maps the active source action panel to its original looping ambience. */
+    public static Cue ambientForAction(GameState.Action action) {
+        if (action == null) {
+            return Cue.GAME_AMBIENT;
+        }
+        switch (action) {
+            case RESOURCES:
+                return Cue.RESOURCES_AMBIENT;
+            case PRODUCTION:
+                return Cue.PRODUCTION_AMBIENT;
+            case RESEARCH:
+                return Cue.TECHNOLOGY_AMBIENT;
+            case MASS_MEDIA:
+                return Cue.MASS_MEDIA_AMBIENT;
+            case DIPLOMACY:
+                return Cue.DIPLOMACY_AMBIENT;
+            case DEFENSE:
+                return Cue.DEFENSE_AMBIENT;
+            default:
+                return Cue.GAME_AMBIENT;
+        }
     }
 
     static String internalPath(Cue cue) {
@@ -175,6 +244,13 @@ public final class OriginalAudio {
 
     private void preload(Cue cue) {
         loadSound(cue);
+    }
+
+    private void stopAmbientPlayback() {
+        if (ambientCue != null && ambientSoundId >= 0L) {
+            stop(ambientCue, ambientSoundId);
+        }
+        ambientSoundId = -1L;
     }
 
     private Sound loadSound(Cue cue) {
