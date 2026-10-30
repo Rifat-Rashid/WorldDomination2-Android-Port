@@ -303,7 +303,7 @@ public final class OpponentAI {
         double biologicalKill = bestInventedPayloadKills(player, "bioload");
         int techCount = player.getInventedTechnologies().size();
         double research = Math.min(60, largestCity - nuclearKill - biologicalKill)
-                + Math.min(60, state.getTurn()) / (double) Math.max(1, techCount) * 9
+                + researchTurnRatio(state.getTurn(), techCount)
                 + player.moneyMillions + personalityResearchBonus;
         int resourceThreshold = Math.round((float) player.populationMillions
                 / new int[]{9, 10, 12}[state.getDifficulty()]) * 2;
@@ -334,6 +334,11 @@ public final class OpponentAI {
             }
         }
         return scores;
+    }
+
+    /** The reference uses its current turn directly; its calculated 60-turn cap is unused. */
+    static double researchTurnRatio(int turn, int technologyCount) {
+        return turn / (double) Math.max(1, technologyCount) * 9;
     }
 
     static double preCounterScore(GameState state, GameState.PlayerState defender,
