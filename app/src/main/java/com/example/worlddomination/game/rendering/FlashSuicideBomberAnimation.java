@@ -5,7 +5,10 @@ import com.example.worlddomination.game.audio.OriginalAudio;
 /** Source-tick presentation for the soldier4 suicide bomber and city explosion. */
 public final class FlashSuicideBomberAnimation {
     private enum Phase {
-        SCREAM,
+        WAITING,
+        FADE_OUT,
+        DISAPPEAR,
+        TELEPORT_TO_HOME,
         FADE_IN,
         WALKING,
         EXPLOSION,
@@ -22,7 +25,7 @@ public final class FlashSuicideBomberAnimation {
         public boolean visible;
     }
 
-    private static final int SCREAM_TICKS = 25;
+    private static final int DISAPPEAR_WAIT_TICKS = 26;
     private static final int BOMBER_FRAMES_PER_DIRECTION = 12;
     private static final int EXPLOSION_FRAME_COUNT = 21;
     private static final float WALK_STEP = 4f;
@@ -36,11 +39,12 @@ public final class FlashSuicideBomberAnimation {
     private final FlashBattleRoutes.SuicideBomberAttack route;
     private final OriginalAudio.Cue screamCue;
     private final Actor bomber = new Actor();
+    private final Actor tint = new Actor();
     private final Actor explosion = new Actor();
-    private final Actor[] actors = {bomber, explosion};
+    private final Actor[] actors = {bomber, tint, explosion};
     private final OriginalAudio.Cue[] pendingAudio = new OriginalAudio.Cue[2];
     private int delayTicks;
-    private int screamTicks;
+    private int disappearTicks;
     private int waypointIndex;
     private int walkFrameOffset = 1;
     private int explosionFrame;
@@ -49,7 +53,7 @@ public final class FlashSuicideBomberAnimation {
     private int pendingAudioCount;
     private int pendingAudioIndex;
     private OriginalAudio.Cue lastAudioCue;
-    private Phase phase = Phase.SCREAM;
+    private Phase phase = Phase.WAITING;
 
     public FlashSuicideBomberAnimation(FlashBattleRoutes.SuicideBomberAttack route,
                                        OriginalAudio.Cue screamCue, int delayTicks) {
@@ -60,9 +64,13 @@ public final class FlashSuicideBomberAnimation {
         this.screamCue = screamCue;
         this.delayTicks = delayTicks;
         bomber.linkage = "suicide_bomber";
-        bomber.sourceX = route.spawn.x;
-        bomber.sourceY = route.spawn.y;
+        bomber.sourceX = route.initialPosition.x;
+        bomber.sourceY = route.initialPosition.y;
         bomber.islandPlayerId = route.attackerPlayerId;
+        tint.linkage = "suicide_bomber_tint";
+        tint.sourceX = bomber.sourceX;
+        tint.sourceY = bomber.sourceY;
+        tint.islandPlayerId = route.attackerPlayerId;
         explosion.linkage = "explosion001";
         explosion.sourceX = route.waypoints[route.waypoints.length - 1].x;
         explosion.sourceY = route.waypoints[route.waypoints.length - 1].y;
@@ -79,27 +87,51 @@ public final class FlashSuicideBomberAnimation {
             return;
         }
         switch (phase) {
-            case SCREAM:
-                if (screamTicks == 0) {
-                    enqueueAudio(screamCue);
-                }
-                screamTicks++;
-                if (screamTicks >= SCREAM_TICKS) {
-                    bomber.visible = true;
-                    bomber.alpha = 0f;
-                    bomber.sourceX = route.spawn.x;
-                    bomber.sourceY = route.spawn.y;
-                    phase = Phase.FADE_IN;
+            case WAITING:
+                bomber.visible = true;
+                tint.visible = true;
+                syncTint();
+                phase = Phase.FADE_OUT;
+                break;
+            case FADE_OUT:
+                fadeBomber(-0.02f);
+                if (moveToward(route.disappearPosition)) {
+                    bomber.sourceFrame = 16; // Source suicide_dissapear uses frame 17.
+                    syncTint();
+                    phase = Phase.DISAPPEAR;
                 }
                 break;
+            case DISAPPEAR:
+                if (disappearTicks == 0) {
+                    enqueueAudio(screamCue);
+                }
+                if (disappearTicks >= DISAPPEAR_WAIT_TICKS - 1) {
+                    phase = Phase.TELEPORT_TO_HOME;
+                } else {
+                    disappearTicks++;
+                }
+                break;
+            case TELEPORT_TO_HOME:
+                // The second source suicide_dissapear waypoint moves the invisible actor
+                // directly to its home-island spawn before suicide_appear begins.
+                bomber.sourceX = route.spawn.x;
+                bomber.sourceY = route.spawn.y;
+                bomber.sourceFrame = 16;
+                waypointIndex = 0;
+                xStep = 0f;
+                yStep = 0f;
+                syncTint();
+                phase = Phase.FADE_IN;
+                break;
             case FADE_IN:
-                bomber.alpha = Math.min(1f, bomber.alpha + 0.01f);
+                fadeBomber(0.01f);
+                tickRouteMovement();
                 if (bomber.alpha >= 1f) {
                     phase = Phase.WALKING;
                 }
                 break;
             case WALKING:
-                tickWalking();
+                tickRouteMovement();
                 break;
             case EXPLOSION:
                 explosion.sourceFrame = explosionFrame++;
@@ -143,9 +175,10 @@ public final class FlashSuicideBomberAnimation {
         return lastAudioCue;
     }
 
-    private void tickWalking() {
+    private void tickRouteMovement() {
         if (waypointIndex >= route.waypoints.length) {
             bomber.visible = false;
+            tint.visible = false;
             explosion.visible = true;
             explosionFrame = 0;
             enqueueAudio(OriginalAudio.Cue.EXPLOSION_SMALL3);
@@ -154,6 +187,15 @@ public final class FlashSuicideBomberAnimation {
         }
 
         FlashBattleRoutes.Point target = route.waypoints[waypointIndex];
+        if (moveToward(target)) {
+            waypointIndex++;
+            if (waypointIndex >= route.waypoints.length) {
+                tickRouteMovement();
+            }
+        }
+    }
+
+    private boolean moveToward(FlashBattleRoutes.Point target) {
         float dx = target.x - bomber.sourceX;
         float dy = target.y - bomber.sourceY;
         float xDistance = Math.abs(dx);
@@ -170,17 +212,27 @@ public final class FlashSuicideBomberAnimation {
         bomber.sourceX += xStep;
         bomber.sourceY += yStep;
         bomber.islandPlayerId = nearestIsland(bomber.sourceX, bomber.sourceY);
-
         int direction = directionFrame(bomber.sourceX - previousX,
                 bomber.sourceY - previousY);
         bomber.sourceFrame = (direction - 1) * BOMBER_FRAMES_PER_DIRECTION
                 + walkFrameOffset - 1;
         walkFrameOffset = walkFrameOffset < BOMBER_FRAMES_PER_DIRECTION
                 ? walkFrameOffset + 1 : 1;
+        syncTint();
+        return insideRange(bomber.sourceX, bomber.sourceY, target, TARGET_RANGE);
+    }
 
-        if (insideRange(bomber.sourceX, bomber.sourceY, target, TARGET_RANGE)) {
-            waypointIndex++;
-        }
+    private void fadeBomber(float amount) {
+        bomber.alpha = Math.max(0f, Math.min(1f, bomber.alpha + amount));
+        syncTint();
+    }
+
+    private void syncTint() {
+        tint.sourceFrame = bomber.sourceFrame;
+        tint.sourceX = bomber.sourceX;
+        tint.sourceY = bomber.sourceY;
+        tint.alpha = bomber.alpha;
+        tint.islandPlayerId = bomber.islandPlayerId;
     }
 
     private void enqueueAudio(OriginalAudio.Cue cue) {

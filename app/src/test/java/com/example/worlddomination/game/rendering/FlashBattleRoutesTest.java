@@ -242,6 +242,31 @@ public final class FlashBattleRoutesTest {
                 () -> FlashBattleRoutes.createSuicideBomberAttack(0, 1, 5, anchors));
         org.junit.Assert.assertThrows(IllegalArgumentException.class,
                 () -> FlashBattleRoutes.createSuicideBomberAttack(0, 1, 1, null));
+        org.junit.Assert.assertThrows(IllegalArgumentException.class,
+                () -> FlashBattleRoutes.createSuicideBomberAttack(0, 1, 1, 0, anchors));
+        org.junit.Assert.assertThrows(IllegalArgumentException.class,
+                () -> FlashBattleRoutes.createSuicideBomberAttack(0, 1, 1, 3, anchors));
+    }
+
+    @Test
+    public void suicideBomberLaunchPositionUsesItsSourceActionBuildingSlot() throws Exception {
+        Map<String, FlashBattleRoutes.Point> anchors = loadAnchors();
+        for (int player = 0; player < BattlefieldCityLayout.PLAYER_COUNT; player++) {
+            for (int slot = 1; slot <= 2; slot++) {
+                FlashBattleRoutes.SuicideBomberAttack route =
+                        FlashBattleRoutes.createSuicideBomberAttack(
+                                player, 1, 0, slot, anchors);
+                FlashBattleRoutes.Point building =
+                        FlashBattleRoutes.actionBuildingPosition(player, slot);
+                assertEquals(slot, route.actionBuildingSlot);
+                assertEquals(building.x, route.actionBuilding.x, 0f);
+                assertEquals(building.y, route.actionBuilding.y, 0f);
+                assertEquals(building.x + 10f, route.initialPosition.x, 0f);
+                assertEquals(building.y - 25f, route.initialPosition.y, 0f);
+                assertEquals(building.x - 15f, route.disappearPosition.x, 0f);
+                assertEquals(building.y - 45f, route.disappearPosition.y, 0f);
+            }
+        }
     }
 
     private static boolean hasSourceWaypoint(int player, int waypoint) {
