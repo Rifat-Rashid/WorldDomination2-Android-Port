@@ -347,11 +347,12 @@ public final class OpponentAITest {
     }
 
     @Test
-    public void specialAttackScoreDoesNotReceiveBonusAppliedAfterSourceActionArray() {
+    public void specialAttackScoreReceivesLateBonusWhenShipAndWarheadStocksQualify() {
         GameState state = null;
         for (long seed = 0; seed < 500; seed++) {
             GameState candidate = new GameState(1, seed);
-            if (candidate.getPlayerState(1).isSpecialPerson()) {
+            if (candidate.getPlayerState(1).isSpecialPerson()
+                    && !candidate.isActionBioloaded(1, GameState.Action.ATTACK)) {
                 state = candidate;
                 break;
             }
@@ -365,7 +366,7 @@ public final class OpponentAITest {
         actor.getWeapons().get("ship").inStock = 1;
         actor.getWeapons().get("warhead3").inStock = 2;
 
-        assertEquals(-999.0, OpponentAI.scoreForAction(state, actor,
+        assertEquals(-949.0, OpponentAI.scoreForAction(state, actor,
                 new Random(919L), GameState.Action.ATTACK), 0.0);
     }
 
