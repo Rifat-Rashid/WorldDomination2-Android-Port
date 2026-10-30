@@ -8,6 +8,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
+import java.util.Collections;
 import java.util.Random;
 
 public final class GameStateTest {
@@ -443,7 +444,10 @@ public final class GameStateTest {
         assertEquals(0, state.getWeaponStock(0, "rocket1"));
         assertEquals(1, state.getWeaponStock(0, "warhead1"));
         assertEquals("rocket1", human.getPreparedCarrierName());
+        assertEquals(Collections.singletonList(0), state.getPreparedThreatPlayerIds(1));
+        assertNull(state.getCounterWeaponForThreat(0, 0));
         assertEquals("antiRocket", state.getCounterWeaponForPreparedThreat(1));
+        assertEquals("antiRocket", state.getCounterWeaponForThreat(1, 0));
 
         state.selectAction(GameState.Action.PREPARED_ATTACK);
         assertTrue(state.getAvailablePreparedPayloads(0, "rocket1").contains("warhead1"));

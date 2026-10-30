@@ -158,6 +158,22 @@ public final class GameState {
             return Collections.unmodifiableSet(inventedTechnologies);
         }
 
+        /** Source AI strength: technology weight, weapon stock strength and funds. */
+        public int getStrength() {
+            int technologyWeight = 0;
+            for (String technologyName : inventedTechnologies) {
+                TechnologyCatalog.Definition technology = TechnologyCatalog.byName(technologyName);
+                if (technology != null) {
+                    technologyWeight += technology.strengthWeight;
+                }
+            }
+            int weaponStrength = 0;
+            for (WeaponState weapon : weapons.values()) {
+                weaponStrength += weapon.inStock * weapon.definition.level;
+            }
+            return technologyWeight + weaponStrength + moneyMillions;
+        }
+
         public Map<String, WeaponState> getWeapons() {
             return Collections.unmodifiableMap(weapons);
         }
@@ -1097,23 +1113,48 @@ public final class GameState {
 
     /** Best stocked counter for any enemy carrier currently in launch-ready state. */
     public String getCounterWeaponForPreparedThreat(int defenderId) {
-        PlayerState defender = playerById(defenderId);
-        for (PlayerState attacker : players) {
-            if (!attacker.alive || attacker.id == defenderId
-                    || defender.hasCeasefireWith(attacker.id)
-                    || attacker.preparedCarrierName == null) {
-                continue;
-            }
-            WeaponState carrier = attacker.weapons.get(attacker.preparedCarrierName);
-            if (carrier == null || carrier.definition.counteredBy.isEmpty()) {
-                continue;
-            }
-            WeaponState counter = defender.weapons.get(carrier.definition.counteredBy);
-            if (counter != null && counter.active && counter.inStock > 0) {
-                return counter.definition.name;
+        for (int attackerId : getPreparedThreatPlayerIds(defenderId)) {
+            String counter = getCounterWeaponForThreat(defenderId, attackerId);
+            if (counter != null) {
+                return counter;
             }
         }
         return null;
+    }
+
+    /** Counter weapon for one specific prepared enemy, or null if no counter is ready. */
+    public String getCounterWeaponForThreat(int defenderId, int attackerId) {
+        if (attackerId < 0 || attackerId >= players.length) {
+            return null;
+        }
+        PlayerState defender = playerById(defenderId);
+        PlayerState attacker = players[attackerId];
+        if (!attacker.alive || attacker.id == defenderId
+                || defender.hasCeasefireWith(attacker.id)
+                || attacker.preparedCarrierName == null) {
+            return null;
+        }
+        WeaponState carrier = attacker.weapons.get(attacker.preparedCarrierName);
+        if (carrier == null || carrier.definition.counteredBy.isEmpty()) {
+            return null;
+        }
+        WeaponState counter = defender.weapons.get(carrier.definition.counteredBy);
+        return counter != null && counter.active && counter.inStock > 0
+                ? counter.definition.name : null;
+    }
+
+    /** Living, non-ceasefire opponents with a carrier currently prepared to launch. */
+    public List<Integer> getPreparedThreatPlayerIds(int defenderId) {
+        PlayerState defender = playerById(defenderId);
+        List<Integer> threats = new ArrayList<>();
+        for (PlayerState attacker : players) {
+            if (attacker.alive && attacker.id != defenderId
+                    && !defender.hasCeasefireWith(attacker.id)
+                    && attacker.preparedCarrierName != null) {
+                threats.add(attacker.id);
+            }
+        }
+        return Collections.unmodifiableList(threats);
     }
 
     private static void addAvailableDefense(PlayerState player, String name,
@@ -1773,18 +1814,7 @@ public final class GameState {
     }
 
     private int strength(PlayerState player) {
-        int technologyWeight = 0;
-        for (String technologyName : player.inventedTechnologies) {
-            TechnologyCatalog.Definition technology = TechnologyCatalog.byName(technologyName);
-            if (technology != null) {
-                technologyWeight += technology.strengthWeight;
-            }
-        }
-        int weaponStrength = 0;
-        for (WeaponState weapon : player.weapons.values()) {
-            weaponStrength += weapon.inStock * weapon.definition.level;
-        }
-        return technologyWeight + weaponStrength + player.moneyMillions;
+        return player.getStrength();
     }
 
     private void resolveDiplomacyResponse(PlayerState target, DiplomacyProposal proposal,
