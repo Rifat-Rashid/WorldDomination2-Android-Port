@@ -2184,6 +2184,74 @@ public final class GameStateTest {
     }
 
     @Test
+    public void cancellingAttackRestoresSourceTargetWeaponAndSpySelections() {
+        GameState state = new GameState(1, 992L, false);
+        GameState.PlayerState human = state.getHuman();
+        for (GameState.WeaponState weapon : human.getWeapons().values()) {
+            if ("soldier".equals(weapon.definition.type)
+                    || "spy".equals(weapon.definition.type)) {
+                weapon.active = true;
+                weapon.inStock = 1;
+            }
+        }
+        human.spyReadiness = 100;
+
+        assertTrue(state.selectBattlefieldCity(2, 3));
+        state.selectAction(GameState.Action.ATTACK);
+        String expectedDefaultWeapon = state.getAvailableAttackWeapons().get(0);
+        String spyWeapon = null;
+        for (String weaponName : state.getAvailableAttackWeapons()) {
+            if (weaponName.startsWith("spy") && !weaponName.equals(expectedDefaultWeapon)) {
+                spyWeapon = weaponName;
+                break;
+            }
+        }
+        assertTrue("the active inventory should contain a spy distinct from its default",
+                spyWeapon != null);
+        assertTrue(state.configureAttack(1, 4, spyWeapon));
+        state.cycleSpyBuilding(1);
+        assertEquals("tech", state.getSelectedSpyBuilding());
+        assertEquals(1, state.getSelectedTargetPlayer());
+        assertEquals(4, state.getSelectedTargetCity());
+
+        state.cancelSelection();
+
+        assertNull(state.getSelectedAction());
+        assertEquals(2, state.getSelectedTargetPlayer());
+        assertEquals(3, state.getSelectedTargetCity());
+        assertEquals(expectedDefaultWeapon, state.getSelectedAttackWeapon());
+        assertEquals("spyCenter", state.getSelectedSpyBuilding());
+    }
+
+    @Test
+    public void cancellingPreparedShipSelectionClearsStagedPayloadReservations() {
+        GameState state = new GameState(1, 207L, false);
+        GameState.PlayerState human = state.getHuman();
+        human.getWeapons().get("ship").active = true;
+        human.getWeapons().get("ship").inStock = 1;
+        human.getWeapons().get("warhead1").inStock = 3;
+
+        state.selectAction(GameState.Action.PREPARED_ATTACK);
+        assertTrue(state.configurePreparedCarrier("ship"));
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+
+        state.selectAction(GameState.Action.PREPARED_ATTACK);
+        for (int city = 0; city < 3; city++) {
+            assertTrue(state.configurePreparedShipStrike(1, city, "warhead1"));
+        }
+        assertEquals(3, state.getSelectedShipStrikeCount());
+
+        state.cancelSelection();
+
+        assertEquals(0, state.getSelectedShipStrikeCount());
+        assertTrue(state.getAvailablePreparedPayloads(0, "ship").contains("warhead1"));
+        assertFalse(state.canAcceptPreparedAttack());
+    }
+
+    @Test
     public void hardMassMediaCannotRaiseInfluenceAboveOneHundred() {
         GameState state = new GameState(2, 0L, false);
         int startingMoney = state.getHuman().moneyMillions;
