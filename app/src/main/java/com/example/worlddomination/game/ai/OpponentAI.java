@@ -215,7 +215,7 @@ public final class OpponentAI {
         int lowestRegard = lowestRegardForScore(state, player);
         double attack = baseAttackScore(state, player, lowestRegard);
         double attackTransferredToProduction = 0;
-        if (!hasAvailableAttack(player, Collections.<String, Integer>emptyMap())) {
+        if (!hasAvailableAttackForScoring(player)) {
             attackTransferredToProduction = attack;
             attack = -999;
         }
@@ -717,13 +717,13 @@ public final class OpponentAI {
         return weapon.inStock - (reserved == null ? 0 : reserved);
     }
 
-    private static boolean hasAvailableAttack(GameState.PlayerState player,
-                                             Map<String, Integer> plannedUse) {
+    static boolean hasAvailableAttackForScoring(GameState.PlayerState player) {
         for (GameState.WeaponState weapon : player.getWeapons().values()) {
-            if (weapon.active && availableStock(weapon, plannedUse) > 0
+            if (weapon.active && weapon.inStock > 0
                     && ("soldier".equals(weapon.definition.type)
-                    || ("spy".equals(weapon.definition.type)
-                    && weapon.definition.level <= player.spyReadiness / 25))) {
+                    // The source gates action scoring with spyAvailable, which
+                    // deliberately ignores readiness; getTarget checks readiness later.
+                    || "spy".equals(weapon.definition.type))) {
                 return true;
             }
         }

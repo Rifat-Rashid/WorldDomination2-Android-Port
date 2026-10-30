@@ -198,6 +198,24 @@ public final class OpponentAITest {
     }
 
     @Test
+    public void attackScoreAvailabilityCountsAnyActiveSpyStockBeforeReadiness() {
+        GameState state = new GameState(1, 916L);
+        GameState.PlayerState actor = state.getPlayerState(1);
+        actor.spyReadiness = 0;
+        for (GameState.WeaponState weapon : actor.getWeapons().values()) {
+            weapon.inStock = 0;
+        }
+        GameState.WeaponState spy = actor.getWeapons().get("spy4");
+        spy.active = true;
+        spy.inStock = 1;
+
+        assertTrue(OpponentAI.hasAvailableAttackForScoring(actor));
+
+        spy.active = false;
+        assertFalse(OpponentAI.hasAvailableAttackForScoring(actor));
+    }
+
+    @Test
     public void preCounterScoreUsesTheThreateningEnemyRegardAndLowPopulationBonus() {
         GameState state = null;
         for (long seed = 0; seed < 500; seed++) {
