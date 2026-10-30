@@ -28,6 +28,7 @@ import com.example.worlddomination.game.rendering.FlashBattleUnitRenderer;
 import com.example.worlddomination.game.rendering.FlashChinookTankAnimation;
 import com.example.worlddomination.game.rendering.FlashApacheMarineAnimation;
 import com.example.worlddomination.game.rendering.FlashSuicideBomberAnimation;
+import com.example.worlddomination.game.rendering.FlashRocketAnimation;
 import com.example.worlddomination.game.rendering.FlashSoldierOneAnimation;
 import com.example.worlddomination.game.rendering.FlashAnimationTimeline;
 import com.example.worlddomination.game.rendering.SourceCombatAnimationMapping;
@@ -124,6 +125,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private final List<FlashApacheMarineAnimation> apacheMarineAnimations = new ArrayList<>();
     private final List<FlashChinookTankAnimation> chinookTankAnimations = new ArrayList<>();
     private final List<FlashSuicideBomberAnimation> suicideBomberAnimations = new ArrayList<>();
+    private final List<FlashRocketAnimation> rocketBattleAnimations = new ArrayList<>();
     private final List<PendingBattleAnimation> pendingBattleAnimations = new ArrayList<>();
     private final MatchOutcomeSequence outcomeSequence =
             new MatchOutcomeSequence(System.nanoTime());
@@ -539,6 +541,29 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 battleAnimations.remove(i);
             }
         }
+        for (int i = rocketBattleAnimations.size() - 1; i >= 0; i--) {
+            FlashRocketAnimation animation = rocketBattleAnimations.get(i);
+            boolean impact = animation.tick();
+            if (animation.takeLaunchSound()) {
+                audio.play(animation.getLaunchCue());
+            }
+            if (impact) {
+                FlashAnimationTimeline timeline = flashAnimationAssets.getTimeline(
+                        animation.getImpactLinkage());
+                if (timeline != null) {
+                    FlashBattleRoutes.RocketStrike route = animation.getRoute();
+                    battleAnimations.add(new BattleAnimationSequence(timeline,
+                            route.targetPlayerId, route.targetCityIndex, 0,
+                            animation.getImpactCue(), animation.getImpactSourceX(),
+                            animation.getImpactSourceY()));
+                } else if (animation.getImpactCue() != null) {
+                    audio.play(animation.getImpactCue());
+                }
+            }
+            if (animation.isFinished()) {
+                rocketBattleAnimations.remove(i);
+            }
+        }
         for (int i = soldierBattleAnimations.size() - 1; i >= 0; i--) {
             FlashSoldierOneAnimation animation = soldierBattleAnimations.get(i);
             animation.tick();
@@ -817,6 +842,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         battleUnitRenderer.drawApacheMarine(batch, mapBounds, apacheMarineAnimations);
         battleUnitRenderer.drawChinookTank(batch, mapBounds, chinookTankAnimations);
         battleUnitRenderer.drawSuicideBomber(batch, mapBounds, suicideBomberAnimations);
+        battleUnitRenderer.drawRocket(batch, mapBounds, rocketBattleAnimations);
         explosionRenderer.draw(batch, mapBounds, battleAnimations);
         drawContained(uiAssets.logo, logoPanel.x + 7f, logoPanel.y + 2f,
                 logoPanel.width - 14f, logoPanel.height - 4f);
@@ -1986,6 +2012,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         apacheMarineAnimations.clear();
         chinookTankAnimations.clear();
         suicideBomberAnimations.clear();
+        rocketBattleAnimations.clear();
         pendingBattleAnimations.clear();
     }
 
@@ -2243,6 +2270,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 apacheMarineAnimations.clear();
                 chinookTankAnimations.clear();
                 suicideBomberAnimations.clear();
+                rocketBattleAnimations.clear();
                 pendingBattleAnimations.clear();
                 modalOpen = false;
                 accumulator = 0f;
@@ -2697,6 +2725,17 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             ReferenceRandom presentationRandom = game.createPresentationRandomCopy();
             for (GameState.CombatEvent event : game.getLastTurnCombatEvents()) {
                 OriginalAudio.Cue cue = OriginalAudio.cueForCombatEvent(event);
+                if (FlashBattleRoutes.supportsRocketStrike(event)) {
+                    FlashBattleRoutes.RocketStrike route = FlashBattleRoutes.createRocketStrike(
+                            event.attackerPlayerId, event.defenderPlayerId,
+                            event.cityIndex, event.actionBuildingSlot,
+                            event.type == GameState.CombatEventType.STRIKE_INTERCEPTED);
+                    rocketBattleAnimations.add(new FlashRocketAnimation(route,
+                            animationIndex * 36,
+                            SourceCombatAnimationMapping.linkageFor(event), cue));
+                    animationIndex++;
+                    continue;
+                }
                 if (FlashBattleRoutes.supports(event)) {
                     FlashBattleRoutes.SoldierOneAttack route =
                             FlashBattleRoutes.createSoldierOneAttack(
@@ -2949,6 +2988,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         apacheMarineAnimations.clear();
         chinookTankAnimations.clear();
         suicideBomberAnimations.clear();
+        rocketBattleAnimations.clear();
         pendingBattleAnimations.clear();
         if (uiAssets != null) {
             uiAssets.dispose();

@@ -78,6 +78,20 @@ public final class BattlefieldCityLayout {
         return mapBounds.x + marginX + sourceX * scale + islandShift(playerId, marginX);
     }
 
+    /** Projects a moving source-stage point between the crops used by two player islands. */
+    public static float sourceXBetween(Rectangle mapBounds, float sourceX,
+                                       int fromPlayerId, int toPlayerId, float progress) {
+        validatePlayer(fromPlayerId);
+        validatePlayer(toPlayerId);
+        float scale = sourceScale(mapBounds);
+        float marginX = (mapBounds.width - SOURCE_WIDTH * scale) / 2f;
+        float blend = Math.max(0f, Math.min(1f, progress));
+        float fromShift = islandShift(fromPlayerId, marginX);
+        float toShift = islandShift(toPlayerId, marginX);
+        float shift = fromShift + (toShift - fromShift) * blend;
+        return mapBounds.x + marginX + sourceX * scale + shift;
+    }
+
     /** Projects a Flash top-down y-coordinate into libGDX world coordinates. */
     public static float sourceY(Rectangle mapBounds, float sourceY) {
         float scale = sourceScale(mapBounds);
@@ -157,6 +171,12 @@ public final class BattlefieldCityLayout {
         if (playerId < 0 || playerId >= PLAYER_COUNT
                 || cityIndex < 0 || cityIndex >= CITIES_PER_PLAYER) {
             throw new IllegalArgumentException("Invalid battlefield city address");
+        }
+    }
+
+    private static void validatePlayer(int playerId) {
+        if (playerId < 0 || playerId >= PLAYER_COUNT) {
+            throw new IllegalArgumentException("Invalid battlefield player");
         }
     }
 }

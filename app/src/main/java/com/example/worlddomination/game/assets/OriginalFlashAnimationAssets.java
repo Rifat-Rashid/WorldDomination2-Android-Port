@@ -31,6 +31,11 @@ import java.util.zip.GZIPInputStream;
 
 /** Loads original combat timelines in the background and caches their WebP shapes in an atlas. */
 public final class OriginalFlashAnimationAssets implements Disposable {
+    /** Body artwork nested in the source Flash rocket movie clip. */
+    public static final int ROCKET_BODY_SHAPE_ID = 792;
+    /** Smoke puff nested in the source Flash trail movie clip. */
+    public static final int ROCKET_TRAIL_SHAPE_ID = 4936;
+
     private static final String SCENE_PATH = "original/runtime/scene.json.gz";
     private static final String SHAPE_PATH = "original/runtime/shapes/";
     private static final String WEBP_PREFIX = "data:image/webp;base64,";
@@ -39,6 +44,7 @@ public final class OriginalFlashAnimationAssets implements Disposable {
             "explosion_warhead_4", "explosion_bioload_1", "explosion_bioload_2",
             "explosion_bioload_3", "explosion_bioload_4", "explosion001", "explosion002",
             "explosion003",
+            "rocket", "trail",
             "boat001", "soldier", "soldier001_shoot", "chinook", "chinook_shadow", "apache",
             "apache_shadow", "apache_tint", "marine", "soldier001_tint",
             "soldier001_shoot_tint", "suicide_bomber", "suicide_bomber_tint",
@@ -203,6 +209,7 @@ public final class OriginalFlashAnimationAssets implements Disposable {
     private static Set<Integer> collectShapeIds(
             Map<String, FlashAnimationTimeline> timelines) {
         Set<Integer> shapeIds = new LinkedHashSet<>();
+        shapeIds.add(ROCKET_TRAIL_SHAPE_ID);
         for (FlashAnimationTimeline timeline : timelines.values()) {
             for (int i = 0; i < timeline.getFrameCount(); i++) {
                 FlashAnimationTimeline.Frame frame = timeline.getFrame(i);

@@ -65,6 +65,9 @@ public final class GameStateCombatEventTest {
         assertEquals(0, events.get(0).cityIndex);
         assertEquals("rocket1", events.get(0).weaponName);
         assertEquals("warhead1", events.get(0).payloadName);
+        assertEquals(1, events.get(0).actionBuildingSlot);
+        assertTrue(com.example.worlddomination.game.rendering.FlashBattleRoutes
+                .supportsRocketStrike(events.get(0)));
         assertTrue(events.get(0).casualtiesMillions > 0);
     }
 

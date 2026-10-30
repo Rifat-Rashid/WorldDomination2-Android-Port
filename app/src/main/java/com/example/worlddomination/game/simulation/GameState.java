@@ -2121,7 +2121,7 @@ public final class GameState {
                 player.lastTurnActions.add(decision.action);
             }
         }
-        assignDirectAttackBuildingSlots(turnOrders);
+        assignActionBuildingSlots(turnOrders);
         for (AiDiplomacyResponse response : diplomacyResponses) {
             resolveDiplomacyResponse(response.target, response.proposal,
                     response.accepted, false);
@@ -2572,22 +2572,32 @@ public final class GameState {
 
     /**
      * Assigns the two native action-building positions using Battle.createToShowABArray's
-     * source order: unique non-fixed direct-attack buildings advance Player.nextActionBuilding.
+     * source order. Unique direct attack buildings and prepared rocket launchers receive
+     * source slots so their Android combat events can play from the correct island.
      */
-    private void assignDirectAttackBuildingSlots(List<ActionOrder> turnOrders) {
+    private void assignActionBuildingSlots(List<ActionOrder> turnOrders) {
         @SuppressWarnings("unchecked")
         Map<String, Integer>[] slotsByPlayer = new Map[players.length];
         int[] nextSlotByPlayer = new int[players.length];
         for (ActionOrder order : turnOrders) {
-            if (order.action != Action.ATTACK || order.playerId < 0
-                    || order.playerId >= players.length) {
+            if ((order.action != Action.ATTACK && order.action != Action.PREPARED_ATTACK)
+                    || order.playerId < 0 || order.playerId >= players.length
+                    || (order.action == Action.PREPARED_ATTACK && order.prepareCarrier)) {
                 continue;
             }
             WeaponState weapon = playerById(order.playerId).weapons.get(order.weaponName);
-            if (weapon == null || !"soldier".equals(weapon.definition.type)) {
+            if (weapon == null) {
                 continue;
             }
-            String frame = sourceDirectAttackBuildingFrame(weapon.definition.name);
+            String frame;
+            if (order.action == Action.ATTACK && "soldier".equals(weapon.definition.type)) {
+                frame = sourceDirectAttackBuildingFrame(weapon.definition.name);
+            } else if (order.action == Action.PREPARED_ATTACK
+                    && "rocket".equals(weapon.definition.type)) {
+                frame = "silo";
+            } else {
+                frame = null;
+            }
             if (frame == null) {
                 continue;
             }
@@ -2691,7 +2701,7 @@ public final class GameState {
         if (intercepted) {
             lastTurnCombatEvents.add(new CombatEvent(CombatEventType.STRIKE_INTERCEPTED,
                     attacker.id, defender.id, city.index, carrier.definition.name,
-                    payload.definition.name, 0, counterName));
+                    payload.definition.name, 0, counterName, order.actionBuildingSlot));
             messages.add("Nation " + defender.id + " intercepted the prepared strike.");
             return;
         }
@@ -2703,7 +2713,7 @@ public final class GameState {
         int casualties = populationChanges.addBattleCasualties(city, rolledCasualties);
         lastTurnCombatEvents.add(new CombatEvent(CombatEventType.STRIKE_IMPACT,
                 attacker.id, defender.id, city.index, carrier.definition.name,
-                payload.definition.name, casualties));
+                payload.definition.name, casualties, null, order.actionBuildingSlot));
         recordLargestBattle(attacker, defender, casualties);
         applyBattleHostilityEffects(attacker, defender, casualties);
         if (casualties > 0) {

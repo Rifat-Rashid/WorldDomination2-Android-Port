@@ -32,6 +32,9 @@ jobs:
           - id: combat-event-tests
             check: Combat event resolution tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.resolvedSoldierAttackEmitsOneDirectAttackEvent" --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.resolvedPreparedRocketAttackEmitsPayloadImpactEvent" --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.shipStrikeEmitsAnImpactForEachResolvedPayload" --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.attackThatBecomesUnavailableDoesNotEmitCombatEvent"'
+          - id: prepared-rocket-slot-tests
+            check: Prepared rocket launcher slot tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.resolvedPreparedRocketAttackEmitsPayloadImpactEvent"'
           - id: apache-building-slot-tests
             check: Apache action-building slot tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.directAttacksUseSourceUniqueBuildingOrderForApacheLaunchSlot" --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.repeatedApacheAttacksReuseTheDeduplicatedHelipadSlot"'
@@ -89,6 +92,9 @@ jobs:
           - id: source-animation-tests
             check: Source animation timeline tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest" --tests "com.example.worlddomination.game.rendering.SourceCombatAnimationMappingTest"'
+          - id: rocket-source-art-tests
+            check: Original rocket and trail artwork tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest.rocketAndTrailUseThePackagedFlashTimelinesAndNestedSourceArtwork" --tests "com.example.worlddomination.game.audio.OriginalAudioTest.combatCuesPointToTheOriginalPackagedSounds"'
           - id: source-battle-route-tests
             check: Source soldier battle route tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.sourceBattleAnchorsIncludeAllSoldierWaypoints" --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.createsBoatAndThreeInfantryRoutesForEveryTargetCity" --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.rejectsInvalidPlayersCitiesAndMissingSourceAnchors"'
@@ -110,6 +116,12 @@ jobs:
           - id: chinook-tank-route-tests
             check: Chinook and tank source route tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.createsChinookAndTankRoutesForEveryPlayerCityAndActionSlot" --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.rejectsInvalidChinookTankRouteData"'
+          - id: rocket-route-tests
+            check: Prepared rocket source route tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.createsSourceRocketEllipseFromEverySiloAndTargetCity" --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.rejectsInvalidRocketRoutePlayerCityAndSiloSlot" --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.rocketStageXBlendsBetweenTheAttackerAndTargetIslandCrops"'
+          - id: rocket-flight-tests
+            check: Rocket flight and impact playback tests
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashRocketAnimationTest"'
           - id: chinook-tank-playback-tests
             check: Chinook and tank source playback tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashChinookTankAnimationTest" --tests "com.example.worlddomination.game.rendering.FlashSpriteTransformTest" --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest.packagedStrikeAndInterceptionSymbolsMatchSourceTimelines" --tests "com.example.worlddomination.game.simulation.GameSetupTest.sourcePlayerColorIdsMapToTankTurretLibraryNames" --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.tankDirectAttackUsesItsSourceSlotAndChinookSound" --tests "com.example.worlddomination.game.audio.OriginalAudioTest.tankBattleCuesUseTheRecoveredOriginalSounds"'

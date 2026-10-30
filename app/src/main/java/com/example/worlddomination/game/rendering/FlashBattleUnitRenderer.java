@@ -76,6 +76,64 @@ public final class FlashBattleUnitRenderer {
         }
     }
 
+    /** Draws the recovered Flash rocket sprite and its original fading smoke artwork. */
+    public void drawRocket(SpriteBatch batch, Rectangle mapBounds,
+                           List<FlashRocketAnimation> animations) {
+        if (!assets.isLoaded()) {
+            return;
+        }
+        TextureRegion rocketShape = assets.getShape(
+                OriginalFlashAnimationAssets.ROCKET_BODY_SHAPE_ID);
+        TextureRegion smokeShape = assets.getShape(
+                OriginalFlashAnimationAssets.ROCKET_TRAIL_SHAPE_ID);
+        if (rocketShape == null || smokeShape == null) {
+            return;
+        }
+        float mapScale = BattlefieldCityLayout.sourceScale(mapBounds);
+        for (FlashRocketAnimation animation : animations) {
+            FlashBattleRoutes.RocketStrike route = animation.getRoute();
+            for (int trail = 0; trail < animation.getTrailCount(); trail++) {
+                float trailX = animation.getTrailX(trail);
+                drawRocketSprite(batch, mapBounds, smokeShape,
+                        trailX, animation.getTrailY(trail), route.attackerPlayerId,
+                        route.targetPlayerId, rocketProgress(route, trailX), 0f,
+                        animation.getTrailAlpha(trail), mapScale);
+            }
+            FlashRocketAnimation.Actor rocket = animation.getRocket();
+            if (rocket.visible) {
+                drawRocketSprite(batch, mapBounds, rocketShape, rocket.sourceX, rocket.sourceY,
+                        route.attackerPlayerId, route.targetPlayerId,
+                        rocketProgress(route, rocket.sourceX), rocket.rotationDegrees, 1f,
+                        mapScale);
+            }
+        }
+        batch.setColor(com.badlogic.gdx.graphics.Color.WHITE);
+    }
+
+    private static void drawRocketSprite(SpriteBatch batch, Rectangle mapBounds,
+                                         TextureRegion region, float sourceX,
+                                         float sourceY, int fromPlayerId, int toPlayerId,
+                                         float progress, float rotationDegrees, float alpha,
+                                         float mapScale) {
+        float width = region.getRegionWidth() * mapScale;
+        float height = region.getRegionHeight() * mapScale;
+        float centerX = BattlefieldCityLayout.sourceXBetween(mapBounds, sourceX,
+                fromPlayerId, toPlayerId, progress);
+        float centerY = BattlefieldCityLayout.sourceY(mapBounds, sourceY);
+        batch.setColor(1f, 1f, 1f, alpha);
+        batch.draw(region, centerX - width / 2f, centerY - height / 2f,
+                width / 2f, height / 2f, width, height, 1f, 1f, rotationDegrees);
+    }
+
+    private static float rocketProgress(FlashBattleRoutes.RocketStrike route,
+                                        float sourceX) {
+        float horizontalDistance = route.target.x - route.launch.x;
+        if (horizontalDistance == 0f) {
+            return 0f;
+        }
+        return (sourceX - route.launch.x) / horizontalDistance;
+    }
+
     private void drawActor(SpriteBatch batch, Rectangle mapBounds, String linkage,
                            int sourceFrame, float sourceX, float sourceY,
                            int islandPlayerId, float actorScale, float actorAlpha,

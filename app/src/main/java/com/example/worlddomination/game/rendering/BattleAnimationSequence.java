@@ -8,6 +8,12 @@ public final class BattleAnimationSequence {
     public final int cityIndex;
     public final FlashAnimationTimeline timeline;
     public final OriginalAudio.Cue audioCue;
+    /** True when this effect uses a Flash stage coordinate instead of the city anchor. */
+    public final boolean hasSourcePosition;
+    /** Source stage x coordinate for an explicitly positioned effect. */
+    public final float sourceX;
+    /** Source stage y coordinate for an explicitly positioned effect. */
+    public final float sourceY;
 
     private int delayFrames;
     private int currentFrameIndex = -1;
@@ -17,8 +23,17 @@ public final class BattleAnimationSequence {
     public BattleAnimationSequence(FlashAnimationTimeline timeline, int targetPlayerId,
                                    int cityIndex, int delayFrames,
                                    OriginalAudio.Cue audioCue) {
+        this(timeline, targetPlayerId, cityIndex, delayFrames, audioCue,
+                Float.NaN, Float.NaN);
+    }
+
+    /** Creates an effect at an explicit Flash stage coordinate instead of the city anchor. */
+    public BattleAnimationSequence(FlashAnimationTimeline timeline, int targetPlayerId,
+                                   int cityIndex, int delayFrames,
+                                   OriginalAudio.Cue audioCue, float sourceX, float sourceY) {
         if (timeline == null || targetPlayerId < 0 || targetPlayerId >= 5
-                || cityIndex < 0 || cityIndex >= 5 || delayFrames < 0) {
+                || cityIndex < 0 || cityIndex >= 5 || delayFrames < 0
+                || Float.isNaN(sourceX) != Float.isNaN(sourceY)) {
             throw new IllegalArgumentException("Invalid battlefield animation sequence");
         }
         this.timeline = timeline;
@@ -26,6 +41,9 @@ public final class BattleAnimationSequence {
         this.cityIndex = cityIndex;
         this.delayFrames = delayFrames;
         this.audioCue = audioCue;
+        this.hasSourcePosition = !Float.isNaN(sourceX);
+        this.sourceX = sourceX;
+        this.sourceY = sourceY;
     }
 
     /** Advances one source tick; returns true only on the animation's first tick. */
