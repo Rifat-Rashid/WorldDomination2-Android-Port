@@ -221,6 +221,33 @@ public final class GameStateTest {
     }
 
     @Test
+    public void resourcesAndMassMediaAddTheirSourceHighscoreWeights() {
+        for (int difficulty = 0; difficulty <= 2; difficulty++) {
+            GameState state = new GameState(difficulty, 72L + difficulty, false);
+            int income = state.getResourceIncomeMillions();
+            int mediaGain = state.getMassMediaGain();
+
+            completeTurnWithResourcesAndMedia(state);
+
+            long minimum = difficulty * (200L * income + 101L * mediaGain);
+            long maximum = difficulty * (250L * income + 151L * mediaGain);
+            assertTrue("score " + state.getHuman().score + " outside source range "
+                            + minimum + ".." + maximum,
+                    state.getHuman().score >= minimum && state.getHuman().score <= maximum);
+        }
+    }
+
+    @Test
+    public void zeroHighscoreMultiplierDefaultsToOneLikeTheSource() {
+        GameState state = new GameState(1, 75L, false);
+
+        state.addToHighscore(state.getHuman(), 5, 0);
+
+        assertTrue(state.getHuman().score >= 200L);
+        assertTrue(state.getHuman().score <= 250L);
+    }
+
+    @Test
     public void resourceYieldUsesDifficultyDividerAndSourceRounding() {
         assertEquals(56, new GameState(0).getResourceIncomeMillions());
         assertEquals(41, new GameState(1).getResourceIncomeMillions());
@@ -563,10 +590,12 @@ public final class GameStateTest {
 
         assertEquals(GameState.MatchStatus.VICTORY, state.getMatchStatus());
         FinalScoreBreakdown breakdown = state.getFinalScoreBreakdown();
-        assertEquals(125L, breakdown.getBaseScore());
+        assertEquals(human.score, breakdown.getBaseScore());
+        assertTrue(breakdown.getBaseScore() > 125L);
         assertEquals(1, breakdown.getSatelliteCount());
         assertEquals(4, breakdown.getFlagBonusCount());
-        assertEquals(1_000_250L, state.getFinalScore());
+        assertEquals(breakdown.getBaseScore() * 2L + 1_000_000L,
+                state.getFinalScore());
     }
 
     @Test
