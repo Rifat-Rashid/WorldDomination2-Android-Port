@@ -1015,7 +1015,7 @@ public final class GameState {
         }
         target.pendingDiplomacy[proposerPlayerId] =
                 new DiplomacyProposal(proposerPlayerId, optionIndex);
-        target.diplomacyOfferedLastTurn[proposerPlayerId] = 2;
+        proposer.diplomacyOfferedLastTurn[targetPlayerId] = 2;
         applyDiplomacySentRegard(proposer, target, optionIndex);
         return true;
     }
@@ -1670,6 +1670,7 @@ public final class GameState {
         for (PlayerState player : players) {
             player.lastTurnActions.clear();
         }
+        tickDiplomacyOfferCooldowns();
         decayReligion();
         advanceSpyReadiness();
         resolvePendingAiDiplomacy();
@@ -1754,7 +1755,7 @@ public final class GameState {
             player.turnMoneyMillions = player.moneyMillions;
         }
         updateDiplomacyRelations();
-        tickCeasefiresAndDiplomacyCooldowns();
+        tickCeasefires();
         refreshMatchStatus();
         reassignDeadAiEnemies();
         turn++;
@@ -1977,14 +1978,21 @@ public final class GameState {
         }
     }
 
-    private void tickCeasefiresAndDiplomacyCooldowns() {
+    private void tickDiplomacyOfferCooldowns() {
+        for (PlayerState player : players) {
+            for (int otherId = 0; otherId < players.length; otherId++) {
+                if (player.diplomacyOfferedLastTurn[otherId] > 0) {
+                    player.diplomacyOfferedLastTurn[otherId]--;
+                }
+            }
+        }
+    }
+
+    private void tickCeasefires() {
         for (PlayerState player : players) {
             for (int otherId = 0; otherId < players.length; otherId++) {
                 if (player.ceasefireTurns[otherId] > 0) {
                     player.ceasefireTurns[otherId]--;
-                }
-                if (player.diplomacyOfferedLastTurn[otherId] > 0) {
-                    player.diplomacyOfferedLastTurn[otherId]--;
                 }
             }
         }
