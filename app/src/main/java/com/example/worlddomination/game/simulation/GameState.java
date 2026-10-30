@@ -75,6 +75,8 @@ public final class GameState {
         private final int playerColor;
         private boolean specialPerson;
         private boolean suicidePerson;
+        private int primaryEnemyId = -1;
+        private int secondaryEnemyId = -1;
         public int populationMillions;
         public int moneyMillions;
         public int turnMoneyMillions;
@@ -142,6 +144,14 @@ public final class GameState {
 
         public boolean isSuicidePerson() {
             return suicidePerson;
+        }
+
+        public int getPrimaryEnemyId() {
+            return primaryEnemyId;
+        }
+
+        public int getSecondaryEnemyId() {
+            return secondaryEnemyId;
         }
 
         public Set<String> getInventedTechnologies() {
@@ -453,8 +463,116 @@ public final class GameState {
                         ? 70 : STARTING_REGARD[difficulty];
             }
             initializeInventory(player);
+        }
+        for (PlayerState player : players) {
+            if (!player.human && player.alive) {
+                initializeAiDesires(player);
+                initializeAiEnemies(player);
+            }
+        }
+        initializeDifficultyTechnologies();
+        if (difficulty == 2) {
+            initializeHardDifficultyOpponents();
+        }
+        initializeSpecialPersonRegard();
+        for (PlayerState player : players) {
             initializeCities(player);
         }
+        messages.add("Welcome, commander. Select two actions.");
+    }
+
+    private void initializeAiEnemies(PlayerState player) {
+        player.primaryEnemyId = chooseRandomEnemy(player, -1);
+        player.secondaryEnemyId = chooseRandomEnemy(player, player.primaryEnemyId);
+        if (player.primaryEnemyId >= 0) {
+            player.regardToward[player.primaryEnemyId] = 45;
+        }
+        if (player.secondaryEnemyId >= 0) {
+            player.regardToward[player.secondaryEnemyId] = 50;
+        }
+    }
+
+    private int chooseRandomEnemy(PlayerState player, int excludedPlayerId) {
+        List<PlayerState> candidates = new ArrayList<>(players.length - 1);
+        for (PlayerState candidate : players) {
+            if (candidate != null && candidate.alive && candidate.id != player.id
+                    && candidate.id != excludedPlayerId) {
+                candidates.add(candidate);
+            }
+        }
+        // The ActionScript helper falls back to player zero when its filtered list is empty.
+        return candidates.isEmpty() ? 0
+                : candidates.get(random.nextInt(candidates.size())).id;
+    }
+
+    private void reassignDeadAiEnemies() {
+        for (PlayerState player : players) {
+            if (player.human || !player.alive) {
+                continue;
+            }
+            if (player.primaryEnemyId >= 0 && !players[player.primaryEnemyId].alive) {
+                player.primaryEnemyId = chooseRandomEnemy(player, player.secondaryEnemyId);
+            }
+            if (player.secondaryEnemyId >= 0 && !players[player.secondaryEnemyId].alive) {
+                player.secondaryEnemyId = chooseRandomEnemy(player, player.primaryEnemyId);
+            }
+        }
+    }
+
+    private void initializeDifficultyTechnologies() {
+        int humanTechnologyLevel = difficulty == 0 ? 2 : 1;
+        inventTechnologiesThroughLevel(players[0], humanTechnologyLevel);
+        if (difficulty == 1) {
+            return;
+        }
+        for (int playerId = 1; playerId < players.length; playerId++) {
+            PlayerState opponent = players[playerId];
+            if (!opponent.alive) {
+                continue;
+            }
+            int opponentTechnologyLevel = difficulty == 2 ? 2 : 1;
+            inventTechnologiesThroughLevel(opponent, opponentTechnologyLevel);
+            if (difficulty == 2) {
+                setWeaponStockPerLevel(opponent, 1, 2);
+                setWeaponStockPerLevel(opponent, 2, 1);
+            }
+        }
+    }
+
+    private static void inventTechnologiesThroughLevel(PlayerState player, int level) {
+        for (TechnologyCatalog.Definition technology : TechnologyCatalog.all()) {
+            if (technology.group == 7 || technology.level > level) {
+                continue;
+            }
+            player.inventedTechnologies.add(technology.name);
+            WeaponState weapon = player.weapons.get(technology.name);
+            if (weapon != null) {
+                weapon.active = true;
+            }
+        }
+    }
+
+    private static void setWeaponStockPerLevel(PlayerState player, int level, int stock) {
+        for (WeaponState weapon : player.weapons.values()) {
+            if (weapon.definition.productionGroup != 8 && weapon.definition.level == level) {
+                weapon.inStock = stock;
+            }
+        }
+    }
+
+    private void initializeHardDifficultyOpponents() {
+        for (int playerId = 1; playerId < players.length; playerId++) {
+            PlayerState opponent = players[playerId];
+            if (!opponent.alive) {
+                continue;
+            }
+            opponent.primaryEnemyId = 0;
+            opponent.secondaryEnemyId = 0;
+            opponent.regardToward[0] = 15 + random.nextInt(46);
+        }
+    }
+
+    private void initializeSpecialPersonRegard() {
         for (PlayerState special : players) {
             if (!special.specialPerson || !special.alive) {
                 continue;
@@ -462,15 +580,10 @@ public final class GameState {
             for (PlayerState other : players) {
                 if (other.alive) {
                     other.regardToward[special.id] = 70;
+                    special.regardToward[other.id] = 70;
                 }
             }
         }
-        for (PlayerState player : players) {
-            if (!player.human && player.alive) {
-                initializeAiDesires(player);
-            }
-        }
-        messages.add("Welcome, commander. Select two actions.");
     }
 
     private static int setupDifficulty(GameSetup setup) {
@@ -1571,6 +1684,7 @@ public final class GameState {
         updateDiplomacyRelations();
         tickCeasefiresAndDiplomacyCooldowns();
         refreshMatchStatus();
+        reassignDeadAiEnemies();
         turn++;
         getHuman().turnMoneyMillions = getHuman().moneyMillions;
         messages.add("Turn " + turn + " complete.");

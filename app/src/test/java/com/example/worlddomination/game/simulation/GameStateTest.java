@@ -105,6 +105,98 @@ public final class GameStateTest {
     }
 
     @Test
+    public void aiEnemiesAreSeededAsDistinctLivingTargetsWithSourceRegard() {
+        GameState state = new GameState(1, 85L);
+        GameState repeated = new GameState(1, 85L);
+        for (int playerId = 1; playerId < 5; playerId++) {
+            GameState.PlayerState player = state.getPlayerState(playerId);
+            GameState.PlayerState sameSeed = repeated.getPlayerState(playerId);
+            int primaryId = player.getPrimaryEnemyId();
+            int secondaryId = player.getSecondaryEnemyId();
+
+            assertEquals(sameSeed.getPrimaryEnemyId(), primaryId);
+            assertEquals(sameSeed.getSecondaryEnemyId(), secondaryId);
+            assertTrue(primaryId >= 0 && primaryId < 5);
+            assertTrue(secondaryId >= 0 && secondaryId < 5);
+            assertTrue(primaryId != playerId);
+            assertTrue(secondaryId != playerId);
+            assertTrue(primaryId != secondaryId);
+            assertTrue(state.getPlayerState(primaryId).alive);
+            assertTrue(state.getPlayerState(secondaryId).alive);
+            if (!player.isSpecialPerson()) {
+                assertEquals(45, player.getRegardToward(primaryId));
+                assertEquals(50, player.getRegardToward(secondaryId));
+            }
+        }
+    }
+
+    @Test
+    public void hardAndEasyDifficultyUseTheReferenceStartingTechnologyLevels() {
+        GameState easy = new GameState(0, 29L);
+        assertTrue(easy.getHuman().hasTechnology("rocket2"));
+        assertTrue(easy.getHuman().hasTechnology("plane2"));
+        assertFalse(easy.getPlayerState(1).hasTechnology("rocket2"));
+
+        GameState hard = new GameState(2, 31L);
+        GameState.PlayerState hardOpponent = hard.getPlayerState(1);
+        assertTrue(hard.getHuman().hasTechnology("rocket1"));
+        assertFalse(hard.getHuman().hasTechnology("rocket2"));
+        assertTrue(hardOpponent.hasTechnology("rocket2"));
+        assertTrue(hardOpponent.hasTechnology("warhead2"));
+        assertTrue(hardOpponent.hasTechnology("plane2"));
+        assertFalse(hardOpponent.hasTechnology("sub"));
+        assertEquals(2, hard.getWeaponStock(1, "rocket1"));
+        assertEquals(1, hard.getWeaponStock(1, "rocket2"));
+        assertEquals(2, hard.getWeaponStock(1, "antiAir"));
+        assertEquals(0, hardOpponent.getPrimaryEnemyId());
+        assertEquals(0, hardOpponent.getSecondaryEnemyId());
+        if (!hardOpponent.isSpecialPerson()) {
+            assertTrue(hardOpponent.getRegardToward(0) >= 15);
+            assertTrue(hardOpponent.getRegardToward(0) <= 60);
+        } else {
+            assertEquals(70, hardOpponent.getRegardToward(0));
+        }
+    }
+
+    @Test
+    public void defeatedAiTargetsAreReplacedWithoutDuplicates() {
+        GameState state = null;
+        for (long seed = 0; seed < 500; seed++) {
+            GameState candidate = new GameState(1, seed, false);
+            int primary = candidate.getPlayerState(1).getPrimaryEnemyId();
+            int secondary = candidate.getPlayerState(1).getSecondaryEnemyId();
+            if (primary > 1 && secondary > 1) {
+                state = candidate;
+                break;
+            }
+        }
+        assertTrue("seed sweep should find AI-on-AI target assignments", state != null);
+        GameState.PlayerState attacker = state.getPlayerState(1);
+        int oldPrimary = attacker.getPrimaryEnemyId();
+        int oldSecondary = attacker.getSecondaryEnemyId();
+        for (int defeatedId : new int[]{oldPrimary, oldSecondary}) {
+            GameState.PlayerState defeated = state.getPlayerState(defeatedId);
+            defeated.alive = false;
+            defeated.populationMillions = 0;
+            for (CityState city : defeated.getCities()) {
+                city.populationMillions = 0;
+            }
+        }
+
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.MASS_MEDIA);
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+
+        assertTrue(state.getPlayerState(attacker.getPrimaryEnemyId()).alive);
+        assertTrue(state.getPlayerState(attacker.getSecondaryEnemyId()).alive);
+        assertTrue(attacker.getPrimaryEnemyId() != oldPrimary);
+        assertTrue(attacker.getSecondaryEnemyId() != oldSecondary);
+        assertTrue(attacker.getPrimaryEnemyId() != attacker.getSecondaryEnemyId());
+    }
+
+    @Test
     public void normalResourcesAndMassMediaResolveOneTurn() {
         GameState state = new GameState(1);
         assertEquals(65, state.getHuman().moneyMillions);
@@ -876,6 +968,7 @@ public final class GameStateTest {
     @Test
     public void diplomacyOfferIsResolvedByAiAndCreatesTimedSymmetricCeasefire() {
         GameState state = new GameState(1, 18L, false);
+        int opponentRegardBeforeOffer = state.getPlayerState(1).getRegardToward(0);
         state.selectAction(GameState.Action.DIPLOMACY);
         assertTrue(state.acceptSelectedAction());
         assertEquals(55, state.getTurnMoneyMillions());
@@ -886,7 +979,8 @@ public final class GameStateTest {
         assertEquals(96, state.getHuman().moneyMillions);
         assertEquals(65, state.getPlayerState(1).moneyMillions);
         assertEquals(67, state.getHuman().getRegardToward(1));
-        assertEquals(67, state.getPlayerState(1).getRegardToward(0));
+        assertEquals(opponentRegardBeforeOffer + 3,
+                state.getPlayerState(1).getRegardToward(0));
         assertEquals(0, state.getPendingDiplomacyProposal(1).proposerId);
 
         completeTurnWithResourcesAndMedia(state);
