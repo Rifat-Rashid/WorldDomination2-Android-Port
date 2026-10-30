@@ -16,6 +16,8 @@ import java.util.Random;
 /** Source-derived action scoring and target selection for computer nations. */
 public final class OpponentAI {
     private static final int[] ATTACK_BASE = {80, 86, 90};
+    private static final int[] SPY_ALERT_MONEY = {180, 150, 100};
+    private static final int[] AI_SPY_STOCK_REQUIREMENTS = {10, 8, 5, 3};
     private static final String[] PRODUCTION_CATEGORIES = {
             "rockets", "warhead", "bioload", "soldier", "spy", "planes", "special"
     };
@@ -86,6 +88,16 @@ public final class OpponentAI {
         ScoredAction(GameState.Action action, double score) {
             this.action = action;
             this.score = score;
+        }
+    }
+
+    private static final class SpyTarget {
+        final int playerId;
+        final int spyLevel;
+
+        SpyTarget(int playerId, int spyLevel) {
+            this.playerId = playerId;
+            this.spyLevel = spyLevel;
         }
     }
 
@@ -557,12 +569,9 @@ public final class OpponentAI {
                 null, false, -1, strikes);
     }
 
-    private static Decision planAttack(GameState state, GameState.PlayerState attacker,
-                                       Random random, Map<String, Integer> plannedUse) {
-        GameState.PlayerState target = mostHostileTarget(state, attacker, false);
-        if (target == null) {
-            return null;
-        }
+    static Decision planAttack(GameState state, GameState.PlayerState attacker,
+                               Random random, Map<String, Integer> plannedUse) {
+        GameState.PlayerState conventionalTarget = mostHostileTarget(state, attacker, false);
         GameState.WeaponState selected = null;
         for (GameState.WeaponState weapon : attacker.getWeapons().values()) {
             if (!weapon.active || availableStock(weapon, plannedUse) <= 0
@@ -574,18 +583,16 @@ public final class OpponentAI {
                 selected = weapon;
             }
         }
-        if (selected == null) {
-            for (GameState.WeaponState weapon : attacker.getWeapons().values()) {
-                if (weapon.active && availableStock(weapon, plannedUse) > 0
-                        && "spy".equals(weapon.definition.type)
-                        && weapon.definition.level <= attacker.spyReadiness / 25
-                        && (selected == null || weapon.definition.level
-                        > selected.definition.level)) {
-                    selected = weapon;
-                }
-            }
+
+        SpyTarget spyTarget = findSpyTarget(state, attacker, random);
+        boolean useSpy = spyTarget != null
+                && (selected == null || randomInclusive(random, 0, 6) == 3);
+        GameState.PlayerState target = conventionalTarget;
+        if (useSpy) {
+            selected = attacker.getWeapons().get("spy" + spyTarget.spyLevel);
+            target = state.getPlayerState(spyTarget.playerId);
         }
-        if (selected == null) {
+        if (selected == null || target == null) {
             return null;
         }
         List<Integer> populated = new ArrayList<>();
@@ -601,6 +608,77 @@ public final class OpponentAI {
         return new Decision(attacker.id, GameState.Action.ATTACK,
                 Collections.<String, Integer>emptyMap(), Collections.<String>emptyList(),
                 0, target.id, cityIndex, selected.definition.name, -1);
+    }
+
+    private static SpyTarget findSpyTarget(GameState state, GameState.PlayerState attacker,
+                                           Random random) {
+        boolean spyAvailable = false;
+        for (GameState.WeaponState weapon : attacker.getWeapons().values()) {
+            if ("spy".equals(weapon.definition.type) && weapon.active
+                    && weapon.inStock > 0) {
+                spyAvailable = true;
+                break;
+            }
+        }
+        if (!spyAvailable) {
+            return null;
+        }
+
+        int bestEnemyStock = 0;
+        int bestSpyLevel = 0;
+        int bestTargetId = -1;
+        for (GameState.PlayerState target : state.getPlayers()) {
+            if (!target.alive || target.id == attacker.id) {
+                continue;
+            }
+            for (int level = 1; level <= AI_SPY_STOCK_REQUIREMENTS.length; level++) {
+                int enemyStockAtLevel = stockAtLevel(target, level);
+                GameState.WeaponState spy = attacker.getWeapons().get("spy" + level);
+                if (enemyStockAtLevel > bestEnemyStock && level > bestSpyLevel
+                        && enemyStockAtLevel >= AI_SPY_STOCK_REQUIREMENTS[level - 1]
+                        // The source checks active stock once via spyAvailable, but
+                        // availableSpies_obj (used for this per-level test) sums stock
+                        // without filtering on active state.
+                        && spy != null && spy.inStock > 0
+                        && attacker.spyReadiness / 25 >= level) {
+                    bestEnemyStock = enemyStockAtLevel;
+                    bestSpyLevel = level;
+                    bestTargetId = target.id;
+                }
+            }
+        }
+
+        int alertThreshold = randomInclusive(random, SPY_ALERT_MONEY[state.getDifficulty()],
+                240);
+        GameState.PlayerState human = state.getHuman();
+        if (human.moneyMillions > alertThreshold) {
+            int highestSpyLevel = highestAvailableSpyLevel(attacker);
+            if (highestSpyLevel > 0) {
+                return new SpyTarget(human.id, highestSpyLevel);
+            }
+        }
+        return bestTargetId < 0 ? null : new SpyTarget(bestTargetId, bestSpyLevel);
+    }
+
+    private static int stockAtLevel(GameState.PlayerState player, int level) {
+        int stock = 0;
+        for (GameState.WeaponState weapon : player.getWeapons().values()) {
+            if (weapon.definition.level == level) {
+                stock += weapon.inStock;
+            }
+        }
+        return stock;
+    }
+
+    private static int highestAvailableSpyLevel(GameState.PlayerState player) {
+        int highestLevel = 0;
+        for (GameState.WeaponState weapon : player.getWeapons().values()) {
+            if ("spy".equals(weapon.definition.type) && weapon.active
+                    && weapon.inStock > 0) {
+                highestLevel = Math.max(highestLevel, weapon.definition.level);
+            }
+        }
+        return highestLevel;
     }
 
     private static int availableStock(GameState.WeaponState weapon,

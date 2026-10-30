@@ -55,6 +55,72 @@ public final class OpponentAITest {
     }
 
     @Test
+    public void spyTargetsTheRivalWithRequiredPerLevelInventory() {
+        GameState state = prepareSpyTargetScenario(false);
+        GameState.PlayerState attacker = state.getPlayerState(1);
+
+        OpponentAI.Decision decision = OpponentAI.planAttack(state, attacker,
+                new SequenceRandom(0, 0), Collections.<String, Integer>emptyMap());
+
+        assertNotNull(decision);
+        assertEquals("spy4", decision.weaponName);
+        assertEquals(4, decision.targetPlayerId);
+        assertTrue(OpponentAI.mostHostileTarget(state, attacker, false).id != 4);
+    }
+
+    @Test
+    public void spyLevelTargetingUsesPerLevelStockEvenWhenThatLevelIsInactive() {
+        GameState state = prepareSpyTargetScenario(false);
+        GameState.PlayerState attacker = state.getPlayerState(1);
+        GameState.WeaponState activeSpy = attacker.getWeapons().get("spy1");
+        activeSpy.active = true;
+        activeSpy.inStock = 1;
+        attacker.getWeapons().get("spy4").active = false;
+        attacker.getWeapons().get("spy4").inStock = 1;
+
+        OpponentAI.Decision decision = OpponentAI.planAttack(state, attacker,
+                new SequenceRandom(0, 0), Collections.<String, Integer>emptyMap());
+
+        assertNotNull(decision);
+        assertEquals("spy4", decision.weaponName);
+        assertEquals(4, decision.targetPlayerId);
+    }
+
+    @Test
+    public void highHumanFundsOverrideChoosesTheHighestAvailableSpyAgainstHuman() {
+        GameState state = prepareSpyTargetScenario(false);
+        GameState.PlayerState attacker = state.getPlayerState(1);
+        attacker.getWeapons().get("spy2").active = true;
+        attacker.getWeapons().get("spy2").inStock = 1;
+        state.getHuman().moneyMillions = 10_000;
+
+        OpponentAI.Decision decision = OpponentAI.planAttack(state, attacker,
+                new SequenceRandom(0, 0), Collections.<String, Integer>emptyMap());
+
+        assertNotNull(decision);
+        assertEquals("spy4", decision.weaponName);
+        assertEquals(0, decision.targetPlayerId);
+    }
+
+    @Test
+    public void spyReplacesConventionalAttackOnlyOnSourceOneInSevenRoll() {
+        GameState spyState = prepareSpyTargetScenario(true);
+        OpponentAI.Decision spyDecision = OpponentAI.planAttack(spyState,
+                spyState.getPlayerState(1), new SequenceRandom(0, 3, 0),
+                Collections.<String, Integer>emptyMap());
+        assertNotNull(spyDecision);
+        assertEquals("spy4", spyDecision.weaponName);
+        assertEquals(4, spyDecision.targetPlayerId);
+
+        GameState soldierState = prepareSpyTargetScenario(true);
+        OpponentAI.Decision soldierDecision = OpponentAI.planAttack(soldierState,
+                soldierState.getPlayerState(1), new SequenceRandom(0, 2, 0),
+                Collections.<String, Integer>emptyMap());
+        assertNotNull(soldierDecision);
+        assertEquals("soldier1", soldierDecision.weaponName);
+    }
+
+    @Test
     public void specialOpponentUsesItsPrimaryEnemyToBreakEqualHostilityTies() {
         GameState state = null;
         for (long seed = 0; seed < 500; seed++) {
@@ -541,5 +607,64 @@ public final class OpponentAITest {
         }
         poorest.populationMillions = 100;
         richer.populationMillions = 200;
+    }
+
+    private static GameState prepareSpyTargetScenario(boolean conventionalAttackAvailable) {
+        GameState state = null;
+        for (long seed = 0; seed < 500; seed++) {
+            GameState candidate = new GameState(1, seed);
+            GameState.PlayerState attacker = candidate.getPlayerState(1);
+            if (OpponentAI.mostHostileTarget(candidate, attacker, false) != null
+                    && OpponentAI.mostHostileTarget(candidate, attacker, false).id != 4) {
+                state = candidate;
+                break;
+            }
+        }
+        assertNotNull("seed sweep should make the spy stock target non-hostile", state);
+
+        GameState.PlayerState attacker = state.getPlayerState(1);
+        attacker.spyReadiness = 100;
+        for (GameState.WeaponState weapon : attacker.getWeapons().values()) {
+            if ("soldier".equals(weapon.definition.type)) {
+                weapon.inStock = 0;
+            } else if ("spy".equals(weapon.definition.type)) {
+                weapon.inStock = 0;
+            }
+        }
+        GameState.WeaponState spy = attacker.getWeapons().get("spy4");
+        spy.active = true;
+        spy.inStock = 1;
+        if (conventionalAttackAvailable) {
+            GameState.WeaponState soldier = attacker.getWeapons().get("soldier1");
+            soldier.active = true;
+            soldier.inStock = 1;
+        }
+
+        state.getHuman().moneyMillions = 0;
+        for (GameState.PlayerState target : state.getPlayers()) {
+            if (target.id == attacker.id) {
+                continue;
+            }
+            for (GameState.WeaponState weapon : target.getWeapons().values()) {
+                weapon.inStock = 0;
+            }
+        }
+        state.getPlayerState(4).getWeapons().get("warhead4").inStock = 8;
+        return state;
+    }
+
+    private static final class SequenceRandom extends Random {
+        private final int[] values;
+        private int index;
+
+        SequenceRandom(int... values) {
+            this.values = values;
+        }
+
+        @Override
+        public int nextInt(int bound) {
+            int value = index < values.length ? values[index++] : 0;
+            return Math.floorMod(value, bound);
+        }
     }
 }
