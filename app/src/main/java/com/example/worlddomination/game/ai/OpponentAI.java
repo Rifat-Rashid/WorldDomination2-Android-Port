@@ -572,15 +572,29 @@ public final class OpponentAI {
     static Decision planAttack(GameState state, GameState.PlayerState attacker,
                                Random random, Map<String, Integer> plannedUse) {
         GameState.PlayerState conventionalTarget = attackTarget(state, attacker, random);
-        GameState.WeaponState selected = null;
+        List<GameState.WeaponState> availableSoldiers = new ArrayList<>(4);
         for (GameState.WeaponState weapon : attacker.getWeapons().values()) {
             if (!weapon.active || availableStock(weapon, plannedUse) <= 0
                     || !"soldier".equals(weapon.definition.type)) {
                 continue;
             }
-            if (selected == null
-                    || weapon.definition.maxKillsMillions > selected.definition.maxKillsMillions) {
-                selected = weapon;
+            availableSoldiers.add(weapon);
+        }
+        availableSoldiers.sort(Comparator.comparingInt(
+                (GameState.WeaponState item) -> item.definition.maxKillsMillions)
+                .reversed());
+        GameState.WeaponState selected = null;
+        if (!availableSoldiers.isEmpty()) {
+            if (plannedUse.containsKey("@prepared")
+                    || attacker.getPreparedCarrierName() != null) {
+                selected = availableSoldiers.get(0);
+            } else {
+                // The source selects a soldier from the max-kill-sorted list using
+                // randRange(0, 3), even when fewer than four soldiers are available.
+                int sourceIndex = randomInclusive(random, 0, 3);
+                if (sourceIndex < availableSoldiers.size()) {
+                    selected = availableSoldiers.get(sourceIndex);
+                }
             }
         }
 

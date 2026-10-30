@@ -106,7 +106,7 @@ public final class OpponentAITest {
     public void spyReplacesConventionalAttackOnlyOnSourceOneInSevenRoll() {
         GameState spyState = prepareSpyTargetScenario(true);
         OpponentAI.Decision spyDecision = OpponentAI.planAttack(spyState,
-                spyState.getPlayerState(1), new SequenceRandom(0, 3, 0),
+                spyState.getPlayerState(1), new SequenceRandom(0, 0, 3, 0),
                 Collections.<String, Integer>emptyMap());
         assertNotNull(spyDecision);
         assertEquals("spy4", spyDecision.weaponName);
@@ -114,10 +114,27 @@ public final class OpponentAITest {
 
         GameState soldierState = prepareSpyTargetScenario(true);
         OpponentAI.Decision soldierDecision = OpponentAI.planAttack(soldierState,
-                soldierState.getPlayerState(1), new SequenceRandom(0, 2, 0),
+                soldierState.getPlayerState(1), new SequenceRandom(0, 0, 2, 0),
                 Collections.<String, Integer>emptyMap());
         assertNotNull(soldierDecision);
         assertEquals("soldier1", soldierDecision.weaponName);
+    }
+
+    @Test
+    public void directAttackSelectsSoldierBySourceRandomIndexInSortedInventory() {
+        GameState strongestState = prepareSoldierSelectionScenario();
+        OpponentAI.Decision strongest = OpponentAI.planAttack(strongestState,
+                strongestState.getPlayerState(1), new SequenceRandom(0),
+                Collections.<String, Integer>emptyMap());
+        assertNotNull(strongest);
+        assertEquals("soldier4", strongest.weaponName);
+
+        GameState weakestState = prepareSoldierSelectionScenario();
+        OpponentAI.Decision weakest = OpponentAI.planAttack(weakestState,
+                weakestState.getPlayerState(1), new SequenceRandom(3),
+                Collections.<String, Integer>emptyMap());
+        assertNotNull(weakest);
+        assertEquals("soldier1", weakest.weaponName);
     }
 
     @Test
@@ -681,6 +698,19 @@ public final class OpponentAITest {
             }
         }
         state.getPlayerState(4).getWeapons().get("warhead4").inStock = 8;
+        return state;
+    }
+
+    private static GameState prepareSoldierSelectionScenario() {
+        GameState state = new GameState(1, 914L);
+        GameState.PlayerState attacker = state.getPlayerState(1);
+        for (GameState.WeaponState weapon : attacker.getWeapons().values()) {
+            weapon.inStock = 0;
+            if ("soldier".equals(weapon.definition.type)) {
+                weapon.active = true;
+                weapon.inStock = 1;
+            }
+        }
         return state;
     }
 
