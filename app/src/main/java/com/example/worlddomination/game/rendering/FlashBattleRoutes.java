@@ -56,6 +56,30 @@ public final class FlashBattleRoutes {
         }
     }
 
+    /** Source route data for the Apache insertion and its three marines. */
+    public static final class ApacheMarineAttack {
+        public final int attackerPlayerId;
+        public final int targetPlayerId;
+        public final int actionBuildingSlot;
+        public final Point actionBuilding;
+        public final Point apacheStart;
+        public final Point unloadPoint;
+        public final SoldierPath[] marines;
+
+        private ApacheMarineAttack(int attackerPlayerId, int targetPlayerId,
+                                   int actionBuildingSlot, Point actionBuilding,
+                                   Point apacheStart, Point unloadPoint,
+                                   SoldierPath[] marines) {
+            this.attackerPlayerId = attackerPlayerId;
+            this.targetPlayerId = targetPlayerId;
+            this.actionBuildingSlot = actionBuildingSlot;
+            this.actionBuilding = actionBuilding;
+            this.apacheStart = apacheStart;
+            this.unloadPoint = unloadPoint;
+            this.marines = marines;
+        }
+    }
+
     private static final int SOLDIER_COUNT = 3;
     private static final int[][][] SOLDIER_WAYPOINTS = {
             {{0}, {1, 2}, {1, 2, 3}, {1, 6}, {0}},
@@ -88,6 +112,14 @@ public final class FlashBattleRoutes {
             {410, 474, 7}, {179, 252, 11}, {528, 145, 1},
             {311, 525, 7}, {575, 510, 5}
     };
+    // battleSrcMC ab{player}_{slot} root-stage coordinates recovered from scene.json.gz.
+    private static final float[][] ACTION_BUILDINGS = {
+            {386.25f, 352.25f, 432.25f, 296.75f},
+            {85.75f, 146.75f, 130.75f, 91.75f},
+            {668.75f, 86.75f, 723.75f, 146.25f},
+            {156.75f, 566.25f, 102.25f, 506.75f},
+            {667.75f, 556.75f, 722.75f, 496.75f}
+    };
     private static final float[][] BOAT_WAYPOINTS = {
             {380, 156}, {474, 192}, {578, 240}, {655, 307}, {582, 455},
             {493, 498}, {400, 530}, {337, 504}, {254, 411}, {200, 360},
@@ -110,6 +142,74 @@ public final class FlashBattleRoutes {
     public static boolean supports(GameState.CombatEvent event) {
         return event != null && event.type == GameState.CombatEventType.DIRECT_ATTACK
                 && "soldier1".equals(event.weaponName);
+    }
+
+    public static boolean supportsApacheMarine(GameState.CombatEvent event) {
+        return event != null && event.type == GameState.CombatEventType.DIRECT_ATTACK
+                && "soldier2".equals(event.weaponName)
+                && event.actionBuildingSlot >= 1 && event.actionBuildingSlot <= 2;
+    }
+
+    /** Returns the source Flash placement for a nation's first or second action building. */
+    public static Point actionBuildingPosition(int playerId, int slot) {
+        validatePlayer(playerId);
+        if (slot < 1 || slot > 2) {
+            throw new IllegalArgumentException("Invalid source action-building slot");
+        }
+        int offset = (slot - 1) * 2;
+        return new Point(ACTION_BUILDINGS[playerId][offset],
+                ACTION_BUILDINGS[playerId][offset + 1]);
+    }
+
+    /** Builds the source soldier2 Apache route and three marine insertion paths. */
+    public static ApacheMarineAttack createSoldierTwoAttack(
+            int attackerPlayerId, int targetPlayerId, int targetCityIndex,
+            int actionBuildingSlot, Map<String, Point> anchors,
+            ReferenceRandom presentationRandom) {
+        validatePlayer(attackerPlayerId);
+        validatePlayer(targetPlayerId);
+        if (targetCityIndex < 0 || targetCityIndex >= BattlefieldCityLayout.CITIES_PER_PLAYER
+                || actionBuildingSlot < 1 || actionBuildingSlot > 2
+                || anchors == null || presentationRandom == null) {
+            throw new IllegalArgumentException("Invalid soldier2 presentation data");
+        }
+
+        Point actionBuilding = actionBuildingPosition(attackerPlayerId, actionBuildingSlot);
+        // View.showActionBuildingFromObj sets heliStart to (_x - 15, _y + 25),
+        // then Unit("apache") adds (+25, -25) when waitForHeliStart releases.
+        Point apacheStart = new Point(actionBuilding.x + 10f, actionBuilding.y);
+        Point marineBase = new Point(LAND_UNIT_POSITIONS[targetPlayerId][0],
+                LAND_UNIT_POSITIONS[targetPlayerId][1]);
+        Point unloadPoint = new Point(marineBase.x + 35f, marineBase.y - 10f);
+
+        float cityX = BattlefieldCityLayout.sourceCityX(targetPlayerId, targetCityIndex);
+        float cityY = BattlefieldCityLayout.sourceCityY(targetPlayerId, targetCityIndex);
+        float[][] offsets = fireOffsets(SOLDIER_END_POSITIONS[targetPlayerId][targetCityIndex]);
+        SoldierPath[] marines = new SoldierPath[SOLDIER_COUNT];
+        for (int marine = 0; marine < SOLDIER_COUNT; marine++) {
+            List<Point> path = new ArrayList<>();
+            path.add(marineBase);
+            for (int waypoint : SOLDIER_WAYPOINTS[targetPlayerId][targetCityIndex]) {
+                if (waypoint == 0) {
+                    continue;
+                }
+                Point anchor = anchors.get("swp" + targetPlayerId + "_" + waypoint);
+                if (anchor == null) {
+                    throw new IllegalArgumentException("Missing source marine waypoint swp"
+                            + targetPlayerId + "_" + waypoint);
+                }
+                path.add(anchor);
+            }
+            int offsetX = (int) offsets[marine][0];
+            int offsetY = (int) offsets[marine][1];
+            path.add(new Point(cityX + offsetX + presentationRandom.nextInt(7) - 3,
+                    cityY + offsetY + presentationRandom.nextInt(7) - 3));
+            path.add(new Point(cityX, cityY));
+            marines[marine] = new SoldierPath(path.toArray(new Point[0]), offsetX, offsetY);
+        }
+
+        return new ApacheMarineAttack(attackerPlayerId, targetPlayerId,
+                actionBuildingSlot, actionBuilding, apacheStart, unloadPoint, marines);
     }
 
     /** Builds the source soldier1 boat arrival and three infantry firing routes. */

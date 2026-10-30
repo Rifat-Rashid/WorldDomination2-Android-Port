@@ -38,7 +38,9 @@ public final class OriginalFlashAnimationAssets implements Disposable {
             "explosion_warhead_1", "explosion_warhead_2", "explosion_warhead_3",
             "explosion_warhead_4", "explosion_bioload_1", "explosion_bioload_2",
             "explosion_bioload_3", "explosion_bioload_4", "explosion002", "explosion003",
-            "boat001", "soldier", "soldier001_shoot", "chinook"
+            "boat001", "soldier", "soldier001_shoot", "chinook", "apache",
+            "apache_shadow", "apache_tint", "marine", "soldier001_tint",
+            "soldier001_shoot_tint"
     };
 
     private final Object loadLock = new Object();

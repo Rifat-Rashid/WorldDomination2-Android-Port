@@ -21,6 +21,9 @@ public final class FlashBattleRoutesTest {
     private static final float[][] BOAT_STARTS = {
             {410f, 474f}, {179f, 252f}, {528f, 145f}, {311f, 525f}, {575f, 510f}
     };
+    private static final float[][] LAND_UNIT_POSITIONS = {
+            {420f, 420f}, {160f, 201f}, {563f, 108f}, {260f, 500f}, {562f, 511f}
+    };
 
     @Test
     public void sourceBattleAnchorsIncludeAllSoldierWaypoints() throws Exception {
@@ -90,6 +93,92 @@ public final class FlashBattleRoutesTest {
         assertThrows(IllegalArgumentException.class,
                 () -> FlashBattleRoutes.createSoldierOneAttack(0, 1, 1, incomplete,
                         new ReferenceRandom(1L)));
+    }
+
+    @Test
+    public void createsApacheAndThreeMarineRoutesForEveryTargetCityAndActionSlot()
+            throws Exception {
+        Map<String, FlashBattleRoutes.Point> anchors = loadAnchors();
+
+        for (int attacker = 0; attacker < BattlefieldCityLayout.PLAYER_COUNT; attacker++) {
+            int target = (attacker + 1) % BattlefieldCityLayout.PLAYER_COUNT;
+            for (int slot = 1; slot <= 2; slot++) {
+                FlashBattleRoutes.Point actionBuilding =
+                        FlashBattleRoutes.actionBuildingPosition(attacker, slot);
+                for (int city = 0; city < BattlefieldCityLayout.CITIES_PER_PLAYER; city++) {
+                    FlashBattleRoutes.ApacheMarineAttack route =
+                            FlashBattleRoutes.createSoldierTwoAttack(attacker, target, city,
+                                    slot, anchors, new ReferenceRandom(attacker * 100L
+                                            + slot * 10L + city));
+
+                    assertEquals(attacker, route.attackerPlayerId);
+                    assertEquals(target, route.targetPlayerId);
+                    assertEquals(slot, route.actionBuildingSlot);
+                    assertEquals(actionBuilding.x, route.actionBuilding.x, 0f);
+                    assertEquals(actionBuilding.y, route.actionBuilding.y, 0f);
+                    assertEquals(actionBuilding.x + 10f, route.apacheStart.x, 0f);
+                    assertEquals(actionBuilding.y, route.apacheStart.y, 0f);
+                    assertEquals(LAND_UNIT_POSITIONS[target][0] + 35f,
+                            route.unloadPoint.x, 0f);
+                    assertEquals(LAND_UNIT_POSITIONS[target][1] - 10f,
+                            route.unloadPoint.y, 0f);
+                    assertEquals(3, route.marines.length);
+                    for (FlashBattleRoutes.SoldierPath marine : route.marines) {
+                        assertTrue(marine.waypoints.length >= 3);
+                        FlashBattleRoutes.Point spawn = marine.waypoints[0];
+                        assertEquals(LAND_UNIT_POSITIONS[target][0], spawn.x, 0f);
+                        assertEquals(LAND_UNIT_POSITIONS[target][1], spawn.y, 0f);
+                        FlashBattleRoutes.Point approach =
+                                marine.waypoints[marine.waypoints.length - 2];
+                        assertTrue(Math.abs(approach.x
+                                - BattlefieldCityLayout.sourceCityX(target, city)
+                                - marine.fireOffsetX) <= 3.01f);
+                        assertTrue("target=" + target + " city=" + city
+                                        + " offset=" + marine.fireOffsetY
+                                        + " approachY=" + approach.y
+                                        + " cityY=" + BattlefieldCityLayout.sourceCityY(target, city),
+                                Math.abs(approach.y
+                                        - BattlefieldCityLayout.sourceCityY(target, city)
+                                        - marine.fireOffsetY) <= 3.01f);
+                        FlashBattleRoutes.Point firingPoint =
+                                marine.waypoints[marine.waypoints.length - 1];
+                        assertEquals(BattlefieldCityLayout.sourceCityX(target, city),
+                                firingPoint.x, 0f);
+                        assertEquals(BattlefieldCityLayout.sourceCityY(target, city),
+                                firingPoint.y, 0f);
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    public void actionBuildingSlotsMatchTheOriginalFlashSceneCoordinates() {
+        float[][] expected = {
+                {386.25f, 352.25f, 432.25f, 296.75f},
+                {85.75f, 146.75f, 130.75f, 91.75f},
+                {668.75f, 86.75f, 723.75f, 146.25f},
+                {156.75f, 566.25f, 102.25f, 506.75f},
+                {667.75f, 556.75f, 722.75f, 496.75f}
+        };
+
+        for (int player = 0; player < expected.length; player++) {
+            for (int slot = 1; slot <= 2; slot++) {
+                FlashBattleRoutes.Point actual =
+                        FlashBattleRoutes.actionBuildingPosition(player, slot);
+                int offset = (slot - 1) * 2;
+                assertEquals(expected[player][offset], actual.x, 0f);
+                assertEquals(expected[player][offset + 1], actual.y, 0f);
+            }
+        }
+    }
+
+    @Test
+    public void rejectsInvalidApacheSlot() {
+        org.junit.Assert.assertThrows(IllegalArgumentException.class,
+                () -> FlashBattleRoutes.actionBuildingPosition(0, 0));
+        org.junit.Assert.assertThrows(IllegalArgumentException.class,
+                () -> FlashBattleRoutes.actionBuildingPosition(0, 3));
     }
 
     private static boolean hasSourceWaypoint(int player, int waypoint) {

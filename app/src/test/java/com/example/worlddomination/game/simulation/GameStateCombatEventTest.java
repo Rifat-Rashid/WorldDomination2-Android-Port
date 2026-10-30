@@ -29,6 +29,7 @@ public final class GameStateCombatEventTest {
         assertEquals(1, events.get(0).defenderPlayerId);
         assertEquals(0, events.get(0).cityIndex);
         assertEquals("soldier1", events.get(0).weaponName);
+        assertEquals(1, events.get(0).actionBuildingSlot);
         assertTrue(events.get(0).casualtiesMillions > 0);
         assertEquals(OriginalAudio.Cue.SOLDIER_GUN,
                 OriginalAudio.cueForCombatEvent(events.get(0)));
@@ -118,6 +119,64 @@ public final class GameStateCombatEventTest {
         state.confirmTurn();
 
         assertTrue(state.getLastTurnCombatEvents().isEmpty());
+    }
+
+    @Test
+    public void directAttacksUseSourceUniqueBuildingOrderForApacheLaunchSlot() {
+        GameState state = new GameState(1, 124L, false);
+        activateWeapon(state, "soldier1", 1);
+        activateWeapon(state, "soldier2", 1);
+
+        queueAttack(state, 1, 0, "soldier1");
+        queueAttack(state, 1, 1, "soldier2");
+        state.confirmTurn();
+
+        List<GameState.CombatEvent> events = state.getLastTurnCombatEvents();
+        assertEquals(2, events.size());
+        assertEquals("soldier1", events.get(0).weaponName);
+        assertEquals(1, events.get(0).actionBuildingSlot);
+        assertEquals("soldier2", events.get(1).weaponName);
+        assertEquals(2, events.get(1).actionBuildingSlot);
+    }
+
+    @Test
+    public void repeatedApacheAttacksReuseTheDeduplicatedHelipadSlot() {
+        GameState state = new GameState(1, 125L, false);
+        activateWeapon(state, "soldier2", 2);
+
+        queueAttack(state, 1, 0, "soldier2");
+        queueAttack(state, 1, 1, "soldier2");
+        state.confirmTurn();
+
+        List<GameState.CombatEvent> events = state.getLastTurnCombatEvents();
+        assertEquals(2, events.size());
+        assertEquals(1, events.get(0).actionBuildingSlot);
+        assertEquals(1, events.get(1).actionBuildingSlot);
+    }
+
+    @Test
+    public void marineDirectAttackUsesTheOriginalSealGunCue() {
+        GameState state = new GameState(1, 126L, false);
+        activateWeapon(state, "soldier2", 1);
+        queueAttack(state, 1, 0, "soldier2");
+        queueResources(state);
+        state.confirmTurn();
+
+        assertEquals(OriginalAudio.Cue.SEAL_GUN,
+                OriginalAudio.cueForCombatEvent(state.getLastTurnCombatEvents().get(0)));
+    }
+
+    private static void activateWeapon(GameState state, String name, int stock) {
+        GameState.WeaponState weapon = state.getHuman().getWeapons().get(name);
+        weapon.active = true;
+        weapon.inStock = stock;
+    }
+
+    private static void queueAttack(GameState state, int targetPlayerId,
+                                    int cityIndex, String weaponName) {
+        state.selectAction(GameState.Action.ATTACK);
+        assertTrue(state.configureAttack(targetPlayerId, cityIndex, weaponName));
+        assertTrue(state.acceptSelectedAction());
     }
 
     private static void queueResources(GameState state) {
