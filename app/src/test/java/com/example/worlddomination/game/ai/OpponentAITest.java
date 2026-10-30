@@ -244,6 +244,47 @@ public final class OpponentAITest {
     }
 
     @Test
+    public void attackScoreAvailabilityRequiresSourceWeaponsOrReadySpy() {
+        GameState state = new GameState(1, 9171L);
+        GameState.PlayerState actor = state.getPlayerState(1);
+        for (GameState.WeaponState weapon : actor.getWeapons().values()) {
+            weapon.inStock = 0;
+        }
+        GameState.WeaponState carrier = actor.getWeapons().get("rocket1");
+        carrier.active = true;
+        carrier.inStock = 1;
+
+        assertFalse("carrier stock alone does not populate availableWeaponsArr",
+                OpponentAI.hasAvailableAttackForScoring(state, actor));
+    }
+
+    @Test
+    public void activePayloadUsesSourceCarrierStockRulesForAttackEligibility() {
+        GameState state = new GameState(1, 9172L);
+        GameState.PlayerState actor = state.getPlayerState(1);
+        for (GameState.WeaponState weapon : actor.getWeapons().values()) {
+            weapon.inStock = 0;
+        }
+        GameState.WeaponState payload = actor.getWeapons().get("warhead1");
+        payload.active = true;
+        payload.inStock = 1;
+        GameState.WeaponState rocket = actor.getWeapons().get("rocket1");
+        rocket.active = false;
+        rocket.inStock = 1;
+
+        assertTrue("the source does not require the matching carrier to be active",
+                OpponentAI.hasAvailableAttackForScoring(state, actor));
+        rocket.inStock = 0;
+        assertFalse("payload without any stocked compatible carrier is unavailable",
+                OpponentAI.hasAvailableAttackForScoring(state, actor));
+
+        GameState.WeaponState bomber = actor.getWeapons().get("plane2");
+        bomber.active = false;
+        bomber.inStock = 1;
+        assertTrue(OpponentAI.hasAvailableAttackForScoring(state, actor));
+    }
+
+    @Test
     public void stockLevelCountsResearchedWeaponsThatAreTemporarilyInactive()
             throws Exception {
         GameState state = new GameState(1, 922L);
