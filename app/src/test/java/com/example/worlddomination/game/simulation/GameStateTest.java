@@ -1032,7 +1032,8 @@ public final class GameStateTest {
         assertTrue(breakdown.getBaseScore() > 125L);
         assertEquals(1, breakdown.getSatelliteCount());
         assertEquals(4, breakdown.getFlagBonusCount());
-        assertEquals(breakdown.getBaseScore() * 2L + 1_000_000L,
+        assertEquals(breakdown.getBaseScore() * 2L
+                        + FinalScoreBreakdown.calculateFlagBonusPoints(4),
                 state.getFinalScore());
     }
 

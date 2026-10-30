@@ -67,6 +67,33 @@ jobs:
       - name: Run ${{ matrix.check }}
         run: ./gradlew --no-daemon --stacktrace ${{ matrix.task }}
 
+      - name: Verify original audio files in the APK
+        if: ${{ matrix.id == 'assemble' }}
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+
+          apk_path = Path('app/build/outputs/apk/debug/app-debug.apk')
+          audio_dir = Path('app/src/main/assets/original/runtime/audio')
+          audio_sources = sorted(audio_dir.glob('*.mp3.gz'))
+          if not audio_sources:
+              raise SystemExit('No original compressed MP3 sources were found')
+
+          with ZipFile(apk_path) as apk:
+              for source in audio_sources:
+                  packaged = 'assets/' + source.relative_to('app/src/main/assets').as_posix()[:-3]
+                  try:
+                      data = apk.read(packaged)
+                  except KeyError as error:
+                      raise SystemExit(f'Missing packaged audio asset: {packaged}') from error
+                  mpeg_sync = len(data) >= 2 and data[0] == 0xff and data[1] & 0xe0 == 0xe0
+                  if not (data.startswith(b'ID3') or mpeg_sync):
+                      raise SystemExit(f'Packaged audio is not MP3 data: {packaged}')
+          print(f'Verified {len(audio_sources)} packaged original MP3 assets')
+          PY
+
       - name: Upload validation reports on failure
         if: failure()
         uses: actions/upload-artifact@v6

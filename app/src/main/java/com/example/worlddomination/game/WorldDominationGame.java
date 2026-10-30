@@ -14,6 +14,7 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.example.worlddomination.game.audio.OriginalAudio;
 import com.example.worlddomination.game.assets.OriginalUiAssets;
@@ -22,6 +23,7 @@ import com.example.worlddomination.game.simulation.GameState;
 import com.example.worlddomination.game.simulation.CityState;
 import com.example.worlddomination.game.ui.BattlefieldCityLayout;
 import com.example.worlddomination.game.ui.MatchOutcomePresentation;
+import com.example.worlddomination.game.ui.MatchOutcomeSequence;
 import com.example.worlddomination.game.ui.ScrollPaneState;
 
 /** Native OpenGL ES game screen; it loads no Python, browser, or network runtime. */
@@ -90,6 +92,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private GameState game;
     private GameSetup setup;
     private final OriginalAudio audio = new OriginalAudio();
+    private final MatchOutcomeSequence outcomeSequence =
+            new MatchOutcomeSequence(System.nanoTime());
+    private long scoreCounterSoundId = -1L;
     private final ExtendViewport viewport = new ExtendViewport(BASE_WIDTH, BASE_HEIGHT, 1400f, 800f);
     private final OrthographicCamera camera = new OrthographicCamera();
     private final Rectangle leftPanel = new Rectangle();
@@ -444,6 +449,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         camera.update();
         if (game == null) {
             drawSetupScreen();
+        } else if (MatchOutcomePresentation.isFinished(game.getMatchStatus())
+                && outcomeSequence.isEndgameVisible()) {
+            drawEndgameOverlay();
         } else {
             drawPanelsAndMap();
             drawTextAndControls();
@@ -451,9 +459,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 drawDiplomacyResponseModal();
             } else if (modalOpen) {
                 drawActionModal();
-            }
-            if (MatchOutcomePresentation.isFinished(game.getMatchStatus())) {
-                drawEndgameOverlay();
             }
         }
         if (showExitPromptSeconds > 0f) {
@@ -465,6 +470,50 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         navigationScroll.tick(seconds);
         equipmentScroll.tick(seconds);
         showExitPromptSeconds = Math.max(0f, showExitPromptSeconds - seconds);
+        advanceOutcomeSequence();
+    }
+
+    private void advanceOutcomeSequence() {
+        if (game == null || !MatchOutcomePresentation.isFinished(game.getMatchStatus())) {
+            if (outcomeSequence.getPhase() != MatchOutcomeSequence.Phase.INACTIVE) {
+                stopScoreCounterSound();
+                outcomeSequence.reset();
+            }
+            return;
+        }
+
+        if (outcomeSequence.getOutcome() != game.getMatchStatus()) {
+            stopScoreCounterSound();
+            outcomeSequence.begin(game.getMatchStatus(), game.getFinalScoreBreakdown());
+            modalOpen = false;
+        }
+        playOutcomeEvents(outcomeSequence.tick());
+    }
+
+    private void playOutcomeEvents(int events) {
+        if ((events & MatchOutcomeSequence.EVENT_DEFEAT) != 0) {
+            audio.play(OriginalAudio.Cue.DEFEAT);
+        }
+        if ((events & MatchOutcomeSequence.EVENT_START_SCORE_COUNTER) != 0) {
+            stopScoreCounterSound();
+            scoreCounterSoundId = audio.loop(OriginalAudio.Cue.SCORE_COUNTER);
+        }
+        if ((events & MatchOutcomeSequence.EVENT_STOP_SCORE_COUNTER) != 0) {
+            stopScoreCounterSound();
+        }
+        if ((events & MatchOutcomeSequence.EVENT_SATELLITE_BONUS) != 0) {
+            audio.play(OriginalAudio.Cue.SATELLITE_MULTIPLIER);
+        }
+        if ((events & MatchOutcomeSequence.EVENT_FLAG_BONUS) != 0) {
+            audio.play(OriginalAudio.Cue.FLAG_BONUS);
+        }
+    }
+
+    private void stopScoreCounterSound() {
+        if (scoreCounterSoundId >= 0L) {
+            audio.stop(OriginalAudio.Cue.SCORE_COUNTER, scoreCounterSoundId);
+            scoreCounterSoundId = -1L;
+        }
     }
 
     /** Safe insets arrive from the Android UI thread and are applied on the game thread. */
@@ -1702,7 +1751,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     }
 
     private void drawEndgameOverlay() {
-        GameState.MatchStatus outcome = game.getMatchStatus();
+        GameState.MatchStatus outcome = outcomeSequence.getOutcome();
+        boolean scoreStarted = outcomeSequence.isScoreStarted();
         shapes.setProjectionMatrix(camera.combined);
         shapes.begin(ShapeRenderer.ShapeType.Filled);
         shapes.setColor(0f, 0f, 0f, 0.70f);
@@ -1711,42 +1761,76 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         shapes.setColor(MODAL_ORANGE);
         shapes.rect(modal.x + 3f, modal.y + modal.height - 29f,
                 modal.width - 6f, 25f);
-        shapes.rect(modal.x + 3f, modal.y + 3f,
-                modal.width - 6f, 25f);
+        if (scoreStarted) {
+            shapes.rect(modal.x + 3f, modal.y + 3f,
+                    modal.width - 6f, 25f);
+        }
         shapes.end();
 
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
         drawPanelTexture(modal);
-        drawOriginalButton(modalAccept);
+        if (scoreStarted) {
+            drawOriginalButton(modalAccept);
+        }
         batch.end();
 
-        shapes.begin(ShapeRenderer.ShapeType.Filled);
-        drawButtonGradient(modalAccept, true);
-        shapes.end();
+        if (scoreStarted) {
+            shapes.begin(ShapeRenderer.ShapeType.Filled);
+            drawButtonGradient(modalAccept, true);
+            shapes.end();
+        }
 
         batch.begin();
         font.setColor(Color.WHITE);
         drawCentered(MatchOutcomePresentation.title(outcome),
                 modal.x + modal.width / 2f, modal.y + modal.height - 12f, 12f);
         font.setColor(TITLE_TEXT);
-        drawCentered(MatchOutcomePresentation.message(outcome),
-                modal.x + modal.width / 2f, modal.y + modal.height * 0.67f, 8f);
-        drawCentered("FINAL SCORE", modal.x + modal.width / 2f,
-                modal.y + modal.height * 0.48f, 8f);
-        drawCentered(MatchOutcomePresentation.formatScore(game.getFinalScore()),
-                modal.x + modal.width / 2f, modal.y + modal.height * 0.37f, 15f);
-        drawCentered("NEW GAME", modalAccept.x + modalAccept.width / 2f,
-                modalAccept.y + modalAccept.height / 2f + 3f, 8f);
+        if (scoreStarted) {
+            drawWrappedCentered(MatchOutcomePresentation.message(outcome),
+                    modal.x + 9f, modal.y + modal.height * 0.70f,
+                    modal.width - 18f, 8f);
+            drawCentered("FINAL SCORE", modal.x + modal.width / 2f,
+                    modal.y + modal.height * 0.48f, 8f);
+            if (outcomeSequence.isScoreVisible()) {
+                drawCentered(outcomeSequence.getScoreText(),
+                        modal.x + modal.width / 2f, modal.y + modal.height * 0.37f, 15f);
+            }
+            if (!outcomeSequence.getSatelliteBonusText().isEmpty()) {
+                drawCentered(outcomeSequence.getSatelliteBonusText(),
+                        modal.x + modal.width / 2f, modal.y + modal.height * 0.25f, 7f);
+            }
+            if (!outcomeSequence.getFlagBonusText().isEmpty()) {
+                drawCentered(outcomeSequence.getFlagBonusText(),
+                        modal.x + modal.width / 2f, modal.y + modal.height * 0.18f, 7f);
+            }
+        }
+        if (scoreStarted) {
+            drawCentered("NEW GAME", modalAccept.x + modalAccept.width / 2f,
+                    modalAccept.y + modalAccept.height / 2f + 3f, 8f);
+        }
         batch.end();
 
         shapes.begin(ShapeRenderer.ShapeType.Line);
         drawPanelEdges(modal);
-        drawButtonEdges(modalAccept);
+        if (scoreStarted) {
+            drawButtonEdges(modalAccept);
+        }
         shapes.end();
     }
 
+    private void drawWrappedCentered(String text, float x, float baselineY,
+                                     float targetWidth, float targetHeight) {
+        float originalScale = font.getScaleX();
+        float scale = targetHeight / Math.max(font.getLineHeight(), 1f);
+        font.getData().setScale(scale);
+        font.draw(batch, text, x, baselineY, targetWidth, Align.center, true);
+        font.getData().setScale(originalScale);
+    }
+
     private void beginNewGameSetup() {
+        stopScoreCounterSound();
+        outcomeSequence.reset();
         setup = new GameSetup();
         java.util.Random setupRandom = new java.util.Random(System.nanoTime());
         setup.setPlayerColor(setupRandom.nextInt(5) + 1);
@@ -2233,15 +2317,19 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             activateSetupAt(x, y);
             return;
         }
-        if (muteButton.contains(x, y)) {
-            audio.toggleMuted();
+        if (MatchOutcomePresentation.isFinished(game.getMatchStatus())) {
+            if (outcomeSequence.isEndgameVisible()) {
+                if (outcomeSequence.isScoreStarted() && modalAccept.contains(x, y)) {
+                    beginNewGameSetup();
+                    audio.play(OriginalAudio.Cue.ACTION_CLOSE);
+                }
+            } else if (muteButton.contains(x, y)) {
+                audio.toggleMuted();
+            }
             return;
         }
-        if (MatchOutcomePresentation.isFinished(game.getMatchStatus())) {
-            if (modalAccept.contains(x, y)) {
-                beginNewGameSetup();
-                audio.play(OriginalAudio.Cue.ACTION_CLOSE);
-            }
+        if (muteButton.contains(x, y)) {
+            audio.toggleMuted();
             return;
         }
         if (game.getPendingHumanDiplomacyProposal() != null) {

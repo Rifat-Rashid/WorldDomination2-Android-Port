@@ -14,8 +14,10 @@ public final class OriginalAudioTest {
     @Test
     public void everyMappedCueIsAnOriginalGzipWrappedMp3Asset() throws Exception {
         for (OriginalAudio.Cue cue : OriginalAudio.Cue.values()) {
-            assertTrue(OriginalAudio.internalPath(cue).endsWith(".mp3.gz"));
-            File asset = locateAsset(OriginalAudio.internalPath(cue));
+            assertTrue(OriginalAudio.internalPath(cue).endsWith(".mp3"));
+            assertEquals(OriginalAudio.internalPath(cue) + ".gz",
+                    OriginalAudio.sourceAssetPath(cue));
+            File asset = locateAsset(OriginalAudio.sourceAssetPath(cue));
             assertTrue("Missing original audio asset: " + cue.name(), asset.isFile());
             try (InputStream gzip = new GZIPInputStream(new FileInputStream(asset))) {
                 int first = gzip.read();
@@ -33,8 +35,20 @@ public final class OriginalAudioTest {
 
     @Test
     public void themeUsesTheRecoveredWorldDominationTrack() {
-        assertEquals("original/runtime/audio/2_WDTheme.wav.mp3.gz",
+        assertEquals("original/runtime/audio/2_WDTheme.wav.mp3",
                 OriginalAudio.internalPath(OriginalAudio.Cue.THEME));
+    }
+
+    @Test
+    public void endgameUsesRecoveredCounterAndBonusSounds() {
+        assertEquals("original/runtime/audio/31_Score counter.Mp3.mp3",
+                OriginalAudio.internalPath(OriginalAudio.Cue.SCORE_COUNTER));
+        assertEquals("original/runtime/audio/34_Satelite multiplier.Mp3.mp3",
+                OriginalAudio.internalPath(OriginalAudio.Cue.SATELLITE_MULTIPLIER));
+        assertEquals("original/runtime/audio/75_Country domination bonus.Mp3.mp3",
+                OriginalAudio.internalPath(OriginalAudio.Cue.FLAG_BONUS));
+        assertEquals("original/runtime/audio/48_Loose.Mp3.mp3",
+                OriginalAudio.internalPath(OriginalAudio.Cue.DEFEAT));
     }
 
     private static File locateAsset(String relativePath) {

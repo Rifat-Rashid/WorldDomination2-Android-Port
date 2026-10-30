@@ -19,7 +19,9 @@ public final class FinalScoreBreakdown {
 
     /**
      * The Flash end-game sequence doubles the base score once per used space
-     * satellite, then adds 250,000 for each flag credited to player zero.
+     * satellite. Its flag animation adds 250,000 times the running number of
+     * credited flags each time a new flag is revealed, producing a triangular
+     * bonus total.
      */
     public static FinalScoreBreakdown calculate(long baseScore, int satelliteCount,
                                                  int flagBonusCount) {
@@ -34,11 +36,31 @@ public final class FinalScoreBreakdown {
                     || multipliedScore > (Long.MAX_VALUE >> doublings)
                     ? Long.MAX_VALUE : multipliedScore << doublings;
         }
-        long flagPoints = flags > Long.MAX_VALUE / FLAG_BONUS_POINTS
-                ? Long.MAX_VALUE : flags * FLAG_BONUS_POINTS;
+        long flagPoints = calculateFlagBonusPoints(flags);
         long total = multipliedScore > Long.MAX_VALUE - flagPoints
                 ? Long.MAX_VALUE : multipliedScore + flagPoints;
         return new FinalScoreBreakdown(nonNegativeScore, satellites, flags, total);
+    }
+
+    /** Returns the exact cumulative flag score used by the Flash score animation. */
+    public static long calculateFlagBonusPoints(int flagBonusCount) {
+        int flags = Math.max(0, flagBonusCount);
+        long firstFactor = flags;
+        long secondFactor = (long) flags + 1L;
+        if ((firstFactor & 1L) == 0L) {
+            firstFactor /= 2L;
+        } else {
+            secondFactor /= 2L;
+        }
+        long triangularCount = multiplySaturated(firstFactor, secondFactor);
+        return multiplySaturated(triangularCount, FLAG_BONUS_POINTS);
+    }
+
+    private static long multiplySaturated(long left, long right) {
+        if (left == 0L || right == 0L) {
+            return 0L;
+        }
+        return left > Long.MAX_VALUE / right ? Long.MAX_VALUE : left * right;
     }
 
     public long getBaseScore() {
