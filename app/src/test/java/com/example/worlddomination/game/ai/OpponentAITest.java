@@ -17,6 +17,13 @@ import static org.junit.Assert.assertTrue;
 
 public final class OpponentAITest {
     @Test
+    public void researchTurnBonusContinuesPastTheUnusedSixtyTurnCap() {
+        assertEquals(108.0, OpponentAI.researchTurnRatio(60, 5), 0.0);
+        assertEquals(216.0, OpponentAI.researchTurnRatio(120, 5), 0.0);
+        assertEquals(108.0, OpponentAI.researchTurnRatio(120, 10), 0.0);
+    }
+
+    @Test
     public void specialOpponentUsesItsPrimaryEnemyToBreakEqualHostilityTies() {
         GameState state = null;
         for (long seed = 0; seed < 500; seed++) {
