@@ -9,6 +9,7 @@ import java.util.Random;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -157,7 +158,16 @@ public final class OpponentAITest {
 
     @Test
     public void opponentShipLaunchConsumesThreePayloadUnitsAcrossItsStrikeArray() {
-        GameState state = new GameState(1, 208L);
+        GameState state = null;
+        for (long seed = 0; seed < 500; seed++) {
+            GameState candidate = new GameState(1, seed);
+            GameState.PlayerState firstOpponent = candidate.getPlayerState(1);
+            if (!firstOpponent.isSpecialPerson() && !firstOpponent.isSuicidePerson()) {
+                state = candidate;
+                break;
+            }
+        }
+        assertNotNull("seed sweep should find a regular first opponent", state);
         GameState.PlayerState attacker = state.getPlayerState(1);
         attacker.getWeapons().get("ship").active = true;
         attacker.getWeapons().get("ship").inStock = 1;

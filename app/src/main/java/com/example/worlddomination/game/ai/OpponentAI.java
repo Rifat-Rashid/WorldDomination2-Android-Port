@@ -210,6 +210,16 @@ public final class OpponentAI {
             attackTransferredToProduction = attack;
             attack = -999;
         }
+        if (player.isSpecialPerson()
+                && (player.getWeaponStockByName("ship") < 0
+                || player.getWeaponStockByName("warhead3") < 3)) {
+            attackTransferredToProduction += attack;
+            attack = -999;
+        }
+        if (player.isSuicidePerson() && player.getWeaponStockByName("soldier4") < 2) {
+            attackTransferredToProduction += attack;
+            attack = -999;
+        }
 
         double preCounter = 0;
         if (state.getCounterWeaponForPreparedThreat(player.id) != null) {
@@ -231,6 +241,10 @@ public final class OpponentAI {
             preparedAttack = -999;
         } else {
             preparedAttack += 30;
+        }
+        if (player.isSpecialPerson() && player.getWeaponStockByName("ship") > 0
+                && player.getWeaponStockByName("warhead3") > 1) {
+            attack += 50;
         }
 
         double religion = 20 + Math.round(player.populationMillions
@@ -256,6 +270,14 @@ public final class OpponentAI {
             resources = 75 - Math.round((float) stockLevel)
                     - player.moneyMillions / 10000.0;
         }
+        if (player.isSpecialPerson()) {
+            if (player.getWeaponStockByName("ship") < 1) {
+                resources += 250;
+            }
+            if (player.getWeaponStockByName("warhead3") < 3) {
+                resources += 250;
+            }
+        }
 
         double production = attackTransferredToProduction
                 + 55 - Math.round((float) stockLevel);
@@ -270,17 +292,34 @@ public final class OpponentAI {
             production = 0;
         }
 
+        double personalityResearchBonus = 0;
+        if (player.isSpecialPerson() && production > 0) {
+            if (!player.hasTechnology("ship") || !player.hasTechnology("warhead3")) {
+                personalityResearchBonus += production;
+                production = -10;
+            }
+        }
+        if (player.isSuicidePerson() && production > 0
+                && !player.hasTechnology("soldier4")) {
+            personalityResearchBonus += production;
+        }
+
         double nuclearKill = bestInventedPayloadKills(player, "warhead");
         double biologicalKill = bestInventedPayloadKills(player, "bioload");
         int techCount = player.getInventedTechnologies().size();
         double research = Math.min(60, largestCity - nuclearKill - biologicalKill)
                 + Math.min(60, state.getTurn()) / (double) Math.max(1, techCount) * 9
-                + player.moneyMillions;
+                + player.moneyMillions + personalityResearchBonus;
         int resourceThreshold = Math.round((float) player.populationMillions
                 / new int[]{9, 10, 12}[state.getDifficulty()]) * 2;
         if (player.moneyMillions <= resourceThreshold) {
             resources += research;
             research = 10;
+        }
+        if (player.isSpecialPerson() && player.hasTechnology("ship")
+                && player.hasTechnology("warhead3") && research > 0) {
+            production += research;
+            research = -100;
         }
 
         List<ScoredAction> scores = new ArrayList<>(9);
@@ -664,6 +703,11 @@ public final class OpponentAI {
         }
         int targetPercent = (int) Math.round(randomInclusive(random, 80, 100) / 10.0) * 10;
         int categoryCount = randomInclusive(random, 1, 4);
+        if (player.isSpecialPerson()) {
+            categoryCount = 2;
+        } else if (player.isSuicidePerson()) {
+            categoryCount = 1;
+        }
         int percentAssigned = defensePercent;
         Map<String, Integer> percentages = new LinkedHashMap<>();
         for (int index = 0; index < categoryCount; index++) {
@@ -674,6 +718,9 @@ public final class OpponentAI {
             int percentage = activeCategories < 4
                     ? (int) Math.round(randomInclusive(random, 40, 60) / 10.0) * 10
                     : (int) Math.round(randomInclusive(random, 0, 60) / 10.0) * 10;
+            if (player.isSpecialPerson()) {
+                percentage = 50;
+            }
             if (percentAssigned + percentage > targetPercent) {
                 percentage = targetPercent - percentAssigned;
                 percentAssigned = targetPercent;
@@ -718,9 +765,13 @@ public final class OpponentAI {
         int budget = slot == 2 ? player.turnMoneyMillions
                 : (int) Math.round(player.turnMoneyMillions
                 * randomInclusive(random, 20, 80) / 100.0);
+        if (player.isSpecialPerson()) {
+            budget = player.turnMoneyMillions;
+        }
         List<TechnologyCatalog.Definition> candidates = new ArrayList<>();
         for (TechnologyCatalog.Definition technology : TechnologyCatalog.all()) {
-            if (technology.group == 7 || player.hasTechnology(technology.name)
+            if ((technology.group == 7 && !player.allowsSpecialTechnologies())
+                    || player.hasTechnology(technology.name)
                     || player.moneyMillions <= technology.costMillions
                     || (technology.prerequisite != null
                     && !player.hasTechnology(technology.prerequisite))) {
@@ -736,7 +787,8 @@ public final class OpponentAI {
         int remaining = budget;
         for (TechnologyCatalog.Definition technology : candidates) {
             if (remaining > technology.costMillions
-                    && player.getDesiredStock(technology.name) > 0) {
+                    && (player.isSpecialPerson()
+                    || player.getDesiredStock(technology.name) > 0)) {
                 technologies.add(technology.name);
                 remaining -= technology.costMillions;
                 reserved += technology.costMillions;
