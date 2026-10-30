@@ -346,6 +346,61 @@ public final class GameState {
         }
     }
 
+    /** Population changes settle after every action in the source turn has resolved. */
+    private static final class TurnPopulationChanges {
+        private final Map<Integer, Integer> battleCasualties = new LinkedHashMap<>();
+        private final Map<Integer, List<Integer>> propagandaLosses = new LinkedHashMap<>();
+        private final Map<Integer, Integer> propagandaGains = new LinkedHashMap<>();
+        private final Set<Integer> propagandaExcluded = new LinkedHashSet<>();
+
+        int remainingAfterBattle(CityState city) {
+            return Math.max(0, city.populationMillions - battleCasualtiesFor(city));
+        }
+
+        int battleCasualtiesFor(CityState city) {
+            Integer casualties = battleCasualties.get(city.id);
+            return casualties == null ? 0 : casualties;
+        }
+
+        int addBattleCasualties(CityState city, int rolledCasualties) {
+            int remaining = remainingAfterBattle(city);
+            if (rolledCasualties > remaining) {
+                propagandaExcluded.add(city.id);
+            }
+            int casualties = Math.min(Math.max(0, rolledCasualties), remaining);
+            battleCasualties.put(city.id, battleCasualtiesFor(city) + casualties);
+            return casualties;
+        }
+
+        void addPropagandaLoss(CityState city, int loss) {
+            List<Integer> losses = propagandaLosses.get(city.id);
+            if (losses == null) {
+                losses = new ArrayList<>(2);
+                propagandaLosses.put(city.id, losses);
+            }
+            losses.add(loss);
+        }
+
+        List<Integer> propagandaLossesFor(CityState city) {
+            List<Integer> losses = propagandaLosses.get(city.id);
+            return losses == null ? Collections.<Integer>emptyList() : losses;
+        }
+
+        boolean isPropagandaExcluded(CityState city) {
+            return propagandaExcluded.contains(city.id);
+        }
+
+        void addPropagandaGain(CityState city, int gain) {
+            Integer current = propagandaGains.get(city.id);
+            propagandaGains.put(city.id, (current == null ? 0 : current) + gain);
+        }
+
+        int propagandaGainFor(CityState city) {
+            Integer gain = propagandaGains.get(city.id);
+            return gain == null ? 0 : gain;
+        }
+    }
+
     private static final class BiologicalEffect {
         final int targetPlayerId;
         final int cityIndex;
@@ -1720,6 +1775,8 @@ public final class GameState {
         clearPreviousBiologicalEffects();
         List<ActionOrder> resolvedDefenses = new ArrayList<>();
         List<BiologicalEffect> biologicalEffects = new ArrayList<>();
+        List<ActionOrder> propagandaOrders = new ArrayList<>();
+        TurnPopulationChanges populationChanges = new TurnPopulationChanges();
         for (ActionOrder order : turnOrders) {
             if (order.action == Action.DEFENSE) {
                 resolveDefense(order, resolvedDefenses);
@@ -1744,15 +1801,16 @@ public final class GameState {
                     resolveResearch(order);
                     break;
                 case ATTACK:
-                    resolveAttack(order, turnOrders);
+                    resolveAttack(order, turnOrders, populationChanges);
                     break;
                 case PREPARED_ATTACK:
-                    resolvePreparedAttack(order, resolvedDefenses, biologicalEffects);
+                    resolvePreparedAttack(order, resolvedDefenses, biologicalEffects,
+                            populationChanges);
                     break;
                 case DEFENSE:
                     break;
                 case PROPAGANDA:
-                    resolvePropaganda(order);
+                    propagandaOrders.add(order);
                     break;
                 case DIPLOMACY:
                     resolveDiplomacy(order);
@@ -1762,7 +1820,11 @@ public final class GameState {
                             + order.action);
             }
         }
+        for (ActionOrder order : propagandaOrders) {
+            resolvePropaganda(order, populationChanges);
+        }
         applyBiologicalEffects(biologicalEffects);
+        applyPopulationChanges(populationChanges);
         clearExpiredPreparedAttacks(turnOrders);
         for (PlayerState player : players) {
             player.religion = Math.min(100, Math.max(0, player.religion));
@@ -2103,7 +2165,8 @@ public final class GameState {
     }
 
     /** Source attack casualties are a rounded random 50%-100% of unit maxKills. */
-    private void resolveAttack(ActionOrder order, List<ActionOrder> turnOrders) {
+    private void resolveAttack(ActionOrder order, List<ActionOrder> turnOrders,
+                              TurnPopulationChanges populationChanges) {
         PlayerState attacker = playerById(order.playerId);
         PlayerState defender = playerById(order.targetPlayerId);
         CityState city = defender.getCity(order.targetCityIndex);
@@ -2129,16 +2192,10 @@ public final class GameState {
         }
         int casualties = 0;
         if ("soldier".equals(weapon.definition.type)) {
-            casualties = Math.min(city.populationMillions,
+            casualties = populationChanges.addBattleCasualties(city,
                     sourceDirectAttackCasualties(weapon.definition.maxKillsMillions, random));
-            city.populationMillions -= casualties;
-            defender.populationMillions = totalPopulation(defender);
             recordLargestBattle(attacker, defender, casualties);
             applyBattleHostilityEffects(attacker, defender, casualties);
-            if (defender.populationMillions <= 0) {
-                defender.alive = false;
-                messages.add("Nation " + defender.id + " has been eliminated.");
-            }
             if (casualties > 0) {
                 addToHighscore(attacker, 1, casualties);
             }
@@ -2165,7 +2222,8 @@ public final class GameState {
 
     private void resolvePreparedAttack(ActionOrder order,
                                        List<ActionOrder> resolvedDefenses,
-                                       List<BiologicalEffect> biologicalEffects) {
+                                       List<BiologicalEffect> biologicalEffects,
+                                       TurnPopulationChanges populationChanges) {
         PlayerState attacker = playerById(order.playerId);
         if (order.prepareCarrier) {
             WeaponState carrier = attacker.weapons.get(order.weaponName);
@@ -2185,7 +2243,7 @@ public final class GameState {
         WeaponState carrier = attacker.weapons.get(order.weaponName);
         if (carrier != null && "ship".equals(carrier.definition.type)) {
             resolveShipPreparedAttack(order, attacker, defender, carrier,
-                    resolvedDefenses, biologicalEffects);
+                    resolvedDefenses, biologicalEffects, populationChanges);
             return;
         }
         CityState city = defender.getCity(order.targetCityIndex);
@@ -2225,15 +2283,9 @@ public final class GameState {
             int bioLevel = order.payloadName.charAt(order.payloadName.length() - 1) - '0';
             biologicalEffects.add(createBiologicalEffect(defender, city, bioLevel));
         }
-        int casualties = Math.min(rolledCasualties, city.populationMillions);
-        city.populationMillions -= casualties;
-        defender.populationMillions = totalPopulation(defender);
+        int casualties = populationChanges.addBattleCasualties(city, rolledCasualties);
         recordLargestBattle(attacker, defender, casualties);
         applyBattleHostilityEffects(attacker, defender, casualties);
-        if (defender.populationMillions <= 0) {
-            defender.alive = false;
-            messages.add("Nation " + defender.id + " has been eliminated.");
-        }
         if (casualties > 0) {
             addToHighscore(attacker, 1, casualties);
         }
@@ -2245,7 +2297,8 @@ public final class GameState {
     private void resolveShipPreparedAttack(ActionOrder order, PlayerState attacker,
                                           PlayerState defender, WeaponState carrier,
                                           List<ActionOrder> resolvedDefenses,
-                                          List<BiologicalEffect> biologicalEffects) {
+                                          List<BiologicalEffect> biologicalEffects,
+                                          TurnPopulationChanges populationChanges) {
         if (!order.weaponName.equals(attacker.preparedCarrierName)
                 || !defender.alive || defender.hasCeasefireWith(attacker.id)
                 || order.shipStrikes.size() != 3) {
@@ -2311,8 +2364,8 @@ public final class GameState {
                 casualties = 0;
                 messages.add("Nation " + defender.id + " intercepted one ship payload.");
             } else {
-                casualties = Math.min(result.rolledCasualties, city.populationMillions);
-                city.populationMillions -= casualties;
+                casualties = populationChanges.addBattleCasualties(city,
+                        result.rolledCasualties);
                 totalCasualties += casualties;
                 recordLargestBattle(attacker, defender, casualties);
                 if (casualties > 0) {
@@ -2324,11 +2377,6 @@ public final class GameState {
                     + (city.index + 1) + ".");
         }
         applyBattleHostilityEffects(attacker, defender, totalCasualties);
-        defender.populationMillions = totalPopulation(defender);
-        if (defender.populationMillions <= 0) {
-            defender.alive = false;
-            messages.add("Nation " + defender.id + " has been eliminated.");
-        }
     }
 
     /** Source ship counter roll uses randRange(1, 3) == 2: one of three strikes. */
@@ -2560,7 +2608,8 @@ public final class GameState {
      * the selected enemy city loses citizens that are distributed across the
      * acting nation's populated cities using the source's rounded per-city share.
      */
-    private void resolvePropaganda(ActionOrder order) {
+    private void resolvePropaganda(ActionOrder order,
+                                   TurnPopulationChanges populationChanges) {
         PlayerState attacker = playerById(order.playerId);
         PlayerState defender = playerById(order.targetPlayerId);
         CityState targetCity = defender.getCity(order.targetCityIndex);
@@ -2569,24 +2618,24 @@ public final class GameState {
             return;
         }
 
-        int transfer = calculatePropagandaTransfer(attacker, defender, targetCity);
-
-        targetCity.populationMillions = Math.max(0, targetCity.populationMillions - transfer);
-        defender.populationMillions = totalPopulation(defender);
+        int transfer = calculatePropagandaTransfer(attacker, defender,
+                populationChanges.remainingAfterBattle(targetCity));
+        populationChanges.addPropagandaLoss(targetCity, transfer);
         int recipientCount = 0;
         for (CityState city : attacker.cities) {
-            if (city.populationMillions > 0) {
+            if (city.populationMillions > 0
+                    && !populationChanges.isPropagandaExcluded(city)) {
                 recipientCount++;
             }
         }
         if (recipientCount > 0) {
             int share = Math.round((float) transfer / recipientCount);
             for (CityState city : attacker.cities) {
-                if (city.populationMillions > 0) {
-                    city.populationMillions += share;
+                if (city.populationMillions > 0
+                        && !populationChanges.isPropagandaExcluded(city)) {
+                    populationChanges.addPropagandaGain(city, share);
                 }
             }
-            attacker.populationMillions = totalPopulation(attacker);
         }
         applyPropagandaHostilityEffects(attacker, defender);
         addToHighscore(attacker, 7, transfer);
@@ -2668,6 +2717,13 @@ public final class GameState {
     private static int calculatePropagandaTransfer(PlayerState attacker,
                                                    PlayerState defender,
                                                    CityState city) {
+        return calculatePropagandaTransfer(attacker, defender,
+                city.populationMillions);
+    }
+
+    private static int calculatePropagandaTransfer(PlayerState attacker,
+                                                   PlayerState defender,
+                                                   int cityPopulationAfterBattle) {
         int religionAdvantage = Math.max(0, attacker.religion - defender.religion);
         int populationShift = 0;
         int populationAdvantage = attacker.populationMillions - defender.populationMillions;
@@ -2688,9 +2744,25 @@ public final class GameState {
         int influence = attacker.religion > defender.religion ? religionAdvantage : 0;
         influence = Math.min(attacker.human ? 15 : 25, influence);
         influence = defender.religion == 100 ? 0 : Math.max(0, influence + populationShift);
-        int roundedLoss = Math.min(Math.round((float) city.populationMillions
+        int roundedLoss = Math.min(Math.round((float) cityPopulationAfterBattle
                 * (influence + 5) / 100f), 40);
         return Math.round(roundedLoss / 2f);
+    }
+
+    private void applyPopulationChanges(TurnPopulationChanges changes) {
+        for (PlayerState player : players) {
+            for (CityState city : player.cities) {
+                city.populationMillions -= changes.battleCasualtiesFor(city);
+                for (int loss : changes.propagandaLossesFor(city)) {
+                    if (city.populationMillions <= 0) {
+                        break;
+                    }
+                    city.populationMillions -= loss;
+                }
+                city.populationMillions += changes.propagandaGainFor(city);
+            }
+            player.populationMillions = totalPopulation(player);
+        }
     }
 
     private static int totalPopulation(PlayerState player) {
@@ -2705,6 +2777,9 @@ public final class GameState {
         for (PlayerState player : players) {
             player.populationMillions = totalPopulation(player);
             if (player.populationMillions <= 0) {
+                if (player.alive) {
+                    messages.add("Nation " + player.id + " has been eliminated.");
+                }
                 player.alive = false;
             }
         }
