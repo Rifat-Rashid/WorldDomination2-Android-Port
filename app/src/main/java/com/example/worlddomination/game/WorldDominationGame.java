@@ -475,6 +475,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private void fixedUpdate(float seconds) {
         navigationScroll.tick(seconds);
         equipmentScroll.tick(seconds);
+        cityRenderer.tick(game);
         showExitPromptSeconds = Math.max(0f, showExitPromptSeconds - seconds);
         advanceOutcomeSequence();
     }
@@ -2100,6 +2101,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         } else if (setupStartButton.contains(x, y)) {
             if (setup.canStart()) {
                 game = new GameState(setup, System.nanoTime());
+                cityRenderer.reset(game);
                 modalOpen = false;
                 accumulator = 0f;
                 audio.play(OriginalAudio.Cue.ACTION_ACCEPT);
