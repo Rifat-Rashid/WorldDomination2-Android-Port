@@ -83,6 +83,12 @@ jobs:
           - id: ai-diplomacy-cooldown-tests
             check: AI diplomacy cooldown RNG parity
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.OpponentAITest.diplomacyCooldownTargetsDoNotConsumeRandomCandidateDraws"'
+          - id: ai-source-strength-tests
+            check: AI source strength calculation
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.OpponentAITest.sourceStrengthCountsTechnologyCombatStockAndFundsButNotCounters"'
+          - id: ai-counter-strength-tests
+            check: Defense counters excluded from AI strength
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.OpponentAITest.sourceStrengthDoesNotChangeWhenCounterStockChanges"'
           - id: ai-planning-matrix
             check: AI planning scenario matrix
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.AiPlanningScenarioMatrixTest"'

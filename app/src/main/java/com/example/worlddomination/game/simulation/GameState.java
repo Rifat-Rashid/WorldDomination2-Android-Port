@@ -235,7 +235,11 @@ public final class GameState {
             }
             int weaponStrength = 0;
             for (WeaponState weapon : weapons.values()) {
-                weaponStrength += weapon.inStock * weapon.definition.level;
+                // Flash Player.weaponStockStrength iterates WeaponStock.weaponArr;
+                // antiAir and antiRocket live in the separate counterArr.
+                if (!"anti".equals(weapon.definition.type)) {
+                    weaponStrength += weapon.inStock * weapon.definition.level;
+                }
             }
             return technologyWeight + weaponStrength + moneyMillions;
         }
