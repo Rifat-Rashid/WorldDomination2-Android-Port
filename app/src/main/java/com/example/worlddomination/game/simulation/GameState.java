@@ -2179,9 +2179,6 @@ public final class GameState {
             player.lastTurnActions.clear();
             player.lastAttackedByCasualties = 0;
         }
-        tickDiplomacyOfferCooldowns();
-        decayReligion();
-        advanceSpyReadiness();
         initializeAiTurnMoney();
         List<AiDiplomacyResponse> diplomacyResponses = resolvePendingAiDiplomacy();
         List<ActionOrder> turnOrders = new ArrayList<>(players.length * MAX_TURN_ACTIONS);
@@ -2203,7 +2200,13 @@ public final class GameState {
             }
         }
         assignActionBuildingSlots(turnOrders);
+        // Model.doTurn plans every AI action before Sub_presenter.turnResults
+        // advances readiness, relations, religion, and offer cooldowns.
+        advanceSpyReadiness();
+        updateDiplomacyRelations();
+        decayReligion();
         applySpecialAiIncome();
+        tickDiplomacyOfferCooldowns();
         for (AiDiplomacyResponse response : diplomacyResponses) {
             resolveDiplomacyResponse(response.target, response.proposal,
                     response.accepted, false);
@@ -2271,7 +2274,6 @@ public final class GameState {
             player.religion = Math.min(100, Math.max(0, player.religion));
             player.turnMoneyMillions = player.moneyMillions;
         }
-        updateDiplomacyRelations();
         tickCeasefires();
         refreshMatchStatus();
         for (PlayerState player : players) {

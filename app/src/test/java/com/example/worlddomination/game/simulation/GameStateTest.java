@@ -1769,7 +1769,7 @@ public final class GameStateTest {
 
     @Test
     public void propagandaTransfersSourceCalculatedCitizensFromChosenCity() {
-        GameState state = new GameState(1, 32L);
+        GameState state = new GameState(1, 32L, false);
         GameState.PlayerState attacker = state.getHuman();
         GameState.PlayerState defender = state.getPlayers()[1];
         attacker.religion = 0;
@@ -2276,6 +2276,33 @@ public final class GameStateTest {
     }
 
     @Test
+    public void aiPlanningReadsSpyReadinessCooldownAndRegardBeforeTurnResultUpkeep() {
+        PlanningSnapshotRandom random = new PlanningSnapshotRandom();
+        GameState state = stateBeforeAiPlanning(random);
+        random.captureOnDraw(state, 1);
+
+        state.confirmTurn();
+
+        assertTrue("AI planning should consume a random draw", random.captured);
+        assertEquals(0, random.spyReadinessAtPlanning);
+        assertEquals(2, random.diplomacyCooldownAtPlanning);
+        assertEquals(20.0d, random.regardAtPlanning, 0.0d);
+    }
+
+    @Test
+    public void aiPlanningUsesReligionBeforeTurnResultDecay() {
+        PlanningSnapshotRandom random = new PlanningSnapshotRandom();
+        GameState state = stateBeforeAiPlanning(random);
+        state.getPlayerState(1).religion = 12;
+        random.captureOnDraw(state, 2);
+
+        state.confirmTurn();
+
+        assertTrue("AI planning should consume at least two random draws", random.captured);
+        assertEquals(12, random.religionAtPlanning);
+    }
+
+    @Test
     public void acceptedAiOfferSettlesAfterTheRecipientPlansItsTurn() {
         GameSetup setup = new GameSetup();
         assertTrue(setup.toggleOpponent(3));
@@ -2329,6 +2356,56 @@ public final class GameStateTest {
         state.selectAction(GameState.Action.MASS_MEDIA);
         assertTrue(state.acceptSelectedAction());
         state.confirmTurn();
+    }
+
+    private static GameState stateBeforeAiPlanning(PlanningSnapshotRandom random) {
+        GameState state = new GameState(1, random);
+        for (GameState.PlayerState player : state.getPlayers()) {
+            player.religion = 0;
+        }
+        GameState.PlayerState ai = state.getPlayerState(1);
+        ai.spyReadiness = 0;
+        assertTrue(state.submitDiplomacyProposal(ai.id, 0, 0));
+        setRegard(ai, 0, 20);
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.MASS_MEDIA);
+        assertTrue(state.acceptSelectedAction());
+        return state;
+    }
+
+    private static final class PlanningSnapshotRandom extends Random {
+        private GameState state;
+        private int targetDraw;
+        private int drawCount;
+        private boolean captured;
+        private int spyReadinessAtPlanning;
+        private int diplomacyCooldownAtPlanning;
+        private double regardAtPlanning;
+        private int religionAtPlanning;
+
+        void captureOnDraw(GameState state, int targetDraw) {
+            this.state = state;
+            this.targetDraw = targetDraw;
+            this.drawCount = 0;
+        }
+
+        @Override
+        public int nextInt(int bound) {
+            if (bound <= 0) {
+                throw new IllegalArgumentException("bound must be positive");
+            }
+            drawCount++;
+            if (!captured && drawCount == targetDraw) {
+                GameState.PlayerState ai = state.getPlayerState(1);
+                spyReadinessAtPlanning = ai.spyReadiness;
+                diplomacyCooldownAtPlanning = ai.getDiplomacyOfferedLastTurn(0);
+                regardAtPlanning = ai.getRegardTowardExact(0);
+                religionAtPlanning = ai.religion;
+                captured = true;
+            }
+            return 0;
+        }
     }
 
     private static void setRegard(GameState.PlayerState player, int opponentId, int value) {

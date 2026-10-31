@@ -36,6 +36,9 @@ jobs:
           - id: ai-special-income-order-tests
             check: AI special income turn ordering
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.specialLeaderIncomeIsAddedAfterAiPlanningBudgetSnapshot"'
+          - id: ai-turn-upkeep-order-tests
+            check: AI source turn-upkeep planning order
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.aiPlanningReadsSpyReadinessCooldownAndRegardBeforeTurnResultUpkeep" --tests "com.example.worlddomination.game.simulation.GameStateTest.aiPlanningUsesReligionBeforeTurnResultDecay"'
           - id: source-city-population-tests
             check: Source starting city population tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.startingCityAllocationUsesFractionalQuarterAndConsumesFiveDraws" --tests "com.example.worlddomination.game.simulation.GameStateTest.inactivePlayerSlotsDoNotConsumeStartingCityPopulationDraws" --tests "com.example.worlddomination.game.simulation.GameStateTest.selectedOpponentSetupDistributesPopulationAcrossItsFiveCities"'
