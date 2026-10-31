@@ -64,11 +64,13 @@ public final class OriginalAudioTest {
     }
 
     @Test
-    public void antiAirTrackingCuesUseTheOriginalPackagedSounds() {
+    public void antiDefenseTrackingCuesUseTheOriginalPackagedSounds() {
         assertEquals("original/runtime/audio/91_building_Anti air rotate.wav.mp3",
                 OriginalAudio.internalPath(OriginalAudio.Cue.ANTI_AIR_ROTATE));
         assertEquals("original/runtime/audio/94_building_Anti air gun.wav.mp3",
                 OriginalAudio.internalPath(OriginalAudio.Cue.ANTI_AIR_GUN));
+        assertEquals("original/runtime/audio/90_building_Anti rocket fire 4.wav.mp3",
+                OriginalAudio.internalPath(OriginalAudio.Cue.ANTI_ROCKET_FIRE));
     }
 
     @Test

@@ -4,7 +4,7 @@ import com.example.worlddomination.game.audio.OriginalAudio;
 
 /** Source-tick playback for one original ship-launched payload aircraft. */
 public final class FlashCarrierPlaneAnimation
-        implements FlashAntiAirTrackingAnimation.Target {
+        implements FlashAntiDefenseTrackingAnimation.Target {
     public static final class Actor {
         public float sourceX;
         public float sourceY;

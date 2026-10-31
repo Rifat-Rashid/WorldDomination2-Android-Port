@@ -3,7 +3,7 @@ package com.example.worlddomination.game.rendering;
 import com.example.worlddomination.game.audio.OriginalAudio;
 
 /** Source-tick playback for the original silo launched rocket and its Flash smoke trail. */
-public final class FlashRocketAnimation {
+public final class FlashRocketAnimation implements FlashAntiDefenseTrackingAnimation.Target {
     public static final class Actor {
         /** Current source stage x coordinate. */
         public float sourceX;
@@ -163,6 +163,7 @@ public final class FlashRocketAnimation {
     }
 
     /** Returns whether the rocket flight and every smoke puff have finished. */
+    @Override
     public boolean isFinished() {
         return finished;
     }
@@ -185,6 +186,27 @@ public final class FlashRocketAnimation {
     /** Returns the immutable source route used for this flight. */
     public FlashBattleRoutes.RocketStrike getRoute() {
         return route;
+    }
+
+    @Override
+    public int targetPlayerId() {
+        return route.targetPlayerId;
+    }
+
+    @Override
+    public float sourceX() {
+        return rocket.sourceX;
+    }
+
+    @Override
+    public float sourceY() {
+        return rocket.sourceY;
+    }
+
+    /** Keep the defense clip alive through the source rocket's post-impact trail cleanup. */
+    @Override
+    public boolean isVisible() {
+        return launched && !finished;
     }
 
     /** Returns the Flash explosion linkage for this event, when one is mapped. */
