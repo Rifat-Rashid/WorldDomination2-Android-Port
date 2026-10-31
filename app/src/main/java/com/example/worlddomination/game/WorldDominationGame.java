@@ -4,6 +4,7 @@ import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
+import com.badlogic.gdx.Preferences;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
@@ -20,6 +21,8 @@ import com.example.worlddomination.game.audio.OriginalAudio;
 import com.example.worlddomination.game.assets.OriginalCityAssets;
 import com.example.worlddomination.game.assets.OriginalFlashAnimationAssets;
 import com.example.worlddomination.game.assets.OriginalUiAssets;
+import com.example.worlddomination.game.persistence.LibGdxScorePreferenceBackend;
+import com.example.worlddomination.game.persistence.PersonalBestStore;
 import com.example.worlddomination.game.rendering.BattleAnimationSequence;
 import com.example.worlddomination.game.rendering.BattleExplosionRenderer;
 import com.example.worlddomination.game.rendering.BattlefieldCityRenderer;
@@ -132,6 +135,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     private GameState game;
     private GameSetup setup;
+    private PersonalBestStore personalBestStore;
     private final OriginalAudio audio = new OriginalAudio();
     private final List<BattleAnimationSequence> battleAnimations = new ArrayList<>();
     private final List<FlashSoldierOneAnimation> soldierBattleAnimations = new ArrayList<>();
@@ -301,6 +305,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         battleAnchors = FlashBattleRoutes.parseAnchors(
                 Gdx.files.internal("original/runtime/battle_anchors.json")
                         .readString("UTF-8"));
+        Preferences scorePreferences = Gdx.app.getPreferences("world_domination_2_scores");
+        personalBestStore = new PersonalBestStore(
+                new LibGdxScorePreferenceBackend(scorePreferences));
         audio.initialize();
         setup = new GameSetup(System.nanoTime());
         Gdx.input.setInputProcessor(this);
@@ -736,6 +743,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
         if (outcomeSequence.getOutcome() != game.getMatchStatus()) {
             stopScoreCounterSound();
+            if (personalBestStore != null) {
+                personalBestStore.recordFinalScore(game.getFinalScore());
+            }
             outcomeSequence.begin(game.getMatchStatus(), game.getFinalScoreBreakdown());
             modalOpen = false;
             audio.stopAmbient();
