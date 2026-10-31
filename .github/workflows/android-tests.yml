@@ -123,6 +123,9 @@ jobs:
           - id: diplomacy-relations-tests
             check: Diplomacy and relations tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.diplomacyOptionsMatchReferenceTableAndReserveOfferFunds" --tests "com.example.worlddomination.game.simulation.GameStateTest.diplomacyOfferIsResolvedByAiAndCreatesTimedSymmetricCeasefire" --tests "com.example.worlddomination.game.simulation.GameStateTest.diplomacyRegardDriftAddsDifficultyBonusOnlyToAiRivalRelations" --tests "com.example.worlddomination.game.simulation.GameStateTest.diplomacyDriftSkipsDeadActorsButUpdatesRelationsTowardThem" --tests "com.example.worlddomination.game.simulation.GameStateTest.rejectedDiplomacyOfferRefundsItsFullCost" --tests "com.example.worlddomination.game.simulation.GameStateTest.diplomacyDemandUsesAiAcceptanceRulesAndTransfersMoney" --tests "com.example.worlddomination.game.simulation.GameStateTest.humanCanRespondToAiOfferAndDemandProposals" --tests "com.example.worlddomination.game.simulation.GameStateTest.diplomacyProposalCooldownBelongsToProposerAndTicksAtTurnStart" --tests "com.example.worlddomination.game.simulation.GameStateTest.acceptedAiOfferSettlesAfterTheRecipientPlansItsTurn"'
+          - id: diplomacy-proposal-order-tests
+            check: Diplomacy proposal arrival order
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.incomingAiDemandsSpendTheRecipientBudgetInProposalArrivalOrder" --tests "com.example.worlddomination.game.simulation.GameStateTest.humanDiplomacyQueuePresentsProposalsInArrivalOrder"'
           - id: ai-tests
             check: Opponent AI tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.*"'
