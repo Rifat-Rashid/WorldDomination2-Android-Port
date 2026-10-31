@@ -243,6 +243,9 @@ jobs:
           - id: match-outcome-tests
             check: Match outcome sequence tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.MatchOutcomeSequenceTest" --tests "com.example.worlddomination.game.ui.MatchOutcomePresentationTest"'
+          - id: personal-best-outcome-display-tests
+            check: Personal best outcome display
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.MatchOutcomePresentationTest.personalBestUsesTheSamePeriodGroupedScoreFormat"'
           - id: outcome-render-demand-tests
             check: Outcome animation render demand
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.MatchOutcomeSequenceTest.outcomeActivityEndsOnlyAfterTheScoreSequenceCompletes"'

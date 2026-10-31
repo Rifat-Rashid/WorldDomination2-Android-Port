@@ -41,4 +41,9 @@ public final class MatchOutcomePresentation {
     public static String formatScore(long score) {
         return String.format(Locale.US, "%,d", Math.max(0L, score)).replace(',', '.');
     }
+
+    /** Labels the device-local record shown on the offline endgame screen. */
+    public static String personalBestLine(long score) {
+        return "PERSONAL BEST: " + formatScore(score);
+    }
 }
