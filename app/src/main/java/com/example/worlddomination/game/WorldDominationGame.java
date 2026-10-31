@@ -48,6 +48,7 @@ import com.example.worlddomination.game.simulation.ReferenceRandom;
 import com.example.worlddomination.game.ui.BattlefieldCityLayout;
 import com.example.worlddomination.game.ui.MatchOutcomePresentation;
 import com.example.worlddomination.game.ui.MatchOutcomeSequence;
+import com.example.worlddomination.game.ui.PreparedShipStrikeSelection;
 import com.example.worlddomination.game.ui.ScrollPaneState;
 import com.example.worlddomination.game.ui.SetupScreenLayout;
 
@@ -1961,28 +1962,43 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     private void drawMapSelection() {
         int selected = game.getSelectedIsland();
-        if (selected < 0) {
+        boolean showShipStrikes = game.getSelectedAction() == GameState.Action.PREPARED_ATTACK
+                && isPreparedShipCarrier() && game.getSelectedShipStrikeCount() > 0;
+        if (selected < 0 && !showShipStrikes) {
             return;
         }
-        float cx = mapBounds.x + mapBounds.width * ISLAND_CENTERS[selected][0] / MAP_WIDTH;
-        float cy = mapBounds.y + mapBounds.height
-                * (MAP_HEIGHT - ISLAND_CENTERS[selected][1]) / MAP_HEIGHT;
         shapes.begin(ShapeRenderer.ShapeType.Line);
-        shapes.setColor(GREEN);
-        shapes.circle(cx, cy, 17f, 24);
-        shapes.circle(cx, cy, 22f, 24);
-        int selectedCityOwner = game.getSelectedMapCityOwner();
-        int selectedCityIndex = game.getSelectedMapCityIndex();
-        if (selectedCityOwner >= 0 && selectedCityIndex >= 0) {
-            GameState.PlayerState owner = game.getPlayerState(selectedCityOwner);
-            CityState city = owner.getCity(selectedCityIndex);
-            if (owner.alive && city != null && city.populationMillions > 0) {
+        if (selected >= 0) {
+            float cx = mapBounds.x + mapBounds.width * ISLAND_CENTERS[selected][0] / MAP_WIDTH;
+            float cy = mapBounds.y + mapBounds.height
+                    * (MAP_HEIGHT - ISLAND_CENTERS[selected][1]) / MAP_HEIGHT;
+            shapes.setColor(GREEN);
+            shapes.circle(cx, cy, 17f, 24);
+            shapes.circle(cx, cy, 22f, 24);
+            int selectedCityOwner = game.getSelectedMapCityOwner();
+            int selectedCityIndex = game.getSelectedMapCityIndex();
+            if (selectedCityOwner >= 0 && selectedCityIndex >= 0) {
+                GameState.PlayerState owner = game.getPlayerState(selectedCityOwner);
+                CityState city = owner.getCity(selectedCityIndex);
+                if (owner.alive && city != null && city.populationMillions > 0) {
+                    float cityX = BattlefieldCityLayout.x(mapBounds,
+                            selectedCityOwner, selectedCityIndex);
+                    float cityY = BattlefieldCityLayout.y(mapBounds,
+                            selectedCityOwner, selectedCityIndex);
+                    shapes.circle(cityX, cityY,
+                            BattlefieldCityLayout.selectionRadius(mapBounds), 24);
+                }
+            }
+        }
+        if (showShipStrikes) {
+            shapes.setColor(MODAL_ORANGE);
+            float radius = BattlefieldCityLayout.selectionRadius(mapBounds) + 4f;
+            for (GameState.ShipStrike strike : game.getSelectedShipStrikes()) {
                 float cityX = BattlefieldCityLayout.x(mapBounds,
-                        selectedCityOwner, selectedCityIndex);
+                        strike.targetPlayerId, strike.cityIndex);
                 float cityY = BattlefieldCityLayout.y(mapBounds,
-                        selectedCityOwner, selectedCityIndex);
-                shapes.circle(cityX, cityY,
-                        BattlefieldCityLayout.selectionRadius(mapBounds), 24);
+                        strike.targetPlayerId, strike.cityIndex);
+                shapes.circle(cityX, cityY, radius, 24);
             }
         }
         shapes.end();
@@ -3045,10 +3061,12 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         preparedPayloadIndex = Math.floorMod(preparedPayloadIndex, payloads.size());
         String payload = payloads.get(preparedPayloadIndex);
-        game.configurePreparedShipStrike(preparedTargetPlayer, preparedCityIndex, payload);
-        java.util.List<GameState.ShipStrike> strikes = game.getSelectedShipStrikes();
-        if (!strikes.isEmpty()) {
-            preparedTargetPlayer = strikes.get(0).targetPlayerId;
+        PreparedShipStrikeSelection.Result result =
+                PreparedShipStrikeSelection.tryAddTargetCity(game, preparedTargetPlayer,
+                        preparedCityIndex, payload);
+        if (result == PreparedShipStrikeSelection.Result.ADDED) {
+            game.selectBattlefieldCity(preparedTargetPlayer, preparedCityIndex);
+            audio.play(OriginalAudio.Cue.UNIT_SELECT);
         }
     }
 
@@ -3477,11 +3495,16 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     }
 
     private boolean selectMapTargetCity(GameState.Action action, float x, float y) {
+        if (isActionModalControlAt(action, x, y)) {
+            return false;
+        }
         boolean targetAction = action == GameState.Action.ATTACK
                 || action == GameState.Action.PROPAGANDA;
+        boolean shipSelection = false;
         if (action == GameState.Action.PREPARED_ATTACK) {
             String carrier = game.getPreparedCarrierName(0);
-            targetAction = carrier != null && !isPreparedShipCarrier();
+            targetAction = carrier != null;
+            shipSelection = targetAction && isPreparedShipCarrier();
         }
         if (!targetAction || !mapBounds.contains(x, y)) {
             return false;
@@ -3492,15 +3515,64 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         int playerId = address / BattlefieldCityLayout.CITIES_PER_PLAYER;
         int cityIndex = address % BattlefieldCityLayout.CITIES_PER_PLAYER;
+        if (playerId <= 0) {
+            return true;
+        }
         if (playerId > 0 && !(action == GameState.Action.ATTACK
                 && game.isSelectedAttackSpy())
                 && game.getHuman().hasCeasefireWith(playerId)) {
             return true;
         }
-        if (playerId > 0 && game.selectBattlefieldCity(playerId, cityIndex)) {
+        if (shipSelection) {
+            java.util.List<String> payloads = getPreparedPayloadChoices();
+            if (payloads.isEmpty()) {
+                return true;
+            }
+            preparedPayloadIndex = Math.floorMod(preparedPayloadIndex, payloads.size());
+            PreparedShipStrikeSelection.Result result =
+                    PreparedShipStrikeSelection.tryAddTargetCity(game, playerId, cityIndex,
+                            payloads.get(preparedPayloadIndex));
+            if (result == PreparedShipStrikeSelection.Result.ADDED) {
+                preparedTargetPlayer = playerId;
+                preparedCityIndex = cityIndex;
+                game.selectBattlefieldCity(playerId, cityIndex);
+                audio.play(OriginalAudio.Cue.UNIT_SELECT);
+            }
+            return true;
+        }
+        if (game.selectBattlefieldCity(playerId, cityIndex)) {
             audio.play(OriginalAudio.Cue.UNIT_SELECT);
+            if (action == GameState.Action.PREPARED_ATTACK) {
+                preparedTargetPlayer = playerId;
+                preparedCityIndex = cityIndex;
+                refreshPreparedLaunch();
+            }
         }
         return true;
+    }
+
+    private boolean isActionModalControlAt(GameState.Action action, float x, float y) {
+        if (modalAccept.contains(x, y) || modalCancel.contains(x, y)) {
+            return true;
+        }
+        if (action == GameState.Action.ATTACK
+                || action == GameState.Action.PROPAGANDA) {
+            return attackTargetPrevious.contains(x, y) || attackTargetNext.contains(x, y)
+                    || attackCityPrevious.contains(x, y) || attackCityNext.contains(x, y)
+                    || action == GameState.Action.ATTACK
+                    && (attackWeaponPrevious.contains(x, y)
+                    || attackWeaponNext.contains(x, y));
+        }
+        if (action != GameState.Action.PREPARED_ATTACK) {
+            return false;
+        }
+        if (game.getPreparedCarrierName(0) == null) {
+            return attackWeaponPrevious.contains(x, y) || attackWeaponNext.contains(x, y);
+        }
+        return attackTargetPrevious.contains(x, y) || attackTargetNext.contains(x, y)
+                || attackCityPrevious.contains(x, y) || attackCityNext.contains(x, y)
+                || attackWeaponPrevious.contains(x, y) || attackWeaponNext.contains(x, y)
+                || preparedStrikeAdd.contains(x, y);
     }
 
     private boolean handleBack() {
