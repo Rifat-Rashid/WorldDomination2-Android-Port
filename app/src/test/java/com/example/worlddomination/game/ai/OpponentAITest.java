@@ -525,13 +525,25 @@ public final class OpponentAITest {
     public void attackScoreUsesSourceDecisionPointBasesForEveryDifficulty() throws Exception {
         double[] expectedBases = {86.0, 80.0, 86.0};
         for (int difficulty = 0; difficulty < expectedBases.length; difficulty++) {
-            GameState state = new GameState(difficulty, 9160L + difficulty);
+            GameState state = gameWithRegularFirstOpponent(
+                    difficulty, 9160L + difficulty * 500L);
             GameState.PlayerState actor = state.getPlayerState(1);
             setFriendlyRelationsAndNoPrimaryEnemy(actor);
+            for (GameState.WeaponState weapon : actor.getWeapons().values()) {
+                weapon.inStock = 0;
+            }
+            GameState.WeaponState soldier = actor.getWeapons().get("soldier1");
+            soldier.active = true;
+            soldier.inStock = 1;
 
+            double expectedAttackScore = expectedBases[difficulty] - 50.0;
             assertEquals("source attack base at difficulty " + difficulty,
-                    expectedBases[difficulty] - 50.0,
+                    expectedAttackScore,
                     OpponentAI.baseAttackScore(state, actor), 0.0);
+            assertEquals("ranked attack action at difficulty " + difficulty,
+                    expectedAttackScore,
+                    OpponentAI.scoreForAction(state, actor,
+                            new Random(9160L + difficulty), GameState.Action.ATTACK), 0.0);
         }
     }
 
@@ -1347,8 +1359,12 @@ public final class OpponentAITest {
     }
 
     private static GameState gameWithRegularFirstOpponent(long firstSeed) {
+        return gameWithRegularFirstOpponent(1, firstSeed);
+    }
+
+    private static GameState gameWithRegularFirstOpponent(int difficulty, long firstSeed) {
         for (long seed = firstSeed; seed < firstSeed + 500; seed++) {
-            GameState state = new GameState(1, seed);
+            GameState state = new GameState(difficulty, seed);
             GameState.PlayerState opponent = state.getPlayerState(1);
             if (!opponent.isSpecialPerson() && !opponent.isSuicidePerson()) {
                 return state;
