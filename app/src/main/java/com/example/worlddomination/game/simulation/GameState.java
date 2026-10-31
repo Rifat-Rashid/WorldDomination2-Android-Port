@@ -2471,6 +2471,14 @@ public final class GameState {
 
     void applyBattleHostilityEffects(PlayerState attacker, PlayerState defender,
                                      int casualties) {
+        // Model.calcBattle applies this fixed AI hostility penalty before
+        // Presenter.turnResults adjusts regard by the casualty count.
+        if (!attacker.human && attacker.regardToward[defender.id] > 0) {
+            attacker.regardToward[defender.id] -= 8;
+        }
+        if (!defender.human && defender.regardToward[attacker.id] > 0) {
+            defender.regardToward[attacker.id] -= 8;
+        }
         attacker.regardToward[defender.id] -= casualties;
         defender.regardToward[attacker.id] -= casualties;
 
