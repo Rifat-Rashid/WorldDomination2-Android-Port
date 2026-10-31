@@ -90,6 +90,38 @@ public final class OriginalFlashAnimationAssetsTest {
         }
     }
 
+    @Test
+    public void loadsOriginalBioloadCloudArtIntoTheBattleAtlas() throws IOException {
+        JsonValue scene = loadScene();
+        Map<String, FlashAnimationTimeline> timelines =
+                OriginalFlashAnimationAssets.loadTimelines(scene);
+        FlashAnimationTimeline bioCloud = timelines.get("bioCloud");
+        Map<Integer, FlashAnimationTimeline> nested =
+                OriginalFlashAnimationAssets.loadNestedTimelines(scene, bioCloud);
+
+        assertNotNull("The source city-contamination clip was not loaded", bioCloud);
+        assertEquals(1, bioCloud.getFrameCount());
+        FlashAnimationTimeline.Frame bioCloudFrame = bioCloud.getFrame(0);
+        assertEquals(1, bioCloudFrame.layers.length);
+        assertEquals(2428, bioCloudFrame.layers[0].shapeId);
+        FlashAnimationTimeline cloud = nested.get(2428);
+        assertNotNull("The nested cloud movie clip was not loaded", cloud);
+        assertEquals(2427, cloud.getFrame(0).layers[0].shapeId);
+        FlashAnimationTimeline cloudArtwork = nested.get(2427);
+        assertNotNull("The nested cloud artwork clip was not loaded", cloudArtwork);
+        assertEquals(1, cloudArtwork.getFrame(0).layers.length);
+        assertEquals(OriginalFlashAnimationAssets.BIO_CLOUD_SHAPE_ID,
+                cloudArtwork.getFrame(0).layers[0].shapeId);
+        assertTrue("Original bioCloud SVG artwork is missing",
+                Files.isRegularFile(shapeAsset(OriginalFlashAnimationAssets.BIO_CLOUD_SHAPE_ID)));
+
+        Set<Integer> battleShapeIds = OriginalFlashAnimationAssets.collectShapeIds(
+                timelines, nested,
+                shapeId -> Files.isRegularFile(shapeAsset(shapeId)));
+        assertTrue("Original bioCloud artwork is not included in the battle atlas",
+                battleShapeIds.contains(OriginalFlashAnimationAssets.BIO_CLOUD_SHAPE_ID));
+    }
+
     private static JsonValue loadScene() throws IOException {
         Path asset = projectAsset("original/runtime/scene.json.gz");
         try (InputStream file = Files.newInputStream(asset);

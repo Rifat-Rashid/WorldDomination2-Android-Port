@@ -294,8 +294,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         font.setColor(Color.WHITE);
         uiAssets = new OriginalUiAssets();
         cityAssets = new OriginalCityAssets();
-        cityRenderer = new BattlefieldCityRenderer(cityAssets);
         flashAnimationAssets = new OriginalFlashAnimationAssets();
+        cityRenderer = new BattlefieldCityRenderer(cityAssets, flashAnimationAssets);
         explosionRenderer = new BattleExplosionRenderer(flashAnimationAssets);
         battleUnitRenderer = new FlashBattleUnitRenderer(flashAnimationAssets);
         battleAnchors = FlashBattleRoutes.parseAnchors(

@@ -42,12 +42,15 @@ public final class OriginalFlashAnimationAssets implements Disposable {
     public static final int ROCKET_BODY_SHAPE_ID = 792;
     /** Smoke puff nested in the source Flash trail movie clip. */
     public static final int ROCKET_TRAIL_SHAPE_ID = 4936;
+    /** Leaf artwork nested inside the source bioCloud and cloud movie clips. */
+    public static final int BIO_CLOUD_SHAPE_ID = 2426;
 
     private static final String SCENE_PATH = "original/runtime/scene.json.gz";
     private static final String SHAPE_PATH = "original/runtime/shapes/";
     private static final String WEBP_PREFIX = "data:image/webp;base64,";
     private static final String[] REQUIRED_LINKAGES = {
             "faces",
+            "bioCloud",
             "explosion_warhead_1", "explosion_warhead_2", "explosion_warhead_3",
             "explosion_warhead_4", "explosion_bioload_1", "explosion_bioload_2",
             "explosion_bioload_3", "explosion_bioload_4", "explosion001", "explosion002",
@@ -177,6 +180,8 @@ public final class OriginalFlashAnimationAssets implements Disposable {
             JsonValue scene = new JsonReader().parse(readCompressedUtf8(SCENE_PATH));
             Map<String, FlashAnimationTimeline> loadedTimelines = loadTimelines(scene);
             Map<Integer, FlashAnimationTimeline> loadedNestedTimelines = new LinkedHashMap<>();
+            loadedNestedTimelines.putAll(loadNestedTimelines(scene,
+                    loadedTimelines.get("bioCloud")));
             loadedNestedTimelines.putAll(loadNestedTimelines(scene,
                     loadedTimelines.get("satellite")));
             loadedNestedTimelines.putAll(loadNestedTimelines(scene,
@@ -364,7 +369,7 @@ public final class OriginalFlashAnimationAssets implements Disposable {
         return Gdx.files.internal(SHAPE_PATH + shapeId + ".svgz").exists();
     }
 
-    private static Map<String, FlashAnimationTimeline> loadTimelines(JsonValue scene) {
+    static Map<String, FlashAnimationTimeline> loadTimelines(JsonValue scene) {
         float frameRate = scene.getFloat("fps");
         JsonValue symbols = scene.get("symbols");
         if (symbols == null || !symbols.isArray()) {
