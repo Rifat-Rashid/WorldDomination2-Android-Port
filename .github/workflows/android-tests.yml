@@ -45,6 +45,9 @@ jobs:
           - id: source-city-population-tests
             check: Source starting city population tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.startingCityAllocationUsesFractionalQuarterAndConsumesFiveDraws" --tests "com.example.worlddomination.game.simulation.GameStateTest.inactivePlayerSlotsDoNotConsumeStartingCityPopulationDraws" --tests "com.example.worlddomination.game.simulation.GameStateTest.selectedOpponentSetupDistributesPopulationAcrossItsFiveCities"'
+          - id: source-difficulty-inventory-tests
+            check: Source difficulty starting inventory parity
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.sourceDifficultySetsStartingWeaponStockByPlayerAndDifficulty" --tests "com.example.worlddomination.game.simulation.GameStateTest.sourceDifficultyInitializesTechnologiesOnlyForActivePlayers"'
           - id: turn-progression-tests
             check: Game state and turn progression tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest"'
