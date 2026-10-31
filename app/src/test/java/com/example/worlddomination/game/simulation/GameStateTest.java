@@ -2133,6 +2133,32 @@ public final class GameStateTest {
     }
 
     @Test
+    public void aiDiplomacyOfferRequiresStrictlyMoreAcceptanceThanRejectionAtRegardBoundary() {
+        for (int regard : new int[]{50, 51}) {
+            GameState state = new GameState(1, 10_000L + regard, false);
+            GameState.PlayerState human = state.getHuman();
+            GameState.PlayerState receiver = state.getPlayerState(1);
+            for (int playerId = 2; playerId < state.getPlayers().length; playerId++) {
+                state.getPlayerState(playerId).alive = false;
+            }
+            human.moneyMillions = 20;
+            human.turnMoneyMillions = 20;
+            human.populationMillions = 100;
+            receiver.moneyMillions = 1_000;
+            receiver.turnMoneyMillions = 1_000;
+            receiver.populationMillions = 1_000;
+            setRegard(human, receiver.id, regard);
+            setRegard(receiver, human.id, regard);
+
+            assertTrue(state.submitDiplomacyProposal(human.id, receiver.id, 0));
+            completeTurnWithResourcesAndMedia(state);
+
+            assertEquals("regard 50 is an acceptance tie and the source uses strict >",
+                    regard > 50, human.hasCeasefireWith(receiver.id));
+        }
+    }
+
+    @Test
     public void humanCanRespondToAiOfferAndDemandProposals() {
         GameState offerState = new GameState(1, 6L);
         assertTrue(offerState.submitDiplomacyProposal(1, 0, 0));

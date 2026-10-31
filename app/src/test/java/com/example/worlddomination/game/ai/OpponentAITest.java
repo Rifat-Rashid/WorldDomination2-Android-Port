@@ -206,6 +206,94 @@ public final class OpponentAITest {
     }
 
     @Test
+    public void diplomacyHumanDemandOverrideUsesStrictFundsAndRegardThresholds()
+            throws Exception {
+        GameState state = findAiWithNeutralHumanRegard();
+        GameState.PlayerState actor = aiWithNeutralHumanRegard(state);
+        GameState.PlayerState poorest = anotherRival(state, actor.id, -1);
+        GameState.PlayerState richer = anotherRival(state, actor.id, poorest.id);
+        configureDiplomacyPopulationAndFunds(state, actor, poorest, richer);
+        state.getHuman().moneyMillions = 51;
+        setRegardToward(actor, state.getHuman().id, 49);
+
+        OpponentAI.Decision decision = OpponentAI.planDiplomacy(state, actor,
+                new Random(83L));
+
+        assertNotNull(decision);
+        assertEquals(GameState.Action.DIPLOMACY, decision.action);
+        assertEquals("the human override demands from a target with over $50M",
+                state.getHuman().id, decision.targetPlayerId);
+        assertEquals("strictly affordable demand options select the greatest amount",
+                4, decision.diplomacyOption);
+
+        GameState regardBoundary = findAiWithNeutralHumanRegard();
+        GameState.PlayerState boundaryActor = aiWithNeutralHumanRegard(regardBoundary);
+        GameState.PlayerState boundaryPoorest = anotherRival(regardBoundary,
+                boundaryActor.id, -1);
+        GameState.PlayerState boundaryRicher = anotherRival(regardBoundary,
+                boundaryActor.id, boundaryPoorest.id);
+        configureDiplomacyPopulationAndFunds(regardBoundary, boundaryActor,
+                boundaryPoorest, boundaryRicher);
+        regardBoundary.getHuman().moneyMillions = 51;
+        setRegardToward(boundaryActor, regardBoundary.getHuman().id, 50);
+
+        assertNull("regard exactly 50 does not trigger the demand override",
+                OpponentAI.planDiplomacy(regardBoundary, boundaryActor,
+                        new Random(84L)));
+
+        GameState fundsBoundary = findAiWithNeutralHumanRegard();
+        GameState.PlayerState fundsActor = aiWithNeutralHumanRegard(fundsBoundary);
+        GameState.PlayerState fundsPoorest = anotherRival(fundsBoundary,
+                fundsActor.id, -1);
+        GameState.PlayerState fundsRicher = anotherRival(fundsBoundary,
+                fundsActor.id, fundsPoorest.id);
+        configureDiplomacyPopulationAndFunds(fundsBoundary, fundsActor,
+                fundsPoorest, fundsRicher);
+        fundsBoundary.getHuman().moneyMillions = 50;
+        setRegardToward(fundsActor, fundsBoundary.getHuman().id, 49);
+
+        assertNull("human funds exactly $50M do not trigger the demand override",
+                OpponentAI.planDiplomacy(fundsBoundary, fundsActor,
+                        new Random(85L)));
+    }
+
+    @Test
+    public void diplomacyHumanOfferOverrideUsesStrictCashAndBudgetThresholds()
+            throws Exception {
+        GameState state = findAiWithNeutralHumanRegard();
+        GameState.PlayerState actor = aiWithNeutralHumanRegard(state);
+        GameState.PlayerState poorest = anotherRival(state, actor.id, -1);
+        GameState.PlayerState richer = anotherRival(state, actor.id, poorest.id);
+        configureDiplomacyPopulationAndFunds(state, actor, poorest, richer);
+        actor.moneyMillions = 51;
+        actor.turnMoneyMillions = 50;
+        setRegardToward(actor, state.getHuman().id, 51);
+
+        OpponentAI.Decision decision = OpponentAI.planDiplomacy(state, actor,
+                new Random(86L));
+
+        assertNotNull(decision);
+        assertEquals(state.getHuman().id, decision.targetPlayerId);
+        assertEquals("an offer amount equal to the budget is not eligible",
+                0, decision.diplomacyOption);
+
+        actor.turnMoneyMillions = 51;
+        decision = OpponentAI.planDiplomacy(state, actor, new Random(87L));
+        assertNotNull(decision);
+        assertEquals("the next offer becomes affordable only above its amount",
+                1, decision.diplomacyOption);
+
+        actor.turnMoneyMillions = 10;
+        assertNull("an offer amount equal to the full budget is rejected",
+                OpponentAI.planDiplomacy(state, actor, new Random(88L)));
+
+        actor.moneyMillions = 50;
+        actor.turnMoneyMillions = 100;
+        assertNull("cash exactly $50M does not trigger the human offer override",
+                OpponentAI.planDiplomacy(state, actor, new Random(89L)));
+    }
+
+    @Test
     public void diplomacyTargetScoreUsesStrictGreaterAndKeepsFirstRivalOnTies() {
         GameState state = findAiWithNeutralHumanRegard();
         GameState.PlayerState actor = aiWithNeutralHumanRegard(state);
