@@ -164,17 +164,29 @@ public final class OpponentAI {
                                             List<ScoredAction> scores) {
 
         List<Decision> decisions = new ArrayList<>(2);
+        List<ScoredAction> availableScores = new ArrayList<>(scores.size());
+        for (ScoredAction scored : scores) {
+            if (!state.isActionBioloaded(player.id, scored.action)) {
+                availableScores.add(scored);
+            }
+        }
+        scores = availableScores;
+        if (scores.isEmpty()) {
+            return decisions;
+        }
+
         Map<String, Integer> plannedWeaponUse = new LinkedHashMap<>();
         ScoredAction first = scores.get(0);
-        ScoredAction second = scores.get(1);
-        boolean duplicateAttack = first.action == GameState.Action.ATTACK
+        ScoredAction second = scores.size() > 1 ? scores.get(1) : null;
+        boolean duplicateAttack = second != null
+                && first.action == GameState.Action.ATTACK
                 && first.score - 50 > second.score;
         int attackSlot = first.action == GameState.Action.ATTACK ? 0
-                : second.action == GameState.Action.ATTACK ? 1 : -1;
+                : second != null && second.action == GameState.Action.ATTACK ? 1 : -1;
 
         if (attackSlot >= 0) {
             ScoredAction companion = duplicateAttack ? null
-                    : scores.get(1 - attackSlot);
+                    : scores.size() > 1 ? scores.get(1 - attackSlot) : null;
             Decision precedingOrder = attackSlot == 1 && companion != null
                     ? planRankedAction(state, player, companion, random, 1,
                     plannedWeaponUse) : null;

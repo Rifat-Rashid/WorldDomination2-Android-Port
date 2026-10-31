@@ -45,6 +45,9 @@ jobs:
           - id: bioload-control-state-tests
             check: Bioload control state and expiry
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.weaponBioloadStatusIsAvailableForInterfaceRendering" --tests "com.example.worlddomination.game.ai.OpponentAITest.biologicalStrikeBlocksHumanActionsAndRestoresTemporaryWeaponLocks"'
+          - id: ai-bioload-action-filter-tests
+            check: AI excludes bio-disabled action choices
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.OpponentAITest.plannerDoesNotFillSecondSlotFromBioDisabledActionScores" --tests "com.example.worlddomination.game.ai.OpponentAITest.plannerReturnsNoActionWhenEverySourceChoiceIsBioDisabled"'
           - id: noncombat-elimination-tests
             check: Noncombat zero-population elimination
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.turnEndEliminatesZeroPopulationNationWithoutCombat"'
