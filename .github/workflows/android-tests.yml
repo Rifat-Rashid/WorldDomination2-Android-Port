@@ -60,6 +60,9 @@ jobs:
           - id: setup-scoring-tests
             check: Game setup and scoring tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameSetupTest" --tests "com.example.worlddomination.game.simulation.FinalScoreBreakdownTest"'
+          - id: setup-screen-tests
+            check: Setup screen layout and rival selection
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.SetupScreenLayoutTest" --tests "com.example.worlddomination.game.simulation.GameSetupTest.removingASelectedOpponentSlotKeepsRemainingRivalsInDisplayOrder"'
           - id: setup-rng-stream-tests
             check: Setup selection RNG stream parity
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameSetupTest.seededSetupUsesSourceMenuDrawsAndNormalDifficulty" --tests "com.example.worlddomination.game.simulation.GameSetupTest.restartedSetupContinuesMenuRandomStreamIndependentOfMatchDraws"'

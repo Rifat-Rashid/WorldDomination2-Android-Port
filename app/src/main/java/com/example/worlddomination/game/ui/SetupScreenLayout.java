@@ -14,6 +14,7 @@ public final class SetupScreenLayout {
     public final Rectangle startPanel = new Rectangle();
     public final Rectangle leaderPrevious = new Rectangle();
     public final Rectangle leaderNext = new Rectangle();
+    public final Rectangle opponentArrow = new Rectangle();
     public final Rectangle leaderDescription = new Rectangle();
     public final Rectangle startButton = new Rectangle();
     public final Rectangle[] difficultyButtons = rectangles(3);
@@ -25,15 +26,19 @@ public final class SetupScreenLayout {
     /** Lays out the mockup's top difficulty row, split player style, rival picker and footer. */
     public void update(float width, float height, float safeLeft, float safeTop,
                        float safeRight, float safeBottom) {
-        float left = Math.max(0f, safeLeft) + 2f;
+        float left = 2f;
         float bottom = Math.max(0f, safeBottom) + 2f;
         float contentWidth = Math.max(1f, width - left - Math.max(0f, safeRight) - 4f);
         float contentHeight = Math.max(1f, height - bottom - Math.max(0f, safeTop) - 4f);
 
-        logo.set(left + contentWidth * 0.012f, bottom + contentHeight * 0.845f,
-                contentWidth * 0.145f, contentHeight * 0.145f);
         difficultyPanel.set(left + contentWidth * 0.18f, bottom + contentHeight * 0.835f,
                 contentWidth * 0.64f, contentHeight * 0.16f);
+        float logoX = Math.max(left + contentWidth * 0.012f,
+                Math.max(0f, safeLeft) + 2f);
+        float logoWidth = Math.min(contentWidth * 0.145f,
+                difficultyPanel.x - logoX - 8f);
+        logo.set(logoX, bottom + contentHeight * 0.845f,
+                Math.max(1f, logoWidth), contentHeight * 0.145f);
         playerStylePanel.set(left + contentWidth * 0.13f, bottom + contentHeight * 0.60f,
                 contentWidth * 0.74f, contentHeight * 0.225f);
         enemiesPanel.set(left + contentWidth * 0.13f, bottom + contentHeight * 0.103f,
@@ -52,15 +57,15 @@ public final class SetupScreenLayout {
         }
 
         float choiceY = playerStylePanel.y + playerStylePanel.height * 0.15f;
-        float choiceHeight = playerStylePanel.height * 0.53f;
-        float colorWidth = playerStylePanel.width * 0.068f;
+        float choiceHeight = playerStylePanel.height * 0.47f;
+        float colorWidth = playerStylePanel.width * 0.062f;
         float colorGap = playerStylePanel.width * 0.018f;
         float colorX = playerStylePanel.x + playerStylePanel.width * 0.055f;
         for (int i = 0; i < colorSwatches.length; i++) {
             colorSwatches[i].set(colorX + i * (colorWidth + colorGap), choiceY,
                     colorWidth, choiceHeight);
         }
-        float buildingWidth = playerStylePanel.width * 0.068f;
+        float buildingWidth = playerStylePanel.width * 0.062f;
         float buildingGap = playerStylePanel.width * 0.016f;
         float buildingX = playerStylePanel.x + playerStylePanel.width * 0.55f;
         for (int i = 0; i < buildingButtons.length; i++) {
@@ -71,27 +76,32 @@ public final class SetupScreenLayout {
         float slotWidth = enemiesPanel.width * 0.108f;
         float slotGap = enemiesPanel.width * 0.018f;
         float slotHeight = enemiesPanel.height * 0.235f;
-        float slotsWidth = slotWidth * opponentSlots.length
-                + slotGap * (opponentSlots.length - 1);
-        float slotX = enemiesPanel.x + (enemiesPanel.width - slotsWidth) / 2f;
-        float slotY = enemiesPanel.y + enemiesPanel.height * 0.60f;
+        // The source mobile mockup leaves room for the direction marker on the
+        // left and places the four selected-rival cards just right of center.
+        float slotX = enemiesPanel.x + enemiesPanel.width * 0.32f;
+        float slotY = enemiesPanel.y + enemiesPanel.height * 0.67f;
         for (int i = 0; i < opponentSlots.length; i++) {
             opponentSlots[i].set(slotX + i * (slotWidth + slotGap), slotY,
                     slotWidth, slotHeight);
         }
+        opponentArrow.set(enemiesPanel.x + enemiesPanel.width * 0.12f,
+                slotY + slotHeight * 0.37f,
+                enemiesPanel.width * 0.15f, slotHeight * 0.26f);
 
         leaderCarouselPanel.set(enemiesPanel.x + enemiesPanel.width * 0.07f,
-                enemiesPanel.y + enemiesPanel.height * 0.035f,
-                enemiesPanel.width * 0.86f, enemiesPanel.height * 0.55f);
+                enemiesPanel.y,
+                enemiesPanel.width * 0.86f, enemiesPanel.height * 0.585f);
         float arrowWidth = enemiesPanel.width * 0.028f;
         float carouselInset = enemiesPanel.width * 0.018f;
         float cardGap = enemiesPanel.width * 0.012f;
         float cardWidth = (leaderCarouselPanel.width - 2f * carouselInset
                 - 2f * arrowWidth - (VISIBLE_LEADERS + 1f) * cardGap) / VISIBLE_LEADERS;
-        float cardHeight = enemiesPanel.height * 0.30f;
-        float cardY = enemiesPanel.y + enemiesPanel.height * 0.21f;
-        leaderPrevious.set(leaderCarouselPanel.x + carouselInset, cardY,
-                arrowWidth, cardHeight);
+        float cardHeight = enemiesPanel.height * 0.326f;
+        float cardY = enemiesPanel.y + enemiesPanel.height * 0.23f;
+        float carouselArrowHeight = cardHeight * 0.72f;
+        float carouselArrowY = cardY + (cardHeight - carouselArrowHeight) * 0.5f;
+        leaderPrevious.set(leaderCarouselPanel.x + carouselInset, carouselArrowY,
+                arrowWidth, carouselArrowHeight);
         float cardsX = leaderPrevious.x + leaderPrevious.width + cardGap;
         for (int i = 0; i < leaderCards.length; i++) {
             leaderCards[i].set(cardsX + i * (cardWidth + cardGap), cardY,
@@ -99,11 +109,11 @@ public final class SetupScreenLayout {
         }
         leaderNext.set(leaderCards[leaderCards.length - 1].x
                         + leaderCards[leaderCards.length - 1].width + cardGap,
-                cardY, arrowWidth, cardHeight);
+                carouselArrowY, arrowWidth, carouselArrowHeight);
         leaderDescription.set(leaderCarouselPanel.x + carouselInset,
-                enemiesPanel.y + enemiesPanel.height * 0.055f,
+                enemiesPanel.y + enemiesPanel.height * 0.04f,
                 leaderCarouselPanel.width - 2f * carouselInset,
-                enemiesPanel.height * 0.105f);
+                enemiesPanel.height * 0.163f);
 
         startButton.set(startPanel.x + startPanel.width * 0.75f,
                 startPanel.y + startPanel.height * 0.13f,

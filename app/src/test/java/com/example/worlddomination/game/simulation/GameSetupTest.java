@@ -36,6 +36,24 @@ public final class GameSetupTest {
     }
 
     @Test
+    public void removingASelectedOpponentSlotKeepsRemainingRivalsInDisplayOrder() {
+        GameSetup setup = new GameSetup();
+        assertTrue(setup.toggleOpponent(4));
+        assertTrue(setup.toggleOpponent(1));
+        assertTrue(setup.toggleOpponent(8));
+        assertTrue(setup.toggleOpponent(12));
+
+        assertTrue(setup.removeOpponentAt(1));
+
+        assertEquals(Arrays.asList(4, 8, 12), setup.getSelectedOpponentIds());
+        assertEquals("Asama Bin Loader", setup.getSelectedOpponents().get(0).name);
+        assertEquals("Ehum Bareass", setup.getSelectedOpponents().get(1).name);
+        assertEquals("Ballony Stare", setup.getSelectedOpponents().get(2).name);
+        assertTrue(setup.canStart());
+        assertFalse(setup.removeOpponentAt(3));
+    }
+
+    @Test
     public void setupOptionsUseOriginalDifficultyColorAndBuildingTables() {
         GameSetup setup = new GameSetup();
         setup.setDifficulty(2);

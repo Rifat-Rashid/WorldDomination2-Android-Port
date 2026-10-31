@@ -905,7 +905,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         drawPanelTexture(setupLayout.difficultyPanel);
         drawPanelTexture(setupLayout.playerStylePanel);
         drawPanelTexture(setupLayout.enemiesPanel);
-        drawPanelTexture(setupLayout.leaderCarouselPanel);
+        drawPanelTexture(setupLayout.leaderCarouselPanel,
+                0.72f, 0.79f, 0.82f, 0.78f);
         drawPanelTexture(setupLayout.startPanel);
         batch.end();
 
@@ -941,10 +942,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         for (int i = 0; i < setupLayout.colorSwatches.length; i++) {
             Rectangle swatch = setupLayout.colorSwatches[i];
-            drawSetupButtonGradient(swatch, i + 1 == setup.getPlayerColor());
-            shapes.setColor(SETUP_PLAYER_COLORS[i]);
-            shapes.rect(swatch.x + 5f, swatch.y + 5f,
-                    swatch.width - 10f, swatch.height - 10f);
+            drawSetupColorSwatch(swatch, SETUP_PLAYER_COLORS[i],
+                    i + 1 == setup.getPlayerColor());
         }
         for (int i = 0; i < setupLayout.buildingButtons.length; i++) {
             drawSetupButtonGradient(setupLayout.buildingButtons[i],
@@ -965,6 +964,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                         slot.width * 0.56f, slot.height * 0.48f);
             }
         }
+        drawSetupDirectionArrow(setupLayout.opponentArrow);
+        drawSetupInsetFill(setupLayout.leaderDescription);
         for (int i = 0; i < setupLayout.leaderCards.length; i++) {
             int leaderId = SetupScreenLayout.leaderIdAt(setupLeaderListStart, i,
                     GameSetup.leaders().size());
@@ -972,6 +973,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         drawSetupButtonGradient(setupLayout.leaderPrevious, false);
         drawSetupButtonGradient(setupLayout.leaderNext, false);
+        drawSetupCarouselArrow(setupLayout.leaderPrevious, -1f);
+        drawSetupCarouselArrow(setupLayout.leaderNext, 1f);
         drawSetupButtonGradient(setupLayout.startButton, setup.canStart());
         shapes.end();
 
@@ -984,23 +987,23 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
         font.setColor(TITLE_TEXT);
         drawSetupText("GAME DIFFICULTY", setupLayout.difficultyPanel.x + 18f,
-                setupLayout.difficultyPanel.y + setupLayout.difficultyPanel.height - 12f, 7f);
+                setupLayout.difficultyPanel.y + setupLayout.difficultyPanel.height - 12f, 11f);
         for (int i = 0; i < setupLayout.difficultyButtons.length; i++) {
             Rectangle button = setupLayout.difficultyButtons[i];
             drawCentered(DIFFICULTY_LABELS[i], button.x + button.width / 2f,
-                    button.y + button.height / 2f + 3f, 8f);
+                    button.y + button.height / 2f + 3f, 13f);
         }
 
         drawSetupText("PLAYER STYLE", setupLayout.playerStylePanel.x + 18f,
-                setupLayout.playerStylePanel.y + setupLayout.playerStylePanel.height - 10f, 7f);
+                setupLayout.playerStylePanel.y + setupLayout.playerStylePanel.height - 10f, 11f);
         drawCentered("SELECT YOUR COLOR",
                 setupLayout.playerStylePanel.x + setupLayout.playerStylePanel.width * 0.29f,
                 setupLayout.playerStylePanel.y + setupLayout.playerStylePanel.height * 0.76f,
-                6.5f);
+                10f);
         drawCentered("SELECT YOUR BUILDINGS",
                 setupLayout.playerStylePanel.x + setupLayout.playerStylePanel.width * 0.76f,
                 setupLayout.playerStylePanel.y + setupLayout.playerStylePanel.height * 0.76f,
-                6.5f);
+                10f);
         for (int i = 0; i < setupLayout.buildingButtons.length; i++) {
             OriginalCityAssets.Frame building = cityAssets.getFrame(
                     SETUP_BUILDING_RELIGIONS[i], 6);
@@ -1012,17 +1015,11 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
 
         drawSetupText("ENEMIES", setupLayout.enemiesPanel.x + 18f,
-                setupLayout.enemiesPanel.y + setupLayout.enemiesPanel.height - 12f, 7f);
+                setupLayout.enemiesPanel.y + setupLayout.enemiesPanel.height - 12f, 11f);
         drawCentered("SELECT YOUR ENEMIES",
                 setupLayout.leaderCarouselPanel.x + setupLayout.leaderCarouselPanel.width / 2f,
-                setupLayout.leaderCarouselPanel.y + setupLayout.leaderCarouselPanel.height - 7f,
-                6f);
-        drawCentered("<", setupLayout.leaderPrevious.x
-                        + setupLayout.leaderPrevious.width / 2f,
-                setupLayout.leaderPrevious.y + setupLayout.leaderPrevious.height / 2f + 3f,
+                setupLayout.leaderCarouselPanel.y + setupLayout.leaderCarouselPanel.height + 12f,
                 10f);
-        drawCentered(">", setupLayout.leaderNext.x + setupLayout.leaderNext.width / 2f,
-                setupLayout.leaderNext.y + setupLayout.leaderNext.height / 2f + 3f, 10f);
         for (int i = 0; i < setupLayout.leaderCards.length; i++) {
             int leaderId = SetupScreenLayout.leaderIdAt(setupLeaderListStart, i,
                     GameSetup.leaders().size());
@@ -1035,29 +1032,28 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             drawSetupLeaderPortrait(selectedIds.get(i), slot.x + 3f, slot.y + 3f,
                     slot.width - 6f, slot.height - 6f);
         }
-        GameSetup.Leader candidate = setup.getCandidateLeader();
         font.setColor(showSetupMessage ? GOLD : TITLE_TEXT);
-        drawCentered(showSetupMessage ? setupMessage
-                        : candidate.displayName + "  |  " + candidate.displayReligionCode,
+        drawCentered(showSetupMessage ? setupMessage : "",
                 setupLayout.leaderDescription.x + setupLayout.leaderDescription.width / 2f,
                 setupLayout.leaderDescription.y + setupLayout.leaderDescription.height / 2f + 2f,
-                6f);
+                10f);
 
         font.setColor(TITLE_TEXT);
         drawSetupText("START", setupLayout.startPanel.x + 14f,
-                setupLayout.startPanel.y + setupLayout.startPanel.height / 2f + 3f, 7f);
+                setupLayout.startPanel.y + setupLayout.startPanel.height / 2f + 3f, 11f);
         font.setColor(setup.canStart() ? Color.WHITE : DISABLED_TEXT);
         drawCentered("START GAME", setupLayout.startButton.x
                         + setupLayout.startButton.width / 2f,
-                setupLayout.startButton.y + setupLayout.startButton.height / 2f + 4f, 8f);
+                setupLayout.startButton.y + setupLayout.startButton.height / 2f + 4f, 13f);
         batch.end();
 
         shapes.begin(ShapeRenderer.ShapeType.Line);
-        drawPanelEdges(setupLayout.difficultyPanel);
-        drawPanelEdges(setupLayout.playerStylePanel);
-        drawPanelEdges(setupLayout.enemiesPanel);
-        drawPanelEdges(setupLayout.leaderCarouselPanel);
-        drawPanelEdges(setupLayout.startPanel);
+        drawSetupPanelEdges(setupLayout.difficultyPanel);
+        drawSetupPanelEdges(setupLayout.playerStylePanel);
+        drawSetupPanelEdges(setupLayout.enemiesPanel);
+        drawSetupPanelEdges(setupLayout.leaderCarouselPanel);
+        drawSetupPanelEdges(setupLayout.startPanel);
+        drawSetupButtonEdges(setupLayout.leaderDescription, false);
         shapes.setColor(PANEL_EDGE);
         shapes.line(setupLayout.playerStylePanel.x
                         + setupLayout.playerStylePanel.width * 0.52f,
@@ -1066,44 +1062,102 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                         + setupLayout.playerStylePanel.width * 0.52f,
                 setupLayout.playerStylePanel.y + setupLayout.playerStylePanel.height * 0.73f);
         for (int i = 0; i < setupLayout.difficultyButtons.length; i++) {
-            drawButtonEdges(setupLayout.difficultyButtons[i]);
+            drawSetupButtonEdges(setupLayout.difficultyButtons[i],
+                    i == setup.getDifficulty());
         }
         for (int i = 0; i < setupLayout.colorSwatches.length; i++) {
             Rectangle swatch = setupLayout.colorSwatches[i];
-            drawButtonEdges(swatch);
-            if (i + 1 == setup.getPlayerColor()) {
-                shapes.setColor(GOLD);
-                shapes.rect(swatch.x - 1f, swatch.y - 1f,
-                        swatch.width + 2f, swatch.height + 2f);
-            }
+            drawSetupButtonEdges(swatch, i + 1 == setup.getPlayerColor());
         }
         for (int i = 0; i < setupLayout.buildingButtons.length; i++) {
             Rectangle button = setupLayout.buildingButtons[i];
-            drawButtonEdges(button);
-            if (i + 1 == setup.getStartingBuilding()) {
-                shapes.setColor(GOLD);
-                shapes.rect(button.x - 1f, button.y - 1f,
-                        button.width + 2f, button.height + 2f);
-            }
+            drawSetupButtonEdges(button, i + 1 == setup.getStartingBuilding());
         }
         for (int i = 0; i < setupLayout.leaderCards.length; i++) {
             Rectangle card = setupLayout.leaderCards[i];
-            drawButtonEdges(card);
             int leaderId = SetupScreenLayout.leaderIdAt(setupLeaderListStart, i,
                     GameSetup.leaders().size());
-            if (setup.getSelectedOpponentIds().contains(leaderId)) {
-                shapes.setColor(MODAL_ORANGE);
-                shapes.rect(card.x - 1f, card.y - 1f,
-                        card.width + 2f, card.height + 2f);
-            }
+            drawSetupButtonEdges(card, setup.getSelectedOpponentIds().contains(leaderId));
         }
-        drawButtonEdges(setupLayout.leaderPrevious);
-        drawButtonEdges(setupLayout.leaderNext);
+        drawSetupButtonEdges(setupLayout.leaderPrevious, false);
+        drawSetupButtonEdges(setupLayout.leaderNext, false);
         for (Rectangle slot : setupLayout.opponentSlots) {
-            drawButtonEdges(slot);
+            drawSetupButtonEdges(slot, false);
         }
-        drawButtonEdges(setupLayout.startButton);
+        drawSetupButtonEdges(setupLayout.startButton, setup.canStart());
         shapes.end();
+    }
+
+    private void drawSetupColorSwatch(Rectangle rectangle, Color base, boolean selected) {
+        drawSetupButtonGradient(rectangle, selected);
+        float left = rectangle.x + 5f;
+        float bottom = rectangle.y + 5f;
+        float width = rectangle.width - 10f;
+        float height = rectangle.height - 10f;
+        float cornerRadius = Math.min(6f, height * 0.14f);
+        int bands = 24;
+        for (int i = 0; i < bands; i++) {
+            float t = i / (float) (bands - 1);
+            float shade = 0.42f + 0.78f * t;
+            float highlight = Math.max(0f, 1f - Math.abs(t - 0.82f) * 3f) * 0.12f;
+            shapes.setColor(Math.min(1f, base.r * shade + highlight),
+                    Math.min(1f, base.g * shade + highlight),
+                    Math.min(1f, base.b * shade + highlight), 1f);
+            float bandHeight = height / bands;
+            float edgeDistance = Math.min(t * height, (1f - t) * height);
+            float cornerInset = 0f;
+            if (edgeDistance < cornerRadius) {
+                float remaining = cornerRadius - edgeDistance;
+                cornerInset = cornerRadius
+                        - (float) Math.sqrt(cornerRadius * cornerRadius
+                                - remaining * remaining);
+            }
+            shapes.rect(left + cornerInset, bottom + i * bandHeight,
+                    width - cornerInset * 2f, bandHeight + 0.2f);
+        }
+    }
+
+    private void drawSetupDirectionArrow(Rectangle rectangle) {
+        float centerY = rectangle.y + rectangle.height * 0.5f;
+        float headStart = rectangle.x + rectangle.width * 0.56f;
+        float headTip = rectangle.x + rectangle.width;
+        float stemHeight = rectangle.height * 0.30f;
+        shapes.setColor(0.11f, 0.12f, 0.04f, 1f);
+        shapes.rect(rectangle.x, centerY - stemHeight * 0.5f,
+                rectangle.width * 0.57f, stemHeight);
+        shapes.triangle(headStart, rectangle.y,
+                headStart, rectangle.y + rectangle.height, headTip, centerY);
+        shapes.setColor(1f, 0.80f, 0.025f, 1f);
+        float inset = 2f;
+        shapes.rect(rectangle.x + inset, centerY - stemHeight * 0.36f,
+                rectangle.width * 0.49f, stemHeight * 0.72f);
+        shapes.triangle(headStart + inset, rectangle.y + inset,
+                headStart + inset, rectangle.y + rectangle.height - inset,
+                headTip - inset, centerY);
+    }
+
+    private void drawSetupCarouselArrow(Rectangle rectangle, float direction) {
+        float centerX = rectangle.x + rectangle.width * 0.5f;
+        float centerY = rectangle.y + rectangle.height * 0.5f;
+        float halfWidth = rectangle.width * 0.28f;
+        float halfHeight = rectangle.height * 0.34f;
+        float tipX = centerX + direction * halfWidth;
+        float baseX = centerX - direction * halfWidth;
+        shapes.setColor(0.08f, 0.11f, 0.04f, 1f);
+        shapes.triangle(baseX, centerY - halfHeight,
+                baseX, centerY + halfHeight, tipX, centerY);
+        shapes.setColor(1f, 0.82f, 0.08f, 1f);
+        shapes.triangle(baseX - direction, centerY - halfHeight + 2f,
+                baseX - direction, centerY + halfHeight - 2f,
+                tipX - direction, centerY);
+    }
+
+    private void drawSetupInsetFill(Rectangle rectangle) {
+        shapes.setColor(0.008f, 0.027f, 0.038f, 1f);
+        shapes.rect(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
+        shapes.setColor(0.12f, 0.21f, 0.25f, 1f);
+        shapes.rect(rectangle.x + 2f, rectangle.y + rectangle.height - 2f,
+                rectangle.width - 4f, 1f);
     }
 
     private void drawSetupOrangeGradient(Rectangle rectangle) {
@@ -1282,12 +1336,17 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     }
 
     private void drawPanelTexture(Rectangle rectangle) {
+        drawPanelTexture(rectangle, 0.55f, 0.68f, 0.73f, 0.52f);
+    }
+
+    private void drawPanelTexture(Rectangle rectangle, float red, float green,
+                                  float blue, float alpha) {
         float inset = 4f;
         float x = rectangle.x + inset;
         float y = rectangle.y + inset;
         float width = Math.max(0f, rectangle.width - inset * 2f);
         float height = Math.max(0f, rectangle.height - inset * 2f);
-        batch.setColor(0.55f, 0.68f, 0.73f, 0.52f);
+        batch.setColor(red, green, blue, alpha);
         batch.draw(uiAssets.metalPanel, x, y, width, height,
                 0f, 0f, width / 240f, height / 168f);
         batch.setColor(Color.WHITE);
@@ -2525,6 +2584,70 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         for (float[] point : points) {
             shapes.circle(point[0] - 0.5f, point[1] + 0.5f, 1f, 8);
         }
+    }
+
+    private void drawSetupPanelEdges(Rectangle rectangle) {
+        shapes.setColor(0.015f, 0.035f, 0.045f, 1f);
+        shapes.rect(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
+        shapes.setColor(0.42f, 0.57f, 0.63f, 1f);
+        shapes.rect(rectangle.x + 1.5f, rectangle.y + 1.5f,
+                rectangle.width - 3f, rectangle.height - 3f);
+        shapes.setColor(0.025f, 0.07f, 0.09f, 1f);
+        shapes.rect(rectangle.x + 3.5f, rectangle.y + 3.5f,
+                rectangle.width - 7f, rectangle.height - 7f);
+        shapes.setColor(0.68f, 0.78f, 0.82f, 1f);
+        shapes.line(rectangle.x + 9f, rectangle.y + rectangle.height - 3f,
+                rectangle.x + rectangle.width - 9f,
+                rectangle.y + rectangle.height - 3f);
+        shapes.line(rectangle.x + 3f, rectangle.y + 9f,
+                rectangle.x + 3f, rectangle.y + rectangle.height - 9f);
+        shapes.setColor(0.025f, 0.055f, 0.07f, 1f);
+        shapes.line(rectangle.x + 9f, rectangle.y + 3f,
+                rectangle.x + rectangle.width - 9f, rectangle.y + 3f);
+        shapes.line(rectangle.x + rectangle.width - 3f, rectangle.y + 9f,
+                rectangle.x + rectangle.width - 3f,
+                rectangle.y + rectangle.height - 9f);
+
+        float boltInset = Math.min(8f, Math.min(rectangle.width, rectangle.height) * 0.12f);
+        float boltRadius = Math.min(3.2f, Math.min(rectangle.width, rectangle.height) * 0.08f);
+        shapes.setColor(0.08f, 0.16f, 0.19f, 1f);
+        shapes.circle(rectangle.x + boltInset, rectangle.y + boltInset, boltRadius + 1f, 12);
+        shapes.circle(rectangle.x + rectangle.width - boltInset,
+                rectangle.y + boltInset, boltRadius + 1f, 12);
+        shapes.circle(rectangle.x + boltInset,
+                rectangle.y + rectangle.height - boltInset, boltRadius + 1f, 12);
+        shapes.circle(rectangle.x + rectangle.width - boltInset,
+                rectangle.y + rectangle.height - boltInset, boltRadius + 1f, 12);
+        shapes.setColor(0.77f, 0.85f, 0.87f, 1f);
+        shapes.circle(rectangle.x + boltInset - 0.6f,
+                rectangle.y + boltInset + 0.6f, boltRadius * 0.57f, 12);
+        shapes.circle(rectangle.x + rectangle.width - boltInset - 0.6f,
+                rectangle.y + boltInset + 0.6f, boltRadius * 0.57f, 12);
+        shapes.circle(rectangle.x + boltInset - 0.6f,
+                rectangle.y + rectangle.height - boltInset + 0.6f,
+                boltRadius * 0.57f, 12);
+        shapes.circle(rectangle.x + rectangle.width - boltInset - 0.6f,
+                rectangle.y + rectangle.height - boltInset + 0.6f,
+                boltRadius * 0.57f, 12);
+    }
+
+    private void drawSetupButtonEdges(Rectangle rectangle, boolean selected) {
+        shapes.setColor(0.06f, 0.13f, 0.16f, 1f);
+        shapes.rect(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
+        shapes.setColor(selected ? 0.92f : 0.47f,
+                selected ? 0.74f : 0.62f, selected ? 0.25f : 0.68f, 1f);
+        shapes.rect(rectangle.x + 1f, rectangle.y + 1f,
+                rectangle.width - 2f, rectangle.height - 2f);
+        shapes.setColor(0.045f, 0.095f, 0.12f, 1f);
+        shapes.rect(rectangle.x + 3f, rectangle.y + 3f,
+                rectangle.width - 6f, rectangle.height - 6f);
+        shapes.setColor(0.72f, 0.81f, 0.84f, 1f);
+        shapes.line(rectangle.x + 4f, rectangle.y + rectangle.height - 3f,
+                rectangle.x + rectangle.width - 4f,
+                rectangle.y + rectangle.height - 3f);
+        shapes.setColor(0.02f, 0.05f, 0.07f, 1f);
+        shapes.line(rectangle.x + 4f, rectangle.y + 3f,
+                rectangle.x + rectangle.width - 4f, rectangle.y + 3f);
     }
 
     private void drawButtonFill(Rectangle rectangle, Color color) {
