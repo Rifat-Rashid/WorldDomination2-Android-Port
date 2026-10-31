@@ -2167,6 +2167,7 @@ public final class GameState {
         List<BiologicalEffect> biologicalEffects = new ArrayList<>();
         List<ActionOrder> propagandaOrders = new ArrayList<>();
         TurnPopulationChanges populationChanges = new TurnPopulationChanges();
+        String latestHumanSpyResult = null;
         for (ActionOrder order : turnOrders) {
             if (order.action == Action.DEFENSE) {
                 resolveDefense(order, resolvedDefenses);
@@ -2190,9 +2191,13 @@ public final class GameState {
                 case RESEARCH:
                     resolveResearch(order);
                     break;
-                case ATTACK:
-                    resolveAttack(order, turnOrders, populationChanges);
+                case ATTACK: {
+                    String spyResult = resolveAttack(order, turnOrders, populationChanges);
+                    if (spyResult != null) {
+                        latestHumanSpyResult = spyResult;
+                    }
                     break;
+                }
                 case PREPARED_ATTACK:
                     resolvePreparedAttack(order, resolvedDefenses, biologicalEffects,
                             populationChanges);
@@ -2232,6 +2237,9 @@ public final class GameState {
         turn++;
         getHuman().turnMoneyMillions = getHuman().moneyMillions;
         messages.add("Turn " + turn + " complete.");
+        if (latestHumanSpyResult != null) {
+            messages.add(latestHumanSpyResult);
+        }
         queuedActions.clear();
         invalidateResearchChoices();
         cancelSelection();
@@ -2567,8 +2575,8 @@ public final class GameState {
     }
 
     /** Source attack casualties are a rounded random 50%-100% of unit maxKills. */
-    private void resolveAttack(ActionOrder order, List<ActionOrder> turnOrders,
-                              TurnPopulationChanges populationChanges) {
+    private String resolveAttack(ActionOrder order, List<ActionOrder> turnOrders,
+                                 TurnPopulationChanges populationChanges) {
         PlayerState attacker = playerById(order.playerId);
         PlayerState defender = playerById(order.targetPlayerId);
         CityState city = defender.getCity(order.targetCityIndex);
@@ -2581,18 +2589,18 @@ public final class GameState {
                 || (!spyMission && city.populationMillions <= 0)
                 || weapon == null || !weapon.active || weapon.inStock <= 0) {
             messages.add("Attack cancelled: target or weapon is no longer available.");
-            return;
+            return null;
         }
         if (spyMission) {
-            resolveSpyAttack(attacker, defender, weapon, turnOrders);
+            String spyResult = resolveSpyAttack(attacker, defender, weapon, turnOrders);
             weapon.inStock--;
             messages.add("Spy operation completed against nation " + defender.id + ".");
-            return;
+            return spyResult;
         }
         if (defender.hasCeasefireWith(attacker.id)) {
             messages.add("Attack cancelled: a ceasefire is active with nation "
                     + defender.id + ".");
-            return;
+            return null;
         }
         int casualties = 0;
         if ("soldier".equals(weapon.definition.type)) {
@@ -2612,6 +2620,7 @@ public final class GameState {
         weapon.inStock--;
         messages.add(casualties + " citizens lost in nation " + defender.id
                 + " city " + (city.index + 1) + ".");
+        return null;
     }
 
     /**
@@ -2987,8 +2996,8 @@ public final class GameState {
         }
     }
 
-    private void resolveSpyAttack(PlayerState attacker, PlayerState defender,
-                                  WeaponState spy, List<ActionOrder> turnOrders) {
+    private String resolveSpyAttack(PlayerState attacker, PlayerState defender,
+                                    WeaponState spy, List<ActionOrder> turnOrders) {
         int level = spy.definition.level;
         int[] statistics = SPY_STATISTICS[level - 1];
         int weaponCount = 1 + random.nextInt(statistics[0]);
@@ -3029,6 +3038,8 @@ public final class GameState {
         int stolenMoney = (int) Math.min(defender.moneyMillions, moneyAmount);
         defender.moneyMillions -= stolenMoney;
         attacker.moneyMillions += stolenMoney;
+        List<String> attackerDetails = new ArrayList<>(weaponCount);
+        List<String> defenderDetails = new ArrayList<>();
         if (stolenMoney > 0) {
             messages.add("Spy stole " + stolenMoney + "M from nation " + defender.id + ".");
         }
@@ -3037,12 +3048,15 @@ public final class GameState {
             WeaponState targetWeapon = availableTargets.remove(
                     random.nextInt(availableTargets.size()));
             WeaponState matchingWeapon = attacker.weapons.get(targetWeapon.definition.name);
+            String prettyName = getTechnologyLabel(targetWeapon.definition.technology);
             if (matchingWeapon.active) {
                 matchingWeapon.inStock++;
                 if (targetWeapon.inStock > 0) {
                     targetWeapon.inStock--;
                 }
                 messages.add("Spy stole " + targetWeapon.definition.name + " stock.");
+                attackerDetails.add("WEAPON: " + prettyName);
+                defenderDetails.add("STOLEN: " + prettyName);
             } else {
                 matchingWeapon.active = true;
                 attacker.inventedTechnologies.add(targetWeapon.definition.technology);
@@ -3050,10 +3064,45 @@ public final class GameState {
                     invalidateResearchChoices();
                 }
                 messages.add("Spy uncovered " + targetWeapon.definition.technology + " technology.");
+                attackerDetails.add("TECHNOLOGY: " + prettyName);
             }
             addToHighscore(attacker, 2, 1);
         }
         attacker.spyReadiness = 0;
+        return formatSpyMissionResult(attacker.human, defender.human, stolenMoney,
+                attackerDetails, defenderDetails);
+    }
+
+    static String formatSpyMissionResult(boolean attackerIsHuman, boolean defenderIsHuman,
+                                         int stolenMoneyMillions,
+                                         List<String> attackerDetails,
+                                         List<String> defenderDetails) {
+        if (attackerIsHuman) {
+            if (stolenMoneyMillions > 0) {
+                return appendSpyDetails("YOUR SPY STOLE $" + stolenMoneyMillions
+                        + ".000.000", attackerDetails, ", ");
+            }
+            if (!attackerDetails.isEmpty()) {
+                return "YOUR SPY STOLE " + String.join(", ", attackerDetails);
+            }
+            return "YOUR SPY DID NOT STEAL ANYTHING";
+        }
+        if (defenderIsHuman) {
+            if (stolenMoneyMillions > 0) {
+                return appendSpyDetails("AN ENEMY SPY STOLE $" + stolenMoneyMillions
+                        + ".000.000", defenderDetails, "; ");
+            }
+            if (!attackerDetails.isEmpty()) {
+                return appendSpyDetails("A ENEMY SPY STOLE", defenderDetails, "; ");
+            }
+            return "AN ENEMY SPY WAS STOPPED";
+        }
+        return null;
+    }
+
+    private static String appendSpyDetails(String message, List<String> details,
+                                           String separator) {
+        return details.isEmpty() ? message : message + separator + String.join(", ", details);
     }
 
     private static String spyActionCategory(Action action) {

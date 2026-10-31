@@ -1819,7 +1819,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         drawStatistics();
         font.setColor(GREEN);
         font.draw(batch, latestMessage(), messagePanel.x + 10f,
-                messagePanel.y + messagePanel.height - 15f);
+                messagePanel.y + messagePanel.height - 15f,
+                messagePanel.width - 20f, Align.left, true);
         font.setColor(TITLE_TEXT);
         drawCentered(Long.toString(game.getHuman().score),
                 scorePanel.x + scorePanel.width / 2f, scorePanel.y + scorePanel.height / 2f + 2f, 13f);
