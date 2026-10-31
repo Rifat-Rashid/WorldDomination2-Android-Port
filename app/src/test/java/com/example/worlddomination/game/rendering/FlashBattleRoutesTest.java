@@ -34,6 +34,10 @@ public final class FlashBattleRoutesTest {
     private static final float[][] SHIP_PLANE_OFFSETS = {
             {28f, -26f}, {-9f, -3f}, {-38f, 11f}
     };
+    private static final float[] SATELLITE_HEIGHTS = {158f, 18f, 18f, 269f, 169f};
+    private static final float[][] SATELLITE_ORBITS = {
+            {368f, 75f}, {268f, 104f}, {466f, 111f}, {121f, 321f}, {667f, 291f}
+    };
 
     @Test
     public void createsThreeSourceCarrierPlaneRoutesForEveryPlayerAndCity() throws Exception {
@@ -88,6 +92,46 @@ public final class FlashBattleRoutesTest {
                 () -> FlashBattleRoutes.createCarrierPlaneStrike(0, 1, 5, 0, false));
         assertThrows(IllegalArgumentException.class,
                 () -> FlashBattleRoutes.createCarrierPlaneStrike(0, 1, 0, 3, false));
+    }
+
+    @Test
+    public void satelliteRouteUsesSourceLaunchAndOrbitDataForEveryIslandAndCity() {
+        String[] religions = {"mus", "jew", "com", "chr", "bhu"};
+        for (int attacker = 0; attacker < BattlefieldCityLayout.PLAYER_COUNT; attacker++) {
+            int target = (attacker + 1) % BattlefieldCityLayout.PLAYER_COUNT;
+            for (int city = 0; city < BattlefieldCityLayout.CITIES_PER_PLAYER; city++) {
+                FlashBattleRoutes.SatelliteStrike route = FlashBattleRoutes
+                        .createSatelliteStrike(attacker, target, city, attacker + 1,
+                                religions[attacker]);
+                assertEquals(attacker, route.attackerPlayerId);
+                assertEquals(target, route.targetPlayerId);
+                assertEquals(city, route.targetCityIndex);
+                assertEquals(attacker + 1, route.attackerColor);
+                assertEquals(religions[attacker], route.religionCode);
+                assertEquals(-120f, route.launch.x, 0f);
+                assertEquals(SATELLITE_HEIGHTS[attacker], route.launch.y, 0f);
+                assertEquals(SATELLITE_ORBITS[attacker][0], route.orbit.x, 0f);
+                assertEquals(SATELLITE_ORBITS[attacker][1], route.orbit.y, 0f);
+                assertEquals(BattlefieldCityLayout.sourceCityX(target, city),
+                        route.targetCity.x, 0f);
+                assertEquals(BattlefieldCityLayout.sourceCityY(target, city),
+                        route.targetCity.y, 0f);
+            }
+        }
+    }
+
+    @Test
+    public void satelliteRouteRejectsUnknownReligionAndInvalidBattlefieldAddresses() {
+        assertThrows(IllegalArgumentException.class,
+                () -> FlashBattleRoutes.createSatelliteStrike(-1, 1, 0, 1, "chr"));
+        assertThrows(IllegalArgumentException.class,
+                () -> FlashBattleRoutes.createSatelliteStrike(0, 5, 0, 1, "chr"));
+        assertThrows(IllegalArgumentException.class,
+                () -> FlashBattleRoutes.createSatelliteStrike(0, 1, 5, 1, "chr"));
+        assertThrows(IllegalArgumentException.class,
+                () -> FlashBattleRoutes.createSatelliteStrike(0, 1, 0, 6, "chr"));
+        assertThrows(IllegalArgumentException.class,
+                () -> FlashBattleRoutes.createSatelliteStrike(0, 1, 0, 1, "unknown"));
     }
 
     @Test

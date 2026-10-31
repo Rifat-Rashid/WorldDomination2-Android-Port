@@ -216,6 +216,72 @@ public final class FlashAnimationTimelineTest {
     }
 
     @Test
+    public void satelliteFlashLabelsSelectTheFiveOriginalReligionFrames() throws IOException {
+        JsonValue scene = loadSourceScene();
+        FlashAnimationTimeline satellite = FlashAnimationTimeline.fromSymbol(
+                findSymbol(scene, "satellite"), scene.getFloat("fps"));
+
+        assertEquals(25, satellite.getFrameCount());
+        assertEquals(1, satellite.getFrameNumberForLabel("mus"));
+        assertEquals(5, satellite.getFrameNumberForLabel("jew"));
+        assertEquals(10, satellite.getFrameNumberForLabel("com"));
+        assertEquals(15, satellite.getFrameNumberForLabel("chr"));
+        assertEquals(20, satellite.getFrameNumberForLabel("bhu"));
+        assertNull(satellite.getFrameByLabel("unknown"));
+        for (String religion : new String[]{"mus", "jew", "com", "chr", "bhu"}) {
+            assertNotNull("Missing source satellite frame for " + religion,
+                    satellite.getFrameByLabel(religion));
+        }
+        assertTrue("Satellite body is original source artwork",
+                Files.isRegularFile(shapeAsset(2430)));
+    }
+
+    @Test
+    public void satelliteReligionClipsLoadTheirAnimatedBodyAndLaserAnchorFrames()
+            throws IOException {
+        JsonValue scene = loadSourceScene();
+        FlashAnimationTimeline satellite = FlashAnimationTimeline.fromSymbol(
+                findSymbol(scene, "satellite"), scene.getFloat("fps"));
+        int[] nestedSymbolIds = {2494, 2557, 2620, 2683, 2746};
+        int[] expectedFrameCounts = {32, 32, 33, 32, 33};
+        String[] religions = {"mus", "jew", "com", "chr", "bhu"};
+
+        for (int index = 0; index < religions.length; index++) {
+            FlashAnimationTimeline.Frame religionFrame =
+                    satellite.getFrameByLabel(religions[index]);
+            assertNotNull(religionFrame);
+            assertEquals(2430, religionFrame.layers[0].shapeId);
+            assertEquals(nestedSymbolIds[index], religionFrame.layers[1].shapeId);
+
+            FlashAnimationTimeline nested = FlashAnimationTimeline.fromSymbol(
+                    findSymbolById(scene, nestedSymbolIds[index]), scene.getFloat("fps"));
+            assertEquals(expectedFrameCounts[index], nested.getFrameCount());
+            FlashAnimationTimeline.Layer firstMarker = null;
+            FlashAnimationTimeline.Layer lastMarker = null;
+            for (int frameIndex = 0; frameIndex < nested.getFrameCount(); frameIndex++) {
+                FlashAnimationTimeline.Frame frame = nested.getFrame(frameIndex);
+                assertNotNull("Missing nested satellite frame " + frameIndex, frame);
+                assertTrue("Missing original satellite body frame " + frame.layers[0].shapeId,
+                        Files.isRegularFile(shapeAsset(frame.layers[0].shapeId)));
+                FlashAnimationTimeline.Layer marker = findLayer(frame, "laserStartMC");
+                assertNotNull("Missing animated laser anchor in frame " + frameIndex, marker);
+                assertEquals("The source laser marker is invisible art", 0f,
+                        marker.alpha, 0f);
+                if (frameIndex == 0) {
+                    firstMarker = marker;
+                }
+                if (frameIndex == nested.getFrameCount() - 1) {
+                    lastMarker = marker;
+                }
+            }
+            assertNotNull(firstMarker);
+            assertNotNull(lastMarker);
+            assertTrue("Laser anchor follows the satellite animation",
+                    firstMarker.tx != lastMarker.tx || firstMarker.ty != lastMarker.ty);
+        }
+    }
+
+    @Test
     public void setupPortraitTimelineContainsEverySelectableOriginalLeaderPortrait()
             throws IOException {
         JsonValue scene = loadSourceScene();
@@ -311,6 +377,16 @@ public final class FlashAnimationTimelineTest {
             }
         }
         return false;
+    }
+
+    private static FlashAnimationTimeline.Layer findLayer(
+            FlashAnimationTimeline.Frame frame, String name) {
+        for (FlashAnimationTimeline.Layer layer : frame.layers) {
+            if (name.equals(layer.name)) {
+                return layer;
+            }
+        }
+        return null;
     }
 
     private static Path shapeAsset(int shapeId) {

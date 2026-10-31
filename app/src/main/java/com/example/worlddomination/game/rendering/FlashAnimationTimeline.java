@@ -2,12 +2,14 @@ package com.example.worlddomination.game.rendering;
 
 import com.badlogic.gdx.utils.JsonValue;
 
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
 /** Reconstructed Flash symbol display-list timeline in source stage coordinates. */
 public final class FlashAnimationTimeline {
-    /** One drawable Flash display-list entry at a particular depth. */
+    /** One Flash display-list entry, including its shape or nested symbol ID. */
     public static final class Layer {
         public final int shapeId;
         public final float a;
@@ -16,6 +18,8 @@ public final class FlashAnimationTimeline {
         public final float d;
         public final float tx;
         public final float ty;
+        public final String name;
+        public final float alpha;
 
         private Layer(DisplayObject object) {
             shapeId = object.shapeId;
@@ -25,6 +29,8 @@ public final class FlashAnimationTimeline {
             d = object.d;
             tx = object.tx;
             ty = object.ty;
+            name = object.name;
+            alpha = object.alpha;
         }
     }
 
@@ -60,22 +66,26 @@ public final class FlashAnimationTimeline {
         float d = 1f;
         float tx;
         float ty;
+        String name = "";
+        float alpha = 1f;
     }
 
     public final int symbolId;
     public final String linkage;
     public final float frameRate;
     private final Frame[] frames;
+    private final Map<String, Integer> labels;
 
     private FlashAnimationTimeline(int symbolId, String linkage, float frameRate,
-                                   Frame[] frames) {
+                                   Frame[] frames, Map<String, Integer> labels) {
         this.symbolId = symbolId;
         this.linkage = linkage;
         this.frameRate = frameRate;
         this.frames = frames;
+        this.labels = Collections.unmodifiableMap(labels);
     }
 
-    /** Applies Flash's display-list deltas and captures one renderable shape per frame. */
+    /** Applies Flash display-list deltas and captures ordered shape/symbol entries. */
     public static FlashAnimationTimeline fromSymbol(JsonValue symbol, float frameRate) {
         if (symbol == null || frameRate <= 0f) {
             throw new IllegalArgumentException("A symbol and positive frame rate are required");
@@ -121,6 +131,16 @@ public final class FlashAnimationTimeline {
                     object.tx = getFloat(matrix, "tx", object.tx);
                     object.ty = getFloat(matrix, "ty", object.ty);
                 }
+                object.name = values.getString("name", object.name);
+                JsonValue color = values.get("color");
+                if (color != null) {
+                    JsonValue multipliers = color.get("mult");
+                    JsonValue additions = color.get("add");
+                    float alphaMultiplier = getArrayFloat(multipliers, 3, 1f);
+                    float alphaAddition = getArrayFloat(additions, 3, 0f);
+                    object.alpha = Math.max(0f, Math.min(1f,
+                            alphaMultiplier + alphaAddition));
+                }
             }
 
             Layer[] layers = new Layer[displayList.size()];
@@ -140,8 +160,15 @@ public final class FlashAnimationTimeline {
             }
         }
 
+        Map<String, Integer> labels = new LinkedHashMap<>();
+        JsonValue sourceLabels = timeline.get("labels");
+        if (sourceLabels != null && sourceLabels.isObject()) {
+            for (JsonValue label = sourceLabels.child; label != null; label = label.next) {
+                labels.put(label.name, label.asInt());
+            }
+        }
         return new FlashAnimationTimeline(symbol.getInt("id"),
-                symbol.getString("linkage"), frameRate, frames);
+                symbol.getString("linkage"), frameRate, frames, labels);
     }
 
     public int getFrameCount() {
@@ -155,6 +182,18 @@ public final class FlashAnimationTimeline {
         return frames[frameIndex];
     }
 
+    /** Returns the source frame named by a Flash frame label, or null when absent. */
+    public Frame getFrameByLabel(String label) {
+        Integer oneBasedFrame = labels.get(label);
+        return oneBasedFrame == null ? null : getFrame(oneBasedFrame - 1);
+    }
+
+    /** Returns a one-based Flash frame number, or -1 when the label is not present. */
+    public int getFrameNumberForLabel(String label) {
+        Integer oneBasedFrame = labels.get(label);
+        return oneBasedFrame == null ? -1 : oneBasedFrame;
+    }
+
     public float getDurationSeconds() {
         return frames.length / frameRate;
     }
@@ -162,5 +201,10 @@ public final class FlashAnimationTimeline {
     private static float getFloat(JsonValue value, String name, float fallback) {
         JsonValue field = value.get(name);
         return field == null ? fallback : field.asFloat();
+    }
+
+    private static float getArrayFloat(JsonValue values, int index, float fallback) {
+        return values != null && values.isArray() && values.size > index
+                ? values.get(index).asFloat() : fallback;
     }
 }

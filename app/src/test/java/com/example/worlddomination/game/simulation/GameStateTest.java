@@ -1,5 +1,8 @@
 package com.example.worlddomination.game.simulation;
 
+import com.example.worlddomination.game.rendering.FlashBattleRoutes;
+import com.example.worlddomination.game.rendering.SourceCombatAnimationMapping;
+
 import org.junit.Test;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -1100,6 +1103,11 @@ public final class GameStateTest {
         assertTrue(state.acceptSelectedAction());
         state.confirmTurn();
         assertEquals(1, human.getSatellitesUsed());
+        assertEquals(1, state.getLastTurnCombatEvents().size());
+        GameState.CombatEvent satelliteEvent = state.getLastTurnCombatEvents().get(0);
+        assertTrue(FlashBattleRoutes.supportsSatelliteStrike(satelliteEvent));
+        assertEquals("explosion_warhead_4",
+                SourceCombatAnimationMapping.linkageFor(satelliteEvent));
 
         human.score = 125;
         state.getPlayerState(1).lastAttackedByPlayerId = 2;
