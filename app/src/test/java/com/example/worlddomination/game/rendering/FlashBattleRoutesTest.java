@@ -390,6 +390,22 @@ public final class FlashBattleRoutesTest {
     }
 
     @Test
+    public void recognizesSubmarineImpactAndInterceptionEventsOnly() {
+        assertTrue(FlashBattleRoutes.supportsSubmarineRocketStrike(
+                com.example.worlddomination.game.simulation.GameState.CombatEventType.STRIKE_IMPACT,
+                "sub"));
+        assertTrue(FlashBattleRoutes.supportsSubmarineRocketStrike(
+                com.example.worlddomination.game.simulation.GameState.CombatEventType.STRIKE_INTERCEPTED,
+                "sub"));
+        assertFalse(FlashBattleRoutes.supportsSubmarineRocketStrike(
+                com.example.worlddomination.game.simulation.GameState.CombatEventType.DIRECT_ATTACK,
+                "sub"));
+        assertFalse(FlashBattleRoutes.supportsSubmarineRocketStrike(
+                com.example.worlddomination.game.simulation.GameState.CombatEventType.STRIKE_IMPACT,
+                "rocket1"));
+    }
+
+    @Test
     public void rejectsInvalidSubmarineRocketRoutePlayerAndCity() {
         assertThrows(IllegalArgumentException.class,
                 () -> FlashBattleRoutes.createSubmarineRocketStrike(-1, 1, 0));
@@ -397,6 +413,16 @@ public final class FlashBattleRoutesTest {
                 () -> FlashBattleRoutes.createSubmarineRocketStrike(0, 5, 0));
         assertThrows(IllegalArgumentException.class,
                 () -> FlashBattleRoutes.createSubmarineRocketStrike(0, 1, 5));
+    }
+
+    @Test
+    public void marksInterceptedSubmarineRocketAndUsesTheOriginalHighExplosionPoint() {
+        FlashBattleRoutes.RocketStrike route =
+                FlashBattleRoutes.createSubmarineRocketStrike(0, 1, 2, true);
+        assertTrue(route.submarineLaunch);
+        assertTrue(route.intercepted);
+        assertEquals(route.target.x, route.explosion.x, 0f);
+        assertEquals(route.target.y - 100f, route.explosion.y, 0f);
     }
 
     @Test

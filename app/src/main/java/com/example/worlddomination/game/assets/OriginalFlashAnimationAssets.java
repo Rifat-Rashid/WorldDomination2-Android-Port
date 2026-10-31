@@ -53,6 +53,7 @@ public final class OriginalFlashAnimationAssets implements Disposable {
             "explosion_bioload_3", "explosion_bioload_4", "explosion001", "explosion002",
             "explosion003", "satellite",
             "rocket", "trail",
+            "submarine",
             "ship_plane",
             "boat001", "soldier", "soldier001_shoot", "chinook", "chinook_shadow", "apache",
             "apache_shadow", "apache_tint", "marine", "soldier001_tint",
@@ -175,8 +176,11 @@ public final class OriginalFlashAnimationAssets implements Disposable {
         try {
             JsonValue scene = new JsonReader().parse(readCompressedUtf8(SCENE_PATH));
             Map<String, FlashAnimationTimeline> loadedTimelines = loadTimelines(scene);
-            Map<Integer, FlashAnimationTimeline> loadedNestedTimelines =
-                    loadNestedTimelines(scene, loadedTimelines.get("satellite"));
+            Map<Integer, FlashAnimationTimeline> loadedNestedTimelines = new LinkedHashMap<>();
+            loadedNestedTimelines.putAll(loadNestedTimelines(scene,
+                    loadedTimelines.get("satellite")));
+            loadedNestedTimelines.putAll(loadNestedTimelines(scene,
+                    loadedTimelines.get("submarine")));
             synchronized (loadLock) {
                 if (disposed) {
                     return;
@@ -385,7 +389,7 @@ public final class OriginalFlashAnimationAssets implements Disposable {
     static Map<Integer, FlashAnimationTimeline> loadNestedTimelines(
             JsonValue scene, FlashAnimationTimeline rootTimeline) {
         if (rootTimeline == null) {
-            throw new IllegalStateException("Original satellite timeline is missing");
+            throw new IllegalStateException("Original Flash root timeline is missing");
         }
         JsonValue symbols = scene.get("symbols");
         Map<Integer, JsonValue> symbolDefinitions = new LinkedHashMap<>();

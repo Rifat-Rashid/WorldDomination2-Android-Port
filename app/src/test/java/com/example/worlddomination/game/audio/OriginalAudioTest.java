@@ -58,6 +58,12 @@ public final class OriginalAudioTest {
     }
 
     @Test
+    public void submarineSurfacingUsesTheOriginalWaterSplashCue() {
+        assertEquals("original/runtime/audio/10_unit_Submarine water splash.wav.mp3",
+                OriginalAudio.internalPath(OriginalAudio.Cue.SUBMARINE_SURFACE));
+    }
+
+    @Test
     public void resolvedCombatEventsUseTheFlashUnitAndExplosionSoundMap() {
         assertEquals(OriginalAudio.Cue.SOLDIER_GUN,
                 OriginalAudio.cueForCombatEvent(

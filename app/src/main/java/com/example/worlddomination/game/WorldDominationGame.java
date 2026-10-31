@@ -32,6 +32,7 @@ import com.example.worlddomination.game.rendering.FlashSuicideBomberAnimation;
 import com.example.worlddomination.game.rendering.FlashRocketAnimation;
 import com.example.worlddomination.game.rendering.FlashSatelliteAnimation;
 import com.example.worlddomination.game.rendering.FlashSoldierOneAnimation;
+import com.example.worlddomination.game.rendering.FlashSubmarineAnimation;
 import com.example.worlddomination.game.rendering.FlashAnimationTimeline;
 import com.example.worlddomination.game.rendering.RenderLoopPolicy;
 import com.example.worlddomination.game.rendering.SourceCombatAnimationMapping;
@@ -138,6 +139,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private final List<FlashChinookTankAnimation> chinookTankAnimations = new ArrayList<>();
     private final List<FlashSuicideBomberAnimation> suicideBomberAnimations = new ArrayList<>();
     private final List<FlashRocketAnimation> rocketBattleAnimations = new ArrayList<>();
+    private final List<FlashSubmarineAnimation> submarineBattleAnimations = new ArrayList<>();
     private final List<FlashCarrierPlaneAnimation> carrierPlaneAnimations = new ArrayList<>();
     private final List<FlashSatelliteAnimation> satelliteBattleAnimations = new ArrayList<>();
     private final List<PendingBattleAnimation> pendingBattleAnimations = new ArrayList<>();
@@ -523,6 +525,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 || !chinookTankAnimations.isEmpty()
                 || !suicideBomberAnimations.isEmpty()
                 || !rocketBattleAnimations.isEmpty()
+                || !submarineBattleAnimations.isEmpty()
                 || !carrierPlaneAnimations.isEmpty()
                 || !satelliteBattleAnimations.isEmpty()
                 || !pendingBattleAnimations.isEmpty()
@@ -552,6 +555,17 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             }
             if (animation.isFinished()) {
                 battleAnimations.remove(i);
+            }
+        }
+        for (int i = submarineBattleAnimations.size() - 1; i >= 0; i--) {
+            FlashSubmarineAnimation animation = submarineBattleAnimations.get(i);
+            animation.tick();
+            if (animation.takeSurfaceCue()) {
+                audio.play(OriginalAudio.Cue.SUBMARINE_SURFACE,
+                        animation.getSurfaceSoundPan());
+            }
+            if (animation.isFinished()) {
+                submarineBattleAnimations.remove(i);
             }
         }
         for (int i = rocketBattleAnimations.size() - 1; i >= 0; i--) {
@@ -1096,6 +1110,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         batch.draw(uiAssets.battleMap, mapBounds.x, mapBounds.y,
                 mapBounds.width, mapBounds.height);
         cityRenderer.draw(batch, mapBounds, game);
+        battleUnitRenderer.drawSubmarines(batch, mapBounds, submarineBattleAnimations);
         battleUnitRenderer.draw(batch, mapBounds, soldierBattleAnimations);
         battleUnitRenderer.drawApacheMarine(batch, mapBounds, apacheMarineAnimations);
         battleUnitRenderer.drawChinookTank(batch, mapBounds, chinookTankAnimations);
@@ -2274,6 +2289,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         chinookTankAnimations.clear();
         suicideBomberAnimations.clear();
         rocketBattleAnimations.clear();
+        submarineBattleAnimations.clear();
         clearCarrierPlaneAnimations();
         satelliteBattleAnimations.clear();
         satelliteFlightCuePlayed = false;
@@ -2559,6 +2575,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 chinookTankAnimations.clear();
                 suicideBomberAnimations.clear();
                 rocketBattleAnimations.clear();
+                submarineBattleAnimations.clear();
                 clearCarrierPlaneAnimations();
                 satelliteBattleAnimations.clear();
                 satelliteFlightCuePlayed = false;
@@ -3003,6 +3020,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             game.confirmTurn();
             audio.play(OriginalAudio.Cue.ACTION_ACCEPT);
             int animationIndex = 0;
+            int submarineSequenceIndex = 0;
             int carrierPlaneIndex = 0;
             ReferenceRandom presentationRandom = game.createPresentationRandomCopy();
             for (GameState.CombatEvent event : game.getLastTurnCombatEvents()) {
@@ -3047,9 +3065,15 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                     FlashBattleRoutes.RocketStrike route =
                             FlashBattleRoutes.createSubmarineRocketStrike(
                                     event.attackerPlayerId, event.defenderPlayerId,
-                                    event.cityIndex);
+                                    event.cityIndex,
+                                    event.type == GameState.CombatEventType.STRIKE_INTERCEPTED);
+                    int submarineDelay = FlashSubmarineAnimation.delayForSequenceIndex(
+                            ++submarineSequenceIndex);
+                    submarineBattleAnimations.add(new FlashSubmarineAnimation(route,
+                            game.getPlayerState(event.attackerPlayerId).getPlayerColor(),
+                            submarineDelay));
                     rocketBattleAnimations.add(new FlashRocketAnimation(route,
-                            animationIndex * 36
+                            submarineDelay
                                     + FlashRocketAnimation.SUBMARINE_LAUNCH_DELAY_TICKS,
                             SourceCombatAnimationMapping.linkageFor(event), cue));
                     animationIndex++;
@@ -3331,7 +3355,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         chinookTankAnimations.clear();
         suicideBomberAnimations.clear();
         rocketBattleAnimations.clear();
+        submarineBattleAnimations.clear();
         clearCarrierPlaneAnimations();
+        satelliteBattleAnimations.clear();
         pendingBattleAnimations.clear();
         if (uiAssets != null) {
             uiAssets.dispose();
@@ -3341,6 +3367,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         if (flashAnimationAssets != null) {
             flashAnimationAssets.dispose();
+        }
+        if (battleUnitRenderer != null) {
+            battleUnitRenderer.dispose();
         }
         if (font != null) {
             font.dispose();

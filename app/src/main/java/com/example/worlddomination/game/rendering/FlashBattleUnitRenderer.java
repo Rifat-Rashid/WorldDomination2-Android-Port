@@ -1,7 +1,9 @@
 package com.example.worlddomination.game.rendering;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Rectangle;
 import com.example.worlddomination.game.assets.OriginalFlashAnimationAssets;
@@ -16,8 +18,37 @@ public final class FlashBattleUnitRenderer {
     };
     private static final int[][] SATELLITE_LASER_COLORS = buildSatelliteLaserColors();
     private static final int MAX_SATELLITE_CLIP_DEPTH = 8;
+    private static final String SUBMARINE_TINT_VERTEX_SHADER =
+            "attribute vec4 a_position;\n"
+                    + "attribute vec4 a_color;\n"
+                    + "attribute vec2 a_texCoord0;\n"
+                    + "uniform mat4 u_projTrans;\n"
+                    + "varying vec4 v_color;\n"
+                    + "varying vec2 v_texCoords;\n"
+                    + "void main() {\n"
+                    + "  v_color = a_color;\n"
+                    + "  v_texCoords = a_texCoord0;\n"
+                    + "  gl_Position = u_projTrans * a_position;\n"
+                    + "}\n";
+    private static final String SUBMARINE_TINT_FRAGMENT_SHADER =
+            "#ifdef GL_ES\n"
+                    + "precision mediump float;\n"
+                    + "#endif\n"
+                    + "varying vec4 v_color;\n"
+                    + "varying vec2 v_texCoords;\n"
+                    + "uniform sampler2D u_texture;\n"
+                    + "uniform vec4 u_flashMultipliers;\n"
+                    + "uniform vec4 u_flashAdditions;\n"
+                    + "void main() {\n"
+                    + "  vec4 source = texture2D(u_texture, v_texCoords);\n"
+                    + "  vec4 transformed = clamp(source * u_flashMultipliers"
+                    + " + u_flashAdditions, 0.0, 1.0);\n"
+                    + "  gl_FragColor = transformed * v_color;\n"
+                    + "}\n";
     private final OriginalFlashAnimationAssets assets;
     private final float[] satelliteLaserOriginScratch = new float[4];
+    private ShaderProgram submarineTintShader;
+    private boolean submarineTintShaderChecked;
 
     public FlashBattleUnitRenderer(OriginalFlashAnimationAssets assets) {
         this.assets = assets;
@@ -115,6 +146,41 @@ public final class FlashBattleUnitRenderer {
             }
         }
         batch.setColor(com.badlogic.gdx.graphics.Color.WHITE);
+    }
+
+    /** Draws the original hull and source-colored tint clips during submarine launches. */
+    public void drawSubmarines(SpriteBatch batch, Rectangle mapBounds,
+                               List<FlashSubmarineAnimation> animations) {
+        if (!assets.isLoaded()) {
+            return;
+        }
+        FlashAnimationTimeline timeline = assets.getTimeline("submarine");
+        FlashAnimationTimeline.Frame rootFrame = timeline == null
+                ? null : timeline.getFrame(0);
+        if (rootFrame == null) {
+            return;
+        }
+        for (FlashSubmarineAnimation animation : animations) {
+            if (!animation.isStarted() || animation.isFinished()) {
+                continue;
+            }
+            FlashBattleRoutes.RocketStrike route = animation.getRoute();
+            drawSubmarineTimelineFrame(batch, mapBounds, rootFrame,
+                    route.silo.x, route.silo.y, route.targetPlayerId,
+                    animation.getSourceFrameIndex(), animation.getTint(), false, 1f, 0);
+        }
+        batch.setColor(com.badlogic.gdx.graphics.Color.WHITE);
+        if (batch.getShader() == submarineTintShader && submarineTintShader != null) {
+            batch.setShader(null);
+        }
+    }
+
+    /** Releases the cached player-tint shader with the other renderer-owned resources. */
+    public void dispose() {
+        if (submarineTintShader != null) {
+            submarineTintShader.dispose();
+            submarineTintShader = null;
+        }
     }
 
     /** Draws ship-launched aircraft from the original 24-frame Flash linkage. */
@@ -269,6 +335,105 @@ public final class FlashBattleUnitRenderer {
                     clipFrameIndex, layerAlpha, depth + 1);
         }
         batch.setColor(com.badlogic.gdx.graphics.Color.WHITE);
+    }
+
+    private void drawSubmarineTimelineFrame(SpriteBatch batch, Rectangle mapBounds,
+                                            FlashAnimationTimeline.Frame frame,
+                                            float sourceX, float sourceY,
+                                            int islandPlayerId, int clipFrameIndex,
+                                            FlashColorTransform tint, boolean tinted,
+                                            float parentAlpha, int depth) {
+        if (frame == null || parentAlpha <= 0f || depth > MAX_SATELLITE_CLIP_DEPTH) {
+            return;
+        }
+        float mapScale = BattlefieldCityLayout.sourceScale(mapBounds);
+        for (FlashAnimationTimeline.Layer layer : frame.layers) {
+            float layerAlpha = parentAlpha * layer.alpha;
+            if (layerAlpha <= 0f) {
+                continue;
+            }
+            TextureRegion region = assets.getShape(layer.shapeId);
+            if (region != null) {
+                float width = region.getRegionWidth() * mapScale;
+                float height = region.getRegionHeight() * mapScale;
+                float x = BattlefieldCityLayout.sourceX(mapBounds,
+                        sourceX + layer.tx, islandPlayerId);
+                float top = BattlefieldCityLayout.sourceY(mapBounds, sourceY + layer.ty);
+                FlashSpriteTransform transform = FlashSpriteTransform.fromMatrix(
+                        layer.a, layer.b, layer.c, layer.d);
+                setSubmarineLayerColor(batch, tint, tinted, layerAlpha);
+                batch.draw(region, x, top - height, 0f, height, width, height,
+                        transform.scaleX, transform.scaleY, transform.rotationDegrees);
+                continue;
+            }
+
+            FlashAnimationTimeline nested = assets.getTimelineBySymbolId(layer.shapeId);
+            if (nested == null || nested.getFrameCount() == 0) {
+                continue;
+            }
+            boolean tintChild = tinted || "tintMC".equals(layer.name);
+            if (tintChild && !tinted) {
+                beginSubmarineTint(batch, tint);
+            }
+            int nestedFrameIndex = Math.min(clipFrameIndex, nested.getFrameCount() - 1);
+            drawSubmarineTimelineFrame(batch, mapBounds, nested.getFrame(nestedFrameIndex),
+                    sourceX + layer.tx, sourceY + layer.ty, islandPlayerId,
+                    clipFrameIndex, tint, tintChild, layerAlpha, depth + 1);
+            if (tintChild && !tinted) {
+                batch.setColor(com.badlogic.gdx.graphics.Color.WHITE);
+                batch.setShader(null);
+            }
+        }
+        batch.setColor(com.badlogic.gdx.graphics.Color.WHITE);
+    }
+
+    private void beginSubmarineTint(SpriteBatch batch, FlashColorTransform tint) {
+        ensureSubmarineTintShader();
+        if (submarineTintShader == null) {
+            return;
+        }
+        batch.setShader(submarineTintShader);
+        submarineTintShader.setUniformf("u_flashMultipliers", tint.redMultiplier,
+                tint.greenMultiplier, tint.blueMultiplier, tint.alphaMultiplier);
+        submarineTintShader.setUniformf("u_flashAdditions", tint.redAdd,
+                tint.greenAdd, tint.blueAdd, tint.alphaAdd);
+    }
+
+    private void setSubmarineLayerColor(SpriteBatch batch, FlashColorTransform tint,
+                                        boolean tinted, float alpha) {
+        if (!tinted) {
+            batch.setColor(1f, 1f, 1f, alpha);
+            return;
+        }
+        if (submarineTintShader != null) {
+            batch.setColor(1f, 1f, 1f, alpha);
+            return;
+        }
+        batch.setColor(approximateTint(tint.redMultiplier, tint.redAdd),
+                approximateTint(tint.greenMultiplier, tint.greenAdd),
+                approximateTint(tint.blueMultiplier, tint.blueAdd), alpha);
+    }
+
+    private void ensureSubmarineTintShader() {
+        if (submarineTintShaderChecked) {
+            return;
+        }
+        submarineTintShaderChecked = true;
+        ShaderProgram candidate = new ShaderProgram(SUBMARINE_TINT_VERTEX_SHADER,
+                SUBMARINE_TINT_FRAGMENT_SHADER);
+        if (candidate.isCompiled()) {
+            submarineTintShader = candidate;
+        } else {
+            if (Gdx.app != null) {
+                Gdx.app.error("FlashBattleUnitRenderer",
+                        "Submarine tint shader failed to compile: " + candidate.getLog());
+            }
+            candidate.dispose();
+        }
+    }
+
+    private static float approximateTint(float multiplier, float addition) {
+        return Math.max(0f, Math.min(1f, multiplier * 0.5f + addition));
     }
 
     private boolean findSatelliteLaserOrigin(FlashSatelliteAnimation animation,
