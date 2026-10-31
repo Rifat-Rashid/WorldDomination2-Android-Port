@@ -2019,6 +2019,9 @@ public final class GameStateTest {
     public void rejectedDiplomacyOfferRefundsItsFullCost() {
         GameState state = new GameState(1, 13L);
         GameState.PlayerState opponent = state.getPlayerState(1);
+        for (int playerId = 2; playerId < state.getPlayers().length; playerId++) {
+            state.getPlayerState(playerId).alive = false;
+        }
         opponent.moneyMillions = 200;
         opponent.turnMoneyMillions = 200;
         setRegard(opponent, 0, 0);
