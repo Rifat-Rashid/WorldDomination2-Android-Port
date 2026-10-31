@@ -78,6 +78,9 @@ jobs:
           - id: production-budget-tests
             check: Production budget and stock tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.productionReservesBudgetAndTurnsItIntoWeaponStock" --tests "com.example.worlddomination.game.simulation.GameStateTest.productionRejectsLockedTechnologyGroupAndKeepsExistingSelection" --tests "com.example.worlddomination.game.simulation.GameStateTest.productionCanSplitOneHundredPercentAcrossMultipleCategories" --tests "com.example.worlddomination.game.simulation.GameStateTest.productionAllocationCannotExceedSharedHundredPercentLimit" --tests "com.example.worlddomination.game.simulation.GameStateTest.productionReservationRoundsCombinedShareAndRefundsOnRemoval" --tests "com.example.worlddomination.game.simulation.GameStateTest.productionActionReservesAndResolvesEveryAllocatedCategory" --tests "com.example.worlddomination.game.simulation.GameStateTest.researchThenProductionUsesUnlockedUnitAndSourceCostOrder"'
+          - id: ai-production-zero-category-tests
+            check: AI production category-zero source parity
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.OpponentAITest.sourceEmptyCategoryZeroCanConsumeTheOnlyProductionSlot"'
           - id: direct-combat-tests
             check: Direct combat and casualty tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.directSoldierAttackConsumesStockAndDamagesSelectedCity" --tests "com.example.worlddomination.game.simulation.GameStateTest.directAttackChangesMutualRegardAndFractionalCeasefireAllyRegard" --tests "com.example.worlddomination.game.simulation.GameStateTest.directAttackRejectsDeadTargetsEmptyCitiesAndUnavailableWeapons" --tests "com.example.worlddomination.game.simulation.GameStateTest.soldierCasualtyRollFloorsSourceRandRangeBeforeRounding"'

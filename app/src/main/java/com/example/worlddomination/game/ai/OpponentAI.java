@@ -1431,7 +1431,10 @@ public final class OpponentAI {
                                    Random random) {
         List<int[]> deficits = new ArrayList<>(8);
         int activeCategories = 0;
-        for (int group = 1; group <= 7; group++) {
+        // Model.getTarget builds sorted deficits for categories 0 through 7.
+        // Category zero has no weapon rows, but its stable leading zero score
+        // can consume one of the source's randomly selected category slots.
+        for (int group = 0; group <= 7; group++) {
             int deficit = 0;
             boolean active = false;
             for (GameState.WeaponState weapon : player.getWeapons().values()) {
