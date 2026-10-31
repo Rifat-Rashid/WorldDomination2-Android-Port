@@ -14,6 +14,11 @@ public final class ScrollPaneState {
         return limit;
     }
 
+    /** Returns whether another fixed tick can still move the panel after a fling. */
+    public boolean hasMotion() {
+        return velocity != 0f;
+    }
+
     public void setRange(float contentHeight, float viewportHeight) {
         limit = Math.max(0f, contentHeight - viewportHeight);
         offset = clamp(offset, 0f, limit);

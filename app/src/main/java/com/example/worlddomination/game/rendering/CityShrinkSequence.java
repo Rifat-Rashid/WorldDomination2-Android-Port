@@ -76,4 +76,8 @@ public final class CityShrinkSequence {
     public Phase getPhase() {
         return phase;
     }
+
+    public boolean isAnimating() {
+        return phase != Phase.IDLE;
+    }
 }

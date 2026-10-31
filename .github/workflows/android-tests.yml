@@ -117,6 +117,12 @@ jobs:
           - id: scroll-pane-tests
             check: Independent panel scrolling tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.ScrollPaneStateTest"'
+          - id: scroll-render-demand-tests
+            check: Scroll momentum render demand
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.ScrollPaneStateTest.flingMotionEndsWhenItReachesTheScrollBoundary"'
+          - id: render-loop-policy-tests
+            check: Idle and animated render loop policy
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.RenderLoopPolicyTest"'
           - id: battlefield-layout-tests
             check: Battlefield layout tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.BattlefieldCityLayoutTest"'
@@ -129,6 +135,9 @@ jobs:
           - id: city-shrink-sequence-tests
             check: City shrink animation sequence tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.CityShrinkSequenceTest"'
+          - id: city-animation-render-demand-tests
+            check: City animation render demand
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.CityShrinkSequenceTest.animationActivityIsReportedUntilTheFinalSourceTick"'
           - id: source-animation-tests
             check: Source animation timeline tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest" --tests "com.example.worlddomination.game.rendering.SourceCombatAnimationMappingTest"'
@@ -186,6 +195,9 @@ jobs:
           - id: match-outcome-tests
             check: Match outcome sequence tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.MatchOutcomeSequenceTest" --tests "com.example.worlddomination.game.ui.MatchOutcomePresentationTest"'
+          - id: outcome-render-demand-tests
+            check: Outcome animation render demand
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.MatchOutcomeSequenceTest.outcomeActivityEndsOnlyAfterTheScoreSequenceCompletes"'
           - id: asset-audio-tests
             check: Asset and audio integrity tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.*" --tests "com.example.worlddomination.game.audio.*" --tests "com.example.worlddomination.ExampleUnitTest"'
