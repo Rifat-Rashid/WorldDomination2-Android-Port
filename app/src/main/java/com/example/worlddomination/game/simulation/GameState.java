@@ -82,6 +82,25 @@ public final class GameState {
         }
     }
 
+    /** Resolved spy operations whose Flash action-building clips are shown in battle playback. */
+    public static final class SpyMissionEvent {
+        public final int attackerPlayerId;
+        public final int defenderPlayerId;
+        public final int actionBuildingSlot;
+        public final String actionBuildingFrame;
+        public final String religionCode;
+
+        private SpyMissionEvent(int attackerPlayerId, int defenderPlayerId,
+                                int actionBuildingSlot, String actionBuildingFrame,
+                                String religionCode) {
+            this.attackerPlayerId = attackerPlayerId;
+            this.defenderPlayerId = defenderPlayerId;
+            this.actionBuildingSlot = actionBuildingSlot;
+            this.actionBuildingFrame = actionBuildingFrame;
+            this.religionCode = religionCode;
+        }
+    }
+
     public enum Action {
         RESOURCES("Resources"),
         PRODUCTION("Production"),
@@ -381,6 +400,7 @@ public final class GameState {
         final int diplomacyOption;
         final List<ShipStrike> shipStrikes;
         int actionBuildingSlot = -1;
+        String actionBuildingFrameName;
 
         ActionOrder(int playerId, Action action,
                     Map<String, Integer> productionBudgets, List<String> technologies,
@@ -540,6 +560,7 @@ public final class GameState {
     private final List<ActionOrder> queuedActions = new ArrayList<>(MAX_TURN_ACTIONS);
     private final List<String> messages = new ArrayList<>();
     private final List<CombatEvent> lastTurnCombatEvents = new ArrayList<>();
+    private final List<SpyMissionEvent> lastTurnSpyMissions = new ArrayList<>();
     private List<String> researchChoicesCache = Collections.emptyList();
     private boolean researchChoicesDirty = true;
     private final Random random;
@@ -2134,6 +2155,11 @@ public final class GameState {
         return Collections.unmodifiableList(lastTurnCombatEvents);
     }
 
+    /** Returns the spy missions from the most recently resolved turn, in source order. */
+    public List<SpyMissionEvent> getLastTurnSpyMissions() {
+        return Collections.unmodifiableList(lastTurnSpyMissions);
+    }
+
     /**
      * Copies the reference-compatible RNG state for deterministic battle presentation.
      * Presentation draws remain isolated from future simulation turns.
@@ -2148,6 +2174,7 @@ public final class GameState {
             throw new IllegalStateException("Choose two actions before confirming the turn");
         }
         lastTurnCombatEvents.clear();
+        lastTurnSpyMissions.clear();
         for (PlayerState player : players) {
             player.lastTurnActions.clear();
             player.lastAttackedByCasualties = 0;
@@ -2613,6 +2640,11 @@ public final class GameState {
         if (spyMission) {
             String spyResult = resolveSpyAttack(attacker, defender, weapon, turnOrders);
             weapon.inStock--;
+            lastTurnSpyMissions.add(new SpyMissionEvent(attacker.id, defender.id,
+                    order.actionBuildingSlot,
+                    order.actionBuildingFrameName == null
+                            ? order.spyBuilding : order.actionBuildingFrameName,
+                    attacker.religionCode));
             messages.add("Spy operation completed against nation " + defender.id + ".");
             return spyResult;
         }
@@ -2652,34 +2684,15 @@ public final class GameState {
         Map<String, Integer>[] slotsByPlayer = new Map[players.length];
         int[] nextSlotByPlayer = new int[players.length];
         for (ActionOrder order : turnOrders) {
-            if ((order.action != Action.ATTACK && order.action != Action.PREPARED_ATTACK
-                    && order.action != Action.DEFENSE)
-                    || order.playerId < 0 || order.playerId >= players.length
-                    || (order.action == Action.PREPARED_ATTACK && order.prepareCarrier)) {
+            if (order.playerId < 0 || order.playerId >= players.length) {
                 continue;
             }
             WeaponState weapon = playerById(order.playerId).weapons.get(order.weaponName);
-            if (weapon == null) {
-                continue;
-            }
-            String frame;
-            if (order.action == Action.ATTACK && "soldier".equals(weapon.definition.type)) {
-                frame = sourceDirectAttackBuildingFrame(weapon.definition.name);
-            } else if (order.action == Action.PREPARED_ATTACK
-                    && "rocket".equals(weapon.definition.type)) {
-                frame = "silo";
-            } else if (order.action == Action.PREPARED_ATTACK
-                    && "plane".equals(weapon.definition.type)) {
-                // Battle.py records the plane's airfield as its source preStart anchor.
-                frame = "airfield";
-            } else if (order.action == Action.DEFENSE) {
-                frame = sourceDefenseBuildingFrame(weapon.definition.name);
-            } else {
-                frame = null;
-            }
+            String frame = sourceActionBuildingFrame(order, weapon);
             if (frame == null) {
                 continue;
             }
+            order.actionBuildingFrameName = frame;
             Map<String, Integer> slots = slotsByPlayer[order.playerId];
             if (slots == null) {
                 slots = new LinkedHashMap<>();
@@ -2695,6 +2708,82 @@ public final class GameState {
                 order.actionBuildingSlot = slot;
             }
         }
+
+        // Presenter.doTR_from_battle changes a spy's selected building to the
+        // generic spyCenter frame when another same-player action uses that frame.
+        for (int i = 0; i < turnOrders.size(); i++) {
+            ActionOrder spyOrder = turnOrders.get(i);
+            if (spyOrder.action != Action.ATTACK || spyOrder.actionBuildingFrameName == null
+                    || !isSpyWeapon(spyOrder)) {
+                continue;
+            }
+            for (int j = 0; j < turnOrders.size(); j++) {
+                ActionOrder other = turnOrders.get(j);
+                if (i != j && other.playerId == spyOrder.playerId
+                        && spyOrder.actionBuildingFrameName.equals(
+                        other.actionBuildingFrameName)) {
+                    spyOrder.actionBuildingFrameName = "spyCenter";
+                    break;
+                }
+            }
+        }
+    }
+
+    private static String sourceActionBuildingFrame(ActionOrder order, WeaponState weapon) {
+        switch (order.action) {
+            case RESOURCES:
+                return "resources";
+            case PRODUCTION:
+                return "factory";
+            case RESEARCH:
+                return "tech";
+            case MASS_MEDIA:
+                return "religion";
+            case PROPAGANDA:
+                return "propaganda";
+            case DIPLOMACY:
+                return "diplomacy";
+            case ATTACK:
+                if (weapon == null) {
+                    return null;
+                }
+                if ("spy".equals(weapon.definition.type)) {
+                    return order.spyBuilding == null ? "spyCenter" : order.spyBuilding;
+                }
+                return "soldier".equals(weapon.definition.type)
+                        ? sourceDirectAttackBuildingFrame(weapon.definition.name) : null;
+            case PREPARED_ATTACK:
+                if (weapon == null) {
+                    return null;
+                }
+                if ("rocket".equals(weapon.definition.type)) {
+                    return "silo";
+                }
+                if ("plane".equals(weapon.definition.type)) {
+                    // Battle.py records the plane's airfield as its source preStart anchor.
+                    return "airfield";
+                }
+                if ("sub".equals(weapon.definition.type)) {
+                    return "sub";
+                }
+                if ("ship".equals(weapon.definition.type)) {
+                    return "ship";
+                }
+                if ("space".equals(weapon.definition.type)) {
+                    return "space";
+                }
+                return null;
+            case DEFENSE:
+                return weapon == null ? null
+                        : sourceDefenseBuildingFrame(weapon.definition.name);
+            default:
+                return null;
+        }
+    }
+
+    private boolean isSpyWeapon(ActionOrder order) {
+        WeaponState weapon = playerById(order.playerId).weapons.get(order.weaponName);
+        return weapon != null && "spy".equals(weapon.definition.type);
     }
 
     private static ActionOrder findCounterDefense(List<ActionOrder> defenses,

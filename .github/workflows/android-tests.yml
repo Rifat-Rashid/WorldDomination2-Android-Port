@@ -63,6 +63,9 @@ jobs:
           - id: apache-building-slot-tests
             check: Apache action-building slot tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.directAttacksUseSourceUniqueBuildingOrderForApacheLaunchSlot" --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.repeatedApacheAttacksReuseTheDeduplicatedHelipadSlot"'
+          - id: spy-building-playback-tests
+            check: Spy mission Flash building playback
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.resolvedSpyMissionEmitsTheChosenOriginalBuildingAndSourceSlot" --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.spyActionBuildingUsesSourceSpyCenterFrameWhenItsBuildingIsDuplicated" --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.spyAfterPreparedCarrierUsesTheSecondSourceActionBuildingSlot" --tests "com.example.worlddomination.game.rendering.FlashSpyBuildingAnimationTest" --tests "com.example.worlddomination.game.assets.OriginalFlashAnimationAssetsTest.loadsOriginalSpyActionBuildingFramesReligionVariantsAndArt"'
           - id: combat-audio-mapping-tests
             check: Original combat audio mapping tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.audio.OriginalAudioTest.resolvedCombatEventsUseTheFlashUnitAndExplosionSoundMap" --tests "com.example.worlddomination.game.audio.OriginalAudioTest.combatCuesPointToTheOriginalPackagedSounds"'
