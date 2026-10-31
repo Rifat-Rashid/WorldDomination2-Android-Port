@@ -2164,6 +2164,7 @@ public final class GameState {
             }
         }
         assignActionBuildingSlots(turnOrders);
+        applySpecialAiIncome();
         for (AiDiplomacyResponse response : diplomacyResponses) {
             resolveDiplomacyResponse(response.target, response.proposal,
                     response.accepted, false);
@@ -2257,15 +2258,23 @@ public final class GameState {
                 + " for " + DIPLOMACY_DURATION[order.diplomacyOption] + " turns.");
     }
 
-    private void initializeAiTurnMoney() {
+    void initializeAiTurnMoney() {
         for (PlayerState player : players) {
             if (player.human || !player.alive) {
                 continue;
             }
             player.turnMoneyMillions = player.moneyMillions;
-            if (opponentTurnsEnabled && player.specialPerson) {
+        }
+    }
+
+    /** Applies the source special-leader income after all opponent plans are chosen. */
+    void applySpecialAiIncome() {
+        if (!opponentTurnsEnabled) {
+            return;
+        }
+        for (PlayerState player : players) {
+            if (!player.human && player.alive && player.specialPerson) {
                 player.moneyMillions += 3;
-                player.turnMoneyMillions += 3;
             }
         }
     }

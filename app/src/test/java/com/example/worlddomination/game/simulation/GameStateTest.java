@@ -646,6 +646,45 @@ public final class GameStateTest {
     }
 
     @Test
+    public void specialLeaderIncomeIsAddedAfterAiPlanningBudgetSnapshot() {
+        GameState state = new GameState(1, 72L, true);
+        GameState.PlayerState special = state.getPlayerState(1);
+        GameState.PlayerState regular = state.getPlayerState(2);
+        setSpecialPerson(special, true);
+        special.moneyMillions = 100;
+        special.turnMoneyMillions = 7;
+        regular.moneyMillions = 200;
+        regular.turnMoneyMillions = 8;
+
+        state.initializeAiTurnMoney();
+
+        assertEquals(100, special.moneyMillions);
+        assertEquals("AI plans use the pre-bonus money snapshot", 100,
+                special.turnMoneyMillions);
+        assertEquals(200, regular.moneyMillions);
+        assertEquals(200, regular.turnMoneyMillions);
+
+        state.applySpecialAiIncome();
+
+        assertEquals(103, special.moneyMillions);
+        assertEquals("the source income does not increase the planning budget", 100,
+                special.turnMoneyMillions);
+        assertEquals(200, regular.moneyMillions);
+        assertEquals(200, regular.turnMoneyMillions);
+
+        GameState quietState = new GameState(1, 72L, false);
+        GameState.PlayerState quietSpecial = quietState.getPlayerState(1);
+        setSpecialPerson(quietSpecial, true);
+        quietSpecial.moneyMillions = 100;
+        quietState.initializeAiTurnMoney();
+        quietState.applySpecialAiIncome();
+
+        assertEquals("quiet-opponent simulation does not grant AI income", 100,
+                quietSpecial.moneyMillions);
+        assertEquals(100, quietSpecial.turnMoneyMillions);
+    }
+
+    @Test
     public void researchCompletesAndActivatesTheCorrespondingWeapon() {
         GameState state = new GameState(1, 9L);
         state.selectAction(GameState.Action.RESEARCH);
