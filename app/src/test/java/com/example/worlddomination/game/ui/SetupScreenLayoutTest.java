@@ -29,6 +29,46 @@ public final class SetupScreenLayoutTest {
     }
 
     @Test
+    public void rivalSlotsLeaveRoomForDirectionMarkerAndPortraitNameBar() {
+        SetupScreenLayout layout = new SetupScreenLayout();
+        layout.update(1854f, 849f, 34f, 12f, 22f, 10f);
+
+        assertTrue("Rival cards sit to the right of the panel center",
+                layout.opponentSlots[0].x > layout.enemiesPanel.x
+                        + layout.enemiesPanel.width * 0.25f);
+        assertTrue("Direction marker has its own clear hit-safe region",
+                layout.opponentArrow.x + layout.opponentArrow.width
+                        < layout.opponentSlots[0].x);
+        assertTrue("Opponent cards sit above the portrait carousel",
+                layout.opponentSlots[0].y
+                        > layout.leaderCarouselPanel.y + layout.leaderCarouselPanel.height);
+        assertEquals("Carousel frame aligns with the enemy panel footer",
+                layout.enemiesPanel.y, layout.leaderCarouselPanel.y, 0.001f);
+        assertTrue("The name bar remains within the carousel frame",
+                layout.leaderDescription.x >= layout.leaderCarouselPanel.x
+                        && layout.leaderDescription.x + layout.leaderDescription.width
+                        <= layout.leaderCarouselPanel.x + layout.leaderCarouselPanel.width);
+        assertTrue("Carousel arrows are vertically inset from portrait cards",
+                layout.leaderPrevious.height < layout.leaderCards[0].height
+                        && layout.leaderNext.height < layout.leaderCards[0].height);
+        assertTrue("The name bar stays below the portrait cards",
+                layout.leaderDescription.y + layout.leaderDescription.height
+                        < layout.leaderCards[0].y);
+    }
+
+    @Test
+    public void landscapeCutoutDoesNotShiftTheMainSetupPanelsAcrossTheScreen() {
+        SetupScreenLayout layout = new SetupScreenLayout();
+        layout.update(930f, 414f, 54f, 0f, 0f, 0f);
+
+        assertTrue("Logo stays clear of the left cutout", layout.logo.x >= 54f);
+        assertTrue("Player panel keeps the reference left margin",
+                layout.playerStylePanel.x < 930f * 0.15f);
+        assertTrue("Difficulty panel remains beside the logo",
+                layout.difficultyPanel.x < 930f * 0.20f);
+    }
+
+    @Test
     public void leaderCarouselWrapsAtTheLastSourcePortrait() {
         assertEquals(17, SetupScreenLayout.leaderIdAt(17, 0, 19));
         assertEquals(18, SetupScreenLayout.leaderIdAt(17, 1, 19));
@@ -80,6 +120,8 @@ public final class SetupScreenLayoutTest {
         assertInside(layout.leaderDescription, width, height,
                 safeLeft, safeTop, safeRight, safeBottom);
         assertInside(layout.startButton, width, height,
+                safeLeft, safeTop, safeRight, safeBottom);
+        assertInside(layout.opponentArrow, width, height,
                 safeLeft, safeTop, safeRight, safeBottom);
 
         for (int i = 0; i < layout.leaderCards.length - 1; i++) {
