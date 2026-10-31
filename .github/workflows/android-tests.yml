@@ -135,6 +135,9 @@ jobs:
           - id: ai-diplomacy-target-score-tests
             check: AI diplomacy source score selection
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.OpponentAITest.diplomacyTargetScoreUsesStrictGreaterAndKeepsFirstRivalOnTies"'
+          - id: ai-diplomacy-personality-tests
+            check: AI diplomacy personality parity
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.OpponentAITest.diplomacyPlanningDoesNotBranchOnAiPersonality"'
           - id: ai-diplomacy-cooldown-tests
             check: AI diplomacy cooldown RNG parity
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.OpponentAITest.diplomacyCooldownTargetsDoNotConsumeRandomCandidateDraws"'
