@@ -635,6 +635,42 @@ public final class OpponentAITest {
     }
 
     @Test
+    public void attackAvailabilityRespectsLevelThreeShipAndSubmarinePayloadCap() {
+        GameState state = new GameState(1, 9173L);
+        GameState.PlayerState actor = state.getPlayerState(1);
+        clearWeaponStock(actor);
+
+        GameState.WeaponState warhead4 = actor.getWeapons().get("warhead4");
+        warhead4.active = true;
+        warhead4.inStock = 1;
+        actor.getWeapons().get("ship").inStock = 1;
+        actor.getWeapons().get("sub").inStock = 1;
+
+        assertFalse("level-three special carriers cannot carry level-four payloads",
+                OpponentAI.hasAvailableAttackForScoring(state, actor));
+
+        actor.getWeapons().get("ship").inStock = 0;
+        actor.getWeapons().get("sub").inStock = 0;
+        actor.getWeapons().get("plane2").inStock = 1;
+        assertTrue("a level-four plane carrier can carry the level-four payload",
+                OpponentAI.hasAvailableAttackForScoring(state, actor));
+
+        actor.getWeapons().get("plane2").inStock = 0;
+        actor.getWeapons().get("rocket4").inStock = 1;
+        assertTrue("the matching level-four rocket carrier can carry it",
+                OpponentAI.hasAvailableAttackForScoring(state, actor));
+
+        actor.getWeapons().get("rocket4").inStock = 0;
+        warhead4.inStock = 0;
+        GameState.WeaponState warhead3 = actor.getWeapons().get("warhead3");
+        warhead3.active = true;
+        warhead3.inStock = 1;
+        actor.getWeapons().get("ship").inStock = 1;
+        assertTrue("a ship can carry a stocked level-three payload",
+                OpponentAI.hasAvailableAttackForScoring(state, actor));
+    }
+
+    @Test
     public void stockLevelCountsResearchedWeaponsThatAreTemporarilyInactive()
             throws Exception {
         GameState state = new GameState(1, 922L);

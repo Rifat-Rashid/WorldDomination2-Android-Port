@@ -1313,8 +1313,7 @@ public final class OpponentAI {
         for (String carrierName : new String[]{"plane1", "plane2", "ship", "sub"}) {
             carrier = player.getWeapons().get(carrierName);
             if (carrier != null && carrier.inStock > 0
-                    && ("ship".equals(carrierName) || "sub".equals(carrierName)
-                    || level <= carrier.definition.level)) {
+                    && level <= carrier.definition.level) {
                 return true;
             }
         }
