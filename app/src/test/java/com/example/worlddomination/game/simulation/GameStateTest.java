@@ -1539,7 +1539,10 @@ public final class GameStateTest {
         GameState.WeaponState attackerSoldier = attacker.getWeapons().get("soldier1");
         GameState.WeaponState defenderSoldier = defender.getWeapons().get("soldier1");
         attackerSoldier.active = false;
-        defender.getWeapons().get("rocket1").inStock = 0;
+        defender.moneyMillions = 0;
+        for (GameState.WeaponState weapon : defender.getWeapons().values()) {
+            weapon.inStock = 0;
+        }
         defenderSoldier.inStock = 1;
 
         state.selectAction(GameState.Action.ATTACK);
@@ -1553,6 +1556,71 @@ public final class GameStateTest {
         assertEquals(1, defenderSoldier.inStock);
         assertEquals(0, state.getWeaponStock(0, "spy1"));
         assertTrue(attacker.score > 0);
+        assertEquals("YOUR SPY STOLE TECHNOLOGY: SOLDIER", state.getLatestMessage());
+    }
+
+    @Test
+    public void spyMissionWithNoFundsOrAvailableItemReportsNoTheft() {
+        GameState state = new GameState(1, 15L, false);
+        GameState.PlayerState attacker = state.getHuman();
+        GameState.PlayerState defender = state.getPlayerState(1);
+        defender.moneyMillions = 0;
+        for (GameState.WeaponState weapon : defender.getWeapons().values()) {
+            weapon.inStock = 0;
+        }
+
+        state.selectAction(GameState.Action.ATTACK);
+        assertTrue(state.configureAttack(defender.id, 0, "spy1"));
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+
+        assertEquals("YOUR SPY DID NOT STEAL ANYTHING", state.getLatestMessage());
+        assertEquals(0, state.getWeaponStock(0, "spy1"));
+        assertEquals(0, attacker.spyReadiness);
+    }
+
+    @Test
+    public void spyMissionResultForHumanAttackerIncludesStolenMoneyAndWeapons() {
+        String result = GameState.formatSpyMissionResult(true, false, 25,
+                Collections.singletonList("WEAPON: ROCKET (10 MEG)"),
+                Collections.<String>emptyList());
+
+        assertEquals("YOUR SPY STOLE $25.000.000, WEAPON: ROCKET (10 MEG)", result);
+    }
+
+    @Test
+    public void spyMissionResultForHumanAttackerReportsTechnologyOrNoTheft() {
+        assertEquals("YOUR SPY STOLE TECHNOLOGY: SOLDIER",
+                GameState.formatSpyMissionResult(true, false, 0,
+                        Collections.singletonList("TECHNOLOGY: SOLDIER"),
+                        Collections.<String>emptyList()));
+        assertEquals("YOUR SPY DID NOT STEAL ANYTHING",
+                GameState.formatSpyMissionResult(true, false, 0,
+                        Collections.<String>emptyList(), Collections.<String>emptyList()));
+    }
+
+    @Test
+    public void spyMissionResultForHumanDefenderReportsMoneyAndStolenWeapons() {
+        String result = GameState.formatSpyMissionResult(false, true, 50,
+                Collections.singletonList("TECHNOLOGY: ROCKET (10 MEG)"),
+                Collections.singletonList("STOLEN: ROCKET (10 MEG)"));
+
+        assertEquals("AN ENEMY SPY STOLE $50.000.000; STOLEN: ROCKET (10 MEG)", result);
+    }
+
+    @Test
+    public void spyMissionResultForHumanDefenderReportsHiddenTechnologyAndStoppedSpies() {
+        assertEquals("A ENEMY SPY STOLE",
+                GameState.formatSpyMissionResult(false, true, 0,
+                        Collections.singletonList("TECHNOLOGY: SOLDIER"),
+                        Collections.<String>emptyList()));
+        assertEquals("AN ENEMY SPY WAS STOPPED",
+                GameState.formatSpyMissionResult(false, true, 0,
+                        Collections.<String>emptyList(), Collections.<String>emptyList()));
+        assertNull(GameState.formatSpyMissionResult(false, false, 0,
+                Collections.<String>emptyList(), Collections.<String>emptyList()));
     }
 
     @Test
@@ -1628,6 +1696,7 @@ public final class GameStateTest {
         defender.getWeapons().get("warhead2").inStock = 1;
         defender.getWeapons().get("soldier3").inStock = 1;
         int attackerFundsBefore = attacker.moneyMillions;
+        int attackerAntiAirBefore = attacker.getWeaponStockByName("antiAir");
 
         state.selectAction(GameState.Action.ATTACK);
         assertTrue(state.configureAttack(defender.id, 0, "spy4"));
@@ -1640,13 +1709,9 @@ public final class GameStateTest {
         assertEquals(attackerFundsBefore + 120, attacker.moneyMillions);
         assertEquals(1, defender.getWeaponStockByName("warhead2"));
         assertEquals(1, defender.getWeaponStockByName("soldier3"));
-        int stolenItems = 0;
-        for (String message : state.getMessages()) {
-            if (message.startsWith("Spy stole ") || message.startsWith("Spy uncovered ")) {
-                stolenItems++;
-            }
-        }
-        assertEquals(1, stolenItems);
+        assertEquals(attackerAntiAirBefore + 1, attacker.getWeaponStockByName("antiAir"));
+        assertEquals("YOUR SPY STOLE $120.000.000, WEAPON: ANTI AIR",
+                state.getLatestMessage());
     }
 
     @Test
