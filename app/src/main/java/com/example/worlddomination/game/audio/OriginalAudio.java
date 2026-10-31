@@ -41,6 +41,8 @@ public final class OriginalAudio {
         FIGHTER_TAKEOFF("66_unit_Fightertakeoff.wav.mp3.gz"),
         CARRIERJET_FLIGHT("21_unit_Carrierjet flight.wav.mp3.gz"),
         CARRIERJET_TAKEOFF("76_unit_Carrierjet take off.wav.mp3.gz"),
+        ANTI_AIR_ROTATE("91_building_Anti air rotate.wav.mp3.gz"),
+        ANTI_AIR_GUN("94_building_Anti air gun.wav.mp3.gz"),
         EXPLOSION_SMALL3("98_Explode small3.wav.mp3.gz"),
         EXPLOSION_MEDIUM3("71_Explode medium 3.wav.mp3.gz"),
         EXPLOSION_MEDIUM("70_explode medium.wav.mp3.gz"),
@@ -106,6 +108,8 @@ public final class OriginalAudio {
         preload(Cue.FIGHTER_TAKEOFF);
         preload(Cue.CARRIERJET_FLIGHT);
         preload(Cue.CARRIERJET_TAKEOFF);
+        preload(Cue.ANTI_AIR_ROTATE);
+        preload(Cue.ANTI_AIR_GUN);
         preload(Cue.EXPLOSION_SMALL3);
         preload(Cue.EXPLOSION_MEDIUM3);
         preload(Cue.EXPLOSION_MEDIUM);

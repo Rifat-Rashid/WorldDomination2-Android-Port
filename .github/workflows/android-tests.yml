@@ -231,6 +231,18 @@ jobs:
           - id: original-ui-manifest-tests
             check: Original UI asset manifest tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.OriginalUiAssetManifestTest"'
+          - id: anti-air-animation-tests
+            check: Anti-air tracking and firing cadence
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashAntiAirTrackingAnimationTest"'
+          - id: anti-air-counter-event-tests
+            check: Anti-air counter event metadata
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.antiAirCounterRetainsItsActionBuildingSlotOnAirStrikeOutcomes"'
+          - id: anti-air-art-tests
+            check: Original anti-air Flash turret artwork
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.OriginalFlashAnimationAssetsTest.loadsOriginalReligionSpecificAntiAirFramesIntoTheBattleAtlas" --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest.antiAirTrackingTimelineContainsOriginalDirectionalTurretArtwork"'
+          - id: anti-air-audio-tests
+            check: Original anti-air sound assets
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.audio.OriginalAudioTest.antiAirTrackingCuesUseTheOriginalPackagedSounds" --tests "com.example.worlddomination.game.audio.OriginalAudioTest.everyMappedCueIsAnOriginalGzipWrappedMp3Asset"'
     steps:
       - name: Check out source
         uses: actions/checkout@v5

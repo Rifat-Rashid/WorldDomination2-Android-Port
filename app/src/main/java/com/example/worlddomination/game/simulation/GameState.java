@@ -37,12 +37,14 @@ public final class GameState {
         public final int casualtiesMillions;
         /** Source action-building slot used to launch a soldier2 Apache attack (1 or 2). */
         public final int actionBuildingSlot;
+        /** Source action-building slot used by the defending anti-air turret (1 or 2). */
+        public final int counterActionBuildingSlot;
 
         private CombatEvent(CombatEventType type, int attackerPlayerId,
                             int defenderPlayerId, int cityIndex, String weaponName,
                             String payloadName, int casualtiesMillions) {
             this(type, attackerPlayerId, defenderPlayerId, cityIndex, weaponName,
-                    payloadName, casualtiesMillions, null, -1);
+                    payloadName, casualtiesMillions, null, -1, -1);
         }
 
         private CombatEvent(CombatEventType type, int attackerPlayerId,
@@ -50,13 +52,23 @@ public final class GameState {
                             String payloadName, int casualtiesMillions,
                             String counterWeaponName) {
             this(type, attackerPlayerId, defenderPlayerId, cityIndex, weaponName,
-                    payloadName, casualtiesMillions, counterWeaponName, -1);
+                    payloadName, casualtiesMillions, counterWeaponName, -1, -1);
         }
 
         private CombatEvent(CombatEventType type, int attackerPlayerId,
                             int defenderPlayerId, int cityIndex, String weaponName,
                             String payloadName, int casualtiesMillions,
                             String counterWeaponName, int actionBuildingSlot) {
+            this(type, attackerPlayerId, defenderPlayerId, cityIndex, weaponName,
+                    payloadName, casualtiesMillions, counterWeaponName,
+                    actionBuildingSlot, -1);
+        }
+
+        private CombatEvent(CombatEventType type, int attackerPlayerId,
+                            int defenderPlayerId, int cityIndex, String weaponName,
+                            String payloadName, int casualtiesMillions,
+                            String counterWeaponName, int actionBuildingSlot,
+                            int counterActionBuildingSlot) {
             this.type = type;
             this.attackerPlayerId = attackerPlayerId;
             this.defenderPlayerId = defenderPlayerId;
@@ -66,6 +78,7 @@ public final class GameState {
             this.casualtiesMillions = casualtiesMillions;
             this.counterWeaponName = counterWeaponName;
             this.actionBuildingSlot = actionBuildingSlot;
+            this.counterActionBuildingSlot = counterActionBuildingSlot;
         }
     }
 
@@ -2625,15 +2638,16 @@ public final class GameState {
 
     /**
      * Assigns the two native action-building positions using Battle.createToShowABArray's
-     * source order. Unique direct attack buildings and prepared rocket launchers receive
-     * source slots so their Android combat events can play from the correct island.
+     * source order. Direct attacks, prepared launchers, and source defense buildings retain
+     * their slots so Android combat playback uses the correct island position.
      */
     private void assignActionBuildingSlots(List<ActionOrder> turnOrders) {
         @SuppressWarnings("unchecked")
         Map<String, Integer>[] slotsByPlayer = new Map[players.length];
         int[] nextSlotByPlayer = new int[players.length];
         for (ActionOrder order : turnOrders) {
-            if ((order.action != Action.ATTACK && order.action != Action.PREPARED_ATTACK)
+            if ((order.action != Action.ATTACK && order.action != Action.PREPARED_ATTACK
+                    && order.action != Action.DEFENSE)
                     || order.playerId < 0 || order.playerId >= players.length
                     || (order.action == Action.PREPARED_ATTACK && order.prepareCarrier)) {
                 continue;
@@ -2652,6 +2666,9 @@ public final class GameState {
                     && "plane".equals(weapon.definition.type)) {
                 // Battle.py records the plane's airfield as its source preStart anchor.
                 frame = "airfield";
+            } else if (order.action == Action.DEFENSE
+                    && "antiAir".equals(weapon.definition.name)) {
+                frame = "antiAir_fire";
             } else {
                 frame = null;
             }
@@ -2673,6 +2690,20 @@ public final class GameState {
                 order.actionBuildingSlot = slot;
             }
         }
+    }
+
+    private static ActionOrder findCounterDefense(List<ActionOrder> defenses,
+                                                   int defenderId,
+                                                   String counterName) {
+        if (counterName == null || counterName.isEmpty()) {
+            return null;
+        }
+        for (ActionOrder defense : defenses) {
+            if (defense.playerId == defenderId && counterName.equals(defense.weaponName)) {
+                return defense;
+            }
+        }
+        return null;
     }
 
     private static String sourceDirectAttackBuildingFrame(String weaponName) {
@@ -2747,18 +2778,16 @@ public final class GameState {
                 attacker.human, defender.human);
         boolean intercepted = false;
         String counterName = carrier.definition.counteredBy;
-        if (!counterName.isEmpty()) {
-            for (ActionOrder defense : resolvedDefenses) {
-                if (defense.playerId == defender.id && counterName.equals(defense.weaponName)) {
-                    intercepted = counterIntercepts(random);
-                    break;
-                }
-            }
+        ActionOrder counterDefense = findCounterDefense(resolvedDefenses, defender.id,
+                counterName);
+        if (counterDefense != null) {
+            intercepted = counterIntercepts(random);
         }
         if (intercepted) {
             lastTurnCombatEvents.add(new CombatEvent(CombatEventType.STRIKE_INTERCEPTED,
                     attacker.id, defender.id, city.index, carrier.definition.name,
-                    payload.definition.name, 0, counterName, order.actionBuildingSlot));
+                    payload.definition.name, 0, counterName, order.actionBuildingSlot,
+                    counterDefense.actionBuildingSlot));
             messages.add("Nation " + defender.id + " intercepted the prepared strike.");
             return;
         }
@@ -2770,7 +2799,9 @@ public final class GameState {
         int casualties = populationChanges.addBattleCasualties(city, rolledCasualties);
         lastTurnCombatEvents.add(new CombatEvent(CombatEventType.STRIKE_IMPACT,
                 attacker.id, defender.id, city.index, carrier.definition.name,
-                payload.definition.name, casualties, null, order.actionBuildingSlot));
+                payload.definition.name, casualties,
+                counterDefense == null ? null : counterName, order.actionBuildingSlot,
+                counterDefense == null ? -1 : counterDefense.actionBuildingSlot));
         recordLargestBattle(attacker, defender, casualties);
         applyBattleHostilityEffects(attacker, defender, casualties);
         if (casualties > 0) {
@@ -2814,13 +2845,9 @@ public final class GameState {
         }
 
         String counterName = carrier.definition.counteredBy;
-        boolean hasMatchingDefense = false;
-        for (ActionOrder defense : resolvedDefenses) {
-            if (defense.playerId == defender.id && counterName.equals(defense.weaponName)) {
-                hasMatchingDefense = true;
-                break;
-            }
-        }
+        ActionOrder counterDefense = findCounterDefense(resolvedDefenses, defender.id,
+                counterName);
+        boolean hasMatchingDefense = counterDefense != null;
         List<ShipStrikeResult> results = new ArrayList<>(3);
         for (ShipStrike strike : order.shipStrikes) {
             WeaponState payload = attacker.weapons.get(strike.payloadName);
@@ -2852,14 +2879,16 @@ public final class GameState {
                 lastTurnCombatEvents.add(new CombatEvent(
                         CombatEventType.STRIKE_INTERCEPTED, attacker.id, defender.id,
                         city.index, carrier.definition.name, result.payloadName, 0,
-                        counterName));
+                        counterName, -1, counterDefense.actionBuildingSlot));
                 messages.add("Nation " + defender.id + " intercepted one ship payload.");
             } else {
                 casualties = populationChanges.addBattleCasualties(city,
                         result.rolledCasualties);
                 lastTurnCombatEvents.add(new CombatEvent(CombatEventType.STRIKE_IMPACT,
                         attacker.id, defender.id, city.index, carrier.definition.name,
-                        result.payloadName, casualties));
+                        result.payloadName, casualties,
+                        hasMatchingDefense ? counterName : null, -1,
+                        hasMatchingDefense ? counterDefense.actionBuildingSlot : -1));
                 totalCasualties += casualties;
                 recordLargestBattle(attacker, defender, casualties);
                 if (casualties > 0) {

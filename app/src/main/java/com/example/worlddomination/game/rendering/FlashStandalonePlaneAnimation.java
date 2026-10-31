@@ -5,7 +5,8 @@ import com.example.worlddomination.game.audio.OriginalAudio;
 import java.util.Random;
 
 /** Source-tick flight of a fighter or bomber launched from a nation's airfield. */
-public final class FlashStandalonePlaneAnimation {
+public final class FlashStandalonePlaneAnimation
+        implements FlashAntiAirTrackingAnimation.Target {
     public enum Phase {
         TAKEOFF,
         CLIMB_TO_ORBIT,
@@ -429,6 +430,26 @@ public final class FlashStandalonePlaneAnimation {
 
     public FlashBattleRoutes.StandalonePlaneStrike getRoute() {
         return route;
+    }
+
+    @Override
+    public int targetPlayerId() {
+        return route.targetPlayerId;
+    }
+
+    @Override
+    public float sourceX() {
+        return actor.sourceX;
+    }
+
+    @Override
+    public float sourceY() {
+        return actor.sourceY;
+    }
+
+    @Override
+    public boolean isVisible() {
+        return actor.visible;
     }
 
     public FlashColorTransform getTint() {

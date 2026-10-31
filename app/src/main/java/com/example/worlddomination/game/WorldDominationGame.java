@@ -26,6 +26,7 @@ import com.example.worlddomination.game.persistence.PersonalBestStore;
 import com.example.worlddomination.game.rendering.BattleAnimationSequence;
 import com.example.worlddomination.game.rendering.BattleExplosionRenderer;
 import com.example.worlddomination.game.rendering.BattlefieldCityRenderer;
+import com.example.worlddomination.game.rendering.FlashAntiAirTrackingAnimation;
 import com.example.worlddomination.game.rendering.FlashBattleRoutes;
 import com.example.worlddomination.game.rendering.FlashBattleUnitRenderer;
 import com.example.worlddomination.game.rendering.FlashCarrierPlaneAnimation;
@@ -147,6 +148,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private final List<FlashSubmarineAnimation> submarineBattleAnimations = new ArrayList<>();
     private final List<FlashCarrierPlaneAnimation> carrierPlaneAnimations = new ArrayList<>();
     private final List<FlashStandalonePlaneAnimation> standalonePlaneAnimations = new ArrayList<>();
+    private final List<FlashAntiAirTrackingAnimation> antiAirTrackingAnimations =
+            new ArrayList<>();
     private final List<FlashSatelliteAnimation> satelliteBattleAnimations = new ArrayList<>();
     private final List<PendingBattleAnimation> pendingBattleAnimations = new ArrayList<>();
     private final MatchOutcomeSequence outcomeSequence =
@@ -538,6 +541,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 || !submarineBattleAnimations.isEmpty()
                 || !carrierPlaneAnimations.isEmpty()
                 || !standalonePlaneAnimations.isEmpty()
+                || !antiAirTrackingAnimations.isEmpty()
                 || !satelliteBattleAnimations.isEmpty()
                 || !pendingBattleAnimations.isEmpty()
                 || outcomeSequence.isAnimating()) {
@@ -662,6 +666,21 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 standalonePlaneAnimations.remove(i);
             }
         }
+        for (int i = antiAirTrackingAnimations.size() - 1; i >= 0; i--) {
+            FlashAntiAirTrackingAnimation animation = antiAirTrackingAnimations.get(i);
+            animation.tick();
+            if (animation.takeRotationCue()) {
+                audio.play(OriginalAudio.Cue.ANTI_AIR_ROTATE,
+                        sourceAudioPan(animation.getBuildingPosition().x));
+            }
+            if (animation.takeGunCue()) {
+                audio.play(OriginalAudio.Cue.ANTI_AIR_GUN,
+                        sourceAudioPan(animation.getBuildingPosition().x));
+            }
+            if (animation.isFinished()) {
+                antiAirTrackingAnimations.remove(i);
+            }
+        }
         for (int i = satelliteBattleAnimations.size() - 1; i >= 0; i--) {
             FlashSatelliteAnimation animation = satelliteBattleAnimations.get(i);
             animation.tick();
@@ -743,6 +762,25 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             }
         }
         standalonePlaneAnimations.clear();
+    }
+
+    private void addAntiAirTrackingAnimation(GameState.CombatEvent event,
+                                            FlashAntiAirTrackingAnimation.Target target,
+                                            FlashAntiAirTrackingAnimation.TargetLock targetLock) {
+        if (!"antiAir".equals(event.counterWeaponName)
+                || event.counterActionBuildingSlot < 1
+                || event.counterActionBuildingSlot > 2
+                || !targetLock.tryLock(event.defenderPlayerId)) {
+            return;
+        }
+        GameState.PlayerState defender = game.getPlayerState(event.defenderPlayerId);
+        antiAirTrackingAnimations.add(new FlashAntiAirTrackingAnimation(target,
+                event.defenderPlayerId, event.counterActionBuildingSlot,
+                defender.getReligionCode()));
+    }
+
+    private static float sourceAudioPan(float sourceX) {
+        return Math.max(-1f, Math.min(1f, (sourceX - 400f) / 400f));
     }
 
     private void preparePendingBattleAnimations() {
@@ -1173,6 +1211,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         battleUnitRenderer.drawRocket(batch, mapBounds, rocketBattleAnimations);
         battleUnitRenderer.drawCarrierPlanes(batch, mapBounds, carrierPlaneAnimations);
         battleUnitRenderer.drawStandalonePlanes(batch, mapBounds, standalonePlaneAnimations);
+        battleUnitRenderer.drawAntiAirTracking(batch, mapBounds,
+                antiAirTrackingAnimations);
         battleUnitRenderer.drawSatellites(batch, mapBounds, satelliteBattleAnimations);
         explosionRenderer.draw(batch, mapBounds, battleAnimations);
         drawContained(uiAssets.logo, logoPanel.x + 7f, logoPanel.y + 2f,
@@ -2387,6 +2427,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         submarineBattleAnimations.clear();
         clearCarrierPlaneAnimations();
         clearStandalonePlaneAnimations();
+        antiAirTrackingAnimations.clear();
         satelliteBattleAnimations.clear();
         satelliteFlightCuePlayed = false;
         pendingBattleAnimations.clear();
@@ -2674,6 +2715,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 submarineBattleAnimations.clear();
                 clearCarrierPlaneAnimations();
                 clearStandalonePlaneAnimations();
+                antiAirTrackingAnimations.clear();
                 satelliteBattleAnimations.clear();
                 satelliteFlightCuePlayed = false;
                 pendingBattleAnimations.clear();
@@ -3119,6 +3161,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             int animationIndex = 0;
             int submarineSequenceIndex = 0;
             int carrierPlaneIndex = 0;
+            FlashAntiAirTrackingAnimation.TargetLock antiAirTargetLock =
+                    new FlashAntiAirTrackingAnimation.TargetLock();
             ReferenceRandom presentationRandom = game.createPresentationRandomCopy();
             for (GameState.CombatEvent event : game.getLastTurnCombatEvents()) {
                 OriginalAudio.Cue cue = OriginalAudio.cueForCombatEvent(event);
@@ -3141,9 +3185,12 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                                     event.attackerPlayerId, event.defenderPlayerId,
                                     event.cityIndex, carrierPlaneIndex++ % 3,
                                     event.type == GameState.CombatEventType.STRIKE_INTERCEPTED);
-                    carrierPlaneAnimations.add(new FlashCarrierPlaneAnimation(route,
+                    FlashCarrierPlaneAnimation planeAnimation =
+                            new FlashCarrierPlaneAnimation(route,
                             animationIndex * 36,
-                            SourceCombatAnimationMapping.linkageFor(event), cue));
+                            SourceCombatAnimationMapping.linkageFor(event), cue);
+                    carrierPlaneAnimations.add(planeAnimation);
+                    addAntiAirTrackingAnimation(event, planeAnimation, antiAirTargetLock);
                     animationIndex++;
                     continue;
                 }
@@ -3156,9 +3203,12 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                                     event.type == GameState.CombatEventType.STRIKE_INTERCEPTED);
                     int playerColor = game.getPlayerState(event.attackerPlayerId)
                             .getPlayerColor();
-                    standalonePlaneAnimations.add(new FlashStandalonePlaneAnimation(
+                    FlashStandalonePlaneAnimation planeAnimation =
+                            new FlashStandalonePlaneAnimation(
                             route, playerColor, animationIndex * 36,
-                            SourceCombatAnimationMapping.linkageFor(event), cue));
+                            SourceCombatAnimationMapping.linkageFor(event), cue);
+                    standalonePlaneAnimations.add(planeAnimation);
+                    addAntiAirTrackingAnimation(event, planeAnimation, antiAirTargetLock);
                     animationIndex++;
                     continue;
                 }
@@ -3469,6 +3519,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         submarineBattleAnimations.clear();
         clearCarrierPlaneAnimations();
         clearStandalonePlaneAnimations();
+        antiAirTrackingAnimations.clear();
         satelliteBattleAnimations.clear();
         pendingBattleAnimations.clear();
         audio.dispose();
