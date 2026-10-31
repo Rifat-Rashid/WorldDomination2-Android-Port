@@ -508,7 +508,7 @@ public final class OpponentAITest {
         setRegardToward(actor, 4, 10);
         state.getPlayerState(4).alive = false;
 
-        assertEquals(81.0, OpponentAI.baseAttackScore(state, actor), 0.0);
+        assertEquals(75.0, OpponentAI.baseAttackScore(state, actor), 0.0);
     }
 
     @Test
@@ -518,7 +518,21 @@ public final class OpponentAITest {
         setFriendlyRelationsAndNoPrimaryEnemy(actor);
         setRegardToward(actor, 4, 40.5);
 
-        assertEquals(65.75, OpponentAI.baseAttackScore(state, actor), 0.0);
+        assertEquals(59.75, OpponentAI.baseAttackScore(state, actor), 0.0);
+    }
+
+    @Test
+    public void attackScoreUsesSourceDecisionPointBasesForEveryDifficulty() throws Exception {
+        double[] expectedBases = {86.0, 80.0, 86.0};
+        for (int difficulty = 0; difficulty < expectedBases.length; difficulty++) {
+            GameState state = new GameState(difficulty, 9160L + difficulty);
+            GameState.PlayerState actor = state.getPlayerState(1);
+            setFriendlyRelationsAndNoPrimaryEnemy(actor);
+
+            assertEquals("source attack base at difficulty " + difficulty,
+                    expectedBases[difficulty] - 50.0,
+                    OpponentAI.baseAttackScore(state, actor), 0.0);
+        }
     }
 
     @Test
@@ -960,10 +974,13 @@ public final class OpponentAITest {
     }
 
     @Test
-    public void plannerCanPrepareACompatibleCarrierWithoutDuplicatingTheSlot() {
+    public void plannerCanPrepareACompatibleCarrierWithoutDuplicatingTheSlot()
+            throws Exception {
         GameState state = gameWithRegularFirstOpponent(53L);
         GameState.PlayerState opponent = state.getPlayerState(1);
         configureSourcePreparationScenario(opponent, "rocket1");
+        setFriendlyRelationsAndNoPrimaryEnemy(opponent);
+        setRegardToward(opponent, state.getHuman().id, 0);
 
         List<OpponentAI.Decision> decisions = OpponentAI.plan(state, opponent,
                 new SequenceRandom(0, 0, 0, 0, 0, 0));

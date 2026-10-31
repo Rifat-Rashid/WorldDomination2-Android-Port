@@ -15,7 +15,9 @@ import java.util.Random;
 
 /** Source-derived action scoring and target selection for computer nations. */
 public final class OpponentAI {
-    private static final int[] ATTACK_BASE = {80, 86, 90};
+    // Mirrors DecisionPoints.set_points_to_difficulty for the source's 0..2
+    // difficulty ids: 0 and 2 use the default 86, while 1 uses 80.
+    private static final int[] ATTACK_BASE = {86, 80, 86};
     private static final int[] SPY_ALERT_MONEY = {180, 150, 100};
     private static final int[] AI_SPY_STOCK_REQUIREMENTS = {10, 8, 5, 3};
     private static final String[] SPY_BUILDINGS = {
