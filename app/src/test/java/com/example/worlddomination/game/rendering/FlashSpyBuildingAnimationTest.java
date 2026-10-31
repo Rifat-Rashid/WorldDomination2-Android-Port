@@ -9,33 +9,32 @@ import static org.junit.Assert.fail;
 
 public final class FlashSpyBuildingAnimationTest {
     @Test
-    public void fadesByFivePercentPerSourceTickAndExpiresAtTheBuildingInterval() {
+    public void fadesByFivePercentPerSourceTickAndRemainsAtFullAlphaAfterInterval() {
         FlashSpyBuildingAnimation animation = create(0);
         assertEquals(24, FlashSpyBuildingAnimation.SOURCE_FRAME_RATE);
         assertEquals(20, FlashSpyBuildingAnimation.FADE_TICKS);
-        assertEquals(38, FlashSpyBuildingAnimation.DISPLAY_TICKS);
+        assertEquals(38, FlashSpyBuildingAnimation.SEQUENCE_INTERVAL_TICKS);
         assertEquals(0f, animation.getAlpha(), 0f);
 
         for (int tick = 0; tick < FlashSpyBuildingAnimation.FADE_TICKS - 1; tick++) {
             assertFalse(animation.tick());
         }
         assertEquals(0.95f, animation.getAlpha(), 0.0001f);
-        assertFalse(animation.tick());
+        assertTrue(animation.tick());
         assertEquals(1f, animation.getAlpha(), 0f);
 
-        for (int tick = FlashSpyBuildingAnimation.FADE_TICKS;
-             tick < FlashSpyBuildingAnimation.DISPLAY_TICKS - 1; tick++) {
-            assertFalse(animation.tick());
+        assertTrue(animation.isFadeComplete());
+        assertFalse(animation.isAnimating());
+        for (int tick = 0; tick < FlashSpyBuildingAnimation.SEQUENCE_INTERVAL_TICKS + 100; tick++) {
+            animation.tick();
         }
-        assertTrue(animation.tick());
-        assertTrue(animation.isFinished());
-        assertEquals(0f, animation.getAlpha(), 0f);
+        assertEquals(1f, animation.getAlpha(), 0f);
     }
 
     @Test
     public void sourceBuildingEventsArePresentedSequentiallyAtTheFlashInterval() {
         FlashSpyBuildingAnimation second = create(1);
-        for (int tick = 0; tick < FlashSpyBuildingAnimation.DISPLAY_TICKS - 1; tick++) {
+        for (int tick = 0; tick < FlashSpyBuildingAnimation.SEQUENCE_INTERVAL_TICKS - 1; tick++) {
             second.tick();
         }
         assertFalse(second.isStarted());
@@ -49,14 +48,18 @@ public final class FlashSpyBuildingAnimationTest {
     }
 
     @Test
-    public void remainsVisibleUntilConcurrentBattlePlaybackCompletes() {
+    public void remainsVisibleAfterItsFadeCompletesUntilTheSlotIsReplaced() {
         FlashSpyBuildingAnimation animation = create(0);
-        for (int tick = 0; tick < FlashSpyBuildingAnimation.DISPLAY_TICKS + 5; tick++) {
-            assertFalse(animation.tick(true));
+        for (int tick = 0; tick < FlashSpyBuildingAnimation.FADE_TICKS; tick++) {
+            animation.tick();
         }
+        assertTrue(animation.isFadeComplete());
         assertEquals(1f, animation.getAlpha(), 0f);
-        assertTrue(animation.tick(false));
-        assertTrue(animation.isFinished());
+        for (int tick = 0; tick < FlashSpyBuildingAnimation.SEQUENCE_INTERVAL_TICKS * 2; tick++) {
+            animation.tick();
+        }
+        assertTrue(animation.isStarted());
+        assertEquals(1f, animation.getAlpha(), 0f);
     }
 
     @Test

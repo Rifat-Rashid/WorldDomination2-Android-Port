@@ -85,8 +85,7 @@ public final class FlashBattleUnitRenderer {
             return;
         }
         for (FlashSpyBuildingAnimation animation : animations) {
-            if (!animation.isStarted() || animation.isFinished()
-                    || animation.getAlpha() <= 0f) {
+            if (!animation.isStarted() || animation.getAlpha() <= 0f) {
                 continue;
             }
             FlashAnimationTimeline.Frame frame = timeline.getFrameByLabel(

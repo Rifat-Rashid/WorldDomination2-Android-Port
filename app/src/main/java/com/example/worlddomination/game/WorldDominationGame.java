@@ -543,7 +543,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         if (flashAnimationAssets != null && !flashAnimationAssets.isLoaded()) {
             return true;
         }
-        if (hasOtherBattlePlayback() || !spyBuildingAnimations.isEmpty()
+        if (hasOtherBattlePlayback() || hasAnimatingSpyBuilding()
                 || outcomeSequence.isAnimating()) {
             return true;
         }
@@ -566,6 +566,15 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 || !pendingBattleAnimations.isEmpty();
     }
 
+    private boolean hasAnimatingSpyBuilding() {
+        for (FlashSpyBuildingAnimation animation : spyBuildingAnimations) {
+            if (animation.isAnimating()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private void fixedUpdate(float seconds) {
         navigationScroll.tick(seconds);
         equipmentScroll.tick(seconds);
@@ -579,13 +588,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         if (flashAnimationAssets == null || !flashAnimationAssets.isLoaded()) {
             return;
         }
-        boolean holdSpyBuildings = hasOtherBattlePlayback();
-        for (int i = spyBuildingAnimations.size() - 1; i >= 0; i--) {
-            FlashSpyBuildingAnimation animation = spyBuildingAnimations.get(i);
-            animation.tick(holdSpyBuildings);
-            if (animation.isFinished()) {
-                spyBuildingAnimations.remove(i);
-            }
+        for (FlashSpyBuildingAnimation animation : spyBuildingAnimations) {
+            animation.tick();
         }
         for (int i = battleAnimations.size() - 1; i >= 0; i--) {
             BattleAnimationSequence animation = battleAnimations.get(i);

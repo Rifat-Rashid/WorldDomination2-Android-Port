@@ -5,9 +5,9 @@ public final class FlashSpyBuildingAnimation {
     public static final int SOURCE_FRAME_RATE = 24;
     public static final int FADE_STEP_PERCENT = 5;
     public static final int FADE_TICKS = 100 / FADE_STEP_PERCENT;
-    public static final int DISPLAY_INTERVAL_MILLIS = 1600;
-    public static final int DISPLAY_TICKS = Math.round(
-            DISPLAY_INTERVAL_MILLIS * SOURCE_FRAME_RATE / 1000f);
+    public static final int SEQUENCE_INTERVAL_MILLIS = 1600;
+    public static final int SEQUENCE_INTERVAL_TICKS = Math.round(
+            SEQUENCE_INTERVAL_MILLIS * SOURCE_FRAME_RATE / 1000f);
 
     public final int attackerPlayerId;
     public final int defenderPlayerId;
@@ -17,7 +17,6 @@ public final class FlashSpyBuildingAnimation {
 
     private final int startDelayTicks;
     private int elapsedTicks;
-    private boolean finished;
 
     public FlashSpyBuildingAnimation(int attackerPlayerId, int defenderPlayerId,
                                      int actionBuildingSlot, String actionBuildingFrame,
@@ -34,35 +33,34 @@ public final class FlashSpyBuildingAnimation {
         this.actionBuildingSlot = actionBuildingSlot;
         this.actionBuildingFrame = actionBuildingFrame;
         this.religionCode = religionCode;
-        startDelayTicks = sequenceIndex * DISPLAY_TICKS;
+        startDelayTicks = sequenceIndex * SEQUENCE_INTERVAL_TICKS;
     }
 
-    /** Advances one 24 Hz source frame and returns true when the clip expires. */
+    /** Advances one 24 Hz source frame; the clip stays visible after fading in. */
     public boolean tick() {
-        return tick(false);
-    }
-
-    /** Keeps the source clip visible while the same turn's unit playback is active. */
-    public boolean tick(boolean holdForBattlePlayback) {
-        if (!finished) {
+        if (elapsedTicks < startDelayTicks + FADE_TICKS) {
             elapsedTicks++;
-            finished = !holdForBattlePlayback
-                    && elapsedTicks >= startDelayTicks + DISPLAY_TICKS;
         }
-        return finished;
+        return isFadeComplete();
     }
 
     public boolean isStarted() {
         return elapsedTicks >= startDelayTicks;
     }
 
-    public boolean isFinished() {
-        return finished;
+    /** True while this clip still needs fixed-tick updates for its delay or fade. */
+    public boolean isAnimating() {
+        return !isStarted() || !isFadeComplete();
+    }
+
+    /** Fade completion does not retire the source clip; it remains until its slot is reused. */
+    public boolean isFadeComplete() {
+        return isStarted() && elapsedTicks - startDelayTicks >= FADE_TICKS;
     }
 
     /** Current Flash alpha in the libGDX 0..1 range. */
     public float getAlpha() {
-        if (!isStarted() || isFinished()) {
+        if (!isStarted()) {
             return 0f;
         }
         int fadeTicks = Math.min(FADE_TICKS, elapsedTicks - startDelayTicks);
