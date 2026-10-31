@@ -62,19 +62,23 @@ public final class GameStateCombatEventTest {
         assertTrue(state.acceptSelectedAction());
         state.confirmTurn();
 
-        assertEquals(1, state.getLastTurnSpyMissions().size());
-        GameState.SpyMissionEvent event = state.getLastTurnSpyMissions().get(0);
-        assertEquals(0, event.attackerPlayerId);
-        assertEquals(1, event.defenderPlayerId);
-        assertEquals(2, event.actionBuildingSlot);
-        assertEquals("tech", event.actionBuildingFrame);
-        assertEquals(state.getHuman().getReligionCode(), event.religionCode);
+        List<GameState.ActionBuildingEvent> buildings = state.getLastTurnActionBuildings();
+        assertEquals(2, buildings.size());
+        assertEquals(GameState.Action.ATTACK, buildings.get(0).action);
+        assertEquals(0, buildings.get(0).playerId);
+        assertEquals(1, buildings.get(0).slot);
+        assertEquals("tech", buildings.get(0).frameName);
+        assertEquals(state.getHuman().getReligionCode(), buildings.get(0).religionCode);
+        assertEquals(GameState.Action.RESOURCES, buildings.get(1).action);
+        assertEquals(2, buildings.get(1).slot);
 
         queueResources(state);
         state.selectAction(GameState.Action.MASS_MEDIA);
         assertTrue(state.acceptSelectedAction());
         state.confirmTurn();
-        assertTrue(state.getLastTurnSpyMissions().isEmpty());
+        for (GameState.ActionBuildingEvent event : state.getLastTurnActionBuildings()) {
+            assertTrue(event.action != GameState.Action.ATTACK);
+        }
     }
 
     @Test
@@ -95,13 +99,14 @@ public final class GameStateCombatEventTest {
         assertTrue(state.acceptSelectedAction());
         state.confirmTurn();
 
-        GameState.SpyMissionEvent event = state.getLastTurnSpyMissions().get(0);
-        assertEquals(1, event.actionBuildingSlot);
-        assertEquals("spyCenter", event.actionBuildingFrame);
+        List<GameState.ActionBuildingEvent> buildings = state.getLastTurnActionBuildings();
+        assertEquals(GameState.Action.ATTACK, buildings.get(0).action);
+        assertEquals(1, buildings.get(0).slot);
+        assertEquals("spyCenter", buildings.get(0).frameName);
     }
 
     @Test
-    public void spyAfterPreparedCarrierUsesTheSecondSourceActionBuildingSlot() {
+    public void spyAndPreparedCarrierUseTheirSourceBuildingQueueSlots() {
         GameState state = new GameState(1, 124L, false);
         GameState.WeaponState rocket = state.getHuman().getWeapons().get("rocket1");
         GameState.WeaponState spy = state.getHuman().getWeapons().get("spy1");
@@ -118,7 +123,13 @@ public final class GameStateCombatEventTest {
         assertTrue(state.acceptSelectedAction());
         state.confirmTurn();
 
-        assertEquals(2, state.getLastTurnSpyMissions().get(0).actionBuildingSlot);
+        List<GameState.ActionBuildingEvent> buildings = state.getLastTurnActionBuildings();
+        assertEquals(2, buildings.size());
+        assertEquals(GameState.Action.ATTACK, buildings.get(0).action);
+        assertEquals("spyCenter", buildings.get(0).frameName);
+        assertEquals(1, buildings.get(0).slot);
+        assertEquals("silo", buildings.get(1).frameName);
+        assertEquals(2, buildings.get(1).slot);
     }
 
     @Test
