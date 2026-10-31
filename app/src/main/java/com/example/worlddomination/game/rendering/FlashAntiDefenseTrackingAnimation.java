@@ -1,7 +1,14 @@
 package com.example.worlddomination.game.rendering;
 
-/** Source-tick anti-air turret state driven by a moving Flash aircraft. */
-public final class FlashAntiAirTrackingAnimation {
+import com.example.worlddomination.game.audio.OriginalAudio;
+
+/** Source-tick anti-defense turret state driven by a moving Flash aircraft or rocket. */
+public final class FlashAntiDefenseTrackingAnimation {
+    public enum DefenseType {
+        AIR,
+        ROCKET
+    }
+
     public interface Target {
         int targetPlayerId();
 
@@ -14,7 +21,7 @@ public final class FlashAntiAirTrackingAnimation {
         boolean isFinished();
     }
 
-    /** Keeps the source's single tracked-aircraft lock for each defending player. */
+    /** Keeps the source's single tracked-unit lock for each defending player. */
     public static final class TargetLock {
         private final boolean[] lockedPlayers = new boolean[5];
 
@@ -33,12 +40,16 @@ public final class FlashAntiAirTrackingAnimation {
     public static final int INITIAL_COUNTDOWN_TICKS = 50;
     public static final int ROTATION_DIRECTIONS = 18;
     private static final int ROTATION_SOUND_COOLDOWN_TICKS = 48;
-    private static final int GUN_SOUND_COOLDOWN_TICKS = 15;
+    private static final int AIR_GUN_SOUND_COOLDOWN_TICKS = 15;
+    /** One 1.312-second Flash rocket shot at the 24 Hz simulation rate. */
+    private static final int ROCKET_GUN_SOUND_COOLDOWN_TICKS = 32;
 
     private final Target target;
     private final int defenderPlayerId;
     private final int actionBuildingSlot;
     private final String religionCode;
+    private final DefenseType defenseType;
+    private final int gunSoundCooldownDurationTicks;
     private final FlashBattleRoutes.Point buildingPosition;
     private int countdownTicks = INITIAL_COUNTDOWN_TICKS;
     private int direction = 1;
@@ -51,18 +62,27 @@ public final class FlashAntiAirTrackingAnimation {
     private boolean gunCuePending;
     private boolean finished;
 
-    public FlashAntiAirTrackingAnimation(Target target, int defenderPlayerId,
+    public FlashAntiDefenseTrackingAnimation(Target target, int defenderPlayerId,
                                          int actionBuildingSlot, String religionCode) {
+        this(target, defenderPlayerId, actionBuildingSlot, religionCode, DefenseType.AIR);
+    }
+
+    public FlashAntiDefenseTrackingAnimation(Target target, int defenderPlayerId,
+                                             int actionBuildingSlot, String religionCode,
+                                             DefenseType defenseType) {
         if (target == null || target.targetPlayerId() != defenderPlayerId
                 || actionBuildingSlot < 1 || actionBuildingSlot > 2
-                || !hasReligionFrame(religionCode)) {
-            throw new IllegalArgumentException("Invalid anti-air tracking target");
+                || !hasReligionFrame(religionCode) || defenseType == null) {
+            throw new IllegalArgumentException("Invalid anti-defense tracking target");
         }
         validatePlayer(defenderPlayerId);
         this.target = target;
         this.defenderPlayerId = defenderPlayerId;
         this.actionBuildingSlot = actionBuildingSlot;
         this.religionCode = religionCode;
+        this.defenseType = defenseType;
+        gunSoundCooldownDurationTicks = defenseType == DefenseType.ROCKET
+                ? ROCKET_GUN_SOUND_COOLDOWN_TICKS : AIR_GUN_SOUND_COOLDOWN_TICKS;
         buildingPosition = FlashBattleRoutes.actionBuildingPosition(
                 defenderPlayerId, actionBuildingSlot);
     }
@@ -103,7 +123,7 @@ public final class FlashAntiAirTrackingAnimation {
         boolean firing = antiOffset == 1;
         if (firing && gunSoundCooldownTicks == 0) {
             gunCuePending = true;
-            gunSoundCooldownTicks = GUN_SOUND_COOLDOWN_TICKS;
+            gunSoundCooldownTicks = gunSoundCooldownDurationTicks;
         }
         frameIndex = (direction - 1) * 2 + (firing ? 1 : 0);
 
@@ -157,7 +177,7 @@ public final class FlashAntiAirTrackingAnimation {
 
     private static void validatePlayer(int playerId) {
         if (playerId < 0 || playerId >= 5) {
-            throw new IllegalArgumentException("Invalid anti-air player id");
+            throw new IllegalArgumentException("Invalid anti-defense player id");
         }
     }
 
@@ -171,6 +191,16 @@ public final class FlashAntiAirTrackingAnimation {
 
     public String getReligionCode() {
         return religionCode;
+    }
+
+    public DefenseType getDefenseType() {
+        return defenseType;
+    }
+
+    /** Anti-rocket uses its own source shot; both defenses share the air-turret rotation cue. */
+    public OriginalAudio.Cue getGunCue() {
+        return defenseType == DefenseType.ROCKET
+                ? OriginalAudio.Cue.ANTI_ROCKET_FIRE : OriginalAudio.Cue.ANTI_AIR_GUN;
     }
 
     public int getReligionFrameIndex() {

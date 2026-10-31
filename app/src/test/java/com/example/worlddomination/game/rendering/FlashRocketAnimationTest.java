@@ -85,6 +85,36 @@ public final class FlashRocketAnimationTest {
     }
 
     @Test
+    public void siloRocketExposesItsMovingTargetPositionForAntiRocketTracking() {
+        FlashBattleRoutes.RocketStrike route =
+                FlashBattleRoutes.createRocketStrike(0, 1, 0, 1, true);
+        FlashRocketAnimation animation = new FlashRocketAnimation(route, 0);
+
+        assertEquals(1, animation.targetPlayerId());
+        assertFalse(animation.isVisible());
+        assertFalse(animation.isFinished());
+
+        animation.tick();
+        assertTrue(animation.isVisible());
+        assertEquals(animation.getRocket().sourceX, animation.sourceX(), 0f);
+        assertEquals(animation.getRocket().sourceY, animation.sourceY(), 0f);
+
+        boolean impact = false;
+        for (int tick = 0; tick < 200 && !impact; tick++) {
+            impact = animation.tick();
+        }
+        assertTrue(impact);
+        assertFalse(animation.getRocket().visible);
+        assertTrue("Defense presentation persists while the original smoke fades",
+                animation.isVisible());
+        for (int tick = 0; tick < 50; tick++) {
+            animation.tick();
+        }
+        assertTrue(animation.isFinished());
+        assertFalse(animation.isVisible());
+    }
+
+    @Test
     public void submarineRocketWaitsForTheSourceLaunchAndUsesHalfHeightArtwork() {
         FlashBattleRoutes.RocketStrike route =
                 FlashBattleRoutes.createSubmarineRocketStrike(0, 2, 1);

@@ -331,6 +331,16 @@ public final class FlashAnimationTimelineTest {
     }
 
     @Test
+    public void antiRocketFireSoundRunsForThirtyTwoSourceTicks() throws IOException {
+        JsonValue scene = loadSourceScene();
+        JsonValue rocketFire = scene.get("sound_metadata").get("90");
+        double sourceTicks = rocketFire.getDouble("sample_count")
+                / rocketFire.getDouble("rate") * scene.getDouble("fps");
+
+        assertEquals(32, (int) Math.ceil(sourceTicks));
+    }
+
+    @Test
     public void smokePuffFlashShapeIsPackagedAsVectorArtForNativeRasterization()
             throws IOException {
         String smokeSvg = loadShapeSvg(4936);

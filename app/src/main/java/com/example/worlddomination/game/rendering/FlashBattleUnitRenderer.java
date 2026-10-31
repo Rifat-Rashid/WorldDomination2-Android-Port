@@ -280,9 +280,9 @@ public final class FlashBattleUnitRenderer {
         }
     }
 
-    /** Draws the original religion-specific anti-air turret with its tracked direction. */
-    public void drawAntiAirTracking(SpriteBatch batch, Rectangle mapBounds,
-                                    List<FlashAntiAirTrackingAnimation> animations) {
+    /** Draws the shared original defense turret with its tracked direction and firing frame. */
+    public void drawAntiDefenseTracking(SpriteBatch batch, Rectangle mapBounds,
+                                    List<FlashAntiDefenseTrackingAnimation> animations) {
         if (!assets.isLoaded()) {
             return;
         }
@@ -291,7 +291,7 @@ public final class FlashBattleUnitRenderer {
             return;
         }
         float mapScale = BattlefieldCityLayout.sourceScale(mapBounds);
-        for (FlashAntiAirTrackingAnimation animation : animations) {
+        for (FlashAntiDefenseTrackingAnimation animation : animations) {
             if (!animation.isVisible()) {
                 continue;
             }

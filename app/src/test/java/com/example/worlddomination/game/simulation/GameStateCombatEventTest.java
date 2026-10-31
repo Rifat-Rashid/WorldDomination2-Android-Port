@@ -12,6 +12,13 @@ import static org.junit.Assert.assertTrue;
 
 public final class GameStateCombatEventTest {
     @Test
+    public void antiDefenseActionsUseTheirDistinctSourceBuildingFrames() {
+        assertEquals("antiAir_fire", GameState.sourceDefenseBuildingFrame("antiAir"));
+        assertEquals("antiRocket_fire",
+                GameState.sourceDefenseBuildingFrame("antiRocket"));
+    }
+
+    @Test
     public void resolvedSoldierAttackEmitsOneDirectAttackEvent() {
         GameState state = new GameState(1, 120L, false);
         GameState.WeaponState soldier = state.getHuman().getWeapons().get("soldier1");
@@ -136,6 +143,46 @@ public final class GameStateCombatEventTest {
                 sawImpact);
     }
 
+    @Test
+    public void antiRocketCounterRetainsItsActionBuildingSlotOnRocketOutcomes()
+            throws Exception {
+        boolean sawInterception = false;
+        boolean sawImpact = false;
+        for (long seed = 1; seed <= 128 && !(sawInterception && sawImpact); seed++) {
+            GameState.CombatEvent event = resolveAntiRocketStrike(seed, false);
+            if (event == null) {
+                continue;
+            }
+            assertEquals("antiRocket", event.counterWeaponName);
+            assertEquals(1, event.counterActionBuildingSlot);
+            assertTrue(FlashBattleRoutes.supportsRocketStrike(event));
+            if (event.type == GameState.CombatEventType.STRIKE_INTERCEPTED) {
+                assertEquals("explosion002",
+                        com.example.worlddomination.game.rendering
+                                .SourceCombatAnimationMapping.linkageFor(event));
+            }
+            sawInterception |= event.type == GameState.CombatEventType.STRIKE_INTERCEPTED;
+            sawImpact |= event.type == GameState.CombatEventType.STRIKE_IMPACT;
+        }
+        assertTrue("A seeded anti-rocket defense should exercise an interception",
+                sawInterception);
+        assertTrue("A seeded anti-rocket defense should exercise a missed interception",
+                sawImpact);
+    }
+
+    @Test
+    public void antiRocketRetainsTheSecondSourceDefenseBuildingSlot() throws Exception {
+        GameState.CombatEvent event = null;
+        for (long seed = 1; seed <= 128 && event == null; seed++) {
+            event = resolveAntiRocketStrike(seed, true);
+        }
+
+        assertTrue("The prepared rocket should resolve", event != null);
+        assertEquals("antiRocket", event.counterWeaponName);
+        assertEquals("The anti-air frame occupies slot one, leaving the distinct rocket frame slot two",
+                2, event.counterActionBuildingSlot);
+    }
+
     private static GameState.CombatEvent resolveAntiAirPlaneStrike(long seed)
             throws Exception {
         GameState state = new GameState(1, seed, true);
@@ -161,6 +208,44 @@ public final class GameStateCombatEventTest {
 
         for (GameState.CombatEvent candidate : state.getLastTurnCombatEvents()) {
             if ("plane1".equals(candidate.weaponName)) {
+                return candidate;
+            }
+        }
+        return null;
+    }
+
+    private static GameState.CombatEvent resolveAntiRocketStrike(long seed,
+                                                                 boolean occupyFirstSlot)
+            throws Exception {
+        GameState state = new GameState(1, seed, true);
+        for (int playerId = 2; playerId < 5; playerId++) {
+            state.getPlayerState(playerId).alive = false;
+        }
+        GameState.PlayerState attacker = state.getPlayerState(1);
+        activate(attacker, "rocket1");
+        activate(attacker, "warhead1");
+        Field preparedCarrier = GameState.PlayerState.class
+                .getDeclaredField("preparedCarrierName");
+        preparedCarrier.setAccessible(true);
+        preparedCarrier.set(attacker, "rocket1");
+
+        if (occupyFirstSlot) {
+            activateWeapon(state, "antiAir", 1);
+            state.selectAction(GameState.Action.DEFENSE);
+            assertTrue(state.configureDefense("antiAir"));
+            assertTrue(state.acceptSelectedAction());
+        }
+        activateWeapon(state, "antiRocket", 1);
+        state.selectAction(GameState.Action.DEFENSE);
+        assertTrue(state.configureDefense("antiRocket"));
+        assertTrue(state.acceptSelectedAction());
+        if (!occupyFirstSlot) {
+            queueResources(state);
+        }
+        state.confirmTurn();
+
+        for (GameState.CombatEvent candidate : state.getLastTurnCombatEvents()) {
+            if ("rocket1".equals(candidate.weaponName)) {
                 return candidate;
             }
         }

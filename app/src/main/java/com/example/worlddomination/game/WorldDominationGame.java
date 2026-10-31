@@ -26,7 +26,7 @@ import com.example.worlddomination.game.persistence.PersonalBestStore;
 import com.example.worlddomination.game.rendering.BattleAnimationSequence;
 import com.example.worlddomination.game.rendering.BattleExplosionRenderer;
 import com.example.worlddomination.game.rendering.BattlefieldCityRenderer;
-import com.example.worlddomination.game.rendering.FlashAntiAirTrackingAnimation;
+import com.example.worlddomination.game.rendering.FlashAntiDefenseTrackingAnimation;
 import com.example.worlddomination.game.rendering.FlashBattleRoutes;
 import com.example.worlddomination.game.rendering.FlashBattleUnitRenderer;
 import com.example.worlddomination.game.rendering.FlashCarrierPlaneAnimation;
@@ -148,7 +148,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private final List<FlashSubmarineAnimation> submarineBattleAnimations = new ArrayList<>();
     private final List<FlashCarrierPlaneAnimation> carrierPlaneAnimations = new ArrayList<>();
     private final List<FlashStandalonePlaneAnimation> standalonePlaneAnimations = new ArrayList<>();
-    private final List<FlashAntiAirTrackingAnimation> antiAirTrackingAnimations =
+    private final List<FlashAntiDefenseTrackingAnimation> antiDefenseTrackingAnimations =
             new ArrayList<>();
     private final List<FlashSatelliteAnimation> satelliteBattleAnimations = new ArrayList<>();
     private final List<PendingBattleAnimation> pendingBattleAnimations = new ArrayList<>();
@@ -541,7 +541,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 || !submarineBattleAnimations.isEmpty()
                 || !carrierPlaneAnimations.isEmpty()
                 || !standalonePlaneAnimations.isEmpty()
-                || !antiAirTrackingAnimations.isEmpty()
+                || !antiDefenseTrackingAnimations.isEmpty()
                 || !satelliteBattleAnimations.isEmpty()
                 || !pendingBattleAnimations.isEmpty()
                 || outcomeSequence.isAnimating()) {
@@ -666,19 +666,19 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 standalonePlaneAnimations.remove(i);
             }
         }
-        for (int i = antiAirTrackingAnimations.size() - 1; i >= 0; i--) {
-            FlashAntiAirTrackingAnimation animation = antiAirTrackingAnimations.get(i);
+        for (int i = antiDefenseTrackingAnimations.size() - 1; i >= 0; i--) {
+            FlashAntiDefenseTrackingAnimation animation = antiDefenseTrackingAnimations.get(i);
             animation.tick();
             if (animation.takeRotationCue()) {
                 audio.play(OriginalAudio.Cue.ANTI_AIR_ROTATE,
                         sourceAudioPan(animation.getBuildingPosition().x));
             }
             if (animation.takeGunCue()) {
-                audio.play(OriginalAudio.Cue.ANTI_AIR_GUN,
+                audio.play(animation.getGunCue(),
                         sourceAudioPan(animation.getBuildingPosition().x));
             }
             if (animation.isFinished()) {
-                antiAirTrackingAnimations.remove(i);
+                antiDefenseTrackingAnimations.remove(i);
             }
         }
         for (int i = satelliteBattleAnimations.size() - 1; i >= 0; i--) {
@@ -764,19 +764,30 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         standalonePlaneAnimations.clear();
     }
 
-    private void addAntiAirTrackingAnimation(GameState.CombatEvent event,
-                                            FlashAntiAirTrackingAnimation.Target target,
-                                            FlashAntiAirTrackingAnimation.TargetLock targetLock) {
-        if (!"antiAir".equals(event.counterWeaponName)
-                || event.counterActionBuildingSlot < 1
+    private void addAntiDefenseTrackingAnimation(GameState.CombatEvent event,
+                                                 FlashAntiDefenseTrackingAnimation.Target target,
+                                                 FlashAntiDefenseTrackingAnimation.TargetLock targetLock) {
+        FlashAntiDefenseTrackingAnimation.DefenseType defenseType;
+        if ("antiAir".equals(event.counterWeaponName)
+                && (target instanceof FlashCarrierPlaneAnimation
+                || target instanceof FlashStandalonePlaneAnimation)) {
+            defenseType = FlashAntiDefenseTrackingAnimation.DefenseType.AIR;
+        } else if ("antiRocket".equals(event.counterWeaponName)
+                && target instanceof FlashRocketAnimation
+                && !((FlashRocketAnimation) target).getRoute().submarineLaunch) {
+            defenseType = FlashAntiDefenseTrackingAnimation.DefenseType.ROCKET;
+        } else {
+            return;
+        }
+        if (event.counterActionBuildingSlot < 1
                 || event.counterActionBuildingSlot > 2
                 || !targetLock.tryLock(event.defenderPlayerId)) {
             return;
         }
         GameState.PlayerState defender = game.getPlayerState(event.defenderPlayerId);
-        antiAirTrackingAnimations.add(new FlashAntiAirTrackingAnimation(target,
+        antiDefenseTrackingAnimations.add(new FlashAntiDefenseTrackingAnimation(target,
                 event.defenderPlayerId, event.counterActionBuildingSlot,
-                defender.getReligionCode()));
+                defender.getReligionCode(), defenseType));
     }
 
     private static float sourceAudioPan(float sourceX) {
@@ -1211,8 +1222,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         battleUnitRenderer.drawRocket(batch, mapBounds, rocketBattleAnimations);
         battleUnitRenderer.drawCarrierPlanes(batch, mapBounds, carrierPlaneAnimations);
         battleUnitRenderer.drawStandalonePlanes(batch, mapBounds, standalonePlaneAnimations);
-        battleUnitRenderer.drawAntiAirTracking(batch, mapBounds,
-                antiAirTrackingAnimations);
+        battleUnitRenderer.drawAntiDefenseTracking(batch, mapBounds,
+                antiDefenseTrackingAnimations);
         battleUnitRenderer.drawSatellites(batch, mapBounds, satelliteBattleAnimations);
         explosionRenderer.draw(batch, mapBounds, battleAnimations);
         drawContained(uiAssets.logo, logoPanel.x + 7f, logoPanel.y + 2f,
@@ -2427,7 +2438,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         submarineBattleAnimations.clear();
         clearCarrierPlaneAnimations();
         clearStandalonePlaneAnimations();
-        antiAirTrackingAnimations.clear();
+        antiDefenseTrackingAnimations.clear();
         satelliteBattleAnimations.clear();
         satelliteFlightCuePlayed = false;
         pendingBattleAnimations.clear();
@@ -2715,7 +2726,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 submarineBattleAnimations.clear();
                 clearCarrierPlaneAnimations();
                 clearStandalonePlaneAnimations();
-                antiAirTrackingAnimations.clear();
+                antiDefenseTrackingAnimations.clear();
                 satelliteBattleAnimations.clear();
                 satelliteFlightCuePlayed = false;
                 pendingBattleAnimations.clear();
@@ -3161,8 +3172,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             int animationIndex = 0;
             int submarineSequenceIndex = 0;
             int carrierPlaneIndex = 0;
-            FlashAntiAirTrackingAnimation.TargetLock antiAirTargetLock =
-                    new FlashAntiAirTrackingAnimation.TargetLock();
+            FlashAntiDefenseTrackingAnimation.TargetLock antiDefenseTargetLock =
+                    new FlashAntiDefenseTrackingAnimation.TargetLock();
             ReferenceRandom presentationRandom = game.createPresentationRandomCopy();
             for (GameState.CombatEvent event : game.getLastTurnCombatEvents()) {
                 OriginalAudio.Cue cue = OriginalAudio.cueForCombatEvent(event);
@@ -3190,7 +3201,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                             animationIndex * 36,
                             SourceCombatAnimationMapping.linkageFor(event), cue);
                     carrierPlaneAnimations.add(planeAnimation);
-                    addAntiAirTrackingAnimation(event, planeAnimation, antiAirTargetLock);
+                    addAntiDefenseTrackingAnimation(event, planeAnimation,
+                            antiDefenseTargetLock);
                     animationIndex++;
                     continue;
                 }
@@ -3208,7 +3220,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                             route, playerColor, animationIndex * 36,
                             SourceCombatAnimationMapping.linkageFor(event), cue);
                     standalonePlaneAnimations.add(planeAnimation);
-                    addAntiAirTrackingAnimation(event, planeAnimation, antiAirTargetLock);
+                    addAntiDefenseTrackingAnimation(event, planeAnimation,
+                            antiDefenseTargetLock);
                     animationIndex++;
                     continue;
                 }
@@ -3217,9 +3230,12 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                             event.attackerPlayerId, event.defenderPlayerId,
                             event.cityIndex, event.actionBuildingSlot,
                             event.type == GameState.CombatEventType.STRIKE_INTERCEPTED);
-                    rocketBattleAnimations.add(new FlashRocketAnimation(route,
+                    FlashRocketAnimation rocketAnimation = new FlashRocketAnimation(route,
                             animationIndex * 36,
-                            SourceCombatAnimationMapping.linkageFor(event), cue));
+                            SourceCombatAnimationMapping.linkageFor(event), cue);
+                    rocketBattleAnimations.add(rocketAnimation);
+                    addAntiDefenseTrackingAnimation(event, rocketAnimation,
+                            antiDefenseTargetLock);
                     animationIndex++;
                     continue;
                 }
@@ -3519,7 +3535,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         submarineBattleAnimations.clear();
         clearCarrierPlaneAnimations();
         clearStandalonePlaneAnimations();
-        antiAirTrackingAnimations.clear();
+        antiDefenseTrackingAnimations.clear();
         satelliteBattleAnimations.clear();
         pendingBattleAnimations.clear();
         audio.dispose();

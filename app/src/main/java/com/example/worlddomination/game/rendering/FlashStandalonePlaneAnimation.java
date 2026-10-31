@@ -6,7 +6,7 @@ import java.util.Random;
 
 /** Source-tick flight of a fighter or bomber launched from a nation's airfield. */
 public final class FlashStandalonePlaneAnimation
-        implements FlashAntiAirTrackingAnimation.Target {
+        implements FlashAntiDefenseTrackingAnimation.Target {
     public enum Phase {
         TAKEOFF,
         CLIMB_TO_ORBIT,

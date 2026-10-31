@@ -2666,9 +2666,8 @@ public final class GameState {
                     && "plane".equals(weapon.definition.type)) {
                 // Battle.py records the plane's airfield as its source preStart anchor.
                 frame = "airfield";
-            } else if (order.action == Action.DEFENSE
-                    && "antiAir".equals(weapon.definition.name)) {
-                frame = "antiAir_fire";
+            } else if (order.action == Action.DEFENSE) {
+                frame = sourceDefenseBuildingFrame(weapon.definition.name);
             } else {
                 frame = null;
             }
@@ -2715,6 +2714,16 @@ public final class GameState {
         }
         if ("soldier4".equals(weaponName)) {
             return "hatch";
+        }
+        return null;
+    }
+
+    static String sourceDefenseBuildingFrame(String weaponName) {
+        if ("antiAir".equals(weaponName)) {
+            return "antiAir_fire";
+        }
+        if ("antiRocket".equals(weaponName)) {
+            return "antiRocket_fire";
         }
         return null;
     }

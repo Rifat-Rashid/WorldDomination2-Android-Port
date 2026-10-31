@@ -232,8 +232,8 @@ jobs:
             check: Original UI asset manifest tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.OriginalUiAssetManifestTest"'
           - id: anti-air-animation-tests
-            check: Anti-air tracking and firing cadence
-            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashAntiAirTrackingAnimationTest"'
+            check: Anti-defense tracking and firing cadence
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashAntiDefenseTrackingAnimationTest"'
           - id: anti-air-counter-event-tests
             check: Anti-air counter event metadata
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.antiAirCounterRetainsItsActionBuildingSlotOnAirStrikeOutcomes"'
@@ -242,7 +242,22 @@ jobs:
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.OriginalFlashAnimationAssetsTest.loadsOriginalReligionSpecificAntiAirFramesIntoTheBattleAtlas" --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest.antiAirTrackingTimelineContainsOriginalDirectionalTurretArtwork"'
           - id: anti-air-audio-tests
             check: Original anti-air sound assets
-            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.audio.OriginalAudioTest.antiAirTrackingCuesUseTheOriginalPackagedSounds" --tests "com.example.worlddomination.game.audio.OriginalAudioTest.everyMappedCueIsAnOriginalGzipWrappedMp3Asset"'
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.audio.OriginalAudioTest.antiDefenseTrackingCuesUseTheOriginalPackagedSounds" --tests "com.example.worlddomination.game.audio.OriginalAudioTest.everyMappedCueIsAnOriginalGzipWrappedMp3Asset"'
+          - id: anti-rocket-playback-tests
+            check: Anti-rocket target playback and shot cadence
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashAntiDefenseTrackingAnimationTest.antiRocketUsesItsOriginalOneShotCueOnTheAlternatingFireFrame" --tests "com.example.worlddomination.game.rendering.FlashRocketAnimationTest.siloRocketExposesItsMovingTargetPositionForAntiRocketTracking"'
+          - id: anti-rocket-counter-event-tests
+            check: Anti-rocket counter events and source building slots
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.antiRocketCounterRetainsItsActionBuildingSlotOnRocketOutcomes" --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.antiRocketRetainsTheSecondSourceDefenseBuildingSlot"'
+          - id: anti-defense-building-frame-tests
+            check: Anti-air and anti-rocket source building frames
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.antiDefenseActionsUseTheirDistinctSourceBuildingFrames"'
+          - id: anti-rocket-art-tests
+            check: Anti-rocket uses original directional Flash turret art
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.OriginalFlashAnimationAssetsTest.loadsOriginalReligionSpecificAntiAirFramesIntoTheBattleAtlas" --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest.antiAirTrackingTimelineContainsOriginalDirectionalTurretArtwork"'
+          - id: anti-rocket-audio-tests
+            check: Anti-rocket uses original one-shot firing audio
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.audio.OriginalAudioTest.antiDefenseTrackingCuesUseTheOriginalPackagedSounds" --tests "com.example.worlddomination.game.audio.OriginalAudioTest.everyMappedCueIsAnOriginalGzipWrappedMp3Asset" --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest.antiRocketFireSoundRunsForThirtyTwoSourceTicks"'
     steps:
       - name: Check out source
         uses: actions/checkout@v5
