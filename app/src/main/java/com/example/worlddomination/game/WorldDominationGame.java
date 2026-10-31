@@ -149,6 +149,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private GameState game;
     private GameSetup setup;
     private PersonalBestStore personalBestStore;
+    private String outcomePersonalBestText = "";
     private final OriginalAudio audio = new OriginalAudio();
     private final List<BattleAnimationSequence> battleAnimations = new ArrayList<>();
     private final List<FlashSoldierOneAnimation> soldierBattleAnimations = new ArrayList<>();
@@ -859,6 +860,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 stopScoreCounterSound();
                 outcomeSequence.reset();
             }
+            outcomePersonalBestText = "";
             return;
         }
 
@@ -866,6 +868,11 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             stopScoreCounterSound();
             if (personalBestStore != null) {
                 personalBestStore.recordFinalScore(game.getFinalScore());
+                outcomePersonalBestText = MatchOutcomePresentation.personalBestLine(
+                        personalBestStore.getBestScore());
+            } else {
+                outcomePersonalBestText = MatchOutcomePresentation.personalBestLine(
+                        game.getFinalScore());
             }
             outcomeSequence.begin(game.getMatchStatus(), game.getFinalScoreBreakdown());
             modalOpen = false;
@@ -2501,6 +2508,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 drawCentered(outcomeSequence.getScoreText(),
                         modal.x + modal.width / 2f, modal.y + modal.height * 0.37f, 15f);
             }
+            if (outcomeSequence.isComplete()) {
+                drawCentered(outcomePersonalBestText,
+                        modal.x + modal.width / 2f, modal.y + modal.height * 0.31f, 7f);
+            }
             if (!outcomeSequence.getSatelliteBonusText().isEmpty()) {
                 drawCentered(outcomeSequence.getSatelliteBonusText(),
                         modal.x + modal.width / 2f, modal.y + modal.height * 0.25f, 7f);
@@ -2539,6 +2550,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         stopScoreCounterSound();
         audio.stopAmbient();
         outcomeSequence.reset();
+        outcomePersonalBestText = "";
         setup = nextSetup;
         setupLeaderListStart = 0;
         setupMessage = "SELECT ONE TO FOUR OPPONENTS TO BEGIN";

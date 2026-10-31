@@ -38,4 +38,12 @@ public final class MatchOutcomePresentationTest {
                 MatchOutcomePresentation.formatScore(1_000_000_250L));
         assertEquals("0", MatchOutcomePresentation.formatScore(-100));
     }
+
+    @Test
+    public void personalBestUsesTheSamePeriodGroupedScoreFormat() {
+        assertEquals("PERSONAL BEST: 0", MatchOutcomePresentation.personalBestLine(0));
+        assertEquals("PERSONAL BEST: 1.000.000.250",
+                MatchOutcomePresentation.personalBestLine(1_000_000_250L));
+        assertEquals("PERSONAL BEST: 0", MatchOutcomePresentation.personalBestLine(-100));
+    }
 }
