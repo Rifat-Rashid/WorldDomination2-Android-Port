@@ -2215,6 +2215,49 @@ public final class GameStateTest {
     }
 
     @Test
+    public void incomingAiDemandsSpendTheRecipientBudgetInProposalArrivalOrder() {
+        GameState state = new GameState(1, 21L, false);
+        GameState.PlayerState receiver = state.getPlayerState(1);
+        GameState.PlayerState firstProposer = state.getPlayerState(3);
+        GameState.PlayerState secondProposer = state.getPlayerState(2);
+        receiver.moneyMillions = 10;
+        receiver.turnMoneyMillions = 10;
+        receiver.populationMillions = 100;
+        firstProposer.moneyMillions = 1_000;
+        firstProposer.populationMillions = 500;
+        secondProposer.moneyMillions = 1_000;
+        secondProposer.populationMillions = 500;
+
+        // The source keeps diplomacyPendingArr insertion order. Both demands
+        // qualify on score, but only the first can spend the recipient budget.
+        assertTrue(state.submitDiplomacyProposal(firstProposer.id, receiver.id, 3));
+        assertTrue(state.submitDiplomacyProposal(secondProposer.id, receiver.id, 3));
+        setRegard(receiver, firstProposer.id, 80);
+        setRegard(receiver, secondProposer.id, 80);
+
+        completeTurnWithResourcesAndMedia(state);
+
+        assertTrue(receiver.hasCeasefireWith(firstProposer.id));
+        assertFalse(receiver.hasCeasefireWith(secondProposer.id));
+        assertEquals(0, receiver.moneyMillions);
+        assertEquals(1_010, firstProposer.moneyMillions);
+        assertEquals(1_000, secondProposer.moneyMillions);
+    }
+
+    @Test
+    public void humanDiplomacyQueuePresentsProposalsInArrivalOrder() {
+        GameState state = new GameState(1, 22L, false);
+
+        assertTrue(state.submitDiplomacyProposal(3, 0, 0));
+        assertTrue(state.submitDiplomacyProposal(2, 0, 0));
+        assertEquals(3, state.getPendingHumanDiplomacyProposal().proposerId);
+
+        assertTrue(state.respondToDiplomacyProposal(false));
+
+        assertEquals(2, state.getPendingHumanDiplomacyProposal().proposerId);
+    }
+
+    @Test
     public void aiDiplomacyOfferRequiresStrictlyMoreAcceptanceThanRejectionAtRegardBoundary() {
         for (int regard : new int[]{50, 51}) {
             GameState state = new GameState(1, 10_000L + regard, false);
