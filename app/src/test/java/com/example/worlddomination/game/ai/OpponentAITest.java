@@ -4,6 +4,7 @@ import com.example.worlddomination.game.simulation.GameState;
 import com.example.worlddomination.game.simulation.TechnologyCatalog;
 import org.junit.Test;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -11,6 +12,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -1326,6 +1328,31 @@ public final class OpponentAITest {
     }
 
     @Test
+    public void plannerDoesNotFillSecondSlotFromBioDisabledActionScores() throws Exception {
+        GameState state = new GameState(1, 554L);
+        GameState.PlayerState actor = state.getPlayerState(1);
+        markEveryActionExceptBioloaded(actor, GameState.Action.RESOURCES);
+
+        List<OpponentAI.Decision> decisions = OpponentAI.plan(state, actor,
+                new Random(555L));
+
+        assertEquals(1, decisions.size());
+        assertEquals(GameState.Action.RESOURCES, decisions.get(0).action);
+    }
+
+    @Test
+    public void plannerReturnsNoActionWhenEverySourceChoiceIsBioDisabled() throws Exception {
+        GameState state = new GameState(1, 556L);
+        GameState.PlayerState actor = state.getPlayerState(1);
+        markEveryActionExceptBioloaded(actor, null);
+
+        List<OpponentAI.Decision> decisions = OpponentAI.plan(state, actor,
+                new Random(557L));
+
+        assertTrue(decisions.isEmpty());
+    }
+
+    @Test
     public void repeatedTurnsKeepOpponentFundsAndCitiesWithinValidRanges() {
         GameState state = new GameState(2, 119L);
         for (int turn = 0; turn < 15 && state.getMatchStatus() == GameState.MatchStatus.ONGOING;
@@ -1401,6 +1428,21 @@ public final class OpponentAITest {
 
     private static GameState gameWithRegularFirstOpponent(long firstSeed) {
         return gameWithRegularFirstOpponent(1, firstSeed);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void markEveryActionExceptBioloaded(GameState.PlayerState player,
+                                                       GameState.Action available)
+            throws Exception {
+        Field field = GameState.PlayerState.class.getDeclaredField("bioloadedActions");
+        field.setAccessible(true);
+        Set<GameState.Action> bioloadedActions =
+                (Set<GameState.Action>) field.get(player);
+        for (GameState.Action action : GameState.Action.values()) {
+            if (action != available) {
+                bioloadedActions.add(action);
+            }
+        }
     }
 
     private static GameState gameWithRegularFirstOpponent(int difficulty, long firstSeed) {
