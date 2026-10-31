@@ -160,6 +160,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private final Rectangle actionTitlePlate = new Rectangle();
     private final Rectangle portraitStrip = new Rectangle();
     private final Rectangle[] portraitCards = new Rectangle[4];
+    private final int[] portraitPlayerIds = {-1, -1, -1, -1};
     private final Rectangle toolbarPanel = new Rectangle();
     private final Rectangle helpButton = new Rectangle();
     private final Rectangle muteButton = new Rectangle();
@@ -1187,27 +1188,63 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     }
 
     private void drawPortraits() {
-        float slotWidth = Math.min(84f, (centerHeader.width - 16f) / 4f);
+        int visiblePlayers = 0;
+        for (int playerId = 1; playerId < 5; playerId++) {
+            GameState.PlayerState player = game.getPlayerState(playerId);
+            if (player.alive || player.getLeaderId() >= 0) {
+                visiblePlayers++;
+            }
+        }
+        for (int slot = 0; slot < portraitCards.length; slot++) {
+            portraitPlayerIds[slot] = -1;
+            portraitCards[slot].set(0f, 0f, 0f, 0f);
+        }
+        if (visiblePlayers == 0) {
+            return;
+        }
+
+        float slotWidth = Math.min(84f, (centerHeader.width - 16f) / visiblePlayers);
         float cardWidth = slotWidth - 3f;
         float cardHeight = Math.min(51f, centerHeader.height - 9f);
-        float startX = centerHeader.x + centerHeader.width / 2f - slotWidth * 2f;
+        float startX = centerHeader.x + centerHeader.width / 2f
+                - slotWidth * visiblePlayers / 2f;
         float y = centerHeader.y + 6f;
-        for (int i = 0; i < uiAssets.portraits.length; i++) {
-            float x = startX + i * slotWidth;
-            Rectangle card = portraitCards[i];
+        int visibleSlot = 0;
+        for (int playerId = 1; playerId < 5; playerId++) {
+            GameState.PlayerState player = game.getPlayerState(playerId);
+            if (!player.alive && player.getLeaderId() < 0) {
+                continue;
+            }
+            float x = startX + visibleSlot * slotWidth;
+            Rectangle card = portraitCards[visibleSlot];
             card.set(x, y, cardWidth, cardHeight);
+            portraitPlayerIds[visibleSlot] = playerId;
             drawPanelTexture(card);
-            drawContained(uiAssets.portraits[i], x + 5f, y + 3f,
-                    cardWidth - 10f, cardHeight - 6f);
+            int leaderId = player.getLeaderId();
+            if (leaderId >= 0) {
+                drawSetupLeaderPortrait(leaderId, x + 5f, y + 3f,
+                        cardWidth - 10f, cardHeight - 6f);
+            } else {
+                int fallbackPortrait = (playerId - 1) % uiAssets.portraits.length;
+                drawContained(uiAssets.portraits[fallbackPortrait], x + 5f, y + 3f,
+                        cardWidth - 10f, cardHeight - 6f);
+            }
+            visibleSlot++;
         }
     }
 
     private void drawPortraitMeters() {
         shapes.setProjectionMatrix(camera.combined);
         shapes.begin(ShapeRenderer.ShapeType.Filled);
-        for (int i = 0; i < PORTRAIT_COLORS.length; i++) {
+        for (int i = 0; i < portraitCards.length; i++) {
             Rectangle card = portraitCards[i];
-            shapes.setColor(PORTRAIT_COLORS[i]);
+            if (portraitPlayerIds[i] < 0 || card.width <= 0f || card.height <= 0f) {
+                continue;
+            }
+            GameState.PlayerState player = game.getPlayerState(portraitPlayerIds[i]);
+            int color = player.getPlayerColor();
+            shapes.setColor(color > 0 && color <= SETUP_PLAYER_COLORS.length
+                    ? SETUP_PLAYER_COLORS[color - 1] : PORTRAIT_COLORS[i]);
             shapes.rect(card.x + 5f, card.y + card.height - 4f,
                     card.width - 10f, 2f);
         }
@@ -1218,7 +1255,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         shapes.setProjectionMatrix(camera.combined);
         shapes.begin(ShapeRenderer.ShapeType.Line);
         for (Rectangle card : portraitCards) {
-            drawPanelEdges(card);
+            if (card.width > 0f && card.height > 0f) {
+                drawPanelEdges(card);
+            }
         }
         shapes.end();
     }
