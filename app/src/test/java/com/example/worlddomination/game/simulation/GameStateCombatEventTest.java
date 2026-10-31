@@ -40,6 +40,8 @@ public final class GameStateCombatEventTest {
         assertEquals("soldier1", events.get(0).weaponName);
         assertEquals(1, events.get(0).actionBuildingSlot);
         assertTrue(events.get(0).casualtiesMillions > 0);
+        assertEquals("base", state.getLastTurnActionBuildings().get(0).frameName);
+        assertEquals(1, state.getLastTurnActionBuildings().get(0).slot);
         assertEquals(OriginalAudio.Cue.SOLDIER_GUN,
                 OriginalAudio.cueForCombatEvent(events.get(0)));
     }
@@ -134,6 +136,7 @@ public final class GameStateCombatEventTest {
         assertTrue(state.acceptSelectedAction());
         queueResources(state);
         state.confirmTurn();
+        assertEquals("silo", state.getLastTurnActionBuildings().get(0).frameName);
 
         state.selectAction(GameState.Action.PREPARED_ATTACK);
         assertTrue(state.configurePreparedLaunch(1, 0, "warhead1"));
@@ -150,6 +153,7 @@ public final class GameStateCombatEventTest {
         assertEquals("rocket1", events.get(0).weaponName);
         assertEquals("warhead1", events.get(0).payloadName);
         assertEquals(1, events.get(0).actionBuildingSlot);
+        assertEquals("silo", state.getLastTurnActionBuildings().get(0).frameName);
         assertTrue(com.example.worlddomination.game.rendering.FlashBattleRoutes
                 .supportsRocketStrike(events.get(0)));
         assertTrue(events.get(0).casualtiesMillions > 0);

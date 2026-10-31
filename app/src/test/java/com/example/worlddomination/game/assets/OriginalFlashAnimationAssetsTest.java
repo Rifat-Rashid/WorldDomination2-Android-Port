@@ -25,6 +25,73 @@ import static org.junit.Assert.assertTrue;
 
 public final class OriginalFlashAnimationAssetsTest {
     @Test
+    public void loadsOriginalActionBuildingFramesAndReligionVariantsIntoTheBattleAtlas()
+            throws IOException {
+        JsonValue scene = loadScene();
+        Map<String, FlashAnimationTimeline> timelines =
+                OriginalFlashAnimationAssets.loadTimelines(scene);
+        FlashAnimationTimeline buildings = timelines.get(
+                OriginalFlashAnimationAssets.ACTION_BUILDINGS_TIMELINE);
+
+        assertNotNull("Missing source action-building root timeline", buildings);
+        assertEquals(OriginalFlashAnimationAssets.ACTION_BUILDINGS_SYMBOL_ID,
+                buildings.symbolId);
+        assertEquals(21, buildings.getFrameCount());
+
+        String[] sourceFrames = {
+                "diplomacy", "factory", "helipad", "base", "propaganda", "tech",
+                "resources", "religion", "antiAir_fire", "antiRocket_fire", "silo",
+                "airfield", "produce", "hatch", "sub", "ship", "space",
+                "antiAir_still", "antiRocket_still", "spyCenter"
+        };
+        int[] sourceFrameNumbers = {
+                2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21
+        };
+        Map<Integer, FlashAnimationTimeline> nested =
+                OriginalFlashAnimationAssets.loadNestedTimelines(scene, buildings);
+        Set<Integer> battleShapeIds = OriginalFlashAnimationAssets.collectShapeIds(
+                timelines, nested, shapeId -> Files.isRegularFile(shapeAsset(shapeId)));
+
+        for (int index = 0; index < sourceFrames.length; index++) {
+            String label = sourceFrames[index];
+            FlashAnimationTimeline.Frame frame = buildings.getFrameByLabel(label);
+            assertEquals("Unexpected source frame number for " + label,
+                    sourceFrameNumbers[index], buildings.getFrameNumberForLabel(label));
+            assertNotNull("Missing original Flash frame " + label, frame);
+            // Battle.createToShowABArray selects "factory" for production; the
+            // separate "produce" library frame is not shown during turn playback.
+            if ("produce".equals(label)) {
+                continue;
+            }
+            assertTrue("Empty source action-building frame " + label,
+                    frame.layers.length > 0);
+            for (FlashAnimationTimeline.Layer layer : frame.layers) {
+                assertTrue("Missing source symbol or artwork for " + label + ": "
+                                + layer.shapeId,
+                        nested.containsKey(layer.shapeId)
+                                || Files.isRegularFile(shapeAsset(layer.shapeId)));
+            }
+        }
+
+        FlashAnimationTimeline.Frame religionFrame = buildings.getFrameByLabel("religion");
+        FlashAnimationTimeline religion = null;
+        for (FlashAnimationTimeline.Layer layer : religionFrame.layers) {
+            FlashAnimationTimeline candidate = nested.get(layer.shapeId);
+            if (candidate != null && candidate.getFrameByLabel("mus") != null) {
+                religion = candidate;
+                break;
+            }
+        }
+        assertNotNull("Missing nested religion action-building clip", religion);
+        for (String religionCode : new String[]{"mus", "jew", "com", "chr", "bhu", "disco"}) {
+            assertNotNull("Missing original religion variant " + religionCode,
+                    religion.getFrameByLabel(religionCode));
+        }
+        assertTrue("The action-building source art was not added to the cached battle atlas",
+                !battleShapeIds.isEmpty());
+    }
+
+    @Test
     public void loadsEveryNestedSatelliteClipAndItsLaserAnchorSymbol() throws IOException {
         JsonValue scene = loadScene();
         FlashAnimationTimeline satellite = FlashAnimationTimeline.fromSymbol(

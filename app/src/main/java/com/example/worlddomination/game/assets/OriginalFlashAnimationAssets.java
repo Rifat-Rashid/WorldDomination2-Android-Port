@@ -44,7 +44,7 @@ public final class OriginalFlashAnimationAssets implements Disposable {
     public static final int ROCKET_TRAIL_SHAPE_ID = 4936;
     /** Leaf artwork nested inside the source bioCloud and cloud movie clips. */
     public static final int BIO_CLOUD_SHAPE_ID = 2426;
-    /** Root Flash timeline containing the two action-building clips for every nation. */
+    /** Root Flash timeline containing both action-building clips for each nation. */
     public static final int ACTION_BUILDINGS_SYMBOL_ID = 5658;
     public static final String ACTION_BUILDINGS_TIMELINE = "actionBuildings";
 

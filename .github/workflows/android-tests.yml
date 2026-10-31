@@ -279,6 +279,9 @@ jobs:
           - id: anti-rocket-audio-tests
             check: Anti-rocket uses original one-shot firing audio
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.audio.OriginalAudioTest.antiDefenseTrackingCuesUseTheOriginalPackagedSounds" --tests "com.example.worlddomination.game.audio.OriginalAudioTest.everyMappedCueIsAnOriginalGzipWrappedMp3Asset" --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest.antiRocketFireSoundRunsForThirtyTwoSourceTicks"'
+          - id: action-building-playback-tests
+            check: Original Flash action-building playback
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateActionBuildingEventTest" --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest" --tests "com.example.worlddomination.game.rendering.FlashActionBuildingAnimationTest" --tests "com.example.worlddomination.game.assets.OriginalFlashAnimationAssetsTest.loadsOriginalActionBuildingFramesAndReligionVariantsIntoTheBattleAtlas"'
     steps:
       - name: Check out source
         uses: actions/checkout@v5
