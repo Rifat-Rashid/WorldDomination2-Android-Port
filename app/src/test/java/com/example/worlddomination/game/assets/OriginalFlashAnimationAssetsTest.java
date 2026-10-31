@@ -58,6 +58,26 @@ public final class OriginalFlashAnimationAssetsTest {
     }
 
     @Test
+    public void productionSliderUsesTheOriginalFlashHandleArtwork() throws IOException {
+        JsonValue scene = loadScene();
+        Map<String, FlashAnimationTimeline> timelines =
+                OriginalFlashAnimationAssets.loadTimelines(scene);
+        FlashAnimationTimeline slider = timelines.get("interface_center_slider_1");
+        assertNotNull("Missing original production slider timeline", slider);
+
+        Map<Integer, FlashAnimationTimeline> nested =
+                OriginalFlashAnimationAssets.loadNestedTimelines(scene, slider);
+        Set<Integer> shapeIds = OriginalFlashAnimationAssets.collectShapeIds(
+                timelines, nested, shapeId -> Files.isRegularFile(shapeAsset(shapeId)));
+
+        assertTrue("Original white slider triangle is not included in the Flash atlas",
+                shapeIds.contains(OriginalFlashAnimationAssets.PRODUCTION_SLIDER_HANDLE_SHAPE_ID));
+        assertTrue("Original slider triangle SVGZ was not packaged",
+                Files.isRegularFile(shapeAsset(
+                        OriginalFlashAnimationAssets.PRODUCTION_SLIDER_HANDLE_SHAPE_ID)));
+    }
+
+    @Test
     public void loadsOriginalSubmarineHullAndTintTimelinesIntoBattleAtlas() throws IOException {
         JsonValue scene = loadScene();
         FlashAnimationTimeline submarine = FlashAnimationTimeline.fromSymbol(
