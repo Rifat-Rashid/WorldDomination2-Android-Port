@@ -117,6 +117,9 @@ jobs:
           - id: ai-research-turn-cap-tests
             check: AI research turn cap parity
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.OpponentAITest.researchTurnBonusStopsGrowingAtTheSourceSixtyTurnCap"'
+          - id: ai-personality-source-tests
+            check: AI special and suicide personality scoring parity
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.OpponentAITest.specialAndSuicideAttackScoresUseTheirStrictSourceStockThresholds" --tests "com.example.worlddomination.game.ai.OpponentAITest.specialLeaderResourceScoreAddsTheTwoSourceStockShortfallBonuses" --tests "com.example.worlddomination.game.ai.OpponentAITest.specialLeaderDivertsProductionAndLaterResearchAtSourceTechBoundaries" --tests "com.example.worlddomination.game.ai.OpponentAITest.suicideLeaderAddsPositiveProductionToResearchWithoutRemovingProduction"'
           - id: ai-diplomacy-target-score-tests
             check: AI diplomacy source score selection
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.OpponentAITest.diplomacyTargetScoreUsesStrictGreaterAndKeepsFirstRivalOnTies"'
