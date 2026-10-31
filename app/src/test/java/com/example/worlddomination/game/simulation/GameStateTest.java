@@ -8,6 +8,7 @@ import org.junit.Test;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
@@ -2303,6 +2304,55 @@ public final class GameStateTest {
     }
 
     @Test
+    public void upkeepRetargetsBeforeReligionDrawAndSkipsEliminatedPlayers() {
+        TurnUpkeepSequenceRandom random = new TurnUpkeepSequenceRandom();
+        GameState state = new GameState(1, random, false);
+        GameState.PlayerState ai = state.getPlayerState(1);
+        GameState.PlayerState eliminated = state.getPlayerState(2);
+        setEnemyPriorities(ai, 2, 3);
+        ai.religion = 12;
+        eliminated.alive = false;
+        eliminated.religion = 20;
+        setDiplomacyCooldown(eliminated, 0, 2);
+        for (int playerId : new int[]{0, 3, 4}) {
+            state.getPlayerState(playerId).religion = 0;
+        }
+        random.script(0, 5);
+        completeTurnWithResourcesAndMedia(state);
+
+        assertNotEquals("the dead primary enemy should be reassigned during upkeep",
+                2, ai.getPrimaryEnemyId());
+        assertEquals("the target-selection draw precedes AI religion decay", 2,
+                ai.religion);
+        assertEquals("eliminated nations are absent from source turn upkeep", 20,
+                eliminated.religion);
+        assertEquals("dead-player offer cooldowns do not tick", 2,
+                eliminated.getDiplomacyOfferedLastTurn(0));
+    }
+
+    @Test
+    public void targetEliminatedDuringResultPassIsRetargetedOnNextUpkeep() {
+        GameState state = new GameState(1, 54L, false);
+        GameState.PlayerState ai = state.getPlayerState(1);
+        GameState.PlayerState target = state.getPlayerState(2);
+        setEnemyPriorities(ai, 2, 3);
+        for (int cityIndex = 0; cityIndex < target.getCities().size(); cityIndex++) {
+            target.getCity(cityIndex).populationMillions = 0;
+        }
+
+        completeTurnWithResourcesAndMedia(state);
+
+        assertFalse(target.alive);
+        assertEquals("source upkeep retargets before this turn's elimination is applied",
+                2, ai.getPrimaryEnemyId());
+
+        completeTurnWithResourcesAndMedia(state);
+
+        assertNotEquals("the eliminated target is reassigned at the next source upkeep",
+                2, ai.getPrimaryEnemyId());
+    }
+
+    @Test
     public void acceptedAiOfferSettlesAfterTheRecipientPlansItsTurn() {
         GameSetup setup = new GameSetup();
         assertTrue(setup.toggleOpponent(3));
@@ -2428,6 +2478,34 @@ public final class GameStateTest {
         try {
             java.lang.reflect.Field field = GameState.PlayerState.class
                     .getDeclaredField("ceasefireTurns");
+            field.setAccessible(true);
+            ((int[]) field.get(player))[opponentId] = turns;
+        } catch (ReflectiveOperationException exception) {
+            throw new AssertionError(exception);
+        }
+    }
+
+    private static void setEnemyPriorities(GameState.PlayerState player, int primary,
+                                           int secondary) {
+        try {
+            java.lang.reflect.Field primaryField = GameState.PlayerState.class
+                    .getDeclaredField("primaryEnemyId");
+            java.lang.reflect.Field secondaryField = GameState.PlayerState.class
+                    .getDeclaredField("secondaryEnemyId");
+            primaryField.setAccessible(true);
+            secondaryField.setAccessible(true);
+            primaryField.setInt(player, primary);
+            secondaryField.setInt(player, secondary);
+        } catch (ReflectiveOperationException exception) {
+            throw new AssertionError(exception);
+        }
+    }
+
+    private static void setDiplomacyCooldown(GameState.PlayerState player, int opponentId,
+                                              int turns) {
+        try {
+            java.lang.reflect.Field field = GameState.PlayerState.class
+                    .getDeclaredField("diplomacyOfferedLastTurn");
             field.setAccessible(true);
             ((int[]) field.get(player))[opponentId] = turns;
         } catch (ReflectiveOperationException exception) {
@@ -2804,6 +2882,27 @@ public final class GameStateTest {
                 throw new AssertionError("scripted random value outside bound");
             }
             return value;
+        }
+    }
+
+    private static final class TurnUpkeepSequenceRandom extends Random {
+        private int[] values = new int[0];
+        private int drawCount;
+
+        void script(int... values) {
+            this.values = values.clone();
+            drawCount = 0;
+        }
+
+        @Override
+        public int nextInt(int bound) {
+            if (bound <= 0) {
+                throw new IllegalArgumentException("bound must be positive");
+            }
+            if (drawCount >= values.length) {
+                return 0;
+            }
+            return Math.floorMod(values[drawCount++], bound);
         }
     }
 
