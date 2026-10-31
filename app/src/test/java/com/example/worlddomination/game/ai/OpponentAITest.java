@@ -685,6 +685,44 @@ public final class OpponentAITest {
     }
 
     @Test
+    public void sourceEmptyCategoryZeroCanConsumeTheOnlyProductionSlot() {
+        GameState state = new GameState(1, 62L);
+        GameState.PlayerState actor = state.getPlayerState(1);
+        assertFalse(actor.isSpecialPerson());
+        assertFalse(actor.isSuicidePerson());
+        actor.turnMoneyMillions = 100;
+
+        boolean[] activeGroups = new boolean[8];
+        for (GameState.WeaponState weapon : actor.getWeapons().values()) {
+            if (weapon.definition.productionGroup == 8) {
+                continue;
+            }
+            weapon.inStock = actor.getDesiredStock(weapon.definition.name);
+            weapon.active = false;
+            int group = weapon.definition.productionGroup;
+            if (group >= 1 && group <= 7 && !activeGroups[group]) {
+                weapon.active = true;
+                activeGroups[group] = true;
+            }
+        }
+        for (int group = 1; group <= 7; group++) {
+            assertTrue("all source production groups need a zero-deficit active item",
+                    activeGroups[group]);
+        }
+
+        SequenceRandom random = new SequenceRandom(0, 0, 0);
+        OpponentAI.Decision decision = OpponentAI.planProduction(state, actor, random);
+
+        assertNotNull(decision);
+        assertEquals(GameState.Action.PRODUCTION, decision.action);
+        assertTrue("the source's leading inactive category zero consumes this one-slot pick",
+                decision.productionBudgets.isEmpty());
+        assertEquals(0, decision.reservedMillions);
+        assertEquals("no investment random draw occurs for inactive source category zero",
+                2, random.getDrawCount());
+    }
+
+    @Test
     public void productionDeficitCountsUnresearchedWeaponsOnlyInActiveCategories()
             throws Exception {
         GameState state = new GameState(1, 919L);
