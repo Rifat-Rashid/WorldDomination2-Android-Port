@@ -35,6 +35,15 @@ jobs:
           - id: airfield-plane-artwork-audio
             check: Airfield aircraft Flash artwork and audio
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.OriginalFlashAnimationAssetsTest.loadsOriginalStandaloneAircraftFramesTintAndShadows" --tests "com.example.worlddomination.game.audio.OriginalAudioTest.standaloneAircraftCuesUseTheRecoveredFighterAndCarrierJetSounds" --tests "com.example.worlddomination.game.rendering.FlashAffineTransformTest"'
+          - id: airfield-plane-trails
+            check: Airfield aircraft source smoke trails
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashStandalonePlaneAnimationTest.emitsSourceSizedFighterAndBomberTrailsFromOriginalTickThresholds" --tests "com.example.worlddomination.game.rendering.FlashStandalonePlaneAnimationTest.standaloneTrailRandomnessIsRepeatableAndDoesNotControlGameState"'
+          - id: airfield-plane-flyoff
+            check: Airfield aircraft post-impact fly-off
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashStandalonePlaneAnimationTest.successfulBombUsesTheFlashFlyOffWindowAndRemovesItsSmoke"'
+          - id: airfield-plane-trail-art
+            check: Original aircraft trail artwork integrity
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.OriginalFlashAnimationAssetsTest.standaloneAircraftTrailResolvesToOriginalPackagedSmokeShape"'
     steps:
       - name: Check out source
         uses: actions/checkout@v5

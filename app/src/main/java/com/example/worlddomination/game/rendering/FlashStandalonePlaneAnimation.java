@@ -2,6 +2,8 @@ package com.example.worlddomination.game.rendering;
 
 import com.example.worlddomination.game.audio.OriginalAudio;
 
+import java.util.Random;
+
 /** Source-tick flight of a fighter or bomber launched from a nation's airfield. */
 public final class FlashStandalonePlaneAnimation {
     public enum Phase {
@@ -9,6 +11,7 @@ public final class FlashStandalonePlaneAnimation {
         CLIMB_TO_ORBIT,
         ORBIT,
         APPROACH,
+        FLY_OFF,
         FINISHED
     }
 
@@ -32,6 +35,10 @@ public final class FlashStandalonePlaneAnimation {
     private static final int PLANE_COUNT_TO_FREE_FLIGHT = 8;
     private static final int FIGHTER_TAKEOFF_TICKS = 60;
     private static final int BOMBER_TAKEOFF_TICKS = 37;
+    private static final int FLY_OFF_COUNTER_LIMIT = 250;
+    private static final int FLY_OFF_DURATION_TICKS = calculateFlashFlyOffDurationTicks();
+    private static final int SINGLE_TRAIL_PUFFS_PER_TICK = 3;
+    private static final int MAX_TRAIL_PUFFS = 50;
     private static final float ORBIT_ALIGNMENT_LIMIT = 40f;
 
     private final FlashBattleRoutes.StandalonePlaneStrike route;
@@ -40,10 +47,25 @@ public final class FlashStandalonePlaneAnimation {
     private final OriginalAudio.Cue impactCue;
     private final OriginalAudio.Cue takeoffCue;
     private final OriginalAudio.Cue flightCue;
+    private final Random trailRandom;
+    private final float[] trailX = new float[MAX_TRAIL_PUFFS];
+    private final float[] trailY = new float[MAX_TRAIL_PUFFS];
+    private final float[] trailProgress = new float[MAX_TRAIL_PUFFS];
+    private final float[] trailSize = new float[MAX_TRAIL_PUFFS];
+    private final float[] trailSizeStep = new float[MAX_TRAIL_PUFFS];
+    private final float[] trailAlpha = new float[MAX_TRAIL_PUFFS];
+    private final float[] trailAlphaStep = new float[MAX_TRAIL_PUFFS];
+    private final boolean pairedTrail;
+    private final int trailStartTicks;
+    private final int trailSlotLimit;
     private final Actor actor = new Actor();
     private int delayTicks;
     private int activeTicks;
+    private int flyOffTicks;
     private int orbitTicks;
+    private int trailSlotCount;
+    private int activeTrailCount;
+    private int nextTrailIndex;
     private int countdownToLeaveOrbit = 6;
     private float xStep;
     private float yStep;
@@ -56,6 +78,7 @@ public final class FlashStandalonePlaneAnimation {
     private boolean takeoffCuePending;
     private boolean flightCuePending;
     private boolean impactPending;
+    private boolean trailEmissionEnabled = true;
     private boolean finished;
     private Phase phase = Phase.TAKEOFF;
 
@@ -71,6 +94,10 @@ public final class FlashStandalonePlaneAnimation {
         this.impactLinkage = impactLinkage;
         this.impactCue = impactCue;
         this.delayTicks = delayTicks;
+        pairedTrail = "plane002".equals(route.linkage);
+        trailStartTicks = pairedTrail ? 1 : 5;
+        trailSlotLimit = pairedTrail ? 22 : 50;
+        trailRandom = new Random(trailSeed(route, delayTicks));
         actor.sourceX = route.start.x;
         actor.sourceY = route.start.y;
         actor.previousX = actor.sourceX;
@@ -108,6 +135,11 @@ public final class FlashStandalonePlaneAnimation {
             flightCuePending = true;
         }
 
+        if (phase == Phase.FLY_OFF) {
+            advanceFlyOff();
+            return false;
+        }
+
         actor.visible = true;
         actor.previousX = actor.sourceX;
         actor.previousY = actor.sourceY;
@@ -133,10 +165,15 @@ public final class FlashStandalonePlaneAnimation {
                 actor.sourceX = route.bombWaypoint.x;
                 actor.sourceY = route.bombWaypoint.y;
                 actor.routeProgress = 1f;
-                actor.visible = false;
-                phase = Phase.FINISHED;
-                finished = true;
+                clearTrail();
                 impactPending = true;
+                if (route.intercepted) {
+                    actor.visible = false;
+                    phase = Phase.FINISHED;
+                    finished = true;
+                } else {
+                    phase = Phase.FLY_OFF;
+                }
                 return true;
             }
         }
@@ -152,7 +189,139 @@ public final class FlashStandalonePlaneAnimation {
         actor.sourceFrame = directionFrame(actor.sourceX - actor.previousX,
                 actor.sourceY - actor.previousY);
         updateRouteProgress();
+        updateTrail();
         return false;
+    }
+
+    private void advanceFlyOff() {
+        actor.previousX = actor.sourceX;
+        actor.previousY = actor.sourceY;
+        actor.sourceX += xStep;
+        actor.sourceY += yStep;
+        distanceTravelled += distance(actor.previousX, actor.previousY,
+                actor.sourceX, actor.sourceY);
+        actor.sourceFrame = directionFrame(actor.sourceX - actor.previousX,
+                actor.sourceY - actor.previousY);
+        updateRouteProgress();
+
+        // Unit.moveUnit increments curCountToStop twice on ordinary flyOff ticks.
+        flyOffTicks++;
+        if (flyOffTicks >= FLY_OFF_DURATION_TICKS) {
+            actor.visible = false;
+            phase = Phase.FINISHED;
+            finished = true;
+        }
+    }
+
+    private void updateTrail() {
+        if (trailEmissionEnabled && activeTicks >= trailStartTicks
+                && nextTrailIndex < trailSlotLimit) {
+            if (pairedTrail) {
+                createPairedTrailPuff(nextTrailIndex++);
+            } else {
+                for (int emitted = 0; emitted < SINGLE_TRAIL_PUFFS_PER_TICK
+                        && nextTrailIndex < trailSlotLimit; emitted++) {
+                    createSingleTrailPuff(nextTrailIndex++);
+                }
+            }
+        }
+
+        for (int index = 0; index < trailSlotCount; index++) {
+            if (trailAlpha[index] <= 0f) {
+                continue;
+            }
+            trailSize[index] += trailSizeStep[index];
+            trailAlpha[index] -= trailAlphaStep[index];
+            if (trailAlpha[index] <= 0f) {
+                trailAlpha[index] = 0f;
+                activeTrailCount--;
+            }
+        }
+    }
+
+    private void createSingleTrailPuff(int trailIndex) {
+        addTrailPuff(trailIndex, actor.previousX, actor.previousY, 8f,
+                randomBetween(50 - trailIndex, 100 - trailIndex),
+                randomBetween(5, 11) / 12f,
+                randomBetween(3, 15) / 3f);
+    }
+
+    private void createPairedTrailPuff(int trailIndex) {
+        float dx = actor.sourceX - actor.previousX;
+        float dy = -(actor.sourceY - actor.previousY);
+        float angle = dx == 0f && dy == 0f ? 0f
+                : -(Math.round((float) Math.toDegrees(Math.atan2(dy, dx))) + 181f);
+        float leftAngle = (angle - 90f) / 180f * (float) Math.PI * -1f;
+        float rightAngle = (angle + 90f) / 180f * (float) Math.PI * -1f;
+        float leftAlpha = 100 - randomBetween(22 - trailIndex, 100 - trailIndex);
+        float rightAlpha = 100 - randomBetween(22 - trailIndex, 100 - trailIndex);
+        addTrailPuff(trailIndex * 2, actor.sourceX + (float) Math.cos(leftAngle) * 15f,
+                actor.sourceY + (float) Math.sin(leftAngle) * 15f, 5f, leftAlpha,
+                randomBetween(1, 2), randomBetween(1, 4));
+        addTrailPuff(trailIndex * 2 + 1,
+                actor.sourceX + (float) Math.cos(rightAngle) * 15f,
+                actor.sourceY + (float) Math.sin(rightAngle) * 15f, 5f, rightAlpha,
+                randomBetween(1, 2), randomBetween(1, 4));
+    }
+
+    private void addTrailPuff(int index, float x, float y, float size,
+                              float alpha, float sizeStep, float alphaStep) {
+        if (index >= trailX.length) {
+            return;
+        }
+        trailX[index] = x;
+        trailY[index] = y;
+        trailProgress[index] = actor.routeProgress;
+        trailSize[index] = size;
+        trailSizeStep[index] = sizeStep;
+        trailAlpha[index] = Math.max(0f, alpha);
+        trailAlphaStep[index] = alphaStep;
+        trailSlotCount = Math.max(trailSlotCount, index + 1);
+        if (trailAlpha[index] > 0f) {
+            activeTrailCount++;
+        }
+    }
+
+    private void clearTrail() {
+        trailEmissionEnabled = false;
+        activeTrailCount = 0;
+        for (int index = 0; index < trailSlotCount; index++) {
+            trailAlpha[index] = 0f;
+        }
+    }
+
+    private int randomBetween(int minimum, int maximum) {
+        return minimum + trailRandom.nextInt(maximum - minimum + 1);
+    }
+
+    private static long trailSeed(FlashBattleRoutes.StandalonePlaneStrike route,
+                                  int delayTicks) {
+        long seed = 0x9E3779B97F4A7C15L;
+        seed = seed * 31L + route.attackerPlayerId;
+        seed = seed * 31L + route.targetPlayerId;
+        seed = seed * 31L + route.targetCityIndex;
+        seed = seed * 31L + route.actionBuildingSlot;
+        seed = seed * 31L + route.linkage.hashCode();
+        return seed * 31L + delayTicks;
+    }
+
+    static int flashFlyOffDurationTicks() {
+        return FLY_OFF_DURATION_TICKS;
+    }
+
+    private static int calculateFlashFlyOffDurationTicks() {
+        int count = 0;
+        int ticks = 0;
+        while (true) {
+            ticks++;
+            if (count <= 0) {
+                count++;
+            } else if (count < FLY_OFF_COUNTER_LIMIT) {
+                count += 2;
+            } else {
+                return ticks;
+            }
+        }
     }
 
     private void updateTakeoffHeight() {
@@ -272,6 +441,34 @@ public final class FlashStandalonePlaneAnimation {
 
     public boolean isFinished() {
         return finished;
+    }
+
+    public int getTrailCount() {
+        return activeTrailCount;
+    }
+
+    public int getTrailSlotCount() {
+        return trailSlotCount;
+    }
+
+    public float getTrailX(int index) {
+        return trailX[index];
+    }
+
+    public float getTrailY(int index) {
+        return trailY[index];
+    }
+
+    public float getTrailProgress(int index) {
+        return trailProgress[index];
+    }
+
+    public float getTrailSize(int index) {
+        return trailSize[index];
+    }
+
+    public float getTrailAlpha(int index) {
+        return Math.max(0f, Math.min(1f, trailAlpha[index] / 100f));
     }
 
     public boolean takeImpact() {

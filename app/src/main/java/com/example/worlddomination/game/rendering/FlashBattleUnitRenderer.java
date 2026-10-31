@@ -235,12 +235,27 @@ public final class FlashBattleUnitRenderer {
             return;
         }
         float mapScale = BattlefieldCityLayout.sourceScale(mapBounds);
+        TextureRegion smokeRegion = assets.getShape(
+                OriginalFlashAnimationAssets.ROCKET_TRAIL_SHAPE_ID);
         for (FlashStandalonePlaneAnimation animation : animations) {
             FlashStandalonePlaneAnimation.Actor actor = animation.getActor();
+            FlashBattleRoutes.StandalonePlaneStrike route = animation.getRoute();
+            if (smokeRegion != null) {
+                for (int index = 0; index < animation.getTrailSlotCount(); index++) {
+                    float alpha = animation.getTrailAlpha(index);
+                    if (alpha <= 0f) {
+                        continue;
+                    }
+                    drawStandalonePlaneTrail(batch, mapBounds, smokeRegion,
+                            animation.getTrailX(index), animation.getTrailY(index),
+                            route.attackerPlayerId, route.targetPlayerId,
+                            animation.getTrailProgress(index),
+                            animation.getTrailSize(index), alpha, mapScale);
+                }
+            }
             if (!actor.visible) {
                 continue;
             }
-            FlashBattleRoutes.StandalonePlaneStrike route = animation.getRoute();
             String linkage = route.linkage;
             drawPlaneLinkage(batch, mapBounds, assets.getTimeline(linkage),
                     actor.sourceFrame, actor.sourceX, actor.sourceY,
@@ -263,6 +278,20 @@ public final class FlashBattleUnitRenderer {
             batch.setColor(com.badlogic.gdx.graphics.Color.WHITE);
             batch.setShader(null);
         }
+    }
+
+    private static void drawStandalonePlaneTrail(SpriteBatch batch, Rectangle mapBounds,
+                                                 TextureRegion smokeRegion,
+                                                 float sourceX, float sourceY,
+                                                 int fromPlayerId, int toPlayerId,
+                                                 float routeProgress, float sourceSize,
+                                                 float alpha, float mapScale) {
+        float size = sourceSize * mapScale;
+        float x = BattlefieldCityLayout.sourceXBetween(mapBounds, sourceX,
+                fromPlayerId, toPlayerId, routeProgress);
+        float y = BattlefieldCityLayout.sourceY(mapBounds, sourceY);
+        batch.setColor(1f, 1f, 1f, alpha);
+        batch.draw(smokeRegion, x - size / 2f, y - size / 2f, size, size);
     }
 
     private void drawPlaneLinkage(SpriteBatch batch, Rectangle mapBounds,

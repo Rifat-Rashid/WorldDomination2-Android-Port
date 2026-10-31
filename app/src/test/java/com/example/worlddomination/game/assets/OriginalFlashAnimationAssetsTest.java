@@ -139,6 +139,27 @@ public final class OriginalFlashAnimationAssetsTest {
     }
 
     @Test
+    public void standaloneAircraftTrailResolvesToOriginalPackagedSmokeShape()
+            throws IOException {
+        JsonValue scene = loadScene();
+        FlashAnimationTimeline trail = FlashAnimationTimeline.fromSymbol(
+                findSymbol(scene, "trail"), scene.getFloat("fps"));
+        Map<Integer, FlashAnimationTimeline> nested =
+                OriginalFlashAnimationAssets.loadNestedTimelines(scene, trail);
+        Set<Integer> atlasShapeIds = OriginalFlashAnimationAssets.collectShapeIds(
+                Collections.singletonMap("trail", trail), nested,
+                shapeId -> Files.isRegularFile(shapeAsset(shapeId)));
+
+        assertEquals(1, trail.getFrameCount());
+        assertNotNull(nested.get(4937));
+        assertTrue("Flash trail linkage should resolve to its original smoke shape",
+                atlasShapeIds.contains(OriginalFlashAnimationAssets.ROCKET_TRAIL_SHAPE_ID));
+        assertTrue("Original smoke SVGZ should remain packaged",
+                Files.isRegularFile(shapeAsset(
+                        OriginalFlashAnimationAssets.ROCKET_TRAIL_SHAPE_ID)));
+    }
+
+    @Test
     public void loadsOriginalBioloadCloudArtIntoTheBattleAtlas() throws IOException {
         JsonValue scene = loadScene();
         Map<String, FlashAnimationTimeline> timelines =
