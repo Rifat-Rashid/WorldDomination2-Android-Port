@@ -42,6 +42,9 @@ jobs:
           - id: turn-progression-tests
             check: Game state and turn progression tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest"'
+          - id: noncombat-elimination-tests
+            check: Noncombat zero-population elimination
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.turnEndEliminatesZeroPopulationNationWithoutCombat"'
           - id: combat-event-tests
             check: Combat event resolution tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.resolvedSoldierAttackEmitsOneDirectAttackEvent" --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.resolvedPreparedRocketAttackEmitsPayloadImpactEvent" --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.shipStrikeEmitsAnImpactForEachResolvedPayload" --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.attackThatBecomesUnavailableDoesNotEmitCombatEvent"'

@@ -1950,6 +1950,34 @@ public final class GameStateTest {
     }
 
     @Test
+    public void turnEndEliminatesZeroPopulationNationWithoutCombat() {
+        GameState state = new GameState(1, 7L, false);
+        GameState.PlayerState opponent = state.getPlayerState(1);
+        for (CityState city : opponent.getCities()) {
+            city.populationMillions = 0;
+        }
+        opponent.populationMillions = 0;
+        assertTrue(opponent.alive);
+        assertEquals(GameState.MatchStatus.ONGOING, state.getMatchStatus());
+
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.MASS_MEDIA);
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+
+        assertFalse(opponent.alive);
+        assertEquals(0, opponent.populationMillions);
+        assertEquals(GameState.MatchStatus.ONGOING, state.getMatchStatus());
+        assertTrue("Zero-population cleanup is not a combat outcome",
+                state.getLastTurnCombatEvents().isEmpty());
+        for (CityState city : opponent.getCities()) {
+            assertEquals(0, city.populationMillions);
+        }
+        assertTrue(state.getMessages().contains("Nation 1 has been eliminated."));
+    }
+
+    @Test
     public void matchEndsInVictoryAfterEveryRivalIsEliminated() {
         GameState state = new GameState(1, 8L);
         for (int playerId = 1; playerId < 5; playerId++) {
