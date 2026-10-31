@@ -42,6 +42,9 @@ jobs:
           - id: turn-progression-tests
             check: Game state and turn progression tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest"'
+          - id: bioload-control-state-tests
+            check: Bioload control state and expiry
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.weaponBioloadStatusIsAvailableForInterfaceRendering" --tests "com.example.worlddomination.game.ai.OpponentAITest.biologicalStrikeBlocksHumanActionsAndRestoresTemporaryWeaponLocks"'
           - id: noncombat-elimination-tests
             check: Noncombat zero-population elimination
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.turnEndEliminatesZeroPopulationNationWithoutCombat"'

@@ -2103,6 +2103,12 @@ public final class GameState {
         return weapon != null && weapon.active;
     }
 
+    /** Returns whether a weapon is temporarily unavailable due to biological contamination. */
+    public boolean isWeaponBioloaded(int playerId, String name) {
+        WeaponState weapon = playerById(playerId).weapons.get(name);
+        return weapon != null && weapon.bioloaded;
+    }
+
     public int getWeaponStock(String name) {
         return getWeaponStock(0, name);
     }

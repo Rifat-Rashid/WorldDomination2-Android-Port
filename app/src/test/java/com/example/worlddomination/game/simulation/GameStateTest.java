@@ -488,6 +488,17 @@ public final class GameStateTest {
     }
 
     @Test
+    public void weaponBioloadStatusIsAvailableForInterfaceRendering() {
+        GameState state = new GameState(1, 18L);
+        assertFalse(state.isWeaponBioloaded(0, "rocket1"));
+        assertFalse(state.isWeaponBioloaded(0, "missing"));
+
+        GameState.WeaponState rocket = state.getHuman().getWeapons().get("rocket1");
+        rocket.bioloaded = true;
+        assertTrue(state.isWeaponBioloaded(0, "rocket1"));
+    }
+
+    @Test
     public void researchRequiresPrerequisiteAndReservesItsSourceCost() {
         GameState state = new GameState(1, 3L);
         state.selectAction(GameState.Action.RESEARCH);
