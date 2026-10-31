@@ -296,6 +296,41 @@ public final class OpponentAITest {
     }
 
     @Test
+    public void diplomacyPlanningDoesNotBranchOnAiPersonality() throws Exception {
+        GameState state = findAiWithNeutralHumanRegard();
+        GameState.PlayerState actor = aiWithNeutralHumanRegard(state);
+        actor.populationMillions = 100;
+        actor.moneyMillions = 100;
+        actor.turnMoneyMillions = 100;
+        state.getHuman().populationMillions = 200;
+        state.getHuman().moneyMillions = 100;
+        setRegardToward(actor, state.getHuman().id, 51);
+
+        SequenceRandom baselineRandom = new SequenceRandom(0, 1, 2, 3);
+        OpponentAI.Decision baseline = OpponentAI.planDiplomacy(state, actor,
+                baselineRandom);
+
+        assertNotNull(baseline);
+        assertEquals(GameState.Action.DIPLOMACY, baseline.action);
+        for (boolean[] personality : new boolean[][]{
+                {true, false}, {false, true}, {true, true}
+        }) {
+            setPersonality(actor, personality[0], personality[1]);
+            SequenceRandom personalityRandom = new SequenceRandom(0, 1, 2, 3);
+
+            OpponentAI.Decision decision = OpponentAI.planDiplomacy(state, actor,
+                    personalityRandom);
+
+            assertNotNull(decision);
+            assertEquals("the source diplomacy branch ignores leader personality",
+                    baseline.targetPlayerId, decision.targetPlayerId);
+            assertEquals(baseline.diplomacyOption, decision.diplomacyOption);
+            assertEquals("personality flags do not change source candidate RNG draws",
+                    baselineRandom.getDrawCount(), personalityRandom.getDrawCount());
+        }
+    }
+
+    @Test
     public void diplomacyTargetScoreUsesStrictGreaterAndKeepsFirstRivalOnTies() {
         GameState state = findAiWithNeutralHumanRegard();
         GameState.PlayerState actor = aiWithNeutralHumanRegard(state);
