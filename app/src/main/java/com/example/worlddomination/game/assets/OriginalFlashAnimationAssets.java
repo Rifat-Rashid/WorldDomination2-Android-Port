@@ -44,6 +44,9 @@ public final class OriginalFlashAnimationAssets implements Disposable {
     public static final int ROCKET_TRAIL_SHAPE_ID = 4936;
     /** Leaf artwork nested inside the source bioCloud and cloud movie clips. */
     public static final int BIO_CLOUD_SHAPE_ID = 2426;
+    /** Root Flash timeline containing the two action-building clips for every nation. */
+    public static final int ACTION_BUILDINGS_SYMBOL_ID = 5658;
+    public static final String ACTION_BUILDINGS_TIMELINE = "actionBuildings";
 
     private static final String SCENE_PATH = "original/runtime/scene.json.gz";
     private static final String SHAPE_PATH = "original/runtime/shapes/";
@@ -195,6 +198,8 @@ public final class OriginalFlashAnimationAssets implements Disposable {
                     loadedTimelines.get("plane001_shadow")));
             loadedNestedTimelines.putAll(loadNestedTimelines(scene,
                     loadedTimelines.get("plane002_shadow")));
+            loadedNestedTimelines.putAll(loadNestedTimelines(scene,
+                    loadedTimelines.get(ACTION_BUILDINGS_TIMELINE)));
             synchronized (loadLock) {
                 if (disposed) {
                     return;
@@ -391,11 +396,18 @@ public final class OriginalFlashAnimationAssets implements Disposable {
             if (isRequiredLinkage(linkage)) {
                 result.put(linkage, FlashAnimationTimeline.fromSymbol(symbol, frameRate));
             }
+            if (symbol.getInt("id", -1) == ACTION_BUILDINGS_SYMBOL_ID) {
+                result.put(ACTION_BUILDINGS_TIMELINE,
+                        FlashAnimationTimeline.fromSymbol(symbol, frameRate));
+            }
         }
         for (String linkage : REQUIRED_LINKAGES) {
             if (!result.containsKey(linkage)) {
                 throw new IllegalStateException("Missing original Flash animation " + linkage);
             }
+        }
+        if (!result.containsKey(ACTION_BUILDINGS_TIMELINE)) {
+            throw new IllegalStateException("Missing original Flash action-building timeline");
         }
         return result;
     }

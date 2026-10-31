@@ -234,6 +234,87 @@ public final class OriginalFlashAnimationAssetsTest {
                 battleShapeIds.contains(OriginalFlashAnimationAssets.BIO_CLOUD_SHAPE_ID));
     }
 
+    @Test
+    public void loadsOriginalSpyActionBuildingFramesReligionVariantsAndArt()
+            throws IOException {
+        JsonValue scene = loadScene();
+        Map<String, FlashAnimationTimeline> timelines =
+                OriginalFlashAnimationAssets.loadTimelines(scene);
+        FlashAnimationTimeline buildings = timelines.get(
+                OriginalFlashAnimationAssets.ACTION_BUILDINGS_TIMELINE);
+        assertNotNull("The source action-building root timeline was not loaded", buildings);
+        assertEquals(OriginalFlashAnimationAssets.ACTION_BUILDINGS_SYMBOL_ID,
+                buildings.symbolId);
+        assertEquals(24f, buildings.frameRate, 0f);
+        assertEquals(21, buildings.getFrameCount());
+        assertEquals(21, buildings.getFrameNumberForLabel("spyCenter"));
+
+        String[] sourceFrames = {"factory", "tech", "resources", "religion", "spyCenter"};
+        Map<Integer, FlashAnimationTimeline> nested =
+                OriginalFlashAnimationAssets.loadNestedTimelines(scene, buildings);
+        Set<Integer> atlasShapeIds = OriginalFlashAnimationAssets.collectShapeIds(
+                Collections.singletonMap(
+                        OriginalFlashAnimationAssets.ACTION_BUILDINGS_TIMELINE, buildings),
+                nested, shapeId -> Files.isRegularFile(shapeAsset(shapeId)));
+
+        for (String label : sourceFrames) {
+            FlashAnimationTimeline.Frame frame = buildings.getFrameByLabel(label);
+            assertNotNull("Missing original spy action-building frame " + label, frame);
+            assertTrue("Empty original spy action-building frame " + label,
+                    frame.layers.length > 0);
+
+            FlashAnimationTimeline religionBuilding = null;
+            for (FlashAnimationTimeline.Layer layer : frame.layers) {
+                if ("citySelectMC".equals(layer.name)) {
+                    continue;
+                }
+                FlashAnimationTimeline child = nested.get(layer.shapeId);
+                if (child != null) {
+                    religionBuilding = child;
+                    break;
+                }
+            }
+            assertNotNull("Missing nested original building symbol for " + label,
+                    religionBuilding);
+            if ("resources".equals(label)) {
+                // The source calls gotoAndStop(religionCode) on this unlabeled clip;
+                // Flash leaves its first frame selected when the label is absent.
+                assertNotNull(religionBuilding.getFrame(0));
+                assertTrue(religionBuilding.getFrameByLabel("chr") == null);
+            } else {
+                boolean hasReligionVariant = false;
+                for (String code : new String[]{"bhu", "chr", "com", "jew", "mus"}) {
+                    hasReligionVariant |= religionBuilding.getFrameByLabel(code) != null;
+                }
+                assertTrue("Missing source religion frame for spy building " + label,
+                        hasReligionVariant);
+            }
+        }
+
+        int sourceArtworkCount = 0;
+        for (FlashAnimationTimeline clip : nested.values()) {
+            for (int frameIndex = 0; frameIndex < clip.getFrameCount(); frameIndex++) {
+                FlashAnimationTimeline.Frame frame = clip.getFrame(frameIndex);
+                if (frame == null) {
+                    continue;
+                }
+                for (FlashAnimationTimeline.Layer layer : frame.layers) {
+                    if (nested.containsKey(layer.shapeId)) {
+                        continue;
+                    }
+                    assertTrue("Missing original action-building artwork " + layer.shapeId,
+                            Files.isRegularFile(shapeAsset(layer.shapeId)));
+                    assertTrue("Action-building art missing from the cached battle atlas "
+                                    + layer.shapeId,
+                            atlasShapeIds.contains(layer.shapeId));
+                    sourceArtworkCount++;
+                }
+            }
+        }
+        assertTrue("Expected source Flash art in the action-building subtree",
+                sourceArtworkCount > 0);
+    }
+
     private static JsonValue loadScene() throws IOException {
         Path asset = projectAsset("original/runtime/scene.json.gz");
         try (InputStream file = Files.newInputStream(asset);

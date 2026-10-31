@@ -45,6 +45,81 @@ public final class GameStateCombatEventTest {
     }
 
     @Test
+    public void resolvedSpyMissionEmitsTheChosenOriginalBuildingAndSourceSlot() {
+        GameState state = new GameState(1, 122L, false);
+        GameState.WeaponState spy = state.getHuman().getWeapons().get("spy1");
+        spy.active = true;
+        spy.inStock = 1;
+
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.ATTACK);
+        assertTrue(state.configureAttack(1, 0, "spy1"));
+        state.cycleSpyBuilding(1);
+        assertEquals("tech", state.getSelectedSpyBuilding());
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+
+        assertEquals(1, state.getLastTurnSpyMissions().size());
+        GameState.SpyMissionEvent event = state.getLastTurnSpyMissions().get(0);
+        assertEquals(0, event.attackerPlayerId);
+        assertEquals(1, event.defenderPlayerId);
+        assertEquals(2, event.actionBuildingSlot);
+        assertEquals("tech", event.actionBuildingFrame);
+        assertEquals(state.getHuman().getReligionCode(), event.religionCode);
+
+        queueResources(state);
+        state.selectAction(GameState.Action.MASS_MEDIA);
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+        assertTrue(state.getLastTurnSpyMissions().isEmpty());
+    }
+
+    @Test
+    public void spyActionBuildingUsesSourceSpyCenterFrameWhenItsBuildingIsDuplicated() {
+        GameState state = new GameState(1, 123L, false);
+        GameState.WeaponState spy = state.getHuman().getWeapons().get("spy1");
+        spy.active = true;
+        spy.inStock = 1;
+
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.ATTACK);
+        assertTrue(state.configureAttack(1, 0, "spy1"));
+        state.cycleSpyBuilding(1);
+        state.cycleSpyBuilding(1);
+        state.cycleSpyBuilding(1);
+        assertEquals("resources", state.getSelectedSpyBuilding());
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+
+        GameState.SpyMissionEvent event = state.getLastTurnSpyMissions().get(0);
+        assertEquals(1, event.actionBuildingSlot);
+        assertEquals("spyCenter", event.actionBuildingFrame);
+    }
+
+    @Test
+    public void spyAfterPreparedCarrierUsesTheSecondSourceActionBuildingSlot() {
+        GameState state = new GameState(1, 124L, false);
+        GameState.WeaponState rocket = state.getHuman().getWeapons().get("rocket1");
+        GameState.WeaponState spy = state.getHuman().getWeapons().get("spy1");
+        rocket.active = true;
+        rocket.inStock = 1;
+        spy.active = true;
+        spy.inStock = 1;
+
+        state.selectAction(GameState.Action.PREPARED_ATTACK);
+        assertTrue(state.configurePreparedCarrier("rocket1"));
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.ATTACK);
+        assertTrue(state.configureAttack(1, 0, "spy1"));
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+
+        assertEquals(2, state.getLastTurnSpyMissions().get(0).actionBuildingSlot);
+    }
+
+    @Test
     public void resolvedPreparedRocketAttackEmitsPayloadImpactEvent() {
         GameState state = new GameState(1, 121L, false);
         GameState.WeaponState rocket = state.getHuman().getWeapons().get("rocket1");

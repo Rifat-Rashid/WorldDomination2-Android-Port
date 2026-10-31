@@ -37,6 +37,7 @@ import com.example.worlddomination.game.rendering.FlashSuicideBomberAnimation;
 import com.example.worlddomination.game.rendering.FlashRocketAnimation;
 import com.example.worlddomination.game.rendering.FlashSatelliteAnimation;
 import com.example.worlddomination.game.rendering.FlashSoldierOneAnimation;
+import com.example.worlddomination.game.rendering.FlashSpyBuildingAnimation;
 import com.example.worlddomination.game.rendering.FlashSubmarineAnimation;
 import com.example.worlddomination.game.rendering.FlashAnimationTimeline;
 import com.example.worlddomination.game.rendering.RenderLoopPolicy;
@@ -151,6 +152,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private final OriginalAudio audio = new OriginalAudio();
     private final List<BattleAnimationSequence> battleAnimations = new ArrayList<>();
     private final List<FlashSoldierOneAnimation> soldierBattleAnimations = new ArrayList<>();
+    private final List<FlashSpyBuildingAnimation> spyBuildingAnimations = new ArrayList<>();
     private final List<FlashApacheMarineAnimation> apacheMarineAnimations = new ArrayList<>();
     private final List<FlashChinookTankAnimation> chinookTankAnimations = new ArrayList<>();
     private final List<FlashSuicideBomberAnimation> suicideBomberAnimations = new ArrayList<>();
@@ -541,7 +543,15 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         if (flashAnimationAssets != null && !flashAnimationAssets.isLoaded()) {
             return true;
         }
-        if ((cityRenderer != null && cityRenderer.isAnimating())
+        if (hasOtherBattlePlayback() || hasAnimatingSpyBuilding()
+                || outcomeSequence.isAnimating()) {
+            return true;
+        }
+        return navigationScroll.hasMotion() || equipmentScroll.hasMotion();
+    }
+
+    private boolean hasOtherBattlePlayback() {
+        return (cityRenderer != null && cityRenderer.isAnimating())
                 || !battleAnimations.isEmpty()
                 || !soldierBattleAnimations.isEmpty()
                 || !apacheMarineAnimations.isEmpty()
@@ -553,11 +563,16 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 || !standalonePlaneAnimations.isEmpty()
                 || !antiDefenseTrackingAnimations.isEmpty()
                 || !satelliteBattleAnimations.isEmpty()
-                || !pendingBattleAnimations.isEmpty()
-                || outcomeSequence.isAnimating()) {
-            return true;
+                || !pendingBattleAnimations.isEmpty();
+    }
+
+    private boolean hasAnimatingSpyBuilding() {
+        for (FlashSpyBuildingAnimation animation : spyBuildingAnimations) {
+            if (animation.isAnimating()) {
+                return true;
+            }
         }
-        return navigationScroll.hasMotion() || equipmentScroll.hasMotion();
+        return false;
     }
 
     private void fixedUpdate(float seconds) {
@@ -572,6 +587,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private void advanceBattleAnimations() {
         if (flashAnimationAssets == null || !flashAnimationAssets.isLoaded()) {
             return;
+        }
+        for (FlashSpyBuildingAnimation animation : spyBuildingAnimations) {
+            animation.tick();
         }
         for (int i = battleAnimations.size() - 1; i >= 0; i--) {
             BattleAnimationSequence animation = battleAnimations.get(i);
@@ -1278,6 +1296,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         batch.draw(uiAssets.battleMap, mapBounds.x, mapBounds.y,
                 mapBounds.width, mapBounds.height);
         cityRenderer.draw(batch, mapBounds, game);
+        battleUnitRenderer.drawSpyMissionBuildings(batch, mapBounds, spyBuildingAnimations);
         battleUnitRenderer.drawSubmarines(batch, mapBounds, submarineBattleAnimations);
         battleUnitRenderer.draw(batch, mapBounds, soldierBattleAnimations);
         battleUnitRenderer.drawApacheMarine(batch, mapBounds, apacheMarineAnimations);
@@ -2530,6 +2549,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         game = null;
         battleAnimations.clear();
         soldierBattleAnimations.clear();
+        spyBuildingAnimations.clear();
         apacheMarineAnimations.clear();
         chinookTankAnimations.clear();
         suicideBomberAnimations.clear();
@@ -2882,6 +2902,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 cityRenderer.reset(game);
                 battleAnimations.clear();
                 soldierBattleAnimations.clear();
+                spyBuildingAnimations.clear();
                 apacheMarineAnimations.clear();
                 chinookTankAnimations.clear();
                 suicideBomberAnimations.clear();
@@ -3334,6 +3355,14 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         } else if (confirmButton.contains(x, y) && game.getQueuedActionCount() == 2) {
             game.confirmTurn();
             audio.play(OriginalAudio.Cue.ACTION_ACCEPT);
+            spyBuildingAnimations.clear();
+            int spySequenceIndex = 0;
+            for (GameState.SpyMissionEvent event : game.getLastTurnSpyMissions()) {
+                spyBuildingAnimations.add(new FlashSpyBuildingAnimation(
+                        event.attackerPlayerId, event.defenderPlayerId,
+                        event.actionBuildingSlot, event.actionBuildingFrame,
+                        event.religionCode, spySequenceIndex++));
+            }
             int animationIndex = 0;
             int submarineSequenceIndex = 0;
             int carrierPlaneIndex = 0;
@@ -3747,6 +3776,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     public void dispose() {
         battleAnimations.clear();
         soldierBattleAnimations.clear();
+        spyBuildingAnimations.clear();
         apacheMarineAnimations.clear();
         chinookTankAnimations.clear();
         suicideBomberAnimations.clear();

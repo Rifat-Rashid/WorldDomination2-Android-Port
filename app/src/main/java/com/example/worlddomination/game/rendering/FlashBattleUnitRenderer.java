@@ -18,7 +18,10 @@ public final class FlashBattleUnitRenderer {
     };
     private static final int[][] SATELLITE_LASER_COLORS = buildSatelliteLaserColors();
     private static final int MAX_SATELLITE_CLIP_DEPTH = 8;
+    private static final int MAX_ACTION_BUILDING_CLIP_DEPTH = 16;
     private final FlashAffineTransform[] planeTransformScratch = createPlaneTransformScratch();
+    private final FlashAffineTransform[] spyBuildingTransformScratch =
+            createSpyBuildingTransformScratch();
     private static final String SUBMARINE_TINT_VERTEX_SHADER =
             "attribute vec4 a_position;\n"
                     + "attribute vec4 a_color;\n"
@@ -68,6 +71,91 @@ public final class FlashBattleUnitRenderer {
                         1f, 1f, actor.visible);
             }
         }
+    }
+
+    /** Draws source action-building frames during resolved spy mission playback. */
+    public void drawSpyMissionBuildings(SpriteBatch batch, Rectangle mapBounds,
+                                        List<FlashSpyBuildingAnimation> animations) {
+        if (!assets.isLoaded()) {
+            return;
+        }
+        FlashAnimationTimeline timeline = assets.getTimeline(
+                OriginalFlashAnimationAssets.ACTION_BUILDINGS_TIMELINE);
+        if (timeline == null) {
+            return;
+        }
+        for (FlashSpyBuildingAnimation animation : animations) {
+            if (!animation.isStarted() || animation.getAlpha() <= 0f) {
+                continue;
+            }
+            FlashAnimationTimeline.Frame frame = timeline.getFrameByLabel(
+                    animation.actionBuildingFrame);
+            if (frame == null) {
+                frame = timeline.getFrame(0);
+            }
+            FlashBattleRoutes.Point position = FlashBattleRoutes.actionBuildingPosition(
+                    animation.attackerPlayerId, animation.actionBuildingSlot);
+            spyBuildingTransformScratch[0].setIdentity();
+            drawSpyBuildingFrame(batch, mapBounds, frame, position.x, position.y,
+                    animation.attackerPlayerId, animation.religionCode,
+                    animation.getAlpha(), 0);
+        }
+        batch.setColor(com.badlogic.gdx.graphics.Color.WHITE);
+    }
+
+    private void drawSpyBuildingFrame(SpriteBatch batch, Rectangle mapBounds,
+                                      FlashAnimationTimeline.Frame frame,
+                                      float sourceX, float sourceY, int playerId,
+                                      String religionCode, float parentAlpha, int depth) {
+        if (frame == null || parentAlpha <= 0f
+                || depth >= MAX_ACTION_BUILDING_CLIP_DEPTH) {
+            return;
+        }
+        float mapScale = BattlefieldCityLayout.sourceScale(mapBounds);
+        FlashAffineTransform parent = spyBuildingTransformScratch[depth];
+        FlashAffineTransform transformed = spyBuildingTransformScratch[depth + 1];
+        for (FlashAnimationTimeline.Layer layer : frame.layers) {
+            float alpha = parentAlpha * layer.alpha;
+            if (alpha <= 0f) {
+                continue;
+            }
+            transformed.setProduct(parent, layer.a, layer.b, layer.c, layer.d,
+                    layer.tx, layer.ty);
+            TextureRegion region = assets.getShape(layer.shapeId);
+            if (region != null) {
+                float width = region.getRegionWidth() * mapScale;
+                float height = region.getRegionHeight() * mapScale;
+                float x = BattlefieldCityLayout.sourceX(mapBounds,
+                        sourceX + transformed.tx, playerId);
+                float top = BattlefieldCityLayout.sourceY(mapBounds,
+                        sourceY + transformed.ty);
+                batch.setColor(1f, 1f, 1f, alpha);
+                batch.draw(region, x, top - height, 0f, height, width, height,
+                        transformed.scaleX, transformed.scaleY,
+                        transformed.rotationDegrees);
+                continue;
+            }
+
+            FlashAnimationTimeline nested = assets.getTimelineBySymbolId(layer.shapeId);
+            if (nested == null || nested.getFrameCount() == 0) {
+                continue;
+            }
+            FlashAnimationTimeline.Frame nestedFrame = nested.getFrameByLabel(religionCode);
+            if (nestedFrame == null) {
+                nestedFrame = nested.getFrame(0);
+            }
+            drawSpyBuildingFrame(batch, mapBounds, nestedFrame, sourceX, sourceY,
+                    playerId, religionCode, alpha, depth + 1);
+        }
+    }
+
+    private static FlashAffineTransform[] createSpyBuildingTransformScratch() {
+        FlashAffineTransform[] transforms = new FlashAffineTransform[
+                MAX_ACTION_BUILDING_CLIP_DEPTH + 1];
+        for (int i = 0; i < transforms.length; i++) {
+            transforms[i] = new FlashAffineTransform();
+        }
+        return transforms;
     }
 
     public void drawApacheMarine(SpriteBatch batch, Rectangle mapBounds,
