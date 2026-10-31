@@ -1261,6 +1261,7 @@ public final class OpponentAITest {
         assertTrue(contaminatedCityFound);
         assertFalse(human.getBioloadedActions().isEmpty());
         GameState.Action blocked = human.getBioloadedActions().iterator().next();
+        assertTrue(state.isActionBioloaded(0, blocked));
         state.selectAction(blocked);
         assertNull(state.getSelectedAction());
         assertTrue(state.getLatestMessage().contains("biological contamination"));
@@ -1269,6 +1270,7 @@ public final class OpponentAITest {
             if (weapon.bioloaded) {
                 assertFalse(weapon.active);
                 disabledWeapon = weapon.definition.name;
+                assertTrue(state.isWeaponBioloaded(0, disabledWeapon));
                 break;
             }
         }
@@ -1287,6 +1289,7 @@ public final class OpponentAITest {
             assertFalse(human.getCity(cityIndex).bioloaded);
         }
         assertFalse(human.getWeapons().get(disabledWeapon).bioloaded);
+        assertFalse(state.isWeaponBioloaded(0, disabledWeapon));
         assertTrue(human.getWeapons().get(disabledWeapon).active);
     }
 

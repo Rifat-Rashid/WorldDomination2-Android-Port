@@ -93,6 +93,15 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             "INTELLIGENCE", "Spy 1", "Spy 2", "Spy 3", "Spy 4",
             "DEFENSE", "Anti-aircraft", "Anti-rocket"
     };
+    private static final String[] EQUIPMENT_WEAPON_NAMES = {
+            null, "rocket1", "rocket2", "rocket3", "rocket4",
+            null, "plane1", "plane2", null, "sub", "ship", "space", "specialLoad",
+            null, "warhead1", "warhead2", "warhead3", "warhead4",
+            null, "bioload1", "bioload2", "bioload3", "bioload4",
+            null, "soldier1", "soldier2", "soldier3", "soldier4",
+            null, "spy1", "spy2", "spy3", "spy4",
+            null, "antiAir", "antiRocket"
+    };
     private static final String[] EQUIPMENT_GROUP_TITLES = {
             "Rockets", "Aircraft", "Special Carriers", "Warheads",
             "Bioloads", "Infantry", "Intelligence", "Defense"
@@ -1492,6 +1501,11 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             font.setColor(ACTIONS[i].isPorted() ? Color.WHITE : DISABLED_TEXT);
             drawCentered(ACTIONS[i].label.toUpperCase(), row.x + row.width / 2f,
                     row.y + row.height / 2f + 4f, 10f);
+            if (game.isActionBioloaded(0, ACTIONS[i])) {
+                float markerY = row.y + row.height / 2f;
+                drawBioloadMarker(row.x + 11f, markerY, 14f, 12f);
+                drawBioloadMarker(row.x + row.width - 11f, markerY, 14f, 12f);
+            }
         }
         batch.end();
         Gdx.gl.glDisable(GL20.GL_SCISSOR_TEST);
@@ -1856,6 +1870,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             int stock = equipmentStock(rowIndex);
             drawCentered(stock >= 0 ? Integer.toString(stock) : "-",
                     countX + countWidth / 2f, row.y + row.height / 2f + 3f, 9f);
+            if (isEquipmentBioloaded(rowIndex)) {
+                drawBioloadMarker(countX + countWidth - 1f,
+                        row.y + row.height / 2f + 7f, 10f, 9f);
+            }
         }
         font.getData().setScale(originalTextScale);
         batch.end();
@@ -1908,31 +1926,37 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         return weaponName != null && game.isWeaponActive(0, weaponName);
     }
 
+    private boolean isEquipmentBioloaded(int rowIndex) {
+        String weaponName = equipmentWeaponName(rowIndex);
+        return weaponName != null && game.isWeaponBioloaded(0, weaponName);
+    }
+
     private int equipmentStock(int rowIndex) {
         String weaponName = equipmentWeaponName(rowIndex);
-        return weaponName == null || !game.isWeaponActive(0, weaponName)
+        return weaponName == null || (!game.isWeaponActive(0, weaponName)
+                && !game.isWeaponBioloaded(0, weaponName))
                 ? -1 : game.getWeaponStock(weaponName);
     }
 
-    private static String equipmentWeaponName(int rowIndex) {
-        if (rowIndex >= 1 && rowIndex <= 4) return "rocket" + rowIndex;
-        if (rowIndex == 6) return "plane1";
-        if (rowIndex == 7) return "plane2";
-        if (rowIndex >= 9 && rowIndex <= 12) {
-            switch (rowIndex) {
-                case 9: return "sub";
-                case 10: return "ship";
-                case 11: return "space";
-                default: return "specialLoad";
-            }
+    /** Draws the recovered Flash contamination artwork over the affected control. */
+    private void drawBioloadMarker(float centerX, float centerY, float width, float height) {
+        TextureRegion marker = flashAnimationAssets == null ? null
+                : flashAnimationAssets.getShape(OriginalFlashAnimationAssets.BIO_CLOUD_SHAPE_ID);
+        if (marker == null) {
+            font.setColor(GREEN);
+            font.draw(batch, "BIO", centerX - width / 2f,
+                    centerY + font.getLineHeight() * 0.28f);
+            font.setColor(Color.WHITE);
+            return;
         }
-        if (rowIndex >= 14 && rowIndex <= 17) return "warhead" + (rowIndex - 13);
-        if (rowIndex >= 19 && rowIndex <= 22) return "bioload" + (rowIndex - 18);
-        if (rowIndex >= 24 && rowIndex <= 27) return "soldier" + (rowIndex - 23);
-        if (rowIndex >= 29 && rowIndex <= 32) return "spy" + (rowIndex - 28);
-        if (rowIndex == 34) return "antiAir";
-        if (rowIndex == 35) return "antiRocket";
-        return null;
+        batch.setColor(1f, 1f, 1f, 0.9f);
+        batch.draw(marker, centerX - width / 2f, centerY - height / 2f, width, height);
+        batch.setColor(Color.WHITE);
+    }
+
+    private static String equipmentWeaponName(int rowIndex) {
+        return rowIndex < 0 || rowIndex >= EQUIPMENT_WEAPON_NAMES.length
+                ? null : EQUIPMENT_WEAPON_NAMES[rowIndex];
     }
 
     private void drawMapSelection() {
