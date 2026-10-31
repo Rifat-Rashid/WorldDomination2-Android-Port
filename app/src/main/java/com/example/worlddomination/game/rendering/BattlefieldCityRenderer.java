@@ -2,6 +2,7 @@ package com.example.worlddomination.game.rendering;
 
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Rectangle;
+import com.example.worlddomination.game.assets.OriginalFlashAnimationAssets;
 import com.example.worlddomination.game.assets.OriginalCityAssets;
 import com.example.worlddomination.game.assets.OriginalCityAssets.Frame;
 import com.example.worlddomination.game.simulation.CityState;
@@ -15,11 +16,14 @@ public final class BattlefieldCityRenderer {
             * BattlefieldCityLayout.CITIES_PER_PLAYER;
 
     private final OriginalCityAssets cityAssets;
+    private final CityBioloadCloudRenderer bioloadCloudRenderer;
     private final CityShrinkSequence[] citySequences = new CityShrinkSequence[CITY_COUNT];
     private final int[] trackedTargets = new int[CITY_COUNT];
 
-    public BattlefieldCityRenderer(OriginalCityAssets cityAssets) {
+    public BattlefieldCityRenderer(OriginalCityAssets cityAssets,
+                                   OriginalFlashAnimationAssets flashAssets) {
         this.cityAssets = cityAssets;
+        bioloadCloudRenderer = new CityBioloadCloudRenderer(flashAssets);
         for (int address = 0; address < CITY_COUNT; address++) {
             citySequences[address] = new CityShrinkSequence();
             trackedTargets[address] = Integer.MIN_VALUE;
@@ -28,6 +32,7 @@ public final class BattlefieldCityRenderer {
 
     /** Seeds presentation frames when a match starts, without animating initial cities. */
     public void reset(GameState game) {
+        bioloadCloudRenderer.reset(game);
         for (int address = 0; address < CITY_COUNT; address++) {
             CityState city = cityAt(game, address);
             int frameNumber = city == null ? -1 : city.getArtworkFrame();
@@ -41,6 +46,7 @@ public final class BattlefieldCityRenderer {
         if (game == null) {
             return;
         }
+        bioloadCloudRenderer.updateTargets(game);
         for (int address = 0; address < CITY_COUNT; address++) {
             CityState city = cityAt(game, address);
             int targetFrame = city == null ? -1 : city.getArtworkFrame();
@@ -57,12 +63,16 @@ public final class BattlefieldCityRenderer {
             return;
         }
         updateTargets(game);
+        bioloadCloudRenderer.tick();
         for (CityShrinkSequence sequence : citySequences) {
             sequence.tick();
         }
     }
 
     public boolean isAnimating() {
+        if (bioloadCloudRenderer.isAnimating()) {
+            return true;
+        }
         for (CityShrinkSequence sequence : citySequences) {
             if (sequence.isAnimating()) {
                 return true;
@@ -87,31 +97,30 @@ public final class BattlefieldCityRenderer {
             int cityAddress = playerId * BattlefieldCityLayout.CITIES_PER_PLAYER + cityIndex;
             CityShrinkSequence sequence = citySequences[cityAddress];
             int frameNumber = sequence.getFrameNumber();
-            if (frameNumber < 1) {
-                continue;
+            if (frameNumber >= 1) {
+                Frame frame = cityAssets.getFrame(owner.getReligionCode(), frameNumber);
+                if (frame != null) {
+                    float width = frame.region.getRegionWidth() * scale;
+                    float height = frame.region.getRegionHeight() * scale;
+                    float x = BattlefieldCityLayout.x(mapBounds, playerId, cityIndex)
+                            + frame.offsetX * scale;
+                    float y = BattlefieldCityLayout.y(mapBounds, playerId, cityIndex)
+                            - frame.offsetY * scale - height;
+                    float red = batch.getColor().r;
+                    float green = batch.getColor().g;
+                    float blue = batch.getColor().b;
+                    float previousAlpha = batch.getColor().a;
+                    float alpha = sequence.getAlpha() / 100f;
+                    if (alpha < 1f) {
+                        batch.setColor(red, green, blue, previousAlpha * alpha);
+                    }
+                    batch.draw(frame.region, x, y, width, height);
+                    if (alpha < 1f) {
+                        batch.setColor(red, green, blue, previousAlpha);
+                    }
+                }
             }
-            Frame frame = cityAssets.getFrame(owner.getReligionCode(), frameNumber);
-            if (frame == null) {
-                continue;
-            }
-            float width = frame.region.getRegionWidth() * scale;
-            float height = frame.region.getRegionHeight() * scale;
-            float x = BattlefieldCityLayout.x(mapBounds, playerId, cityIndex)
-                    + frame.offsetX * scale;
-            float y = BattlefieldCityLayout.y(mapBounds, playerId, cityIndex)
-                    - frame.offsetY * scale - height;
-            float red = batch.getColor().r;
-            float green = batch.getColor().g;
-            float blue = batch.getColor().b;
-            float previousAlpha = batch.getColor().a;
-            float alpha = sequence.getAlpha() / 100f;
-            if (alpha < 1f) {
-                batch.setColor(red, green, blue, previousAlpha * alpha);
-            }
-            batch.draw(frame.region, x, y, width, height);
-            if (alpha < 1f) {
-                batch.setColor(red, green, blue, previousAlpha);
-            }
+            bioloadCloudRenderer.drawCity(batch, mapBounds, playerId, cityIndex);
         }
     }
 
