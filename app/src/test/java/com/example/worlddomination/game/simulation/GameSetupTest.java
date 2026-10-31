@@ -74,6 +74,28 @@ public final class GameSetupTest {
     }
 
     @Test
+    public void selectedOpponentLeadersKeepTheirSetupOrderInTheMatchSlots() {
+        GameSetup setup = new GameSetup();
+        assertTrue(setup.toggleOpponent(17));
+        assertTrue(setup.toggleOpponent(3));
+
+        GameState game = new GameState(setup, new ReferenceRandom(818L));
+
+        assertEquals(17, game.getPlayerState(1).getLeaderId());
+        assertEquals(3, game.getPlayerState(2).getLeaderId());
+        assertEquals(GameSetup.leader(17).religionCode,
+                game.getPlayerState(1).getReligionCode());
+        assertEquals(GameSetup.leader(3).religionCode,
+                game.getPlayerState(2).getReligionCode());
+        assertTrue(game.getPlayerState(1).alive);
+        assertTrue(game.getPlayerState(2).alive);
+        assertFalse(game.getPlayerState(3).alive);
+        assertFalse(game.getPlayerState(4).alive);
+        assertEquals(-1, game.getPlayerState(3).getLeaderId());
+        assertEquals(-1, game.getPlayerState(4).getLeaderId());
+    }
+
+    @Test
     public void sourcePlayerColorIdsMapToTankTurretLibraryNames() {
         assertEquals("blue", GameSetup.colorName(1));
         assertEquals("red", GameSetup.colorName(2));
