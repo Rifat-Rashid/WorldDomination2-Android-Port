@@ -4,8 +4,10 @@ import com.badlogic.gdx.math.Rectangle;
 
 /** Source-sized layout and slider mapping for the original Flash production menu. */
 public final class ProductionScreenLayout {
-    public static final float ART_WIDTH = 364f;
-    public static final float ART_HEIGHT = 279f;
+    public static final float ART_WIDTH = 365f;
+    public static final float ART_HEIGHT = 275f;
+    public static final float MAP_BUTTON_WIDTH = 50f;
+    public static final float MAP_BUTTON_HEIGHT = 22f;
 
     private static final String[] CATEGORY_KEYS = {
             "rockets", "planes", "special", "warhead", "bioload", "soldier", "spy", "defense"
@@ -35,6 +37,13 @@ public final class ProductionScreenLayout {
     public static String categoryKey(int sliderIndex) {
         checkSliderIndex(sliderIndex);
         return CATEGORY_KEYS[sliderIndex];
+    }
+
+    /** Places the source MAP control at the upper-right edge of the battlefield frame. */
+    public static Rectangle setMapButtonBounds(Rectangle mapFrame, Rectangle output) {
+        return output.set(mapFrame.x + mapFrame.width - MAP_BUTTON_WIDTH - 3f,
+                mapFrame.y + mapFrame.height - MAP_BUTTON_HEIGHT - 2f,
+                MAP_BUTTON_WIDTH, MAP_BUTTON_HEIGHT);
     }
 
     /** Sets a touch target around one source slider track, in game world coordinates. */

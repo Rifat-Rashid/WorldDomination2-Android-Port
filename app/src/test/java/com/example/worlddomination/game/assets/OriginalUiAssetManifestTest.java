@@ -50,12 +50,14 @@ public final class OriginalUiAssetManifestTest {
     }
 
     @Test
-    public void productionMenuArtworkUsesItsOriginalDesktopAspectRatio() throws IOException {
+    public void productionMenuArtworkUsesTheOriginalAspectRatioAtTwoTimesResolution()
+            throws IOException {
         Path uiAssets = findUiAssets();
         int[] production = pngSize(uiAssets.resolve("production-modal.png"));
 
-        assertEquals(364, production[0]);
-        assertEquals(279, production[1]);
+        assertEquals(730, production[0]);
+        assertEquals(550, production[1]);
+        assertEquals(365f / 275f, (float) production[0] / production[1], 0.001f);
         assertTrue(Files.isRegularFile(uiAssets.resolve("production-modal.png")));
     }
 

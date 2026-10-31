@@ -732,6 +732,23 @@ public final class GameStateTest {
     }
 
     @Test
+    public void productionMenuUsesTheRemainingTurnBudgetAfterAnEarlierAction() {
+        GameState state = new GameState(1, 0L);
+        state.selectAction(GameState.Action.PRODUCTION);
+        assertTrue(state.configureProduction("soldier", 40));
+        assertEquals(26, state.getSelectedProductionTotalBudgetMillions());
+        assertTrue(state.acceptSelectedAction());
+        assertEquals(39, state.getTurnMoneyMillions());
+
+        state.selectAction(GameState.Action.PRODUCTION);
+        assertTrue(state.configureProduction("rockets", 50));
+        assertEquals(20, state.getSelectedProductionTotalBudgetMillions());
+        assertTrue(state.acceptSelectedAction());
+        assertEquals(19, state.getTurnMoneyMillions());
+        assertEquals(65, state.getHuman().moneyMillions);
+    }
+
+    @Test
     public void productionRejectsLockedTechnologyGroupAndKeepsExistingSelection() {
         GameState state = new GameState(1, 0L, false);
         state.selectAction(GameState.Action.PRODUCTION);

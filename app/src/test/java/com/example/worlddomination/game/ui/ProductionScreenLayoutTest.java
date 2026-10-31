@@ -19,7 +19,8 @@ public final class ProductionScreenLayoutTest {
             assertEquals(expected[index], ProductionScreenLayout.categoryKey(index));
         }
 
-        Rectangle modal = new Rectangle(100f, 40f, 364f, 279f);
+        Rectangle modal = new Rectangle(100f, 40f,
+                ProductionScreenLayout.ART_WIDTH, ProductionScreenLayout.ART_HEIGHT);
         Rectangle[] tracks = new Rectangle[expected.length];
         for (int index = 0; index < tracks.length; index++) {
             tracks[index] = ProductionScreenLayout.setSliderHitBounds(
@@ -31,6 +32,40 @@ public final class ProductionScreenLayoutTest {
                 tracks[2].overlaps(tracks[3]));
         assertFalse("Bioload and aircraft tracks are separate columns",
                 tracks[1].overlaps(tracks[4]));
+    }
+
+    @Test
+    public void mapReturnControlMatchesTheOriginalUpperRightPlacement() {
+        Rectangle mapFrame = new Rectangle(120f, 30f, 620f, 340f);
+        Rectangle mapButton = ProductionScreenLayout.setMapButtonBounds(
+                mapFrame, new Rectangle());
+
+        assertEquals(50f, mapButton.width, 0.001f);
+        assertEquals(22f, mapButton.height, 0.001f);
+        assertEquals(3f, mapFrame.x + mapFrame.width - mapButton.x - mapButton.width,
+                0.001f);
+        assertEquals(2f, mapFrame.y + mapFrame.height - mapButton.y - mapButton.height,
+                0.001f);
+        assertTrue(mapFrame.contains(mapButton));
+    }
+
+    @Test
+    public void specialCarrierTrackKeepsItsOriginalBoundsWhileTechnologyIsLocked() {
+        Rectangle modal = new Rectangle(0f, 0f,
+                ProductionScreenLayout.ART_WIDTH, ProductionScreenLayout.ART_HEIGHT);
+        Rectangle track = ProductionScreenLayout.setSliderHitBounds(
+                2, modal, new Rectangle());
+        Rectangle zeroHandle = ProductionScreenLayout.setHandleBounds(
+                2, 0, modal, new Rectangle());
+        Rectangle fullHandle = ProductionScreenLayout.setHandleBounds(
+                2, 100, modal, new Rectangle());
+
+        assertTrue(track.contains(zeroHandle.x + zeroHandle.width / 2f,
+                zeroHandle.y + zeroHandle.height / 2f));
+        assertTrue(track.contains(fullHandle.x + fullHandle.width / 2f,
+                fullHandle.y + fullHandle.height / 2f));
+        assertEquals(96.5f, fullHandle.x + fullHandle.width / 2f
+                - (zeroHandle.x + zeroHandle.width / 2f), 0.001f);
     }
 
     @Test
@@ -53,14 +88,17 @@ public final class ProductionScreenLayoutTest {
 
         assertEquals(100, ProductionScreenLayout.percentAt(0, modal, endX, 100));
         assertEquals(50, ProductionScreenLayout.percentAt(0, modal,
-                modal.x + (13.5f + 96.5f * 0.54f) * (modal.width / 364f), 55));
+                modal.x + (13.5f + 96.5f * 0.54f)
+                        * (modal.width / ProductionScreenLayout.ART_WIDTH), 55));
         assertEquals(55, ProductionScreenLayout.percentAt(0, modal,
-                modal.x + (13.5f + 96.5f * 0.92f) * (modal.width / 364f), 55));
+                modal.x + (13.5f + 96.5f * 0.92f)
+                        * (modal.width / ProductionScreenLayout.ART_WIDTH), 55));
     }
 
     @Test
     public void specialCarrierProgressBarsRespectTheirBounds() {
-        Rectangle modal = new Rectangle(0f, 0f, 364f, 279f);
+        Rectangle modal = new Rectangle(0f, 0f,
+                ProductionScreenLayout.ART_WIDTH, ProductionScreenLayout.ART_HEIGHT);
         Rectangle empty = ProductionScreenLayout.setSpecialStatFillBounds(
                 0, 0f, modal, new Rectangle());
         Rectangle full = ProductionScreenLayout.setSpecialStatFillBounds(

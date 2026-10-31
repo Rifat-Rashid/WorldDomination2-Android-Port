@@ -200,6 +200,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private final Rectangle actionSlots[] = {new Rectangle(), new Rectangle()};
     private final Rectangle confirmButton = new Rectangle();
     private final Rectangle modal = new Rectangle();
+    private final Rectangle productionMapButton = new Rectangle();
     private final Rectangle modalAccept = new Rectangle();
     private final Rectangle modalCancel = new Rectangle();
     private final SetupScreenLayout setupLayout = new SetupScreenLayout();
@@ -447,6 +448,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         modal.set(mapFrame.x + (mapFrame.width - modalWidth) / 2f,
                 mapFrame.y + (mapFrame.height - modalHeight) / 2f,
                 modalWidth, modalHeight);
+        ProductionScreenLayout.setMapButtonBounds(mapFrame, productionMapButton);
         float modalScaleX = modal.width / ProductionScreenLayout.ART_WIDTH;
         float modalScaleY = modal.height / ProductionScreenLayout.ART_HEIGHT;
         modalCancel.set(modal.x + 22f * modalScaleX,
@@ -2121,7 +2123,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         font.setColor(TITLE_TEXT);
         font.draw(batch, "FUNDS", x, top);
         font.setColor(GOLD);
-        font.draw(batch, "$ " + formatMillions(human.moneyMillions),
+        font.draw(batch, "$ " + formatMillions(human.turnMoneyMillions),
                 x + width * 0.43f, top);
         font.setColor(DISABLED_TEXT);
         font.draw(batch, "technology", x, top - rowHeight);
@@ -2200,6 +2202,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         GameState.Action action = game.getSelectedAction();
         if (action == GameState.Action.PRODUCTION) {
             drawProductionModal();
+            drawProductionMapButton();
             return;
         }
         if (action == GameState.Action.RESOURCES) {
@@ -2443,9 +2446,18 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
         batch.draw(uiAssets.productionModal, modal.x, modal.y, modal.width, modal.height);
+        batch.end();
+
+        shapes.setProjectionMatrix(camera.combined);
+        shapes.begin(ShapeRenderer.ShapeType.Filled);
+        drawProductionSpecialStatFills();
+        shapes.end();
+
         TextureRegion sliderHandle = flashAnimationAssets == null ? null
                 : flashAnimationAssets.getShape(
                         OriginalFlashAnimationAssets.PRODUCTION_SLIDER_HANDLE_SHAPE_ID);
+        batch.setProjectionMatrix(camera.combined);
+        batch.begin();
         for (int i = 0; i < ProductionScreenLayout.sliderCount(); i++) {
             ProductionScreenLayout.setHandleBounds(i,
                     game.getProductionPercent(ProductionScreenLayout.categoryKey(i)),
@@ -2457,16 +2469,59 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         batch.end();
 
+        if (sliderHandle == null) {
+            shapes.setProjectionMatrix(camera.combined);
+            shapes.begin(ShapeRenderer.ShapeType.Filled);
+            drawProductionSliderHandleFallbacks();
+            shapes.end();
+        }
+
+        batch.setProjectionMatrix(camera.combined);
+        batch.begin();
+        drawProductionSummary();
+        batch.end();
+        if (productionSummaryCount > 0) {
+            drawProductionModalButtons();
+        }
+    }
+
+    private void drawProductionModalButtons() {
+        batch.setProjectionMatrix(camera.combined);
+        batch.begin();
+        drawOriginalButton(modalCancel);
+        drawOriginalButton(modalAccept);
+        batch.end();
+
         shapes.setProjectionMatrix(camera.combined);
         shapes.begin(ShapeRenderer.ShapeType.Filled);
-        drawProductionSpecialStatFills();
-        if (sliderHandle == null) {
-            drawProductionSliderHandleFallbacks();
-        }
+        drawButtonGradient(modalCancel, false);
+        drawButtonGradient(modalAccept, false);
         shapes.end();
 
         batch.begin();
-        drawProductionSummary();
+        font.setColor(TITLE_TEXT);
+        drawCentered("CANCEL", modalCancel.x + modalCancel.width / 2f,
+                modalCancel.y + modalCancel.height / 2f + 3f, 8f);
+        drawCentered("ACCEPT", modalAccept.x + modalAccept.width / 2f,
+                modalAccept.y + modalAccept.height / 2f + 3f, 8f);
+        batch.end();
+    }
+
+    private void drawProductionMapButton() {
+        batch.setProjectionMatrix(camera.combined);
+        batch.begin();
+        drawOriginalButton(productionMapButton);
+        batch.end();
+
+        shapes.setProjectionMatrix(camera.combined);
+        shapes.begin(ShapeRenderer.ShapeType.Filled);
+        drawButtonGradient(productionMapButton, false);
+        shapes.end();
+
+        batch.begin();
+        font.setColor(TITLE_TEXT);
+        drawCentered("MAP", productionMapButton.x + productionMapButton.width / 2f,
+                productionMapButton.y + productionMapButton.height / 2f + 3f, 8f);
         batch.end();
     }
 
@@ -2483,7 +2538,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     }
 
     private void drawProductionSliderHandleFallbacks() {
-        for (Rectangle marker : productionSliderMarkers) {
+        for (int index = 0; index < productionSliderMarkers.length; index++) {
+            Rectangle marker = productionSliderMarkers[index];
             float x = marker.x;
             float y = marker.y;
             float width = marker.width;
@@ -2545,10 +2601,12 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                     modal.x + 350f * scaleX - productionSummaryLayout.width, baseline);
         }
 
-        font.setColor(0f, 36f / 255f, 60f / 255f, 1f);
-        font.draw(batch, productionSummaryTotal,
-                modal.x + 126f * scaleX,
-                modal.y + (ProductionScreenLayout.ART_HEIGHT - 237f) * scaleY);
+        if (productionSummaryCount > 0) {
+            font.setColor(0f, 36f / 255f, 60f / 255f, 1f);
+            font.draw(batch, productionSummaryTotal,
+                    modal.x + 126f * scaleX,
+                    modal.y + (ProductionScreenLayout.ART_HEIGHT - 237f) * scaleY);
+        }
         font.setColor(Color.WHITE);
         font.getData().setScale(originalScale);
     }
@@ -2955,6 +3013,15 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 continue;
             }
             if (game.getSelectedAction() == action) {
+                if (action == GameState.Action.PRODUCTION) {
+                    modalOpen = !modalOpen;
+                    audio.play(modalOpen ? OriginalAudio.Cue.ACTION_OPEN
+                            : OriginalAudio.Cue.ACTION_CLOSE);
+                    audio.playAmbient(modalOpen
+                            ? OriginalAudio.ambientForAction(action)
+                            : OriginalAudio.Cue.GAME_AMBIENT);
+                    return;
+                }
                 audio.play(OriginalAudio.Cue.ACTION_SWITCH_OFF);
                 game.cancelSelection();
                 modalOpen = false;
@@ -2982,6 +3049,14 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 }
             }
             return;
+        }
+    }
+
+    private void acceptProductionSelection() {
+        if (game.acceptSelectedAction()) {
+            modalOpen = false;
+            audio.play(OriginalAudio.Cue.ACTION_ACCEPT);
+            audio.playAmbient(OriginalAudio.Cue.GAME_AMBIENT);
         }
     }
 
@@ -3331,6 +3406,48 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         if (modalOpen) {
             GameState.Action action = game.getSelectedAction();
+            if (action == GameState.Action.PRODUCTION) {
+                if (productionMapButton.contains(x, y)) {
+                    modalOpen = false;
+                    audio.play(OriginalAudio.Cue.ACTION_CLOSE);
+                    audio.playAmbient(OriginalAudio.Cue.GAME_AMBIENT);
+                    return;
+                }
+                for (Rectangle row : navRows) {
+                    if (row.contains(x, y)) {
+                        activateNavigationRow(x, y);
+                        return;
+                    }
+                }
+                if (productionSummaryCount > 0 && modalAccept.contains(x, y)) {
+                    acceptProductionSelection();
+                    return;
+                }
+                if (productionSummaryCount > 0 && modalCancel.contains(x, y)) {
+                    game.cancelSelection();
+                    modalOpen = false;
+                    audio.play(OriginalAudio.Cue.ACTION_CLOSE);
+                    audio.playAmbient(OriginalAudio.Cue.GAME_AMBIENT);
+                    return;
+                }
+                for (int slot = 0; slot < actionSlots.length; slot++) {
+                    if (!actionSlots[slot].contains(x, y)) {
+                        continue;
+                    }
+                    if (game.getQueuedAction(slot) != null) {
+                        game.removeQueuedAction(slot);
+                        audio.play(OriginalAudio.Cue.ACTION_CLOSE);
+                    }
+                    return;
+                }
+                for (int i = 0; i < productionSliderHitTargets.length; i++) {
+                    if (productionSliderHitTargets[i].contains(x, y)) {
+                        updateProductionSlider(i, x);
+                        return;
+                    }
+                }
+                return;
+            }
             if (selectMapTargetCity(action, x, y)) {
                 return;
             }
@@ -3382,13 +3499,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 if (attackWeaponNext.contains(x, y)) {
                     cycleDefenseWeapon(1);
                     return;
-                }
-            } else if (action == GameState.Action.PRODUCTION) {
-                for (int i = 0; i < productionSliderHitTargets.length; i++) {
-                    if (productionSliderHitTargets[i].contains(x, y)) {
-                        updateProductionSlider(i, x);
-                        return;
-                    }
                 }
             } else if (action == GameState.Action.RESEARCH) {
                 if (researchPrevious.contains(x, y)) {
