@@ -208,6 +208,32 @@ public final class FlashBattleRoutes {
         }
     }
 
+    /** Source launch, orbital parking point, and laser target for a space strike. */
+    public static final class SatelliteStrike {
+        public final int attackerPlayerId;
+        public final int targetPlayerId;
+        public final int targetCityIndex;
+        public final int attackerColor;
+        public final String religionCode;
+        public final Point launch;
+        public final Point orbit;
+        public final Point targetCity;
+
+        private SatelliteStrike(int attackerPlayerId, int targetPlayerId,
+                                int targetCityIndex, int attackerColor,
+                                String religionCode, Point launch, Point orbit,
+                                Point targetCity) {
+            this.attackerPlayerId = attackerPlayerId;
+            this.targetPlayerId = targetPlayerId;
+            this.targetCityIndex = targetCityIndex;
+            this.attackerColor = attackerColor;
+            this.religionCode = religionCode;
+            this.launch = launch;
+            this.orbit = orbit;
+            this.targetCity = targetCity;
+        }
+    }
+
     /** Source carrier-launched plane path for one of a ship's three payloads. */
     public static final class CarrierPlaneStrike {
         public final int attackerPlayerId;
@@ -310,6 +336,11 @@ public final class FlashBattleRoutes {
             {402f, 128f}, {79.4f, 289.3f}, {351.4f, 103.55f},
             {343.45f, 478f}, {546f, 382f}
     };
+    // Sub_model.satellite_height_arr and satellite_pos_arr from the Flash source.
+    private static final float[] SATELLITE_LAUNCH_HEIGHTS = {158f, 18f, 18f, 269f, 169f};
+    private static final float[][] SATELLITE_ORBIT_POSITIONS = {
+            {368f, 75f}, {268f, 104f}, {466f, 111f}, {121f, 321f}, {667f, 291f}
+    };
     // Sub_model.ship_plane_start_arr offsets, in the source payload attack order.
     private static final float[][] SHIP_PLANE_START_OFFSETS = {
             {28f, -26f}, {-9f, -3f}, {-38f, 11f}
@@ -376,6 +407,43 @@ public final class FlashBattleRoutes {
                 && (event.type == GameState.CombatEventType.STRIKE_IMPACT
                 || event.type == GameState.CombatEventType.STRIKE_INTERCEPTED)
                 && "ship".equals(event.weaponName);
+    }
+
+    /** Returns whether the original Flash resolver launched a satellite unit. */
+    public static boolean supportsSatelliteStrike(GameState.CombatEvent event) {
+        return event != null && event.type == GameState.CombatEventType.STRIKE_IMPACT
+                && "space".equals(event.weaponName)
+                && "specialLoad".equals(event.payloadName);
+    }
+
+    /** Recreates Battle.createToSpawnUnitsArr's satellite route and city laser target. */
+    public static SatelliteStrike createSatelliteStrike(int attackerPlayerId,
+                                                         int targetPlayerId,
+                                                         int targetCityIndex,
+                                                         int attackerColor,
+                                                         String religionCode) {
+        validatePlayer(attackerPlayerId);
+        validatePlayer(targetPlayerId);
+        if (targetCityIndex < 0 || targetCityIndex >= BattlefieldCityLayout.CITIES_PER_PLAYER
+                || attackerColor < 1 || attackerColor > 5
+                || !isSatelliteReligion(religionCode)) {
+            throw new IllegalArgumentException("Invalid satellite presentation data");
+        }
+
+        float[] orbitPosition = SATELLITE_ORBIT_POSITIONS[attackerPlayerId];
+        Point launch = new Point(-120f, SATELLITE_LAUNCH_HEIGHTS[attackerPlayerId]);
+        Point orbit = new Point(orbitPosition[0], orbitPosition[1]);
+        Point targetCity = new Point(BattlefieldCityLayout.sourceCityX(targetPlayerId,
+                targetCityIndex), BattlefieldCityLayout.sourceCityY(targetPlayerId,
+                targetCityIndex));
+        return new SatelliteStrike(attackerPlayerId, targetPlayerId, targetCityIndex,
+                attackerColor, religionCode, launch, orbit, targetCity);
+    }
+
+    private static boolean isSatelliteReligion(String religionCode) {
+        return "mus".equals(religionCode) || "jew".equals(religionCode)
+                || "com".equals(religionCode) || "chr".equals(religionCode)
+                || "bhu".equals(religionCode);
     }
 
     /** Recreates Battle.createToSpawnUnitsArr's carrier, launch offsets, and source waypoints. */

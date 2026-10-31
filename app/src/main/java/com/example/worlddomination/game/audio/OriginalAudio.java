@@ -26,6 +26,8 @@ public final class OriginalAudio {
         ACTION_CLOSE("63_interface_closeactiondevice.wav.mp3.gz"),
         SCORE_COUNTER("31_Score counter.Mp3.mp3.gz"),
         SATELLITE_MULTIPLIER("34_Satelite multiplier.Mp3.mp3.gz"),
+        SATELLITE_FLIGHT("33_Satelite_flight.wav.mp3.gz"),
+        SATELLITE_LASER("19_unit_Sattelite Lasershot.wav.mp3.gz"),
         FLAG_BONUS("75_Country domination bonus.Mp3.mp3.gz"),
         SOLDIER_GUN("14_unit_Soldier gun.wav.mp3.gz"),
         SEAL_GUN("16_unit_seal gun.wav.mp3.gz"),
@@ -86,6 +88,8 @@ public final class OriginalAudio {
         preload(Cue.ACTION_CLOSE);
         preload(Cue.SCORE_COUNTER);
         preload(Cue.SATELLITE_MULTIPLIER);
+        preload(Cue.SATELLITE_FLIGHT);
+        preload(Cue.SATELLITE_LASER);
         preload(Cue.FLAG_BONUS);
         preload(Cue.SOLDIER_GUN);
         preload(Cue.SEAL_GUN);

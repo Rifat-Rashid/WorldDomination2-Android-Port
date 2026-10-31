@@ -25,11 +25,15 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayDeque;
 import java.util.Collections;
+import java.util.Deque;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.IntPredicate;
 import java.util.zip.GZIPInputStream;
 
 /** Loads original Flash timelines and caches their shapes, prioritizing setup portraits. */
@@ -47,7 +51,7 @@ public final class OriginalFlashAnimationAssets implements Disposable {
             "explosion_warhead_1", "explosion_warhead_2", "explosion_warhead_3",
             "explosion_warhead_4", "explosion_bioload_1", "explosion_bioload_2",
             "explosion_bioload_3", "explosion_bioload_4", "explosion001", "explosion002",
-            "explosion003",
+            "explosion003", "satellite",
             "rocket", "trail",
             "ship_plane",
             "boat001", "soldier", "soldier001_shoot", "chinook", "chinook_shadow", "apache",
@@ -59,6 +63,8 @@ public final class OriginalFlashAnimationAssets implements Disposable {
 
     private final Object loadLock = new Object();
     private volatile Map<String, FlashAnimationTimeline> timelines = Collections.emptyMap();
+    private volatile Map<Integer, FlashAnimationTimeline> nestedTimelines =
+            Collections.emptyMap();
     private volatile Map<Integer, TextureRegion> shapeRegions = Collections.emptyMap();
     private volatile Map<Integer, TextureRegion> setupPortraitRegions = Collections.emptyMap();
     private volatile RuntimeException loadFailure;
@@ -113,7 +119,7 @@ public final class OriginalFlashAnimationAssets implements Disposable {
         }
 
         Map<Integer, TextureRegion> generatedRegions = new LinkedHashMap<>();
-        Set<Integer> battleShapeIds = collectShapeIds(timelines);
+        Set<Integer> battleShapeIds = collectShapeIds(timelines, nestedTimelines);
         battleShapeIds.removeAll(collectSetupPortraitShapeIds(timelines));
         for (int shapeId : battleShapeIds) {
             TextureRegion region = generatedAtlas.findRegion(regionName(shapeId));
@@ -150,6 +156,11 @@ public final class OriginalFlashAnimationAssets implements Disposable {
         return timelines.get(linkage);
     }
 
+    /** Returns a nested source movie clip by its Flash character ID. */
+    public FlashAnimationTimeline getTimelineBySymbolId(int symbolId) {
+        return nestedTimelines.get(symbolId);
+    }
+
     public TextureRegion getShape(int shapeId) {
         TextureRegion portrait = setupPortraitRegions.get(shapeId);
         return portrait != null ? portrait : shapeRegions.get(shapeId);
@@ -162,12 +173,16 @@ public final class OriginalFlashAnimationAssets implements Disposable {
         boolean portraitTransferred = false;
         boolean battleTransferred = false;
         try {
-            Map<String, FlashAnimationTimeline> loadedTimelines = loadTimelines();
+            JsonValue scene = new JsonReader().parse(readCompressedUtf8(SCENE_PATH));
+            Map<String, FlashAnimationTimeline> loadedTimelines = loadTimelines(scene);
+            Map<Integer, FlashAnimationTimeline> loadedNestedTimelines =
+                    loadNestedTimelines(scene, loadedTimelines.get("satellite"));
             synchronized (loadLock) {
                 if (disposed) {
                     return;
                 }
                 timelines = Collections.unmodifiableMap(loadedTimelines);
+                nestedTimelines = Collections.unmodifiableMap(loadedNestedTimelines);
             }
 
             Set<Integer> portraitShapeIds = collectSetupPortraitShapeIds(loadedTimelines);
@@ -184,7 +199,8 @@ public final class OriginalFlashAnimationAssets implements Disposable {
 
             packer = new PixmapPacker(1024, 1024,
                     Pixmap.Format.RGBA8888, 2, true);
-            Set<Integer> battleShapeIds = collectShapeIds(loadedTimelines);
+            Set<Integer> battleShapeIds = collectShapeIds(loadedTimelines,
+                    loadedNestedTimelines);
             battleShapeIds.removeAll(portraitShapeIds);
             packShapes(packer, battleShapeIds);
 
@@ -284,28 +300,67 @@ public final class OriginalFlashAnimationAssets implements Disposable {
 
     private static Set<Integer> collectShapeIds(
             Map<String, FlashAnimationTimeline> timelines, boolean includeRocketTrail) {
+        return collectShapeIds(timelines, Collections.emptyMap(), includeRocketTrail);
+    }
+
+    private static Set<Integer> collectShapeIds(
+            Map<String, FlashAnimationTimeline> timelines,
+            Map<Integer, FlashAnimationTimeline> nestedTimelines) {
+        return collectShapeIds(timelines, nestedTimelines, true);
+    }
+
+    private static Set<Integer> collectShapeIds(
+            Map<String, FlashAnimationTimeline> timelines,
+            Map<Integer, FlashAnimationTimeline> nestedTimelines,
+            boolean includeRocketTrail) {
+        return collectShapeIds(timelines, nestedTimelines, includeRocketTrail,
+                OriginalFlashAnimationAssets::hasPackagedShape);
+    }
+
+    static Set<Integer> collectShapeIds(
+            Map<String, FlashAnimationTimeline> timelines,
+            Map<Integer, FlashAnimationTimeline> nestedTimelines,
+            IntPredicate hasShapeAsset) {
+        return collectShapeIds(timelines, nestedTimelines, true, hasShapeAsset);
+    }
+
+    private static Set<Integer> collectShapeIds(
+            Map<String, FlashAnimationTimeline> timelines,
+            Map<Integer, FlashAnimationTimeline> nestedTimelines,
+            boolean includeRocketTrail, IntPredicate hasShapeAsset) {
         Set<Integer> shapeIds = new LinkedHashSet<>();
         if (includeRocketTrail) {
             shapeIds.add(ROCKET_TRAIL_SHAPE_ID);
         }
         for (FlashAnimationTimeline timeline : timelines.values()) {
-            for (int i = 0; i < timeline.getFrameCount(); i++) {
-                FlashAnimationTimeline.Frame frame = timeline.getFrame(i);
-                if (frame != null) {
-                    for (FlashAnimationTimeline.Layer layer : frame.layers) {
-                        String shapePath = SHAPE_PATH + layer.shapeId + ".svgz";
-                        if (Gdx.files.internal(shapePath).exists()) {
-                            shapeIds.add(layer.shapeId);
-                        }
-                    }
-                }
-            }
+            addShapeIds(shapeIds, timeline, hasShapeAsset);
+        }
+        for (FlashAnimationTimeline timeline : nestedTimelines.values()) {
+            addShapeIds(shapeIds, timeline, hasShapeAsset);
         }
         return shapeIds;
     }
 
-    private static Map<String, FlashAnimationTimeline> loadTimelines() {
-        JsonValue scene = new JsonReader().parse(readCompressedUtf8(SCENE_PATH));
+    private static void addShapeIds(Set<Integer> shapeIds,
+                                    FlashAnimationTimeline timeline,
+                                    IntPredicate hasShapeAsset) {
+        for (int i = 0; i < timeline.getFrameCount(); i++) {
+            FlashAnimationTimeline.Frame frame = timeline.getFrame(i);
+            if (frame != null) {
+                for (FlashAnimationTimeline.Layer layer : frame.layers) {
+                    if (hasShapeAsset.test(layer.shapeId)) {
+                        shapeIds.add(layer.shapeId);
+                    }
+                }
+            }
+        }
+    }
+
+    private static boolean hasPackagedShape(int shapeId) {
+        return Gdx.files.internal(SHAPE_PATH + shapeId + ".svgz").exists();
+    }
+
+    private static Map<String, FlashAnimationTimeline> loadTimelines(JsonValue scene) {
         float frameRate = scene.getFloat("fps");
         JsonValue symbols = scene.get("symbols");
         if (symbols == null || !symbols.isArray()) {
@@ -325,6 +380,54 @@ public final class OriginalFlashAnimationAssets implements Disposable {
             }
         }
         return result;
+    }
+
+    static Map<Integer, FlashAnimationTimeline> loadNestedTimelines(
+            JsonValue scene, FlashAnimationTimeline rootTimeline) {
+        if (rootTimeline == null) {
+            throw new IllegalStateException("Original satellite timeline is missing");
+        }
+        JsonValue symbols = scene.get("symbols");
+        Map<Integer, JsonValue> symbolDefinitions = new LinkedHashMap<>();
+        for (JsonValue symbol = symbols.child; symbol != null; symbol = symbol.next) {
+            symbolDefinitions.put(symbol.getInt("id"), symbol);
+        }
+
+        Map<Integer, FlashAnimationTimeline> result = new LinkedHashMap<>();
+        Set<Integer> visited = new HashSet<>();
+        Deque<Integer> pending = new ArrayDeque<>();
+        enqueueChildSymbols(rootTimeline, pending);
+        float frameRate = scene.getFloat("fps");
+        while (!pending.isEmpty()) {
+            int symbolId = pending.removeFirst();
+            if (!visited.add(symbolId)) {
+                continue;
+            }
+            JsonValue definition = symbolDefinitions.get(symbolId);
+            JsonValue sourceTimeline = definition == null ? null : definition.get("timeline");
+            JsonValue frames = sourceTimeline == null ? null : sourceTimeline.get("frames");
+            if (frames == null || !frames.isArray()) {
+                continue;
+            }
+            FlashAnimationTimeline nested = FlashAnimationTimeline.fromSymbol(
+                    definition, frameRate);
+            result.put(symbolId, nested);
+            enqueueChildSymbols(nested, pending);
+        }
+        return result;
+    }
+
+    private static void enqueueChildSymbols(FlashAnimationTimeline timeline,
+                                            Deque<Integer> pending) {
+        for (int frameIndex = 0; frameIndex < timeline.getFrameCount(); frameIndex++) {
+            FlashAnimationTimeline.Frame frame = timeline.getFrame(frameIndex);
+            if (frame == null) {
+                continue;
+            }
+            for (FlashAnimationTimeline.Layer layer : frame.layers) {
+                pending.addLast(layer.shapeId);
+            }
+        }
     }
 
     private static Pixmap decodeShape(int shapeId) {
@@ -457,6 +560,7 @@ public final class OriginalFlashAnimationAssets implements Disposable {
             }
             shapeRegions = Collections.emptyMap();
             setupPortraitRegions = Collections.emptyMap();
+            nestedTimelines = Collections.emptyMap();
             setupPortraitsLoaded = false;
             timelines = Collections.emptyMap();
         }

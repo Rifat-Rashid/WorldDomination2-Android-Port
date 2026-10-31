@@ -10,6 +10,12 @@ public final class SourceCombatAnimationMapping {
         if (event == null) {
             return null;
         }
+        if (event.type == GameState.CombatEventType.STRIKE_IMPACT
+                && "space".equals(event.weaponName)
+                && "specialLoad".equals(event.payloadName)) {
+            // Unit.satellite_explosion attaches explosion_warhead_4 directly.
+            return "explosion_warhead_4";
+        }
         return linkageFor(event.type, event.payloadName, event.counterWeaponName);
     }
 
@@ -19,6 +25,10 @@ public final class SourceCombatAnimationMapping {
             return null;
         }
         if (type == GameState.CombatEventType.STRIKE_IMPACT) {
+            if ("specialLoad".equals(payloadName)) {
+                // WeaponStock.specialLoad declares the Flash bioload level-four impact clip.
+                return "explosion_bioload_4";
+            }
             if (isPayload(payloadName, "warhead")) {
                 return linkageForPayload(payloadName);
             }

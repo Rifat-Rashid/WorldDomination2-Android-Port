@@ -51,6 +51,10 @@ public final class OriginalAudioTest {
                 OriginalAudio.internalPath(OriginalAudio.Cue.FLAG_BONUS));
         assertEquals("original/runtime/audio/48_Loose.Mp3.mp3",
                 OriginalAudio.internalPath(OriginalAudio.Cue.DEFEAT));
+        assertEquals("original/runtime/audio/33_Satelite_flight.wav.mp3",
+                OriginalAudio.internalPath(OriginalAudio.Cue.SATELLITE_FLIGHT));
+        assertEquals("original/runtime/audio/19_unit_Sattelite Lasershot.wav.mp3",
+                OriginalAudio.internalPath(OriginalAudio.Cue.SATELLITE_LASER));
     }
 
     @Test

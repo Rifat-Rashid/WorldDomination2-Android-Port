@@ -20,6 +20,10 @@ public final class SourceCombatAnimationMappingTest {
                             GameState.CombatEventType.STRIKE_IMPACT,
                             "bioload" + level, null));
         }
+        assertEquals("explosion_bioload_4",
+                SourceCombatAnimationMapping.linkageFor(
+                        GameState.CombatEventType.STRIKE_IMPACT,
+                        "specialLoad", null));
     }
 
     @Test

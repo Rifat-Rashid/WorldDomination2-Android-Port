@@ -183,6 +183,15 @@ jobs:
           - id: rocket-flight-tests
             check: Rocket flight and impact playback tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashRocketAnimationTest"'
+          - id: satellite-route-tests
+            check: Satellite launch route parity
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.satelliteRouteUsesSourceLaunchAndOrbitDataForEveryIslandAndCity" --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.satelliteRouteRejectsUnknownReligionAndInvalidBattlefieldAddresses"'
+          - id: satellite-playback-tests
+            check: Satellite flight and laser timing
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashSatelliteAnimationTest" --tests "com.example.worlddomination.game.simulation.GameStateTest.spaceLaunchCountsSatelliteAndTerminalScoreIncludesSourceFlagBonus"'
+          - id: satellite-source-art-tests
+            check: Nested satellite art and audio mapping
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.OriginalFlashAnimationAssetsTest" --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest.satelliteFlashLabelsSelectTheFiveOriginalReligionFrames" --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest.satelliteReligionClipsLoadTheirAnimatedBodyAndLaserAnchorFrames" --tests "com.example.worlddomination.game.rendering.FlashBattleUnitRendererTest" --tests "com.example.worlddomination.game.rendering.SourceCombatAnimationMappingTest.allWarheadAndBioloadLevelsUseTheirOriginalSymbols" --tests "com.example.worlddomination.game.audio.OriginalAudioTest.combatCuesPointToTheOriginalPackagedSounds"'
           - id: chinook-tank-playback-tests
             check: Chinook and tank source playback tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashChinookTankAnimationTest" --tests "com.example.worlddomination.game.rendering.FlashSpriteTransformTest" --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest.packagedStrikeAndInterceptionSymbolsMatchSourceTimelines" --tests "com.example.worlddomination.game.simulation.GameSetupTest.sourcePlayerColorIdsMapToTankTurretLibraryNames" --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.tankDirectAttackUsesItsSourceSlotAndChinookSound" --tests "com.example.worlddomination.game.audio.OriginalAudioTest.tankBattleCuesUseTheRecoveredOriginalSounds"'
