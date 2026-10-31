@@ -2648,6 +2648,10 @@ public final class GameState {
             } else if (order.action == Action.PREPARED_ATTACK
                     && "rocket".equals(weapon.definition.type)) {
                 frame = "silo";
+            } else if (order.action == Action.PREPARED_ATTACK
+                    && "plane".equals(weapon.definition.type)) {
+                // Battle.py records the plane's airfield as its source preStart anchor.
+                frame = "airfield";
             } else {
                 frame = null;
             }

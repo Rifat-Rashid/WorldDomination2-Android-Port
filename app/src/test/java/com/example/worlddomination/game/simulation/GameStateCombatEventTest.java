@@ -73,6 +73,45 @@ public final class GameStateCombatEventTest {
     }
 
     @Test
+    public void resolvedPreparedAircraftAttackCarriesItsAirfieldSlotForNativePlayback() {
+        GameState state = new GameState(1, 1211L, false);
+        GameState.WeaponState plane = state.getHuman().getWeapons().get("plane1");
+        GameState.WeaponState warhead = state.getHuman().getWeapons().get("warhead1");
+        plane.active = true;
+        plane.inStock = 1;
+        warhead.active = true;
+        warhead.inStock = 1;
+
+        state.selectAction(GameState.Action.PREPARED_ATTACK);
+        assertTrue(state.configurePreparedCarrier("plane1"));
+        assertTrue(state.acceptSelectedAction());
+        queueResources(state);
+        state.confirmTurn();
+
+        state.selectAction(GameState.Action.PREPARED_ATTACK);
+        assertTrue(state.configurePreparedLaunch(1, 3, "warhead1"));
+        assertTrue(state.acceptSelectedAction());
+        queueResources(state);
+        state.confirmTurn();
+
+        GameState.CombatEvent event = state.getLastTurnCombatEvents().get(0);
+        assertEquals(GameState.CombatEventType.STRIKE_IMPACT, event.type);
+        assertEquals("plane1", event.weaponName);
+        assertEquals(1, event.actionBuildingSlot);
+        assertTrue(FlashBattleRoutes.supportsStandalonePlaneStrike(event));
+        FlashBattleRoutes.StandalonePlaneStrike route =
+                FlashBattleRoutes.createStandalonePlaneStrike(event.attackerPlayerId,
+                        event.defenderPlayerId, event.cityIndex, event.actionBuildingSlot,
+                        event.weaponName, false);
+        assertEquals("plane001", route.linkage);
+        assertEquals(OriginalAudio.Cue.EXPLOSION_SMALL3,
+                OriginalAudio.cueForCombatEvent(event));
+        assertEquals("explosion_warhead_1",
+                com.example.worlddomination.game.rendering.SourceCombatAnimationMapping
+                        .linkageFor(event));
+    }
+
+    @Test
     public void resolvedPreparedSubmarineAttackEmitsAPlayablePayloadImpact() {
         GameState state = new GameState(1, 1221L, false);
         GameState.WeaponState submarine = state.getHuman().getWeapons().get("sub");

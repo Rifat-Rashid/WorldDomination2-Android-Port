@@ -29,6 +29,7 @@ import com.example.worlddomination.game.rendering.BattlefieldCityRenderer;
 import com.example.worlddomination.game.rendering.FlashBattleRoutes;
 import com.example.worlddomination.game.rendering.FlashBattleUnitRenderer;
 import com.example.worlddomination.game.rendering.FlashCarrierPlaneAnimation;
+import com.example.worlddomination.game.rendering.FlashStandalonePlaneAnimation;
 import com.example.worlddomination.game.rendering.FlashChinookTankAnimation;
 import com.example.worlddomination.game.rendering.FlashApacheMarineAnimation;
 import com.example.worlddomination.game.rendering.FlashSuicideBomberAnimation;
@@ -145,6 +146,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private final List<FlashRocketAnimation> rocketBattleAnimations = new ArrayList<>();
     private final List<FlashSubmarineAnimation> submarineBattleAnimations = new ArrayList<>();
     private final List<FlashCarrierPlaneAnimation> carrierPlaneAnimations = new ArrayList<>();
+    private final List<FlashStandalonePlaneAnimation> standalonePlaneAnimations = new ArrayList<>();
     private final List<FlashSatelliteAnimation> satelliteBattleAnimations = new ArrayList<>();
     private final List<PendingBattleAnimation> pendingBattleAnimations = new ArrayList<>();
     private final MatchOutcomeSequence outcomeSequence =
@@ -535,6 +537,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 || !rocketBattleAnimations.isEmpty()
                 || !submarineBattleAnimations.isEmpty()
                 || !carrierPlaneAnimations.isEmpty()
+                || !standalonePlaneAnimations.isEmpty()
                 || !satelliteBattleAnimations.isEmpty()
                 || !pendingBattleAnimations.isEmpty()
                 || outcomeSequence.isAnimating()) {
@@ -628,6 +631,37 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 carrierPlaneAnimations.remove(i);
             }
         }
+        for (int i = standalonePlaneAnimations.size() - 1; i >= 0; i--) {
+            FlashStandalonePlaneAnimation animation = standalonePlaneAnimations.get(i);
+            boolean impact = animation.tick();
+            if (animation.takeTakeoffCue()) {
+                audio.play(animation.getTakeoffCue());
+            }
+            if (animation.takeFlightCue()) {
+                if (animation.loopsFlightCue()) {
+                    animation.setFlightSoundId(audio.loop(animation.getFlightCue()));
+                } else {
+                    audio.play(animation.getFlightCue());
+                }
+            }
+            if (impact) {
+                FlashAnimationTimeline timeline = flashAnimationAssets.getTimeline(
+                        animation.getImpactLinkage());
+                FlashBattleRoutes.StandalonePlaneStrike route = animation.getRoute();
+                if (timeline != null) {
+                    battleAnimations.add(new BattleAnimationSequence(timeline,
+                            route.targetPlayerId, route.targetCityIndex, 0,
+                            animation.getImpactCue(), route.target.x, route.target.y));
+                } else if (animation.getImpactCue() != null) {
+                    audio.play(animation.getImpactCue());
+                }
+            }
+            if (animation.isFinished()) {
+                audio.stop(OriginalAudio.Cue.CARRIERJET_FLIGHT,
+                        animation.getFlightSoundId());
+                standalonePlaneAnimations.remove(i);
+            }
+        }
         for (int i = satelliteBattleAnimations.size() - 1; i >= 0; i--) {
             FlashSatelliteAnimation animation = satelliteBattleAnimations.get(i);
             animation.tick();
@@ -699,6 +733,16 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             audio.stop(OriginalAudio.Cue.CARRIERJET_FLIGHT, animation.getFlightSoundId());
         }
         carrierPlaneAnimations.clear();
+    }
+
+    private void clearStandalonePlaneAnimations() {
+        for (FlashStandalonePlaneAnimation animation : standalonePlaneAnimations) {
+            if (animation.loopsFlightCue()) {
+                audio.stop(OriginalAudio.Cue.CARRIERJET_FLIGHT,
+                        animation.getFlightSoundId());
+            }
+        }
+        standalonePlaneAnimations.clear();
     }
 
     private void preparePendingBattleAnimations() {
@@ -1128,6 +1172,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         battleUnitRenderer.drawSuicideBomber(batch, mapBounds, suicideBomberAnimations);
         battleUnitRenderer.drawRocket(batch, mapBounds, rocketBattleAnimations);
         battleUnitRenderer.drawCarrierPlanes(batch, mapBounds, carrierPlaneAnimations);
+        battleUnitRenderer.drawStandalonePlanes(batch, mapBounds, standalonePlaneAnimations);
         battleUnitRenderer.drawSatellites(batch, mapBounds, satelliteBattleAnimations);
         explosionRenderer.draw(batch, mapBounds, battleAnimations);
         drawContained(uiAssets.logo, logoPanel.x + 7f, logoPanel.y + 2f,
@@ -2341,6 +2386,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         rocketBattleAnimations.clear();
         submarineBattleAnimations.clear();
         clearCarrierPlaneAnimations();
+        clearStandalonePlaneAnimations();
         satelliteBattleAnimations.clear();
         satelliteFlightCuePlayed = false;
         pendingBattleAnimations.clear();
@@ -2627,6 +2673,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 rocketBattleAnimations.clear();
                 submarineBattleAnimations.clear();
                 clearCarrierPlaneAnimations();
+                clearStandalonePlaneAnimations();
                 satelliteBattleAnimations.clear();
                 satelliteFlightCuePlayed = false;
                 pendingBattleAnimations.clear();
@@ -3100,6 +3147,21 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                     animationIndex++;
                     continue;
                 }
+                if (FlashBattleRoutes.supportsStandalonePlaneStrike(event)) {
+                    FlashBattleRoutes.StandalonePlaneStrike route =
+                            FlashBattleRoutes.createStandalonePlaneStrike(
+                                    event.attackerPlayerId, event.defenderPlayerId,
+                                    event.cityIndex, event.actionBuildingSlot,
+                                    event.weaponName,
+                                    event.type == GameState.CombatEventType.STRIKE_INTERCEPTED);
+                    int playerColor = game.getPlayerState(event.attackerPlayerId)
+                            .getPlayerColor();
+                    standalonePlaneAnimations.add(new FlashStandalonePlaneAnimation(
+                            route, playerColor, animationIndex * 36,
+                            SourceCombatAnimationMapping.linkageFor(event), cue));
+                    animationIndex++;
+                    continue;
+                }
                 if (FlashBattleRoutes.supportsRocketStrike(event)) {
                     FlashBattleRoutes.RocketStrike route = FlashBattleRoutes.createRocketStrike(
                             event.attackerPlayerId, event.defenderPlayerId,
@@ -3398,7 +3460,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     @Override
     public void dispose() {
-        audio.dispose();
         battleAnimations.clear();
         soldierBattleAnimations.clear();
         apacheMarineAnimations.clear();
@@ -3407,8 +3468,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         rocketBattleAnimations.clear();
         submarineBattleAnimations.clear();
         clearCarrierPlaneAnimations();
+        clearStandalonePlaneAnimations();
         satelliteBattleAnimations.clear();
         pendingBattleAnimations.clear();
+        audio.dispose();
         if (uiAssets != null) {
             uiAssets.dispose();
         }

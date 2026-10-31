@@ -1,4 +1,4 @@
-name: Android carrier playback checks
+name: Android aircraft playback checks
 
 on:
   push:
@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 jobs:
-  carrier-tests:
+  aircraft-tests:
     name: ${{ matrix.check }}
     runs-on: ubuntu-latest
     strategy:
@@ -26,6 +26,24 @@ jobs:
           - id: carrier-assets
             check: Carrier Flash artwork and audio integrity
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest.carrierAircraftUsesItsPackaged24FrameFlashTimelineAndShapes" --tests "com.example.worlddomination.game.audio.OriginalAudioTest.carrierAircraftCuesUseTheRecoveredOriginalTakeoffAndFlightSounds"'
+          - id: airfield-plane-routes
+            check: Airfield aircraft route and event parity
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.standalonePlaneRoutesMatchAirfieldOrbitAndFlashLinkagesForAllIslands" --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.standalonePlaneInterceptionTargetsCityAndRejectsInvalidLaunchData" --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.resolvedPreparedAircraftAttackCarriesItsAirfieldSlotForNativePlayback"'
+          - id: airfield-plane-playback
+            check: Airfield aircraft source-tick playback
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashStandalonePlaneAnimationTest"'
+          - id: airfield-plane-artwork-audio
+            check: Airfield aircraft Flash artwork and audio
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.OriginalFlashAnimationAssetsTest.loadsOriginalStandaloneAircraftFramesTintAndShadows" --tests "com.example.worlddomination.game.audio.OriginalAudioTest.standaloneAircraftCuesUseTheRecoveredFighterAndCarrierJetSounds" --tests "com.example.worlddomination.game.rendering.FlashAffineTransformTest"'
+          - id: airfield-plane-trails
+            check: Airfield aircraft source smoke trails
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashStandalonePlaneAnimationTest.emitsSourceSizedFighterAndBomberTrailsFromOriginalTickThresholds" --tests "com.example.worlddomination.game.rendering.FlashStandalonePlaneAnimationTest.standaloneTrailRandomnessIsRepeatableAndDoesNotControlGameState"'
+          - id: airfield-plane-flyoff
+            check: Airfield aircraft post-impact fly-off
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashStandalonePlaneAnimationTest.successfulBombUsesTheFlashFlyOffWindowAndRemovesItsSmoke"'
+          - id: airfield-plane-trail-art
+            check: Original aircraft trail artwork integrity
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.OriginalFlashAnimationAssetsTest.standaloneAircraftTrailResolvesToOriginalPackagedSmokeShape"'
     steps:
       - name: Check out source
         uses: actions/checkout@v5

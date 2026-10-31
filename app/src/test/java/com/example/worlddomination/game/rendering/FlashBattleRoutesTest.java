@@ -95,6 +95,70 @@ public final class FlashBattleRoutesTest {
     }
 
     @Test
+    public void standalonePlaneRoutesMatchAirfieldOrbitAndFlashLinkagesForAllIslands() {
+        float[][] liftOff = {{327, 246}, {230, 230}, {570, 220}, {200, 430}, {620, 450}};
+        float[][] orbitCenters = {{273, 298}, {175, 75}, {619, 100}, {230, 500}, {570, 500}};
+        float[] orbitFlyTo = {-100, 100, -100, 100, -100};
+        int[] startAngles = {180, 0, 180, 0, 180};
+        int[] directions = {-1, -1, 1, 1, -1};
+        for (int attacker = 0; attacker < BattlefieldCityLayout.PLAYER_COUNT; attacker++) {
+            int target = (attacker + 1) % BattlefieldCityLayout.PLAYER_COUNT;
+            for (int city = 0; city < BattlefieldCityLayout.CITIES_PER_PLAYER; city++) {
+                FlashBattleRoutes.StandalonePlaneStrike fighter =
+                        FlashBattleRoutes.createStandalonePlaneStrike(attacker, target,
+                                city, 1, "plane1", false);
+                FlashBattleRoutes.StandalonePlaneStrike bomber =
+                        FlashBattleRoutes.createStandalonePlaneStrike(attacker, target,
+                                city, 2, "plane2", false);
+                FlashBattleRoutes.Point airfield = FlashBattleRoutes.actionBuildingPosition(
+                        attacker, 1);
+                assertEquals(airfield.x + 10f, fighter.start.x, 0f);
+                assertEquals(airfield.y, fighter.start.y, 0f);
+                assertEquals(liftOff[attacker][0], fighter.liftOff.x, 0f);
+                assertEquals(liftOff[attacker][1], fighter.liftOff.y, 0f);
+                assertEquals(orbitCenters[attacker][0] + orbitFlyTo[attacker],
+                        fighter.orbitEntry.x, 0f);
+                assertEquals(orbitCenters[attacker][1], fighter.orbitEntry.y, 0f);
+                assertEquals(orbitCenters[attacker][0],
+                        fighter.orbitEntry.x + fighter.orbitCenterOffset.x, 0f);
+                assertEquals(startAngles[attacker], fighter.orbitStartAngle);
+                assertEquals(directions[attacker], fighter.orbitDirection);
+                assertEquals("plane001", fighter.linkage);
+                assertEquals("plane002", bomber.linkage);
+                assertEquals(BattlefieldCityLayout.sourceCityX(target, city),
+                        fighter.target.x, 0f);
+                assertEquals(BattlefieldCityLayout.sourceCityY(target, city) - 100f,
+                        fighter.bombWaypoint.y, 0f);
+                assertEquals(fighter.target.x, fighter.bombWaypoint.x, 0f);
+                assertEquals(100f, fighter.orbitRadius, 0f);
+                assertEquals(0.5f, fighter.orbitRadiusStep, 0f);
+                assertEquals(8f, fighter.orbitAngleStep, 0f);
+                assertEquals(attacker == 3 ? 1f : 2f, fighter.xAcceleration, 0f);
+            }
+        }
+    }
+
+    @Test
+    public void standalonePlaneInterceptionTargetsCityAndRejectsInvalidLaunchData() {
+        FlashBattleRoutes.StandalonePlaneStrike intercepted =
+                FlashBattleRoutes.createStandalonePlaneStrike(1, 4, 2, 2,
+                        "plane2", true);
+        assertTrue(intercepted.intercepted);
+        assertEquals(intercepted.target.x, intercepted.bombWaypoint.x, 0f);
+        assertEquals(intercepted.target.y, intercepted.bombWaypoint.y, 0f);
+        assertTrue(intercepted.linkage.equals("plane002"));
+        org.junit.Assert.assertThrows(IllegalArgumentException.class,
+                () -> FlashBattleRoutes.createStandalonePlaneStrike(-1, 1, 0,
+                        1, "plane1", false));
+        org.junit.Assert.assertThrows(IllegalArgumentException.class,
+                () -> FlashBattleRoutes.createStandalonePlaneStrike(0, 1, 0,
+                        3, "plane1", false));
+        org.junit.Assert.assertThrows(IllegalArgumentException.class,
+                () -> FlashBattleRoutes.createStandalonePlaneStrike(0, 1, 0,
+                        1, "ship", false));
+    }
+
+    @Test
     public void satelliteRouteUsesSourceLaunchAndOrbitDataForEveryIslandAndCity() {
         String[] religions = {"mus", "jew", "com", "chr", "bhu"};
         for (int attacker = 0; attacker < BattlefieldCityLayout.PLAYER_COUNT; attacker++) {

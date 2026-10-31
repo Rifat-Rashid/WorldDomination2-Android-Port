@@ -262,6 +262,57 @@ public final class FlashBattleRoutes {
         }
     }
 
+    /** Source flight geometry for a fighter or bomber launched from an airfield. */
+    public static final class StandalonePlaneStrike {
+        public final int attackerPlayerId;
+        public final int targetPlayerId;
+        public final int targetCityIndex;
+        public final int actionBuildingSlot;
+        public final boolean intercepted;
+        public final String linkage;
+        public final Point start;
+        public final Point liftOff;
+        public final Point orbitEntry;
+        public final Point orbitCenterOffset;
+        public final Point target;
+        public final Point bombWaypoint;
+        public final int orbitStartAngle;
+        public final int orbitDirection;
+        public final float orbitRadius;
+        public final float orbitRadiusStep;
+        public final float orbitAngleStep;
+        public final float xAcceleration;
+
+        private StandalonePlaneStrike(int attackerPlayerId, int targetPlayerId,
+                                      int targetCityIndex, int actionBuildingSlot,
+                                      boolean intercepted, String linkage,
+                                      Point start, Point liftOff, Point orbitEntry,
+                                      Point orbitCenterOffset, Point target,
+                                      Point bombWaypoint, int orbitStartAngle,
+                                      int orbitDirection, float orbitRadius,
+                                      float orbitRadiusStep, float orbitAngleStep,
+                                      float xAcceleration) {
+            this.attackerPlayerId = attackerPlayerId;
+            this.targetPlayerId = targetPlayerId;
+            this.targetCityIndex = targetCityIndex;
+            this.actionBuildingSlot = actionBuildingSlot;
+            this.intercepted = intercepted;
+            this.linkage = linkage;
+            this.start = start;
+            this.liftOff = liftOff;
+            this.orbitEntry = orbitEntry;
+            this.orbitCenterOffset = orbitCenterOffset;
+            this.target = target;
+            this.bombWaypoint = bombWaypoint;
+            this.orbitStartAngle = orbitStartAngle;
+            this.orbitDirection = orbitDirection;
+            this.orbitRadius = orbitRadius;
+            this.orbitRadiusStep = orbitRadiusStep;
+            this.orbitAngleStep = orbitAngleStep;
+            this.xAcceleration = xAcceleration;
+        }
+    }
+
     private static final int SOLDIER_COUNT = 3;
     private static final int[][][] SOLDIER_WAYPOINTS = {
             {{0}, {1, 2}, {1, 2, 3}, {1, 6}, {0}},
@@ -341,6 +392,17 @@ public final class FlashBattleRoutes {
     private static final float[][] SATELLITE_ORBIT_POSITIONS = {
             {368f, 75f}, {268f, 104f}, {466f, 111f}, {121f, 321f}, {667f, 291f}
     };
+    // Battle.createToSpawnUnitsArr's aircraft orbit center, entry offset, and turn direction.
+    private static final float[][] PLANE_ORBIT_CENTERS = {
+            {273f, 298f}, {175f, 75f}, {619f, 100f}, {230f, 500f}, {570f, 500f}
+    };
+    private static final int[] PLANE_ORBIT_START_ANGLES = {180, 0, 180, 0, 180};
+    private static final int[] PLANE_ORBIT_DIRECTIONS = {-1, -1, 1, 1, -1};
+    private static final float[] PLANE_ORBIT_FLY_TO_X = {-100f, 100f, -100f, 100f, -100f};
+    private static final float[] PLANE_ORBIT_CENTER_OFFSET_X = {100f, -100f, 100f, -100f, 100f};
+    private static final float[] PLANE_X_ACCELERATIONS = {2f, 2f, 2f, 1f, 2f};
+    private static final float[] PLANE_LIFTOFF_X = {327f, 230f, 570f, 200f, 620f};
+    private static final float[] PLANE_LIFTOFF_Y = {246f, 230f, 220f, 430f, 450f};
     // Sub_model.ship_plane_start_arr offsets, in the source payload attack order.
     private static final float[][] SHIP_PLANE_START_OFFSETS = {
             {28f, -26f}, {-9f, -3f}, {-38f, 11f}
@@ -414,6 +476,52 @@ public final class FlashBattleRoutes {
                 && (event.type == GameState.CombatEventType.STRIKE_IMPACT
                 || event.type == GameState.CombatEventType.STRIKE_INTERCEPTED)
                 && "ship".equals(event.weaponName);
+    }
+
+    /** Returns whether a resolved event uses a standalone airfield-launched aircraft. */
+    public static boolean supportsStandalonePlaneStrike(GameState.CombatEvent event) {
+        return event != null
+                && (event.type == GameState.CombatEventType.STRIKE_IMPACT
+                || event.type == GameState.CombatEventType.STRIKE_INTERCEPTED)
+                && isStandalonePlaneName(event.weaponName);
+    }
+
+    private static boolean isStandalonePlaneName(String weaponName) {
+        return "plane1".equals(weaponName) || "plane2".equals(weaponName);
+    }
+
+    /** Recreates Battle.py's airfield launch and player-specific circular flight. */
+    public static StandalonePlaneStrike createStandalonePlaneStrike(
+            int attackerPlayerId, int targetPlayerId, int targetCityIndex,
+            int actionBuildingSlot, String carrierName, boolean intercepted) {
+        validatePlayer(attackerPlayerId);
+        validatePlayer(targetPlayerId);
+        if (targetCityIndex < 0 || targetCityIndex >= BattlefieldCityLayout.CITIES_PER_PLAYER
+                || actionBuildingSlot < 1 || actionBuildingSlot > 2
+                || !isStandalonePlaneName(carrierName)) {
+            throw new IllegalArgumentException("Invalid airfield-plane presentation data");
+        }
+
+        Point airfield = actionBuildingPosition(attackerPlayerId, actionBuildingSlot);
+        Point start = new Point(airfield.x + 10f, airfield.y);
+        Point liftOff = new Point(PLANE_LIFTOFF_X[attackerPlayerId],
+                PLANE_LIFTOFF_Y[attackerPlayerId]);
+        float centerX = PLANE_ORBIT_CENTERS[attackerPlayerId][0];
+        float centerY = PLANE_ORBIT_CENTERS[attackerPlayerId][1];
+        Point orbitEntry = new Point(centerX + PLANE_ORBIT_FLY_TO_X[attackerPlayerId],
+                centerY);
+        Point centerOffset = new Point(PLANE_ORBIT_CENTER_OFFSET_X[attackerPlayerId], 0f);
+        Point target = new Point(BattlefieldCityLayout.sourceCityX(targetPlayerId,
+                targetCityIndex), BattlefieldCityLayout.sourceCityY(targetPlayerId,
+                targetCityIndex));
+        Point bombWaypoint = intercepted ? target : new Point(target.x, target.y - 100f);
+        return new StandalonePlaneStrike(attackerPlayerId, targetPlayerId,
+                targetCityIndex, actionBuildingSlot, intercepted,
+                "plane1".equals(carrierName) ? "plane001" : "plane002",
+                start, liftOff, orbitEntry, centerOffset, target, bombWaypoint,
+                PLANE_ORBIT_START_ANGLES[attackerPlayerId],
+                PLANE_ORBIT_DIRECTIONS[attackerPlayerId], 100f, 0.5f, 8f,
+                PLANE_X_ACCELERATIONS[attackerPlayerId]);
     }
 
     /** Returns whether the original Flash resolver launched a satellite unit. */
