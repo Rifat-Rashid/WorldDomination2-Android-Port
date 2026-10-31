@@ -139,6 +139,49 @@ public final class OriginalFlashAnimationAssetsTest {
     }
 
     @Test
+    public void loadsOriginalReligionSpecificAntiAirFramesIntoTheBattleAtlas()
+            throws IOException {
+        JsonValue scene = loadScene();
+        Map<String, FlashAnimationTimeline> timelines =
+                OriginalFlashAnimationAssets.loadTimelines(scene);
+        FlashAnimationTimeline buildings = timelines.get("buildings_antiAir");
+        assertNotNull("Missing original anti-air action-building timeline", buildings);
+        assertEquals(5, buildings.getFrameCount());
+
+        int[] religionSymbols = {5107, 5072, 4349, 5035, 4998};
+        for (int frameIndex = 0; frameIndex < religionSymbols.length; frameIndex++) {
+            FlashAnimationTimeline.Frame religion = buildings.getFrame(frameIndex);
+            assertNotNull("Missing anti-air religion frame " + frameIndex, religion);
+            assertEquals(religionSymbols[frameIndex], religion.layers[0].shapeId);
+        }
+
+        Map<Integer, FlashAnimationTimeline> nested =
+                OriginalFlashAnimationAssets.loadNestedTimelines(scene, buildings);
+        Set<Integer> battleShapeIds = OriginalFlashAnimationAssets.collectShapeIds(
+                timelines, nested, shapeId -> Files.isRegularFile(shapeAsset(shapeId)));
+        for (int symbolId : religionSymbols) {
+            FlashAnimationTimeline religion = nested.get(symbolId);
+            assertNotNull("Missing nested anti-air religion clip " + symbolId, religion);
+            assertTrue("Religion clip does not contain the source 18-way turret animation",
+                    religion.getFrameCount() >= 36);
+            for (int direction = 0; direction < 18; direction++) {
+                FlashAnimationTimeline.Frame frame = religion.getFrame(direction * 2);
+                assertNotNull("Missing anti-air direction " + direction, frame);
+                assertTrue("Empty anti-air direction " + direction, frame.layers.length > 0);
+                for (FlashAnimationTimeline.Layer layer : frame.layers) {
+                    assertTrue("Missing source anti-air art " + layer.shapeId,
+                            Files.isRegularFile(shapeAsset(layer.shapeId)));
+                    assertTrue("Anti-air art missing from the cached battle atlas "
+                                    + layer.shapeId,
+                            battleShapeIds.contains(layer.shapeId));
+                }
+            }
+        }
+        assertTrue("Communist anti-air art must use the original symbol 4349 chain",
+                nested.containsKey(4349));
+    }
+
+    @Test
     public void standaloneAircraftTrailResolvesToOriginalPackagedSmokeShape()
             throws IOException {
         JsonValue scene = loadScene();

@@ -300,6 +300,37 @@ public final class FlashAnimationTimelineTest {
     }
 
     @Test
+    public void antiAirTrackingTimelineContainsOriginalDirectionalTurretArtwork()
+            throws IOException {
+        JsonValue scene = loadSourceScene();
+        FlashAnimationTimeline antiAirBuildings = FlashAnimationTimeline.fromSymbol(
+                findSymbol(scene, "buildings_antiAir"), scene.getFloat("fps"));
+        int[] expectedReligionSymbols = {5107, 5072, 4349, 5035, 4998};
+
+        assertEquals(expectedReligionSymbols.length, antiAirBuildings.getFrameCount());
+        for (int frameIndex = 0; frameIndex < expectedReligionSymbols.length; frameIndex++) {
+            FlashAnimationTimeline.Frame frame = antiAirBuildings.getFrame(frameIndex);
+            assertNotNull("Missing anti-air religion wrapper frame " + frameIndex, frame);
+            assertEquals(expectedReligionSymbols[frameIndex], frame.layers[0].shapeId);
+
+            JsonValue religionSymbol = findSymbolById(scene, expectedReligionSymbols[frameIndex]);
+            FlashAnimationTimeline religion = FlashAnimationTimeline.fromSymbol(
+                    religionSymbol, scene.getFloat("fps"));
+            assertTrue("The turret must cover 18 source directions",
+                    religion.getFrameCount() >= 36);
+            for (int direction = 0; direction < 18; direction++) {
+                FlashAnimationTimeline.Frame directionFrame = religion.getFrame(direction * 2);
+                assertNotNull("Missing turret direction " + direction, directionFrame);
+                assertTrue(directionFrame.layers.length > 0);
+                for (FlashAnimationTimeline.Layer layer : directionFrame.layers) {
+                    assertTrue("Missing original Flash anti-air shape " + layer.shapeId,
+                            Files.isRegularFile(shapeAsset(layer.shapeId)));
+                }
+            }
+        }
+    }
+
+    @Test
     public void smokePuffFlashShapeIsPackagedAsVectorArtForNativeRasterization()
             throws IOException {
         String smokeSvg = loadShapeSvg(4936);

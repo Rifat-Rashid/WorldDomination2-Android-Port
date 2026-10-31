@@ -4,6 +4,7 @@ import com.example.worlddomination.game.audio.OriginalAudio;
 import com.example.worlddomination.game.rendering.FlashBattleRoutes;
 import org.junit.Test;
 
+import java.lang.reflect.Field;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -109,6 +110,61 @@ public final class GameStateCombatEventTest {
         assertEquals("explosion_warhead_1",
                 com.example.worlddomination.game.rendering.SourceCombatAnimationMapping
                         .linkageFor(event));
+    }
+
+    @Test
+    public void antiAirCounterRetainsItsActionBuildingSlotOnAirStrikeOutcomes()
+            throws Exception {
+        boolean sawInterception = false;
+        boolean sawImpact = false;
+        for (long seed = 1; seed <= 128 && !(sawInterception && sawImpact); seed++) {
+            GameState.CombatEvent event = resolveAntiAirPlaneStrike(seed);
+            if (event == null) {
+                continue;
+            }
+            assertEquals("antiAir", event.counterWeaponName);
+            assertTrue("The human's anti-air building uses source slot one or two",
+                    event.counterActionBuildingSlot == 1
+                            || event.counterActionBuildingSlot == 2);
+            assertTrue(FlashBattleRoutes.supportsStandalonePlaneStrike(event));
+            sawInterception |= event.type == GameState.CombatEventType.STRIKE_INTERCEPTED;
+            sawImpact |= event.type == GameState.CombatEventType.STRIKE_IMPACT;
+        }
+        assertTrue("A seeded anti-air counter should exercise the successful interception path",
+                sawInterception);
+        assertTrue("A seeded anti-air counter should exercise the failed interception path",
+                sawImpact);
+    }
+
+    private static GameState.CombatEvent resolveAntiAirPlaneStrike(long seed)
+            throws Exception {
+        GameState state = new GameState(1, seed, true);
+        for (int playerId = 2; playerId < 5; playerId++) {
+            state.getPlayerState(playerId).alive = false;
+        }
+        GameState.PlayerState attacker = state.getPlayerState(1);
+        activate(attacker, "plane1");
+        activate(attacker, "warhead1");
+        Field preparedCarrier = GameState.PlayerState.class
+                .getDeclaredField("preparedCarrierName");
+        preparedCarrier.setAccessible(true);
+        preparedCarrier.set(attacker, "plane1");
+
+        GameState.WeaponState antiAir = state.getHuman().getWeapons().get("antiAir");
+        antiAir.active = true;
+        antiAir.inStock = 1;
+        state.selectAction(GameState.Action.DEFENSE);
+        assertTrue(state.configureDefense("antiAir"));
+        assertTrue(state.acceptSelectedAction());
+        queueResources(state);
+        state.confirmTurn();
+
+        for (GameState.CombatEvent candidate : state.getLastTurnCombatEvents()) {
+            if ("plane1".equals(candidate.weaponName)) {
+                return candidate;
+            }
+        }
+        return null;
     }
 
     @Test
@@ -303,5 +359,11 @@ public final class GameStateCombatEventTest {
     private static void queueResources(GameState state) {
         state.selectAction(GameState.Action.RESOURCES);
         assertTrue(state.acceptSelectedAction());
+    }
+
+    private static void activate(GameState.PlayerState player, String weaponName) {
+        GameState.WeaponState weapon = player.getWeapons().get(weaponName);
+        weapon.active = true;
+        weapon.inStock = 1;
     }
 }

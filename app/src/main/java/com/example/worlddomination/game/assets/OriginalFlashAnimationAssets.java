@@ -50,6 +50,7 @@ public final class OriginalFlashAnimationAssets implements Disposable {
     private static final String WEBP_PREFIX = "data:image/webp;base64,";
     private static final String[] REQUIRED_LINKAGES = {
             "faces",
+            "buildings_antiAir",
             "bioCloud",
             "explosion_warhead_1", "explosion_warhead_2", "explosion_warhead_3",
             "explosion_warhead_4", "explosion_bioload_1", "explosion_bioload_2",
@@ -182,6 +183,8 @@ public final class OriginalFlashAnimationAssets implements Disposable {
             JsonValue scene = new JsonReader().parse(readCompressedUtf8(SCENE_PATH));
             Map<String, FlashAnimationTimeline> loadedTimelines = loadTimelines(scene);
             Map<Integer, FlashAnimationTimeline> loadedNestedTimelines = new LinkedHashMap<>();
+            loadedNestedTimelines.putAll(loadNestedTimelines(scene,
+                    loadedTimelines.get("buildings_antiAir")));
             loadedNestedTimelines.putAll(loadNestedTimelines(scene,
                     loadedTimelines.get("bioCloud")));
             loadedNestedTimelines.putAll(loadNestedTimelines(scene,

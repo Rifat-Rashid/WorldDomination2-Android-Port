@@ -280,6 +280,32 @@ public final class FlashBattleUnitRenderer {
         }
     }
 
+    /** Draws the original religion-specific anti-air turret with its tracked direction. */
+    public void drawAntiAirTracking(SpriteBatch batch, Rectangle mapBounds,
+                                    List<FlashAntiAirTrackingAnimation> animations) {
+        if (!assets.isLoaded()) {
+            return;
+        }
+        FlashAnimationTimeline timeline = assets.getTimeline("buildings_antiAir");
+        if (timeline == null) {
+            return;
+        }
+        float mapScale = BattlefieldCityLayout.sourceScale(mapBounds);
+        for (FlashAntiAirTrackingAnimation animation : animations) {
+            if (!animation.isVisible()) {
+                continue;
+            }
+            FlashBattleRoutes.Point position = animation.getBuildingPosition();
+            drawPlaneLinkage(batch, mapBounds, timeline,
+                    animation.getReligionFrameIndex(), position.x, position.y,
+                    animation.getDefenderPlayerId(), animation.getDefenderPlayerId(),
+                    0f, animation.getAlpha(), mapScale, null, false, false,
+                    animation.getFrameIndex(), 1f, 0,
+                    planeTransformScratch[0].setIdentity());
+        }
+        batch.setColor(com.badlogic.gdx.graphics.Color.WHITE);
+    }
+
     private static void drawStandalonePlaneTrail(SpriteBatch batch, Rectangle mapBounds,
                                                  TextureRegion smokeRegion,
                                                  float sourceX, float sourceY,

@@ -3,7 +3,8 @@ package com.example.worlddomination.game.rendering;
 import com.example.worlddomination.game.audio.OriginalAudio;
 
 /** Source-tick playback for one original ship-launched payload aircraft. */
-public final class FlashCarrierPlaneAnimation {
+public final class FlashCarrierPlaneAnimation
+        implements FlashAntiAirTrackingAnimation.Target {
     public static final class Actor {
         public float sourceX;
         public float sourceY;
@@ -162,6 +163,26 @@ public final class FlashCarrierPlaneAnimation {
 
     public FlashBattleRoutes.CarrierPlaneStrike getRoute() {
         return route;
+    }
+
+    @Override
+    public int targetPlayerId() {
+        return route.targetPlayerId;
+    }
+
+    @Override
+    public float sourceX() {
+        return actor.sourceX;
+    }
+
+    @Override
+    public float sourceY() {
+        return actor.sourceY;
+    }
+
+    @Override
+    public boolean isVisible() {
+        return actor.visible;
     }
 
     public String getImpactLinkage() {
