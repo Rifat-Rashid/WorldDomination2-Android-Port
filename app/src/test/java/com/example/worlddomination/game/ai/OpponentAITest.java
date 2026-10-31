@@ -7,6 +7,7 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -59,6 +60,82 @@ public final class OpponentAITest {
                     || decision.action == GameState.Action.RESOURCES
                     || decision.action == GameState.Action.MASS_MEDIA);
         }
+    }
+
+    @Test
+    public void turnPlannerScoresEveryOpponentBeforePlanningAnyOpponent() {
+        long seed = firstOrderSensitiveSeed();
+        assertTrue("fixture search must find a turn where interleaving changes AI plans",
+                seed >= 0L);
+
+        CountingRandom actualRandom = new CountingRandom(seed);
+        GameState actualState = new GameState(1, actualRandom);
+        actualRandom.resetDrawCount();
+        List<OpponentAI.Decision> actual = OpponentAI.planTurn(actualState, actualRandom);
+
+        CountingRandom referenceRandom = new CountingRandom(seed);
+        GameState referenceState = new GameState(1, referenceRandom);
+        referenceRandom.resetDrawCount();
+        List<GameState.PlayerState> opponents = new ArrayList<>();
+        List<List<OpponentAI.ScoredAction>> rankedByOpponent = new ArrayList<>();
+        for (GameState.PlayerState player : referenceState.getPlayers()) {
+            if (player.human || !player.alive) {
+                continue;
+            }
+            opponents.add(player);
+            List<OpponentAI.ScoredAction> scores = OpponentAI.scoreActions(
+                    referenceState, player, referenceRandom);
+            scores.sort(Comparator.comparingDouble(
+                    (OpponentAI.ScoredAction scored) -> scored.score).reversed());
+            rankedByOpponent.add(scores);
+        }
+        List<OpponentAI.Decision> twoPassReference = new ArrayList<>();
+        for (int index = 0; index < opponents.size(); index++) {
+            twoPassReference.addAll(OpponentAI.planScoredActions(referenceState,
+                    opponents.get(index), referenceRandom, rankedByOpponent.get(index)));
+        }
+
+        CountingRandom interleavedRandom = new CountingRandom(seed);
+        GameState interleavedState = new GameState(1, interleavedRandom);
+        interleavedRandom.resetDrawCount();
+        List<OpponentAI.Decision> interleaved = new ArrayList<>();
+        for (GameState.PlayerState player : interleavedState.getPlayers()) {
+            if (!player.human && player.alive) {
+                interleaved.addAll(OpponentAI.plan(interleavedState, player,
+                        interleavedRandom));
+            }
+        }
+
+        assertEquals("the turn planner matches source score-all, then target-all ordering",
+                summarize(twoPassReference), summarize(actual));
+        assertEquals(referenceRandom.getDrawCount(), actualRandom.getDrawCount());
+        assertFalse("the fixture exposes the legacy score/target interleaving",
+                summarize(twoPassReference).equals(summarize(interleaved)));
+    }
+
+    private static long firstOrderSensitiveSeed() {
+        for (long seed = 0; seed < 512; seed++) {
+            CountingRandom sourceOrderRandom = new CountingRandom(seed);
+            GameState sourceOrderState = new GameState(1, sourceOrderRandom);
+            sourceOrderRandom.resetDrawCount();
+            List<OpponentAI.Decision> sourceOrder = OpponentAI.planTurn(
+                    sourceOrderState, sourceOrderRandom);
+
+            CountingRandom interleavedRandom = new CountingRandom(seed);
+            GameState interleavedState = new GameState(1, interleavedRandom);
+            interleavedRandom.resetDrawCount();
+            List<OpponentAI.Decision> interleaved = new ArrayList<>();
+            for (GameState.PlayerState player : interleavedState.getPlayers()) {
+                if (!player.human && player.alive) {
+                    interleaved.addAll(OpponentAI.plan(interleavedState, player,
+                            interleavedRandom));
+                }
+            }
+            if (!summarize(sourceOrder).equals(summarize(interleaved))) {
+                return seed;
+            }
+        }
+        return -1L;
     }
 
     @Test
@@ -1390,6 +1467,50 @@ public final class OpponentAITest {
 
         int getDrawCount() {
             return index;
+        }
+    }
+
+    private static String summarize(List<OpponentAI.Decision> decisions) {
+        StringBuilder result = new StringBuilder();
+        for (OpponentAI.Decision decision : decisions) {
+            if (result.length() > 0) {
+                result.append(';');
+            }
+            result.append(decision.playerId).append(':').append(decision.action)
+                    .append(':').append(decision.targetPlayerId)
+                    .append(':').append(decision.targetCityIndex)
+                    .append(':').append(decision.weaponName)
+                    .append(':').append(decision.payloadName)
+                    .append(':').append(decision.prepareCarrier)
+                    .append(':').append(decision.diplomacyOption)
+                    .append(':').append(decision.reservedMillions)
+                    .append(':').append(decision.productionBudgets)
+                    .append(':').append(decision.technologies)
+                    .append(':').append(decision.spyBuilding)
+                    .append(':').append(decision.shipStrikes);
+        }
+        return result.toString();
+    }
+
+    private static final class CountingRandom extends Random {
+        private int drawCount;
+
+        CountingRandom(long seed) {
+            super(seed);
+        }
+
+        @Override
+        public int nextInt(int bound) {
+            drawCount++;
+            return super.nextInt(bound);
+        }
+
+        int getDrawCount() {
+            return drawCount;
+        }
+
+        void resetDrawCount() {
+            drawCount = 0;
         }
     }
 

@@ -30,6 +30,9 @@ jobs:
           - id: ai-initialization-rng-tests
             check: AI initialization RNG parity tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.emptySourceEnemySelectionStillConsumesItsRandomDraw" --tests "com.example.worlddomination.game.simulation.GameStateTest.aiDesireChoicesUseTheFirstValueOfSourceOneToTwoDraws"'
+          - id: ai-two-pass-planning-tests
+            check: AI two-pass source planning order
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.OpponentAITest.turnPlannerScoresEveryOpponentBeforePlanningAnyOpponent"'
           - id: ai-special-income-order-tests
             check: AI special income turn ordering
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.specialLeaderIncomeIsAddedAfterAiPlanningBudgetSnapshot"'

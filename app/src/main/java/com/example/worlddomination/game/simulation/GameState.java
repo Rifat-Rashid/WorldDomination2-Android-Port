@@ -2139,24 +2139,17 @@ public final class GameState {
         initializeAiTurnMoney();
         List<AiDiplomacyResponse> diplomacyResponses = resolvePendingAiDiplomacy();
         List<ActionOrder> turnOrders = new ArrayList<>(players.length * MAX_TURN_ACTIONS);
-        for (PlayerState player : players) {
-            if (player.human) {
-                turnOrders.addAll(queuedActions);
-                for (ActionOrder order : queuedActions) {
-                    player.lastTurnActions.add(order.action);
-                }
-                continue;
-            }
-            if (!opponentTurnsEnabled || !player.alive) {
-                continue;
-            }
-            List<OpponentAI.Decision> decisions = OpponentAI.plan(this, player, random);
-            for (OpponentAI.Decision decision : decisions) {
+        turnOrders.addAll(queuedActions);
+        for (ActionOrder order : queuedActions) {
+            getHuman().lastTurnActions.add(order.action);
+        }
+        if (opponentTurnsEnabled) {
+            for (OpponentAI.Decision decision : OpponentAI.planTurn(this, random)) {
+                PlayerState player = playerById(decision.playerId);
                 turnOrders.add(new ActionOrder(player.id, decision.action,
                         decision.productionBudgets, decision.technologies,
                         decision.reservedMillions, decision.targetPlayerId,
-                        decision.targetCityIndex,
-                        decision.weaponName,
+                        decision.targetCityIndex, decision.weaponName,
                         decision.payloadName, decision.prepareCarrier,
                         decision.spyBuilding == null ? "spyCenter" : decision.spyBuilding,
                         decision.diplomacyOption, decision.shipStrikes));

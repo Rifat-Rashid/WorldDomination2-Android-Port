@@ -120,8 +120,46 @@ public final class OpponentAI {
     /** Plans the source-ranked action slots before any nation's actions resolve. */
     public static List<Decision> plan(GameState state, GameState.PlayerState player,
                                       Random random) {
+        return planScoredActions(state, player, random,
+                rankedActions(state, player, random));
+    }
+
+    /**
+     * Mirrors Model.doTurn: score every living opponent first, then select any
+     * opponent's targets and action slots in player order. Score calculation
+     * consumes random draws, so interleaving planning here changes later scores.
+     */
+    public static List<Decision> planTurn(GameState state, Random random) {
+        List<GameState.PlayerState> opponents = new ArrayList<>();
+        List<List<ScoredAction>> rankedByOpponent = new ArrayList<>();
+        for (GameState.PlayerState player : state.getPlayers()) {
+            if (player.human || !player.alive) {
+                continue;
+            }
+            opponents.add(player);
+            rankedByOpponent.add(rankedActions(state, player, random));
+        }
+
+        List<Decision> decisions = new ArrayList<>(opponents.size() * 2);
+        for (int index = 0; index < opponents.size(); index++) {
+            decisions.addAll(planScoredActions(state, opponents.get(index), random,
+                    rankedByOpponent.get(index)));
+        }
+        return decisions;
+    }
+
+    private static List<ScoredAction> rankedActions(GameState state,
+                                                    GameState.PlayerState player,
+                                                    Random random) {
         List<ScoredAction> scores = scoreActions(state, player, random);
         scores.sort(Comparator.comparingDouble((ScoredAction item) -> item.score).reversed());
+        return scores;
+    }
+
+    static List<Decision> planScoredActions(GameState state,
+                                            GameState.PlayerState player,
+                                            Random random,
+                                            List<ScoredAction> scores) {
 
         List<Decision> decisions = new ArrayList<>(2);
         Map<String, Integer> plannedWeaponUse = new LinkedHashMap<>();
