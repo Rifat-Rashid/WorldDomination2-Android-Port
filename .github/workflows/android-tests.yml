@@ -45,6 +45,9 @@ jobs:
           - id: bioload-control-state-tests
             check: Bioload control state and expiry
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.weaponBioloadStatusIsAvailableForInterfaceRendering" --tests "com.example.worlddomination.game.ai.OpponentAITest.biologicalStrikeBlocksHumanActionsAndRestoresTemporaryWeaponLocks"'
+          - id: prepared-ship-map-tap-tests
+            check: Prepared ship city-tap selection
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.PreparedShipStrikeSelectionTest"'
           - id: noncombat-elimination-tests
             check: Noncombat zero-population elimination
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.turnEndEliminatesZeroPopulationNationWithoutCombat"'
