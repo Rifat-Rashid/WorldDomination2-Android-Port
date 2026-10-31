@@ -30,6 +30,9 @@ jobs:
           - id: ai-initialization-rng-tests
             check: AI initialization RNG parity tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.emptySourceEnemySelectionStillConsumesItsRandomDraw" --tests "com.example.worlddomination.game.simulation.GameStateTest.aiDesireChoicesUseTheFirstValueOfSourceOneToTwoDraws"'
+          - id: ai-special-income-order-tests
+            check: AI special income turn ordering
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.specialLeaderIncomeIsAddedAfterAiPlanningBudgetSnapshot"'
           - id: source-city-population-tests
             check: Source starting city population tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.startingCityAllocationUsesFractionalQuarterAndConsumesFiveDraws" --tests "com.example.worlddomination.game.simulation.GameStateTest.inactivePlayerSlotsDoNotConsumeStartingCityPopulationDraws" --tests "com.example.worlddomination.game.simulation.GameStateTest.selectedOpponentSetupDistributesPopulationAcrossItsFiveCities"'
