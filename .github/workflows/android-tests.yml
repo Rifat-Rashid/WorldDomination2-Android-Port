@@ -123,6 +123,9 @@ jobs:
           - id: ai-carrier-eligibility-tests
             check: AI source carrier payload level eligibility
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.OpponentAITest.attackAvailabilityRespectsLevelThreeShipAndSubmarinePayloadCap"'
+          - id: ai-battle-hostility-tests
+            check: AI battle hostility penalty parity
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.aiBattleParticipantsReceiveSourceHostilityPenaltyBeforeCasualtyLoss" --tests "com.example.worlddomination.game.simulation.GameStateTest.humanBattleParticipantDoesNotReceiveAiHostilityPenalty" --tests "com.example.worlddomination.game.simulation.GameStateTest.aiHostilityPenaltyRequiresPositiveRegardBeforeCasualtyLoss"'
           - id: ai-diplomacy-target-score-tests
             check: AI diplomacy source score selection
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.OpponentAITest.diplomacyTargetScoreUsesStrictGreaterAndKeepsFirstRivalOnTies"'

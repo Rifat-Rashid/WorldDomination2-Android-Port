@@ -919,9 +919,51 @@ public final class GameStateTest {
                 - state.getCityPopulationMillions(defender.id, 0);
         assertTrue(casualties >= 2 && casualties <= 4);
         assertEquals(83 - casualties, human.getRegardTowardExact(defender.id), 0.0);
-        assertEquals(83 - casualties, defender.getRegardTowardExact(human.id), 0.0);
+        assertEquals(75 - casualties, defender.getRegardTowardExact(human.id), 0.0);
         assertEquals(75 - casualties / 20.0d,
                 observer.getRegardTowardExact(human.id), 0.000001);
+    }
+
+    @Test
+    public void aiBattleParticipantsReceiveSourceHostilityPenaltyBeforeCasualtyLoss() {
+        GameState state = new GameState(0, 750L, false);
+        GameState.PlayerState attacker = state.getPlayerState(1);
+        GameState.PlayerState defender = state.getPlayerState(2);
+        setRegard(attacker, defender.id, 3);
+        setRegard(defender, attacker.id, 3);
+
+        state.applyBattleHostilityEffects(attacker, defender, 4);
+
+        assertEquals(-9, attacker.getRegardTowardExact(defender.id), 0.0);
+        assertEquals(-9, defender.getRegardTowardExact(attacker.id), 0.0);
+    }
+
+    @Test
+    public void humanBattleParticipantDoesNotReceiveAiHostilityPenalty() {
+        GameState state = new GameState(0, 751L, false);
+        GameState.PlayerState human = state.getHuman();
+        GameState.PlayerState ai = state.getPlayerState(1);
+        setRegard(human, ai.id, 3);
+        setRegard(ai, human.id, 3);
+
+        state.applyBattleHostilityEffects(human, ai, 4);
+
+        assertEquals(-1, human.getRegardTowardExact(ai.id), 0.0);
+        assertEquals(-9, ai.getRegardTowardExact(human.id), 0.0);
+    }
+
+    @Test
+    public void aiHostilityPenaltyRequiresPositiveRegardBeforeCasualtyLoss() {
+        GameState state = new GameState(0, 752L, false);
+        GameState.PlayerState attacker = state.getPlayerState(1);
+        GameState.PlayerState human = state.getHuman();
+        setRegard(attacker, human.id, 0);
+        setRegard(human, attacker.id, 0);
+
+        state.applyBattleHostilityEffects(attacker, human, 4);
+
+        assertEquals(-4, attacker.getRegardTowardExact(human.id), 0.0);
+        assertEquals(-4, human.getRegardTowardExact(attacker.id), 0.0);
     }
 
     @Test
@@ -940,8 +982,8 @@ public final class GameStateTest {
 
         state.applyBattleHostilityEffects(attacker, specialDefender, 4);
 
-        assertEquals(76, attacker.getRegardTowardExact(specialDefender.id), 0.0);
-        assertEquals(69, specialDefender.getRegardTowardExact(attacker.id), 0.0);
+        assertEquals(68, attacker.getRegardTowardExact(specialDefender.id), 0.0);
+        assertEquals(61, specialDefender.getRegardTowardExact(attacker.id), 0.0);
         assertEquals(63, attacker.getRegardTowardExact(attacker.id), 0.0);
         assertEquals(63, human.getRegardTowardExact(attacker.id), 0.0);
         assertEquals(63, observer.getRegardTowardExact(attacker.id), 0.0);
