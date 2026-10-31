@@ -96,6 +96,27 @@ public final class ProductionScreenLayoutTest {
     }
 
     @Test
+    public void draggingFromTheHandlePreservesTheSourceGrabOffset() {
+        Rectangle modal = new Rectangle(20f, 30f,
+                ProductionScreenLayout.ART_WIDTH, ProductionScreenLayout.ART_HEIGHT);
+        Rectangle handle = ProductionScreenLayout.setHandleBounds(
+                0, 30, modal, new Rectangle());
+        float handleCenterX = handle.x + handle.width / 2f;
+        float pointerDownX = handleCenterX + 4f;
+
+        int unchanged = ProductionScreenLayout.percentAt(
+                0, modal, pointerDownX, pointerDownX - handleCenterX, 100);
+        int afterDrag = ProductionScreenLayout.percentAt(
+                0, modal, pointerDownX + 6f, pointerDownX - handleCenterX, 100);
+
+        assertEquals("A stationary handle press must keep its current setting", 30, unchanged);
+        assertEquals("A short drag must keep the finger at its original point on the handle",
+                30, afterDrag);
+        assertEquals("Treating the drag as a track tap would incorrectly snap to 40%", 40,
+                ProductionScreenLayout.percentAt(0, modal, pointerDownX + 6f, 100));
+    }
+
+    @Test
     public void specialCarrierProgressBarsRespectTheirBounds() {
         Rectangle modal = new Rectangle(0f, 0f,
                 ProductionScreenLayout.ART_WIDTH, ProductionScreenLayout.ART_HEIGHT);

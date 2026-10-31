@@ -90,6 +90,15 @@ public final class ProductionScreenLayout {
         return Math.min(percent, Math.max(0, Math.min(100, remainingPercent)));
     }
 
+    /**
+     * Converts a handle drag to a source slider value while preserving the point
+     * where the user grabbed the handle.
+     */
+    public static int percentAt(int sliderIndex, Rectangle modal, float worldX,
+                                float handleGrabOffsetX, int remainingPercent) {
+        return percentAt(sliderIndex, modal, worldX - handleGrabOffsetX, remainingPercent);
+    }
+
     /** Source slider rounds down through the midpoint and rounds to nearest above it. */
     public static int sourceStepPercent(float rawPercent) {
         float clamped = Math.max(0f, Math.min(100f, rawPercent));

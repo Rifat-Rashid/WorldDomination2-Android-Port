@@ -102,6 +102,9 @@ jobs:
           - id: production-screen-layout-tests
             check: Original production slider layout and touch mapping
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.ProductionScreenLayoutTest"'
+          - id: production-source-handle-drag-tests
+            check: Original production handle drag behavior
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.ProductionScreenLayoutTest.draggingFromTheHandlePreservesTheSourceGrabOffset"'
           - id: production-source-art-tests
             check: Original production window and slider artwork
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.OriginalUiAssetManifestTest.productionMenuArtworkUsesItsOriginalDesktopAspectRatio" --tests "com.example.worlddomination.game.assets.OriginalFlashAnimationAssetsTest.productionSliderUsesTheOriginalFlashHandleArtwork"'

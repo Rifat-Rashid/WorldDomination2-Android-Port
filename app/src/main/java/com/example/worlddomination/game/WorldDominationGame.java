@@ -263,6 +263,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private float lastPointerY;
     private float lastPointerTime;
     private float gestureVelocityY;
+    private float productionGestureHandleOffsetX;
     private float showExitPromptSeconds;
     private int gestureArea;
     private int preparedCarrierIndex;
@@ -2626,6 +2627,11 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     }
 
     private boolean updateProductionSlider(int sliderIndex, float worldX) {
+        return updateProductionSlider(sliderIndex, worldX, 0f);
+    }
+
+    private boolean updateProductionSlider(int sliderIndex, float worldX,
+                                           float handleGrabOffsetX) {
         if (sliderIndex < 0 || sliderIndex >= ProductionScreenLayout.sliderCount()
                 || game == null || game.getSelectedAction() != GameState.Action.PRODUCTION) {
             return false;
@@ -2634,7 +2640,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         game.selectProductionCategory(category);
         int remainingPercent = game.getSelectedProductionMaximumPercent();
         int percent = ProductionScreenLayout.percentAt(
-                sliderIndex, modal, worldX, remainingPercent);
+                sliderIndex, modal, worldX, handleGrabOffsetX, remainingPercent);
         boolean updated = game.configureProduction(category, percent);
         if (updated) {
             refreshProductionSummary();
@@ -3923,11 +3929,21 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         dragging = false;
         gestureArea = pointArea(pointer.x, pointer.y);
         productionGestureSlider = -1;
+        productionGestureHandleOffsetX = 0f;
         if (gestureArea == GESTURE_PRODUCTION) {
             for (int i = 0; i < productionSliderHitTargets.length; i++) {
                 if (productionSliderHitTargets[i].contains(pointer.x, pointer.y)) {
                     productionGestureSlider = i;
-                    if (!updateProductionSlider(i, pointer.x)) {
+                    int currentPercent = game.getProductionPercent(
+                            ProductionScreenLayout.categoryKey(i));
+                    Rectangle handle = ProductionScreenLayout.setHandleBounds(
+                            i, currentPercent, modal, productionSliderMarkers[i]);
+                    if (handle.contains(pointer.x, pointer.y)) {
+                        productionGestureHandleOffsetX = pointer.x
+                                - (handle.x + handle.width / 2f);
+                    }
+                    if (!updateProductionSlider(i, pointer.x,
+                            productionGestureHandleOffsetX)) {
                         productionGestureSlider = -1;
                     }
                     break;
@@ -3946,7 +3962,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         float distance = (float) Math.hypot(pointer.x - pointerStartX, pointer.y - pointerStartY);
         if (gestureArea == GESTURE_PRODUCTION) {
             if (productionGestureSlider >= 0 && (dragging || distance >= TAP_SLOP)) {
-                updateProductionSlider(productionGestureSlider, pointer.x);
+                updateProductionSlider(productionGestureSlider, pointer.x,
+                        productionGestureHandleOffsetX);
             }
         } else if (gestureArea != GESTURE_NONE && dragging) {
             if (gestureArea == GESTURE_NAV) {
@@ -3959,6 +3976,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         gestureArea = GESTURE_NONE;
         productionGestureSlider = -1;
+        productionGestureHandleOffsetX = 0f;
         dragging = false;
         Gdx.graphics.requestRendering();
         return true;
@@ -3969,6 +3987,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         if (pointerIndex == 0) {
             gestureArea = GESTURE_NONE;
             productionGestureSlider = -1;
+            productionGestureHandleOffsetX = 0f;
             dragging = false;
             gestureVelocityY = 0f;
         }
@@ -3988,7 +4007,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 dragging = true;
             }
             if (dragging) {
-                updateProductionSlider(productionGestureSlider, pointer.x);
+                updateProductionSlider(productionGestureSlider, pointer.x,
+                        productionGestureHandleOffsetX);
             }
             return true;
         }
