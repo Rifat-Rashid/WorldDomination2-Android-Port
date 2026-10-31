@@ -133,6 +133,18 @@ public final class OriginalAudioTest {
     }
 
     @Test
+    public void standaloneAircraftCuesUseTheRecoveredFighterAndCarrierJetSounds() {
+        assertEquals("original/runtime/audio/66_unit_Fightertakeoff.wav.mp3.gz",
+                OriginalAudio.sourceAssetPath(OriginalAudio.Cue.FIGHTER_TAKEOFF));
+        assertEquals("original/runtime/audio/20_unit_fighterflight.wav.mp3.gz",
+                OriginalAudio.sourceAssetPath(OriginalAudio.Cue.FIGHTER_FLIGHT));
+        assertEquals("original/runtime/audio/76_unit_Carrierjet take off.wav.mp3.gz",
+                OriginalAudio.sourceAssetPath(OriginalAudio.Cue.CARRIERJET_TAKEOFF));
+        assertEquals("original/runtime/audio/21_unit_Carrierjet flight.wav.mp3.gz",
+                OriginalAudio.sourceAssetPath(OriginalAudio.Cue.CARRIERJET_FLIGHT));
+    }
+
+    @Test
     public void actionPanelsUseTheirOriginalAmbientSoundAssignments() {
         assertEquals(OriginalAudio.Cue.RESOURCES_AMBIENT,
                 OriginalAudio.ambientForAction(GameState.Action.RESOURCES));

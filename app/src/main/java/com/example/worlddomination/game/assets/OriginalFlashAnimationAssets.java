@@ -58,6 +58,8 @@ public final class OriginalFlashAnimationAssets implements Disposable {
             "rocket", "trail",
             "submarine",
             "ship_plane",
+            "plane001", "plane001_tint", "plane001_shadow",
+            "plane002", "plane002_tint", "plane002_shadow",
             "boat001", "soldier", "soldier001_shoot", "chinook", "chinook_shadow", "apache",
             "apache_shadow", "apache_tint", "marine", "soldier001_tint",
             "soldier001_shoot_tint", "suicide_bomber", "suicide_bomber_tint",
@@ -186,6 +188,10 @@ public final class OriginalFlashAnimationAssets implements Disposable {
                     loadedTimelines.get("satellite")));
             loadedNestedTimelines.putAll(loadNestedTimelines(scene,
                     loadedTimelines.get("submarine")));
+            loadedNestedTimelines.putAll(loadNestedTimelines(scene,
+                    loadedTimelines.get("plane001_shadow")));
+            loadedNestedTimelines.putAll(loadNestedTimelines(scene,
+                    loadedTimelines.get("plane002_shadow")));
             synchronized (loadLock) {
                 if (disposed) {
                     return;

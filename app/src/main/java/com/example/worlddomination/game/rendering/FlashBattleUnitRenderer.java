@@ -18,6 +18,7 @@ public final class FlashBattleUnitRenderer {
     };
     private static final int[][] SATELLITE_LASER_COLORS = buildSatelliteLaserColors();
     private static final int MAX_SATELLITE_CLIP_DEPTH = 8;
+    private final FlashAffineTransform[] planeTransformScratch = createPlaneTransformScratch();
     private static final String SUBMARINE_TINT_VERTEX_SHADER =
             "attribute vec4 a_position;\n"
                     + "attribute vec4 a_color;\n"
@@ -225,6 +226,109 @@ public final class FlashBattleUnitRenderer {
             }
         }
         batch.setColor(com.badlogic.gdx.graphics.Color.WHITE);
+    }
+
+    /** Draws the source fighter/bomber, color overlay, and raised shadow. */
+    public void drawStandalonePlanes(SpriteBatch batch, Rectangle mapBounds,
+                                     List<FlashStandalonePlaneAnimation> animations) {
+        if (!assets.isLoaded()) {
+            return;
+        }
+        float mapScale = BattlefieldCityLayout.sourceScale(mapBounds);
+        for (FlashStandalonePlaneAnimation animation : animations) {
+            FlashStandalonePlaneAnimation.Actor actor = animation.getActor();
+            if (!actor.visible) {
+                continue;
+            }
+            FlashBattleRoutes.StandalonePlaneStrike route = animation.getRoute();
+            String linkage = route.linkage;
+            drawPlaneLinkage(batch, mapBounds, assets.getTimeline(linkage),
+                    actor.sourceFrame, actor.sourceX, actor.sourceY,
+                    route.attackerPlayerId, route.targetPlayerId, actor.routeProgress,
+                    actor.alpha, actor.scale * mapScale, null, false, false,
+                    actor.sourceFrame, 1f, 0, planeTransformScratch[0].setIdentity());
+
+            drawPlaneLinkage(batch, mapBounds, assets.getTimeline(linkage + "_shadow"),
+                    0, actor.sourceX, actor.sourceY + actor.shadowYOffset,
+                    route.attackerPlayerId, route.targetPlayerId, actor.routeProgress,
+                    1f, actor.scale * mapScale, null, false, true,
+                    actor.sourceFrame, 1f, 0, planeTransformScratch[0].setIdentity());
+
+            beginSubmarineTint(batch, animation.getTint());
+            drawPlaneLinkage(batch, mapBounds, assets.getTimeline(linkage + "_tint"),
+                    actor.sourceFrame, actor.sourceX, actor.sourceY,
+                    route.attackerPlayerId, route.targetPlayerId, actor.routeProgress,
+                    actor.alpha, actor.scale * mapScale, animation.getTint(), true, false,
+                    actor.sourceFrame, 1f, 0, planeTransformScratch[0].setIdentity());
+            batch.setColor(com.badlogic.gdx.graphics.Color.WHITE);
+            batch.setShader(null);
+        }
+    }
+
+    private void drawPlaneLinkage(SpriteBatch batch, Rectangle mapBounds,
+                                  FlashAnimationTimeline timeline, int frameIndex,
+                                  float sourceX, float sourceY, int fromPlayerId,
+                                  int toPlayerId, float routeProgress, float alpha,
+                                  float actorScale, FlashColorTransform tint,
+                                  boolean tinted, boolean shadow, int childFrameIndex,
+                                  float parentAlpha, int depth,
+                                  FlashAffineTransform parentTransform) {
+        if (timeline == null || depth > MAX_SATELLITE_CLIP_DEPTH || alpha <= 0f
+                || parentAlpha <= 0f) {
+            return;
+        }
+        FlashAnimationTimeline.Frame frame = timeline.getFrame(frameIndex);
+        if (frame == null) {
+            return;
+        }
+        for (FlashAnimationTimeline.Layer layer : frame.layers) {
+            float layerAlpha = parentAlpha * layer.alpha;
+            if (layerAlpha <= 0f) {
+                continue;
+            }
+            FlashAffineTransform transform = planeTransformScratch[depth + 1]
+                    .setProduct(parentTransform, layer.a, layer.b, layer.c, layer.d,
+                            layer.tx, layer.ty);
+            if (transform.scaleX == 0f || transform.scaleY == 0f) {
+                continue;
+            }
+            TextureRegion region = assets.getShape(layer.shapeId);
+            if (region != null) {
+                float width = region.getRegionWidth() * actorScale;
+                float height = region.getRegionHeight() * actorScale;
+                float x = BattlefieldCityLayout.sourceXBetween(mapBounds,
+                        sourceX + transform.tx, fromPlayerId, toPlayerId, routeProgress);
+                float top = BattlefieldCityLayout.sourceY(mapBounds, sourceY + transform.ty);
+                if (shadow) {
+                    batch.setColor(0f, 0f, 0f, alpha * layerAlpha);
+                } else {
+                    setSubmarineLayerColor(batch, tint, tinted, alpha * layerAlpha);
+                }
+                batch.draw(region, x, top - height, 0f, height, width, height,
+                        transform.scaleX, transform.scaleY, transform.rotationDegrees);
+                continue;
+            }
+
+            FlashAnimationTimeline nested = assets.getTimelineBySymbolId(layer.shapeId);
+            if (nested == null || nested.getFrameCount() == 0) {
+                continue;
+            }
+            int nestedFrame = Math.min(childFrameIndex, nested.getFrameCount() - 1);
+            drawPlaneLinkage(batch, mapBounds, nested, nestedFrame,
+                    sourceX, sourceY, fromPlayerId, toPlayerId,
+                    routeProgress, alpha, actorScale, tint, tinted, shadow,
+                    childFrameIndex, layerAlpha, depth + 1, transform);
+        }
+        batch.setColor(com.badlogic.gdx.graphics.Color.WHITE);
+    }
+
+    private static FlashAffineTransform[] createPlaneTransformScratch() {
+        FlashAffineTransform[] transforms = new FlashAffineTransform[
+                MAX_SATELLITE_CLIP_DEPTH + 2];
+        for (int i = 0; i < transforms.length; i++) {
+            transforms[i] = new FlashAffineTransform();
+        }
+        return transforms;
     }
 
     /** Draws the original religion-specific satellite symbol while it approaches orbit. */

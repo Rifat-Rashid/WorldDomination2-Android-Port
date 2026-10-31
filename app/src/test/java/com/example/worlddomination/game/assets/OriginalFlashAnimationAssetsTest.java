@@ -14,6 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.zip.GZIPInputStream;
@@ -88,6 +89,53 @@ public final class OriginalFlashAnimationAssetsTest {
                 }
             }
         }
+    }
+
+    @Test
+    public void loadsOriginalStandaloneAircraftFramesTintAndShadows() throws IOException {
+        JsonValue scene = loadScene();
+        Map<String, FlashAnimationTimeline> timelines =
+                OriginalFlashAnimationAssets.loadTimelines(scene);
+        Map<Integer, FlashAnimationTimeline> nested = new LinkedHashMap<>();
+        for (String linkage : new String[]{"plane001_shadow", "plane002_shadow"}) {
+            nested.putAll(OriginalFlashAnimationAssets.loadNestedTimelines(
+                    scene, timelines.get(linkage)));
+        }
+        Set<Integer> atlasShapeIds = OriginalFlashAnimationAssets.collectShapeIds(
+                timelines, nested,
+                shapeId -> Files.isRegularFile(shapeAsset(shapeId)));
+
+        for (String linkage : new String[]{"plane001", "plane001_tint", "plane002",
+                "plane002_tint"}) {
+            FlashAnimationTimeline plane = timelines.get(linkage);
+            assertNotNull("Missing original airplane Flash linkage " + linkage, plane);
+            assertEquals(linkage, 24, plane.getFrameCount());
+            for (int frameIndex = 0; frameIndex < plane.getFrameCount(); frameIndex++) {
+                FlashAnimationTimeline.Frame frame = plane.getFrame(frameIndex);
+                assertNotNull("Missing airplane frame " + linkage + ":" + frameIndex, frame);
+                assertTrue("Empty airplane frame " + linkage + ":" + frameIndex,
+                        frame.layers.length > 0);
+                for (FlashAnimationTimeline.Layer layer : frame.layers) {
+                    assertTrue("Missing original plane art " + layer.shapeId,
+                            Files.isRegularFile(shapeAsset(layer.shapeId)));
+                    assertTrue("Plane art not included in the battle atlas " + layer.shapeId,
+                            atlasShapeIds.contains(layer.shapeId));
+                }
+            }
+        }
+        assertNotNull("The fighter's shadow must resolve to the original plane clip",
+                nested.get(399));
+        assertNotNull("The bomber's shadow must resolve to the original plane clip",
+                nested.get(847));
+        assertTrue(atlasShapeIds.contains(349));
+        assertTrue(atlasShapeIds.contains(800));
+
+        JsonValue fighterTakeoff = scene.get("sound_metadata").get("66");
+        JsonValue bomberTakeoff = scene.get("sound_metadata").get("76");
+        assertEquals(60, Math.round(fighterTakeoff.getFloat("sample_count")
+                / fighterTakeoff.getFloat("rate") * scene.getFloat("fps")));
+        assertEquals(37, Math.round(bomberTakeoff.getFloat("sample_count")
+                / bomberTakeoff.getFloat("rate") * scene.getFloat("fps")));
     }
 
     @Test
