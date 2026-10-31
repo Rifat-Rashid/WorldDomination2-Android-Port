@@ -105,7 +105,8 @@ public final class GameStateCombatEventTest {
         assertEquals("warhead1", event.payloadName);
         assertTrue(FlashBattleRoutes.supportsSubmarineRocketStrike(event));
         FlashBattleRoutes.RocketStrike route = FlashBattleRoutes.createSubmarineRocketStrike(
-                event.attackerPlayerId, event.defenderPlayerId, event.cityIndex);
+                event.attackerPlayerId, event.defenderPlayerId, event.cityIndex,
+                event.type == GameState.CombatEventType.STRIKE_INTERCEPTED);
         assertTrue(route.submarineLaunch);
         assertEquals(0.5f, new com.example.worlddomination.game.rendering.FlashRocketAnimation(
                 route, 0).getRocket().scaleY, 0f);

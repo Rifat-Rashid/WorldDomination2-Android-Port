@@ -397,8 +397,15 @@ public final class FlashBattleRoutes {
 
     /** Returns whether the source resolved a payload launched by a submarine. */
     public static boolean supportsSubmarineRocketStrike(GameState.CombatEvent event) {
-        return event != null && event.type == GameState.CombatEventType.STRIKE_IMPACT
-                && "sub".equals(event.weaponName);
+        return event != null && supportsSubmarineRocketStrike(event.type, event.weaponName);
+    }
+
+    /** Returns whether a resolved event should use the submarine launch animation. */
+    public static boolean supportsSubmarineRocketStrike(GameState.CombatEventType type,
+                                                         String weaponName) {
+        return (type == GameState.CombatEventType.STRIKE_IMPACT
+                || type == GameState.CombatEventType.STRIKE_INTERCEPTED)
+                && "sub".equals(weaponName);
     }
 
     /** Returns whether the event came from one payload launched by the source ship carrier. */
@@ -517,6 +524,15 @@ public final class FlashBattleRoutes {
     public static RocketStrike createSubmarineRocketStrike(int attackerPlayerId,
                                                             int targetPlayerId,
                                                             int targetCityIndex) {
+        return createSubmarineRocketStrike(attackerPlayerId, targetPlayerId,
+                targetCityIndex, false);
+    }
+
+    /** Recreates a submarine route whose rocket is intercepted by the defender. */
+    public static RocketStrike createSubmarineRocketStrike(int attackerPlayerId,
+                                                            int targetPlayerId,
+                                                            int targetCityIndex,
+                                                            boolean intercepted) {
         validatePlayer(attackerPlayerId);
         validatePlayer(targetPlayerId);
         if (targetCityIndex < 0 || targetCityIndex >= BattlefieldCityLayout.CITIES_PER_PLAYER) {
@@ -537,7 +553,8 @@ public final class FlashBattleRoutes {
         float directionMultiplier = launchesFromRight ? 1f : -1f;
         float targetAngle = launchesFromRight ? -180f : 360f;
         return new RocketStrike(attackerPlayerId, targetPlayerId, targetCityIndex,
-                0, false, submarine, true, launch, target, target,
+                0, intercepted, submarine, true, launch, target,
+                new Point(target.x, intercepted ? target.y - 100f : target.y),
                 ellipseCenterX, ellipseCenterY, Math.abs(launch.x - target.x) / 2f,
                 170f, startAngle, directionMultiplier, targetAngle);
     }

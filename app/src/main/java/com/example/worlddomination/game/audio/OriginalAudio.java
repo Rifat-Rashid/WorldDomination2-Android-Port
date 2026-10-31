@@ -36,6 +36,7 @@ public final class OriginalAudio {
         TANK_GUN("5_unit_Tank gun.wav.mp3.gz"),
         TANK_CHOPPER("6_unit_Tank chopper.wav.mp3.gz"),
         SUICIDE_SCREAM("7_unit_Suicide scream.wav.mp3.gz"),
+        SUBMARINE_SURFACE("10_unit_Submarine water splash.wav.mp3.gz"),
         CARRIERJET_FLIGHT("21_unit_Carrierjet flight.wav.mp3.gz"),
         CARRIERJET_TAKEOFF("76_unit_Carrierjet take off.wav.mp3.gz"),
         EXPLOSION_SMALL3("98_Explode small3.wav.mp3.gz"),
@@ -98,6 +99,7 @@ public final class OriginalAudio {
         preload(Cue.TANK_GUN);
         preload(Cue.TANK_CHOPPER);
         preload(Cue.SUICIDE_SCREAM);
+        preload(Cue.SUBMARINE_SURFACE);
         preload(Cue.CARRIERJET_FLIGHT);
         preload(Cue.CARRIERJET_TAKEOFF);
         preload(Cue.EXPLOSION_SMALL3);
@@ -162,6 +164,11 @@ public final class OriginalAudio {
     }
 
     public void play(Cue cue) {
+        play(cue, 0f);
+    }
+
+    /** Plays an original effect at the source Flash stage's normalized horizontal position. */
+    public void play(Cue cue, float pan) {
         if (muted || cue == Cue.THEME) {
             return;
         }
@@ -170,7 +177,7 @@ public final class OriginalAudio {
             sound = loadSound(cue);
         }
         if (sound != null) {
-            sound.play(EFFECT_VOLUME);
+            sound.play(EFFECT_VOLUME, 1f, Math.max(-1f, Math.min(1f, pan)));
         }
     }
 

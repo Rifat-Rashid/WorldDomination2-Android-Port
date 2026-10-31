@@ -56,6 +56,40 @@ public final class OriginalFlashAnimationAssetsTest {
                 nested.get(2433));
     }
 
+    @Test
+    public void loadsOriginalSubmarineHullAndTintTimelinesIntoBattleAtlas() throws IOException {
+        JsonValue scene = loadScene();
+        FlashAnimationTimeline submarine = FlashAnimationTimeline.fromSymbol(
+                findSymbol(scene, "submarine"), scene.getFloat("fps"));
+        Map<Integer, FlashAnimationTimeline> nested =
+                OriginalFlashAnimationAssets.loadNestedTimelines(scene, submarine);
+        Set<Integer> atlasShapeIds = OriginalFlashAnimationAssets.collectShapeIds(
+                Collections.singletonMap("submarine", submarine), nested,
+                shapeId -> Files.isRegularFile(shapeAsset(shapeId)));
+
+        assertEquals(1, submarine.getFrameCount());
+        assertNotNull("The submarine hull movie clip was not loaded", nested.get(4833));
+        assertNotNull("The submarine tint movie clip was not loaded", nested.get(4834));
+        assertEquals(66, nested.get(4833).getFrameCount());
+        assertEquals(65, nested.get(4834).getFrameCount());
+        for (int symbolId : new int[]{4833, 4834}) {
+            FlashAnimationTimeline clip = nested.get(symbolId);
+            for (int frameIndex = 0; frameIndex < clip.getFrameCount(); frameIndex++) {
+                FlashAnimationTimeline.Frame frame = clip.getFrame(frameIndex);
+                if (frame == null) {
+                    continue;
+                }
+                for (FlashAnimationTimeline.Layer layer : frame.layers) {
+                    assertTrue("Missing original submarine shape asset: " + layer.shapeId,
+                            Files.isRegularFile(shapeAsset(layer.shapeId)));
+                    assertTrue("Submarine shape missing from battle atlas: "
+                                    + layer.shapeId,
+                            atlasShapeIds.contains(layer.shapeId));
+                }
+            }
+        }
+    }
+
     private static JsonValue loadScene() throws IOException {
         Path asset = projectAsset("original/runtime/scene.json.gz");
         try (InputStream file = Files.newInputStream(asset);

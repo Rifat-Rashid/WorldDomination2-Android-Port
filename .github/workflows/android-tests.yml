@@ -192,6 +192,15 @@ jobs:
           - id: satellite-source-art-tests
             check: Nested satellite art and audio mapping
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.OriginalFlashAnimationAssetsTest" --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest.satelliteFlashLabelsSelectTheFiveOriginalReligionFrames" --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest.satelliteReligionClipsLoadTheirAnimatedBodyAndLaserAnchorFrames" --tests "com.example.worlddomination.game.rendering.FlashBattleUnitRendererTest" --tests "com.example.worlddomination.game.rendering.SourceCombatAnimationMappingTest.allWarheadAndBioloadLevelsUseTheirOriginalSymbols" --tests "com.example.worlddomination.game.audio.OriginalAudioTest.combatCuesPointToTheOriginalPackagedSounds"'
+          - id: submarine-source-art-tests
+            check: Submarine source clips and atlas assets
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.OriginalFlashAnimationAssetsTest.loadsOriginalSubmarineHullAndTintTimelinesIntoBattleAtlas"'
+          - id: submarine-launch-timing-tests
+            check: Submarine launch frame timing and route pans
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashSubmarineAnimationTest" --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.createsSourceSubmarineRocketEllipseForEveryTargetCity" --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.marksInterceptedSubmarineRocketAndUsesTheOriginalHighExplosionPoint" --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.recognizesSubmarineImpactAndInterceptionEventsOnly" --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.resolvedPreparedSubmarineAttackEmitsAPlayablePayloadImpact"'
+          - id: submarine-tint-audio-tests
+            check: Submarine player tint and splash audio
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashColorTransformTest" --tests "com.example.worlddomination.game.audio.OriginalAudioTest.submarineSurfacingUsesTheOriginalWaterSplashCue"'
           - id: chinook-tank-playback-tests
             check: Chinook and tank source playback tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashChinookTankAnimationTest" --tests "com.example.worlddomination.game.rendering.FlashSpriteTransformTest" --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest.packagedStrikeAndInterceptionSymbolsMatchSourceTimelines" --tests "com.example.worlddomination.game.simulation.GameSetupTest.sourcePlayerColorIdsMapToTankTurretLibraryNames" --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.tankDirectAttackUsesItsSourceSlotAndChinookSound" --tests "com.example.worlddomination.game.audio.OriginalAudioTest.tankBattleCuesUseTheRecoveredOriginalSounds"'
