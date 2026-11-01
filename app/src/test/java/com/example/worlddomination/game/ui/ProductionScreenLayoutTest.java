@@ -35,18 +35,29 @@ public final class ProductionScreenLayoutTest {
     }
 
     @Test
-    public void mapReturnControlMatchesTheOriginalUpperRightPlacement() {
-        Rectangle mapFrame = new Rectangle(120f, 30f, 620f, 340f);
-        Rectangle mapButton = ProductionScreenLayout.setMapButtonBounds(
-                mapFrame, new Rectangle());
+    public void productionArtworkFitsDesktopAndMobileFramesWithoutDistortion() {
+        Rectangle[] mapFrames = {
+                new Rectangle(0f, 0f, 380f, 360f),
+                new Rectangle(120f, 30f, 620f, 340f),
+                new Rectangle(40f, 20f, 1040f, 410f)
+        };
 
-        assertEquals(50f, mapButton.width, 0.001f);
-        assertEquals(22f, mapButton.height, 0.001f);
-        assertEquals(3f, mapFrame.x + mapFrame.width - mapButton.x - mapButton.width,
-                0.001f);
-        assertEquals(2f, mapFrame.y + mapFrame.height - mapButton.y - mapButton.height,
-                0.001f);
-        assertTrue(mapFrame.contains(mapButton));
+        for (Rectangle mapFrame : mapFrames) {
+            Rectangle modal = ProductionScreenLayout.setModalBounds(
+                    mapFrame, new Rectangle());
+
+            assertTrue("The production artwork must fit inside the battlefield",
+                    mapFrame.contains(modal));
+            assertEquals("The source Flash artwork aspect ratio must be preserved",
+                    ProductionScreenLayout.ART_WIDTH / ProductionScreenLayout.ART_HEIGHT,
+                    modal.width / modal.height, 0.001f);
+            assertEquals("The production modal remains centered",
+                    mapFrame.x + mapFrame.width / 2f,
+                    modal.x + modal.width / 2f, 0.001f);
+            assertEquals("The production modal remains centered vertically",
+                    mapFrame.y + mapFrame.height / 2f,
+                    modal.y + modal.height / 2f, 0.001f);
+        }
     }
 
     @Test

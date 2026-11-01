@@ -45,6 +45,9 @@ jobs:
           - id: source-city-population-tests
             check: Source starting city population tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.startingCityAllocationUsesFractionalQuarterAndConsumesFiveDraws" --tests "com.example.worlddomination.game.simulation.GameStateTest.inactivePlayerSlotsDoNotConsumeStartingCityPopulationDraws" --tests "com.example.worlddomination.game.simulation.GameStateTest.selectedOpponentSetupDistributesPopulationAcrossItsFiveCities"'
+          - id: source-difficulty-inventory-tests
+            check: Source difficulty starting inventory parity
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.sourceDifficultySetsStartingWeaponStockByPlayerAndDifficulty" --tests "com.example.worlddomination.game.simulation.GameStateTest.sourceDifficultyInitializesTechnologiesOnlyForActivePlayers"'
           - id: turn-progression-tests
             check: Game state and turn progression tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest"'
@@ -102,6 +105,12 @@ jobs:
           - id: production-screen-layout-tests
             check: Original production slider layout and touch mapping
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.ProductionScreenLayoutTest"'
+          - id: action-screen-ui-tests
+            check: Action screen mode and responsive UI layout
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.ActionScreenLayoutTest"'
+          - id: direct-attack-equipment-selection-tests
+            check: Direct attack equipment picker selection
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.directAttackEquipmentSelectionUpdatesTheActiveWeapon"'
           - id: production-source-handle-drag-tests
             check: Original production handle drag behavior
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.ProductionScreenLayoutTest.draggingFromTheHandlePreservesTheSourceGrabOffset"'

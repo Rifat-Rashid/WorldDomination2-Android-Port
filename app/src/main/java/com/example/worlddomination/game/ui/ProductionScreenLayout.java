@@ -6,8 +6,6 @@ import com.badlogic.gdx.math.Rectangle;
 public final class ProductionScreenLayout {
     public static final float ART_WIDTH = 365f;
     public static final float ART_HEIGHT = 275f;
-    public static final float MAP_BUTTON_WIDTH = 50f;
-    public static final float MAP_BUTTON_HEIGHT = 22f;
 
     private static final String[] CATEGORY_KEYS = {
             "rockets", "planes", "special", "warhead", "bioload", "soldier", "spy", "defense"
@@ -39,11 +37,14 @@ public final class ProductionScreenLayout {
         return CATEGORY_KEYS[sliderIndex];
     }
 
-    /** Places the source MAP control at the upper-right edge of the battlefield frame. */
-    public static Rectangle setMapButtonBounds(Rectangle mapFrame, Rectangle output) {
-        return output.set(mapFrame.x + mapFrame.width - MAP_BUTTON_WIDTH - 3f,
-                mapFrame.y + mapFrame.height - MAP_BUTTON_HEIGHT - 2f,
-                MAP_BUTTON_WIDTH, MAP_BUTTON_HEIGHT);
+    /** Fits the original production artwork inside the battlefield without distortion. */
+    public static Rectangle setModalBounds(Rectangle mapFrame, Rectangle output) {
+        float aspect = ART_WIDTH / ART_HEIGHT;
+        float width = Math.min(mapFrame.width * 0.78f,
+                mapFrame.height * 0.96f * aspect);
+        float height = width / aspect;
+        return output.set(mapFrame.x + (mapFrame.width - width) / 2f,
+                mapFrame.y + (mapFrame.height - height) / 2f, width, height);
     }
 
     /** Sets a touch target around one source slider track, in game world coordinates. */

@@ -15,8 +15,10 @@ import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 
 public final class GameStateTest {
     @Test
@@ -24,6 +26,72 @@ public final class GameStateTest {
         for (GameState.Action action : GameState.Action.values()) {
             assertTrue(action.label, action.isPorted());
         }
+    }
+
+    @Test
+    public void messageHistoryKeepsCurrentEntriesUntilTurnResultsThenResets() {
+        GameState state = new GameState(1, 734L, false);
+        assertTrue(state.getMessages(1).isEmpty());
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.MASS_MEDIA);
+        assertTrue(state.acceptSelectedAction());
+
+        for (int i = 0; i < 6; i++) {
+            state.selectAction(GameState.Action.DIPLOMACY);
+        }
+        String fullActionQueueMessage =
+                "Both action slots are full. Confirm the turn or clear them.";
+        assertTrue(state.getMessages().size() > 4);
+        assertTrue(state.getMessages().contains(fullActionQueueMessage));
+
+        state.confirmTurn();
+
+        assertFalse(state.getMessages().contains(fullActionQueueMessage));
+        assertFalse(state.getMessages().contains(
+                "Welcome, commander. Select two actions."));
+        assertTrue(state.getMessages().contains("Turn 1 complete."));
+    }
+
+    @Test
+    public void messageHistoryAccessorReturnsSeparateReadOnlyPlayerLogs() {
+        GameState state = new GameState(1, 22L, false);
+
+        assertEquals(Collections.singletonList("Welcome, commander. Select two actions."),
+                state.getMessages(0));
+        assertTrue(state.getMessages(1).isEmpty());
+        try {
+            state.getMessages(1).add("must not mutate another player's log");
+            fail("Player message logs should be read-only to callers");
+        } catch (UnsupportedOperationException expected) {
+            // Expected: callers observe, but cannot mutate, simulation results.
+        }
+    }
+
+    @Test
+    public void propagandaResultsAreStoredWithThePlayersTheyAffect() {
+        GameState state = new GameState(1, 51L, false);
+        GameState.PlayerState attacker = state.getHuman();
+        GameState.PlayerState defender = state.getPlayerState(1);
+        attacker.religion = 100;
+        defender.religion = 0;
+        assertTrue(state.getPropagandaTransferEstimate(defender.id, 0) > 0);
+
+        state.selectAction(GameState.Action.PROPAGANDA);
+        assertTrue(state.configurePropaganda(defender.id, 0));
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+
+        assertTrue(state.getMessages().stream()
+                .anyMatch(message -> message.startsWith("You gained ")));
+        assertTrue(state.getMessages(1).stream()
+                .anyMatch(message -> message.startsWith("You lost ")));
+        assertFalse(state.getMessages().stream()
+                .anyMatch(message -> message.startsWith("You lost ")));
+        assertFalse(state.getMessages(1).stream()
+                .anyMatch(message -> message.startsWith("You gained ")));
     }
 
     @Test
@@ -699,6 +767,7 @@ public final class GameStateTest {
     @Test
     public void researchCompletesAndActivatesTheCorrespondingWeapon() {
         GameState state = new GameState(1, 9L);
+        int startingTechnologyLevel = state.getHuman().getTechnologyLevel();
         state.selectAction(GameState.Action.RESEARCH);
         assertTrue(state.selectResearchTechnology("soldier2"));
         assertTrue(state.acceptSelectedAction());
@@ -708,6 +777,8 @@ public final class GameStateTest {
 
         assertTrue(state.getHuman().hasTechnology("soldier2"));
         assertTrue(state.isWeaponActive(0, "soldier2"));
+        assertEquals("Technology level uses each researched item's source strength weight",
+                startingTechnologyLevel + 3, state.getHuman().getTechnologyLevel());
         assertEquals(55, state.getHuman().moneyMillions);
         assertEquals(55, state.getTurnMoneyMillions());
         assertEquals(1, state.getTurn());
@@ -896,7 +967,7 @@ public final class GameStateTest {
 
     @Test
     public void directSoldierAttackConsumesStockAndDamagesSelectedCity() {
-        GameState state = new GameState(1, 0L);
+        GameState state = new GameState(1, 0L, false);
         int beforeCity = state.getCityPopulationMillions(1, 0);
         int beforePlayer = state.getPlayers()[1].populationMillions;
         state.selectAction(GameState.Action.ATTACK);
@@ -911,12 +982,26 @@ public final class GameStateTest {
         assertEquals(beforePlayer - casualties, state.getPlayers()[1].populationMillions);
         assertEquals(0, state.getWeaponStock("soldier1"));
         assertTrue(state.getHuman().score > 0);
+        assertTrue(state.getMessages().contains("You KILLED " + casualties
+                + ".000.000 citizens in battle."));
+        assertTrue(state.getMessages(1).contains("You LOST " + casualties
+                + ".000.000 citizens in battle."));
+        assertFalse(state.getMessages().contains("You LOST " + casualties
+                + ".000.000 citizens in battle."));
+        assertFalse(state.getMessages(1).contains("You KILLED " + casualties
+                + ".000.000 citizens in battle."));
+        assertTrue(state.getMessages().stream()
+                .anyMatch(message -> message.startsWith("You GAINED $ ")));
+        assertFalse(state.getMessages(1).stream()
+                .anyMatch(message -> message.startsWith("You GAINED $ ")));
     }
 
     @Test
     public void directAttackChangesMutualRegardAndFractionalCeasefireAllyRegard() {
         GameState state = new GameState(0, 74L, false);
         GameState.PlayerState human = state.getHuman();
+        // Easy starts with no soldier stock; this test isolates attack diplomacy.
+        human.getWeapons().get("soldier1").inStock = 1;
         GameState.PlayerState defender = state.getPlayerState(1);
         GameState.PlayerState observer = state.getPlayerState(2);
         setRegard(human, defender.id, 80);
@@ -1018,6 +1103,18 @@ public final class GameStateTest {
         assertTrue(state.configureAttack(1, 0, "soldier1"));
         assertTrue(state.acceptSelectedAction());
         assertEquals(GameState.Action.ATTACK, state.getQueuedAction(0));
+    }
+
+    @Test
+    public void directAttackEquipmentSelectionUpdatesTheActiveWeapon() {
+        GameState state = new GameState(1, 4L);
+        state.selectAction(GameState.Action.ATTACK);
+
+        assertTrue(state.selectAttackWeapon("spy1"));
+        assertEquals("spy1", state.getSelectedAttackWeapon());
+        assertFalse(state.selectAttackWeapon("rocket1"));
+        assertEquals("Unavailable equipment cannot replace the selected weapon",
+                "spy1", state.getSelectedAttackWeapon());
     }
 
     @Test
@@ -1628,6 +1725,10 @@ public final class GameStateTest {
         assertEquals(0, state.getWeaponStock(0, "spy1"));
         assertTrue(attacker.score > 0);
         assertEquals("YOUR SPY STOLE TECHNOLOGY: SOLDIER", state.getLatestMessage());
+        assertTrue(state.getMessages(1).stream()
+                .anyMatch(message -> message.startsWith("A ENEMY SPY STOLE")));
+        assertFalse(state.getMessages(1).stream()
+                .anyMatch(message -> message.startsWith("YOUR SPY STOLE")));
     }
 
     @Test
@@ -2045,7 +2146,8 @@ public final class GameStateTest {
         for (CityState city : opponent.getCities()) {
             assertEquals(0, city.populationMillions);
         }
-        assertTrue(state.getMessages().contains("Nation 1 has been eliminated."));
+        assertTrue(state.getMessages(1).contains("Nation 1 has been eliminated."));
+        assertFalse(state.getMessages().contains("Nation 1 has been eliminated."));
     }
 
     @Test
@@ -2741,6 +2843,78 @@ public final class GameStateTest {
             assertEquals(enemyMoney[difficulty], players[1].moneyMillions);
             assertEquals(450, players[1].populationMillions);
             assertEquals(enemyReligion[difficulty], players[1].religion);
+        }
+    }
+
+    @Test
+    public void sourceDifficultySetsStartingWeaponStockByPlayerAndDifficulty() {
+        for (int difficulty = 0; difficulty < 3; difficulty++) {
+            GameSetup setup = new GameSetup();
+            setup.setDifficulty(difficulty);
+            assertTrue(setup.toggleOpponent(0));
+            assertTrue(setup.toggleOpponent(1));
+            GameState state = new GameState(setup, 810L + difficulty);
+
+            for (int playerId = 0; playerId < state.getPlayers().length; playerId++) {
+                GameState.PlayerState player = state.getPlayerState(playerId);
+                for (WeaponCatalog.Definition weapon : WeaponCatalog.all()) {
+                    int constructorStock = "spy1".equals(weapon.name) ? 1
+                            : weapon.productionGroup == 8 ? 2 : 0;
+                    int expectedStock = player.alive ? constructorStock : 0;
+                    if (player.alive && weapon.productionGroup != 8) {
+                        if (difficulty == 1 && weapon.level == 1) {
+                            expectedStock = 1;
+                        } else if (difficulty == 2 && playerId > 0) {
+                            if (weapon.level == 1) {
+                                expectedStock = 2;
+                            } else if (weapon.level == 2) {
+                                expectedStock = 1;
+                            }
+                        }
+                    }
+                    assertEquals("difficulty " + difficulty + ", player " + playerId
+                                    + ", weapon " + weapon.name,
+                            expectedStock, player.getWeaponStockByName(weapon.name));
+                }
+            }
+        }
+    }
+
+    @Test
+    public void sourceDifficultyInitializesTechnologiesOnlyForActivePlayers() {
+        String[] sourceLevelOneTechnologies = {
+                "rocket1", "warhead1", "bioload1", "soldier1", "spy1",
+                "plane1", "antiAir", "antiRocket"
+        };
+        String[] sourceLevelTwoTechnologies = {
+                "rocket2", "warhead2", "bioload2", "soldier2", "spy2", "plane2"
+        };
+        for (int difficulty = 0; difficulty < 3; difficulty++) {
+            GameSetup setup = new GameSetup();
+            setup.setDifficulty(difficulty);
+            assertTrue(setup.toggleOpponent(0));
+            GameState state = new GameState(setup, 820L + difficulty);
+
+            for (int playerId = 0; playerId < state.getPlayers().length; playerId++) {
+                GameState.PlayerState player = state.getPlayerState(playerId);
+                Set<String> expected = new LinkedHashSet<>();
+                if (player.alive) {
+                    int maxLevel = (difficulty == 0 && playerId == 0)
+                            || (difficulty == 2 && playerId > 0) ? 2 : 1;
+                    Collections.addAll(expected, sourceLevelOneTechnologies);
+                    if (maxLevel == 2) {
+                        Collections.addAll(expected, sourceLevelTwoTechnologies);
+                    }
+                }
+                assertEquals("difficulty " + difficulty + ", player " + playerId,
+                        expected, player.getInventedTechnologies());
+                for (WeaponCatalog.Definition weapon : WeaponCatalog.all()) {
+                    assertEquals("difficulty " + difficulty + ", player " + playerId
+                                    + ", active weapon " + weapon.name,
+                            expected.contains(weapon.technology),
+                            player.getWeapons().get(weapon.name).active);
+                }
+            }
         }
     }
 
