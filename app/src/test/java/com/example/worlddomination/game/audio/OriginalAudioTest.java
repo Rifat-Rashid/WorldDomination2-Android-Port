@@ -9,10 +9,45 @@ import java.io.InputStream;
 import java.util.zip.GZIPInputStream;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public final class OriginalAudioTest {
+    @Test
+    public void sourceSoundAndMusicSwitchesStartEnabledAndToggleIndependently() {
+        OriginalAudio audio = new OriginalAudio();
+
+        assertTrue(audio.isSoundEnabled());
+        assertTrue(audio.isMusicEnabled());
+        assertFalse(audio.toggleSound());
+        assertFalse(audio.isSoundEnabled());
+        assertTrue(audio.isMusicEnabled());
+
+        assertFalse(audio.toggleMusic());
+        assertFalse(audio.isSoundEnabled());
+        assertFalse(audio.isMusicEnabled());
+
+        assertTrue(audio.toggleSound());
+        assertTrue(audio.isSoundEnabled());
+        assertFalse(audio.isMusicEnabled());
+        assertTrue(audio.toggleMusic());
+        assertTrue(audio.isSoundEnabled());
+        assertTrue(audio.isMusicEnabled());
+    }
+
+    @Test
+    public void legacyMuteSwitchOnlyControlsSoundEffects() {
+        OriginalAudio audio = new OriginalAudio();
+
+        assertTrue(audio.toggleMuted());
+        assertTrue(audio.isMuted());
+        assertTrue(audio.isMusicEnabled());
+        assertFalse(audio.toggleMuted());
+        assertFalse(audio.isMuted());
+        assertTrue(audio.isMusicEnabled());
+    }
+
     @Test
     public void everyMappedCueIsAnOriginalGzipWrappedMp3Asset() throws Exception {
         for (OriginalAudio.Cue cue : OriginalAudio.Cue.values()) {
