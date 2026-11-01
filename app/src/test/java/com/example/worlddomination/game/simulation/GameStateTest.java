@@ -29,6 +29,72 @@ public final class GameStateTest {
     }
 
     @Test
+    public void messageHistoryKeepsCurrentEntriesUntilTurnResultsThenResets() {
+        GameState state = new GameState(1, 734L, false);
+        assertTrue(state.getMessages(1).isEmpty());
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.MASS_MEDIA);
+        assertTrue(state.acceptSelectedAction());
+
+        for (int i = 0; i < 6; i++) {
+            state.selectAction(GameState.Action.DIPLOMACY);
+        }
+        String fullActionQueueMessage =
+                "Both action slots are full. Confirm the turn or clear them.";
+        assertTrue(state.getMessages().size() > 4);
+        assertTrue(state.getMessages().contains(fullActionQueueMessage));
+
+        state.confirmTurn();
+
+        assertFalse(state.getMessages().contains(fullActionQueueMessage));
+        assertFalse(state.getMessages().contains(
+                "Welcome, commander. Select two actions."));
+        assertTrue(state.getMessages().contains("Turn 1 complete."));
+    }
+
+    @Test
+    public void messageHistoryAccessorReturnsSeparateReadOnlyPlayerLogs() {
+        GameState state = new GameState(1, 22L, false);
+
+        assertEquals(Collections.singletonList("Welcome, commander. Select two actions."),
+                state.getMessages(0));
+        assertTrue(state.getMessages(1).isEmpty());
+        try {
+            state.getMessages(1).add("must not mutate another player's log");
+            fail("Player message logs should be read-only to callers");
+        } catch (UnsupportedOperationException expected) {
+            // Expected: callers observe, but cannot mutate, simulation results.
+        }
+    }
+
+    @Test
+    public void propagandaResultsAreStoredWithThePlayersTheyAffect() {
+        GameState state = new GameState(1, 51L, false);
+        GameState.PlayerState attacker = state.getHuman();
+        GameState.PlayerState defender = state.getPlayerState(1);
+        attacker.religion = 100;
+        defender.religion = 0;
+        assertTrue(state.getPropagandaTransferEstimate(defender.id, 0) > 0);
+
+        state.selectAction(GameState.Action.PROPAGANDA);
+        assertTrue(state.configurePropaganda(defender.id, 0));
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+
+        assertTrue(state.getMessages().stream()
+                .anyMatch(message -> message.startsWith("You gained ")));
+        assertTrue(state.getMessages(1).stream()
+                .anyMatch(message -> message.startsWith("You lost ")));
+        assertFalse(state.getMessages().stream()
+                .anyMatch(message -> message.startsWith("You lost ")));
+        assertFalse(state.getMessages(1).stream()
+                .anyMatch(message -> message.startsWith("You gained ")));
+    }
+
+    @Test
     public void battlefieldCitySelectionSeedsActionTargetAndRejectsEmptyCities() {
         GameState state = new GameState(1, 0L, false);
 
@@ -701,6 +767,7 @@ public final class GameStateTest {
     @Test
     public void researchCompletesAndActivatesTheCorrespondingWeapon() {
         GameState state = new GameState(1, 9L);
+        int startingTechnologyLevel = state.getHuman().getTechnologyLevel();
         state.selectAction(GameState.Action.RESEARCH);
         assertTrue(state.selectResearchTechnology("soldier2"));
         assertTrue(state.acceptSelectedAction());
@@ -710,6 +777,8 @@ public final class GameStateTest {
 
         assertTrue(state.getHuman().hasTechnology("soldier2"));
         assertTrue(state.isWeaponActive(0, "soldier2"));
+        assertEquals("Technology level uses each researched item's source strength weight",
+                startingTechnologyLevel + 3, state.getHuman().getTechnologyLevel());
         assertEquals(55, state.getHuman().moneyMillions);
         assertEquals(55, state.getTurnMoneyMillions());
         assertEquals(1, state.getTurn());
@@ -898,7 +967,7 @@ public final class GameStateTest {
 
     @Test
     public void directSoldierAttackConsumesStockAndDamagesSelectedCity() {
-        GameState state = new GameState(1, 0L);
+        GameState state = new GameState(1, 0L, false);
         int beforeCity = state.getCityPopulationMillions(1, 0);
         int beforePlayer = state.getPlayers()[1].populationMillions;
         state.selectAction(GameState.Action.ATTACK);
@@ -913,6 +982,18 @@ public final class GameStateTest {
         assertEquals(beforePlayer - casualties, state.getPlayers()[1].populationMillions);
         assertEquals(0, state.getWeaponStock("soldier1"));
         assertTrue(state.getHuman().score > 0);
+        assertTrue(state.getMessages().contains("You KILLED " + casualties
+                + ".000.000 citizens in battle."));
+        assertTrue(state.getMessages(1).contains("You LOST " + casualties
+                + ".000.000 citizens in battle."));
+        assertFalse(state.getMessages().contains("You LOST " + casualties
+                + ".000.000 citizens in battle."));
+        assertFalse(state.getMessages(1).contains("You KILLED " + casualties
+                + ".000.000 citizens in battle."));
+        assertTrue(state.getMessages().stream()
+                .anyMatch(message -> message.startsWith("You GAINED $ ")));
+        assertFalse(state.getMessages(1).stream()
+                .anyMatch(message -> message.startsWith("You GAINED $ ")));
     }
 
     @Test
@@ -1022,6 +1103,18 @@ public final class GameStateTest {
         assertTrue(state.configureAttack(1, 0, "soldier1"));
         assertTrue(state.acceptSelectedAction());
         assertEquals(GameState.Action.ATTACK, state.getQueuedAction(0));
+    }
+
+    @Test
+    public void directAttackEquipmentSelectionUpdatesTheActiveWeapon() {
+        GameState state = new GameState(1, 4L);
+        state.selectAction(GameState.Action.ATTACK);
+
+        assertTrue(state.selectAttackWeapon("spy1"));
+        assertEquals("spy1", state.getSelectedAttackWeapon());
+        assertFalse(state.selectAttackWeapon("rocket1"));
+        assertEquals("Unavailable equipment cannot replace the selected weapon",
+                "spy1", state.getSelectedAttackWeapon());
     }
 
     @Test
@@ -1632,6 +1725,10 @@ public final class GameStateTest {
         assertEquals(0, state.getWeaponStock(0, "spy1"));
         assertTrue(attacker.score > 0);
         assertEquals("YOUR SPY STOLE TECHNOLOGY: SOLDIER", state.getLatestMessage());
+        assertTrue(state.getMessages(1).stream()
+                .anyMatch(message -> message.startsWith("A ENEMY SPY STOLE")));
+        assertFalse(state.getMessages(1).stream()
+                .anyMatch(message -> message.startsWith("YOUR SPY STOLE")));
     }
 
     @Test
@@ -2049,7 +2146,8 @@ public final class GameStateTest {
         for (CityState city : opponent.getCities()) {
             assertEquals(0, city.populationMillions);
         }
-        assertTrue(state.getMessages().contains("Nation 1 has been eliminated."));
+        assertTrue(state.getMessages(1).contains("Nation 1 has been eliminated."));
+        assertFalse(state.getMessages().contains("Nation 1 has been eliminated."));
     }
 
     @Test

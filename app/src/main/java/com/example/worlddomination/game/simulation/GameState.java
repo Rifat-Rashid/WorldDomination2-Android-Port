@@ -191,12 +191,17 @@ public final class GameState {
         private final List<DiplomacyProposal> pendingDiplomacyOrder = new ArrayList<>();
         private final List<CityState> cities = new ArrayList<>(5);
         private final List<Action> lastTurnActions = new ArrayList<>(2);
+        private final List<String> shortMessages = new ArrayList<>();
+        private final List<String> shortMessagesView = Collections.unmodifiableList(shortMessages);
         private final Set<String> inventedTechnologies = new LinkedHashSet<>();
         private final Map<String, WeaponState> weapons = new LinkedHashMap<>();
         private final Map<String, Integer> desiredStock = new LinkedHashMap<>();
         private final Set<Action> bioloadedActions = new LinkedHashSet<>();
         private String preparedCarrierName;
         private boolean bioloaded;
+        private int turnBattleCasualties;
+        private int turnBattleKills;
+        private int turnResourcesGained;
 
         private PlayerState(int id, boolean human, int populationMillions,
                             int moneyMillions, int religion, int leaderId,
@@ -214,6 +219,17 @@ public final class GameState {
 
         public boolean hasTechnology(String name) {
             return inventedTechnologies.contains(name);
+        }
+
+        /** Source TechTree.techLevel: sum the weights of every invented technology. */
+        public int getTechnologyLevel() {
+            int level = 0;
+            for (TechnologyCatalog.Definition technology : TechnologyCatalog.all()) {
+                if (inventedTechnologies.contains(technology.name)) {
+                    level += technology.strengthWeight;
+                }
+            }
+            return level;
         }
 
         /** Mirrors TechTree.allow_special from the reference game's unlock rule. */
@@ -519,6 +535,16 @@ public final class GameState {
         }
     }
 
+    private static final class PlayerMessage {
+        final int playerId;
+        final String text;
+
+        PlayerMessage(int playerId, String text) {
+            this.playerId = playerId;
+            this.text = text;
+        }
+    }
+
     private static final int[] PLAYER_START_MONEY = {80, 65, 55};
     private static final int[] ENEMY_START_MONEY = {50, 65, 60};
     private static final int[] PLAYER_START_POPULATION = {500, 450, 400};
@@ -561,7 +587,6 @@ public final class GameState {
     private final boolean opponentTurnsEnabled;
     private final PlayerState[] players = new PlayerState[5];
     private final List<ActionOrder> queuedActions = new ArrayList<>(MAX_TURN_ACTIONS);
-    private final List<String> messages = new ArrayList<>();
     private final List<CombatEvent> lastTurnCombatEvents = new ArrayList<>();
     private final List<SpyMissionEvent> lastTurnSpyMissions = new ArrayList<>();
     private List<String> researchChoicesCache = Collections.emptyList();
@@ -711,7 +736,7 @@ public final class GameState {
         for (PlayerState player : players) {
             initializeCities(player);
         }
-        messages.add("Welcome, commander. Select two actions.");
+        addMessage(getHuman(), "Welcome, commander. Select two actions.");
     }
 
     private void initializeAiEnemies(PlayerState player) {
@@ -1056,7 +1081,7 @@ public final class GameState {
         }
         if (isActionBioloaded(0, action)) {
             selectedAction = null;
-            messages.add(action.label + " is unavailable due to biological contamination.");
+            addMessage(action.label + " is unavailable due to biological contamination.");
             return;
         }
         if (selectedAction == action) {
@@ -1064,7 +1089,7 @@ public final class GameState {
             return;
         }
         if (queuedActions.size() >= MAX_TURN_ACTIONS) {
-            messages.add("Both action slots are full. Confirm the turn or clear them.");
+            addMessage("Both action slots are full. Confirm the turn or clear them.");
             selectedAction = null;
             return;
         }
@@ -1105,8 +1130,7 @@ public final class GameState {
             throw new IllegalArgumentException("Production percentage must be 0..100");
         }
         if (!isProductionGroupUnlocked(getHuman(), group)) {
-            messages.add("You have not yet invented this Technology");
-            trimMessages();
+            addMessage("You have not yet invented this Technology");
             return false;
         }
         if (percent > getProductionMaximumPercent(category)) {
@@ -1134,13 +1158,13 @@ public final class GameState {
             return false;
         }
         if (definition.group == 7 && !getHuman().allowsSpecialTechnologies()) {
-            messages.add("You need to invent 4 complete technologies before you can start "
+            addMessage("You need to invent 4 complete technologies before you can start "
                     + "inventing special weapons.");
             return false;
         }
         if (definition.costMillions > getHuman().turnMoneyMillions
                 - getSelectedResearchCostMillions()) {
-            messages.add("Not enough money!");
+            addMessage("Not enough money!");
             return false;
         }
         selectedResearchTechnologies.add(technology);
@@ -1399,6 +1423,14 @@ public final class GameState {
 
     public String getSelectedAttackWeapon() {
         return selectedAttackWeapon;
+    }
+
+    /** Selects a stocked soldier or ready spy from the equipment panel. */
+    public boolean selectAttackWeapon(String weaponName) {
+        if (selectedAction != Action.ATTACK) {
+            return false;
+        }
+        return configureAttack(selectedTargetPlayer, selectedTargetCity, weaponName);
     }
 
     public int getSpyReadiness() {
@@ -1929,18 +1961,18 @@ public final class GameState {
             return false;
         }
         if (isActionBioloaded(0, selectedAction)) {
-            messages.add(selectedAction.label + " is unavailable due to biological contamination.");
+            addMessage(selectedAction.label + " is unavailable due to biological contamination.");
             return false;
         }
         int reserved = 0;
         if (selectedAction == Action.RESEARCH) {
             if (selectedResearchTechnologies.isEmpty()) {
-                messages.add("Choose an available technology to research.");
+                addMessage("Choose an available technology to research.");
                 return false;
             }
             for (String technology : selectedResearchTechnologies) {
                 if (!isResearchAvailable(technology)) {
-                    messages.add("Choose an available technology to research.");
+                    addMessage("Choose an available technology to research.");
                     return false;
                 }
             }
@@ -1951,37 +1983,36 @@ public final class GameState {
                         : selectedProductionPercentages.entrySet()) {
                     if (!isProductionGroupUnlocked(getHuman(),
                             productionGroup(investment.getKey()))) {
-                        messages.add("You have not yet invented this Technology");
-                        trimMessages();
+                        addMessage("You have not yet invented this Technology");
                         return false;
                     }
                 }
                 reserved = getSelectedProductionTotalBudgetMillions();
             }
         } else if (selectedAction == Action.ATTACK && !canAcceptAttack()) {
-            messages.add("Choose a living target city and an available unit.");
+            addMessage("Choose a living target city and an available unit.");
             return false;
         } else if (selectedAction == Action.PREPARED_ATTACK
                 && !canAcceptPreparedAttack()) {
-            messages.add(getHuman().preparedCarrierName == null
+            addMessage(getHuman().preparedCarrierName == null
                     ? "Choose an available carrier to prepare."
                     : "Choose a living target city and compatible payload.");
             return false;
         } else if (selectedAction == Action.DEFENSE && !canAcceptDefense()) {
-            messages.add("Choose available anti-air or anti-rocket defense stock.");
+            addMessage("Choose available anti-air or anti-rocket defense stock.");
             return false;
         } else if (selectedAction == Action.PROPAGANDA && !canAcceptPropaganda()) {
-            messages.add("Choose a living opponent and a populated city.");
+            addMessage("Choose a living opponent and a populated city.");
             return false;
         } else if (selectedAction == Action.DIPLOMACY && !canAcceptDiplomacy()) {
-            messages.add("Choose a living nation and an affordable diplomacy option.");
+            addMessage("Choose a living nation and an affordable diplomacy option.");
             return false;
         } else if (selectedAction == Action.DIPLOMACY
                 && selectedDiplomacyOption < 3) {
             reserved = DIPLOMACY_AMOUNT[selectedDiplomacyOption];
         }
         if (reserved > getHuman().turnMoneyMillions) {
-            messages.add("The selected action exceeds the remaining budget.");
+            addMessage("The selected action exceeds the remaining budget.");
             return false;
         }
         Map<String, Integer> productionBudgets = new LinkedHashMap<>();
@@ -2017,7 +2048,7 @@ public final class GameState {
             invalidateResearchChoices();
         }
         getHuman().turnMoneyMillions -= reserved;
-        messages.add(selectedAction.label + " queued.");
+        addMessage(selectedAction.label + " queued.");
         selectedAction = null;
         selectedResearchTechnologies.clear();
         resetTargetFromMapSelection();
@@ -2085,7 +2116,7 @@ public final class GameState {
             }
             getHuman().turnMoneyMillions = Math.min(getHuman().moneyMillions,
                     getHuman().turnMoneyMillions + removed.reservedMillions);
-            messages.add(removed.action.label + " removed.");
+            addMessage(removed.action.label + " removed.");
         }
     }
 
@@ -2163,12 +2194,30 @@ public final class GameState {
     }
 
     public List<String> getMessages() {
-        return Collections.unmodifiableList(messages);
+        return getMessages(0);
+    }
+
+    /** Returns the Flash shortMSG_arr equivalent for the requested player. */
+    public List<String> getMessages(int playerId) {
+        return playerById(playerId).shortMessagesView;
     }
 
     public String getLatestMessage() {
-        return messages.isEmpty() ? "Choose two actions, then confirm."
-                : messages.get(messages.size() - 1);
+        List<String> humanMessages = getHuman().shortMessages;
+        return humanMessages.isEmpty() ? "Choose two actions, then confirm."
+                : humanMessages.get(humanMessages.size() - 1);
+    }
+
+    private void addMessage(String message) {
+        addMessage(getHuman(), message);
+    }
+
+    private void addMessage(PlayerState player, String message) {
+        player.shortMessages.add(message);
+    }
+
+    private void addMessage(int playerId, String message) {
+        addMessage(playerById(playerId), message);
     }
 
     /** Returns the combat outcomes from the most recently resolved turn. */
@@ -2193,6 +2242,13 @@ public final class GameState {
     public void confirmTurn() {
         if (queuedActions.size() != MAX_TURN_ACTIONS) {
             throw new IllegalStateException("Choose two actions before confirming the turn");
+        }
+        // The Flash clears every player's shortMSG_arr before presenting results.
+        for (PlayerState player : players) {
+            player.shortMessages.clear();
+            player.turnBattleCasualties = 0;
+            player.turnBattleKills = 0;
+            player.turnResourcesGained = 0;
         }
         lastTurnCombatEvents.clear();
         lastTurnSpyMissions.clear();
@@ -2233,7 +2289,7 @@ public final class GameState {
         List<BiologicalEffect> biologicalEffects = new ArrayList<>();
         List<ActionOrder> propagandaOrders = new ArrayList<>();
         TurnPopulationChanges populationChanges = new TurnPopulationChanges();
-        String latestHumanSpyResult = null;
+        List<PlayerMessage> spyResultMessages = new ArrayList<>();
         for (ActionOrder order : turnOrders) {
             if (order.action == Action.DEFENSE) {
                 resolveDefense(order, resolvedDefenses);
@@ -2258,10 +2314,7 @@ public final class GameState {
                     resolveResearch(order);
                     break;
                 case ATTACK: {
-                    String spyResult = resolveAttack(order, turnOrders, populationChanges);
-                    if (spyResult != null) {
-                        latestHumanSpyResult = spyResult;
-                    }
+                    resolveAttack(order, turnOrders, populationChanges, spyResultMessages);
                     break;
                 }
                 case PREPARED_ATTACK:
@@ -2293,6 +2346,7 @@ public final class GameState {
         }
         tickCeasefires();
         refreshMatchStatus();
+        appendTurnSummaryMessages();
         for (PlayerState player : players) {
             // Presenter.updatePlayerVars_4 clears this comparison value after
             // all turn results have been applied. Keep the attacker itself.
@@ -2300,25 +2354,42 @@ public final class GameState {
         }
         turn++;
         getHuman().turnMoneyMillions = getHuman().moneyMillions;
-        messages.add("Turn " + turn + " complete.");
-        if (latestHumanSpyResult != null) {
-            messages.add(latestHumanSpyResult);
+        addMessage(getHuman(), "Turn " + turn + " complete.");
+        for (PlayerMessage message : spyResultMessages) {
+            addMessage(message.playerId, message.text);
         }
         queuedActions.clear();
         invalidateResearchChoices();
         cancelSelection();
-        trimMessages();
+    }
+
+    /** Adds the per-player economy and battle summaries built by Presenter.updatePlayerVars_4. */
+    private void appendTurnSummaryMessages() {
+        for (PlayerState player : players) {
+            if (player.turnBattleCasualties > 0) {
+                addMessage(player, "You LOST " + player.turnBattleCasualties
+                        + ".000.000 citizens in battle.");
+            }
+            if (player.turnBattleKills > 0) {
+                addMessage(player, "You KILLED " + player.turnBattleKills
+                        + ".000.000 citizens in battle.");
+            }
+            if (player.turnResourcesGained > 0) {
+                addMessage(player, "You GAINED $ " + player.turnResourcesGained
+                        + ".000.000 from resources");
+            }
+        }
     }
 
     private void resolveDiplomacy(ActionOrder order) {
         PlayerState proposer = playerById(order.playerId);
         if (!submitDiplomacyProposal(proposer.id, order.targetPlayerId,
                 order.diplomacyOption)) {
-            messages.add("Diplomacy proposal could not be sent.");
+            addMessage(proposer, "Diplomacy proposal could not be sent.");
             return;
         }
         String type = order.diplomacyOption < 3 ? "offer" : "demand";
-        messages.add("Nation " + proposer.id + " sent a diplomacy " + type
+        addMessage(proposer, "Nation " + proposer.id + " sent a diplomacy " + type
                 + " to nation " + order.targetPlayerId
                 + " for " + DIPLOMACY_DURATION[order.diplomacyOption] + " turns.");
     }
@@ -2463,7 +2534,7 @@ public final class GameState {
             int duration = DIPLOMACY_DURATION[optionIndex];
             target.ceasefireTurns[proposerId] = duration;
             proposer.ceasefireTurns[target.id] = duration;
-            messages.add("Nation " + target.id + " accepted diplomacy with nation "
+            addMessage(target, "Nation " + target.id + " accepted diplomacy with nation "
                     + proposer.id + ".");
         } else {
             target.regardToward[proposerId] -= DIPLOMACY_BONUS;
@@ -2474,7 +2545,7 @@ public final class GameState {
                     proposer.turnMoneyMillions += amount;
                 }
             }
-            messages.add("Nation " + target.id + " rejected diplomacy with nation "
+            addMessage(target, "Nation " + target.id + " rejected diplomacy with nation "
                     + proposer.id + ".");
         }
     }
@@ -2486,9 +2557,11 @@ public final class GameState {
         target.regardToward[proposer.id] += adjustment;
     }
 
-    /** Keeps the source's greatest-casualty attacker attribution for this turn. */
+    /** Tracks source attacker attribution and the per-player casualties shown at turn end. */
     private static void recordLargestBattle(PlayerState attacker, PlayerState defender,
                                             int casualties) {
+        attacker.turnBattleKills += casualties;
+        defender.turnBattleCasualties += casualties;
         if (casualties > defender.lastAttackedByCasualties) {
             defender.lastAttackedByCasualties = casualties;
             defender.lastAttackedByPlayerId = attacker.id;
@@ -2616,15 +2689,14 @@ public final class GameState {
         player.moneyMillions += income;
         player.turnMoneyMillions += income;
         addToHighscore(player, 5, income);
-        messages.add("Nation " + player.id + " gained $ " + income
-                + ".000.000 from resources.");
+        player.turnResourcesGained += income;
     }
 
     private void resolveMassMedia(PlayerState player) {
         int gain = getMassMediaGain(player.id);
         player.religion += gain;
         addToHighscore(player, 6, gain);
-        messages.add("Nation " + player.id + " increased influence by "
+        addMessage(player, "Nation " + player.id + " increased influence by "
                 + gain + ".");
     }
 
@@ -2653,16 +2725,17 @@ public final class GameState {
             invented.add(technology.name.toUpperCase(java.util.Locale.US));
         }
         if (invented.isEmpty()) {
-            messages.add("Nation " + researcher.id + " could not complete research.");
+            addMessage(researcher, "Nation " + researcher.id + " could not complete research.");
         } else {
-            messages.add("Nation " + researcher.id + " invented technologies: "
+            addMessage(researcher, "Nation " + researcher.id + " invented technologies: "
                     + String.join(", ", invented) + ".");
         }
     }
 
     /** Source attack casualties are a rounded random 50%-100% of unit maxKills. */
-    private String resolveAttack(ActionOrder order, List<ActionOrder> turnOrders,
-                                 TurnPopulationChanges populationChanges) {
+    private void resolveAttack(ActionOrder order, List<ActionOrder> turnOrders,
+                               TurnPopulationChanges populationChanges,
+                               List<PlayerMessage> spyResultMessages) {
         PlayerState attacker = playerById(order.playerId);
         PlayerState defender = playerById(order.targetPlayerId);
         CityState city = defender.getCity(order.targetCityIndex);
@@ -2674,24 +2747,24 @@ public final class GameState {
         if (!defender.alive || city == null
                 || (!spyMission && city.populationMillions <= 0)
                 || weapon == null || !weapon.active || weapon.inStock <= 0) {
-            messages.add("Attack cancelled: target or weapon is no longer available.");
-            return null;
+            addMessage(attacker, "Attack cancelled: target or weapon is no longer available.");
+            return;
         }
         if (spyMission) {
-            String spyResult = resolveSpyAttack(attacker, defender, weapon, turnOrders);
+            resolveSpyAttack(attacker, defender, weapon, turnOrders, spyResultMessages);
             weapon.inStock--;
             lastTurnSpyMissions.add(new SpyMissionEvent(attacker.id, defender.id,
                     order.actionBuildingSlot,
                     order.actionBuildingFrameName == null
                             ? order.spyBuilding : order.actionBuildingFrameName,
                     attacker.religionCode));
-            messages.add("Spy operation completed against nation " + defender.id + ".");
-            return spyResult;
+            addMessage(attacker, "Spy operation completed against nation " + defender.id + ".");
+            return;
         }
         if (defender.hasCeasefireWith(attacker.id)) {
-            messages.add("Attack cancelled: a ceasefire is active with nation "
+            addMessage(attacker, "Attack cancelled: a ceasefire is active with nation "
                     + defender.id + ".");
-            return null;
+            return;
         }
         int casualties = 0;
         if ("soldier".equals(weapon.definition.type)) {
@@ -2709,9 +2782,6 @@ public final class GameState {
             throw new IllegalStateException("Direct attack only supports soldier units");
         }
         weapon.inStock--;
-        messages.add(casualties + " citizens lost in nation " + defender.id
-                + " city " + (city.index + 1) + ".");
-        return null;
     }
 
     /**
@@ -2868,12 +2938,12 @@ public final class GameState {
         WeaponState counter = defender.weapons.get(order.weaponName);
         if (counter == null || !counter.active || counter.inStock <= 0
                 || !"anti".equals(counter.definition.type)) {
-            messages.add("Defense cancelled: counter stock is no longer available.");
+            addMessage(defender, "Defense cancelled: counter stock is no longer available.");
             return;
         }
         counter.inStock--;
         resolvedDefenses.add(order);
-        messages.add("Nation " + defender.id + " used " + order.weaponName + " defense.");
+        addMessage(defender, "Nation " + defender.id + " used " + order.weaponName + " defense.");
     }
 
     private void resolvePreparedAttack(ActionOrder order,
@@ -2886,12 +2956,12 @@ public final class GameState {
             if (attacker.preparedCarrierName != null || !isCarrier(carrier)
                     || !carrier.active || carrier.inStock <= 0
                     || getAvailablePreparedPayloads(attacker.id, order.weaponName).isEmpty()) {
-                messages.add("Strike preparation cancelled: carrier or payload is unavailable.");
+                addMessage(attacker, "Strike preparation cancelled: carrier or payload is unavailable.");
                 return;
             }
             carrier.inStock--;
             attacker.preparedCarrierName = order.weaponName;
-            messages.add("Nation " + attacker.id + " prepared " + order.weaponName + ".");
+            addMessage(attacker, "Nation " + attacker.id + " prepared " + order.weaponName + ".");
             return;
         }
 
@@ -2909,7 +2979,7 @@ public final class GameState {
                 || defender.hasCeasefireWith(attacker.id)
                 || !isCompatiblePayload(carrier, payload) || !payload.active
                 || payload.inStock <= 0) {
-            messages.add("Prepared strike cancelled: target or payload is unavailable.");
+            addMessage(attacker, "Prepared strike cancelled: target or payload is unavailable.");
             return;
         }
 
@@ -2932,7 +3002,7 @@ public final class GameState {
                     attacker.id, defender.id, city.index, carrier.definition.name,
                     payload.definition.name, 0, counterName, order.actionBuildingSlot,
                     counterDefense.actionBuildingSlot));
-            messages.add("Nation " + defender.id + " intercepted the prepared strike.");
+            addMessage(defender, "Nation " + defender.id + " intercepted the prepared strike.");
             return;
         }
 
@@ -2951,9 +3021,6 @@ public final class GameState {
         if (casualties > 0) {
             addToHighscore(attacker, 1, casualties);
         }
-        messages.add(order.payloadName + " strike caused " + casualties
-                + " million casualties in nation " + defender.id + " city "
-                + (city.index + 1) + ".");
     }
 
     private void resolveShipPreparedAttack(ActionOrder order, PlayerState attacker,
@@ -2964,7 +3031,7 @@ public final class GameState {
         if (!order.weaponName.equals(attacker.preparedCarrierName)
                 || !defender.alive || defender.hasCeasefireWith(attacker.id)
                 || order.shipStrikes.size() != 3) {
-            messages.add("Ship strike cancelled: target or payload sequence is unavailable.");
+            addMessage(attacker, "Ship strike cancelled: target or payload sequence is unavailable.");
             return;
         }
         Map<String, Integer> payloadUse = new LinkedHashMap<>();
@@ -2974,7 +3041,7 @@ public final class GameState {
             if (strike.targetPlayerId != defender.id || city == null
                     || city.populationMillions <= 0
                     || !isCompatiblePayload(carrier, payload) || !payload.active) {
-                messages.add("Ship strike cancelled: target or payload sequence is unavailable.");
+                addMessage(attacker, "Ship strike cancelled: target or payload sequence is unavailable.");
                 return;
             }
             Integer count = payloadUse.get(strike.payloadName);
@@ -2983,7 +3050,7 @@ public final class GameState {
         for (Map.Entry<String, Integer> used : payloadUse.entrySet()) {
             WeaponState payload = attacker.weapons.get(used.getKey());
             if (payload.inStock < used.getValue()) {
-                messages.add("Ship strike cancelled: selected payload stock is unavailable.");
+                addMessage(attacker, "Ship strike cancelled: selected payload stock is unavailable.");
                 return;
             }
         }
@@ -3024,7 +3091,7 @@ public final class GameState {
                         CombatEventType.STRIKE_INTERCEPTED, attacker.id, defender.id,
                         city.index, carrier.definition.name, result.payloadName, 0,
                         counterName, -1, counterDefense.actionBuildingSlot));
-                messages.add("Nation " + defender.id + " intercepted one ship payload.");
+                addMessage(defender, "Nation " + defender.id + " intercepted one ship payload.");
             } else {
                 casualties = populationChanges.addBattleCasualties(city,
                         result.rolledCasualties);
@@ -3039,9 +3106,6 @@ public final class GameState {
                     addToHighscore(attacker, 1, casualties);
                 }
             }
-            messages.add(result.payloadName + " ship payload caused " + casualties
-                    + " million casualties in nation " + defender.id + " city "
-                    + (city.index + 1) + ".");
         }
         applyBattleHostilityEffects(attacker, defender, totalCasualties);
     }
@@ -3132,7 +3196,7 @@ public final class GameState {
             if (city != null) {
                 city.bioloaded = true;
             }
-            messages.add("Biological agents contaminated nation " + target.id
+            addMessage(target, "Biological agents contaminated nation " + target.id
                     + " after a bioload strike.");
         }
     }
@@ -3168,13 +3232,14 @@ public final class GameState {
             }
             if (!usedPreparedAttackAction) {
                 player.preparedCarrierName = null;
-                messages.add("Nation " + player.id + " cancelled its unused prepared strike.");
+                addMessage(player, "Nation " + player.id + " cancelled its unused prepared strike.");
             }
         }
     }
 
-    private String resolveSpyAttack(PlayerState attacker, PlayerState defender,
-                                    WeaponState spy, List<ActionOrder> turnOrders) {
+    private void resolveSpyAttack(PlayerState attacker, PlayerState defender,
+                                  WeaponState spy, List<ActionOrder> turnOrders,
+                                  List<PlayerMessage> resultMessages) {
         int level = spy.definition.level;
         int[] statistics = SPY_STATISTICS[level - 1];
         int weaponCount = 1 + random.nextInt(statistics[0]);
@@ -3217,10 +3282,6 @@ public final class GameState {
         attacker.moneyMillions += stolenMoney;
         List<String> attackerDetails = new ArrayList<>(weaponCount);
         List<String> defenderDetails = new ArrayList<>();
-        if (stolenMoney > 0) {
-            messages.add("Spy stole " + stolenMoney + "M from nation " + defender.id + ".");
-        }
-
         for (int i = 0; i < weaponCount; i++) {
             WeaponState targetWeapon = availableTargets.remove(
                     random.nextInt(availableTargets.size()));
@@ -3231,7 +3292,6 @@ public final class GameState {
                 if (targetWeapon.inStock > 0) {
                     targetWeapon.inStock--;
                 }
-                messages.add("Spy stole " + targetWeapon.definition.name + " stock.");
                 attackerDetails.add("WEAPON: " + prettyName);
                 defenderDetails.add("STOLEN: " + prettyName);
             } else {
@@ -3240,14 +3300,17 @@ public final class GameState {
                 if (attacker.id == 0) {
                     invalidateResearchChoices();
                 }
-                messages.add("Spy uncovered " + targetWeapon.definition.technology + " technology.");
                 attackerDetails.add("TECHNOLOGY: " + prettyName);
             }
             addToHighscore(attacker, 2, 1);
         }
         attacker.spyReadiness = 0;
-        return formatSpyMissionResult(attacker.human, defender.human, stolenMoney,
-                attackerDetails, defenderDetails);
+        resultMessages.add(new PlayerMessage(attacker.id,
+                formatSpyMissionResult(true, false, stolenMoney,
+                        attackerDetails, defenderDetails)));
+        resultMessages.add(new PlayerMessage(defender.id,
+                formatSpyMissionResult(false, true, stolenMoney,
+                        attackerDetails, defenderDetails)));
     }
 
     static String formatSpyMissionResult(boolean attackerIsHuman, boolean defenderIsHuman,
@@ -3320,7 +3383,7 @@ public final class GameState {
         PlayerState defender = playerById(order.targetPlayerId);
         CityState targetCity = defender.getCity(order.targetCityIndex);
         if (!defender.alive || targetCity == null || targetCity.populationMillions <= 0) {
-            messages.add("Propaganda cancelled: target city is no longer available.");
+            addMessage(attacker, "Propaganda cancelled: target city is no longer available.");
             return;
         }
 
@@ -3346,10 +3409,12 @@ public final class GameState {
         applyPropagandaHostilityEffects(attacker, defender);
         addToHighscore(attacker, 7, transfer);
         if (transfer > 0) {
-            messages.add("You gained " + transfer
+            addMessage(attacker, "You gained " + transfer
+                    + ".000.000 citizens from propaganda.");
+            addMessage(defender, "You lost " + transfer
                     + ".000.000 citizens from propaganda.");
         } else {
-            messages.add("Propaganda had no effect in the selected city.");
+            addMessage(attacker, "Propaganda had no effect in the selected city.");
         }
     }
 
@@ -3491,7 +3556,7 @@ public final class GameState {
         if (!getHuman().alive) {
             matchStatus = MatchStatus.DEFEAT;
             captureFinalScore();
-            messages.add("Your nation has been defeated.");
+            addMessage(getHuman(), "Your nation has been defeated.");
             return;
         }
         for (int playerId = 1; playerId < players.length; playerId++) {
@@ -3501,12 +3566,12 @@ public final class GameState {
         }
         matchStatus = MatchStatus.VICTORY;
         captureFinalScore();
-        messages.add("Victory. All rival nations have fallen.");
+        addMessage(getHuman(), "Victory. All rival nations have fallen.");
     }
 
     /** Matches Model.killPlayer cleanup and transfers flags from its prior victims. */
     private void eliminatePlayer(PlayerState eliminated) {
-        messages.add("Nation " + eliminated.id + " has been eliminated.");
+        addMessage(eliminated, "Nation " + eliminated.id + " has been eliminated.");
         for (CityState city : eliminated.cities) {
             city.setPopulationMillions(0);
             city.bioloaded = false;
@@ -3601,10 +3666,10 @@ public final class GameState {
                 summary.append(' ').append(entry.getKey()).append(" x")
                         .append(entry.getValue()).append(';');
             }
-            messages.add(summary.toString());
+            addMessage(producer, summary.toString());
         }
         if (remaining > 0 && !candidates.isEmpty()) {
-            messages.add("Money returned from nation " + producer.id
+            addMessage(producer, "Money returned from nation " + producer.id
                     + " production: " + remaining + ".000.000");
         }
     }
@@ -3639,9 +3704,4 @@ public final class GameState {
         return false;
     }
 
-    private void trimMessages() {
-        while (messages.size() > 4) {
-            messages.remove(0);
-        }
-    }
 }

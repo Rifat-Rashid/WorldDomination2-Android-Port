@@ -46,13 +46,20 @@ import com.example.worlddomination.game.simulation.GameSetup;
 import com.example.worlddomination.game.simulation.GameState;
 import com.example.worlddomination.game.simulation.CityState;
 import com.example.worlddomination.game.simulation.ReferenceRandom;
+import com.example.worlddomination.game.simulation.TechnologyCatalog;
+import com.example.worlddomination.game.ui.ActionFooterLayout;
+import com.example.worlddomination.game.ui.ActionScreenLayout;
 import com.example.worlddomination.game.ui.BattlefieldCityLayout;
+import com.example.worlddomination.game.ui.InformationPanelLayout;
 import com.example.worlddomination.game.ui.MatchOutcomePresentation;
 import com.example.worlddomination.game.ui.MatchOutcomeSequence;
+import com.example.worlddomination.game.ui.MessageHistoryScrollState;
+import com.example.worlddomination.game.ui.NavigationPanelLayout;
 import com.example.worlddomination.game.ui.PreparedShipStrikeSelection;
 import com.example.worlddomination.game.ui.ProductionScreenLayout;
 import com.example.worlddomination.game.ui.ScrollPaneState;
 import com.example.worlddomination.game.ui.SetupScreenLayout;
+import com.example.worlddomination.game.ui.TechnologyScreenLayout;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -69,6 +76,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private static final float MAP_WIDTH = 523f;
     private static final float MAP_HEIGHT = 318f;
     private static final int RESEARCH_ROWS_PER_PAGE = 6;
+    private static final String[] RESEARCH_GROUP_LABELS = {
+            "ROCKETS", "AIRCRAFT", "SPECIAL CARRIER", "WARHEAD", "BIOLOAD",
+            "INFANTRY", "INTELLIGENCE"
+    };
     private static final String[] DIFFICULTY_LABELS = {"EASY", "MEDIUM", "HARD"};
     private static final Color[] SETUP_PLAYER_COLORS = {
             new Color(0.10f, 0.20f, 0.58f, 1f),
@@ -82,6 +93,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private static final int GESTURE_NAV = 1;
     private static final int GESTURE_EQUIPMENT = 2;
     private static final int GESTURE_PRODUCTION = 3;
+    private static final int GESTURE_MESSAGE = 4;
 
     private static final GameState.Action[] ACTIONS = GameState.Action.values();
     private static final String[] EQUIPMENT_ROWS = {
@@ -178,10 +190,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private final Rectangle centerHeader = new Rectangle();
     private final Rectangle navPanel = new Rectangle();
     private final Rectangle infoPanel = new Rectangle();
-    private final Rectangle navTitlePlate = new Rectangle();
     private final Rectangle infoTitlePlate = new Rectangle();
     private final Rectangle scoreTitlePlate = new Rectangle();
-    private final Rectangle actionTitlePlate = new Rectangle();
     private final Rectangle portraitStrip = new Rectangle();
     private final Rectangle[] portraitCards = new Rectangle[4];
     private final int[] portraitPlayerIds = {-1, -1, -1, -1};
@@ -195,6 +205,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private final Rectangle mapFrame = new Rectangle();
     private final Rectangle mapBounds = new Rectangle();
     private final Rectangle messagePanel = new Rectangle();
+    private final Rectangle messageViewport = new Rectangle();
     private final Rectangle scorePanel = new Rectangle();
     private final Rectangle actionPanel = new Rectangle();
     private final Rectangle actionSlots[] = {new Rectangle(), new Rectangle()};
@@ -219,6 +230,16 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             new Rectangle[ProductionScreenLayout.sliderCount()];
     private final Rectangle[] productionSliderMarkers =
             new Rectangle[ProductionScreenLayout.sliderCount()];
+    private final Rectangle[] technologyCards =
+            new Rectangle[TechnologyScreenLayout.CARD_COUNT];
+    private final String[] researchChoiceByCard =
+            new String[TechnologyScreenLayout.CARD_COUNT];
+    private final StringBuilder selectedResearchSummary = new StringBuilder(128);
+    private final StringBuilder actionFooterText = new StringBuilder(96);
+    private final Rectangle technologySelectedArea = new Rectangle();
+    private final Rectangle[] actionFooterButtons = {
+            new Rectangle(), new Rectangle(), new Rectangle()
+    };
     private final Rectangle[] productionSpecialStatFills = {
             new Rectangle(), new Rectangle(), new Rectangle(), new Rectangle()
     };
@@ -230,9 +251,12 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private final Rectangle[] researchRows = new Rectangle[RESEARCH_ROWS_PER_PAGE];
     private final ScrollPaneState navigationScroll = new ScrollPaneState();
     private final ScrollPaneState equipmentScroll = new ScrollPaneState();
+    private final MessageHistoryScrollState messageHistoryScroll =
+            new MessageHistoryScrollState();
     private final Vector3 pointer = new Vector3();
     private final GlyphLayout glyphLayout = new GlyphLayout();
     private final GlyphLayout productionSummaryLayout = new GlyphLayout();
+    private final GlyphLayout messageHistoryLayout = new GlyphLayout();
 
     private SpriteBatch batch;
     private ShapeRenderer shapes;
@@ -263,8 +287,13 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private float lastPointerTime;
     private float gestureVelocityY;
     private float productionGestureHandleOffsetX;
+    private float messageLineHeight = 1f;
+    private float messageLayoutWidth = -1f;
     private float showExitPromptSeconds;
     private int gestureArea;
+    private int messageDragStartScroll = 1;
+    private int cachedMessageCount = -1;
+    private int cachedMessageTurn = -1;
     private int preparedCarrierIndex;
     private int preparedTargetPlayer = 1;
     private int preparedCityIndex;
@@ -272,6 +301,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private int defenseWeaponIndex;
     private int setupLeaderListStart;
     private boolean dragging;
+    private String cachedLatestMessage = "";
+    private String cachedMessageText = "";
     private boolean modalOpen;
     private boolean continuousRenderingEnabled = true;
     private boolean renderingFrame;
@@ -298,6 +329,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         for (int i = 0; i < productionSliderHitTargets.length; i++) {
             productionSliderHitTargets[i] = new Rectangle();
             productionSliderMarkers[i] = new Rectangle();
+        }
+        for (int i = 0; i < technologyCards.length; i++) {
+            technologyCards[i] = new Rectangle();
         }
         for (int i = 0; i < researchRows.length; i++) {
             researchRows[i] = new Rectangle();
@@ -391,12 +425,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         centerHeader.set(centerLeft, contentY + contentHeight - 62f, centerWidth, 62f);
         float navigationPanelHeight = Math.min(contentHeight - 144f,
                 5f * (NAV_ROW_HEIGHT + NAV_ROW_GAP) + 24f);
-        navPanel.set(leftPanel.x, contentY + 80f, leftWidth, navigationPanelHeight);
-        navViewport.set(navPanel.x + 8f, navPanel.y + 8f,
-                navPanel.width - 16f, navPanel.height - 24f);
-        infoPanel.set(leftPanel.x, contentY, leftWidth, 75f);
-        navTitlePlate.set(navPanel.x + navPanel.width / 2f,
-                navPanel.y + navPanel.height - 5f, 10f, 14f);
+        navPanel.set(leftPanel.x, contentY + 86f, leftWidth, navigationPanelHeight);
+        NavigationPanelLayout.setContentBounds(navPanel, navViewport);
+        infoPanel.set(leftPanel.x, contentY, leftWidth, 82f);
         infoTitlePlate.set(infoPanel.x + infoPanel.width / 2f,
                 infoPanel.y + infoPanel.height - 5f, 10f, 14f);
         toolbarPanel.set(rightPanel.x, rightPanel.y + rightPanel.height - 34f,
@@ -420,13 +451,15 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
         float footerHeight = 64f;
         messagePanel.set(centerLeft, contentY, centerWidth * 0.67f, footerHeight);
+        messageViewport.set(messagePanel.x + 10f, messagePanel.y + 2f,
+                Math.max(1f, messagePanel.width - 20f),
+                Math.max(1f, messagePanel.height - 4f));
+        messageLayoutWidth = -1f;
         scorePanel.set(messagePanel.x + messagePanel.width + 4f, contentY,
                 centerRight - messagePanel.x - messagePanel.width - 4f, footerHeight);
         scoreTitlePlate.set(scorePanel.x + scorePanel.width / 2f,
                 scorePanel.y + scorePanel.height - 5f, 10f, 14f);
         actionPanel.set(rightPanel.x, contentY, rightWidth, footerHeight);
-        actionTitlePlate.set(actionPanel.x + actionPanel.width / 2f,
-                actionPanel.y + actionPanel.height - 5f, 10f, 14f);
         float firstWidth = (actionPanel.width - 42f) * 0.5f;
         float tubeY = actionPanel.y + 5f;
         actionSlots[0].set(actionPanel.x + 8f, tubeY, firstWidth, 33f);
@@ -435,10 +468,11 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         confirmButton.set(actionPanel.x + actionPanel.width - 35f, tubeY, 27f, 33f);
         portraitStrip.set(centerHeader.x + centerHeader.width * 0.28f,
                 centerHeader.y + 1f, centerHeader.width * 0.44f, 6f);
-        fitTitlePlate(navTitlePlate, "MAIN PANEL");
         fitTitlePlate(infoTitlePlate, "INFO PANEL");
         fitTitlePlate(scoreTitlePlate, "SCORE");
-        fitTitlePlate(actionTitlePlate, "NEXT ACTION");
+        for (int i = 0; i < actionFooterButtons.length; i++) {
+            ActionFooterLayout.setButtonBounds(messagePanel, i, actionFooterButtons[i]);
+        }
 
         ProductionScreenLayout.setModalBounds(mapFrame, modal);
         float modalScaleX = modal.width / ProductionScreenLayout.ART_WIDTH;
@@ -451,6 +485,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             ProductionScreenLayout.setSliderHitBounds(
                     i, modal, productionSliderHitTargets[i]);
         }
+        for (int i = 0; i < technologyCards.length; i++) {
+            TechnologyScreenLayout.setCardBounds(i, modal, technologyCards[i]);
+        }
+        TechnologyScreenLayout.setSelectedBounds(modal, technologySelectedArea);
         float researchRowHeight = Math.min(18f, (modal.height - 83f) / RESEARCH_ROWS_PER_PAGE);
         float researchTop = modal.y + modal.height - 50f;
         for (int i = 0; i < researchRows.length; i++) {
@@ -1357,10 +1395,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         drawPanelEdges(actionPanel);
         shapes.end();
         shapes.begin(ShapeRenderer.ShapeType.Filled);
-        drawTitlePlate(navTitlePlate);
         drawTitlePlate(infoTitlePlate);
         drawTitlePlate(scoreTitlePlate);
-        drawTitlePlate(actionTitlePlate);
         shapes.end();
 
         batch.setProjectionMatrix(camera.combined);
@@ -1371,7 +1407,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         shapes.setProjectionMatrix(camera.combined);
         shapes.begin(ShapeRenderer.ShapeType.Filled);
         drawButtonGradient(helpButton, false);
-        drawButtonGradient(muteButton, false);
+        drawButtonGradient(muteButton, !audio.isSoundEnabled());
         shapes.end();
 
         drawNavigationRows();
@@ -2040,6 +2076,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     }
 
     private void drawTextAndControls() {
+        updateMessageHistoryLayout();
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
         font.setColor(TITLE_TEXT);
@@ -2047,20 +2084,22 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 helpButton.y + helpButton.height / 2f + 3f, 9f);
         drawCentered("MUTE", muteButton.x + muteButton.width / 2f,
                 muteButton.y + muteButton.height / 2f + 3f, 9f);
-        drawCentered("MAIN PANEL", navTitlePlate.x + navTitlePlate.width / 2f,
-                navTitlePlate.y + navTitlePlate.height / 2f - 2f, 8f);
         drawCentered("INFO PANEL", infoTitlePlate.x + infoTitlePlate.width / 2f,
                 infoTitlePlate.y + infoTitlePlate.height / 2f - 2f, 8f);
         drawCentered("SCORE", scoreTitlePlate.x + scoreTitlePlate.width / 2f,
                 scoreTitlePlate.y + scoreTitlePlate.height / 2f - 2f, 9f);
-        drawCentered("NEXT ACTION", actionTitlePlate.x + actionTitlePlate.width / 2f,
-                actionTitlePlate.y + actionTitlePlate.height / 2f - 2f, 9f);
 
         drawStatistics();
-        font.setColor(GREEN);
-        font.draw(batch, latestMessage(), messagePanel.x + 10f,
-                messagePanel.y + messagePanel.height - 15f,
-                messagePanel.width - 20f, Align.left, true);
+        if (!ActionScreenLayout.hasInlineActionControls(game.getSelectedAction())) {
+            font.setColor(GREEN);
+            batch.flush();
+            setScissor(messageViewport);
+            float textBaseline = messagePanel.y + messagePanel.height - 15f
+                    + messageHistoryScroll.getFirstVisibleLine() * messageLineHeight;
+            font.draw(batch, messageHistoryLayout, messageViewport.x, textBaseline);
+            batch.flush();
+            Gdx.gl.glDisable(GL20.GL_SCISSOR_TEST);
+        }
         font.setColor(TITLE_TEXT);
         drawCentered(Long.toString(game.getHuman().score),
                 scorePanel.x + scorePanel.width / 2f, scorePanel.y + scorePanel.height / 2f + 2f, 13f);
@@ -2080,7 +2119,97 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         batch.begin();
         drawQueuedActionLabels();
         batch.end();
+        drawInlineActionFooter();
         drawSettingsGear();
+    }
+
+    private void drawInlineActionFooter() {
+        GameState.Action action = game.getSelectedAction();
+        if (!ActionScreenLayout.hasInlineActionControls(action) || modalOpen) {
+            return;
+        }
+        batch.setProjectionMatrix(camera.combined);
+        batch.begin();
+        for (Rectangle button : actionFooterButtons) {
+            drawOriginalButton(button);
+        }
+        batch.end();
+
+        shapes.setProjectionMatrix(camera.combined);
+        shapes.begin(ShapeRenderer.ShapeType.Filled);
+        for (int i = 0; i < actionFooterButtons.length; i++) {
+            boolean selected = i == 2 && (action != GameState.Action.ATTACK
+                    || game.canAcceptAttack());
+            drawButtonGradient(actionFooterButtons[i], selected);
+        }
+        shapes.end();
+
+        batch.setProjectionMatrix(camera.combined);
+        batch.begin();
+        font.setColor(GREEN);
+        CharSequence summary = action == GameState.Action.MASS_MEDIA
+                ? massMediaFooterSummary() : directAttackFooterSummary();
+        drawFittedLeft(summary, messagePanel.x + 8f,
+                messagePanel.y + messagePanel.height - 10f,
+                messagePanel.width - 16f, 9f);
+        font.setColor(TITLE_TEXT);
+        drawCentered("DETAILS", actionFooterButtons[0].x
+                        + actionFooterButtons[0].width / 2f,
+                actionFooterButtons[0].y + actionFooterButtons[0].height / 2f + 2f, 7.5f);
+        drawCentered("CANCEL", actionFooterButtons[1].x
+                        + actionFooterButtons[1].width / 2f,
+                actionFooterButtons[1].y + actionFooterButtons[1].height / 2f + 2f, 7.5f);
+        font.setColor(action != GameState.Action.ATTACK || game.canAcceptAttack()
+                ? TITLE_TEXT : DISABLED_TEXT);
+        drawCentered("ACCEPT", actionFooterButtons[2].x
+                        + actionFooterButtons[2].width / 2f,
+                actionFooterButtons[2].y + actionFooterButtons[2].height / 2f + 2f, 7.5f);
+        batch.end();
+    }
+
+    private CharSequence massMediaFooterSummary() {
+        actionFooterText.setLength(0);
+        actionFooterText.append("MASS MEDIA  +").append(game.getMassMediaGain())
+                .append("% INFLUENCE");
+        return actionFooterText;
+    }
+
+    private CharSequence directAttackFooterSummary() {
+        actionFooterText.setLength(0);
+        String weapon = game.getSelectedAttackWeapon();
+        GameState.PlayerState target = game.getPlayerState(game.getSelectedTargetPlayer());
+        actionFooterText.append("ATTACK: ");
+        if (weapon == null) {
+            actionFooterText.append("SELECT A UNIT");
+        } else {
+            appendUppercase(actionFooterText, weapon);
+            actionFooterText.append(" x").append(game.getWeaponStock(weapon));
+        }
+        if (target != null) {
+            actionFooterText.append("  |  NATION ").append(target.id)
+                    .append("  CITY ").append(game.getSelectedTargetCity() + 1);
+        }
+        return actionFooterText;
+    }
+
+    private static void appendUppercase(StringBuilder output, String value) {
+        for (int i = 0; i < value.length(); i++) {
+            char character = value.charAt(i);
+            output.append(character >= 'a' && character <= 'z'
+                    ? (char) (character - ('a' - 'A')) : character);
+        }
+    }
+
+    private void drawFittedLeft(CharSequence text, float x, float baselineY,
+                                float maxWidth, float targetHeight) {
+        float originalScale = font.getScaleX();
+        font.getData().setScale(targetHeight / Math.max(font.getLineHeight(), 1f));
+        glyphLayout.setText(font, text);
+        if (glyphLayout.width > maxWidth && glyphLayout.width > 0f) {
+            font.getData().setScale(font.getScaleX() * maxWidth / glyphLayout.width);
+        }
+        font.draw(batch, text, x, baselineY);
+        font.getData().setScale(originalScale);
     }
 
     private void drawTitlePlate(Rectangle rectangle) {
@@ -2108,43 +2237,64 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         float x = infoPanel.x + 9f;
         float width = infoPanel.width - 18f;
         GameState.PlayerState human = game.getHuman();
-        float rowHeight = 9.1f;
-        float top = infoPanel.y + infoPanel.height - 14f;
         float originalScale = font.getScaleX();
-        font.getData().setScale(0.60f);
+        float targetScale = InformationPanelLayout.fontScale(infoPanel, font.getLineHeight());
+        font.getData().setScale(targetScale);
         font.setColor(TITLE_TEXT);
-        font.draw(batch, "FUNDS", x, top);
+        font.draw(batch, "FUNDS", x, InformationPanelLayout.rowBaseline(infoPanel, 0));
+        String funds = "$ " + formatMillions(human.turnMoneyMillions);
+        float fundsX = x + width * 0.43f;
+        float fundsWidth = width * 0.57f;
+        glyphLayout.setText(font, funds);
+        if (glyphLayout.width > fundsWidth && glyphLayout.width > 0f) {
+            font.getData().setScale(targetScale * fundsWidth / glyphLayout.width);
+        }
         font.setColor(GOLD);
-        font.draw(batch, "$ " + formatMillions(human.turnMoneyMillions),
-                x + width * 0.43f, top);
+        font.draw(batch, funds, fundsX, InformationPanelLayout.rowBaseline(infoPanel, 0));
+        font.getData().setScale(targetScale);
         font.setColor(DISABLED_TEXT);
-        font.draw(batch, "technology", x, top - rowHeight);
-        font.draw(batch, "propaganda", x, top - rowHeight * 2f);
-        font.draw(batch, "population", x, top - rowHeight * 3f);
-        font.draw(batch, "spy", x, top - rowHeight * 4f);
+        font.draw(batch, "technology", x, InformationPanelLayout.rowBaseline(infoPanel, 1));
+        font.draw(batch, "propaganda", x, InformationPanelLayout.rowBaseline(infoPanel, 2));
+        font.draw(batch, "population", x, InformationPanelLayout.rowBaseline(infoPanel, 3));
+        font.draw(batch, "spy", x, InformationPanelLayout.rowBaseline(infoPanel, 4));
         font.getData().setScale(originalScale);
     }
 
     private void drawStatisticsBars() {
         float x = infoPanel.x + infoPanel.width * 0.47f;
         float width = infoPanel.width * 0.47f;
-        float top = infoPanel.y + infoPanel.height - 23.1f;
-        float rowHeight = 9.1f;
-        for (int i = 0; i < 4; i++) {
-            int value = i == 1 ? game.getHuman().religion
-                    : i == 2 ? Math.min(100, game.getHuman().populationMillions / 10) : 0;
-            float y = top - i * rowHeight;
-            shapes.setColor(0.02f, 0.055f, 0.07f, 1f);
-            shapes.rect(x, y, width, 4.2f);
-            float filledWidth = width * value / 100f;
-            for (int band = 0; band < 8; band++) {
-                float segmentLeft = x + filledWidth * band / 8f;
-                float segmentWidth = filledWidth / 8f + 0.2f;
-                float blend = band / 7f;
-                shapes.setColor(1f, 0.19f + blend * 0.68f,
-                        0.02f + blend * 0.01f, 1f);
-                shapes.rect(segmentLeft, y, segmentWidth, 4.2f);
+        GameState.PlayerState human = game.getHuman();
+        int activePopulation = 0;
+        for (int playerId = 0; playerId < 5; playerId++) {
+            GameState.PlayerState player = game.getPlayerState(playerId);
+            if (player.alive) {
+                activePopulation += player.populationMillions;
             }
+        }
+        int populationShare = activePopulation <= 0 ? 0
+                : Math.round(human.populationMillions * 100f / activePopulation);
+        drawInformationBar(x, InformationPanelLayout.barY(infoPanel, 1), width,
+                human.getTechnologyLevel());
+        drawInformationBar(x, InformationPanelLayout.barY(infoPanel, 2), width,
+                human.religion);
+        drawInformationBar(x, InformationPanelLayout.barY(infoPanel, 3), width,
+                populationShare);
+        drawInformationBar(x, InformationPanelLayout.barY(infoPanel, 4), width,
+                human.spyReadiness);
+    }
+
+    private void drawInformationBar(float x, float y, float width, int statistic) {
+        int value = Math.max(0, Math.min(100, statistic));
+        shapes.setColor(0.02f, 0.055f, 0.07f, 1f);
+        shapes.rect(x, y, width, 4.2f);
+        float filledWidth = width * value / 100f;
+        for (int band = 0; band < 8; band++) {
+            float segmentLeft = x + filledWidth * band / 8f;
+            float segmentWidth = filledWidth / 8f + 0.2f;
+            float blend = band / 7f;
+            shapes.setColor(1f, 0.19f + blend * 0.68f,
+                    0.02f + blend * 0.01f, 1f);
+            shapes.rect(segmentLeft, y, segmentWidth, 4.2f);
         }
     }
 
@@ -2175,7 +2325,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     private void drawSettingsGear() {
         shapes.begin(ShapeRenderer.ShapeType.Line);
-        shapes.setColor(TITLE_TEXT);
+        shapes.setColor(audio.isMusicEnabled() ? TITLE_TEXT : DISABLED_TEXT);
         float cx = settingsButton.x + settingsButton.width / 2f;
         float cy = settingsButton.y + settingsButton.height / 2f;
         shapes.circle(cx, cy, 6.5f, 16);
@@ -2217,6 +2367,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                         modal.y + modal.height * 0.93f);
                 batch.end();
             }
+            return;
+        }
+        if (action == GameState.Action.RESEARCH) {
+            drawTechnologyModal();
             return;
         }
 
@@ -2431,6 +2585,192 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         shapes.begin(ShapeRenderer.ShapeType.Line);
         drawPanelEdges(modal);
         shapes.end();
+    }
+
+    private void drawTechnologyModal() {
+        java.util.List<String> choices = game.getResearchChoices();
+        updateResearchChoiceCards(choices);
+
+        shapes.setProjectionMatrix(camera.combined);
+        shapes.begin(ShapeRenderer.ShapeType.Filled);
+        drawPanelFill(modal);
+        shapes.end();
+
+        batch.setProjectionMatrix(camera.combined);
+        batch.begin();
+        drawPanelTexture(modal);
+        drawOriginalButton(modalCancel);
+        drawOriginalButton(modalAccept);
+        batch.end();
+
+        shapes.setProjectionMatrix(camera.combined);
+        shapes.begin(ShapeRenderer.ShapeType.Filled);
+        shapes.setColor(MODAL_ORANGE);
+        shapes.rect(modal.x + 3f, modal.y + modal.height - 29f,
+                modal.width - 6f, 25f);
+        shapes.rect(modal.x + 3f, modal.y + 3f, modal.width - 6f, 25f);
+        shapes.setColor(0.02f, 0.07f, 0.10f, 0.95f);
+        shapes.rect(technologySelectedArea.x, technologySelectedArea.y,
+                technologySelectedArea.width, technologySelectedArea.height);
+        for (int i = 0; i < technologyCards.length; i++) {
+            Rectangle card = technologyCards[i];
+            String technology = researchChoiceByCard[i];
+            boolean selected = technology != null
+                    && game.isResearchTechnologySelected(technology);
+            boolean available = technology != null && game.isResearchAvailable(technology);
+            if (technology == null) {
+                shapes.setColor(0.05f, 0.09f, 0.11f, 0.95f);
+            } else if (selected) {
+                shapes.setColor(0.12f, 0.30f, 0.35f, 0.98f);
+            } else if (available) {
+                shapes.setColor(0.08f, 0.17f, 0.21f, 0.98f);
+            } else {
+                shapes.setColor(0.10f, 0.10f, 0.11f, 0.96f);
+            }
+            shapes.rect(card.x, card.y, card.width, card.height);
+        }
+        drawButtonGradient(modalCancel, false);
+        drawButtonGradient(modalAccept, false);
+        shapes.end();
+
+        batch.begin();
+        font.setColor(Color.WHITE);
+        drawCentered("TECHNOLOGY", modal.x + modal.width / 2f,
+                modal.y + modal.height - 12f, 12f);
+        for (int i = 0; i < technologyCards.length; i++) {
+            Rectangle card = technologyCards[i];
+            String technology = researchChoiceByCard[i];
+            drawFittedCentered(RESEARCH_GROUP_LABELS[i],
+                    card.x + card.width / 2f, card.y + card.height - 7f,
+                    6.5f, card.width - 8f);
+            if (technology == null) {
+                font.setColor(DISABLED_TEXT);
+                drawFittedCentered("COMPLETED", card.x + card.width / 2f,
+                        card.y + card.height * 0.52f, 7f, card.width - 8f);
+                drawCentered("ALL", card.x + card.width / 2f, card.y + 12f, 6f);
+                continue;
+            }
+            boolean selected = game.isResearchTechnologySelected(technology);
+            boolean available = game.isResearchAvailable(technology);
+            font.setColor(available ? TITLE_TEXT : DISABLED_TEXT);
+            drawFittedCentered(game.getTechnologyLabel(technology),
+                    card.x + card.width / 2f, card.y + card.height * 0.55f,
+                    7f, card.width - 8f);
+            font.setColor(selected ? GOLD : available ? GREEN : RESEARCH_UNAVAILABLE_TEXT);
+            String status = selected ? "SELECTED"
+                    : available ? researchCostLabel(game.getTechnologyCost(technology))
+                    : "LOCKED";
+            drawFittedCentered(status, card.x + card.width / 2f,
+                    card.y + 12f, 6f, card.width - 8f);
+        }
+
+        CharSequence selectedCategories = selectedResearchCategoriesSummary();
+        font.setColor(TITLE_TEXT);
+        drawFittedCentered(selectedCategories, technologySelectedArea.x
+                        + technologySelectedArea.width / 2f,
+                technologySelectedArea.y + technologySelectedArea.height - 7f,
+                7f, technologySelectedArea.width - 12f);
+        font.setColor(GOLD);
+        selectedResearchSummary.setLength(0);
+        selectedResearchSummary.append("RESEARCH BUDGET  $")
+                .append(game.getSelectedResearchCostMillions()).append('M');
+        drawFittedCentered(selectedResearchSummary,
+                technologySelectedArea.x + technologySelectedArea.width / 2f,
+                technologySelectedArea.y + 14f, 7f,
+                technologySelectedArea.width - 12f);
+        font.setColor(TITLE_TEXT);
+        drawCentered("CANCEL", modalCancel.x + modalCancel.width / 2f,
+                modalCancel.y + modalCancel.height / 2f + 3f, 8f);
+        drawCentered("ACCEPT", modalAccept.x + modalAccept.width / 2f,
+                modalAccept.y + modalAccept.height / 2f + 3f, 8f);
+        batch.end();
+
+        shapes.begin(ShapeRenderer.ShapeType.Line);
+        for (Rectangle card : technologyCards) {
+            drawTechnologyFrame(card);
+        }
+        drawTechnologyFrame(technologySelectedArea);
+        drawPanelEdges(modal);
+        shapes.end();
+    }
+
+    private void drawTechnologyFrame(Rectangle rectangle) {
+        shapes.setColor(PANEL_EDGE);
+        shapes.rect(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
+        shapes.setColor(0.65f, 0.77f, 0.81f, 1f);
+        shapes.line(rectangle.x + 5f, rectangle.y + rectangle.height - 1.5f,
+                rectangle.x + rectangle.width - 5f,
+                rectangle.y + rectangle.height - 1.5f);
+    }
+
+    private void updateResearchChoiceCards(java.util.List<String> choices) {
+        for (int i = 0; i < researchChoiceByCard.length; i++) {
+            researchChoiceByCard[i] = null;
+        }
+        for (String technology : choices) {
+            TechnologyCatalog.Definition definition = TechnologyCatalog.byName(technology);
+            if (definition == null) {
+                continue;
+            }
+            int card = TechnologyScreenLayout.cardIndexForGroup(definition.group);
+            if (card >= 0) {
+                researchChoiceByCard[card] = technology;
+            }
+        }
+    }
+
+    private CharSequence selectedResearchCategoriesSummary() {
+        selectedResearchSummary.setLength(0);
+        boolean hasSelectedCategory = false;
+        for (int i = 0; i < researchChoiceByCard.length; i++) {
+            String technology = researchChoiceByCard[i];
+            if (technology == null || !game.isResearchTechnologySelected(technology)) {
+                continue;
+            }
+            if (hasSelectedCategory) {
+                selectedResearchSummary.append("  |  ");
+            }
+            selectedResearchSummary.append(RESEARCH_GROUP_LABELS[i]);
+            hasSelectedCategory = true;
+        }
+        if (!hasSelectedCategory) {
+            selectedResearchSummary.append("SELECT A TECHNOLOGY CATEGORY");
+        } else {
+            selectedResearchSummary.insert(0, "SELECTED  ");
+        }
+        return selectedResearchSummary;
+    }
+
+    private String researchCostLabel(int costMillions) {
+        switch (costMillions) {
+            case 5:
+                return "$5M";
+            case 10:
+                return "$10M";
+            case 15:
+                return "$15M";
+            case 20:
+                return "$20M";
+            case 40:
+                return "$40M";
+            case 50:
+                return "$50M";
+            default:
+                return "$" + costMillions + "M";
+        }
+    }
+
+    private void drawFittedCentered(CharSequence text, float centerX, float baselineY,
+                                    float targetHeight, float maxWidth) {
+        float originalScale = font.getScaleX();
+        font.getData().setScale(targetHeight / Math.max(font.getLineHeight(), 1f));
+        glyphLayout.setText(font, text);
+        if (glyphLayout.width > maxWidth && glyphLayout.width > 0f) {
+            font.getData().setScale(font.getScaleX() * maxWidth / glyphLayout.width);
+            glyphLayout.setText(font, text);
+        }
+        font.draw(batch, text, centerX - glyphLayout.width / 2f, baselineY);
+        font.getData().setScale(originalScale);
     }
 
     private void drawProductionModal() {
@@ -2920,8 +3260,46 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         return action == null ? prefix + "EMPTY" : prefix + action.label.toUpperCase();
     }
 
-    private String latestMessage() {
-        return game.getLatestMessage();
+    private void updateMessageHistoryLayout() {
+        List<String> messages = game.getMessages();
+        int messageCount = messages.size();
+        String latest = game.getLatestMessage();
+        int currentTurn = game.getTurn();
+        boolean contentChanged = messageCount != cachedMessageCount
+                || currentTurn != cachedMessageTurn
+                || !latest.equals(cachedLatestMessage);
+        boolean widthChanged = Math.abs(messageViewport.width - messageLayoutWidth) > 0.01f;
+        if (!contentChanged && !widthChanged) {
+            return;
+        }
+
+        if (contentChanged) {
+            StringBuilder text = new StringBuilder();
+            for (String message : messages) {
+                if (message == null || message.isEmpty()) {
+                    continue;
+                }
+                if (text.length() > 0) {
+                    text.append('\n');
+                }
+                text.append(message.replaceAll("(?i)<br\\s*/?>", "\n"));
+            }
+            cachedMessageText = text.length() == 0
+                    ? "Choose two actions, then confirm." : text.toString();
+            cachedMessageCount = messageCount;
+            cachedMessageTurn = currentTurn;
+            cachedLatestMessage = latest;
+        }
+
+        messageHistoryLayout.setText(font, cachedMessageText, GREEN,
+                messageViewport.width, Align.left, true);
+        messageLineHeight = Math.max(1f, font.getLineHeight());
+        int visibleLines = Math.max(1,
+                (int) Math.floor(messageViewport.height / messageLineHeight));
+        int totalLines = Math.max(1,
+                Math.round(messageHistoryLayout.height / messageLineHeight));
+        messageHistoryScroll.setLineRange(totalLines, visibleLines, contentChanged);
+        messageLayoutWidth = messageViewport.width;
     }
 
     private static String formatMillions(int millions) {
@@ -2970,7 +3348,15 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         if (equipmentViewport.contains(x, y)) {
             return GESTURE_EQUIPMENT;
         }
+        if (messageViewport.contains(x, y) && canScrollMessageHistory()) {
+            return GESTURE_MESSAGE;
+        }
         return GESTURE_NONE;
+    }
+
+    private boolean canScrollMessageHistory() {
+        return game != null && !modalOpen
+                && !ActionScreenLayout.hasInlineActionControls(game.getSelectedAction());
     }
 
     private void unproject(int screenX, int screenY) {
@@ -3012,8 +3398,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                     researchPage = 0;
                 } else if (action == GameState.Action.PRODUCTION) {
                     refreshProductionSummary();
+                } else if (action == GameState.Action.ATTACK) {
+                    syncSelectedAttackEquipment();
                 }
-                modalOpen = game.getSelectedAction() != null;
+                modalOpen = ActionScreenLayout.opensCenterDialog(game.getSelectedAction());
                 if (modalOpen) {
                     audio.play(OriginalAudio.Cue.ACTION_OPEN);
                 }
@@ -3041,8 +3429,30 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private void activateEquipmentRow(float x, float y) {
         for (int i = 0; i < equipmentRows.length; i++) {
             if (!isEquipmentHeading(i) && equipmentRows[i].contains(x, y)) {
+                String weapon = EQUIPMENT_WEAPON_NAMES[i];
+                if (game.getSelectedAction() == GameState.Action.ATTACK
+                        && weapon != null) {
+                    if (game.selectAttackWeapon(weapon)) {
+                        selectedEquipment = EQUIPMENT_ROWS[i];
+                        audio.play(OriginalAudio.Cue.STOCK_SELECT);
+                    }
+                } else {
+                    selectedEquipment = EQUIPMENT_ROWS[i];
+                    audio.play(OriginalAudio.Cue.STOCK_SELECT);
+                }
+                return;
+            }
+        }
+    }
+
+    private void syncSelectedAttackEquipment() {
+        String weapon = game.getSelectedAttackWeapon();
+        if (weapon == null) {
+            return;
+        }
+        for (int i = 0; i < EQUIPMENT_WEAPON_NAMES.length; i++) {
+            if (weapon.equals(EQUIPMENT_WEAPON_NAMES[i])) {
                 selectedEquipment = EQUIPMENT_ROWS[i];
-                audio.play(OriginalAudio.Cue.STOCK_SELECT);
                 return;
             }
         }
@@ -3350,18 +3760,28 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             return;
         }
         if (MatchOutcomePresentation.isFinished(game.getMatchStatus())) {
+            if (muteButton.contains(x, y)) {
+                audio.toggleSound();
+                return;
+            }
+            if (settingsButton.contains(x, y)) {
+                audio.toggleMusic();
+                return;
+            }
             if (outcomeSequence.isEndgameVisible()) {
                 if (outcomeSequence.isScoreStarted() && modalAccept.contains(x, y)) {
                     beginNewGameSetup();
                     audio.play(OriginalAudio.Cue.ACTION_CLOSE);
                 }
-            } else if (muteButton.contains(x, y)) {
-                audio.toggleMuted();
             }
             return;
         }
         if (muteButton.contains(x, y)) {
-            audio.toggleMuted();
+            audio.toggleSound();
+            return;
+        }
+        if (settingsButton.contains(x, y)) {
+            audio.toggleMusic();
             return;
         }
         if (game.getPendingHumanDiplomacyProposal() != null) {
@@ -3381,6 +3801,34 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 }
             }
             return;
+        }
+        GameState.Action selectedAction = game.getSelectedAction();
+        if (!modalOpen && ActionScreenLayout.hasInlineActionControls(selectedAction)) {
+            if (actionFooterButtons[0].contains(x, y)) {
+                modalOpen = true;
+                audio.play(OriginalAudio.Cue.ACTION_OPEN);
+                audio.playAmbient(OriginalAudio.ambientForAction(selectedAction));
+                return;
+            }
+            if (actionFooterButtons[1].contains(x, y)) {
+                game.cancelSelection();
+                modalOpen = false;
+                audio.play(OriginalAudio.Cue.ACTION_CLOSE);
+                audio.playAmbient(OriginalAudio.Cue.GAME_AMBIENT);
+                return;
+            }
+            if (actionFooterButtons[2].contains(x, y)) {
+                if (game.acceptSelectedAction()) {
+                    modalOpen = false;
+                    audio.play(OriginalAudio.Cue.ACTION_ACCEPT);
+                    audio.playAmbient(OriginalAudio.Cue.GAME_AMBIENT);
+                }
+                return;
+            }
+            if (selectedAction == GameState.Action.ATTACK && mapBounds.contains(x, y)) {
+                selectMapTargetCity(selectedAction, x, y);
+                return;
+            }
         }
         if (modalOpen) {
             GameState.Action action = game.getSelectedAction();
@@ -3419,6 +3867,20 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                     }
                 }
                 return;
+            }
+            if (action == GameState.Action.RESEARCH) {
+                updateResearchChoiceCards(game.getResearchChoices());
+                for (int i = 0; i < technologyCards.length; i++) {
+                    if (!technologyCards[i].contains(x, y)) {
+                        continue;
+                    }
+                    String technology = researchChoiceByCard[i];
+                    if (technology != null
+                            && game.selectResearchTechnology(technology)) {
+                        audio.play(OriginalAudio.Cue.STOCK_SELECT);
+                    }
+                    return;
+                }
             }
             if (selectMapTargetCity(action, x, y)) {
                 return;
@@ -3471,26 +3933,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 if (attackWeaponNext.contains(x, y)) {
                     cycleDefenseWeapon(1);
                     return;
-                }
-            } else if (action == GameState.Action.RESEARCH) {
-                if (researchPrevious.contains(x, y)) {
-                    researchPage = Math.max(0, researchPage - 1);
-                    return;
-                }
-                int pageCount = Math.max(1, (game.getResearchChoices().size()
-                        + RESEARCH_ROWS_PER_PAGE - 1) / RESEARCH_ROWS_PER_PAGE);
-                if (researchNext.contains(x, y)) {
-                    researchPage = Math.min(pageCount - 1, researchPage + 1);
-                    return;
-                }
-                java.util.List<String> choices = game.getResearchChoices();
-                int first = researchPage * RESEARCH_ROWS_PER_PAGE;
-                for (int i = 0; i < researchRows.length; i++) {
-                    int item = first + i;
-                    if (item < choices.size() && researchRows[i].contains(x, y)) {
-                        game.selectResearchTechnology(choices.get(item));
-                        return;
-                    }
                 }
             } else if (action == GameState.Action.ATTACK) {
                 if (attackTargetPrevious.contains(x, y)) {
@@ -3894,6 +4336,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         gestureVelocityY = 0f;
         dragging = false;
         gestureArea = pointArea(pointer.x, pointer.y);
+        if (gestureArea == GESTURE_MESSAGE) {
+            messageDragStartScroll = messageHistoryScroll.getScroll();
+        }
         productionGestureSlider = -1;
         productionGestureHandleOffsetX = 0f;
         if (gestureArea == GESTURE_PRODUCTION) {
@@ -3931,6 +4376,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 updateProductionSlider(productionGestureSlider, pointer.x,
                         productionGestureHandleOffsetX);
             }
+        } else if (gestureArea == GESTURE_MESSAGE) {
+            // The source uses separate up/down hit targets; on Android the panel swipes instead.
         } else if (gestureArea != GESTURE_NONE && dragging) {
             if (gestureArea == GESTURE_NAV) {
                 navigationScroll.endGesture(gestureVelocityY);
@@ -3978,6 +4425,19 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             }
             return true;
         }
+        if (gestureArea == GESTURE_MESSAGE) {
+            if (!dragging && Math.abs(totalY) > TAP_SLOP
+                    && Math.abs(totalY) > Math.abs(totalX)) {
+                dragging = true;
+            }
+            if (dragging) {
+                if (messageHistoryScroll.scrollFromDrag(messageDragStartScroll,
+                        totalY, messageLineHeight)) {
+                    Gdx.graphics.requestRendering();
+                }
+            }
+            return true;
+        }
         if (!dragging && Math.abs(totalY) > TAP_SLOP && Math.abs(totalY) > Math.abs(totalX)) {
             dragging = true;
         }
@@ -4009,6 +4469,12 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         if (equipmentViewport.contains(pointer.x, pointer.y)) {
             equipmentScroll.moveBy(amountY * EQUIPMENT_ROW_HEIGHT);
             Gdx.graphics.requestRendering();
+            return true;
+        }
+        if (messageViewport.contains(pointer.x, pointer.y) && canScrollMessageHistory()) {
+            if (messageHistoryScroll.scrollBy(-Math.round(amountY))) {
+                Gdx.graphics.requestRendering();
+            }
             return true;
         }
         return false;
