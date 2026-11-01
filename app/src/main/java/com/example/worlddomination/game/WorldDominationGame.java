@@ -54,6 +54,7 @@ import com.example.worlddomination.game.ui.InformationPanelLayout;
 import com.example.worlddomination.game.ui.MatchOutcomePresentation;
 import com.example.worlddomination.game.ui.MatchOutcomeSequence;
 import com.example.worlddomination.game.ui.MessageHistoryScrollState;
+import com.example.worlddomination.game.ui.NavigationPanelLayout;
 import com.example.worlddomination.game.ui.PreparedShipStrikeSelection;
 import com.example.worlddomination.game.ui.ProductionScreenLayout;
 import com.example.worlddomination.game.ui.ScrollPaneState;
@@ -425,8 +426,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         float navigationPanelHeight = Math.min(contentHeight - 144f,
                 5f * (NAV_ROW_HEIGHT + NAV_ROW_GAP) + 24f);
         navPanel.set(leftPanel.x, contentY + 86f, leftWidth, navigationPanelHeight);
-        navViewport.set(navPanel.x + 8f, navPanel.y + 8f,
-                navPanel.width - 16f, navPanel.height - 24f);
+        NavigationPanelLayout.setContentBounds(navPanel, navViewport);
         infoPanel.set(leftPanel.x, contentY, leftWidth, 82f);
         infoTitlePlate.set(infoPanel.x + infoPanel.width / 2f,
                 infoPanel.y + infoPanel.height - 5f, 10f, 14f);
