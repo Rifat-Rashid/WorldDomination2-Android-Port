@@ -534,7 +534,9 @@ public final class OpponentAITest {
                 new SequenceRandom(3));
 
         assertNotNull(target);
-        assertEquals(4, target.id);
+        // Source ASArray key iteration visits players in reverse order, so the
+        // seeded fallback index 3 resolves to player 0 in [4, 3, 2, 0].
+        assertEquals(0, target.id);
     }
 
     @Test
@@ -1230,8 +1232,9 @@ public final class OpponentAITest {
                 assertNull(decision.payloadName);
             }
         }
-        assertEquals("source preparation resets the companion action slot",
-                1, decisions.size());
+        assertEquals("source fills the second slot with the next ranked action",
+                2, decisions.size());
+        assertEquals(GameState.Action.RESOURCES, decisions.get(1).action);
         assertTrue("planner should use the available strike option", preparedActions > 0);
         assertEquals(1, preparedActions);
     }
@@ -1402,7 +1405,8 @@ public final class OpponentAITest {
     }
 
     @Test
-    public void biologicalStrikeBlocksHumanActionsAndRestoresTemporaryWeaponLocks() {
+    public void biologicalStrikeBlocksHumanActionsAndRestoresTemporaryWeaponLocks()
+            throws Exception {
         GameState state = new GameState(1, 62L);
         GameState.PlayerState attacker = state.getPlayerState(1);
         assertFalse(attacker.isSpecialPerson());
@@ -1423,6 +1427,9 @@ public final class OpponentAITest {
             }
         }
         state.getHuman().getWeapons().get("antiRocket").inStock = 0;
+        // Keep this integration test focused on the biological attack flow;
+        // source AI scoring can otherwise choose a different valid action first.
+        markEveryActionExceptBioloaded(attacker, GameState.Action.ATTACK);
 
         state.selectAction(GameState.Action.RESOURCES);
         assertTrue(state.acceptSelectedAction());
