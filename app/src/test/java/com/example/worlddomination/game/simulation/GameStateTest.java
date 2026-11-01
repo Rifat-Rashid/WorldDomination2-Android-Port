@@ -8,6 +8,7 @@ import org.junit.Test;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
@@ -731,6 +732,23 @@ public final class GameStateTest {
     }
 
     @Test
+    public void productionMenuUsesTheRemainingTurnBudgetAfterAnEarlierAction() {
+        GameState state = new GameState(1, 0L);
+        state.selectAction(GameState.Action.PRODUCTION);
+        assertTrue(state.configureProduction("soldier", 40));
+        assertEquals(26, state.getSelectedProductionTotalBudgetMillions());
+        assertTrue(state.acceptSelectedAction());
+        assertEquals(39, state.getTurnMoneyMillions());
+
+        state.selectAction(GameState.Action.PRODUCTION);
+        assertTrue(state.configureProduction("rockets", 50));
+        assertEquals(20, state.getSelectedProductionTotalBudgetMillions());
+        assertTrue(state.acceptSelectedAction());
+        assertEquals(19, state.getTurnMoneyMillions());
+        assertEquals(65, state.getHuman().moneyMillions);
+    }
+
+    @Test
     public void productionRejectsLockedTechnologyGroupAndKeepsExistingSelection() {
         GameState state = new GameState(1, 0L, false);
         state.selectAction(GameState.Action.PRODUCTION);
@@ -919,9 +937,51 @@ public final class GameStateTest {
                 - state.getCityPopulationMillions(defender.id, 0);
         assertTrue(casualties >= 2 && casualties <= 4);
         assertEquals(83 - casualties, human.getRegardTowardExact(defender.id), 0.0);
-        assertEquals(83 - casualties, defender.getRegardTowardExact(human.id), 0.0);
+        assertEquals(75 - casualties, defender.getRegardTowardExact(human.id), 0.0);
         assertEquals(75 - casualties / 20.0d,
                 observer.getRegardTowardExact(human.id), 0.000001);
+    }
+
+    @Test
+    public void aiBattleParticipantsReceiveSourceHostilityPenaltyBeforeCasualtyLoss() {
+        GameState state = new GameState(0, 750L, false);
+        GameState.PlayerState attacker = state.getPlayerState(1);
+        GameState.PlayerState defender = state.getPlayerState(2);
+        setRegard(attacker, defender.id, 3);
+        setRegard(defender, attacker.id, 3);
+
+        state.applyBattleHostilityEffects(attacker, defender, 4);
+
+        assertEquals(-9, attacker.getRegardTowardExact(defender.id), 0.0);
+        assertEquals(-9, defender.getRegardTowardExact(attacker.id), 0.0);
+    }
+
+    @Test
+    public void humanBattleParticipantDoesNotReceiveAiHostilityPenalty() {
+        GameState state = new GameState(0, 751L, false);
+        GameState.PlayerState human = state.getHuman();
+        GameState.PlayerState ai = state.getPlayerState(1);
+        setRegard(human, ai.id, 3);
+        setRegard(ai, human.id, 3);
+
+        state.applyBattleHostilityEffects(human, ai, 4);
+
+        assertEquals(-1, human.getRegardTowardExact(ai.id), 0.0);
+        assertEquals(-9, ai.getRegardTowardExact(human.id), 0.0);
+    }
+
+    @Test
+    public void aiHostilityPenaltyRequiresPositiveRegardBeforeCasualtyLoss() {
+        GameState state = new GameState(0, 752L, false);
+        GameState.PlayerState attacker = state.getPlayerState(1);
+        GameState.PlayerState human = state.getHuman();
+        setRegard(attacker, human.id, 0);
+        setRegard(human, attacker.id, 0);
+
+        state.applyBattleHostilityEffects(attacker, human, 4);
+
+        assertEquals(-4, attacker.getRegardTowardExact(human.id), 0.0);
+        assertEquals(-4, human.getRegardTowardExact(attacker.id), 0.0);
     }
 
     @Test
@@ -940,8 +1000,8 @@ public final class GameStateTest {
 
         state.applyBattleHostilityEffects(attacker, specialDefender, 4);
 
-        assertEquals(76, attacker.getRegardTowardExact(specialDefender.id), 0.0);
-        assertEquals(69, specialDefender.getRegardTowardExact(attacker.id), 0.0);
+        assertEquals(68, attacker.getRegardTowardExact(specialDefender.id), 0.0);
+        assertEquals(61, specialDefender.getRegardTowardExact(attacker.id), 0.0);
         assertEquals(63, attacker.getRegardTowardExact(attacker.id), 0.0);
         assertEquals(63, human.getRegardTowardExact(attacker.id), 0.0);
         assertEquals(63, observer.getRegardTowardExact(attacker.id), 0.0);
@@ -1727,7 +1787,7 @@ public final class GameStateTest {
 
     @Test
     public void propagandaTransfersSourceCalculatedCitizensFromChosenCity() {
-        GameState state = new GameState(1, 32L);
+        GameState state = new GameState(1, 32L, false);
         GameState.PlayerState attacker = state.getHuman();
         GameState.PlayerState defender = state.getPlayers()[1];
         attacker.religion = 0;
@@ -2172,6 +2232,49 @@ public final class GameStateTest {
     }
 
     @Test
+    public void incomingAiDemandsSpendTheRecipientBudgetInProposalArrivalOrder() {
+        GameState state = new GameState(1, 21L, false);
+        GameState.PlayerState receiver = state.getPlayerState(1);
+        GameState.PlayerState firstProposer = state.getPlayerState(3);
+        GameState.PlayerState secondProposer = state.getPlayerState(2);
+        receiver.moneyMillions = 10;
+        receiver.turnMoneyMillions = 10;
+        receiver.populationMillions = 100;
+        firstProposer.moneyMillions = 1_000;
+        firstProposer.populationMillions = 500;
+        secondProposer.moneyMillions = 1_000;
+        secondProposer.populationMillions = 500;
+
+        // The source keeps diplomacyPendingArr insertion order. Both demands
+        // qualify on score, but only the first can spend the recipient budget.
+        assertTrue(state.submitDiplomacyProposal(firstProposer.id, receiver.id, 3));
+        assertTrue(state.submitDiplomacyProposal(secondProposer.id, receiver.id, 3));
+        setRegard(receiver, firstProposer.id, 80);
+        setRegard(receiver, secondProposer.id, 80);
+
+        completeTurnWithResourcesAndMedia(state);
+
+        assertTrue(receiver.hasCeasefireWith(firstProposer.id));
+        assertFalse(receiver.hasCeasefireWith(secondProposer.id));
+        assertEquals(0, receiver.moneyMillions);
+        assertEquals(1_010, firstProposer.moneyMillions);
+        assertEquals(1_000, secondProposer.moneyMillions);
+    }
+
+    @Test
+    public void humanDiplomacyQueuePresentsProposalsInArrivalOrder() {
+        GameState state = new GameState(1, 22L, false);
+
+        assertTrue(state.submitDiplomacyProposal(3, 0, 0));
+        assertTrue(state.submitDiplomacyProposal(2, 0, 0));
+        assertEquals(3, state.getPendingHumanDiplomacyProposal().proposerId);
+
+        assertTrue(state.respondToDiplomacyProposal(false));
+
+        assertEquals(2, state.getPendingHumanDiplomacyProposal().proposerId);
+    }
+
+    @Test
     public void aiDiplomacyOfferRequiresStrictlyMoreAcceptanceThanRejectionAtRegardBoundary() {
         for (int regard : new int[]{50, 51}) {
             GameState state = new GameState(1, 10_000L + regard, false);
@@ -2234,6 +2337,82 @@ public final class GameStateTest {
     }
 
     @Test
+    public void aiPlanningReadsSpyReadinessCooldownAndRegardBeforeTurnResultUpkeep() {
+        PlanningSnapshotRandom random = new PlanningSnapshotRandom();
+        GameState state = stateBeforeAiPlanning(random);
+        random.captureOnDraw(state, 1);
+
+        state.confirmTurn();
+
+        assertTrue("AI planning should consume a random draw", random.captured);
+        assertEquals(0, random.spyReadinessAtPlanning);
+        assertEquals(2, random.diplomacyCooldownAtPlanning);
+        assertEquals(20.0d, random.regardAtPlanning, 0.0d);
+    }
+
+    @Test
+    public void aiPlanningUsesReligionBeforeTurnResultDecay() {
+        PlanningSnapshotRandom random = new PlanningSnapshotRandom();
+        GameState state = stateBeforeAiPlanning(random);
+        state.getPlayerState(1).religion = 12;
+        random.captureOnDraw(state, 2);
+
+        state.confirmTurn();
+
+        assertTrue("AI planning should consume at least two random draws", random.captured);
+        assertEquals(12, random.religionAtPlanning);
+    }
+
+    @Test
+    public void upkeepRetargetsBeforeReligionDrawAndSkipsEliminatedPlayers() {
+        TurnUpkeepSequenceRandom random = new TurnUpkeepSequenceRandom();
+        GameState state = new GameState(1, random, false);
+        GameState.PlayerState ai = state.getPlayerState(1);
+        GameState.PlayerState eliminated = state.getPlayerState(2);
+        setEnemyPriorities(ai, 2, 3);
+        ai.religion = 12;
+        eliminated.alive = false;
+        eliminated.religion = 20;
+        setDiplomacyCooldown(eliminated, 0, 2);
+        for (int playerId : new int[]{0, 3, 4}) {
+            state.getPlayerState(playerId).religion = 0;
+        }
+        random.script(0, 5);
+        completeTurnWithResourcesAndMedia(state);
+
+        assertNotEquals("the dead primary enemy should be reassigned during upkeep",
+                2, ai.getPrimaryEnemyId());
+        assertEquals("the target-selection draw precedes AI religion decay", 2,
+                ai.religion);
+        assertEquals("eliminated nations are absent from source turn upkeep", 20,
+                eliminated.religion);
+        assertEquals("dead-player offer cooldowns do not tick", 2,
+                eliminated.getDiplomacyOfferedLastTurn(0));
+    }
+
+    @Test
+    public void targetEliminatedDuringResultPassIsRetargetedOnNextUpkeep() {
+        GameState state = new GameState(1, 54L, false);
+        GameState.PlayerState ai = state.getPlayerState(1);
+        GameState.PlayerState target = state.getPlayerState(2);
+        setEnemyPriorities(ai, 2, 3);
+        for (int cityIndex = 0; cityIndex < target.getCities().size(); cityIndex++) {
+            target.getCity(cityIndex).populationMillions = 0;
+        }
+
+        completeTurnWithResourcesAndMedia(state);
+
+        assertFalse(target.alive);
+        assertEquals("source upkeep retargets before this turn's elimination is applied",
+                2, ai.getPrimaryEnemyId());
+
+        completeTurnWithResourcesAndMedia(state);
+
+        assertNotEquals("the eliminated target is reassigned at the next source upkeep",
+                2, ai.getPrimaryEnemyId());
+    }
+
+    @Test
     public void acceptedAiOfferSettlesAfterTheRecipientPlansItsTurn() {
         GameSetup setup = new GameSetup();
         assertTrue(setup.toggleOpponent(3));
@@ -2289,6 +2468,56 @@ public final class GameStateTest {
         state.confirmTurn();
     }
 
+    private static GameState stateBeforeAiPlanning(PlanningSnapshotRandom random) {
+        GameState state = new GameState(1, random);
+        for (GameState.PlayerState player : state.getPlayers()) {
+            player.religion = 0;
+        }
+        GameState.PlayerState ai = state.getPlayerState(1);
+        ai.spyReadiness = 0;
+        assertTrue(state.submitDiplomacyProposal(ai.id, 0, 0));
+        setRegard(ai, 0, 20);
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.MASS_MEDIA);
+        assertTrue(state.acceptSelectedAction());
+        return state;
+    }
+
+    private static final class PlanningSnapshotRandom extends Random {
+        private GameState state;
+        private int targetDraw;
+        private int drawCount;
+        private boolean captured;
+        private int spyReadinessAtPlanning;
+        private int diplomacyCooldownAtPlanning;
+        private double regardAtPlanning;
+        private int religionAtPlanning;
+
+        void captureOnDraw(GameState state, int targetDraw) {
+            this.state = state;
+            this.targetDraw = targetDraw;
+            this.drawCount = 0;
+        }
+
+        @Override
+        public int nextInt(int bound) {
+            if (bound <= 0) {
+                throw new IllegalArgumentException("bound must be positive");
+            }
+            drawCount++;
+            if (!captured && drawCount == targetDraw) {
+                GameState.PlayerState ai = state.getPlayerState(1);
+                spyReadinessAtPlanning = ai.spyReadiness;
+                diplomacyCooldownAtPlanning = ai.getDiplomacyOfferedLastTurn(0);
+                regardAtPlanning = ai.getRegardTowardExact(0);
+                religionAtPlanning = ai.religion;
+                captured = true;
+            }
+            return 0;
+        }
+    }
+
     private static void setRegard(GameState.PlayerState player, int opponentId, int value) {
         setRegard(player, opponentId, (double) value);
     }
@@ -2309,6 +2538,34 @@ public final class GameStateTest {
         try {
             java.lang.reflect.Field field = GameState.PlayerState.class
                     .getDeclaredField("ceasefireTurns");
+            field.setAccessible(true);
+            ((int[]) field.get(player))[opponentId] = turns;
+        } catch (ReflectiveOperationException exception) {
+            throw new AssertionError(exception);
+        }
+    }
+
+    private static void setEnemyPriorities(GameState.PlayerState player, int primary,
+                                           int secondary) {
+        try {
+            java.lang.reflect.Field primaryField = GameState.PlayerState.class
+                    .getDeclaredField("primaryEnemyId");
+            java.lang.reflect.Field secondaryField = GameState.PlayerState.class
+                    .getDeclaredField("secondaryEnemyId");
+            primaryField.setAccessible(true);
+            secondaryField.setAccessible(true);
+            primaryField.setInt(player, primary);
+            secondaryField.setInt(player, secondary);
+        } catch (ReflectiveOperationException exception) {
+            throw new AssertionError(exception);
+        }
+    }
+
+    private static void setDiplomacyCooldown(GameState.PlayerState player, int opponentId,
+                                              int turns) {
+        try {
+            java.lang.reflect.Field field = GameState.PlayerState.class
+                    .getDeclaredField("diplomacyOfferedLastTurn");
             field.setAccessible(true);
             ((int[]) field.get(player))[opponentId] = turns;
         } catch (ReflectiveOperationException exception) {
@@ -2685,6 +2942,27 @@ public final class GameStateTest {
                 throw new AssertionError("scripted random value outside bound");
             }
             return value;
+        }
+    }
+
+    private static final class TurnUpkeepSequenceRandom extends Random {
+        private int[] values = new int[0];
+        private int drawCount;
+
+        void script(int... values) {
+            this.values = values.clone();
+            drawCount = 0;
+        }
+
+        @Override
+        public int nextInt(int bound) {
+            if (bound <= 0) {
+                throw new IllegalArgumentException("bound must be positive");
+            }
+            if (drawCount >= values.length) {
+                return 0;
+            }
+            return Math.floorMod(values[drawCount++], bound);
         }
     }
 

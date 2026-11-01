@@ -50,10 +50,23 @@ public final class OriginalUiAssetManifestTest {
     }
 
     @Test
+    public void productionMenuArtworkUsesTheOriginalAspectRatioAtTwoTimesResolution()
+            throws IOException {
+        Path uiAssets = findUiAssets();
+        int[] production = pngSize(uiAssets.resolve("production-modal.png"));
+
+        assertEquals(730, production[0]);
+        assertEquals(550, production[1]);
+        assertEquals(365f / 275f, (float) production[0] / production[1], 0.001f);
+        assertTrue(Files.isRegularFile(uiAssets.resolve("production-modal.png")));
+    }
+
+    @Test
     public void standaloneTexturesAndAtlasPageRequiredByLoaderArePackaged() throws IOException {
         Path uiAssets = findUiAssets();
         for (String texture : new String[]{
-                "ui.png", "metal-panel.png", "logo-mark.png", "battle-map-hd.png"}) {
+                "ui.png", "metal-panel.png", "logo-mark.png", "battle-map-hd.png",
+                "production-modal.png"}) {
             assertTrue("Missing UI texture " + texture,
                     Files.isRegularFile(uiAssets.resolve(texture)));
         }

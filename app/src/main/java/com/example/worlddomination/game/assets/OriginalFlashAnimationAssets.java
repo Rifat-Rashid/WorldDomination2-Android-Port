@@ -47,12 +47,15 @@ public final class OriginalFlashAnimationAssets implements Disposable {
     /** Root Flash timeline containing both action-building clips for each nation. */
     public static final int ACTION_BUILDINGS_SYMBOL_ID = 5658;
     public static final String ACTION_BUILDINGS_TIMELINE = "actionBuildings";
+    /** White source triangle used by each production investment slider. */
+    public static final int PRODUCTION_SLIDER_HANDLE_SHAPE_ID = 3274;
 
     private static final String SCENE_PATH = "original/runtime/scene.json.gz";
     private static final String SHAPE_PATH = "original/runtime/shapes/";
     private static final String WEBP_PREFIX = "data:image/webp;base64,";
     private static final String[] REQUIRED_LINKAGES = {
             "faces",
+            "interface_center_slider_1",
             "buildings_antiAir",
             "bioCloud",
             "explosion_warhead_1", "explosion_warhead_2", "explosion_warhead_3",
@@ -200,6 +203,8 @@ public final class OriginalFlashAnimationAssets implements Disposable {
                     loadedTimelines.get("plane002_shadow")));
             loadedNestedTimelines.putAll(loadNestedTimelines(scene,
                     loadedTimelines.get(ACTION_BUILDINGS_TIMELINE)));
+            loadedNestedTimelines.putAll(loadNestedTimelines(scene,
+                    loadedTimelines.get("interface_center_slider_1")));
             synchronized (loadLock) {
                 if (disposed) {
                     return;

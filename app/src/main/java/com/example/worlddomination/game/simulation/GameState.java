@@ -188,6 +188,9 @@ public final class GameState {
         private final int[] ceasefireTurns = new int[5];
         private final int[] diplomacyOfferedLastTurn = new int[5];
         private final DiplomacyProposal[] pendingDiplomacy = new DiplomacyProposal[5];
+        // The Flash source uses diplomacyPendingArr in append order; accepted
+        // demands spend the receiver's turn budget in that same order.
+        private final List<DiplomacyProposal> pendingDiplomacyOrder = new ArrayList<>();
         private final List<CityState> cities = new ArrayList<>(5);
         private final List<Action> lastTurnActions = new ArrayList<>(2);
         private final Set<String> inventedTechnologies = new LinkedHashSet<>();
@@ -630,6 +633,11 @@ public final class GameState {
         this(difficulty, random, true, null);
     }
 
+    /** Package-private quiet-opponent mode for source upkeep/RNG regression tests. */
+    GameState(int difficulty, Random random, boolean opponentTurnsEnabled) {
+        this(difficulty, random, opponentTurnsEnabled, null);
+    }
+
     private GameState(int difficulty, Random random, boolean opponentTurnsEnabled,
                       GameSetup setup) {
         if (difficulty < 0 || difficulty > 2) {
@@ -746,17 +754,15 @@ public final class GameState {
         return random.nextInt(candidates.size());
     }
 
-    private void reassignDeadAiEnemies() {
-        for (PlayerState player : players) {
-            if (player.human || !player.alive) {
-                continue;
-            }
-            if (player.primaryEnemyId >= 0 && !players[player.primaryEnemyId].alive) {
-                player.primaryEnemyId = chooseRandomEnemy(player, player.secondaryEnemyId);
-            }
-            if (player.secondaryEnemyId >= 0 && !players[player.secondaryEnemyId].alive) {
-                player.secondaryEnemyId = chooseRandomEnemy(player, player.primaryEnemyId);
-            }
+    private void reassignDeadAiEnemies(PlayerState player) {
+        if (player.human || !player.alive) {
+            return;
+        }
+        if (player.primaryEnemyId >= 0 && !players[player.primaryEnemyId].alive) {
+            player.primaryEnemyId = chooseRandomEnemy(player, player.secondaryEnemyId);
+        }
+        if (player.secondaryEnemyId >= 0 && !players[player.secondaryEnemyId].alive) {
+            player.secondaryEnemyId = chooseRandomEnemy(player, player.primaryEnemyId);
         }
     }
 
@@ -1316,9 +1322,8 @@ public final class GameState {
     }
 
     public DiplomacyProposal getPendingHumanDiplomacyProposal() {
-        for (int proposerId = 1; proposerId < players.length; proposerId++) {
-            DiplomacyProposal proposal = players[0].pendingDiplomacy[proposerId];
-            if (proposal != null) {
+        for (DiplomacyProposal proposal : players[0].pendingDiplomacyOrder) {
+            if (proposal != null && proposal.proposerId > 0) {
                 return proposal;
             }
         }
@@ -1359,8 +1364,9 @@ public final class GameState {
         if (offer) {
             proposer.moneyMillions -= amount;
         }
-        target.pendingDiplomacy[proposerPlayerId] =
-                new DiplomacyProposal(proposerPlayerId, optionIndex);
+        DiplomacyProposal proposal = new DiplomacyProposal(proposerPlayerId, optionIndex);
+        target.pendingDiplomacy[proposerPlayerId] = proposal;
+        target.pendingDiplomacyOrder.add(proposal);
         proposer.diplomacyOfferedLastTurn[targetPlayerId] = 2;
         applyDiplomacySentRegard(proposer, target, optionIndex);
         return true;
@@ -2182,9 +2188,6 @@ public final class GameState {
             player.lastTurnActions.clear();
             player.lastAttackedByCasualties = 0;
         }
-        tickDiplomacyOfferCooldowns();
-        decayReligion();
-        advanceSpyReadiness();
         initializeAiTurnMoney();
         List<AiDiplomacyResponse> diplomacyResponses = resolvePendingAiDiplomacy();
         List<ActionOrder> turnOrders = new ArrayList<>(players.length * MAX_TURN_ACTIONS);
@@ -2206,7 +2209,9 @@ public final class GameState {
             }
         }
         assignActionBuildingSlots(turnOrders);
-        applySpecialAiIncome();
+        // Model.doTurn plans every AI action before Sub_presenter.turnResults
+        // advances readiness, relations, religion, and offer cooldowns.
+        updateTurnUpkeep();
         for (AiDiplomacyResponse response : diplomacyResponses) {
             resolveDiplomacyResponse(response.target, response.proposal,
                     response.accepted, false);
@@ -2274,7 +2279,6 @@ public final class GameState {
             player.religion = Math.min(100, Math.max(0, player.religion));
             player.turnMoneyMillions = player.moneyMillions;
         }
-        updateDiplomacyRelations();
         tickCeasefires();
         refreshMatchStatus();
         for (PlayerState player : players) {
@@ -2282,7 +2286,6 @@ public final class GameState {
             // all turn results have been applied. Keep the attacker itself.
             player.lastAttackedByCasualties = 0;
         }
-        reassignDeadAiEnemies();
         collectActionBuildingEvents(turnOrders);
         turn++;
         getHuman().turnMoneyMillions = getHuman().moneyMillions;
@@ -2320,13 +2323,15 @@ public final class GameState {
 
     /** Applies the source special-leader income after all opponent plans are chosen. */
     void applySpecialAiIncome() {
-        if (!opponentTurnsEnabled) {
-            return;
-        }
         for (PlayerState player : players) {
-            if (!player.human && player.alive && player.specialPerson) {
-                player.moneyMillions += 3;
-            }
+            applySpecialAiIncome(player);
+        }
+    }
+
+    private void applySpecialAiIncome(PlayerState player) {
+        if (opponentTurnsEnabled && player.alive && !player.human
+                && player.specialPerson) {
+            player.moneyMillions += 3;
         }
     }
 
@@ -2337,9 +2342,14 @@ public final class GameState {
             if (!target.alive) {
                 continue;
             }
-            for (int proposerId = 0; proposerId < players.length; proposerId++) {
-                DiplomacyProposal proposal = target.pendingDiplomacy[proposerId];
-                if (proposal != null) {
+            // A fixed proposer-id scan changes which demands fit the recipient's
+            // remaining turn money when several proposals arrive together.
+            List<DiplomacyProposal> pendingInArrivalOrder =
+                    new ArrayList<>(target.pendingDiplomacyOrder);
+            target.pendingDiplomacyOrder.clear();
+            for (DiplomacyProposal proposal : pendingInArrivalOrder) {
+                int proposerId = proposal.proposerId;
+                if (target.pendingDiplomacy[proposerId] == proposal) {
                     boolean accept = shouldAiAccept(target, proposal);
                     if (accept && proposal.optionIndex >= 3) {
                         target.turnMoneyMillions -= DIPLOMACY_AMOUNT[proposal.optionIndex];
@@ -2421,6 +2431,7 @@ public final class GameState {
             accepted = false;
         }
         target.pendingDiplomacy[proposerId] = null;
+        target.pendingDiplomacyOrder.remove(proposal);
         if (accepted) {
             target.regardToward[proposerId] += DIPLOMACY_BONUS;
             proposer.regardToward[target.id] += DIPLOMACY_BONUS;
@@ -2475,6 +2486,14 @@ public final class GameState {
 
     void applyBattleHostilityEffects(PlayerState attacker, PlayerState defender,
                                      int casualties) {
+        // Model.calcBattle applies this fixed AI hostility penalty before
+        // Presenter.turnResults adjusts regard by the casualty count.
+        if (!attacker.human && attacker.regardToward[defender.id] > 0) {
+            attacker.regardToward[defender.id] -= 8;
+        }
+        if (!defender.human && defender.regardToward[attacker.id] > 0) {
+            defender.regardToward[attacker.id] -= 8;
+        }
         attacker.regardToward[defender.id] -= casualties;
         defender.regardToward[attacker.id] -= casualties;
 
@@ -2518,41 +2537,49 @@ public final class GameState {
         }
     }
 
-    private void updateDiplomacyRelations() {
+    /** Applies source upkeep in active-player order after AI planning. */
+    private void updateTurnUpkeep() {
         for (PlayerState player : players) {
             if (!player.alive) {
                 continue;
             }
-            for (int otherId = 0; otherId < players.length; otherId++) {
-                double regard = player.regardToward[otherId];
-                if (player.ceasefireTurns[otherId] > 0) {
-                    regard += 2;
-                }
-                if (regard < 100) {
-                    regard += difficulty == 0 ? 3 : difficulty == 1 ? 2 : 1;
-                }
-                if (regard < 50) {
-                    regard += difficulty == 0 ? 2 : 1;
-                }
-                if (regard < 30) {
-                    regard++;
-                }
-                player.regardToward[otherId] = Math.min(100, regard);
+            advanceSpyReadiness(player);
+            updateDiplomacyRelations(player);
+            reassignDeadAiEnemies(player);
+            decayReligion(player);
+            applySpecialAiIncome(player);
+            tickDiplomacyOfferCooldowns(player);
+        }
+    }
+
+    private void updateDiplomacyRelations(PlayerState player) {
+        for (int otherId = 0; otherId < players.length; otherId++) {
+            double regard = player.regardToward[otherId];
+            if (player.ceasefireTurns[otherId] > 0) {
+                regard += 2;
             }
-            if (!player.human) {
-                for (int otherId = 1; otherId < players.length; otherId++) {
-                    player.regardToward[otherId] += difficulty;
-                }
+            if (regard < 100) {
+                regard += difficulty == 0 ? 3 : difficulty == 1 ? 2 : 1;
+            }
+            if (regard < 50) {
+                regard += difficulty == 0 ? 2 : 1;
+            }
+            if (regard < 30) {
+                regard++;
+            }
+            player.regardToward[otherId] = Math.min(100, regard);
+        }
+        if (!player.human) {
+            for (int otherId = 1; otherId < players.length; otherId++) {
+                player.regardToward[otherId] += difficulty;
             }
         }
     }
 
-    private void tickDiplomacyOfferCooldowns() {
-        for (PlayerState player : players) {
-            for (int otherId = 0; otherId < players.length; otherId++) {
-                if (player.diplomacyOfferedLastTurn[otherId] > 0) {
-                    player.diplomacyOfferedLastTurn[otherId]--;
-                }
+    private void tickDiplomacyOfferCooldowns(PlayerState player) {
+        for (int otherId = 0; otherId < players.length; otherId++) {
+            if (player.diplomacyOfferedLastTurn[otherId] > 0) {
+                player.diplomacyOfferedLastTurn[otherId]--;
             }
         }
     }
@@ -2567,11 +2594,9 @@ public final class GameState {
         }
     }
 
-    private void decayReligion() {
-        for (PlayerState player : players) {
-            if (player.religion > 11) {
-                player.religion -= 5 + random.nextInt(6);
-            }
+    private void decayReligion(PlayerState player) {
+        if (player.religion > 11) {
+            player.religion -= 5 + random.nextInt(6);
         }
     }
 
@@ -3317,12 +3342,8 @@ public final class GameState {
         }
     }
 
-    private void advanceSpyReadiness() {
-        for (PlayerState player : players) {
-            if (player.alive) {
-                player.spyReadiness = Math.min(100, player.spyReadiness + 25);
-            }
-        }
+    private void advanceSpyReadiness(PlayerState player) {
+        player.spyReadiness = Math.min(100, player.spyReadiness + 25);
     }
 
     private static boolean canUseSpy(PlayerState player, WeaponState weapon) {

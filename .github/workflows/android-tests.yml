@@ -36,6 +36,12 @@ jobs:
           - id: ai-special-income-order-tests
             check: AI special income turn ordering
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.specialLeaderIncomeIsAddedAfterAiPlanningBudgetSnapshot"'
+          - id: ai-turn-upkeep-order-tests
+            check: AI source turn-upkeep planning order
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.aiPlanningReadsSpyReadinessCooldownAndRegardBeforeTurnResultUpkeep" --tests "com.example.worlddomination.game.simulation.GameStateTest.aiPlanningUsesReligionBeforeTurnResultDecay"'
+          - id: ai-per-player-upkeep-tests
+            check: AI per-player upkeep RNG and target timing
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.upkeepRetargetsBeforeReligionDrawAndSkipsEliminatedPlayers" --tests "com.example.worlddomination.game.simulation.GameStateTest.targetEliminatedDuringResultPassIsRetargetedOnNextUpkeep"'
           - id: source-city-population-tests
             check: Source starting city population tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.startingCityAllocationUsesFractionalQuarterAndConsumesFiveDraws" --tests "com.example.worlddomination.game.simulation.GameStateTest.inactivePlayerSlotsDoNotConsumeStartingCityPopulationDraws" --tests "com.example.worlddomination.game.simulation.GameStateTest.selectedOpponentSetupDistributesPopulationAcrossItsFiveCities"'
@@ -93,6 +99,15 @@ jobs:
           - id: production-budget-tests
             check: Production budget and stock tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.productionReservesBudgetAndTurnsItIntoWeaponStock" --tests "com.example.worlddomination.game.simulation.GameStateTest.productionRejectsLockedTechnologyGroupAndKeepsExistingSelection" --tests "com.example.worlddomination.game.simulation.GameStateTest.productionCanSplitOneHundredPercentAcrossMultipleCategories" --tests "com.example.worlddomination.game.simulation.GameStateTest.productionAllocationCannotExceedSharedHundredPercentLimit" --tests "com.example.worlddomination.game.simulation.GameStateTest.productionReservationRoundsCombinedShareAndRefundsOnRemoval" --tests "com.example.worlddomination.game.simulation.GameStateTest.productionActionReservesAndResolvesEveryAllocatedCategory" --tests "com.example.worlddomination.game.simulation.GameStateTest.researchThenProductionUsesUnlockedUnitAndSourceCostOrder"'
+          - id: production-screen-layout-tests
+            check: Original production slider layout and touch mapping
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.ProductionScreenLayoutTest"'
+          - id: production-source-handle-drag-tests
+            check: Original production handle drag behavior
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.ProductionScreenLayoutTest.draggingFromTheHandlePreservesTheSourceGrabOffset"'
+          - id: production-source-art-tests
+            check: Original production window and slider artwork
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.OriginalUiAssetManifestTest.productionMenuArtworkUsesItsOriginalDesktopAspectRatio" --tests "com.example.worlddomination.game.assets.OriginalFlashAnimationAssetsTest.productionSliderUsesTheOriginalFlashHandleArtwork"'
           - id: ai-production-zero-category-tests
             check: AI production category-zero source parity
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.OpponentAITest.sourceEmptyCategoryZeroCanConsumeTheOnlyProductionSlot"'
@@ -111,15 +126,30 @@ jobs:
           - id: diplomacy-relations-tests
             check: Diplomacy and relations tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.diplomacyOptionsMatchReferenceTableAndReserveOfferFunds" --tests "com.example.worlddomination.game.simulation.GameStateTest.diplomacyOfferIsResolvedByAiAndCreatesTimedSymmetricCeasefire" --tests "com.example.worlddomination.game.simulation.GameStateTest.diplomacyRegardDriftAddsDifficultyBonusOnlyToAiRivalRelations" --tests "com.example.worlddomination.game.simulation.GameStateTest.diplomacyDriftSkipsDeadActorsButUpdatesRelationsTowardThem" --tests "com.example.worlddomination.game.simulation.GameStateTest.rejectedDiplomacyOfferRefundsItsFullCost" --tests "com.example.worlddomination.game.simulation.GameStateTest.diplomacyDemandUsesAiAcceptanceRulesAndTransfersMoney" --tests "com.example.worlddomination.game.simulation.GameStateTest.humanCanRespondToAiOfferAndDemandProposals" --tests "com.example.worlddomination.game.simulation.GameStateTest.diplomacyProposalCooldownBelongsToProposerAndTicksAtTurnStart" --tests "com.example.worlddomination.game.simulation.GameStateTest.acceptedAiOfferSettlesAfterTheRecipientPlansItsTurn"'
+          - id: diplomacy-proposal-order-tests
+            check: Diplomacy proposal arrival order
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.incomingAiDemandsSpendTheRecipientBudgetInProposalArrivalOrder" --tests "com.example.worlddomination.game.simulation.GameStateTest.humanDiplomacyQueuePresentsProposalsInArrivalOrder"'
           - id: ai-tests
             check: Opponent AI tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.*"'
           - id: ai-research-turn-cap-tests
             check: AI research turn cap parity
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.OpponentAITest.researchTurnBonusStopsGrowingAtTheSourceSixtyTurnCap"'
+          - id: ai-personality-source-tests
+            check: AI special and suicide personality scoring parity
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.OpponentAITest.specialAndSuicideAttackScoresUseTheirStrictSourceStockThresholds" --tests "com.example.worlddomination.game.ai.OpponentAITest.specialLeaderResourceScoreAddsTheTwoSourceStockShortfallBonuses" --tests "com.example.worlddomination.game.ai.OpponentAITest.specialLeaderDivertsProductionAndLaterResearchAtSourceTechBoundaries" --tests "com.example.worlddomination.game.ai.OpponentAITest.suicideLeaderAddsPositiveProductionToResearchWithoutRemovingProduction"'
+          - id: ai-carrier-eligibility-tests
+            check: AI source carrier payload level eligibility
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.OpponentAITest.attackAvailabilityRespectsLevelThreeShipAndSubmarinePayloadCap"'
+          - id: ai-battle-hostility-tests
+            check: AI battle hostility penalty parity
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.aiBattleParticipantsReceiveSourceHostilityPenaltyBeforeCasualtyLoss" --tests "com.example.worlddomination.game.simulation.GameStateTest.humanBattleParticipantDoesNotReceiveAiHostilityPenalty" --tests "com.example.worlddomination.game.simulation.GameStateTest.aiHostilityPenaltyRequiresPositiveRegardBeforeCasualtyLoss"'
           - id: ai-diplomacy-target-score-tests
             check: AI diplomacy source score selection
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.OpponentAITest.diplomacyTargetScoreUsesStrictGreaterAndKeepsFirstRivalOnTies"'
+          - id: ai-diplomacy-personality-tests
+            check: AI diplomacy personality parity
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.OpponentAITest.diplomacyPlanningDoesNotBranchOnAiPersonality"'
           - id: ai-diplomacy-cooldown-tests
             check: AI diplomacy cooldown RNG parity
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.OpponentAITest.diplomacyCooldownTargetsDoNotConsumeRandomCandidateDraws"'
@@ -243,6 +273,9 @@ jobs:
           - id: match-outcome-tests
             check: Match outcome sequence tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.MatchOutcomeSequenceTest" --tests "com.example.worlddomination.game.ui.MatchOutcomePresentationTest"'
+          - id: personal-best-outcome-display-tests
+            check: Personal best outcome display
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.MatchOutcomePresentationTest.personalBestUsesTheSamePeriodGroupedScoreFormat"'
           - id: outcome-render-demand-tests
             check: Outcome animation render demand
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.MatchOutcomeSequenceTest.outcomeActivityEndsOnlyAfterTheScoreSequenceCompletes"'

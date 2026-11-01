@@ -296,6 +296,41 @@ public final class OpponentAITest {
     }
 
     @Test
+    public void diplomacyPlanningDoesNotBranchOnAiPersonality() throws Exception {
+        GameState state = findAiWithNeutralHumanRegard();
+        GameState.PlayerState actor = aiWithNeutralHumanRegard(state);
+        actor.populationMillions = 100;
+        actor.moneyMillions = 100;
+        actor.turnMoneyMillions = 100;
+        state.getHuman().populationMillions = 200;
+        state.getHuman().moneyMillions = 100;
+        setRegardToward(actor, state.getHuman().id, 51);
+
+        SequenceRandom baselineRandom = new SequenceRandom(0, 1, 2, 3);
+        OpponentAI.Decision baseline = OpponentAI.planDiplomacy(state, actor,
+                baselineRandom);
+
+        assertNotNull(baseline);
+        assertEquals(GameState.Action.DIPLOMACY, baseline.action);
+        for (boolean[] personality : new boolean[][]{
+                {true, false}, {false, true}, {true, true}
+        }) {
+            setPersonality(actor, personality[0], personality[1]);
+            SequenceRandom personalityRandom = new SequenceRandom(0, 1, 2, 3);
+
+            OpponentAI.Decision decision = OpponentAI.planDiplomacy(state, actor,
+                    personalityRandom);
+
+            assertNotNull(decision);
+            assertEquals("the source diplomacy branch ignores leader personality",
+                    baseline.targetPlayerId, decision.targetPlayerId);
+            assertEquals(baseline.diplomacyOption, decision.diplomacyOption);
+            assertEquals("personality flags do not change source candidate RNG draws",
+                    baselineRandom.getDrawCount(), personalityRandom.getDrawCount());
+        }
+    }
+
+    @Test
     public void diplomacyTargetScoreUsesStrictGreaterAndKeepsFirstRivalOnTies() {
         GameState state = findAiWithNeutralHumanRegard();
         GameState.PlayerState actor = aiWithNeutralHumanRegard(state);
@@ -635,6 +670,42 @@ public final class OpponentAITest {
     }
 
     @Test
+    public void attackAvailabilityRespectsLevelThreeShipAndSubmarinePayloadCap() {
+        GameState state = new GameState(1, 9173L);
+        GameState.PlayerState actor = state.getPlayerState(1);
+        clearWeaponStock(actor);
+
+        GameState.WeaponState warhead4 = actor.getWeapons().get("warhead4");
+        warhead4.active = true;
+        warhead4.inStock = 1;
+        actor.getWeapons().get("ship").inStock = 1;
+        actor.getWeapons().get("sub").inStock = 1;
+
+        assertFalse("level-three special carriers cannot carry level-four payloads",
+                OpponentAI.hasAvailableAttackForScoring(state, actor));
+
+        actor.getWeapons().get("ship").inStock = 0;
+        actor.getWeapons().get("sub").inStock = 0;
+        actor.getWeapons().get("plane2").inStock = 1;
+        assertTrue("a level-four plane carrier can carry the level-four payload",
+                OpponentAI.hasAvailableAttackForScoring(state, actor));
+
+        actor.getWeapons().get("plane2").inStock = 0;
+        actor.getWeapons().get("rocket4").inStock = 1;
+        assertTrue("the matching level-four rocket carrier can carry it",
+                OpponentAI.hasAvailableAttackForScoring(state, actor));
+
+        actor.getWeapons().get("rocket4").inStock = 0;
+        warhead4.inStock = 0;
+        GameState.WeaponState warhead3 = actor.getWeapons().get("warhead3");
+        warhead3.active = true;
+        warhead3.inStock = 1;
+        actor.getWeapons().get("ship").inStock = 1;
+        assertTrue("a ship can carry a stocked level-three payload",
+                OpponentAI.hasAvailableAttackForScoring(state, actor));
+    }
+
+    @Test
     public void stockLevelCountsResearchedWeaponsThatAreTemporarilyInactive()
             throws Exception {
         GameState state = new GameState(1, 922L);
@@ -783,6 +854,120 @@ public final class OpponentAITest {
 
         assertEquals(-999.0, OpponentAI.scoreForAction(state, actor,
                 new Random(919L), GameState.Action.ATTACK), 0.0);
+    }
+
+    @Test
+    public void specialAndSuicideAttackScoresUseTheirStrictSourceStockThresholds()
+            throws Exception {
+        GameState specialState = gameWithRegularFirstOpponent(9200L);
+        GameState.PlayerState special = specialState.getPlayerState(1);
+        clearWeaponStock(special);
+        special.getWeapons().get("soldier1").active = true;
+        special.getWeapons().get("soldier1").inStock = 1;
+        special.getWeapons().get("warhead3").inStock = 2;
+        setPersonality(special, true, false);
+
+        assertEquals(-999.0, score(specialState, special, GameState.Action.ATTACK), 0.0);
+        special.getWeapons().get("warhead3").inStock = 3;
+        assertEquals(OpponentAI.baseAttackScore(specialState, special),
+                score(specialState, special, GameState.Action.ATTACK), 0.0);
+
+        GameState suicideState = gameWithRegularFirstOpponent(9700L);
+        GameState.PlayerState suicide = suicideState.getPlayerState(1);
+        clearWeaponStock(suicide);
+        suicide.getWeapons().get("soldier4").active = true;
+        suicide.getWeapons().get("soldier4").inStock = 1;
+        setPersonality(suicide, false, true);
+
+        assertEquals(-999.0, score(suicideState, suicide, GameState.Action.ATTACK), 0.0);
+        suicide.getWeapons().get("soldier4").inStock = 2;
+        assertEquals(OpponentAI.baseAttackScore(suicideState, suicide),
+                score(suicideState, suicide, GameState.Action.ATTACK), 0.0);
+    }
+
+    @Test
+    public void specialLeaderResourceScoreAddsTheTwoSourceStockShortfallBonuses()
+            throws Exception {
+        GameState state = gameWithRegularFirstOpponent(10200L);
+        GameState.PlayerState actor = state.getPlayerState(1);
+        actor.moneyMillions = 100;
+        clearWeaponStock(actor);
+        double regularScore = score(state, actor, GameState.Action.RESOURCES);
+
+        setPersonality(actor, true, false);
+        actor.getWeapons().get("ship").inStock = 0;
+        actor.getWeapons().get("warhead3").inStock = 2;
+        assertEquals(500.0,
+                score(state, actor, GameState.Action.RESOURCES) - regularScore, 0.0);
+
+        actor.getWeapons().get("ship").inStock = 1;
+        actor.getWeapons().get("warhead3").inStock = 3;
+        assertEquals(regularScore,
+                score(state, actor, GameState.Action.RESOURCES), 0.0);
+    }
+
+    @Test
+    public void specialLeaderDivertsProductionAndLaterResearchAtSourceTechBoundaries()
+            throws Exception {
+        GameState state = gameWithRegularFirstOpponent(10700L);
+        GameState.PlayerState actor = state.getPlayerState(1);
+        actor.moneyMillions = 1_000;
+        clearWeaponStock(actor);
+        actor.getWeapons().get("soldier1").active = true;
+        actor.getWeapons().get("soldier1").inStock = 1;
+        actor.getWeapons().get("warhead3").inStock = 3;
+        actor.getWeapons().get("ship").inStock = 1;
+
+        double regularProduction = score(state, actor, GameState.Action.PRODUCTION);
+        double regularResearch = score(state, actor, GameState.Action.RESEARCH);
+        assertTrue("the fixture must produce a positive source production score",
+                regularProduction > 0.0);
+        assertTrue("the fixture must have a positive source research score",
+                regularResearch > 0.0);
+
+        setPersonality(actor, true, false);
+        assertEquals(-10.0,
+                score(state, actor, GameState.Action.PRODUCTION), 0.0);
+        assertEquals(regularResearch + regularProduction,
+                score(state, actor, GameState.Action.RESEARCH), 0.0);
+
+        setTechnology(actor, "ship", true);
+        setTechnology(actor, "warhead3", true);
+        setPersonality(actor, false, false);
+        double researchedProduction = score(state, actor, GameState.Action.PRODUCTION);
+        double researchedResearch = score(state, actor, GameState.Action.RESEARCH);
+        assertTrue("the source special-tech transfer requires positive research",
+                researchedResearch > 0.0);
+
+        setPersonality(actor, true, false);
+        assertEquals(-100.0, score(state, actor, GameState.Action.RESEARCH), 0.0);
+        assertEquals(researchedProduction + researchedResearch,
+                score(state, actor, GameState.Action.PRODUCTION), 0.0);
+    }
+
+    @Test
+    public void suicideLeaderAddsPositiveProductionToResearchWithoutRemovingProduction()
+            throws Exception {
+        GameState state = gameWithRegularFirstOpponent(11200L);
+        GameState.PlayerState actor = state.getPlayerState(1);
+        actor.moneyMillions = 1_000;
+        clearWeaponStock(actor);
+        actor.getWeapons().get("soldier4").active = true;
+        actor.getWeapons().get("soldier4").inStock = 2;
+
+        double regularProduction = score(state, actor, GameState.Action.PRODUCTION);
+        double regularResearch = score(state, actor, GameState.Action.RESEARCH);
+        assertTrue(regularProduction > 0.0);
+
+        setPersonality(actor, false, true);
+        assertEquals(regularProduction,
+                score(state, actor, GameState.Action.PRODUCTION), 0.0);
+        assertEquals(regularResearch + regularProduction,
+                score(state, actor, GameState.Action.RESEARCH), 0.0);
+
+        setTechnology(actor, "soldier4", true);
+        assertEquals(regularResearch,
+                score(state, actor, GameState.Action.RESEARCH), 0.0);
     }
 
     @Test
@@ -1454,6 +1639,40 @@ public final class OpponentAITest {
             }
         }
         throw new AssertionError("seed sweep should find a regular first opponent");
+    }
+
+    private static void clearWeaponStock(GameState.PlayerState player) {
+        for (GameState.WeaponState weapon : player.getWeapons().values()) {
+            weapon.inStock = 0;
+        }
+    }
+
+    private static double score(GameState state, GameState.PlayerState player,
+                                GameState.Action action) {
+        return OpponentAI.scoreForAction(state, player, new Random(43L), action);
+    }
+
+    private static void setPersonality(GameState.PlayerState player, boolean special,
+                                       boolean suicide) throws Exception {
+        Field specialField = GameState.PlayerState.class.getDeclaredField("specialPerson");
+        Field suicideField = GameState.PlayerState.class.getDeclaredField("suicidePerson");
+        specialField.setAccessible(true);
+        suicideField.setAccessible(true);
+        specialField.setBoolean(player, special);
+        suicideField.setBoolean(player, suicide);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void setTechnology(GameState.PlayerState player, String technology,
+                                      boolean invented) throws Exception {
+        Field field = GameState.PlayerState.class.getDeclaredField("inventedTechnologies");
+        field.setAccessible(true);
+        Set<String> technologies = (Set<String>) field.get(player);
+        if (invented) {
+            technologies.add(technology);
+        } else {
+            technologies.remove(technology);
+        }
     }
 
     private static GameState findAiWithNeutralHumanRegard() {

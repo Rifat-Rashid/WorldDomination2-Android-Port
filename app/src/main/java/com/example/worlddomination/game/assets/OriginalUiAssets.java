@@ -13,6 +13,7 @@ public final class OriginalUiAssets implements Disposable {
     private final TextureAtlas atlas;
     private final Texture logoTexture;
     private final Texture battleMapTexture;
+    private final Texture productionModalTexture;
     public final Texture metalPanel;
     public final TextureRegion[][] buttonPatches = new TextureRegion[3][3];
 
@@ -23,6 +24,7 @@ public final class OriginalUiAssets implements Disposable {
     public final TextureRegion[] navigationIcons = new TextureRegion[5];
     public final TextureRegion battleMap;
     public final TextureRegion resourceModal;
+    public final TextureRegion productionModal;
     public final TextureRegion inventoryCounter;
     public final TextureRegion inventorySwitch;
     public final TextureRegion inventoryRadio;
@@ -42,6 +44,10 @@ public final class OriginalUiAssets implements Disposable {
                 Gdx.files.internal("original/ui/battle-map-hd.png"), true);
         battleMapTexture.setFilter(TextureFilter.Linear, TextureFilter.Linear);
         battleMap = new TextureRegion(battleMapTexture);
+        productionModalTexture = new Texture(
+                Gdx.files.internal("original/ui/production-modal.png"), true);
+        productionModalTexture.setFilter(TextureFilter.Linear, TextureFilter.Linear);
+        productionModal = new TextureRegion(productionModalTexture);
         resourceModal = require("resourceModal");
         inventoryCounter = require("inventoryCounter");
         inventorySwitch = require("inventorySwitch");
@@ -86,6 +92,7 @@ public final class OriginalUiAssets implements Disposable {
         atlas.dispose();
         logoTexture.dispose();
         battleMapTexture.dispose();
+        productionModalTexture.dispose();
         metalPanel.dispose();
     }
 }
