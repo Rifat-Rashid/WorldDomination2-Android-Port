@@ -699,6 +699,7 @@ public final class GameStateTest {
     @Test
     public void researchCompletesAndActivatesTheCorrespondingWeapon() {
         GameState state = new GameState(1, 9L);
+        int startingTechnologyLevel = state.getHuman().getTechnologyLevel();
         state.selectAction(GameState.Action.RESEARCH);
         assertTrue(state.selectResearchTechnology("soldier2"));
         assertTrue(state.acceptSelectedAction());
@@ -708,6 +709,8 @@ public final class GameStateTest {
 
         assertTrue(state.getHuman().hasTechnology("soldier2"));
         assertTrue(state.isWeaponActive(0, "soldier2"));
+        assertEquals("Technology level uses each researched item's source strength weight",
+                startingTechnologyLevel + 3, state.getHuman().getTechnologyLevel());
         assertEquals(55, state.getHuman().moneyMillions);
         assertEquals(55, state.getTurnMoneyMillions());
         assertEquals(1, state.getTurn());
@@ -1018,6 +1021,18 @@ public final class GameStateTest {
         assertTrue(state.configureAttack(1, 0, "soldier1"));
         assertTrue(state.acceptSelectedAction());
         assertEquals(GameState.Action.ATTACK, state.getQueuedAction(0));
+    }
+
+    @Test
+    public void directAttackEquipmentSelectionUpdatesTheActiveWeapon() {
+        GameState state = new GameState(1, 4L);
+        state.selectAction(GameState.Action.ATTACK);
+
+        assertTrue(state.selectAttackWeapon("spy1"));
+        assertEquals("spy1", state.getSelectedAttackWeapon());
+        assertFalse(state.selectAttackWeapon("rocket1"));
+        assertEquals("Unavailable equipment cannot replace the selected weapon",
+                "spy1", state.getSelectedAttackWeapon());
     }
 
     @Test
