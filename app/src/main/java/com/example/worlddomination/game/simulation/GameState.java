@@ -216,6 +216,17 @@ public final class GameState {
             return inventedTechnologies.contains(name);
         }
 
+        /** Source TechTree.techLevel: sum the weights of every invented technology. */
+        public int getTechnologyLevel() {
+            int level = 0;
+            for (TechnologyCatalog.Definition technology : TechnologyCatalog.all()) {
+                if (inventedTechnologies.contains(technology.name)) {
+                    level += technology.strengthWeight;
+                }
+            }
+            return level;
+        }
+
         /** Mirrors TechTree.allow_special from the reference game's unlock rule. */
         public boolean allowsSpecialTechnologies() {
             int unlockedSpecialTechCount = hasTechnology("plane2") ? 1 : 0;
@@ -1384,6 +1395,14 @@ public final class GameState {
 
     public String getSelectedAttackWeapon() {
         return selectedAttackWeapon;
+    }
+
+    /** Selects a stocked soldier or ready spy from the equipment panel. */
+    public boolean selectAttackWeapon(String weaponName) {
+        if (selectedAction != Action.ATTACK) {
+            return false;
+        }
+        return configureAttack(selectedTargetPlayer, selectedTargetCity, weaponName);
     }
 
     public int getSpyReadiness() {
