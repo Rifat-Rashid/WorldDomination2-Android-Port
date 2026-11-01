@@ -133,19 +133,27 @@ public final class OpponentAI {
      */
     public static List<Decision> planTurn(GameState state, Random random) {
         List<GameState.PlayerState> opponents = new ArrayList<>();
-        List<List<ScoredAction>> rankedByOpponent = new ArrayList<>();
+        Map<Integer, List<ScoredAction>> rankedByPlayer = new LinkedHashMap<>();
         for (GameState.PlayerState player : state.getPlayers()) {
-            if (player.human || !player.alive) {
-                continue;
+            if (!player.human && player.alive) {
+                opponents.add(player);
             }
-            opponents.add(player);
-            rankedByOpponent.add(rankedActions(state, player, random));
+        }
+        // Model.doTurn scores with `for-in` over activePlayerArr. The recovered
+        // ActionScript array iterator visits keys from last to first; target
+        // assignment below still runs in player order.
+        GameState.PlayerState[] players = state.getPlayers();
+        for (int playerId = players.length - 1; playerId >= 0; playerId--) {
+            GameState.PlayerState player = players[playerId];
+            if (!player.human && player.alive) {
+                rankedByPlayer.put(player.id, rankedActions(state, player, random));
+            }
         }
 
         List<Decision> decisions = new ArrayList<>(opponents.size() * 2);
-        for (int index = 0; index < opponents.size(); index++) {
-            decisions.addAll(planScoredActions(state, opponents.get(index), random,
-                    rankedByOpponent.get(index)));
+        for (GameState.PlayerState opponent : opponents) {
+            decisions.addAll(planScoredActions(state, opponent, random,
+                    rankedByPlayer.get(opponent.id)));
         }
         return decisions;
     }
@@ -187,17 +195,19 @@ public final class OpponentAI {
         if (attackSlot >= 0) {
             ScoredAction companion = duplicateAttack ? null
                     : scores.size() > 1 ? scores.get(1 - attackSlot) : null;
-            Decision precedingOrder = attackSlot == 1 && companion != null
-                    ? planRankedAction(state, player, companion, random, 1,
-                    plannedWeaponUse) : null;
             List<Decision> attackPlan = planSourceAttack(state, player, random,
                     duplicateAttack, plannedWeaponUse);
             if (!attackPlan.isEmpty()) {
+                boolean preparingCarrier = attackPlan.size() == 1
+                        && attackPlan.get(0).action == GameState.Action.PREPARED_ATTACK
+                        && attackPlan.get(0).prepareCarrier;
                 boolean readySingleAttack = player.getPreparedCarrierName() != null
                         && !"ship".equals(player.getWeapons().get(
                         player.getPreparedCarrierName()).definition.type)
                         && attackPlan.size() == 1;
                 if (attackSlot == 1 && companion != null && readySingleAttack) {
+                    Decision precedingOrder = planRankedAction(state, player, companion,
+                            random, 1, plannedWeaponUse);
                     if (precedingOrder != null) {
                         decisions.add(precedingOrder);
                         reserve(player, precedingOrder);
@@ -208,6 +218,20 @@ public final class OpponentAI {
                     decisions.add(decision);
                     reserve(player, decision);
                     markPlannedUse(decision, plannedWeaponUse);
+                }
+                // A new carrier prep may displace the scored attack's original
+                // slot; the source planner then fills the freed slot from the
+                // remaining ranked actions. Seeded source traces include this
+                // follow-up action after a carrier prep in slot two.
+                if (attackSlot == 1 && companion != null && preparingCarrier) {
+                    Decision secondOrder = planRankedAction(state, player, companion,
+                            random, 2, plannedWeaponUse);
+                    if (secondOrder != null) {
+                        decisions.add(secondOrder);
+                        reserve(player, secondOrder);
+                        markPlannedUse(secondOrder, plannedWeaponUse);
+                    }
+                    return decisions;
                 }
                 // A not-ready attack resets its companion slot in the reference.
                 // A ready carrier's single attack leaves the other scored action intact.
@@ -224,6 +248,9 @@ public final class OpponentAI {
                 return decisions;
             }
             if (attackSlot == 1) {
+                Decision precedingOrder = companion == null ? null
+                        : planRankedAction(state, player, companion, random, 1,
+                        plannedWeaponUse);
                 if (precedingOrder != null) {
                     decisions.add(precedingOrder);
                     reserve(player, precedingOrder);
@@ -717,7 +744,7 @@ public final class OpponentAI {
             if (carrierName != null) {
                 decisions.add(new Decision(attacker.id, GameState.Action.PREPARED_ATTACK,
                         Collections.<String, Integer>emptyMap(),
-                        Collections.<String>emptyList(), 0, -1, -1,
+                        Collections.<String>emptyList(), 0, target.id, -1,
                         carrierName, null, true, -1));
             }
         } else {
@@ -1603,6 +1630,14 @@ public final class OpponentAI {
                 continue;
             }
             activePlayers.add(player);
+        }
+        // getTarget's first hostile-target pass iterates activePlayerArr with
+        // ActionScript for-in, which visits the array from its last key.
+        for (int playerId = players.length - 1; playerId >= 0; playerId--) {
+            GameState.PlayerState player = players[playerId];
+            if (player == null || !player.alive) {
+                continue;
+            }
             if (player.id != actor.id && !actor.hasCeasefireWith(player.id)) {
                 candidates.add(player);
             }

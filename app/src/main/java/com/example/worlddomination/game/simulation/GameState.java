@@ -571,6 +571,11 @@ public final class GameState {
     private static final int[] ENEMY_START_MONEY = {50, 65, 60};
     private static final int[] PLAYER_START_POPULATION = {500, 450, 400};
     private static final int[] ENEMY_START_POPULATION = {450, 450, 450};
+    /** Presenter.set_player_vars human desireArr in WeaponStock.weaponArr order. */
+    private static final int[] HUMAN_DESIRE_PROFILE = {
+            3, 2, 2, 15, 2, 3, 2, 15, 2, 3, 2, 15, 2, 3, 2, 15,
+            1, 2, 2, 2, 1, 15, 0, 2, 15, 15
+    };
     private static final int[] PLAYER_RESOURCE_DIVISOR = {9, 11, 13};
     private static final int[] ENEMY_RESOURCE_DIVISOR = {9, 10, 12};
     private static final int[] PLAYER_RELIGION_ADDITION = {30, 30, 25};
@@ -745,6 +750,7 @@ public final class GameState {
             }
             initializeInventory(player);
         }
+        applyWeaponDesireProfile(players[0], HUMAN_DESIRE_PROFILE);
         for (PlayerState player : players) {
             if (!player.human && player.alive) {
                 initializeAiDesires(player, random);
@@ -756,9 +762,7 @@ public final class GameState {
             initializeHardDifficultyOpponents();
         }
         initializeSpecialPersonRegard();
-        for (PlayerState player : players) {
-            initializeCities(player);
-        }
+        initializeCities();
         addMessage(getHuman(), "Welcome, commander. Select two actions.");
     }
 
@@ -862,7 +866,9 @@ public final class GameState {
     }
 
     private void initializeHardDifficultyOpponents() {
-        for (int playerId = 1; playerId < players.length; playerId++) {
+        // Flash's `for (key in playerArr)` visits array indices in descending
+        // order. Each random regard roll must stay attached to that player.
+        for (int playerId = players.length - 1; playerId >= 1; playerId--) {
             PlayerState opponent = players[playerId];
             if (!opponent.alive) {
                 continue;
@@ -921,19 +927,20 @@ public final class GameState {
         player.desiredStock.put("space", 5);
         player.desiredStock.put("specialLoad", 5);
         if (player.specialPerson) {
-            setPersonalityDesires(player, new int[]{
+            applyWeaponDesireProfile(player, new int[]{
                     0, 0, 0, 0, 1, 1, 15, 0, 0, 0, 0, 0, 0,
                     0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 15, 0, 0
             });
         } else if (player.suicidePerson) {
-            setPersonalityDesires(player, new int[]{
+            applyWeaponDesireProfile(player, new int[]{
                     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
                     1, 1, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
             });
         }
     }
 
-    private static void setPersonalityDesires(PlayerState player, int[] sourceDesires) {
+    /** Copies a source desireArr into each weapon and its related technology. */
+    private static void applyWeaponDesireProfile(PlayerState player, int[] sourceDesires) {
         int index = 0;
         for (WeaponCatalog.Definition definition : WeaponCatalog.all()) {
             if (definition.productionGroup == 8) {
@@ -970,12 +977,17 @@ public final class GameState {
     }
 
     /** The source distributes each active nation's starting population across five cities. */
-    private void initializeCities(PlayerState player) {
-        int[] populations = sourceStartingCityPopulations(player.populationMillions,
-                player.alive, random);
-        for (int cityIndex = 0; cityIndex < 5; cityIndex++) {
-            player.cities.add(new CityState(player.id * 5 + cityIndex,
-                    player.id, cityIndex, populations[cityIndex]));
+    private void initializeCities() {
+        // Presenter.spawn_cities also iterates Model.playerArr with ActionScript
+        // `for-in`, which the recovered runtime exposes in reverse key order.
+        for (int playerId = players.length - 1; playerId >= 0; playerId--) {
+            PlayerState player = players[playerId];
+            int[] populations = sourceStartingCityPopulations(player.populationMillions,
+                    player.alive, random);
+            for (int cityIndex = 0; cityIndex < 5; cityIndex++) {
+                player.cities.add(new CityState(player.id * 5 + cityIndex,
+                        player.id, cityIndex, populations[cityIndex]));
+            }
         }
     }
 
