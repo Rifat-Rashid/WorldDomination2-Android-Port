@@ -18,10 +18,10 @@ public final class FlashBattleUnitRenderer {
     };
     private static final int[][] SATELLITE_LASER_COLORS = buildSatelliteLaserColors();
     private static final int MAX_SATELLITE_CLIP_DEPTH = 8;
-    private static final int MAX_ACTION_BUILDING_CLIP_DEPTH = 16;
+    private static final int MAX_ACTION_BUILDING_CLIP_DEPTH = 8;
     private final FlashAffineTransform[] planeTransformScratch = createPlaneTransformScratch();
-    private final FlashAffineTransform[] spyBuildingTransformScratch =
-            createSpyBuildingTransformScratch();
+    private final FlashAffineTransform[] actionBuildingTransformScratch =
+            createActionBuildingTransformScratch();
     private static final String SUBMARINE_TINT_VERTEX_SHADER =
             "attribute vec4 a_position;\n"
                     + "attribute vec4 a_color;\n"
@@ -73,9 +73,9 @@ public final class FlashBattleUnitRenderer {
         }
     }
 
-    /** Draws source action-building frames during resolved spy mission playback. */
-    public void drawSpyMissionBuildings(SpriteBatch batch, Rectangle mapBounds,
-                                        List<FlashSpyBuildingAnimation> animations) {
+    /** Draws source action-building clips at their two persistent island positions. */
+    public void drawActionBuildings(SpriteBatch batch, Rectangle mapBounds,
+                                    List<FlashActionBuildingAnimation> animations) {
         if (!assets.isLoaded()) {
             return;
         }
@@ -84,36 +84,35 @@ public final class FlashBattleUnitRenderer {
         if (timeline == null) {
             return;
         }
-        for (FlashSpyBuildingAnimation animation : animations) {
-            if (!animation.isStarted() || animation.getAlpha() <= 0f) {
+        for (FlashActionBuildingAnimation animation : animations) {
+            if (animation.getAlpha() <= 0f) {
                 continue;
             }
             FlashAnimationTimeline.Frame frame = timeline.getFrameByLabel(
-                    animation.actionBuildingFrame);
+                    animation.frameName);
             if (frame == null) {
                 frame = timeline.getFrame(0);
             }
             FlashBattleRoutes.Point position = FlashBattleRoutes.actionBuildingPosition(
-                    animation.attackerPlayerId, animation.actionBuildingSlot);
-            spyBuildingTransformScratch[0].setIdentity();
-            drawSpyBuildingFrame(batch, mapBounds, frame, position.x, position.y,
-                    animation.attackerPlayerId, animation.religionCode,
-                    animation.getAlpha(), 0);
+                    animation.playerId, animation.slot);
+            actionBuildingTransformScratch[0].setIdentity();
+            drawActionBuildingFrame(batch, mapBounds, frame, position.x, position.y,
+                    animation.playerId, animation.religionCode, animation.getAlpha(), 0);
         }
         batch.setColor(com.badlogic.gdx.graphics.Color.WHITE);
     }
 
-    private void drawSpyBuildingFrame(SpriteBatch batch, Rectangle mapBounds,
-                                      FlashAnimationTimeline.Frame frame,
-                                      float sourceX, float sourceY, int playerId,
-                                      String religionCode, float parentAlpha, int depth) {
+    private void drawActionBuildingFrame(SpriteBatch batch, Rectangle mapBounds,
+                                         FlashAnimationTimeline.Frame frame,
+                                         float sourceX, float sourceY, int playerId,
+                                         String religionCode, float parentAlpha, int depth) {
         if (frame == null || parentAlpha <= 0f
                 || depth >= MAX_ACTION_BUILDING_CLIP_DEPTH) {
             return;
         }
         float mapScale = BattlefieldCityLayout.sourceScale(mapBounds);
-        FlashAffineTransform parent = spyBuildingTransformScratch[depth];
-        FlashAffineTransform transformed = spyBuildingTransformScratch[depth + 1];
+        FlashAffineTransform parent = actionBuildingTransformScratch[depth];
+        FlashAffineTransform transformed = actionBuildingTransformScratch[depth + 1];
         for (FlashAnimationTimeline.Layer layer : frame.layers) {
             float alpha = parentAlpha * layer.alpha;
             if (alpha <= 0f) {
@@ -144,16 +143,16 @@ public final class FlashBattleUnitRenderer {
             if (nestedFrame == null) {
                 nestedFrame = nested.getFrame(0);
             }
-            drawSpyBuildingFrame(batch, mapBounds, nestedFrame, sourceX, sourceY,
+            drawActionBuildingFrame(batch, mapBounds, nestedFrame, sourceX, sourceY,
                     playerId, religionCode, alpha, depth + 1);
         }
     }
 
-    private static FlashAffineTransform[] createSpyBuildingTransformScratch() {
+    private static FlashAffineTransform[] createActionBuildingTransformScratch() {
         FlashAffineTransform[] transforms = new FlashAffineTransform[
                 MAX_ACTION_BUILDING_CLIP_DEPTH + 1];
-        for (int i = 0; i < transforms.length; i++) {
-            transforms[i] = new FlashAffineTransform();
+        for (int index = 0; index < transforms.length; index++) {
+            transforms[index] = new FlashAffineTransform();
         }
         return transforms;
     }

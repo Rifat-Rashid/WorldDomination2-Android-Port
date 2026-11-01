@@ -82,7 +82,7 @@ public final class GameState {
         }
     }
 
-    /** Resolved spy operations whose Flash action-building clips are shown in battle playback. */
+    /** Resolved spy operations kept for source-specific result presentation. */
     public static final class SpyMissionEvent {
         public final int attackerPlayerId;
         public final int defenderPlayerId;
@@ -98,6 +98,27 @@ public final class GameState {
             this.actionBuildingSlot = actionBuildingSlot;
             this.actionBuildingFrame = actionBuildingFrame;
             this.religionCode = religionCode;
+        }
+    }
+
+    /** Source action-building clip queued for the latest resolved turn. */
+    public static final class ActionBuildingEvent {
+        public final int playerId;
+        public final Action action;
+        public final int slot;
+        public final String frameName;
+        public final String religionCode;
+        public final int sequenceIndex;
+
+        private ActionBuildingEvent(int playerId, Action action, int slot,
+                                    String frameName, String religionCode,
+                                    int sequenceIndex) {
+            this.playerId = playerId;
+            this.action = action;
+            this.slot = slot;
+            this.frameName = frameName;
+            this.religionCode = religionCode;
+            this.sequenceIndex = sequenceIndex;
         }
     }
 
@@ -420,6 +441,7 @@ public final class GameState {
         final List<ShipStrike> shipStrikes;
         int actionBuildingSlot = -1;
         String actionBuildingFrameName;
+        boolean actionBuildingResolved;
 
         ActionOrder(int playerId, Action action,
                     Map<String, Integer> productionBudgets, List<String> technologies,
@@ -589,6 +611,7 @@ public final class GameState {
     private final List<ActionOrder> queuedActions = new ArrayList<>(MAX_TURN_ACTIONS);
     private final List<CombatEvent> lastTurnCombatEvents = new ArrayList<>();
     private final List<SpyMissionEvent> lastTurnSpyMissions = new ArrayList<>();
+    private final List<ActionBuildingEvent> lastTurnActionBuildings = new ArrayList<>();
     private List<String> researchChoicesCache = Collections.emptyList();
     private boolean researchChoicesDirty = true;
     private final Random random;
@@ -2225,9 +2248,14 @@ public final class GameState {
         return Collections.unmodifiableList(lastTurnCombatEvents);
     }
 
-    /** Returns the spy missions from the most recently resolved turn, in source order. */
+    /** Returns resolved spy missions from the latest turn in source order. */
     public List<SpyMissionEvent> getLastTurnSpyMissions() {
         return Collections.unmodifiableList(lastTurnSpyMissions);
+    }
+
+    /** Returns source-ordered original action-building clips for the last turn. */
+    public List<ActionBuildingEvent> getLastTurnActionBuildings() {
+        return Collections.unmodifiableList(lastTurnActionBuildings);
     }
 
     /**
@@ -2252,6 +2280,7 @@ public final class GameState {
         }
         lastTurnCombatEvents.clear();
         lastTurnSpyMissions.clear();
+        lastTurnActionBuildings.clear();
         for (PlayerState player : players) {
             player.lastTurnActions.clear();
             player.lastAttackedByCasualties = 0;
@@ -2352,6 +2381,7 @@ public final class GameState {
             // all turn results have been applied. Keep the attacker itself.
             player.lastAttackedByCasualties = 0;
         }
+        collectActionBuildingEvents(turnOrders);
         turn++;
         getHuman().turnMoneyMillions = getHuman().moneyMillions;
         addMessage(getHuman(), "Turn " + turn + " complete.");
@@ -2753,6 +2783,7 @@ public final class GameState {
         if (spyMission) {
             resolveSpyAttack(attacker, defender, weapon, turnOrders, spyResultMessages);
             weapon.inStock--;
+            order.actionBuildingResolved = true;
             lastTurnSpyMissions.add(new SpyMissionEvent(attacker.id, defender.id,
                     order.actionBuildingSlot,
                     order.actionBuildingFrameName == null
@@ -2784,57 +2815,54 @@ public final class GameState {
         weapon.inStock--;
     }
 
-    /**
-     * Assigns the two native action-building positions using Battle.createToShowABArray's
-     * source order. Direct attacks, prepared launchers, and source defense buildings retain
-     * their slots so Android combat playback uses the correct island position.
-     */
+    /** Assigns source action-building frames and the two per-player Flash positions. */
     private void assignActionBuildingSlots(List<ActionOrder> turnOrders) {
-        @SuppressWarnings("unchecked")
-        Map<String, Integer>[] slotsByPlayer = new Map[players.length];
-        int[] nextSlotByPlayer = new int[players.length];
         for (ActionOrder order : turnOrders) {
             if (order.playerId < 0 || order.playerId >= players.length) {
                 continue;
             }
             WeaponState weapon = playerById(order.playerId).weapons.get(order.weaponName);
-            String frame = sourceActionBuildingFrame(order, weapon);
-            if (frame == null) {
-                continue;
-            }
-            order.actionBuildingFrameName = frame;
-            Map<String, Integer> slots = slotsByPlayer[order.playerId];
-            if (slots == null) {
-                slots = new LinkedHashMap<>();
-                slotsByPlayer[order.playerId] = slots;
-            }
-            Integer existingSlot = slots.get(frame);
-            if (existingSlot != null) {
-                order.actionBuildingSlot = existingSlot;
-            } else {
-                int slot = nextSlotByPlayer[order.playerId] == 0 ? 1 : 2;
-                nextSlotByPlayer[order.playerId]++;
-                slots.put(frame, slot);
-                order.actionBuildingSlot = slot;
-            }
+            order.actionBuildingFrameName = sourceActionBuildingFrame(order, weapon);
         }
 
-        // Presenter.doTR_from_battle changes a spy's selected building to the
-        // generic spyCenter frame when another same-player action uses that frame.
-        for (int i = 0; i < turnOrders.size(); i++) {
-            ActionOrder spyOrder = turnOrders.get(i);
+        // Presenter.initBattle replaces a duplicate selected spy frame with the
+        // generic center clip before it checks for same-player duplicate frames.
+        for (ActionOrder spyOrder : turnOrders) {
             if (spyOrder.action != Action.ATTACK || spyOrder.actionBuildingFrameName == null
                     || !isSpyWeapon(spyOrder)) {
                 continue;
             }
-            for (int j = 0; j < turnOrders.size(); j++) {
-                ActionOrder other = turnOrders.get(j);
-                if (i != j && other.playerId == spyOrder.playerId
+            for (ActionOrder other : turnOrders) {
+                if (other != spyOrder && other.playerId == spyOrder.playerId
                         && spyOrder.actionBuildingFrameName.equals(
                         other.actionBuildingFrameName)) {
                     spyOrder.actionBuildingFrameName = "spyCenter";
                     break;
                 }
+            }
+        }
+
+        @SuppressWarnings("unchecked")
+        Map<String, Integer>[] slotsByPlayer = new Map[players.length];
+        int[] nextSlotByPlayer = new int[players.length];
+        for (ActionOrder order : sourceActionBuildingOrder(turnOrders)) {
+            if (order.playerId < 0 || order.playerId >= players.length
+                    || order.actionBuildingFrameName == null) {
+                continue;
+            }
+            Map<String, Integer> slots = slotsByPlayer[order.playerId];
+            if (slots == null) {
+                slots = new LinkedHashMap<>();
+                slotsByPlayer[order.playerId] = slots;
+            }
+            Integer existingSlot = slots.get(order.actionBuildingFrameName);
+            if (existingSlot != null) {
+                order.actionBuildingSlot = existingSlot;
+            } else {
+                int slot = nextSlotByPlayer[order.playerId] % 2 + 1;
+                nextSlotByPlayer[order.playerId]++;
+                slots.put(order.actionBuildingFrameName, slot);
+                order.actionBuildingSlot = slot;
             }
         }
     }
@@ -2870,7 +2898,6 @@ public final class GameState {
                     return "silo";
                 }
                 if ("plane".equals(weapon.definition.type)) {
-                    // Battle.py records the plane's airfield as its source preStart anchor.
                     return "airfield";
                 }
                 if ("sub".equals(weapon.definition.type)) {
@@ -2894,6 +2921,68 @@ public final class GameState {
     private boolean isSpyWeapon(ActionOrder order) {
         WeaponState weapon = playerById(order.playerId).weapons.get(order.weaponName);
         return weapon != null && "spy".equals(weapon.definition.type);
+    }
+
+    private void collectActionBuildingEvents(List<ActionOrder> turnOrders) {
+        Set<String> seen = new LinkedHashSet<>();
+        for (ActionOrder order : sourceActionBuildingOrder(turnOrders)) {
+            if (order.actionBuildingFrameName == null || order.actionBuildingSlot < 1
+                    || order.actionBuildingSlot > 2) {
+                continue;
+            }
+            if (order.action == Action.ATTACK && isSpyWeapon(order)
+                    && !order.actionBuildingResolved) {
+                continue;
+            }
+            String key = order.playerId + ":" + order.actionBuildingFrameName;
+            if (!seen.add(key)) {
+                continue;
+            }
+            lastTurnActionBuildings.add(new ActionBuildingEvent(order.playerId,
+                    order.action, order.actionBuildingSlot,
+                    order.actionBuildingFrameName,
+                    playerById(order.playerId).getReligionCode(),
+                    lastTurnActionBuildings.size()));
+        }
+    }
+
+    /**
+     * Presenter.initBattle concatenates the source init, last, in-battle, and
+     * spawned-building queues. Keep the corresponding order here so per-player
+     * slot assignment does not depend on the order in which the player tapped.
+     */
+    private static List<ActionOrder> sourceActionBuildingOrder(List<ActionOrder> turnOrders) {
+        List<ActionOrder> ordered = new ArrayList<>(turnOrders);
+        Collections.sort(ordered, (left, right) -> Integer.compare(
+                sourceActionBuildingPriority(left), sourceActionBuildingPriority(right)));
+        return ordered;
+    }
+
+    private static int sourceActionBuildingPriority(ActionOrder order) {
+        switch (order.action) {
+            case ATTACK:
+                return 0;
+            case PREPARED_ATTACK:
+                // A prepared carrier enters the source last-building queue;
+                // a launch result enters the initial battle queue.
+                return order.prepareCarrier ? 1 : 0;
+            case PRODUCTION:
+                return 2;
+            case RESEARCH:
+                return 3;
+            case DEFENSE:
+                return 4;
+            case PROPAGANDA:
+                return 5;
+            case DIPLOMACY:
+                return 6;
+            case RESOURCES:
+                return 7;
+            case MASS_MEDIA:
+                return 8;
+            default:
+                return Integer.MAX_VALUE;
+        }
     }
 
     private static ActionOrder findCounterDefense(List<ActionOrder> defenses,

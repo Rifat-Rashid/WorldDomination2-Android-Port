@@ -27,6 +27,7 @@ import com.example.worlddomination.game.rendering.BattleAnimationSequence;
 import com.example.worlddomination.game.rendering.BattleExplosionRenderer;
 import com.example.worlddomination.game.rendering.BattlefieldCityRenderer;
 import com.example.worlddomination.game.rendering.FlashAntiDefenseTrackingAnimation;
+import com.example.worlddomination.game.rendering.FlashActionBuildingAnimation;
 import com.example.worlddomination.game.rendering.FlashBattleRoutes;
 import com.example.worlddomination.game.rendering.FlashBattleUnitRenderer;
 import com.example.worlddomination.game.rendering.FlashCarrierPlaneAnimation;
@@ -37,11 +38,11 @@ import com.example.worlddomination.game.rendering.FlashSuicideBomberAnimation;
 import com.example.worlddomination.game.rendering.FlashRocketAnimation;
 import com.example.worlddomination.game.rendering.FlashSatelliteAnimation;
 import com.example.worlddomination.game.rendering.FlashSoldierOneAnimation;
-import com.example.worlddomination.game.rendering.FlashSpyBuildingAnimation;
 import com.example.worlddomination.game.rendering.FlashSubmarineAnimation;
 import com.example.worlddomination.game.rendering.FlashAnimationTimeline;
 import com.example.worlddomination.game.rendering.RenderLoopPolicy;
 import com.example.worlddomination.game.rendering.SourceCombatAnimationMapping;
+import com.example.worlddomination.game.rendering.TurnPlaybackSequence;
 import com.example.worlddomination.game.simulation.GameSetup;
 import com.example.worlddomination.game.simulation.GameState;
 import com.example.worlddomination.game.simulation.CityState;
@@ -166,8 +167,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private String outcomePersonalBestText = "";
     private final OriginalAudio audio = new OriginalAudio();
     private final List<BattleAnimationSequence> battleAnimations = new ArrayList<>();
+    private final List<FlashActionBuildingAnimation> actionBuildingAnimations =
+            new ArrayList<>();
+    private final TurnPlaybackSequence turnPlaybackSequence = new TurnPlaybackSequence();
     private final List<FlashSoldierOneAnimation> soldierBattleAnimations = new ArrayList<>();
-    private final List<FlashSpyBuildingAnimation> spyBuildingAnimations = new ArrayList<>();
     private final List<FlashApacheMarineAnimation> apacheMarineAnimations = new ArrayList<>();
     private final List<FlashChinookTankAnimation> chinookTankAnimations = new ArrayList<>();
     private final List<FlashSuicideBomberAnimation> suicideBomberAnimations = new ArrayList<>();
@@ -301,6 +304,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private int defenseWeaponIndex;
     private int setupLeaderListStart;
     private boolean dragging;
+    private boolean ignorePlaybackTouchUntilUp;
     private String cachedLatestMessage = "";
     private String cachedMessageText = "";
     private boolean modalOpen;
@@ -591,16 +595,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         if (flashAnimationAssets != null && !flashAnimationAssets.isLoaded()) {
             return true;
         }
-        if (hasOtherBattlePlayback() || hasAnimatingSpyBuilding()
-                || outcomeSequence.isAnimating()) {
-            return true;
-        }
-        return navigationScroll.hasMotion() || equipmentScroll.hasMotion();
-    }
-
-    private boolean hasOtherBattlePlayback() {
-        return (cityRenderer != null && cityRenderer.isAnimating())
+        if ((cityRenderer != null && cityRenderer.isAnimating())
                 || !battleAnimations.isEmpty()
+                || turnPlaybackSequence.isBlockingInput()
+                || hasAnimatingActionBuilding()
                 || !soldierBattleAnimations.isEmpty()
                 || !apacheMarineAnimations.isEmpty()
                 || !chinookTankAnimations.isEmpty()
@@ -611,11 +609,15 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 || !standalonePlaneAnimations.isEmpty()
                 || !antiDefenseTrackingAnimations.isEmpty()
                 || !satelliteBattleAnimations.isEmpty()
-                || !pendingBattleAnimations.isEmpty();
+                || !pendingBattleAnimations.isEmpty()
+                || outcomeSequence.isAnimating()) {
+            return true;
+        }
+        return navigationScroll.hasMotion() || equipmentScroll.hasMotion();
     }
 
-    private boolean hasAnimatingSpyBuilding() {
-        for (FlashSpyBuildingAnimation animation : spyBuildingAnimations) {
+    private boolean hasAnimatingActionBuilding() {
+        for (FlashActionBuildingAnimation animation : actionBuildingAnimations) {
             if (animation.isAnimating()) {
                 return true;
             }
@@ -628,16 +630,20 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         equipmentScroll.tick(seconds);
         cityRenderer.tick(game);
         showExitPromptSeconds = Math.max(0f, showExitPromptSeconds - seconds);
-        advanceBattleAnimations();
+        advanceBattleAnimations(seconds);
         advanceOutcomeSequence();
     }
 
-    private void advanceBattleAnimations() {
+    private void advanceBattleAnimations(float seconds) {
+        turnPlaybackSequence.advance(seconds);
         if (flashAnimationAssets == null || !flashAnimationAssets.isLoaded()) {
             return;
         }
-        for (FlashSpyBuildingAnimation animation : spyBuildingAnimations) {
+        for (FlashActionBuildingAnimation animation : actionBuildingAnimations) {
             animation.tick();
+        }
+        if (turnPlaybackSequence.isWaitingForActionLabels()) {
+            return;
         }
         for (int i = battleAnimations.size() - 1; i >= 0; i--) {
             BattleAnimationSequence animation = battleAnimations.get(i);
@@ -821,6 +827,24 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 suicideBomberAnimations.remove(i);
             }
         }
+        if (turnPlaybackSequence.isReadyForBattle() && !hasActiveCombatPlayback()) {
+            turnPlaybackSequence.completeBattlePlayback();
+        }
+    }
+
+    private boolean hasActiveCombatPlayback() {
+        return !battleAnimations.isEmpty()
+                || !soldierBattleAnimations.isEmpty()
+                || !apacheMarineAnimations.isEmpty()
+                || !chinookTankAnimations.isEmpty()
+                || !suicideBomberAnimations.isEmpty()
+                || !rocketBattleAnimations.isEmpty()
+                || !submarineBattleAnimations.isEmpty()
+                || !carrierPlaneAnimations.isEmpty()
+                || !standalonePlaneAnimations.isEmpty()
+                || !antiDefenseTrackingAnimations.isEmpty()
+                || !satelliteBattleAnimations.isEmpty()
+                || !pendingBattleAnimations.isEmpty();
     }
 
     private void clearCarrierPlaneAnimations() {
@@ -892,6 +916,22 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 i++;
             }
         }
+    }
+
+    private void queueActionBuildingAnimations() {
+        List<GameState.Action> resolvedActions = new ArrayList<>(
+                game.getLastTurnActionBuildings().size());
+        for (GameState.ActionBuildingEvent event : game.getLastTurnActionBuildings()) {
+            resolvedActions.add(event.action);
+            for (int index = actionBuildingAnimations.size() - 1; index >= 0; index--) {
+                FlashActionBuildingAnimation previous = actionBuildingAnimations.get(index);
+                if (previous.playerId == event.playerId && previous.slot == event.slot) {
+                    actionBuildingAnimations.remove(index);
+                }
+            }
+            actionBuildingAnimations.add(new FlashActionBuildingAnimation(event));
+        }
+        turnPlaybackSequence.begin(resolvedActions);
     }
 
     private void advanceOutcomeSequence() {
@@ -1350,7 +1390,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         batch.draw(uiAssets.battleMap, mapBounds.x, mapBounds.y,
                 mapBounds.width, mapBounds.height);
         cityRenderer.draw(batch, mapBounds, game);
-        battleUnitRenderer.drawSpyMissionBuildings(batch, mapBounds, spyBuildingAnimations);
+        battleUnitRenderer.drawActionBuildings(batch, mapBounds, actionBuildingAnimations);
         battleUnitRenderer.drawSubmarines(batch, mapBounds, submarineBattleAnimations);
         battleUnitRenderer.draw(batch, mapBounds, soldierBattleAnimations);
         battleUnitRenderer.drawApacheMarine(batch, mapBounds, apacheMarineAnimations);
@@ -2118,6 +2158,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         shapes.end();
         batch.begin();
         drawQueuedActionLabels();
+        drawPlaybackActionLabel();
         batch.end();
         drawInlineActionFooter();
         drawSettingsGear();
@@ -2308,6 +2349,12 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             shapes.rect(target.x + target.width * 0.13f, target.y + 6f,
                     target.width * 0.74f, target.height - 12f);
         }
+        if (turnPlaybackSequence.getCurrentAction() != null) {
+            Rectangle target = actionSlots[0];
+            shapes.setColor(1f, 0.48f, 0.02f, 0.92f);
+            shapes.rect(target.x + target.width * 0.13f, target.y + 6f,
+                    target.width * 0.74f, target.height - 12f);
+        }
     }
 
     private void drawQueuedActionLabels() {
@@ -2320,6 +2367,43 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             font.setColor(QUEUED_ACTION_TEXT);
             drawCentered(action.label.toUpperCase(), target.x + target.width / 2f,
                     target.y + target.height / 2f + 3f, 8f);
+        }
+    }
+
+    private void drawPlaybackActionLabel() {
+        GameState.Action action = turnPlaybackSequence.getCurrentAction();
+        if (action == null) {
+            return;
+        }
+        Rectangle target = actionSlots[0];
+        font.setColor(MODAL_ORANGE);
+        drawCentered(sourceActionLabel(action), target.x + target.width / 2f,
+                target.y + target.height / 2f + 3f, 8f);
+        font.setColor(Color.WHITE);
+    }
+
+    private static String sourceActionLabel(GameState.Action action) {
+        switch (action) {
+            case RESOURCES:
+                return "RESOURCES";
+            case PRODUCTION:
+                return "PRODUCTION";
+            case RESEARCH:
+                return "RESEARCH";
+            case MASS_MEDIA:
+                return "RELIGION";
+            case PREPARED_ATTACK:
+                return "PRE-ATTACK";
+            case ATTACK:
+                return "ATTACK";
+            case DEFENSE:
+                return "DEFENSE";
+            case PROPAGANDA:
+                return "PROPAGANDA";
+            case DIPLOMACY:
+                return "DIPLOMACY";
+            default:
+                return action.label.toUpperCase(java.util.Locale.US);
         }
     }
 
@@ -3073,7 +3157,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         game = null;
         battleAnimations.clear();
         soldierBattleAnimations.clear();
-        spyBuildingAnimations.clear();
         apacheMarineAnimations.clear();
         chinookTankAnimations.clear();
         suicideBomberAnimations.clear();
@@ -3522,8 +3605,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 game = new GameState(setup);
                 cityRenderer.reset(game);
                 battleAnimations.clear();
+                actionBuildingAnimations.clear();
+                turnPlaybackSequence.reset();
                 soldierBattleAnimations.clear();
-                spyBuildingAnimations.clear();
                 apacheMarineAnimations.clear();
                 chinookTankAnimations.clear();
                 suicideBomberAnimations.clear();
@@ -4025,15 +4109,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             activateIsland(x, y);
         } else if (confirmButton.contains(x, y) && game.getQueuedActionCount() == 2) {
             game.confirmTurn();
+            queueActionBuildingAnimations();
             audio.play(OriginalAudio.Cue.ACTION_ACCEPT);
-            spyBuildingAnimations.clear();
-            int spySequenceIndex = 0;
-            for (GameState.SpyMissionEvent event : game.getLastTurnSpyMissions()) {
-                spyBuildingAnimations.add(new FlashSpyBuildingAnimation(
-                        event.attackerPlayerId, event.defenderPlayerId,
-                        event.actionBuildingSlot, event.actionBuildingFrame,
-                        event.religionCode, spySequenceIndex++));
-            }
             int animationIndex = 0;
             int submarineSequenceIndex = 0;
             int carrierPlaneIndex = 0;
@@ -4328,6 +4405,12 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         if (pointerIndex != 0) {
             return false;
         }
+        if (turnPlaybackSequence.isBlockingInput()) {
+            ignorePlaybackTouchUntilUp = true;
+            gestureArea = GESTURE_NONE;
+            dragging = false;
+            return true;
+        }
         unproject(screenX, screenY);
         pointerStartX = pointer.x;
         pointerStartY = pointer.y;
@@ -4369,6 +4452,17 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         if (pointerIndex != 0) {
             return false;
         }
+        if (ignorePlaybackTouchUntilUp) {
+            ignorePlaybackTouchUntilUp = false;
+            gestureArea = GESTURE_NONE;
+            dragging = false;
+            return true;
+        }
+        if (turnPlaybackSequence.isBlockingInput()) {
+            gestureArea = GESTURE_NONE;
+            dragging = false;
+            return true;
+        }
         unproject(screenX, screenY);
         float distance = (float) Math.hypot(pointer.x - pointerStartX, pointer.y - pointerStartY);
         if (gestureArea == GESTURE_PRODUCTION) {
@@ -4398,6 +4492,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     @Override
     public boolean touchCancelled(int screenX, int screenY, int pointerIndex, int button) {
         if (pointerIndex == 0) {
+            ignorePlaybackTouchUntilUp = false;
             gestureArea = GESTURE_NONE;
             productionGestureSlider = -1;
             productionGestureHandleOffsetX = 0f;
@@ -4409,6 +4504,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     @Override
     public boolean touchDragged(int screenX, int screenY, int pointerIndex) {
+        if (ignorePlaybackTouchUntilUp || turnPlaybackSequence.isBlockingInput()) {
+            return true;
+        }
         if (pointerIndex != 0 || gestureArea == GESTURE_NONE) {
             return false;
         }
@@ -4460,6 +4558,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     @Override
     public boolean scrolled(float amountX, float amountY) {
+        if (turnPlaybackSequence.isBlockingInput()) {
+            return true;
+        }
         unproject(Gdx.input.getX(), Gdx.input.getY());
         if (navViewport.contains(pointer.x, pointer.y)) {
             navigationScroll.moveBy(amountY * NAV_ROW_HEIGHT);
@@ -4510,9 +4611,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     @Override
     public void dispose() {
+        turnPlaybackSequence.reset();
         battleAnimations.clear();
+        actionBuildingAnimations.clear();
         soldierBattleAnimations.clear();
-        spyBuildingAnimations.clear();
         apacheMarineAnimations.clear();
         chinookTankAnimations.clear();
         suicideBomberAnimations.clear();
