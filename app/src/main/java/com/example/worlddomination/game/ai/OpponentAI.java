@@ -192,46 +192,50 @@ public final class OpponentAI {
         int attackSlot = first.action == GameState.Action.ATTACK ? 0
                 : second != null && second.action == GameState.Action.ATTACK ? 1 : -1;
 
+        if (attackSlot == 1 && second != null) {
+            // Model.doTurn accepts the higher-ranked first slot before it calls
+            // getTarget for the second-slot attack. Besides preserving visible
+            // slot order, this matters when the first action reserves money or
+            // weapons before getTarget chooses the attack route.
+            Decision precedingOrder = planRankedAction(state, player, first,
+                    random, 1, plannedWeaponUse);
+            if (precedingOrder != null) {
+                addPlannedDecision(player, precedingOrder, decisions, plannedWeaponUse);
+            }
+
+            List<Decision> attackPlan = planSourceAttack(state, player, random,
+                    false, plannedWeaponUse);
+            for (Decision decision : attackPlan) {
+                if (decisions.size() == 2) {
+                    break;
+                }
+                addPlannedDecision(player, decision, decisions, plannedWeaponUse);
+            }
+            if (decisions.size() < 2) {
+                return planRemainingRankedActions(state, player, scores, random,
+                        decisions, plannedWeaponUse, 2);
+            }
+            return decisions;
+        }
+
         if (attackSlot >= 0) {
             ScoredAction companion = duplicateAttack ? null
                     : scores.size() > 1 ? scores.get(1 - attackSlot) : null;
+            boolean[] duplicateSuppressed = new boolean[1];
             List<Decision> attackPlan = planSourceAttack(state, player, random,
-                    duplicateAttack, plannedWeaponUse);
+                    duplicateAttack, plannedWeaponUse, duplicateSuppressed);
+            if (duplicateSuppressed[0] && scores.size() > 1) {
+                companion = scores.get(1);
+            }
             if (!attackPlan.isEmpty()) {
-                boolean preparingCarrier = attackPlan.size() == 1
-                        && attackPlan.get(0).action == GameState.Action.PREPARED_ATTACK
-                        && attackPlan.get(0).prepareCarrier;
                 boolean readySingleAttack = player.getPreparedCarrierName() != null
                         && !"ship".equals(player.getWeapons().get(
                         player.getPreparedCarrierName()).definition.type)
                         && attackPlan.size() == 1;
-                if (attackSlot == 1 && companion != null && readySingleAttack) {
-                    Decision precedingOrder = planRankedAction(state, player, companion,
-                            random, 1, plannedWeaponUse);
-                    if (precedingOrder != null) {
-                        decisions.add(precedingOrder);
-                        reserve(player, precedingOrder);
-                        markPlannedUse(precedingOrder, plannedWeaponUse);
-                    }
-                }
                 for (Decision decision : attackPlan) {
                     decisions.add(decision);
                     reserve(player, decision);
                     markPlannedUse(decision, plannedWeaponUse);
-                }
-                // A new carrier prep may displace the scored attack's original
-                // slot; the source planner then fills the freed slot from the
-                // remaining ranked actions. Seeded source traces include this
-                // follow-up action after a carrier prep in slot two.
-                if (attackSlot == 1 && companion != null && preparingCarrier) {
-                    Decision secondOrder = planRankedAction(state, player, companion,
-                            random, 2, plannedWeaponUse);
-                    if (secondOrder != null) {
-                        decisions.add(secondOrder);
-                        reserve(player, secondOrder);
-                        markPlannedUse(secondOrder, plannedWeaponUse);
-                    }
-                    return decisions;
                 }
                 // A not-ready attack resets its companion slot in the reference.
                 // A ready carrier's single attack leaves the other scored action intact.
@@ -246,30 +250,6 @@ public final class OpponentAI {
                     }
                 }
                 return decisions;
-            }
-            if (attackSlot == 1) {
-                Decision precedingOrder = companion == null ? null
-                        : planRankedAction(state, player, companion, random, 1,
-                        plannedWeaponUse);
-                if (precedingOrder != null) {
-                    decisions.add(precedingOrder);
-                    reserve(player, precedingOrder);
-                    markPlannedUse(precedingOrder, plannedWeaponUse);
-                    List<Decision> retryAttackPlan = planSourceAttack(state, player,
-                            random, false, plannedWeaponUse);
-                    if (!retryAttackPlan.isEmpty()) {
-                        for (Decision decision : retryAttackPlan) {
-                            if (decisions.size() == 2) {
-                                break;
-                            }
-                            addPlannedDecision(player, decision, decisions,
-                                    plannedWeaponUse);
-                        }
-                        return decisions;
-                    }
-                    return planRemainingRankedActions(state, player, scores, random,
-                            decisions, plannedWeaponUse, 2);
-                }
             }
         }
 
@@ -656,10 +636,29 @@ public final class OpponentAI {
                                                    Random random,
                                                    boolean duplicateAttack,
                                                    Map<String, Integer> plannedUse) {
+        return planSourceAttack(state, attacker, random, duplicateAttack,
+                plannedUse, null);
+    }
+
+    private static List<Decision> planSourceAttack(GameState state,
+                                                   GameState.PlayerState attacker,
+                                                   Random random,
+                                                   boolean duplicateAttack,
+                                                   Map<String, Integer> plannedUse,
+                                                   boolean[] duplicateSuppressed) {
         List<Decision> decisions = new ArrayList<>(2);
         GameState.PlayerState target = attackTarget(state, attacker, random);
         if (target == null) {
             return decisions;
+        }
+        // Model.getTarget clears a scored duplicate attack unless randRange(0, 2)
+        // returns zero. It makes this draw after choosing the target and before
+        // deciding whether a ready carrier can pair with a direct attack.
+        if (duplicateAttack && random.nextInt(3) != 0) {
+            duplicateAttack = false;
+            if (duplicateSuppressed != null) {
+                duplicateSuppressed[0] = true;
+            }
         }
 
         String readyCarrier = attacker.getPreparedCarrierName();
@@ -725,6 +724,9 @@ public final class OpponentAI {
                 decisions.add(preparedDecision(attacker.id, target.id, cityIndex,
                         readyCarrier, payload.definition.name));
             }
+            // getTarget checks the spy alert after choosing the prepared strike,
+            // consuming its cash threshold even when the carrier keeps priority.
+            findSpyTarget(state, attacker, random);
             return decisions;
         }
 
@@ -747,6 +749,9 @@ public final class OpponentAI {
                         Collections.<String>emptyList(), 0, target.id, -1,
                         carrierName, null, true, -1));
             }
+            // The Flash performs the spy alert check after selecting a new
+            // carrier, even though this preparation already occupies the slot.
+            findSpyTarget(state, attacker, random);
         } else {
             Decision direct = planDirectAttackForTarget(state, attacker, target,
                     random, plannedUse);
@@ -945,7 +950,11 @@ public final class OpponentAI {
 
     private static int randomPopulatedCity(GameState.PlayerState target, Random random) {
         List<Integer> populated = new ArrayList<>();
-        for (CityState city : target.getCities()) {
+        // ActionScript's keys() enumerates array slots from highest to lowest;
+        // select_random_city builds its candidate list in that same order.
+        List<CityState> cities = target.getCities();
+        for (int index = cities.size() - 1; index >= 0; index--) {
+            CityState city = cities.get(index);
             if (city.populationMillions > 0) {
                 populated.add(city.index);
             }

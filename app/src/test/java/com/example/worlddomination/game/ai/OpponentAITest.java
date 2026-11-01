@@ -1234,7 +1234,8 @@ public final class OpponentAITest {
         }
         assertEquals("source fills the second slot with the next ranked action",
                 2, decisions.size());
-        assertEquals(GameState.Action.RESOURCES, decisions.get(1).action);
+        assertEquals(GameState.Action.RESOURCES, decisions.get(0).action);
+        assertEquals(GameState.Action.PREPARED_ATTACK, decisions.get(1).action);
         assertTrue("planner should use the available strike option", preparedActions > 0);
         assertEquals(1, preparedActions);
     }

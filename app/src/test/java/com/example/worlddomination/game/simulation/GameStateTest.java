@@ -1022,7 +1022,9 @@ public final class GameStateTest {
                 - state.getCityPopulationMillions(defender.id, 0);
         assertTrue(casualties >= 2 && casualties <= 4);
         assertEquals(83 - casualties, human.getRegardTowardExact(defender.id), 0.0);
-        assertEquals(75 - casualties, defender.getRegardTowardExact(human.id), 0.0);
+        // The normal turn-result path applies casualty loss after upkeep. The
+        // separate Model.calcBattle penalty is covered by the helper tests below.
+        assertEquals(83 - casualties, defender.getRegardTowardExact(human.id), 0.0);
         assertEquals(75 - casualties / 20.0d,
                 observer.getRegardTowardExact(human.id), 0.000001);
     }
@@ -1867,6 +1869,14 @@ public final class GameStateTest {
         defender.moneyMillions = 1000;
         defender.getWeapons().get("warhead2").inStock = 1;
         defender.getWeapons().get("soldier3").inStock = 1;
+        // Keep one eligible level-one target so this test exercises the special
+        // leader's one-item theft rule without coupling it to unrelated RNG draws.
+        for (GameState.WeaponState weapon : defender.getWeapons().values()) {
+            if (weapon.definition.level <= 1
+                    && !"antiAir".equals(weapon.definition.name)) {
+                weapon.inStock = 0;
+            }
+        }
         int attackerFundsBefore = attacker.moneyMillions;
         int attackerAntiAirBefore = attacker.getWeaponStockByName("antiAir");
 
@@ -2490,6 +2500,33 @@ public final class GameStateTest {
                 eliminated.religion);
         assertEquals("dead-player offer cooldowns do not tick", 2,
                 eliminated.getDiplomacyOfferedLastTurn(0));
+    }
+
+    @Test
+    public void sourceTurnUsesReverseUpkeepAndConsumesBattleTimerDrawsBeforeResults() {
+        TurnUpkeepSequenceRandom random = new TurnUpkeepSequenceRandom();
+        GameState state = new GameState(1, random, false);
+        for (GameState.PlayerState player : state.getPlayers()) {
+            player.religion = 60;
+        }
+        // Source active-player iteration decays p4..p1 first. The human then
+        // initializes its unset primary/secondary target slots before decay.
+        random.script(0, 1, 2, 3, 1, 2, 4);
+
+        completeTurnWithResourcesAndMedia(state);
+
+        assertEquals(55, state.getPlayerState(4).religion);
+        assertEquals(54, state.getPlayerState(3).religion);
+        assertEquals(53, state.getPlayerState(2).religion);
+        assertEquals(52, state.getPlayerState(1).religion);
+        List<Integer> expectedBounds = new ArrayList<>();
+        Collections.addAll(expectedBounds, 6, 6, 6, 6, 4, 3, 6);
+        for (int timerIndex = 0; timerIndex < 15; timerIndex++) {
+            expectedBounds.add(11);
+        }
+        expectedBounds.add(51);
+        expectedBounds.add(51);
+        assertEquals(expectedBounds, random.bounds);
     }
 
     @Test
@@ -3122,10 +3159,12 @@ public final class GameStateTest {
     private static final class TurnUpkeepSequenceRandom extends Random {
         private int[] values = new int[0];
         private int drawCount;
+        private final List<Integer> bounds = new ArrayList<>();
 
         void script(int... values) {
             this.values = values.clone();
             drawCount = 0;
+            bounds.clear();
         }
 
         @Override
@@ -3133,6 +3172,7 @@ public final class GameStateTest {
             if (bound <= 0) {
                 throw new IllegalArgumentException("bound must be positive");
             }
+            bounds.add(bound);
             if (drawCount >= values.length) {
                 return 0;
             }
