@@ -2686,14 +2686,26 @@ public final class GameState {
 
     void applyBattleHostilityEffects(PlayerState attacker, PlayerState defender,
                                      int casualties) {
-        // Model.calcBattle applies this fixed AI hostility penalty before
-        // Presenter.turnResults adjusts regard by the casualty count.
+        // Model.calcBattle's fixed penalty is a distinct source stage. The
+        // ordinary turn-result path applies casualties through Presenter only.
+        applyModelBattleHostilityPenalty(attacker, defender);
+        applyTurnResultBattleHostilityEffects(attacker, defender, casualties);
+    }
+
+    private void applyModelBattleHostilityPenalty(PlayerState attacker,
+                                                  PlayerState defender) {
         if (!attacker.human && attacker.regardToward[defender.id] > 0) {
             attacker.regardToward[defender.id] -= 8;
         }
         if (!defender.human && defender.regardToward[attacker.id] > 0) {
             defender.regardToward[attacker.id] -= 8;
         }
+    }
+
+    /** Applies the Presenter turn-result relation changes after combat. */
+    private void applyTurnResultBattleHostilityEffects(PlayerState attacker,
+                                                       PlayerState defender,
+                                                       int casualties) {
         attacker.regardToward[defender.id] -= casualties;
         defender.regardToward[attacker.id] -= casualties;
 
@@ -2907,7 +2919,7 @@ public final class GameState {
                     attacker.id, defender.id, city.index, weapon.definition.name, null,
                     casualties, null, order.actionBuildingSlot));
             recordLargestBattle(attacker, defender, casualties);
-            applyBattleHostilityEffects(attacker, defender, casualties);
+            applyTurnResultBattleHostilityEffects(attacker, defender, casualties);
             if (casualties > 0) {
                 addToHighscore(attacker, 1, casualties);
             }
@@ -3208,7 +3220,7 @@ public final class GameState {
                 counterDefense == null ? null : counterName, order.actionBuildingSlot,
                 counterDefense == null ? -1 : counterDefense.actionBuildingSlot));
         recordLargestBattle(attacker, defender, casualties);
-        applyBattleHostilityEffects(attacker, defender, casualties);
+        applyTurnResultBattleHostilityEffects(attacker, defender, casualties);
         if (casualties > 0) {
             addToHighscore(attacker, 1, casualties);
         }
@@ -3298,7 +3310,7 @@ public final class GameState {
                 }
             }
         }
-        applyBattleHostilityEffects(attacker, defender, totalCasualties);
+        applyTurnResultBattleHostilityEffects(attacker, defender, totalCasualties);
     }
 
     /** Source ship counter roll uses randRange(1, 3) == 2: one of three strikes. */
@@ -3820,10 +3832,22 @@ public final class GameState {
         // the stock cap. That stale minimum controls how long its random purchase
         // loop continues after the remaining budget can no longer buy the sole
         // uncapped item.
-        for (int index = candidates.size() - 1; index >= 0; index--) {
+        // The Flash removes capped items while walking forward. It increments
+        // the index after splice, so the item shifted into a removed slot is
+        // skipped. That source quirk matters when a category has multiple
+        // weapons: a capped lower tier can be removed while the next tier is
+        // still eligible for the purchase loop.
+        for (int index = 0; index < candidates.size(); index++) {
             if (candidates.get(index).inStock >= PLAYER_STOCK_CAP) {
                 candidates.remove(index);
             }
+        }
+        if (candidates.isEmpty()) {
+            // Presenter_updatePlayerVars_3 still calls randRange(0, -1) once
+            // for an empty filtered production list. Tools.randRange consumes
+            // one random() draw and returns zero for that zero-width range.
+            random.nextDouble();
+            return;
         }
         int remaining = budget;
         int attempts = 0;

@@ -72,6 +72,38 @@ public final class AiSourceTurnResolutionTraceTest {
             "1:0", "1:0", "1:0", "1:0", "1:0", "1:0", "1:0", "1:0", "1:0",
             "1:0", "1:0", "1:0", "1:0");
 
+    private static final int[][] EXPECTED_THIRD_TURN_PLAYER_STATE = {
+            {144, 352, 100, 57032},
+            {51, 450, 40, 239658},
+            {58, 455, 33, 142056},
+            {66, 450, 36, 97052},
+            {100, 445, 38, 69634}
+    };
+
+    private static final int[][] EXPECTED_THIRD_TURN_CITY_POPULATIONS = {
+            {73, 47, 80, 47, 105},
+            {59, 97, 54, 84, 156},
+            {58, 81, 111, 79, 126},
+            {66, 110, 67, 96, 111},
+            {107, 41, 67, 43, 187}
+    };
+
+    // Source trace collected from Model.doTurn through Sub_presenter.turnResults.
+    // Empty and zero-width ranges remain because they consume source RNG calls.
+    private static final List<String> EXPECTED_THIRD_TURN_RANDOM_DRAWS = Arrays.asList(
+            "91:69", "3:0", "91:50", "3:0", "91:48", "3:0", "91:73", "3:2",
+            "4:3", "21:8", "61:37", "61:10", "61:43", "5:3", "5:2", "5:1",
+            "5:3", "2:1", "61:48", "4:1", "21:5", "61:15", "4:0", "21:0",
+            "61:7", "6:2", "6:2", "6:5", "6:2", "6:1", "11:10", "11:0",
+            "11:3", "11:8", "11:3", "11:10", "11:8", "11:3", "11:9", "11:10",
+            "11:5", "11:1", "11:1", "11:8", "11:9", "51:33", "51:39", "51:40",
+            "51:12", "51:10", "51:44", "3:2", "51:22", "3:0", "51:4",
+            "3:2", "51:10", "3:0", "51:1", "1:0", "51:3", "1:0", "1:0",
+            "1:0", "1:0", "1:0", "1:0", "1:0", "1:0", "1:0", "1:0",
+            "1:0", "1:0", "1:0", "1:0", "1:0", "1:0", "1:0", "1:0",
+            "1:0", "1:0", "1:0", "1:0", "1:0", "1:0", "1:0", "1:0",
+            "1:0", "1:0", "1:0", "1:0", "1:0");
+
     @Test
     public void hardSeededFirstTurnMatchesSourceResolutionAndRandomTrace() {
         GameSetup setup = new GameSetup(17L);
@@ -159,6 +191,8 @@ public final class AiSourceTurnResolutionTraceTest {
                 48, strike.casualtiesMillions);
         assertSeededState(game, EXPECTED_SECOND_TURN_PLAYER_STATE,
                 EXPECTED_SECOND_TURN_CITY_POPULATIONS);
+        assertEquals("Presenter turn results reduce regard by casualties only", 6.0,
+                game.getPlayerState(1).getRegardTowardExact(0), 0.0);
         assertEquals("second turn AI, city, and resolution draws match the source trace",
                 EXPECTED_SECOND_TURN_RANDOM_DRAWS, random.draws);
         assertEquals(Arrays.asList(GameState.Action.PREPARED_ATTACK, GameState.Action.RESEARCH),
@@ -174,6 +208,43 @@ public final class AiSourceTurnResolutionTraceTest {
         assertEquals(5, game.getPlayerState(3).getWeaponStockByName("soldier1"));
         assertEquals(4, game.getPlayerState(3).getWeaponStockByName("soldier2"));
         assertTrue(game.getPlayerState(4).hasTechnology("warhead3"));
+    }
+
+    @Test
+    public void hardSeededThirdTurnMatchesSourceAiChoicesUpkeepAndRandomTrace() {
+        GameSetup setup = new GameSetup(17L);
+        setup.setDifficulty(2);
+        for (int leader : new int[]{0, 9, 18, 5}) {
+            setup.toggleOpponent(leader);
+        }
+        RecordingRandom random = new RecordingRandom(setup.copyGameplayRandom());
+        GameState game = new GameState(setup, random);
+        random.clear();
+
+        queueHumanTurn(game);
+        game.confirmTurn();
+        random.clear();
+        queueHumanTurn(game);
+        game.confirmTurn();
+        random.clear();
+        queueHumanTurn(game);
+        game.confirmTurn();
+
+        assertEquals(3, game.getTurn());
+        assertEquals(Arrays.asList(GameState.Action.RESOURCES, GameState.Action.PRODUCTION),
+                game.getPlayerState(1).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.RESOURCES, GameState.Action.DIPLOMACY),
+                game.getPlayerState(2).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.RESEARCH, GameState.Action.PRODUCTION),
+                game.getPlayerState(3).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.RESOURCES, GameState.Action.PRODUCTION),
+                game.getPlayerState(4).getLastTurnActions());
+        assertSeededState(game, EXPECTED_THIRD_TURN_PLAYER_STATE,
+                EXPECTED_THIRD_TURN_CITY_POPULATIONS);
+        assertEquals("source production buys the available second soldier tier",
+                5, game.getPlayerState(3).getWeaponStockByName("soldier2"));
+        assertEquals("third turn AI, upkeep, score, and production draws match source",
+                EXPECTED_THIRD_TURN_RANDOM_DRAWS, random.draws);
     }
 
     private static void assertSeededState(GameState game, int[][] players,

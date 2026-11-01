@@ -1022,7 +1022,9 @@ public final class GameStateTest {
                 - state.getCityPopulationMillions(defender.id, 0);
         assertTrue(casualties >= 2 && casualties <= 4);
         assertEquals(83 - casualties, human.getRegardTowardExact(defender.id), 0.0);
-        assertEquals(75 - casualties, defender.getRegardTowardExact(human.id), 0.0);
+        // The normal turn-result path applies casualty loss after upkeep. The
+        // separate Model.calcBattle penalty is covered by the helper tests below.
+        assertEquals(83 - casualties, defender.getRegardTowardExact(human.id), 0.0);
         assertEquals(75 - casualties / 20.0d,
                 observer.getRegardTowardExact(human.id), 0.000001);
     }
