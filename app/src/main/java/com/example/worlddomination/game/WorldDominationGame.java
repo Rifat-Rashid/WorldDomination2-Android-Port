@@ -53,6 +53,7 @@ import com.example.worlddomination.game.ui.BattlefieldCityLayout;
 import com.example.worlddomination.game.ui.InformationPanelLayout;
 import com.example.worlddomination.game.ui.MatchOutcomePresentation;
 import com.example.worlddomination.game.ui.MatchOutcomeSequence;
+import com.example.worlddomination.game.ui.MessageHistoryScrollState;
 import com.example.worlddomination.game.ui.PreparedShipStrikeSelection;
 import com.example.worlddomination.game.ui.ProductionScreenLayout;
 import com.example.worlddomination.game.ui.ScrollPaneState;
@@ -91,6 +92,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private static final int GESTURE_NAV = 1;
     private static final int GESTURE_EQUIPMENT = 2;
     private static final int GESTURE_PRODUCTION = 3;
+    private static final int GESTURE_MESSAGE = 4;
 
     private static final GameState.Action[] ACTIONS = GameState.Action.values();
     private static final String[] EQUIPMENT_ROWS = {
@@ -202,6 +204,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private final Rectangle mapFrame = new Rectangle();
     private final Rectangle mapBounds = new Rectangle();
     private final Rectangle messagePanel = new Rectangle();
+    private final Rectangle messageViewport = new Rectangle();
     private final Rectangle scorePanel = new Rectangle();
     private final Rectangle actionPanel = new Rectangle();
     private final Rectangle actionSlots[] = {new Rectangle(), new Rectangle()};
@@ -247,9 +250,12 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private final Rectangle[] researchRows = new Rectangle[RESEARCH_ROWS_PER_PAGE];
     private final ScrollPaneState navigationScroll = new ScrollPaneState();
     private final ScrollPaneState equipmentScroll = new ScrollPaneState();
+    private final MessageHistoryScrollState messageHistoryScroll =
+            new MessageHistoryScrollState();
     private final Vector3 pointer = new Vector3();
     private final GlyphLayout glyphLayout = new GlyphLayout();
     private final GlyphLayout productionSummaryLayout = new GlyphLayout();
+    private final GlyphLayout messageHistoryLayout = new GlyphLayout();
 
     private SpriteBatch batch;
     private ShapeRenderer shapes;
@@ -280,8 +286,13 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private float lastPointerTime;
     private float gestureVelocityY;
     private float productionGestureHandleOffsetX;
+    private float messageLineHeight = 1f;
+    private float messageLayoutWidth = -1f;
     private float showExitPromptSeconds;
     private int gestureArea;
+    private int messageDragStartScroll = 1;
+    private int cachedMessageCount = -1;
+    private int cachedMessageTurn = -1;
     private int preparedCarrierIndex;
     private int preparedTargetPlayer = 1;
     private int preparedCityIndex;
@@ -289,6 +300,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private int defenseWeaponIndex;
     private int setupLeaderListStart;
     private boolean dragging;
+    private String cachedLatestMessage = "";
+    private String cachedMessageText = "";
     private boolean modalOpen;
     private boolean continuousRenderingEnabled = true;
     private boolean renderingFrame;
@@ -438,6 +451,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
         float footerHeight = 64f;
         messagePanel.set(centerLeft, contentY, centerWidth * 0.67f, footerHeight);
+        messageViewport.set(messagePanel.x + 10f, messagePanel.y + 2f,
+                Math.max(1f, messagePanel.width - 20f),
+                Math.max(1f, messagePanel.height - 4f));
+        messageLayoutWidth = -1f;
         scorePanel.set(messagePanel.x + messagePanel.width + 4f, contentY,
                 centerRight - messagePanel.x - messagePanel.width - 4f, footerHeight);
         scoreTitlePlate.set(scorePanel.x + scorePanel.width / 2f,
@@ -2059,6 +2076,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     }
 
     private void drawTextAndControls() {
+        updateMessageHistoryLayout();
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
         font.setColor(TITLE_TEXT);
@@ -2074,9 +2092,13 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         drawStatistics();
         if (!ActionScreenLayout.hasInlineActionControls(game.getSelectedAction())) {
             font.setColor(GREEN);
-            font.draw(batch, latestMessage(), messagePanel.x + 10f,
-                    messagePanel.y + messagePanel.height - 15f,
-                    messagePanel.width - 20f, Align.left, true);
+            batch.flush();
+            setScissor(messageViewport);
+            float textBaseline = messagePanel.y + messagePanel.height - 15f
+                    + messageHistoryScroll.getFirstVisibleLine() * messageLineHeight;
+            font.draw(batch, messageHistoryLayout, messageViewport.x, textBaseline);
+            batch.flush();
+            Gdx.gl.glDisable(GL20.GL_SCISSOR_TEST);
         }
         font.setColor(TITLE_TEXT);
         drawCentered(Long.toString(game.getHuman().score),
@@ -3238,8 +3260,46 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         return action == null ? prefix + "EMPTY" : prefix + action.label.toUpperCase();
     }
 
-    private String latestMessage() {
-        return game.getLatestMessage();
+    private void updateMessageHistoryLayout() {
+        List<String> messages = game.getMessages();
+        int messageCount = messages.size();
+        String latest = game.getLatestMessage();
+        int currentTurn = game.getTurn();
+        boolean contentChanged = messageCount != cachedMessageCount
+                || currentTurn != cachedMessageTurn
+                || !latest.equals(cachedLatestMessage);
+        boolean widthChanged = Math.abs(messageViewport.width - messageLayoutWidth) > 0.01f;
+        if (!contentChanged && !widthChanged) {
+            return;
+        }
+
+        if (contentChanged) {
+            StringBuilder text = new StringBuilder();
+            for (String message : messages) {
+                if (message == null || message.isEmpty()) {
+                    continue;
+                }
+                if (text.length() > 0) {
+                    text.append('\n');
+                }
+                text.append(message.replaceAll("(?i)<br\\s*/?>", "\n"));
+            }
+            cachedMessageText = text.length() == 0
+                    ? "Choose two actions, then confirm." : text.toString();
+            cachedMessageCount = messageCount;
+            cachedMessageTurn = currentTurn;
+            cachedLatestMessage = latest;
+        }
+
+        messageHistoryLayout.setText(font, cachedMessageText, GREEN,
+                messageViewport.width, Align.left, true);
+        messageLineHeight = Math.max(1f, font.getLineHeight());
+        int visibleLines = Math.max(1,
+                (int) Math.floor(messageViewport.height / messageLineHeight));
+        int totalLines = Math.max(1,
+                Math.round(messageHistoryLayout.height / messageLineHeight));
+        messageHistoryScroll.setLineRange(totalLines, visibleLines, contentChanged);
+        messageLayoutWidth = messageViewport.width;
     }
 
     private static String formatMillions(int millions) {
@@ -3288,7 +3348,15 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         if (equipmentViewport.contains(x, y)) {
             return GESTURE_EQUIPMENT;
         }
+        if (messageViewport.contains(x, y) && canScrollMessageHistory()) {
+            return GESTURE_MESSAGE;
+        }
         return GESTURE_NONE;
+    }
+
+    private boolean canScrollMessageHistory() {
+        return game != null && !modalOpen
+                && !ActionScreenLayout.hasInlineActionControls(game.getSelectedAction());
     }
 
     private void unproject(int screenX, int screenY) {
@@ -4268,6 +4336,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         gestureVelocityY = 0f;
         dragging = false;
         gestureArea = pointArea(pointer.x, pointer.y);
+        if (gestureArea == GESTURE_MESSAGE) {
+            messageDragStartScroll = messageHistoryScroll.getScroll();
+        }
         productionGestureSlider = -1;
         productionGestureHandleOffsetX = 0f;
         if (gestureArea == GESTURE_PRODUCTION) {
@@ -4305,6 +4376,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 updateProductionSlider(productionGestureSlider, pointer.x,
                         productionGestureHandleOffsetX);
             }
+        } else if (gestureArea == GESTURE_MESSAGE) {
+            // The source uses separate up/down hit targets; on Android the panel swipes instead.
         } else if (gestureArea != GESTURE_NONE && dragging) {
             if (gestureArea == GESTURE_NAV) {
                 navigationScroll.endGesture(gestureVelocityY);
@@ -4352,6 +4425,19 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             }
             return true;
         }
+        if (gestureArea == GESTURE_MESSAGE) {
+            if (!dragging && Math.abs(totalY) > TAP_SLOP
+                    && Math.abs(totalY) > Math.abs(totalX)) {
+                dragging = true;
+            }
+            if (dragging) {
+                if (messageHistoryScroll.scrollFromDrag(messageDragStartScroll,
+                        totalY, messageLineHeight)) {
+                    Gdx.graphics.requestRendering();
+                }
+            }
+            return true;
+        }
         if (!dragging && Math.abs(totalY) > TAP_SLOP && Math.abs(totalY) > Math.abs(totalX)) {
             dragging = true;
         }
@@ -4383,6 +4469,12 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         if (equipmentViewport.contains(pointer.x, pointer.y)) {
             equipmentScroll.moveBy(amountY * EQUIPMENT_ROW_HEIGHT);
             Gdx.graphics.requestRendering();
+            return true;
+        }
+        if (messageViewport.contains(pointer.x, pointer.y) && canScrollMessageHistory()) {
+            if (messageHistoryScroll.scrollBy(-Math.round(amountY))) {
+                Gdx.graphics.requestRendering();
+            }
             return true;
         }
         return false;

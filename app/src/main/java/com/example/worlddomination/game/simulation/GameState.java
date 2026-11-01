@@ -1102,7 +1102,6 @@ public final class GameState {
         }
         if (!isProductionGroupUnlocked(getHuman(), group)) {
             messages.add("You have not yet invented this Technology");
-            trimMessages();
             return false;
         }
         if (percent > getProductionMaximumPercent(category)) {
@@ -1956,7 +1955,6 @@ public final class GameState {
                     if (!isProductionGroupUnlocked(getHuman(),
                             productionGroup(investment.getKey()))) {
                         messages.add("You have not yet invented this Technology");
-                        trimMessages();
                         return false;
                     }
                 }
@@ -2198,6 +2196,8 @@ public final class GameState {
         if (queuedActions.size() != MAX_TURN_ACTIONS) {
             throw new IllegalStateException("Choose two actions before confirming the turn");
         }
+        // The Flash shortMSG_arr is cleared at the start of turn-result presentation.
+        messages.clear();
         lastTurnCombatEvents.clear();
         lastTurnSpyMissions.clear();
         for (PlayerState player : players) {
@@ -2311,7 +2311,6 @@ public final class GameState {
         queuedActions.clear();
         invalidateResearchChoices();
         cancelSelection();
-        trimMessages();
     }
 
     private void resolveDiplomacy(ActionOrder order) {
@@ -3643,9 +3642,4 @@ public final class GameState {
         return false;
     }
 
-    private void trimMessages() {
-        while (messages.size() > 4) {
-            messages.remove(0);
-        }
-    }
 }
