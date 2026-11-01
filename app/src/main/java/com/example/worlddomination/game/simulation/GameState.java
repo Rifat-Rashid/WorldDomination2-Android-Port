@@ -803,14 +803,19 @@ public final class GameState {
         return random.nextInt(candidates.size());
     }
 
-    private void reassignDeadAiEnemies(PlayerState player) {
-        if (player.human || !player.alive) {
+    private void reassignDeadPlayerEnemies(PlayerState player) {
+        if (!player.alive) {
             return;
         }
-        if (player.primaryEnemyId >= 0 && !players[player.primaryEnemyId].alive) {
+        // The source runs these checks for the human too. Human enemy IDs start
+        // unset, so its first upkeep selects two source target slots and consumes
+        // the corresponding random draws before religion decay.
+        if (player.primaryEnemyId < 0 || player.primaryEnemyId >= players.length
+                || !players[player.primaryEnemyId].alive) {
             player.primaryEnemyId = chooseRandomEnemy(player, player.secondaryEnemyId);
         }
-        if (player.secondaryEnemyId >= 0 && !players[player.secondaryEnemyId].alive) {
+        if (player.secondaryEnemyId < 0 || player.secondaryEnemyId >= players.length
+                || !players[player.secondaryEnemyId].alive) {
             player.secondaryEnemyId = chooseRandomEnemy(player, player.primaryEnemyId);
         }
     }
@@ -2336,47 +2341,116 @@ public final class GameState {
                 resolveDefense(order, resolvedDefenses);
             }
         }
-        for (ActionOrder order : turnOrders) {
-            PlayerState actor = playerById(order.playerId);
+        // Resolve every battle before propaganda calculates its city transfer.
+        // Within the battle group, the source likewise visits players in reverse
+        // active-player order and retains each player's action-slot order.
+        for (int playerIndex = players.length - 1; playerIndex >= 0; playerIndex--) {
+            PlayerState actor = players[playerIndex];
             if (!actor.alive) {
                 continue;
             }
-            switch (order.action) {
-                case RESOURCES:
-                    resolveResources(actor);
-                    break;
-                case MASS_MEDIA:
-                    resolveMassMedia(actor);
-                    break;
-                case PRODUCTION:
-                    resolveProduction(order);
-                    break;
-                case RESEARCH:
-                    resolveResearch(order);
-                    break;
-                case ATTACK: {
-                    resolveAttack(order, turnOrders, populationChanges, spyResultMessages);
-                    break;
+            for (ActionOrder order : turnOrders) {
+                if (order.playerId != actor.id) {
+                    continue;
                 }
-                case PREPARED_ATTACK:
+                if (order.action == Action.ATTACK) {
+                    resolveAttack(order, turnOrders, populationChanges, spyResultMessages);
+                } else if (order.action == Action.PREPARED_ATTACK) {
                     resolvePreparedAttack(order, resolvedDefenses, biologicalEffects,
                             populationChanges);
-                    break;
-                case DEFENSE:
-                    break;
-                case PROPAGANDA:
-                    propagandaOrders.add(order);
-                    break;
-                case DIPLOMACY:
-                    resolveDiplomacy(order);
-                    break;
-                default:
-                    throw new IllegalStateException("Unported action entered the turn queue: "
-                            + order.action);
+                }
             }
         }
+        // The source calculates strike casualties and their immediate score
+        // draws during turnResults, then creates the battle script and consumes
+        // its 15 presentation timer values before later result scoring.
+        consumeSourceBattleTimerDraws();
+        // Battle.createBattleScriptVars builds its result list in action order,
+        // then replays that list backwards. Its score/event order is therefore
+        // propaganda, religion (Mass Media), resources. These calls consume the
+        // same random stream as later production and research.
+        for (int playerIndex = players.length - 1; playerIndex >= 0; playerIndex--) {
+            PlayerState actor = players[playerIndex];
+            if (!actor.alive) {
+                continue;
+            }
+            for (ActionOrder order : turnOrders) {
+                if (order.playerId == actor.id && order.action == Action.PROPAGANDA) {
+                    propagandaOrders.add(order);
+                    resolvePropaganda(order, populationChanges);
+                }
+            }
+        }
+        for (int playerIndex = players.length - 1; playerIndex >= 0; playerIndex--) {
+            PlayerState actor = players[playerIndex];
+            if (!actor.alive) {
+                continue;
+            }
+            for (ActionOrder order : turnOrders) {
+                if (order.playerId == actor.id && order.action == Action.MASS_MEDIA) {
+                    resolveMassMedia(actor);
+                }
+            }
+        }
+        for (int playerIndex = players.length - 1; playerIndex >= 0; playerIndex--) {
+            PlayerState actor = players[playerIndex];
+            if (!actor.alive) {
+                continue;
+            }
+            for (ActionOrder order : turnOrders) {
+                if (order.playerId == actor.id && order.action == Action.RESOURCES) {
+                    resolveResources(actor);
+                }
+            }
+        }
+        // updatePlayerVars_2 applies propaganda hostility after doTR_from_battle
+        // has finished all of its score draws.
         for (ActionOrder order : propagandaOrders) {
-            resolvePropaganda(order, populationChanges);
+            PlayerState attacker = playerById(order.playerId);
+            PlayerState defender = playerById(order.targetPlayerId);
+            applyPropagandaHostilityEffects(attacker, defender);
+        }
+        // updatePlayerVars_2 settles all research results in player order before
+        // updatePlayerVars_3 handles any production purchases. Keeping these as
+        // separate passes preserves the shared score and purchase RNG sequence.
+        for (int playerIndex = 0; playerIndex < players.length; playerIndex++) {
+            PlayerState actor = players[playerIndex];
+            if (!actor.alive) {
+                continue;
+            }
+            for (ActionOrder order : turnOrders) {
+                if (order.playerId != actor.id) {
+                    continue;
+                }
+                if (order.action == Action.RESEARCH) {
+                        resolveResearch(order);
+                }
+            }
+        }
+        for (int playerIndex = 0; playerIndex < players.length; playerIndex++) {
+            PlayerState actor = players[playerIndex];
+            if (!actor.alive) {
+                continue;
+            }
+            for (ActionOrder order : turnOrders) {
+                if (order.playerId != actor.id) {
+                    continue;
+                }
+                if (order.action == Action.PRODUCTION) {
+                    resolveProduction(order);
+                } else if (order.action == Action.DIPLOMACY) {
+                    resolveDiplomacy(order);
+                } else if (order.action != Action.RESOURCES
+                        && order.action != Action.MASS_MEDIA
+                        && order.action != Action.ATTACK
+                        && order.action != Action.PREPARED_ATTACK
+                        && order.action != Action.DEFENSE
+                        && order.action != Action.PROPAGANDA
+                        && order.action != Action.RESEARCH) {
+                    throw new IllegalStateException("Unported action entered the turn queue: "
+                            + order.action);
+                }
+            }
         }
         applyBiologicalEffects(biologicalEffects);
         applyPopulationChanges(populationChanges);
@@ -2665,16 +2739,32 @@ public final class GameState {
 
     /** Applies source upkeep in active-player order after AI planning. */
     private void updateTurnUpkeep() {
-        for (PlayerState player : players) {
+        // ActionScript keys() visits array indices from last to first. The
+        // source active-player array is in player-id order, so keep the same
+        // reverse order when assigning religion and retargeting random draws.
+        for (int playerIndex = players.length - 1; playerIndex >= 0; playerIndex--) {
+            PlayerState player = players[playerIndex];
             if (!player.alive) {
                 continue;
             }
             advanceSpyReadiness(player);
             updateDiplomacyRelations(player);
-            reassignDeadAiEnemies(player);
+            reassignDeadPlayerEnemies(player);
             decayReligion(player);
             applySpecialAiIncome(player);
             tickDiplomacyOfferCooldowns(player);
+        }
+    }
+
+    /**
+     * The Flash battle setup always consumes 15 randRange(50, 60) values for
+     * its battle timer before resolving turn-result events. Those values only
+     * drive presentation, but they share the source gameplay RNG and affect
+     * later decisions, so advance the stream here without involving rendering.
+     */
+    private void consumeSourceBattleTimerDraws() {
+        for (int timerIndex = 0; timerIndex < 15; timerIndex++) {
+            random.nextInt(11);
         }
     }
 
@@ -3490,6 +3580,10 @@ public final class GameState {
 
         int transfer = calculatePropagandaTransfer(attacker, defender,
                 populationChanges.remainingAfterBattle(targetCity));
+        // Source passes the Player object where addToHighscore expects a player
+        // ID. That still consumes its 0..50 RNG draw, but its NaN score update
+        // is discarded; reproduce this source quirk for seeded parity.
+        random.nextInt(51);
         populationChanges.addPropagandaLoss(targetCity, transfer);
         int recipientCount = 0;
         for (CityState city : attacker.cities) {
@@ -3507,8 +3601,6 @@ public final class GameState {
                 }
             }
         }
-        applyPropagandaHostilityEffects(attacker, defender);
-        addToHighscore(attacker, 7, transfer);
         if (transfer > 0) {
             addMessage(attacker, "You gained " + transfer
                     + ".000.000 citizens from propaganda.");
@@ -3719,16 +3811,24 @@ public final class GameState {
         for (WeaponState weapon : producer.weapons.values()) {
             WeaponCatalog.Definition definition = weapon.definition;
             if (definition.productionGroup == group && weapon.active
-                    && weapon.inStock < PLAYER_STOCK_CAP
                     && (group == 7 || definition.costMillions < budget)) {
                 candidates.add(weapon);
                 minimumCost = Math.min(minimumCost, definition.costMillions);
             }
         }
+        // The Flash computes its minimum candidate cost before removing items at
+        // the stock cap. That stale minimum controls how long its random purchase
+        // loop continues after the remaining budget can no longer buy the sole
+        // uncapped item.
+        for (int index = candidates.size() - 1; index >= 0; index--) {
+            if (candidates.get(index).inStock >= PLAYER_STOCK_CAP) {
+                candidates.remove(index);
+            }
+        }
         int remaining = budget;
         int attempts = 0;
         Map<String, Integer> bought = new LinkedHashMap<>();
-        while (!candidates.isEmpty() && attempts <= 30) {
+        while (!candidates.isEmpty()) {
             WeaponState weapon = candidates.get(random.nextInt(candidates.size()));
             if (weapon.inStock <= PLAYER_STOCK_CAP) {
                 if (group == 7) {
@@ -3755,10 +3855,11 @@ public final class GameState {
                     addToHighscore(producer, 3, weapon.definition.level);
                 }
             }
-            attempts++;
-            if ((group == 7 ? remaining <= 0 : remaining < minimumCost) || attempts > 30) {
+            if ((group == 7 ? remaining <= 0 : remaining < minimumCost)
+                    || attempts > 30) {
                 break;
             }
+            attempts++;
         }
         if (!bought.isEmpty()) {
             StringBuilder summary = new StringBuilder("Nation ")
