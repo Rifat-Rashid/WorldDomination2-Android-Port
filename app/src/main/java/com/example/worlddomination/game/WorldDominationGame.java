@@ -1390,7 +1390,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         shapes.setProjectionMatrix(camera.combined);
         shapes.begin(ShapeRenderer.ShapeType.Filled);
         drawButtonGradient(helpButton, false);
-        drawButtonGradient(muteButton, false);
+        drawButtonGradient(muteButton, !audio.isSoundEnabled());
         shapes.end();
 
         drawNavigationRows();
@@ -2303,7 +2303,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     private void drawSettingsGear() {
         shapes.begin(ShapeRenderer.ShapeType.Line);
-        shapes.setColor(TITLE_TEXT);
+        shapes.setColor(audio.isMusicEnabled() ? TITLE_TEXT : DISABLED_TEXT);
         float cx = settingsButton.x + settingsButton.width / 2f;
         float cy = settingsButton.y + settingsButton.height / 2f;
         shapes.circle(cx, cy, 6.5f, 16);
@@ -3692,18 +3692,28 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             return;
         }
         if (MatchOutcomePresentation.isFinished(game.getMatchStatus())) {
+            if (muteButton.contains(x, y)) {
+                audio.toggleSound();
+                return;
+            }
+            if (settingsButton.contains(x, y)) {
+                audio.toggleMusic();
+                return;
+            }
             if (outcomeSequence.isEndgameVisible()) {
                 if (outcomeSequence.isScoreStarted() && modalAccept.contains(x, y)) {
                     beginNewGameSetup();
                     audio.play(OriginalAudio.Cue.ACTION_CLOSE);
                 }
-            } else if (muteButton.contains(x, y)) {
-                audio.toggleMuted();
             }
             return;
         }
         if (muteButton.contains(x, y)) {
-            audio.toggleMuted();
+            audio.toggleSound();
+            return;
+        }
+        if (settingsButton.contains(x, y)) {
+            audio.toggleMusic();
             return;
         }
         if (game.getPendingHumanDiplomacyProposal() != null) {

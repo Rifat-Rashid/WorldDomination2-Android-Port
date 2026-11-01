@@ -74,7 +74,8 @@ public final class OriginalAudio {
     private Music theme;
     private Cue ambientCue;
     private long ambientSoundId = -1L;
-    private boolean muted;
+    private boolean soundEnabled = true;
+    private boolean musicEnabled = true;
     private boolean resumeMusicAfterPause;
     private boolean initialized;
 
@@ -126,22 +127,17 @@ public final class OriginalAudio {
         preload(Cue.MASS_MEDIA_AMBIENT);
         preload(Cue.TECHNOLOGY_AMBIENT);
         play(Cue.STARTUP);
-        if (theme != null && !muted) {
+        if (theme != null && musicEnabled) {
             theme.setLooping(true);
             theme.setVolume(MUSIC_VOLUME);
             theme.play();
         }
     }
 
-    public boolean toggleMuted() {
-        muted = !muted;
-        if (theme != null) {
-            theme.setVolume(muted ? 0f : MUSIC_VOLUME);
-            if (!muted && !theme.isPlaying()) {
-                theme.play();
-            }
-        }
-        if (muted) {
+    /** Toggles source sound effects without changing the independent music setting. */
+    public boolean toggleSound() {
+        soundEnabled = !soundEnabled;
+        if (!soundEnabled) {
             for (Sound sound : sounds.values()) {
                 sound.stop();
             }
@@ -149,21 +145,50 @@ public final class OriginalAudio {
         } else if (ambientCue != null) {
             ambientSoundId = loop(ambientCue);
         }
-        return muted;
+        return soundEnabled;
+    }
+
+    /** Toggles the original theme track without changing sound effects or ambience. */
+    public boolean toggleMusic() {
+        musicEnabled = !musicEnabled;
+        if (theme != null) {
+            if (musicEnabled) {
+                theme.setLooping(true);
+                theme.setVolume(MUSIC_VOLUME);
+                theme.play();
+            } else {
+                theme.stop();
+            }
+        }
+        return musicEnabled;
+    }
+
+    /** Backwards-compatible mute action; the original MUTE switch controls effects only. */
+    public boolean toggleMuted() {
+        toggleSound();
+        return !soundEnabled;
     }
 
     public boolean isMuted() {
-        return muted;
+        return !soundEnabled;
+    }
+
+    public boolean isSoundEnabled() {
+        return soundEnabled;
+    }
+
+    public boolean isMusicEnabled() {
+        return musicEnabled;
     }
 
     /** Starts the requested original ambience loop, replacing the previous one. */
     public void playAmbient(Cue cue) {
-        if (ambientCue == cue && (muted || ambientSoundId >= 0L)) {
+        if (ambientCue == cue && (!soundEnabled || ambientSoundId >= 0L)) {
             return;
         }
         stopAmbientPlayback();
         ambientCue = cue;
-        if (!muted && cue != null) {
+        if (soundEnabled && cue != null) {
             ambientSoundId = loop(cue);
         }
     }
@@ -179,7 +204,7 @@ public final class OriginalAudio {
 
     /** Plays an original effect at the source Flash stage's normalized horizontal position. */
     public void play(Cue cue, float pan) {
-        if (muted || cue == Cue.THEME) {
+        if (!soundEnabled || cue == Cue.THEME) {
             return;
         }
         Sound sound = sounds.get(cue);
@@ -193,7 +218,7 @@ public final class OriginalAudio {
 
     /** Starts a looping original cue and returns its libGDX sound instance id. */
     public long loop(Cue cue) {
-        if (muted || cue == Cue.THEME) {
+        if (!soundEnabled || cue == Cue.THEME) {
             return -1L;
         }
         Sound sound = sounds.get(cue);
@@ -214,7 +239,7 @@ public final class OriginalAudio {
     }
 
     public void pause() {
-        resumeMusicAfterPause = theme != null && theme.isPlaying();
+        resumeMusicAfterPause = musicEnabled && theme != null && theme.isPlaying();
         if (resumeMusicAfterPause) {
             theme.pause();
         }
@@ -224,10 +249,10 @@ public final class OriginalAudio {
     }
 
     public void resume() {
-        if (resumeMusicAfterPause && !muted && theme != null) {
+        if (resumeMusicAfterPause && musicEnabled && theme != null) {
             theme.play();
         }
-        if (!muted) {
+        if (soundEnabled) {
             for (Sound sound : sounds.values()) {
                 sound.resume();
             }
