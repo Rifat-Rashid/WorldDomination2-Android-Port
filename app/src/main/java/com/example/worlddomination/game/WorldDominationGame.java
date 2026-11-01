@@ -200,7 +200,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private final Rectangle actionSlots[] = {new Rectangle(), new Rectangle()};
     private final Rectangle confirmButton = new Rectangle();
     private final Rectangle modal = new Rectangle();
-    private final Rectangle productionMapButton = new Rectangle();
     private final Rectangle modalAccept = new Rectangle();
     private final Rectangle modalCancel = new Rectangle();
     private final SetupScreenLayout setupLayout = new SetupScreenLayout();
@@ -441,15 +440,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         fitTitlePlate(scoreTitlePlate, "SCORE");
         fitTitlePlate(actionTitlePlate, "NEXT ACTION");
 
-        float modalAspect = ProductionScreenLayout.ART_WIDTH
-                / ProductionScreenLayout.ART_HEIGHT;
-        float modalWidth = Math.min(mapFrame.width * 0.78f,
-                mapFrame.height * 0.96f * modalAspect);
-        float modalHeight = modalWidth / modalAspect;
-        modal.set(mapFrame.x + (mapFrame.width - modalWidth) / 2f,
-                mapFrame.y + (mapFrame.height - modalHeight) / 2f,
-                modalWidth, modalHeight);
-        ProductionScreenLayout.setMapButtonBounds(mapFrame, productionMapButton);
+        ProductionScreenLayout.setModalBounds(mapFrame, modal);
         float modalScaleX = modal.width / ProductionScreenLayout.ART_WIDTH;
         float modalScaleY = modal.height / ProductionScreenLayout.ART_HEIGHT;
         modalCancel.set(modal.x + 22f * modalScaleX,
@@ -2203,7 +2194,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         GameState.Action action = game.getSelectedAction();
         if (action == GameState.Action.PRODUCTION) {
             drawProductionModal();
-            drawProductionMapButton();
             return;
         }
         if (action == GameState.Action.RESOURCES) {
@@ -2505,24 +2495,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 modalCancel.y + modalCancel.height / 2f + 3f, 8f);
         drawCentered("ACCEPT", modalAccept.x + modalAccept.width / 2f,
                 modalAccept.y + modalAccept.height / 2f + 3f, 8f);
-        batch.end();
-    }
-
-    private void drawProductionMapButton() {
-        batch.setProjectionMatrix(camera.combined);
-        batch.begin();
-        drawOriginalButton(productionMapButton);
-        batch.end();
-
-        shapes.setProjectionMatrix(camera.combined);
-        shapes.begin(ShapeRenderer.ShapeType.Filled);
-        drawButtonGradient(productionMapButton, false);
-        shapes.end();
-
-        batch.begin();
-        font.setColor(TITLE_TEXT);
-        drawCentered("MAP", productionMapButton.x + productionMapButton.width / 2f,
-                productionMapButton.y + productionMapButton.height / 2f + 3f, 8f);
         batch.end();
     }
 
@@ -3413,12 +3385,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         if (modalOpen) {
             GameState.Action action = game.getSelectedAction();
             if (action == GameState.Action.PRODUCTION) {
-                if (productionMapButton.contains(x, y)) {
-                    modalOpen = false;
-                    audio.play(OriginalAudio.Cue.ACTION_CLOSE);
-                    audio.playAmbient(OriginalAudio.Cue.GAME_AMBIENT);
-                    return;
-                }
                 for (Rectangle row : navRows) {
                     if (row.contains(x, y)) {
                         activateNavigationRow(x, y);
