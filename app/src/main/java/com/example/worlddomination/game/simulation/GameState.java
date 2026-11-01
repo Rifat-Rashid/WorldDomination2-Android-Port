@@ -789,11 +789,18 @@ public final class GameState {
     }
 
     private void initializeDifficultyTechnologies() {
-        int humanTechnologyLevel = difficulty == 0 ? 2 : 1;
-        inventTechnologiesThroughLevel(players[0], humanTechnologyLevel);
         if (difficulty == 1) {
+            for (PlayerState player : players) {
+                if (!player.alive) {
+                    continue;
+                }
+                inventTechnologiesThroughLevel(player, 1);
+                setWeaponStockPerLevel(player, 1, 1);
+            }
             return;
         }
+        int humanTechnologyLevel = difficulty == 0 ? 2 : 1;
+        inventTechnologiesThroughLevel(players[0], humanTechnologyLevel);
         for (int playerId = 1; playerId < players.length; playerId++) {
             PlayerState opponent = players[playerId];
             if (!opponent.alive) {
@@ -823,6 +830,8 @@ public final class GameState {
 
     private static void setWeaponStockPerLevel(PlayerState player, int level, int stock) {
         for (WeaponState weapon : player.weapons.values()) {
+            // The source helper iterates WeaponStock.weaponArr. The defense
+            // counters live in counterArr and retain their constructor stock.
             if (weapon.definition.productionGroup != 8 && weapon.definition.level == level) {
                 weapon.inStock = stock;
             }
@@ -923,10 +932,16 @@ public final class GameState {
     }
 
     private static void initializeInventory(PlayerState player) {
-        Collections.addAll(player.inventedTechnologies, STARTING_TECHNOLOGIES);
+        if (player.alive) {
+            Collections.addAll(player.inventedTechnologies, STARTING_TECHNOLOGIES);
+        }
         for (WeaponCatalog.Definition definition : WeaponCatalog.all()) {
             WeaponState weapon = new WeaponState(definition);
-            weapon.active = player.inventedTechnologies.contains(definition.technology);
+            if (!player.alive) {
+                weapon.inStock = 0;
+            }
+            weapon.active = player.alive
+                    && player.inventedTechnologies.contains(definition.technology);
             player.weapons.put(definition.name, weapon);
         }
     }

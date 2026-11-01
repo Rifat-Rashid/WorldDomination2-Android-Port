@@ -15,8 +15,10 @@ import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 
 public final class GameStateTest {
     @Test
@@ -998,6 +1000,8 @@ public final class GameStateTest {
     public void directAttackChangesMutualRegardAndFractionalCeasefireAllyRegard() {
         GameState state = new GameState(0, 74L, false);
         GameState.PlayerState human = state.getHuman();
+        // Easy starts with no soldier stock; this test isolates attack diplomacy.
+        human.getWeapons().get("soldier1").inStock = 1;
         GameState.PlayerState defender = state.getPlayerState(1);
         GameState.PlayerState observer = state.getPlayerState(2);
         setRegard(human, defender.id, 80);
@@ -2839,6 +2843,78 @@ public final class GameStateTest {
             assertEquals(enemyMoney[difficulty], players[1].moneyMillions);
             assertEquals(450, players[1].populationMillions);
             assertEquals(enemyReligion[difficulty], players[1].religion);
+        }
+    }
+
+    @Test
+    public void sourceDifficultySetsStartingWeaponStockByPlayerAndDifficulty() {
+        for (int difficulty = 0; difficulty < 3; difficulty++) {
+            GameSetup setup = new GameSetup();
+            setup.setDifficulty(difficulty);
+            assertTrue(setup.toggleOpponent(0));
+            assertTrue(setup.toggleOpponent(1));
+            GameState state = new GameState(setup, 810L + difficulty);
+
+            for (int playerId = 0; playerId < state.getPlayers().length; playerId++) {
+                GameState.PlayerState player = state.getPlayerState(playerId);
+                for (WeaponCatalog.Definition weapon : WeaponCatalog.all()) {
+                    int constructorStock = "spy1".equals(weapon.name) ? 1
+                            : weapon.productionGroup == 8 ? 2 : 0;
+                    int expectedStock = player.alive ? constructorStock : 0;
+                    if (player.alive && weapon.productionGroup != 8) {
+                        if (difficulty == 1 && weapon.level == 1) {
+                            expectedStock = 1;
+                        } else if (difficulty == 2 && playerId > 0) {
+                            if (weapon.level == 1) {
+                                expectedStock = 2;
+                            } else if (weapon.level == 2) {
+                                expectedStock = 1;
+                            }
+                        }
+                    }
+                    assertEquals("difficulty " + difficulty + ", player " + playerId
+                                    + ", weapon " + weapon.name,
+                            expectedStock, player.getWeaponStockByName(weapon.name));
+                }
+            }
+        }
+    }
+
+    @Test
+    public void sourceDifficultyInitializesTechnologiesOnlyForActivePlayers() {
+        String[] sourceLevelOneTechnologies = {
+                "rocket1", "warhead1", "bioload1", "soldier1", "spy1",
+                "plane1", "antiAir", "antiRocket"
+        };
+        String[] sourceLevelTwoTechnologies = {
+                "rocket2", "warhead2", "bioload2", "soldier2", "spy2", "plane2"
+        };
+        for (int difficulty = 0; difficulty < 3; difficulty++) {
+            GameSetup setup = new GameSetup();
+            setup.setDifficulty(difficulty);
+            assertTrue(setup.toggleOpponent(0));
+            GameState state = new GameState(setup, 820L + difficulty);
+
+            for (int playerId = 0; playerId < state.getPlayers().length; playerId++) {
+                GameState.PlayerState player = state.getPlayerState(playerId);
+                Set<String> expected = new LinkedHashSet<>();
+                if (player.alive) {
+                    int maxLevel = (difficulty == 0 && playerId == 0)
+                            || (difficulty == 2 && playerId > 0) ? 2 : 1;
+                    Collections.addAll(expected, sourceLevelOneTechnologies);
+                    if (maxLevel == 2) {
+                        Collections.addAll(expected, sourceLevelTwoTechnologies);
+                    }
+                }
+                assertEquals("difficulty " + difficulty + ", player " + playerId,
+                        expected, player.getInventedTechnologies());
+                for (WeaponCatalog.Definition weapon : WeaponCatalog.all()) {
+                    assertEquals("difficulty " + difficulty + ", player " + playerId
+                                    + ", active weapon " + weapon.name,
+                            expected.contains(weapon.technology),
+                            player.getWeapons().get(weapon.name).active);
+                }
+            }
         }
     }
 
