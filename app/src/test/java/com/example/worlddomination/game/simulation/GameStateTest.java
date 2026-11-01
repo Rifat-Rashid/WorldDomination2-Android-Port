@@ -734,6 +734,23 @@ public final class GameStateTest {
     }
 
     @Test
+    public void productionMenuUsesTheRemainingTurnBudgetAfterAnEarlierAction() {
+        GameState state = new GameState(1, 0L);
+        state.selectAction(GameState.Action.PRODUCTION);
+        assertTrue(state.configureProduction("soldier", 40));
+        assertEquals(26, state.getSelectedProductionTotalBudgetMillions());
+        assertTrue(state.acceptSelectedAction());
+        assertEquals(39, state.getTurnMoneyMillions());
+
+        state.selectAction(GameState.Action.PRODUCTION);
+        assertTrue(state.configureProduction("rockets", 50));
+        assertEquals(20, state.getSelectedProductionTotalBudgetMillions());
+        assertTrue(state.acceptSelectedAction());
+        assertEquals(19, state.getTurnMoneyMillions());
+        assertEquals(65, state.getHuman().moneyMillions);
+    }
+
+    @Test
     public void productionRejectsLockedTechnologyGroupAndKeepsExistingSelection() {
         GameState state = new GameState(1, 0L, false);
         state.selectAction(GameState.Action.PRODUCTION);
@@ -2216,6 +2233,49 @@ public final class GameStateTest {
         assertEquals(1051, human.moneyMillions);
         assertEquals(0, opponent.moneyMillions);
         assertTrue(human.hasCeasefireWith(1));
+    }
+
+    @Test
+    public void incomingAiDemandsSpendTheRecipientBudgetInProposalArrivalOrder() {
+        GameState state = new GameState(1, 21L, false);
+        GameState.PlayerState receiver = state.getPlayerState(1);
+        GameState.PlayerState firstProposer = state.getPlayerState(3);
+        GameState.PlayerState secondProposer = state.getPlayerState(2);
+        receiver.moneyMillions = 10;
+        receiver.turnMoneyMillions = 10;
+        receiver.populationMillions = 100;
+        firstProposer.moneyMillions = 1_000;
+        firstProposer.populationMillions = 500;
+        secondProposer.moneyMillions = 1_000;
+        secondProposer.populationMillions = 500;
+
+        // The source keeps diplomacyPendingArr insertion order. Both demands
+        // qualify on score, but only the first can spend the recipient budget.
+        assertTrue(state.submitDiplomacyProposal(firstProposer.id, receiver.id, 3));
+        assertTrue(state.submitDiplomacyProposal(secondProposer.id, receiver.id, 3));
+        setRegard(receiver, firstProposer.id, 80);
+        setRegard(receiver, secondProposer.id, 80);
+
+        completeTurnWithResourcesAndMedia(state);
+
+        assertTrue(receiver.hasCeasefireWith(firstProposer.id));
+        assertFalse(receiver.hasCeasefireWith(secondProposer.id));
+        assertEquals(0, receiver.moneyMillions);
+        assertEquals(1_010, firstProposer.moneyMillions);
+        assertEquals(1_000, secondProposer.moneyMillions);
+    }
+
+    @Test
+    public void humanDiplomacyQueuePresentsProposalsInArrivalOrder() {
+        GameState state = new GameState(1, 22L, false);
+
+        assertTrue(state.submitDiplomacyProposal(3, 0, 0));
+        assertTrue(state.submitDiplomacyProposal(2, 0, 0));
+        assertEquals(3, state.getPendingHumanDiplomacyProposal().proposerId);
+
+        assertTrue(state.respondToDiplomacyProposal(false));
+
+        assertEquals(2, state.getPendingHumanDiplomacyProposal().proposerId);
     }
 
     @Test

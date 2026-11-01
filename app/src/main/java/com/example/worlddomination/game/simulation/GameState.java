@@ -186,6 +186,9 @@ public final class GameState {
         private final int[] ceasefireTurns = new int[5];
         private final int[] diplomacyOfferedLastTurn = new int[5];
         private final DiplomacyProposal[] pendingDiplomacy = new DiplomacyProposal[5];
+        // The Flash source uses diplomacyPendingArr in append order; accepted
+        // demands spend the receiver's turn budget in that same order.
+        private final List<DiplomacyProposal> pendingDiplomacyOrder = new ArrayList<>();
         private final List<CityState> cities = new ArrayList<>(5);
         private final List<Action> lastTurnActions = new ArrayList<>(2);
         private final Set<String> inventedTechnologies = new LinkedHashSet<>();
@@ -1331,9 +1334,8 @@ public final class GameState {
     }
 
     public DiplomacyProposal getPendingHumanDiplomacyProposal() {
-        for (int proposerId = 1; proposerId < players.length; proposerId++) {
-            DiplomacyProposal proposal = players[0].pendingDiplomacy[proposerId];
-            if (proposal != null) {
+        for (DiplomacyProposal proposal : players[0].pendingDiplomacyOrder) {
+            if (proposal != null && proposal.proposerId > 0) {
                 return proposal;
             }
         }
@@ -1374,8 +1376,9 @@ public final class GameState {
         if (offer) {
             proposer.moneyMillions -= amount;
         }
-        target.pendingDiplomacy[proposerPlayerId] =
-                new DiplomacyProposal(proposerPlayerId, optionIndex);
+        DiplomacyProposal proposal = new DiplomacyProposal(proposerPlayerId, optionIndex);
+        target.pendingDiplomacy[proposerPlayerId] = proposal;
+        target.pendingDiplomacyOrder.add(proposal);
         proposer.diplomacyOfferedLastTurn[targetPlayerId] = 2;
         applyDiplomacySentRegard(proposer, target, optionIndex);
         return true;
@@ -2350,9 +2353,14 @@ public final class GameState {
             if (!target.alive) {
                 continue;
             }
-            for (int proposerId = 0; proposerId < players.length; proposerId++) {
-                DiplomacyProposal proposal = target.pendingDiplomacy[proposerId];
-                if (proposal != null) {
+            // A fixed proposer-id scan changes which demands fit the recipient's
+            // remaining turn money when several proposals arrive together.
+            List<DiplomacyProposal> pendingInArrivalOrder =
+                    new ArrayList<>(target.pendingDiplomacyOrder);
+            target.pendingDiplomacyOrder.clear();
+            for (DiplomacyProposal proposal : pendingInArrivalOrder) {
+                int proposerId = proposal.proposerId;
+                if (target.pendingDiplomacy[proposerId] == proposal) {
                     boolean accept = shouldAiAccept(target, proposal);
                     if (accept && proposal.optionIndex >= 3) {
                         target.turnMoneyMillions -= DIPLOMACY_AMOUNT[proposal.optionIndex];
@@ -2434,6 +2442,7 @@ public final class GameState {
             accepted = false;
         }
         target.pendingDiplomacy[proposerId] = null;
+        target.pendingDiplomacyOrder.remove(proposal);
         if (accepted) {
             target.regardToward[proposerId] += DIPLOMACY_BONUS;
             proposer.regardToward[target.id] += DIPLOMACY_BONUS;
