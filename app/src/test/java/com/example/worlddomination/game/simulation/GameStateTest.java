@@ -27,6 +27,30 @@ public final class GameStateTest {
     }
 
     @Test
+    public void messageHistoryKeepsCurrentEntriesUntilTurnResultsThenResets() {
+        GameState state = new GameState(1, 734L, false);
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.MASS_MEDIA);
+        assertTrue(state.acceptSelectedAction());
+
+        for (int i = 0; i < 6; i++) {
+            state.selectAction(GameState.Action.DIPLOMACY);
+        }
+        String fullActionQueueMessage =
+                "Both action slots are full. Confirm the turn or clear them.";
+        assertTrue(state.getMessages().size() > 4);
+        assertTrue(state.getMessages().contains(fullActionQueueMessage));
+
+        state.confirmTurn();
+
+        assertFalse(state.getMessages().contains(fullActionQueueMessage));
+        assertFalse(state.getMessages().contains(
+                "Welcome, commander. Select two actions."));
+        assertTrue(state.getMessages().contains("Turn 1 complete."));
+    }
+
+    @Test
     public void battlefieldCitySelectionSeedsActionTargetAndRejectsEmptyCities() {
         GameState state = new GameState(1, 0L, false);
 
