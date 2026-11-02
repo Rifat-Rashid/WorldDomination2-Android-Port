@@ -153,6 +153,22 @@ public final class AiSourceTurnResolutionTraceTest {
             {107, 41, 67, 43, 167}
     };
 
+    private static final int[][] EXPECTED_EIGHTH_TURN_PLAYER_STATE = {
+            {236, 334, 100, 147088},
+            {5, 450, 28, 424890},
+            {107, 475, 17, 371586},
+            {92, 450, 45, 191644},
+            {10, 425, 50, 212592}
+    };
+
+    private static final int[][] EXPECTED_EIGHTH_TURN_CITY_POPULATIONS = {
+            {73, 29, 80, 47, 105},
+            {59, 97, 54, 84, 156},
+            {62, 85, 115, 83, 130},
+            {66, 110, 67, 96, 111},
+            {107, 41, 67, 43, 167}
+    };
+
     // Source trace includes one empty-range random() call that Java records
     // separately from bounded nextInt draws.
     private static final List<String> EXPECTED_FOURTH_TURN_RANDOM_DRAWS = Arrays.asList(
@@ -200,6 +216,19 @@ public final class AiSourceTurnResolutionTraceTest {
             "11:5", "11:3", "11:1", "11:3", "11:8", "51:14", "51:49", "51:42",
             "51:13", "51:23", "51:40", "51:0", "1:0", "51:34", "2:0", "51:33",
             "2:0", "51:14", "2:1", "2:1", "2:0", "51:13", "1:0", "51:15");
+
+    // The source's 15..18 strike casualty roll maps to nextDouble in Java and
+    // is asserted separately through RecordingRandom.rawDraws.
+    private static final List<String> EXPECTED_EIGHTH_TURN_RANDOM_DRAWS = Arrays.asList(
+            "91:20", "3:0", "91:45", "3:2", "91:74", "3:1", "91:85", "3:1",
+            "61:50", "4:3", "21:15", "61:55", "61:36", "61:53", "61:16", "61:30",
+            "4:2", "21:11", "61:3", "3:0", "5:3", "5:1", "141:98", "5:3",
+            "5:2", "6:0", "6:2", "6:5", "6:1", "6:0", "51:18",
+            "11:2", "11:5", "11:10", "11:6", "11:2", "11:0", "11:4", "11:2",
+            "11:10", "11:9", "11:10", "11:10", "11:3", "11:6", "11:6", "51:27",
+            "51:27", "51:11", "51:7", "51:2", "51:35", "51:8", "4:3", "51:33",
+            "4:1", "51:45", "4:0", "51:10", "4:3", "4:1", "4:3", "4:1",
+            "4:0", "51:47", "4:3", "51:23", "4:2", "4:2", "4:0", "51:38");
 
     // Source trace collected from Model.doTurn through Sub_presenter.turnResults.
     // Empty and zero-width ranges remain because they consume source RNG calls.
@@ -526,6 +555,66 @@ public final class AiSourceTurnResolutionTraceTest {
         assertSeededState(game, EXPECTED_SEVENTH_TURN_PLAYER_STATE,
                 EXPECTED_SEVENTH_TURN_CITY_POPULATIONS);
         assertEquals("seventh-turn empty production list consumes a raw draw",
+                1, random.rawDraws);
+    }
+
+    @Test
+    public void hardSeededEighthTurnMatchesPreparedStrikeAndSettlement() {
+        GameSetup setup = new GameSetup(17L);
+        setup.setDifficulty(2);
+        for (int leader : new int[]{0, 9, 18, 5}) {
+            setup.toggleOpponent(leader);
+        }
+        RecordingRandom random = new RecordingRandom(setup.copyGameplayRandom());
+        GameState game = new GameState(setup, random);
+        random.clear();
+
+        for (int priorTurn = 0; priorTurn < 7; priorTurn++) {
+            queueHumanTurn(game);
+            game.confirmTurn();
+            random.clear();
+        }
+        assertEquals("turn seven leaves the source-selected rocket ready",
+                "rocket1", game.getPreparedCarrierName(4));
+
+        queueHumanTurn(game);
+        game.confirmTurn();
+
+        assertEquals(8, game.getTurn());
+        assertEquals(Arrays.asList(GameState.Action.RESEARCH, GameState.Action.PRODUCTION),
+                game.getPlayerState(1).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.RESOURCES, GameState.Action.RESEARCH),
+                game.getPlayerState(2).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.PRODUCTION, GameState.Action.MASS_MEDIA),
+                game.getPlayerState(3).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.PREPARED_ATTACK, GameState.Action.MASS_MEDIA),
+                game.getPlayerState(4).getLastTurnActions());
+        assertTrue("source consumes the prepared rocket after its turn-eight strike",
+                game.getPreparedCarrierName(4) == null);
+        assertEquals("turn-eight AI, strike, and settlement draws match source; actual="
+                        + random.draws,
+                EXPECTED_EIGHTH_TURN_RANDOM_DRAWS, random.draws);
+
+        StringBuilder combatSummary = new StringBuilder();
+        for (GameState.CombatEvent event : game.getLastTurnCombatEvents()) {
+            combatSummary.append(event.type).append(':').append(event.attackerPlayerId)
+                    .append("->").append(event.defenderPlayerId).append(" city=")
+                    .append(event.cityIndex).append(" weapon=").append(event.weaponName)
+                    .append(" payload=").append(event.payloadName).append(" casualties=")
+                    .append(event.casualtiesMillions).append(';');
+        }
+        assertEquals("one prepared rocket hits the source-selected city: " + combatSummary,
+                1, game.getLastTurnCombatEvents().size());
+        GameState.CombatEvent strike = game.getLastTurnCombatEvents().get(0);
+        assertEquals(GameState.CombatEventType.STRIKE_IMPACT, strike.type);
+        assertEquals(4, strike.attackerPlayerId);
+        assertEquals(0, strike.defenderPlayerId);
+        assertEquals("prepared strike city: " + combatSummary, 1, strike.cityIndex);
+        assertEquals("warhead1", strike.payloadName);
+        assertEquals(18, strike.casualtiesMillions);
+        assertSeededState(game, EXPECTED_EIGHTH_TURN_PLAYER_STATE,
+                EXPECTED_EIGHTH_TURN_CITY_POPULATIONS);
+        assertEquals("turn eight strike casualty consumes one raw random draw",
                 1, random.rawDraws);
     }
 

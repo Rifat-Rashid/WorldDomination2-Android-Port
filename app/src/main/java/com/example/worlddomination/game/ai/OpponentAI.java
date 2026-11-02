@@ -230,6 +230,22 @@ public final class OpponentAI {
                 companion = scores.get(1);
             }
             if (!attackPlan.isEmpty()) {
+                boolean rejectedPreparedCompanion = attackSlot == 0
+                        && duplicateAttack && !duplicateSuppressed[0]
+                        && attackPlan.size() > 1
+                        && attackPlan.get(0).action == GameState.Action.PREPARED_ATTACK
+                        && attackPlan.get(1).action == GameState.Action.ATTACK
+                        && player.getWeapons().containsKey(attackPlan.get(1).weaponName)
+                        && "spy".equals(player.getWeapons().get(
+                        attackPlan.get(1).weaponName).definition.type)
+                        && !"ship".equals(player.getWeapons().get(
+                        attackPlan.get(0).weaponName).definition.type);
+                if (rejectedPreparedCompanion && scores.size() > 1) {
+                    // getTarget first prepares a direct companion after a ready
+                    // carrier strike, then rejects the second-slot "attack"
+                    // case. Model.doTurn refills that slot from the next score.
+                    companion = scores.get(1);
+                }
                 boolean companionWasReset = player.getPreparedCarrierName() == null
                         || attackPlan.get(0).prepareCarrier;
                 if (companionWasReset && scores.size() > 1) {
@@ -240,6 +256,10 @@ public final class OpponentAI {
                     companion = scores.get(1);
                 }
                 for (Decision decision : attackPlan) {
+                    if (rejectedPreparedCompanion
+                            && decision == attackPlan.get(1)) {
+                        continue;
+                    }
                     decisions.add(decision);
                     reserve(player, decision);
                     markPlannedUse(decision, plannedWeaponUse);
@@ -278,6 +298,14 @@ public final class OpponentAI {
                         && scored.score - 50 > scores.get(1).score;
                 List<Decision> attackPlan = planSourceAttack(state, player, random,
                         duplicateAttack, plannedWeaponUse);
+                if (attackPlan.isEmpty() && firstActionIndex == 0 && index == 0) {
+                    // Model.doTurn calls getTarget on the ActionTarget's initial
+                    // top-ranked action before advancing its score cursor. If
+                    // that first target fails, the loop assigns the same top
+                    // action and asks getTarget again before moving down.
+                    attackPlan = planSourceAttack(state, player, random,
+                            duplicateAttack, plannedWeaponUse);
+                }
                 for (Decision decision : attackPlan) {
                     if (decisions.size() == 2) {
                         break;
@@ -289,6 +317,12 @@ public final class OpponentAI {
 
             Decision decision = planRankedAction(state, player, scored, random,
                     decisions.size() + 1, plannedWeaponUse);
+            if (decision == null && firstActionIndex == 0 && index == 0) {
+                // A rejected initial target is tested again once by the source
+                // loop before it advances to the next ranked action.
+                decision = planRankedAction(state, player, scored, random,
+                        decisions.size() + 1, plannedWeaponUse);
+            }
             if (decision != null) {
                 addPlannedDecision(player, decision, decisions, plannedWeaponUse);
             }
@@ -707,6 +741,19 @@ public final class OpponentAI {
                             readyCarrier, payload.definition.name));
                     decisions.add(attackDecision(attacker.id, target.id, conventionalCity,
                             conventional.definition.name));
+                    // The first getTarget call checks the spy cash alert after
+                    // creating the paired slot and can replace that companion
+                    // with a spy. The second-slot "attack" is rejected later,
+                    // but its city and building draws still belong to the source
+                    // trace.
+                    SpyTarget spyTarget = findSpyTarget(state, attacker, random);
+                    if (spyTarget != null && spyTarget.cashAlert) {
+                        Decision spyAttack = planCashAlertSpyAttack(state, attacker,
+                                spyTarget, random);
+                        if (spyAttack != null) {
+                            decisions.set(1, spyAttack);
+                        }
+                    }
                     return decisions;
                 }
             }
