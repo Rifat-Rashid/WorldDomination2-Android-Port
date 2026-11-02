@@ -2971,14 +2971,19 @@ public final class GameState {
         }
         int casualties = 0;
         if ("soldier".equals(weapon.definition.type)) {
+            int rolledCasualties = sourceDirectAttackCasualties(
+                    weapon.definition.maxKillsMillions, random);
             casualties = populationChanges.addBattleCasualties(city,
-                    sourceDirectAttackCasualties(weapon.definition.maxKillsMillions, random));
+                    rolledCasualties);
             lastTurnCombatEvents.add(new CombatEvent(CombatEventType.DIRECT_ATTACK,
                     attacker.id, defender.id, city.index, weapon.definition.name, null,
                     casualties, null, order.actionBuildingSlot));
             recordLargestBattle(attacker, defender, casualties);
             applyTurnResultBattleHostilityEffects(attacker, defender, casualties);
-            if (casualties > 0) {
+            // Source scores a successful casualty roll before treating a city
+            // as visually empty. A roll can be clamped to zero by earlier
+            // attacks on the same city and still consumes its score draw.
+            if (rolledCasualties > 0) {
                 addToHighscore(attacker, 1, casualties);
             }
         } else {
@@ -3279,7 +3284,7 @@ public final class GameState {
                 counterDefense == null ? -1 : counterDefense.actionBuildingSlot));
         recordLargestBattle(attacker, defender, casualties);
         applyTurnResultBattleHostilityEffects(attacker, defender, casualties);
-        if (casualties > 0) {
+        if (rolledCasualties > 0) {
             addToHighscore(attacker, 1, casualties);
         }
     }
@@ -3363,7 +3368,10 @@ public final class GameState {
                         hasMatchingDefense ? counterDefense.actionBuildingSlot : -1));
                 totalCasualties += casualties;
                 recordLargestBattle(attacker, defender, casualties);
-                if (casualties > 0) {
+                // The source checks the un-clamped ship result before applying
+                // city population limits, then scores the clamped casualty
+                // amount (including zero) for every non-intercepted hit.
+                if (result.rolledCasualties > 0) {
                     addToHighscore(attacker, 1, casualties);
                 }
             }
@@ -3535,7 +3543,11 @@ public final class GameState {
         }
 
         List<WeaponState> availableTargets = new ArrayList<>();
-        for (WeaponState targetWeapon : defender.weapons.values()) {
+        List<WeaponState> defenderWeapons = new ArrayList<>(defender.weapons.values());
+        // Sub_presenter.createSpyStealArray enumerates WeaponStock.weaponArr
+        // with ActionScript keys(), which visits array slots from last to first.
+        for (int index = defenderWeapons.size() - 1; index >= 0; index--) {
+            WeaponState targetWeapon = defenderWeapons.get(index);
             int maximumTargetLevel = defender.specialPerson ? 1 : level;
             if (targetWeapon.inStock > 0 && targetWeapon.definition.level <= maximumTargetLevel
                     && !"spy".equals(targetWeapon.definition.type)

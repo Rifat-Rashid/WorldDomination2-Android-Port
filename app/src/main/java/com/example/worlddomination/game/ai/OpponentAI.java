@@ -732,13 +732,22 @@ public final class OpponentAI {
                     return decisions;
                 }
                 decisions.add(ship);
-                GameState.WeaponState conventional = strongestAvailableSoldier(
-                        attacker, plannedUse);
-                Integer cityIndex = firstPopulatedCity(target);
-                if (conventional != null && cityIndex != null) {
-                    decisions.add(attackDecision(attacker.id, target.id, cityIndex,
-                            conventional.definition.name));
+                // Model.getTarget runs the common spy-cash alert check after
+                // choosing a ready ship's three strike targets. It can replace
+                // the prepared attack with a spy mission, and consumes a draw
+                // even when the human's funds stay below the sampled threshold.
+                SpyTarget spyTarget = findSpyTarget(state, attacker, random);
+                if (spyTarget != null && spyTarget.cashAlert) {
+                    Decision spyAttack = planCashAlertSpyAttack(state, attacker,
+                            spyTarget, random);
+                    if (spyAttack != null) {
+                        decisions.clear();
+                        decisions.add(spyAttack);
+                    }
                 }
+                // A ship may stage a conventional companion in its source
+                // ActionTarget, but doTurn rejects that second-slot attack and
+                // fills the slot from the next ranked action instead.
                 return decisions;
             }
 
@@ -1226,7 +1235,11 @@ public final class OpponentAI {
             return null;
         }
         List<Integer> populated = new ArrayList<>();
-        for (CityState city : target.getCities()) {
+        List<CityState> targetCities = target.getCities();
+        // The source calls select_random_city, whose ActionScript keys()
+        // iteration visits array slots from highest to lowest.
+        for (int index = targetCities.size() - 1; index >= 0; index--) {
+            CityState city = targetCities.get(index);
             if (city.populationMillions > 0) {
                 populated.add(city.index);
             }
@@ -1275,7 +1288,11 @@ public final class OpponentAI {
             return null;
         }
         List<Integer> populated = new ArrayList<>();
-        for (CityState city : target.getCities()) {
+        List<CityState> targetCities = target.getCities();
+        // ActionScript's keys(cityArr) traversal in select_random_city is
+        // reverse-indexed, so ship payloads use the same candidate ordering.
+        for (int index = targetCities.size() - 1; index >= 0; index--) {
+            CityState city = targetCities.get(index);
             if (city.populationMillions > 0) {
                 populated.add(city.index);
             }

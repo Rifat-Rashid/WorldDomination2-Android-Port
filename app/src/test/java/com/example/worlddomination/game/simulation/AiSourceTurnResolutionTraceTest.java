@@ -1419,6 +1419,105 @@ public final class AiSourceTurnResolutionTraceTest {
         assertSeededState(game, expectedPlayers, expectedCities);
     }
 
+    @Test
+    public void hardSeededSeventeenthTurnMatchesSourceShipPayloadsAndAiActions() {
+        GameSetup setup = new GameSetup(17L);
+        setup.setDifficulty(2);
+        for (int leader : new int[]{0, 9, 18, 5}) {
+            setup.toggleOpponent(leader);
+        }
+        RecordingRandom random = new RecordingRandom(setup.copyGameplayRandom());
+        GameState game = new GameState(setup, random);
+        random.clear();
+
+        for (int priorTurn = 0; priorTurn < 16; priorTurn++) {
+            queueHumanTurn(game);
+            game.confirmTurn();
+            random.clear();
+        }
+        assertSeededState(game,
+                new int[][]{
+                        {135, 220, 100, 286912},
+                        {33, 432, 17, 609590},
+                        {55, 475, 41, 605478},
+                        {83, 470, 36, 444884},
+                        {50, 425, 40, 492174}
+                },
+                new int[][]{
+                        {65, 0, 37, 13, 105},
+                        {59, 97, 54, 84, 138},
+                        {62, 85, 115, 83, 130},
+                        {70, 114, 71, 100, 115},
+                        {107, 41, 67, 43, 167}
+                });
+
+        queueHumanTurn(game);
+        game.confirmTurn();
+        assertEquals(17, game.getTurn());
+        assertEquals("source turn-seventeen bounded draw trace; actual=" + random.draws,
+                Arrays.asList(
+                        "91:71", "3:1", "91:27", "3:1", "91:38", "3:1", "91:13", "3:2",
+                        "4:1", "4:3", "4:1", "141:132", "61:22", "61:41", "2:0", "3:2",
+                        "1:0", "141:134", "2:1", "4:1", "4:1", "141:107", "7:6", "4:0",
+                        "21:0", "61:41", "6:1", "6:4", "6:2", "6:2", "6:2", "3:0",
+                        "3:2", "3:2", "51:30", "51:19", "51:19", "51:35", "11:4", "11:1",
+                        "11:9", "11:9", "11:3", "11:9",
+                        "11:8", "11:9", "11:4", "11:8", "11:8", "11:3", "11:2", "11:6",
+                        "11:4", "51:22", "51:34", "51:45", "51:11", "51:19", "51:17", "1:0",
+                        "51:44", "1:0", "51:10"), random.draws);
+        assertEquals("source ship and soldier casualty rolls use raw draws", 4,
+                random.rawDraws);
+        assertEquals(Arrays.asList(GameState.Action.MASS_MEDIA, GameState.Action.RESOURCES),
+                game.getPlayerState(1).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.PREPARED_ATTACK, GameState.Action.RESOURCES),
+                game.getPlayerState(2).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.PREPARED_ATTACK, GameState.Action.MASS_MEDIA),
+                game.getPlayerState(3).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.ATTACK, GameState.Action.PRODUCTION),
+                game.getPlayerState(4).getLastTurnActions());
+
+        assertEquals("P3 prepares the next silo rocket", "rocket1",
+                game.getPreparedCarrierName(3));
+        assertEquals("P2 consumes its three-payload ship", null,
+                game.getPreparedCarrierName(2));
+        List<GameState.CombatEvent> resolvedEvents = game.getLastTurnCombatEvents();
+        assertEquals("source ship impacts and final soldier attack", 4,
+                resolvedEvents.size());
+        int[] expectedShipCities = {3, 0, 3};
+        int[] expectedShipCasualties = {13, 57, 0};
+        for (int strikeIndex = 0; strikeIndex < 3; strikeIndex++) {
+            GameState.CombatEvent strike = resolvedEvents.get(strikeIndex);
+            assertEquals(GameState.CombatEventType.STRIKE_IMPACT, strike.type);
+            assertEquals(2, strike.attackerPlayerId);
+            assertEquals(0, strike.defenderPlayerId);
+            assertEquals(expectedShipCities[strikeIndex], strike.cityIndex);
+            assertEquals("warhead3", strike.payloadName);
+            assertEquals(expectedShipCasualties[strikeIndex], strike.casualtiesMillions);
+        }
+        GameState.CombatEvent directAttack = resolvedEvents.get(3);
+        assertEquals(GameState.CombatEventType.DIRECT_ATTACK, directAttack.type);
+        assertEquals(4, directAttack.attackerPlayerId);
+        assertEquals(0, directAttack.defenderPlayerId);
+        assertEquals(3, directAttack.cityIndex);
+        assertEquals("soldier2", directAttack.weaponName);
+        assertEquals(0, directAttack.casualtiesMillions);
+        assertSeededState(game,
+                new int[][]{
+                        {152, 150, 100, 301590},
+                        {69, 432, 35, 632108},
+                        {98, 475, 34, 797588},
+                        {83, 470, 52, 451034},
+                        {30, 425, 34, 510894}
+                },
+                new int[][]{
+                        {8, 0, 37, 0, 105},
+                        {59, 97, 54, 84, 138},
+                        {62, 85, 115, 83, 130},
+                        {70, 114, 71, 100, 115},
+                        {107, 41, 67, 43, 167}
+                });
+    }
+
     private static void assertSeededState(GameState game, int[][] players,
                                          int[][] cities) {
         for (int playerId = 0; playerId < players.length; playerId++) {
