@@ -4117,7 +4117,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             FlashAntiDefenseTrackingAnimation.TargetLock antiDefenseTargetLock =
                     new FlashAntiDefenseTrackingAnimation.TargetLock();
             ReferenceRandom presentationRandom = game.createPresentationRandomCopy();
-            for (GameState.CombatEvent event : game.getLastTurnCombatEvents()) {
+            for (GameState.CombatEvent event
+                    : game.getLastTurnCombatEventsInSourcePresentationOrder()) {
                 OriginalAudio.Cue cue = OriginalAudio.cueForCombatEvent(event);
                 if (FlashBattleRoutes.supportsSatelliteStrike(event)) {
                     GameState.PlayerState attacker = game.getPlayerState(

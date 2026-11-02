@@ -2293,6 +2293,18 @@ public final class GameState {
         return Collections.unmodifiableList(lastTurnCombatEvents);
     }
 
+    /**
+     * Returns battle outcomes in the order the Flash battle timeline presents them.
+     * The source stores turn-result records in reverse resolution order, then
+     * iterates those records backward to apply simulation side effects. Playback
+     * consumes the original record order, so it is the reverse of this resolved list.
+     */
+    public List<CombatEvent> getLastTurnCombatEventsInSourcePresentationOrder() {
+        List<CombatEvent> presentationOrder = new ArrayList<>(lastTurnCombatEvents);
+        Collections.reverse(presentationOrder);
+        return Collections.unmodifiableList(presentationOrder);
+    }
+
     /** Returns resolved spy missions from the latest turn in source order. */
     public List<SpyMissionEvent> getLastTurnSpyMissions() {
         return Collections.unmodifiableList(lastTurnSpyMissions);

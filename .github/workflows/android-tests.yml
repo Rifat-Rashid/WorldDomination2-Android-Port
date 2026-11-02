@@ -42,6 +42,12 @@ jobs:
           - id: ai-per-player-upkeep-tests
             check: AI per-player upkeep RNG and target timing
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.upkeepRetargetsBeforeReligionDrawAndSkipsEliminatedPlayers" --tests "com.example.worlddomination.game.simulation.GameStateTest.targetEliminatedDuringResultPassIsRetargetedOnNextUpkeep"'
+          - id: ai-turn-sixteen-source-trace-tests
+            check: AI turn sixteen source resolution trace
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.AiSourceTurnResolutionTraceTest.hardSeededSixteenthTurnMatchesSourceAttacksAndCarrierPreparation"'
+          - id: ai-soldier-array-order-tests
+            check: AI soldier selection source array order
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.OpponentAITest.directAttackSelectsSoldierBySourceIndexAfterReverseArrayEnumeration" --tests "com.example.worlddomination.game.ai.OpponentAITest.sourceDirectAttackChoiceUsesReverseKeysAfterMaxKillSort"'
           - id: source-city-population-tests
             check: Source starting city population tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.startingCityAllocationUsesFractionalQuarterAndConsumesFiveDraws" --tests "com.example.worlddomination.game.simulation.GameStateTest.inactivePlayerSlotsDoNotConsumeStartingCityPopulationDraws" --tests "com.example.worlddomination.game.simulation.GameStateTest.selectedOpponentSetupDistributesPopulationAcrossItsFiveCities"'
