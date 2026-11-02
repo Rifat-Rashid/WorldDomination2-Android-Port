@@ -112,10 +112,12 @@ public final class OpponentAI {
     private static final class SpyTarget {
         final int playerId;
         final int spyLevel;
+        final boolean cashAlert;
 
-        SpyTarget(int playerId, int spyLevel) {
+        SpyTarget(int playerId, int spyLevel, boolean cashAlert) {
             this.playerId = playerId;
             this.spyLevel = spyLevel;
+            this.cashAlert = cashAlert;
         }
     }
 
@@ -724,9 +726,18 @@ public final class OpponentAI {
                 decisions.add(preparedDecision(attacker.id, target.id, cityIndex,
                         readyCarrier, payload.definition.name));
             }
-            // getTarget checks the spy alert after choosing the prepared strike,
-            // consuming its cash threshold even when the carrier keeps priority.
-            findSpyTarget(state, attacker, random);
+            // getTarget checks the cash alert after choosing the prepared strike.
+            // A triggered alert replaces the action with a spy mission; the
+            // unused carrier/payload selection does not consume inventory.
+            SpyTarget spyTarget = findSpyTarget(state, attacker, random);
+            if (spyTarget != null && spyTarget.cashAlert) {
+                Decision spyAttack = planCashAlertSpyAttack(state, attacker,
+                        spyTarget, random);
+                if (spyAttack != null) {
+                    decisions.clear();
+                    decisions.add(spyAttack);
+                }
+            }
             return decisions;
         }
 
@@ -750,8 +761,17 @@ public final class OpponentAI {
                         carrierName, null, true, -1));
             }
             // The Flash performs the spy alert check after selecting a new
-            // carrier, even though this preparation already occupies the slot.
-            findSpyTarget(state, attacker, random);
+            // carrier. A triggered cash alert replaces that action with a spy
+            // mission, leaving the selected carrier unused.
+            SpyTarget spyTarget = findSpyTarget(state, attacker, random);
+            if (spyTarget != null && spyTarget.cashAlert) {
+                Decision spyAttack = planCashAlertSpyAttack(state, attacker,
+                        spyTarget, random);
+                if (spyAttack != null) {
+                    decisions.clear();
+                    decisions.add(spyAttack);
+                }
+            }
         } else {
             Decision direct = planDirectAttackForTarget(state, attacker, target,
                     random, plannedUse);
@@ -989,6 +1009,36 @@ public final class OpponentAI {
         return SPY_BUILDINGS[randomInclusive(random, 0, SPY_BUILDINGS.length - 1)];
     }
 
+    private static Decision planCashAlertSpyAttack(GameState state,
+                                                    GameState.PlayerState attacker,
+                                                    SpyTarget target,
+                                                    Random random) {
+        GameState.PlayerState spyTarget = state.getPlayerState(target.playerId);
+        GameState.WeaponState spy = attacker.getWeapons().get("spy" + target.spyLevel);
+        if (spyTarget == null || spy == null) {
+            return null;
+        }
+        int cityIndex = randomPopulatedCity(spyTarget, random);
+        if (cityIndex < 0) {
+            return null;
+        }
+        return attackDecision(attacker.id, spyTarget.id, cityIndex,
+                spy.definition.name, randomSpyBuilding(random));
+    }
+
+    private static boolean shouldUseSpy(SpyTarget target,
+                                        boolean hasSelectedAttackWeapon,
+                                        Random random) {
+        if (target == null) {
+            return false;
+        }
+        if (!hasSelectedAttackWeapon) {
+            return true;
+        }
+        boolean luckySpyReplacement = randomInclusive(random, 0, 6) == 3;
+        return target.cashAlert || luckySpyReplacement;
+    }
+
     private static Decision planDirectAttackForTarget(GameState state,
                                                        GameState.PlayerState attacker,
                                                        GameState.PlayerState target,
@@ -1017,8 +1067,7 @@ public final class OpponentAI {
             }
         }
         SpyTarget spyTarget = findSpyTarget(state, attacker, random);
-        boolean useSpy = spyTarget != null
-                && (selected == null || randomInclusive(random, 0, 6) == 3);
+        boolean useSpy = shouldUseSpy(spyTarget, selected != null, random);
         if (useSpy) {
             selected = attacker.getWeapons().get("spy" + spyTarget.spyLevel);
             target = state.getPlayerState(spyTarget.playerId);
@@ -1196,8 +1245,7 @@ public final class OpponentAI {
         }
 
         SpyTarget spyTarget = findSpyTarget(state, attacker, random);
-        boolean useSpy = spyTarget != null
-                && (selected == null || randomInclusive(random, 0, 6) == 3);
+        boolean useSpy = shouldUseSpy(spyTarget, selected != null, random);
         GameState.PlayerState target = conventionalTarget;
         String spyBuilding = null;
         if (useSpy) {
@@ -1272,10 +1320,10 @@ public final class OpponentAI {
         if (human.moneyMillions > alertThreshold) {
             int highestSpyLevel = highestAvailableSpyLevel(attacker);
             if (highestSpyLevel > 0) {
-                return new SpyTarget(human.id, highestSpyLevel);
+                return new SpyTarget(human.id, highestSpyLevel, true);
             }
         }
-        return bestTargetId < 0 ? null : new SpyTarget(bestTargetId, bestSpyLevel);
+        return bestTargetId < 0 ? null : new SpyTarget(bestTargetId, bestSpyLevel, false);
     }
 
     private static int stockAtLevel(GameState.PlayerState player, int level) {

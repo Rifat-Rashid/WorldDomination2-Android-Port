@@ -1756,6 +1756,33 @@ public final class GameStateTest {
     }
 
     @Test
+    public void spyCannotStealDefenseCountersOutsideSourceWeaponArray() {
+        GameState state = new GameState(1, 16L, false);
+        GameState.PlayerState attacker = state.getHuman();
+        GameState.PlayerState defender = state.getPlayerState(1);
+        attacker.spyReadiness = 100;
+        attacker.getWeapons().get("spy1").active = true;
+        attacker.getWeapons().get("spy1").inStock = 1;
+        defender.moneyMillions = 0;
+        for (GameState.WeaponState weapon : defender.getWeapons().values()) {
+            weapon.inStock = 0;
+        }
+        defender.getWeapons().get("antiAir").inStock = 2;
+        defender.getWeapons().get("antiRocket").inStock = 2;
+
+        state.selectAction(GameState.Action.ATTACK);
+        assertTrue(state.configureAttack(defender.id, 0, "spy1"));
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+
+        assertEquals(2, defender.getWeapons().get("antiAir").inStock);
+        assertEquals(2, defender.getWeapons().get("antiRocket").inStock);
+        assertEquals("YOUR SPY DID NOT STEAL ANYTHING", state.getLatestMessage());
+    }
+
+    @Test
     public void spyMissionResultForHumanAttackerIncludesStolenMoneyAndWeapons() {
         String result = GameState.formatSpyMissionResult(true, false, 25,
                 Collections.singletonList("WEAPON: ROCKET (10 MEG)"),
@@ -1866,19 +1893,21 @@ public final class GameStateTest {
         GameState.WeaponState spy = attacker.getWeapons().get("spy4");
         spy.active = true;
         spy.inStock = 1;
+        attacker.getWeapons().get("rocket1").active = true;
         defender.moneyMillions = 1000;
         defender.getWeapons().get("warhead2").inStock = 1;
         defender.getWeapons().get("soldier3").inStock = 1;
         // Keep one eligible level-one target so this test exercises the special
-        // leader's one-item theft rule without coupling it to unrelated RNG draws.
+        // leader's one-item theft rule; defense counters are outside WeaponStock.weaponArr.
+        defender.getWeapons().get("rocket1").inStock = 1;
         for (GameState.WeaponState weapon : defender.getWeapons().values()) {
             if (weapon.definition.level <= 1
-                    && !"antiAir".equals(weapon.definition.name)) {
+                    && !"rocket1".equals(weapon.definition.name)) {
                 weapon.inStock = 0;
             }
         }
         int attackerFundsBefore = attacker.moneyMillions;
-        int attackerAntiAirBefore = attacker.getWeaponStockByName("antiAir");
+        int attackerRocketBefore = attacker.getWeaponStockByName("rocket1");
 
         state.selectAction(GameState.Action.ATTACK);
         assertTrue(state.configureAttack(defender.id, 0, "spy4"));
@@ -1891,8 +1920,8 @@ public final class GameStateTest {
         assertEquals(attackerFundsBefore + 120, attacker.moneyMillions);
         assertEquals(1, defender.getWeaponStockByName("warhead2"));
         assertEquals(1, defender.getWeaponStockByName("soldier3"));
-        assertEquals(attackerAntiAirBefore + 1, attacker.getWeaponStockByName("antiAir"));
-        assertEquals("YOUR SPY STOLE $120.000.000, WEAPON: ANTI AIR",
+        assertEquals(attackerRocketBefore + 1, attacker.getWeaponStockByName("rocket1"));
+        assertEquals("YOUR SPY STOLE $120.000.000, WEAPON: ROCKET (10 MEG)",
                 state.getLatestMessage());
     }
 

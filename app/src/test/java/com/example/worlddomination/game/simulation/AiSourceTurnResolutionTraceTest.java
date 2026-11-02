@@ -88,6 +88,34 @@ public final class AiSourceTurnResolutionTraceTest {
             {107, 41, 67, 43, 187}
     };
 
+    private static final int[][] EXPECTED_FOURTH_TURN_PLAYER_STATE = {
+            {128, 352, 100, 75958},
+            {132, 450, 34, 255390},
+            {99, 455, 51, 164282},
+            {104, 450, 30, 112632},
+            {40, 445, 32, 132278}
+    };
+
+    private static final int[][] EXPECTED_FOURTH_TURN_CITY_POPULATIONS = {
+            {73, 47, 80, 47, 105},
+            {59, 97, 54, 84, 156},
+            {58, 81, 111, 79, 126},
+            {66, 110, 67, 96, 111},
+            {107, 41, 67, 43, 187}
+    };
+
+    // Source trace includes one empty-range random() call that Java records
+    // separately from bounded nextInt draws.
+    private static final List<String> EXPECTED_FOURTH_TURN_RANDOM_DRAWS = Arrays.asList(
+            "91:21", "3:2", "91:84", "3:2", "91:44", "3:1", "91:36", "3:2",
+            "2:0", "3:2", "1:0", "141:4", "5:2", "5:0", "4:1", "21:0",
+            "61:7", "61:26", "4:0", "21:6", "61:37", "6:1", "6:1", "6:2",
+            "6:1", "6:3", "9:6", "31:0", "4:2", "11:5", "11:10", "11:7",
+            "11:3", "11:6", "11:9", "11:10", "11:8", "11:1", "11:4", "11:5",
+            "11:3", "11:8", "11:5", "11:10", "51:0", "51:41", "51:5", "51:26",
+            "51:7", "51:19", "51:31", "51:48", "3:1", "51:5", "3:2", "3:0",
+            "51:10");
+
     // Source trace collected from Model.doTurn through Sub_presenter.turnResults.
     // Empty and zero-width ranges remain because they consume source RNG calls.
     private static final List<String> EXPECTED_THIRD_TURN_RANDOM_DRAWS = Arrays.asList(
@@ -245,6 +273,41 @@ public final class AiSourceTurnResolutionTraceTest {
                 5, game.getPlayerState(3).getWeaponStockByName("soldier2"));
         assertEquals("third turn AI, upkeep, score, and production draws match source",
                 EXPECTED_THIRD_TURN_RANDOM_DRAWS, random.draws);
+    }
+
+    @Test
+    public void hardSeededFourthTurnMatchesSourceSpyMissionAndSettlement() {
+        GameSetup setup = new GameSetup(17L);
+        setup.setDifficulty(2);
+        for (int leader : new int[]{0, 9, 18, 5}) {
+            setup.toggleOpponent(leader);
+        }
+        RecordingRandom random = new RecordingRandom(setup.copyGameplayRandom());
+        GameState game = new GameState(setup, random);
+        random.clear();
+
+        for (int priorTurn = 0; priorTurn < 3; priorTurn++) {
+            queueHumanTurn(game);
+            game.confirmTurn();
+            random.clear();
+        }
+        queueHumanTurn(game);
+        game.confirmTurn();
+
+        assertEquals(4, game.getTurn());
+        assertEquals(Arrays.asList(GameState.Action.RESOURCES, GameState.Action.ATTACK),
+                game.getPlayerState(1).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.RESOURCES, GameState.Action.MASS_MEDIA),
+                game.getPlayerState(2).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.RESOURCES, GameState.Action.PRODUCTION),
+                game.getPlayerState(3).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.RESEARCH, GameState.Action.PRODUCTION),
+                game.getPlayerState(4).getLastTurnActions());
+        assertSeededState(game, EXPECTED_FOURTH_TURN_PLAYER_STATE,
+                EXPECTED_FOURTH_TURN_CITY_POPULATIONS);
+        assertEquals(0, game.getPlayerState(1).getWeaponStockByName("spy3"));
+        assertEquals("fourth-turn spy and settlement draws match source",
+                EXPECTED_FOURTH_TURN_RANDOM_DRAWS, random.draws);
     }
 
     private static void assertSeededState(GameState game, int[][] players,

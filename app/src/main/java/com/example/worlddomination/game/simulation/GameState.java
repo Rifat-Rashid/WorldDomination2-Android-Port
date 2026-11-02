@@ -3475,7 +3475,10 @@ public final class GameState {
         for (WeaponState targetWeapon : defender.weapons.values()) {
             int maximumTargetLevel = defender.specialPerson ? 1 : level;
             if (targetWeapon.inStock > 0 && targetWeapon.definition.level <= maximumTargetLevel
-                    && !"spy".equals(targetWeapon.definition.type)) {
+                    && !"spy".equals(targetWeapon.definition.type)
+                    // Source counter weapons live in WeaponStock.counterArr,
+                    // outside the weaponArr searched by createSpyStealArray.
+                    && !"anti".equals(targetWeapon.definition.type)) {
                 availableTargets.add(targetWeapon);
             }
         }
