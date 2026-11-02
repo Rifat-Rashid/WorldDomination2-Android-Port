@@ -1343,6 +1343,13 @@ public final class OpponentAITest {
         opponent.getWeapons().get("soldier1").active = true;
         opponent.getWeapons().get("soldier1").inStock = 1;
         setPreparedCarrier(opponent, "rocket1");
+        for (GameState.PlayerState target : state.getPlayers()) {
+            if (target.id != opponent.id) {
+                // A city below the combined payload + soldier casualty count
+                // exercises the source's accepted set_attack companion path.
+                target.getCity(0).populationMillions = 1;
+            }
+        }
 
         List<OpponentAI.Decision> decisions = OpponentAI.plan(state, opponent,
                 new SequenceRandom(0, 0, 0, 0, 0, 0));

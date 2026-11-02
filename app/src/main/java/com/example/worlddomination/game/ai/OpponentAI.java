@@ -201,6 +201,14 @@ public final class OpponentAI {
             // weapons before getTarget chooses the attack route.
             Decision precedingOrder = planRankedAction(state, player, first,
                     random, 1, plannedWeaponUse);
+            if (precedingOrder == null) {
+                // Model.doTurn retries a rejected first-slot target before it
+                // advances to the scored second-slot attack. Some targets,
+                // especially research with no affordable choice, consume RNG
+                // on both attempts even though only the attack is accepted.
+                precedingOrder = planRankedAction(state, player, first,
+                        random, 1, plannedWeaponUse);
+            }
             if (precedingOrder != null) {
                 addPlannedDecision(player, precedingOrder, decisions, plannedWeaponUse);
             }
@@ -235,6 +243,16 @@ public final class OpponentAI {
             List<Decision> attackPlan = planSourceAttack(state, player, random,
                     duplicateAttack, plannedWeaponUse, duplicateSuppressed);
             if (duplicateSuppressed[0] && scores.size() > 1) {
+                companion = scores.get(1);
+            }
+            if (duplicateAttack && !duplicateSuppressed[0]
+                    && attackPlan.size() == 1
+                    && attackPlan.get(0).action == GameState.Action.PREPARED_ATTACK
+                    && scores.size() > 1) {
+                // A ready non-ship carrier may choose a random city for the
+                // prepared strike and stage a direct companion. The Flash
+                // rejects that companion when no city fits the combined
+                // casualties, then fills the slot from the next ranked action.
                 companion = scores.get(1);
             }
             if (!attackPlan.isEmpty()) {
@@ -742,13 +760,18 @@ public final class OpponentAI {
                     conventionalCity = pairedCity.index;
                 } else {
                     preparedCity = randomPopulatedCity(target, random);
+                    // getTarget stages this second-slot attack, but Model.doTurn
+                    // rejects the generated "attack" action and advances to
+                    // the next ranked order. Its target-city draw still occurs.
                     conventionalCity = randomPopulatedCity(target, random);
                 }
                 if (preparedCity >= 0 && conventionalCity >= 0) {
                     decisions.add(preparedDecision(attacker.id, target.id, preparedCity,
                             readyCarrier, payload.definition.name));
-                    decisions.add(attackDecision(attacker.id, target.id, conventionalCity,
-                            conventional.definition.name));
+                    if (pairedCity != null) {
+                        decisions.add(attackDecision(attacker.id, target.id,
+                                conventionalCity, conventional.definition.name));
+                    }
                     // The first getTarget call checks the spy cash alert after
                     // creating the paired slot and can replace that companion
                     // with a spy. The second-slot "attack" is rejected later,
@@ -759,7 +782,11 @@ public final class OpponentAI {
                         Decision spyAttack = planCashAlertSpyAttack(state, attacker,
                                 spyTarget, random);
                         if (spyAttack != null) {
-                            decisions.set(1, spyAttack);
+                            if (decisions.size() > 1) {
+                                decisions.set(1, spyAttack);
+                            } else {
+                                decisions.add(spyAttack);
+                            }
                         }
                     }
                     return decisions;
