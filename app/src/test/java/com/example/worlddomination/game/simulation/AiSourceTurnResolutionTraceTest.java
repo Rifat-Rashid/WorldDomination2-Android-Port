@@ -58,6 +58,37 @@ public final class AiSourceTurnResolutionTraceTest {
             "2:1", "2:1", "2:0", "2:1", "2:0", "2:0", "2:1", "2:1",
             "2:0", "2:0", "2:1", "2:1", "2:0", "2:0");
 
+    private static final List<String> EXPECTED_NINETEENTH_TURN_RANDOM_DRAWS = Arrays.asList(
+            "91:65", "3:1", "91:79", "3:2", "91:30", "3:0", "91:36", "3:0",
+            "61:9", "61:15", "4:0", "21:16", "61:41", "4:3", "21:9", "61:49",
+            "61:41", "2:1", "2:1", "4:0", "141:73", "7:3", "5:3", "5:2",
+            "3:1", "141:35", "2:0", "5:1", "6:4", "6:3", "6:1", "6:5",
+            "6:0", "5:4", "11:9", "4:2", "3:0", "51:38", "2:1", "51:6",
+            "1:0", "51:22", "9:2", "31:4", "4:2", "11:6", "11:8", "11:4",
+            "11:4", "11:0", "11:3", "11:9", "11:9", "11:2", "11:6", "11:6",
+            "11:0", "11:0", "11:6", "11:9", "51:26", "51:20", "51:50", "51:20",
+            "51:43", "51:22", "4:1", "24:22", "4:3", "24:3", "4:1", "24:19",
+            "4:3", "24:6", "4:0", "24:22", "4:2", "24:6", "4:1", "24:14",
+            "4:2", "24:1", "4:1", "24:19", "4:3", "24:17", "4:2", "24:19",
+            "4:2", "24:6", "4:3", "24:22", "4:3", "24:19", "4:2", "24:9",
+            "4:2", "24:13", "4:1", "24:19", "4:2", "24:14", "4:2", "24:18",
+            "4:3", "24:15", "4:2", "24:17", "4:0", "24:18", "4:3", "24:13",
+            "4:3", "24:13", "4:0", "24:23", "4:3", "24:7", "4:2", "24:8",
+            "4:1", "24:3", "4:2", "24:8", "4:0", "24:2", "4:3", "24:11",
+            "4:2", "24:10", "2:0", "24:21", "2:1", "24:1", "2:1", "24:19",
+            "2:0", "24:16", "2:0", "24:0", "2:1", "24:14", "2:1", "24:17",
+            "2:1", "24:8", "2:1", "24:14", "2:0", "24:15", "2:0", "24:11",
+            "2:0", "24:16", "2:1", "24:13", "2:1", "24:20", "2:1", "24:1",
+            "2:0", "24:10", "2:1", "24:18", "2:1", "24:4", "2:1", "24:14",
+            "2:0", "24:9", "2:1", "24:11", "2:1", "24:0", "2:0", "24:8",
+            "2:0", "24:5", "2:0", "24:10", "2:0", "24:11", "2:1", "24:6",
+            "2:0", "24:14", "2:1", "24:13", "2:1", "24:2", "2:0", "24:13",
+            "2:1", "24:17", "3:0", "3:2", "51:26", "3:0", "3:0", "3:0",
+            "3:0", "3:1", "3:2", "3:2", "3:0", "3:0", "3:1", "3:1",
+            "3:1", "3:0", "3:0", "3:1", "3:2", "3:0", "3:2", "3:0",
+            "3:0", "3:1", "3:0", "3:0", "3:2", "3:0", "3:0", "3:2",
+            "3:0", "3:0", "3:2");
+
     private static final List<String> EXPECTED_RANDOM_DRAWS = Arrays.asList(
             "91:30", "3:2", "91:52", "3:0", "91:0", "3:2", "91:31", "3:1",
             "2:0", "3:1", "2:1", "141:43", "4:0", "21:20", "61:55", "4:0",
@@ -1604,6 +1635,79 @@ public final class AiSourceTurnResolutionTraceTest {
                         {80, 475, 25, 829718},
                         {63, 470, 45, 486834},
                         {30, 425, 24, 510894}
+                },
+                new int[][]{
+                        {0, 0, 37, 0, 105},
+                        {59, 97, 54, 84, 138},
+                        {62, 85, 115, 83, 130},
+                        {70, 114, 71, 100, 115},
+                        {107, 41, 67, 43, 167}
+                });
+    }
+
+    @Test
+    public void hardSeededNineteenthTurnMatchesSourceStateActionsAndSpyMissions() {
+        GameSetup setup = new GameSetup(17L);
+        setup.setDifficulty(2);
+        for (int leader : new int[]{0, 9, 18, 5}) {
+            setup.toggleOpponent(leader);
+        }
+        RecordingRandom random = new RecordingRandom(setup.copyGameplayRandom());
+        GameState game = new GameState(setup, random);
+        random.clear();
+        for (int priorTurn = 0; priorTurn < 18; priorTurn++) {
+            queueHumanTurn(game);
+            game.confirmTurn();
+            random.clear();
+        }
+        queueHumanTurn(game);
+        game.confirmTurn();
+
+        assertEquals(19, game.getTurn());
+        assertEquals("source turn-nineteen bounded random trace; actual=" + random.draws,
+                EXPECTED_NINETEENTH_TURN_RANDOM_DRAWS, random.draws);
+        assertEquals("source turn nineteen has no raw casualty draws", 0, random.rawDraws);
+        assertEquals(Arrays.asList(GameState.Action.RESOURCES, GameState.Action.MASS_MEDIA),
+                game.getPlayerState(0).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.PRODUCTION, GameState.Action.MASS_MEDIA),
+                game.getPlayerState(1).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.RESOURCES, GameState.Action.PRODUCTION),
+                game.getPlayerState(2).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.RESOURCES, GameState.Action.ATTACK),
+                game.getPlayerState(3).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.ATTACK, GameState.Action.MASS_MEDIA),
+                game.getPlayerState(4).getLastTurnActions());
+        assertTrue(game.getLastTurnCombatEvents().isEmpty());
+
+        int playerThreeMissions = 0;
+        int playerFourMissions = 0;
+        for (GameState.SpyMissionEvent event : game.getLastTurnSpyMissions()) {
+            if (event.attackerPlayerId == 3) {
+                playerThreeMissions++;
+                assertEquals(4, event.defenderPlayerId);
+                assertEquals(1, event.actionBuildingSlot);
+                assertEquals("religion", event.actionBuildingFrame);
+                assertEquals("mus", event.religionCode);
+            } else if (event.attackerPlayerId == 4) {
+                playerFourMissions++;
+                assertEquals(0, event.defenderPlayerId);
+                assertEquals(1, event.actionBuildingSlot);
+                assertEquals("tech", event.actionBuildingFrame);
+                assertEquals("bhu", event.religionCode);
+            }
+        }
+        assertEquals("the third opponent resolves its spy mission", 1,
+                playerThreeMissions);
+        assertEquals("the fourth opponent resolves its spy mission", 1,
+                playerFourMissions);
+
+        assertSeededState(game,
+                new int[][]{
+                        {119, 142, 100, 325490},
+                        {66, 432, 43, 655294},
+                        {64, 475, 19, 865374},
+                        {108, 470, 37, 510132},
+                        {80, 425, 40, 517244}
                 },
                 new int[][]{
                         {0, 0, 37, 0, 105},
