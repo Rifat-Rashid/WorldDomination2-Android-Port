@@ -1312,6 +1312,113 @@ public final class AiSourceTurnResolutionTraceTest {
                 EXPECTED_FIFTEENTH_TURN_CITY_POPULATIONS);
     }
 
+    @Test
+    public void hardSeededSixteenthTurnMatchesSourceAttacksAndCarrierPreparation() {
+        GameSetup setup = new GameSetup(17L);
+        setup.setDifficulty(2);
+        for (int leader : new int[]{0, 9, 18, 5}) {
+            setup.toggleOpponent(leader);
+        }
+        RecordingRandom random = new RecordingRandom(setup.copyGameplayRandom());
+        GameState game = new GameState(setup, random);
+        random.clear();
+
+        for (int priorTurn = 0; priorTurn < 15; priorTurn++) {
+            queueHumanTurn(game);
+            game.confirmTurn();
+            random.clear();
+        }
+        assertSeededState(game, EXPECTED_FIFTEENTH_TURN_PLAYER_STATE,
+                EXPECTED_FIFTEENTH_TURN_CITY_POPULATIONS);
+
+        queueHumanTurn(game);
+        game.confirmTurn();
+
+        assertEquals(16, game.getTurn());
+        assertEquals("source turn-sixteen bounded draw trace; actual=" + random.draws,
+                Arrays.asList(
+                        "91:83", "3:0", "91:81", "3:2", "91:73", "3:0", "91:41", "3:2",
+                        "61:44", "4:1", "21:4", "61:19", "61:3", "5:3", "5:0", "5:0",
+                        "2:0", "3:2", "4:3", "141:92", "3:0", "141:27", "2:1", "4:3",
+                        "4:1", "141:16", "7:5", "6:5", "6:3", "6:4", "6:1", "6:4",
+                        "51:5", "51:25", "51:34", "11:7", "11:5",
+                        "11:10", "11:7", "11:9", "11:0", "11:5", "11:10", "11:10", "11:2",
+                        "11:0", "11:10", "11:4", "11:2", "11:8", "51:28", "51:23", "51:46",
+                        "51:30", "4:2", "24:23", "4:0", "24:20", "4:2", "24:14", "4:3",
+                        "24:7", "4:3", "24:11", "4:3", "24:3", "4:2", "24:10", "4:3",
+                        "24:5", "4:1", "24:23", "4:1", "24:2", "4:3", "24:19", "4:0",
+                        "24:10", "4:1", "24:17", "4:3", "24:22", "4:0", "24:2", "4:0",
+                        "24:2", "4:1", "24:18", "4:2", "24:17", "4:1", "24:11", "4:1",
+                        "24:17", "4:2", "24:8", "4:0", "24:19", "4:0", "24:4", "4:2",
+                        "24:15", "4:2", "24:8", "4:1", "24:19", "4:1", "24:22", "4:3",
+                        "24:23", "4:1", "24:11", "4:2", "24:9", "4:1", "24:5", "4:3",
+                        "24:3"), random.draws);
+        assertEquals("source direct and prepared attacks use three casualty draws",
+                3, random.rawDraws);
+        assertEquals(Arrays.asList(GameState.Action.RESEARCH, GameState.Action.PRODUCTION),
+                game.getPlayerState(1).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.DIPLOMACY,
+                        GameState.Action.PREPARED_ATTACK),
+                game.getPlayerState(2).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.PREPARED_ATTACK, GameState.Action.ATTACK),
+                game.getPlayerState(3).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.MASS_MEDIA, GameState.Action.ATTACK),
+                game.getPlayerState(4).getLastTurnActions());
+
+        assertEquals("source P2 prepares its ship carrier", "ship",
+                game.getPreparedCarrierName(2));
+        assertEquals("source P3 consumes its prepared rocket", null,
+                game.getPreparedCarrierName(3));
+        assertEquals("source P2's demand remains pending for the human", 5,
+                game.getPendingDiplomacyProposal(0, 2).optionIndex);
+
+        List<GameState.CombatEvent> presentationEvents =
+                game.getLastTurnCombatEventsInSourcePresentationOrder();
+        assertEquals("source turn sixteen resolves two soldier attacks and one rocket",
+                3, presentationEvents.size());
+        GameState.CombatEvent firstAttack = presentationEvents.get(0);
+        assertEquals(GameState.CombatEventType.DIRECT_ATTACK, firstAttack.type);
+        assertEquals(4, firstAttack.attackerPlayerId);
+        assertEquals(0, firstAttack.defenderPlayerId);
+        assertEquals(0, firstAttack.cityIndex);
+        assertEquals("soldier2", firstAttack.weaponName);
+        assertEquals("source P4 casualty event weapon=" + firstAttack.weaponName,
+                8, firstAttack.casualtiesMillions);
+
+        GameState.CombatEvent secondAttack = presentationEvents.get(1);
+        assertEquals(GameState.CombatEventType.DIRECT_ATTACK, secondAttack.type);
+        assertEquals(3, secondAttack.attackerPlayerId);
+        assertEquals(0, secondAttack.defenderPlayerId);
+        assertEquals(3, secondAttack.cityIndex);
+        assertEquals("soldier4", secondAttack.weaponName);
+        assertEquals(18, secondAttack.casualtiesMillions);
+
+        GameState.CombatEvent rocketStrike = presentationEvents.get(2);
+        assertEquals(GameState.CombatEventType.STRIKE_IMPACT, rocketStrike.type);
+        assertEquals(3, rocketStrike.attackerPlayerId);
+        assertEquals(0, rocketStrike.defenderPlayerId);
+        assertEquals(3, rocketStrike.cityIndex);
+        assertEquals("rocket1", rocketStrike.weaponName);
+        assertEquals("warhead1", rocketStrike.payloadName);
+        assertEquals(16, rocketStrike.casualtiesMillions);
+
+        int[][] expectedPlayers = {
+                {135, 220, 100, 286912},
+                {33, 432, 17, 609590},
+                {55, 475, 41, 605478},
+                {83, 470, 36, 444884},
+                {50, 425, 40, 492174}
+        };
+        int[][] expectedCities = {
+                {65, 0, 37, 13, 105},
+                {59, 97, 54, 84, 138},
+                {62, 85, 115, 83, 130},
+                {70, 114, 71, 100, 115},
+                {107, 41, 67, 43, 167}
+        };
+        assertSeededState(game, expectedPlayers, expectedCities);
+    }
+
     private static void assertSeededState(GameState game, int[][] players,
                                          int[][] cities) {
         for (int playerId = 0; playerId < players.length; playerId++) {

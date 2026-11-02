@@ -531,20 +531,46 @@ public final class OpponentAITest {
     }
 
     @Test
-    public void directAttackSelectsSoldierBySourceRandomIndexInSortedInventory() {
+    public void directAttackSelectsSoldierBySourceIndexAfterReverseArrayEnumeration() {
         GameState strongestState = prepareSoldierSelectionScenario();
         OpponentAI.Decision strongest = OpponentAI.planAttack(strongestState,
                 strongestState.getPlayerState(1), new SequenceRandom(0),
                 Collections.<String, Integer>emptyMap());
         assertNotNull(strongest);
-        assertEquals("soldier4", strongest.weaponName);
+        assertEquals("index zero visits the weakest item after reverse enumeration",
+                "soldier1", strongest.weaponName);
 
         GameState weakestState = prepareSoldierSelectionScenario();
         OpponentAI.Decision weakest = OpponentAI.planAttack(weakestState,
                 weakestState.getPlayerState(1), new SequenceRandom(3),
                 Collections.<String, Integer>emptyMap());
         assertNotNull(weakest);
-        assertEquals("soldier1", weakest.weaponName);
+        assertEquals("index three visits the strongest item after reverse enumeration",
+                "soldier4", weakest.weaponName);
+    }
+
+    @Test
+    public void sourceDirectAttackChoiceUsesReverseKeysAfterMaxKillSort() {
+        GameState state = prepareSoldierSelectionScenario();
+        GameState.PlayerState actor = state.getPlayerState(1);
+        for (GameState.WeaponState weapon : actor.getWeapons().values()) {
+            weapon.inStock = 0;
+        }
+        actor.getWeapons().get("soldier1").active = true;
+        actor.getWeapons().get("soldier1").inStock = 1;
+        actor.getWeapons().get("soldier2").active = true;
+        actor.getWeapons().get("soldier2").inStock = 1;
+
+        SequenceRandom random = new SequenceRandom(0, 1);
+        OpponentAI.Decision decision = OpponentAI.planAction(state, actor,
+                GameState.Action.ATTACK, random, 1,
+                Collections.<String, Integer>emptyMap());
+
+        assertNotNull(decision);
+        assertEquals(GameState.Action.ATTACK, decision.action);
+        assertEquals("soldier2", decision.weaponName);
+        assertEquals("source draws city and soldier index only", 2,
+                random.getDrawCount());
     }
 
     @Test

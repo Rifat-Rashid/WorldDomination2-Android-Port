@@ -1139,7 +1139,12 @@ public final class OpponentAI {
             }
             int sourceIndex = randomInclusive(random, 0, 3);
             if (sourceIndex < availableSoldiers.size()) {
-                selected = availableSoldiers.get(sourceIndex);
+                // ActionScript sorts the available list by descending maxKills,
+                // then enumerates its numeric keys in reverse when building the
+                // soldier-only choices. The random index therefore addresses the
+                // ascending-strength view of this sorted list.
+                selected = availableSoldiers.get(availableSoldiers.size()
+                        - 1 - sourceIndex);
             }
         }
         SpyTarget spyTarget = findSpyTarget(state, attacker, random);
@@ -1313,9 +1318,11 @@ public final class OpponentAI {
             } else {
                 // The source selects a soldier from the max-kill-sorted list using
                 // randRange(0, 3), even when fewer than four soldiers are available.
+                // It then enumerates that sorted ActionScript array in reverse.
                 int sourceIndex = randomInclusive(random, 0, 3);
                 if (sourceIndex < availableSoldiers.size()) {
-                    selected = availableSoldiers.get(sourceIndex);
+                    selected = availableSoldiers.get(availableSoldiers.size()
+                            - 1 - sourceIndex);
                 }
             }
         }
