@@ -2005,12 +2005,18 @@ public final class GameState {
     }
 
     public int getSelectedProductionBudgetMillions() {
-        return getHuman().turnMoneyMillions * getSelectedProductionPercent() / 100;
+        return sourceProductionBudgetMillions(getHuman().turnMoneyMillions,
+                getSelectedProductionPercent());
     }
 
     public int getSelectedProductionTotalBudgetMillions() {
-        return (int) Math.round(getHuman().turnMoneyMillions
-                * (double) getSelectedProductionAllocatedPercent() / 100.0d);
+        return (int) Math.round(getHuman().turnMoneyMillions / 100.0d
+                * getSelectedProductionAllocatedPercent());
+    }
+
+    /** Matches the Flash source's Math.floor((turnMoney / 100) * percentage). */
+    public static int sourceProductionBudgetMillions(int turnMoneyMillions, int percentage) {
+        return (int) Math.floor((turnMoneyMillions / 100.0d) * percentage);
     }
 
     public int getTurnMoneyMillions() {
@@ -2082,7 +2088,8 @@ public final class GameState {
                 int percent = getProductionPercent(category);
                 if (percent > 0) {
                     productionBudgets.put(category,
-                            getHuman().turnMoneyMillions * percent / 100);
+                            sourceProductionBudgetMillions(
+                                    getHuman().turnMoneyMillions, percent));
                 }
             }
         }
@@ -3927,7 +3934,8 @@ public final class GameState {
             WeaponState weapon = candidates.get(random.nextInt(candidates.size()));
             if (weapon.inStock <= PLAYER_STOCK_CAP) {
                 if (group == 7) {
-                    int investment = Math.round((float) remaining / (2 + random.nextInt(24)));
+                    int denominator = 2 + random.nextInt(24);
+                    int investment = (int) Math.round(remaining / (double) denominator);
                     weapon.investmentMillions += investment;
                     producer.moneyMillions -= investment;
                     remaining -= investment;
