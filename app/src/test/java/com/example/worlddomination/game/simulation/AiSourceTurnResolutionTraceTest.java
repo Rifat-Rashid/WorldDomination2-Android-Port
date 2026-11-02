@@ -30,6 +30,34 @@ public final class AiSourceTurnResolutionTraceTest {
             {107, 41, 67, 43, 187}
     };
 
+    // The source trace's single 10..12 casualty roll is a raw random draw and
+    // is asserted separately below. This list contains every bounded draw.
+    private static final List<String> EXPECTED_EIGHTEENTH_TURN_RANDOM_DRAWS = Arrays.asList(
+            "91:79", "3:2", "91:75", "3:1", "91:14", "3:0", "91:46", "3:0",
+            "4:0", "21:4", "61:1", "4:3", "21:4", "61:48", "61:0", "3:2",
+            "141:98", "4:2", "21:9", "61:40", "2:0", "3:0", "2:0", "141:96",
+            "5:2", "5:0", "5:4", "5:2", "6:5", "6:2", "6:4", "6:2",
+            "6:3", "6:4", "26:5", "26:16", "26:4", "26:6", "26:20", "26:8",
+            "51:9", "11:2", "11:2", "11:8", "11:1", "11:10", "11:3", "11:6",
+            "11:9", "11:6", "11:7", "11:6", "11:4", "11:10", "11:1", "11:6",
+            "51:16", "51:49", "51:38", "51:34", "2:0", "24:0", "2:1", "24:15",
+            "2:1", "24:19", "2:0", "24:16", "2:0", "24:16", "2:1", "24:4",
+            "2:1", "24:2", "2:1", "24:23", "2:0", "24:12", "2:0", "24:18",
+            "2:0", "24:19", "2:1", "24:8", "2:0", "24:14", "2:0", "24:10",
+            "2:0", "24:3", "2:0", "24:3", "2:0", "24:17", "2:1", "24:23",
+            "2:0", "24:18", "2:0", "24:4", "2:0", "24:18", "2:1", "24:17",
+            "2:0", "24:15", "2:1", "24:13", "2:0", "24:17", "2:0", "24:8",
+            "2:1", "24:10", "2:0", "24:10", "2:1", "24:19", "2:0", "24:11",
+            "2:1", "24:2", "2:1", "24:14", "3:1", "51:34", "3:2", "3:1",
+            "3:2", "3:0", "3:2", "3:0", "3:1", "3:1", "3:2", "3:0",
+            "3:1", "3:1", "3:1", "3:0", "3:0", "3:0", "3:0", "3:2",
+            "3:0", "3:0", "3:1", "3:0", "3:2", "3:0", "3:2", "3:0",
+            "3:0", "3:0", "3:1", "3:1", "3:1", "2:0", "2:1", "51:30",
+            "2:0", "2:1", "2:0", "2:1", "2:0", "2:0", "2:1", "2:1",
+            "2:0", "2:0", "2:0", "2:1", "2:0", "2:1", "2:1", "2:1",
+            "2:1", "2:1", "2:0", "2:1", "2:0", "2:0", "2:1", "2:1",
+            "2:0", "2:0", "2:1", "2:1", "2:0", "2:0");
+
     private static final List<String> EXPECTED_RANDOM_DRAWS = Arrays.asList(
             "91:30", "3:2", "91:52", "3:0", "91:0", "3:2", "91:31", "3:1",
             "2:0", "3:1", "2:1", "141:43", "4:0", "21:20", "61:55", "4:0",
@@ -1511,6 +1539,74 @@ public final class AiSourceTurnResolutionTraceTest {
                 },
                 new int[][]{
                         {8, 0, 37, 0, 105},
+                        {59, 97, 54, 84, 138},
+                        {62, 85, 115, 83, 130},
+                        {70, 114, 71, 100, 115},
+                        {107, 41, 67, 43, 167}
+                });
+    }
+
+    @Test
+    public void hardSeededEighteenthTurnMatchesSourceStateActionsAndRandomTrace() {
+        GameSetup setup = new GameSetup(17L);
+        setup.setDifficulty(2);
+        for (int leader : new int[]{0, 9, 18, 5}) {
+            setup.toggleOpponent(leader);
+        }
+        RecordingRandom random = new RecordingRandom(setup.copyGameplayRandom());
+        GameState game = new GameState(setup, random);
+        random.clear();
+
+        for (int priorTurn = 0; priorTurn < 17; priorTurn++) {
+            queueHumanTurn(game);
+            game.confirmTurn();
+            random.clear();
+        }
+        queueHumanTurn(game);
+        game.confirmTurn();
+
+        assertEquals(18, game.getTurn());
+        assertEquals("source turn-eighteen bounded random trace; actual=" + random.draws,
+                EXPECTED_EIGHTEENTH_TURN_RANDOM_DRAWS, random.draws);
+        assertEquals("the source biological strike has one raw casualty draw", 1,
+                random.rawDraws);
+        assertEquals(Arrays.asList(GameState.Action.RESOURCES, GameState.Action.MASS_MEDIA),
+                game.getPlayerState(0).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.RESOURCES, GameState.Action.PRODUCTION),
+                game.getPlayerState(1).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.RESOURCES, GameState.Action.PRODUCTION),
+                game.getPlayerState(2).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.PREPARED_ATTACK, GameState.Action.PRODUCTION),
+                game.getPlayerState(3).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.PREPARED_ATTACK, GameState.Action.DIPLOMACY),
+                game.getPlayerState(4).getLastTurnActions());
+        assertEquals("the fourth opponent stages its level-two rocket", "rocket2",
+                game.getPreparedCarrierName(4));
+        assertTrue(game.isActionBioloaded(0, GameState.Action.PROPAGANDA));
+        assertFalse(game.isActionBioloaded(0, GameState.Action.DIPLOMACY));
+
+        List<GameState.CombatEvent> events = game.getLastTurnCombatEvents();
+        assertEquals("one biological strike resolves on source turn eighteen", 1,
+                events.size());
+        GameState.CombatEvent strike = events.get(0);
+        assertEquals(GameState.CombatEventType.STRIKE_IMPACT, strike.type);
+        assertEquals(3, strike.attackerPlayerId);
+        assertEquals(0, strike.defenderPlayerId);
+        assertEquals(0, strike.cityIndex);
+        assertEquals("rocket1", strike.weaponName);
+        assertEquals("bioload1", strike.payloadName);
+        assertEquals(8, strike.casualtiesMillions);
+
+        assertSeededState(game,
+                new int[][]{
+                        {164, 142, 100, 313056},
+                        {105, 432, 28, 649244},
+                        {80, 475, 25, 829718},
+                        {63, 470, 45, 486834},
+                        {30, 425, 24, 510894}
+                },
+                new int[][]{
+                        {0, 0, 37, 0, 105},
                         {59, 97, 54, 84, 138},
                         {62, 85, 115, 83, 130},
                         {70, 114, 71, 100, 115},
