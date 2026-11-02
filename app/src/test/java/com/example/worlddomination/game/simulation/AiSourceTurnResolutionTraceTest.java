@@ -217,6 +217,22 @@ public final class AiSourceTurnResolutionTraceTest {
             {107, 41, 67, 43, 167}
     };
 
+    private static final int[][] EXPECTED_TWELFTH_TURN_PLAYER_STATE = {
+            {129, 317, 100, 220360},
+            {123, 432, 20, 544130},
+            {116, 475, 47, 507028},
+            {56, 470, 40, 277198},
+            {21, 425, 49, 323854}
+    };
+
+    private static final int[][] EXPECTED_TWELFTH_TURN_CITY_POPULATIONS = {
+            {73, 12, 80, 47, 105},
+            {59, 97, 54, 84, 138},
+            {62, 85, 115, 83, 130},
+            {70, 114, 71, 100, 115},
+            {107, 41, 67, 43, 167}
+    };
+
     // Source trace includes one empty-range random() call that Java records
     // separately from bounded nextInt draws.
     private static final List<String> EXPECTED_FOURTH_TURN_RANDOM_DRAWS = Arrays.asList(
@@ -361,6 +377,21 @@ public final class AiSourceTurnResolutionTraceTest {
             "1:0", "1:0", "1:0", "1:0", "1:0", "1:0", "1:0", "1:0",
             "1:0", "1:0", "1:0", "1:0", "1:0", "1:0", "1:0", "1:0",
             "1:0", "1:0", "3:0", "51:7", "3:2", "51:45");
+
+    // The strike's 15..18 casualty roll is recorded as a separate raw draw.
+    private static final List<String> EXPECTED_TWELFTH_TURN_RANDOM_DRAWS = Arrays.asList(
+            "91:24", "3:1", "91:16", "3:1", "91:45", "3:2", "91:35", "3:1",
+            "2:0", "3:0", "1:0", "141:50", "5:3", "5:4", "61:22", "61:50",
+            "2:0", "3:1", "2:1", "141:115", "4:3", "21:18", "61:51", "3:0",
+            "5:3", "5:3", "141:104", "6:4", "6:5", "6:1", "6:5", "6:5",
+            "9:3", "31:10", "4:2", "51:1", "11:9", "11:4", "11:6", "11:8",
+            "11:10", "11:4", "11:6", "11:10", "11:7", "11:3", "11:2", "11:6",
+            "11:7", "11:4", "11:8", "51:3", "51:29", "51:46", "51:22", "51:14",
+            "51:37", "3:1", "51:10", "3:0", "3:0", "3:0", "3:0", "3:0",
+            "3:2", "51:24", "3:0", "3:1", "3:2", "3:1", "3:1", "3:0",
+            "3:2", "3:0", "3:2", "3:2", "3:1", "3:1", "3:2", "3:0",
+            "3:1", "3:2", "3:0", "3:2", "3:0", "3:0", "3:0", "3:2",
+            "3:1", "3:2", "3:1");
 
     // Source trace collected from Model.doTurn through Sub_presenter.turnResults.
     // Empty and zero-width ranges remain because they consume source RNG calls.
@@ -906,6 +937,69 @@ public final class AiSourceTurnResolutionTraceTest {
         assertEquals("source turn eleven has no raw random draw", 0, random.rawDraws);
         assertSeededState(game, EXPECTED_ELEVENTH_TURN_PLAYER_STATE,
                 EXPECTED_ELEVENTH_TURN_CITY_POPULATIONS);
+    }
+
+    @Test
+    public void hardSeededTwelfthTurnMatchesSpyStrikeAndCarrierPreparation() {
+        GameSetup setup = new GameSetup(17L);
+        setup.setDifficulty(2);
+        for (int leader : new int[]{0, 9, 18, 5}) {
+            setup.toggleOpponent(leader);
+        }
+        RecordingRandom random = new RecordingRandom(setup.copyGameplayRandom());
+        GameState game = new GameState(setup, random);
+        random.clear();
+
+        for (int priorTurn = 0; priorTurn < 11; priorTurn++) {
+            queueHumanTurn(game);
+            game.confirmTurn();
+            random.clear();
+        }
+        int spyStockBefore = game.getPlayerState(1).getWeaponStockByName("spy3");
+        assertTrue("source readies a third-tier spy before turn twelve", spyStockBefore > 0);
+        assertEquals("turn eleven prepares the source rocket", "rocket1",
+                game.getPreparedCarrierName(4));
+        assertEquals("source turn eleven has one plane1", 1,
+                game.getPlayerState(3).getWeaponStockByName("plane1"));
+        assertTrue("plane1 carrier should be available: "
+                        + game.getAvailablePreparedCarriers(3),
+                game.getAvailablePreparedCarriers(3).contains("plane1"));
+        assertFalse("source still ranks the research action for player three",
+                game.getPlayerState(3).isActionBioloaded(GameState.Action.RESEARCH));
+
+        queueHumanTurn(game);
+        game.confirmTurn();
+
+        assertEquals(12, game.getTurn());
+        assertEquals("turn-twelve AI and settlement draws match source; actual=" + random.draws,
+                EXPECTED_TWELFTH_TURN_RANDOM_DRAWS, random.draws);
+        assertEquals(Arrays.asList(GameState.Action.RESOURCES, GameState.Action.ATTACK),
+                game.getPlayerState(1).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.RESOURCES, GameState.Action.MASS_MEDIA),
+                game.getPlayerState(2).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.PREPARED_ATTACK,
+                        GameState.Action.PRODUCTION),
+                game.getPlayerState(3).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.PREPARED_ATTACK,
+                        GameState.Action.MASS_MEDIA),
+                game.getPlayerState(4).getLastTurnActions());
+        assertEquals("source mission consumes one spy3", spyStockBefore - 1,
+                game.getPlayerState(1).getWeaponStockByName("spy3"));
+        assertEquals("source mission becomes unready", 0,
+                game.getPlayerState(1).spyReadiness);
+        assertEquals("spy mission targets the source factory", 1,
+                game.getLastTurnSpyMissions().size());
+        GameState.SpyMissionEvent spy = game.getLastTurnSpyMissions().get(0);
+        assertEquals(1, spy.attackerPlayerId);
+        assertEquals(0, spy.defenderPlayerId);
+        assertEquals("factory", spy.actionBuildingFrame);
+        assertEquals("source prepares its plane after rejecting research twice",
+                "plane1", game.getPreparedCarrierName(3));
+        assertEquals("turn twelve strike consumes the prepared rocket", null,
+                game.getPreparedCarrierName(4));
+        assertEquals("prepared strike casualty draw", 1, random.rawDraws);
+        assertSeededState(game, EXPECTED_TWELFTH_TURN_PLAYER_STATE,
+                EXPECTED_TWELFTH_TURN_CITY_POPULATIONS);
     }
 
     private static void assertSeededState(GameState game, int[][] players,
