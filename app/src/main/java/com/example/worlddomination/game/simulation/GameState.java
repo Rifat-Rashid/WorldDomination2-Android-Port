@@ -3,6 +3,7 @@ package com.example.worlddomination.game.simulation;
 import com.example.worlddomination.game.ai.OpponentAI;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -803,14 +804,19 @@ public final class GameState {
         return random.nextInt(candidates.size());
     }
 
-    private void reassignDeadAiEnemies(PlayerState player) {
-        if (player.human || !player.alive) {
+    private void reassignDeadPlayerEnemies(PlayerState player) {
+        if (!player.alive) {
             return;
         }
-        if (player.primaryEnemyId >= 0 && !players[player.primaryEnemyId].alive) {
+        // The source runs these checks for the human too. Human enemy IDs start
+        // unset, so its first upkeep selects two source target slots and consumes
+        // the corresponding random draws before religion decay.
+        if (player.primaryEnemyId < 0 || player.primaryEnemyId >= players.length
+                || !players[player.primaryEnemyId].alive) {
             player.primaryEnemyId = chooseRandomEnemy(player, player.secondaryEnemyId);
         }
-        if (player.secondaryEnemyId >= 0 && !players[player.secondaryEnemyId].alive) {
+        if (player.secondaryEnemyId < 0 || player.secondaryEnemyId >= players.length
+                || !players[player.secondaryEnemyId].alive) {
             player.secondaryEnemyId = chooseRandomEnemy(player, player.primaryEnemyId);
         }
     }
@@ -1407,10 +1413,7 @@ public final class GameState {
                 || getHuman().turnMoneyMillions >= DIPLOMACY_AMOUNT[proposal.optionIndex]);
     }
 
-    /**
-     * Entry point for a ported opponent AI to send a source-format proposal.
-     * Offer costs are paid when the proposal is sent; a rejected offer is refunded.
-     */
+    /** Validates an interactive proposal request before adding it to the source queue. */
     public boolean submitDiplomacyProposal(int proposerPlayerId, int targetPlayerId,
                                            int optionIndex) {
         validateDiplomacyOption(optionIndex);
@@ -1427,6 +1430,29 @@ public final class GameState {
                 || proposer.ceasefireTurns[targetPlayerId] > 0) {
             return false;
         }
+        return recordDiplomacyProposal(proposer, target, optionIndex);
+    }
+
+    /** Records a proposal already selected for this turn by the source action planner. */
+    private boolean submitResolvedDiplomacyProposal(int proposerPlayerId,
+                                                     int targetPlayerId,
+                                                     int optionIndex) {
+        validateDiplomacyOption(optionIndex);
+        if (proposerPlayerId == targetPlayerId || proposerPlayerId < 0
+                || proposerPlayerId >= players.length || targetPlayerId < 0
+                || targetPlayerId >= players.length) {
+            return false;
+        }
+        PlayerState proposer = players[proposerPlayerId];
+        PlayerState target = players[targetPlayerId];
+        if (!proposer.alive || !target.alive || proposer.ceasefireTurns[targetPlayerId] > 0) {
+            return false;
+        }
+        return recordDiplomacyProposal(proposer, target, optionIndex);
+    }
+
+    private boolean recordDiplomacyProposal(PlayerState proposer, PlayerState target,
+                                            int optionIndex) {
         int amount = DIPLOMACY_AMOUNT[optionIndex];
         boolean offer = optionIndex < 3;
         if (offer && proposer.moneyMillions < amount) {
@@ -1435,10 +1461,10 @@ public final class GameState {
         if (offer) {
             proposer.moneyMillions -= amount;
         }
-        DiplomacyProposal proposal = new DiplomacyProposal(proposerPlayerId, optionIndex);
-        target.pendingDiplomacy[proposerPlayerId] = proposal;
+        DiplomacyProposal proposal = new DiplomacyProposal(proposer.id, optionIndex);
+        target.pendingDiplomacy[proposer.id] = proposal;
         target.pendingDiplomacyOrder.add(proposal);
-        proposer.diplomacyOfferedLastTurn[targetPlayerId] = 2;
+        proposer.diplomacyOfferedLastTurn[target.id] = 2;
         applyDiplomacySentRegard(proposer, target, optionIndex);
         return true;
     }
@@ -2326,6 +2352,10 @@ public final class GameState {
                     response.accepted, false);
         }
         clearPreviousBiologicalEffects();
+        long[] spyMoneyBases = new long[players.length];
+        for (PlayerState player : players) {
+            spyMoneyBases[player.id] = player.moneyMillions;
+        }
         List<ActionOrder> resolvedDefenses = new ArrayList<>();
         List<BiologicalEffect> biologicalEffects = new ArrayList<>();
         List<ActionOrder> propagandaOrders = new ArrayList<>();
@@ -2336,47 +2366,119 @@ public final class GameState {
                 resolveDefense(order, resolvedDefenses);
             }
         }
-        for (ActionOrder order : turnOrders) {
-            PlayerState actor = playerById(order.playerId);
+        // Resolve every battle before propaganda calculates its city transfer.
+        // The Flash builds turn-result records in reverse active-player order,
+        // then Presenter.turnResults walks that array backward. Side effects
+        // such as spy theft and casualty rolls therefore resolve by ascending
+        // player id while preserving each player's action-slot order.
+        for (int playerIndex = 0; playerIndex < players.length; playerIndex++) {
+            PlayerState actor = players[playerIndex];
             if (!actor.alive) {
                 continue;
             }
-            switch (order.action) {
-                case RESOURCES:
-                    resolveResources(actor);
-                    break;
-                case MASS_MEDIA:
-                    resolveMassMedia(actor);
-                    break;
-                case PRODUCTION:
-                    resolveProduction(order);
-                    break;
-                case RESEARCH:
-                    resolveResearch(order);
-                    break;
-                case ATTACK: {
-                    resolveAttack(order, turnOrders, populationChanges, spyResultMessages);
-                    break;
+            for (ActionOrder order : turnOrders) {
+                if (order.playerId != actor.id) {
+                    continue;
                 }
-                case PREPARED_ATTACK:
+                if (order.action == Action.ATTACK) {
+                    resolveAttack(order, turnOrders, populationChanges,
+                            spyMoneyBases, spyResultMessages);
+                } else if (order.action == Action.PREPARED_ATTACK) {
                     resolvePreparedAttack(order, resolvedDefenses, biologicalEffects,
                             populationChanges);
-                    break;
-                case DEFENSE:
-                    break;
-                case PROPAGANDA:
-                    propagandaOrders.add(order);
-                    break;
-                case DIPLOMACY:
-                    resolveDiplomacy(order);
-                    break;
-                default:
-                    throw new IllegalStateException("Unported action entered the turn queue: "
-                            + order.action);
+                }
             }
         }
+        // The source calculates strike casualties and their immediate score
+        // draws during turnResults, then creates the battle script and consumes
+        // its 15 presentation timer values before later result scoring.
+        consumeSourceBattleTimerDraws();
+        // Battle.createBattleScriptVars builds its result list in action order,
+        // then replays that list backwards. Its score/event order is therefore
+        // propaganda, religion (Mass Media), resources. These calls consume the
+        // same random stream as later production and research.
+        for (int playerIndex = players.length - 1; playerIndex >= 0; playerIndex--) {
+            PlayerState actor = players[playerIndex];
+            if (!actor.alive) {
+                continue;
+            }
+            for (ActionOrder order : turnOrders) {
+                if (order.playerId == actor.id && order.action == Action.PROPAGANDA) {
+                    propagandaOrders.add(order);
+                    resolvePropaganda(order, populationChanges);
+                }
+            }
+        }
+        for (int playerIndex = players.length - 1; playerIndex >= 0; playerIndex--) {
+            PlayerState actor = players[playerIndex];
+            if (!actor.alive) {
+                continue;
+            }
+            for (ActionOrder order : turnOrders) {
+                if (order.playerId == actor.id && order.action == Action.MASS_MEDIA) {
+                    resolveMassMedia(actor);
+                }
+            }
+        }
+        for (int playerIndex = players.length - 1; playerIndex >= 0; playerIndex--) {
+            PlayerState actor = players[playerIndex];
+            if (!actor.alive) {
+                continue;
+            }
+            for (ActionOrder order : turnOrders) {
+                if (order.playerId == actor.id && order.action == Action.RESOURCES) {
+                    resolveResources(actor);
+                }
+            }
+        }
+        // updatePlayerVars_2 applies propaganda hostility after doTR_from_battle
+        // has finished all of its score draws.
         for (ActionOrder order : propagandaOrders) {
-            resolvePropaganda(order, populationChanges);
+            PlayerState attacker = playerById(order.playerId);
+            PlayerState defender = playerById(order.targetPlayerId);
+            applyPropagandaHostilityEffects(attacker, defender);
+        }
+        // updatePlayerVars_2 settles all research results in player order before
+        // updatePlayerVars_3 handles any production purchases. Keeping these as
+        // separate passes preserves the shared score and purchase RNG sequence.
+        for (int playerIndex = 0; playerIndex < players.length; playerIndex++) {
+            PlayerState actor = players[playerIndex];
+            if (!actor.alive) {
+                continue;
+            }
+            for (ActionOrder order : turnOrders) {
+                if (order.playerId != actor.id) {
+                    continue;
+                }
+                if (order.action == Action.RESEARCH) {
+                        resolveResearch(order);
+                }
+            }
+        }
+        for (int playerIndex = 0; playerIndex < players.length; playerIndex++) {
+            PlayerState actor = players[playerIndex];
+            if (!actor.alive) {
+                continue;
+            }
+            for (ActionOrder order : turnOrders) {
+                if (order.playerId != actor.id) {
+                    continue;
+                }
+                if (order.action == Action.PRODUCTION) {
+                    resolveProduction(order);
+                } else if (order.action == Action.DIPLOMACY) {
+                    resolveDiplomacy(order);
+                } else if (order.action != Action.RESOURCES
+                        && order.action != Action.MASS_MEDIA
+                        && order.action != Action.ATTACK
+                        && order.action != Action.PREPARED_ATTACK
+                        && order.action != Action.DEFENSE
+                        && order.action != Action.PROPAGANDA
+                        && order.action != Action.RESEARCH) {
+                    throw new IllegalStateException("Unported action entered the turn queue: "
+                            + order.action);
+                }
+            }
         }
         applyBiologicalEffects(biologicalEffects);
         applyPopulationChanges(populationChanges);
@@ -2425,7 +2527,7 @@ public final class GameState {
 
     private void resolveDiplomacy(ActionOrder order) {
         PlayerState proposer = playerById(order.playerId);
-        if (!submitDiplomacyProposal(proposer.id, order.targetPlayerId,
+        if (!submitResolvedDiplomacyProposal(proposer.id, order.targetPlayerId,
                 order.diplomacyOption)) {
             addMessage(proposer, "Diplomacy proposal could not be sent.");
             return;
@@ -2471,16 +2573,14 @@ public final class GameState {
             List<DiplomacyProposal> pendingInArrivalOrder =
                     new ArrayList<>(target.pendingDiplomacyOrder);
             target.pendingDiplomacyOrder.clear();
+            Arrays.fill(target.pendingDiplomacy, null);
             for (DiplomacyProposal proposal : pendingInArrivalOrder) {
                 int proposerId = proposal.proposerId;
-                if (target.pendingDiplomacy[proposerId] == proposal) {
-                    boolean accept = shouldAiAccept(target, proposal);
-                    if (accept && proposal.optionIndex >= 3) {
-                        target.turnMoneyMillions -= DIPLOMACY_AMOUNT[proposal.optionIndex];
-                    }
-                    target.pendingDiplomacy[proposerId] = null;
-                    responses.add(new AiDiplomacyResponse(target, proposal, accept));
+                boolean accept = shouldAiAccept(target, proposal);
+                if (accept && proposal.optionIndex >= 3) {
+                    target.turnMoneyMillions -= DIPLOMACY_AMOUNT[proposal.optionIndex];
                 }
+                responses.add(new AiDiplomacyResponse(target, proposal, accept));
             }
         }
         return responses;
@@ -2554,8 +2654,7 @@ public final class GameState {
         if (accepted && optionIndex >= 3 && target.moneyMillions < amount) {
             accepted = false;
         }
-        target.pendingDiplomacy[proposerId] = null;
-        target.pendingDiplomacyOrder.remove(proposal);
+        removePendingDiplomacy(target, proposal);
         if (accepted) {
             target.regardToward[proposerId] += DIPLOMACY_BONUS;
             proposer.regardToward[target.id] += DIPLOMACY_BONUS;
@@ -2592,6 +2691,18 @@ public final class GameState {
         }
     }
 
+    private void removePendingDiplomacy(PlayerState target, DiplomacyProposal proposal) {
+        target.pendingDiplomacyOrder.remove(proposal);
+        int proposerId = proposal.proposerId;
+        target.pendingDiplomacy[proposerId] = null;
+        for (DiplomacyProposal remaining : target.pendingDiplomacyOrder) {
+            if (remaining.proposerId == proposerId) {
+                target.pendingDiplomacy[proposerId] = remaining;
+                break;
+            }
+        }
+    }
+
     private static void applyDiplomacySentRegard(PlayerState proposer, PlayerState target,
                                                   int optionIndex) {
         int adjustment = optionIndex < 3 ? optionIndex * 5 : -optionIndex;
@@ -2612,14 +2723,26 @@ public final class GameState {
 
     void applyBattleHostilityEffects(PlayerState attacker, PlayerState defender,
                                      int casualties) {
-        // Model.calcBattle applies this fixed AI hostility penalty before
-        // Presenter.turnResults adjusts regard by the casualty count.
+        // Model.calcBattle's fixed penalty is a distinct source stage. The
+        // ordinary turn-result path applies casualties through Presenter only.
+        applyModelBattleHostilityPenalty(attacker, defender);
+        applyTurnResultBattleHostilityEffects(attacker, defender, casualties);
+    }
+
+    private void applyModelBattleHostilityPenalty(PlayerState attacker,
+                                                  PlayerState defender) {
         if (!attacker.human && attacker.regardToward[defender.id] > 0) {
             attacker.regardToward[defender.id] -= 8;
         }
         if (!defender.human && defender.regardToward[attacker.id] > 0) {
             defender.regardToward[attacker.id] -= 8;
         }
+    }
+
+    /** Applies the Presenter turn-result relation changes after combat. */
+    private void applyTurnResultBattleHostilityEffects(PlayerState attacker,
+                                                       PlayerState defender,
+                                                       int casualties) {
         attacker.regardToward[defender.id] -= casualties;
         defender.regardToward[attacker.id] -= casualties;
 
@@ -2665,16 +2788,32 @@ public final class GameState {
 
     /** Applies source upkeep in active-player order after AI planning. */
     private void updateTurnUpkeep() {
-        for (PlayerState player : players) {
+        // ActionScript keys() visits array indices from last to first. The
+        // source active-player array is in player-id order, so keep the same
+        // reverse order when assigning religion and retargeting random draws.
+        for (int playerIndex = players.length - 1; playerIndex >= 0; playerIndex--) {
+            PlayerState player = players[playerIndex];
             if (!player.alive) {
                 continue;
             }
             advanceSpyReadiness(player);
             updateDiplomacyRelations(player);
-            reassignDeadAiEnemies(player);
+            reassignDeadPlayerEnemies(player);
             decayReligion(player);
             applySpecialAiIncome(player);
             tickDiplomacyOfferCooldowns(player);
+        }
+    }
+
+    /**
+     * The Flash battle setup always consumes 15 randRange(50, 60) values for
+     * its battle timer before resolving turn-result events. Those values only
+     * drive presentation, but they share the source gameplay RNG and affect
+     * later decisions, so advance the stream here without involving rendering.
+     */
+    private void consumeSourceBattleTimerDraws() {
+        for (int timerIndex = 0; timerIndex < 15; timerIndex++) {
+            random.nextInt(11);
         }
     }
 
@@ -2777,6 +2916,7 @@ public final class GameState {
     /** Source attack casualties are a rounded random 50%-100% of unit maxKills. */
     private void resolveAttack(ActionOrder order, List<ActionOrder> turnOrders,
                                TurnPopulationChanges populationChanges,
+                               long[] spyMoneyBases,
                                List<PlayerMessage> spyResultMessages) {
         PlayerState attacker = playerById(order.playerId);
         PlayerState defender = playerById(order.targetPlayerId);
@@ -2793,7 +2933,8 @@ public final class GameState {
             return;
         }
         if (spyMission) {
-            resolveSpyAttack(attacker, defender, weapon, turnOrders, spyResultMessages);
+            resolveSpyAttack(attacker, defender, weapon, turnOrders,
+                    spyMoneyBases[defender.id], spyResultMessages);
             weapon.inStock--;
             order.actionBuildingResolved = true;
             lastTurnSpyMissions.add(new SpyMissionEvent(attacker.id, defender.id,
@@ -2817,7 +2958,7 @@ public final class GameState {
                     attacker.id, defender.id, city.index, weapon.definition.name, null,
                     casualties, null, order.actionBuildingSlot));
             recordLargestBattle(attacker, defender, casualties);
-            applyBattleHostilityEffects(attacker, defender, casualties);
+            applyTurnResultBattleHostilityEffects(attacker, defender, casualties);
             if (casualties > 0) {
                 addToHighscore(attacker, 1, casualties);
             }
@@ -3118,7 +3259,7 @@ public final class GameState {
                 counterDefense == null ? null : counterName, order.actionBuildingSlot,
                 counterDefense == null ? -1 : counterDefense.actionBuildingSlot));
         recordLargestBattle(attacker, defender, casualties);
-        applyBattleHostilityEffects(attacker, defender, casualties);
+        applyTurnResultBattleHostilityEffects(attacker, defender, casualties);
         if (casualties > 0) {
             addToHighscore(attacker, 1, casualties);
         }
@@ -3208,7 +3349,7 @@ public final class GameState {
                 }
             }
         }
-        applyBattleHostilityEffects(attacker, defender, totalCasualties);
+        applyTurnResultBattleHostilityEffects(attacker, defender, totalCasualties);
     }
 
     /** Source ship counter roll uses randRange(1, 3) == 2: one of three strikes. */
@@ -3340,13 +3481,18 @@ public final class GameState {
 
     private void resolveSpyAttack(PlayerState attacker, PlayerState defender,
                                   WeaponState spy, List<ActionOrder> turnOrders,
+                                  long sourceMoneyBase,
                                   List<PlayerMessage> resultMessages) {
         int level = spy.definition.level;
         int[] statistics = SPY_STATISTICS[level - 1];
         int weaponCount = 1 + random.nextInt(statistics[0]);
         int moneyPercent = level * 10
                 + random.nextInt(statistics[1] - level * 10 + 1);
-        long moneyAmount = Math.round((defender.moneyMillions / 100.0d) * moneyPercent);
+        // Sub_presenter creates every spy result array before Presenter applies
+        // any of them, so concurrent missions calculate their offer from the
+        // same pre-battle defender balance. The transfer below still clamps to
+        // the defender's live balance, as the source result handler does.
+        long moneyAmount = Math.round((sourceMoneyBase / 100.0d) * moneyPercent);
         moneyAmount = Math.min(moneyAmount, SPY_MONEY_CAP[difficulty]);
         if (defender.specialPerson) {
             // The source stores the money amount before its later local $20M adjustment.
@@ -3373,7 +3519,10 @@ public final class GameState {
         for (WeaponState targetWeapon : defender.weapons.values()) {
             int maximumTargetLevel = defender.specialPerson ? 1 : level;
             if (targetWeapon.inStock > 0 && targetWeapon.definition.level <= maximumTargetLevel
-                    && !"spy".equals(targetWeapon.definition.type)) {
+                    && !"spy".equals(targetWeapon.definition.type)
+                    // Source counter weapons live in WeaponStock.counterArr,
+                    // outside the weaponArr searched by createSpyStealArray.
+                    && !"anti".equals(targetWeapon.definition.type)) {
                 availableTargets.add(targetWeapon);
             }
         }
@@ -3451,7 +3600,10 @@ public final class GameState {
             case RESOURCES:
                 return "resources";
             case PRODUCTION:
-                return "factory";
+                // Source production results are "produce2" and
+                // "production_building", neither of which removes "factory"
+                // from the spy-action choices.
+                return null;
             case RESEARCH:
                 return "tech";
             case MASS_MEDIA:
@@ -3490,6 +3642,10 @@ public final class GameState {
 
         int transfer = calculatePropagandaTransfer(attacker, defender,
                 populationChanges.remainingAfterBattle(targetCity));
+        // Source passes the Player object where addToHighscore expects a player
+        // ID. That still consumes its 0..50 RNG draw, but its NaN score update
+        // is discarded; reproduce this source quirk for seeded parity.
+        random.nextInt(51);
         populationChanges.addPropagandaLoss(targetCity, transfer);
         int recipientCount = 0;
         for (CityState city : attacker.cities) {
@@ -3507,8 +3663,6 @@ public final class GameState {
                 }
             }
         }
-        applyPropagandaHostilityEffects(attacker, defender);
-        addToHighscore(attacker, 7, transfer);
         if (transfer > 0) {
             addMessage(attacker, "You gained " + transfer
                     + ".000.000 citizens from propaganda.");
@@ -3703,8 +3857,29 @@ public final class GameState {
 
     private void resolveProduction(ActionOrder order) {
         PlayerState producer = playerById(order.playerId);
-        for (Map.Entry<String, Integer> investment : order.productionBudgets.entrySet()) {
+        List<Map.Entry<String, Integer>> investments = new ArrayList<>(
+                order.productionBudgets.entrySet());
+        investments.sort((left, right) -> Integer.compare(
+                sourceProductionInvestmentOrder(left.getKey()),
+                sourceProductionInvestmentOrder(right.getKey())));
+        // The Flash's productionInvestmentArr has a fixed display order that
+        // differs from weapon group numbers. Turn results preserve that order.
+        for (Map.Entry<String, Integer> investment : investments) {
             resolveProductionInvestment(producer, investment.getKey(), investment.getValue());
+        }
+    }
+
+    private static int sourceProductionInvestmentOrder(String category) {
+        switch (category) {
+            case "rockets": return 0;
+            case "planes": return 1;
+            case "special": return 2;
+            case "warhead": return 3;
+            case "bioload": return 4;
+            case "soldier": return 5;
+            case "spy": return 6;
+            case "defense": return 7;
+            default: return Integer.MAX_VALUE;
         }
     }
 
@@ -3719,16 +3894,36 @@ public final class GameState {
         for (WeaponState weapon : producer.weapons.values()) {
             WeaponCatalog.Definition definition = weapon.definition;
             if (definition.productionGroup == group && weapon.active
-                    && weapon.inStock < PLAYER_STOCK_CAP
                     && (group == 7 || definition.costMillions < budget)) {
                 candidates.add(weapon);
                 minimumCost = Math.min(minimumCost, definition.costMillions);
             }
         }
+        // The Flash computes its minimum candidate cost before removing items at
+        // the stock cap. That stale minimum controls how long its random purchase
+        // loop continues after the remaining budget can no longer buy the sole
+        // uncapped item.
+        // The Flash removes capped items while walking forward. It increments
+        // the index after splice, so the item shifted into a removed slot is
+        // skipped. That source quirk matters when a category has multiple
+        // weapons: a capped lower tier can be removed while the next tier is
+        // still eligible for the purchase loop.
+        for (int index = 0; index < candidates.size(); index++) {
+            if (candidates.get(index).inStock >= PLAYER_STOCK_CAP) {
+                candidates.remove(index);
+            }
+        }
+        if (candidates.isEmpty()) {
+            // Presenter_updatePlayerVars_3 still calls randRange(0, -1) once
+            // for an empty filtered production list. Tools.randRange consumes
+            // one random() draw and returns zero for that zero-width range.
+            random.nextDouble();
+            return;
+        }
         int remaining = budget;
         int attempts = 0;
         Map<String, Integer> bought = new LinkedHashMap<>();
-        while (!candidates.isEmpty() && attempts <= 30) {
+        while (!candidates.isEmpty()) {
             WeaponState weapon = candidates.get(random.nextInt(candidates.size()));
             if (weapon.inStock <= PLAYER_STOCK_CAP) {
                 if (group == 7) {
@@ -3743,7 +3938,6 @@ public final class GameState {
                         weapon.investmentMillions -= weapon.definition.costMillions;
                         Integer count = bought.get(weapon.definition.name);
                         bought.put(weapon.definition.name, count == null ? 1 : count + 1);
-                        addToHighscore(producer, 3, weapon.definition.level);
                         unitsBought++;
                     }
                 } else if (weapon.definition.costMillions <= remaining) {
@@ -3755,10 +3949,11 @@ public final class GameState {
                     addToHighscore(producer, 3, weapon.definition.level);
                 }
             }
-            attempts++;
-            if ((group == 7 ? remaining <= 0 : remaining < minimumCost) || attempts > 30) {
+            if ((group == 7 ? remaining <= 0 : remaining < minimumCost)
+                    || attempts > 30) {
                 break;
             }
+            attempts++;
         }
         if (!bought.isEmpty()) {
             StringBuilder summary = new StringBuilder("Nation ")
