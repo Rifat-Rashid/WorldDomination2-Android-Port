@@ -230,19 +230,21 @@ public final class OpponentAI {
                 companion = scores.get(1);
             }
             if (!attackPlan.isEmpty()) {
-                boolean readySingleAttack = player.getPreparedCarrierName() != null
-                        && !"ship".equals(player.getWeapons().get(
-                        player.getPreparedCarrierName()).definition.type)
-                        && attackPlan.size() == 1;
+                boolean companionWasReset = player.getPreparedCarrierName() == null
+                        || attackPlan.get(0).prepareCarrier;
+                if (companionWasReset && scores.size() > 1) {
+                    // getTarget resets the companion slot when it selects a new
+                    // carrier. doTurn then refills that slot from the next
+                    // ranked action, so carrier preparation does not consume
+                    // both action slots by itself.
+                    companion = scores.get(1);
+                }
                 for (Decision decision : attackPlan) {
                     decisions.add(decision);
                     reserve(player, decision);
                     markPlannedUse(decision, plannedWeaponUse);
                 }
-                // A not-ready attack resets its companion slot in the reference.
-                // A ready carrier's single attack leaves the other scored action intact.
-                boolean attackResetsCompanion = !readySingleAttack;
-                if (attackSlot == 0 && companion != null && !attackResetsCompanion) {
+                if (attackSlot == 0 && companion != null && decisions.size() < 2) {
                     Decision secondOrder = planRankedAction(state, player, companion,
                             random, 2, plannedWeaponUse);
                     if (secondOrder != null) {
@@ -281,10 +283,6 @@ public final class OpponentAI {
                         break;
                     }
                     addPlannedDecision(player, decision, decisions, plannedWeaponUse);
-                    if (decision.action == GameState.Action.PREPARED_ATTACK
-                            && decision.prepareCarrier) {
-                        return decisions;
-                    }
                 }
                 continue;
             }
@@ -293,10 +291,6 @@ public final class OpponentAI {
                     decisions.size() + 1, plannedWeaponUse);
             if (decision != null) {
                 addPlannedDecision(player, decision, decisions, plannedWeaponUse);
-                if (decision.action == GameState.Action.PREPARED_ATTACK
-                        && decision.prepareCarrier) {
-                    return decisions;
-                }
             }
         }
         return decisions;
@@ -1623,7 +1617,12 @@ public final class OpponentAI {
             budget = player.turnMoneyMillions;
         }
         List<TechnologyCatalog.Definition> candidates = new ArrayList<>();
-        for (TechnologyCatalog.Definition technology : TechnologyCatalog.all()) {
+        List<TechnologyCatalog.Definition> technologyDefinitions = TechnologyCatalog.all();
+        // Model.getTarget walks TechTree.techArr with ActionScript's reverse
+        // array-key order before its stable desire sort. Keep that order for
+        // equal-desire choices, which can decide which technology fits a budget.
+        for (int index = technologyDefinitions.size() - 1; index >= 0; index--) {
+            TechnologyCatalog.Definition technology = technologyDefinitions.get(index);
             if ((technology.group == 7 && !player.allowsSpecialTechnologies())
                     || player.hasTechnology(technology.name)
                     || player.moneyMillions <= technology.costMillions

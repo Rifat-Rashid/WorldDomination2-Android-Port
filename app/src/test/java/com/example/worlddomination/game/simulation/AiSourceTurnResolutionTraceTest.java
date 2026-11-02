@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Random;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 /** Seeded regression for source result ordering, score RNG, and production. */
@@ -136,6 +137,22 @@ public final class AiSourceTurnResolutionTraceTest {
             {107, 41, 67, 43, 167}
     };
 
+    private static final int[][] EXPECTED_SEVENTH_TURN_PLAYER_STATE = {
+            {209, 352, 100, 130580},
+            {90, 450, 34, 365972},
+            {104, 475, 27, 342986},
+            {92, 450, 27, 185244},
+            {10, 425, 30, 161876}
+    };
+
+    private static final int[][] EXPECTED_SEVENTH_TURN_CITY_POPULATIONS = {
+            {73, 47, 80, 47, 105},
+            {59, 97, 54, 84, 156},
+            {62, 85, 115, 83, 130},
+            {66, 110, 67, 96, 111},
+            {107, 41, 67, 43, 167}
+    };
+
     // Source trace includes one empty-range random() call that Java records
     // separately from bounded nextInt draws.
     private static final List<String> EXPECTED_FOURTH_TURN_RANDOM_DRAWS = Arrays.asList(
@@ -173,6 +190,16 @@ public final class AiSourceTurnResolutionTraceTest {
             "3:1", "3:0", "3:1", "3:1", "3:0", "3:2", "3:0", "3:1",
             "3:2", "3:2", "3:2", "3:2", "3:0", "3:0", "3:1", "3:2",
             "3:1", "3:1", "3:2", "3:0");
+
+    private static final List<String> EXPECTED_SEVENTH_TURN_RANDOM_DRAWS = Arrays.asList(
+            "91:51", "3:1", "91:80", "3:0", "91:49", "3:1", "91:64", "3:2",
+            "61:45", "4:0", "21:20", "61:2", "4:2", "21:6", "61:6", "2:0",
+            "3:0", "2:0", "141:136", "4:3", "21:7", "61:30", "61:36", "61:19",
+            "61:8", "6:2", "6:5", "6:5", "6:3", "6:4", "11:4", "11:8",
+            "11:8", "11:9", "11:2", "11:5", "11:0", "11:6", "11:5", "11:6",
+            "11:5", "11:3", "11:1", "11:3", "11:8", "51:14", "51:49", "51:42",
+            "51:13", "51:23", "51:40", "51:0", "1:0", "51:34", "2:0", "51:33",
+            "2:0", "51:14", "2:1", "2:1", "2:0", "51:13", "1:0", "51:15");
 
     // Source trace collected from Model.doTurn through Sub_presenter.turnResults.
     // Empty and zero-width ranges remain because they consume source RNG calls.
@@ -446,6 +473,60 @@ public final class AiSourceTurnResolutionTraceTest {
         assertSeededState(game, EXPECTED_SIXTH_TURN_PLAYER_STATE,
                 EXPECTED_SIXTH_TURN_CITY_POPULATIONS);
         assertEquals("sixth turn has no unbounded random draws", 0, random.rawDraws);
+    }
+
+    @Test
+    public void hardSeededSeventhTurnMatchesSourceCarrierPreparationAndProduction() {
+        GameSetup setup = new GameSetup(17L);
+        setup.setDifficulty(2);
+        for (int leader : new int[]{0, 9, 18, 5}) {
+            setup.toggleOpponent(leader);
+        }
+        RecordingRandom random = new RecordingRandom(setup.copyGameplayRandom());
+        GameState game = new GameState(setup, random);
+        random.clear();
+
+        for (int priorTurn = 0; priorTurn < 6; priorTurn++) {
+            queueHumanTurn(game);
+            game.confirmTurn();
+            assertFalse("source keeps soldier3 locked after turn " + (priorTurn + 1)
+                            + ": " + game.getPlayerState(4).getInventedTechnologies(),
+                    game.getPlayerState(4).hasTechnology("soldier3"));
+            if (priorTurn == 3) {
+                assertTrue(game.getPlayerState(4).hasTechnology("warhead4"));
+                assertTrue(game.getPlayerState(4).hasTechnology("spy3"));
+            }
+            random.clear();
+        }
+        queueHumanTurn(game);
+        game.confirmTurn();
+
+        assertEquals(7, game.getTurn());
+        assertEquals(Arrays.asList(GameState.Action.RESEARCH, GameState.Action.PRODUCTION),
+                game.getPlayerState(1).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.RESOURCES, GameState.Action.RESEARCH),
+                game.getPlayerState(2).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.RESOURCES, GameState.Action.PRODUCTION),
+                game.getPlayerState(3).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.PREPARED_ATTACK,
+                        GameState.Action.PRODUCTION),
+                game.getPlayerState(4).getLastTurnActions());
+        assertEquals("seventh-turn source carrier choice is preserved", "rocket1",
+                game.getPreparedCarrierName(4));
+        assertEquals("carrier stock is consumed when it is prepared", 1,
+                game.getPlayerState(4).getWeaponStockByName("rocket1"));
+        assertEquals("source production fills warhead tier two", 4,
+                game.getPlayerState(4).getWeaponStockByName("warhead2"));
+        assertEquals("source production fills soldier tier one", 5,
+                game.getPlayerState(4).getWeaponStockByName("soldier1"));
+        assertEquals("source production buys one additional spy", 3,
+                game.getPlayerState(4).getWeaponStockByName("spy1"));
+        assertEquals("seventh-turn AI and settlement draws match source",
+                EXPECTED_SEVENTH_TURN_RANDOM_DRAWS, random.draws);
+        assertSeededState(game, EXPECTED_SEVENTH_TURN_PLAYER_STATE,
+                EXPECTED_SEVENTH_TURN_CITY_POPULATIONS);
+        assertEquals("seventh-turn empty production list consumes a raw draw",
+                1, random.rawDraws);
     }
 
     private static void assertSeededState(GameState game, int[][] players,

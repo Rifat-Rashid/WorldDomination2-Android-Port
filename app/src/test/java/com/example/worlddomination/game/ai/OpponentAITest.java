@@ -31,6 +31,31 @@ public final class OpponentAITest {
     }
 
     @Test
+    public void researchUsesSourceReverseTechnologyOrderToBreakTies() throws Exception {
+        GameState state = gameWithRegularFirstOpponent(7401L);
+        GameState.PlayerState actor = state.getPlayerState(1);
+        for (TechnologyCatalog.Definition technology : TechnologyCatalog.all()) {
+            setTechnology(actor, technology.name,
+                    !"soldier3".equals(technology.name)
+                            && !"spy3".equals(technology.name));
+        }
+        actor.moneyMillions = 16;
+        actor.turnMoneyMillions = 16;
+        setDesiredStock(actor, 0);
+        setDesiredStock(actor, "soldier3", 1);
+        setDesiredStock(actor, "spy3", 1);
+
+        OpponentAI.Decision decision = OpponentAI.planAction(state, actor,
+                GameState.Action.RESEARCH, new SequenceRandom(), 2,
+                Collections.<String, Integer>emptyMap());
+
+        assertNotNull(decision);
+        assertEquals("equal-desire research follows reversed Flash array-key order",
+                Collections.singletonList("spy3"), decision.technologies);
+        assertEquals(15, decision.reservedMillions);
+    }
+
+    @Test
     public void plannerFallsThroughUnavailableTopActionsToFillBothSlots() throws Exception {
         GameState state = gameWithRegularFirstOpponent(7401L);
         GameState.PlayerState actor = state.getPlayerState(1);
@@ -1841,6 +1866,17 @@ public final class OpponentAITest {
         for (String weaponName : desiredStock.keySet()) {
             desiredStock.put(weaponName, value);
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void setDesiredStock(GameState.PlayerState actor, String name, int value)
+            throws Exception {
+        java.lang.reflect.Field desiredStockField = GameState.PlayerState.class
+                .getDeclaredField("desiredStock");
+        desiredStockField.setAccessible(true);
+        Map<String, Integer> desiredStock =
+                (Map<String, Integer>) desiredStockField.get(actor);
+        desiredStock.put(name, value);
     }
 
     private static void configureSourcePreparationScenario(
