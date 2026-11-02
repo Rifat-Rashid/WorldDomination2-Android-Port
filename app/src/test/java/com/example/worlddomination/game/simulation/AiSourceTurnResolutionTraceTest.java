@@ -112,6 +112,29 @@ public final class AiSourceTurnResolutionTraceTest {
             "1:0", "1:0", "1:0", "1:0", "1:0", "1:0", "1:0"
     );
 
+    // The source has two randRange(0, -1) calls; Java records those as raw draws.
+    private static final List<String> EXPECTED_TWENTY_FIRST_TURN_RANDOM_DRAWS = Arrays.asList(
+            "91:66", "3:0", "91:53", "3:2", "91:52", "3:1", "91:9", "3:0", "4:3", "21:4",
+            "61:60", "61:12", "61:27", "61:31", "4:1", "21:17", "61:2", "61:42", "61:6", "61:46",
+            "2:0", "3:1", "1:0", "2:0", "3:0", "1:0", "141:118", "5:0", "5:1", "5:2",
+            "6:3", "6:4", "6:2", "6:2", "6:2", "11:4", "11:4", "11:4", "11:5", "11:1",
+            "11:0", "11:2", "11:5", "11:2", "11:8", "11:8", "11:10", "11:4", "11:1", "11:3",
+            "51:11", "51:3", "51:50", "51:39", "51:36", "4:0", "24:0", "4:2", "24:16", "4:3",
+            "24:23", "4:0", "24:22", "4:2", "24:3", "4:1", "24:14", "4:2", "24:13", "4:2",
+            "24:21", "4:3", "24:9", "4:1", "24:17", "4:0", "24:10", "4:0", "24:14", "4:1",
+            "24:20", "4:3", "24:2", "4:3", "24:15", "4:1", "24:10", "4:3", "24:19", "4:3",
+            "24:10", "4:0", "24:23", "4:0", "24:13", "4:3", "24:9", "4:0", "24:12", "4:0",
+            "24:7", "4:2", "24:4", "4:1", "24:3", "4:1", "24:19", "4:2", "24:16", "4:1",
+            "24:22", "4:0", "24:6", "4:1", "24:16", "4:2", "24:4", "4:1", "24:8", "2:1",
+            "24:8", "2:1", "24:5", "2:1", "24:20", "2:0", "24:7", "2:1", "24:21", "2:1",
+            "24:8", "2:1", "24:10", "2:0", "24:7", "2:0", "24:13", "2:0", "24:7", "2:1",
+            "24:1", "2:1", "24:4", "2:0", "24:11", "2:1", "24:17", "2:0", "24:5", "2:1",
+            "24:17", "2:0", "24:1", "2:1", "24:8", "2:0", "24:10", "2:1", "24:18", "2:0",
+            "24:9", "2:0", "24:19", "2:0", "24:18", "2:0", "24:15", "2:0", "24:19", "2:0",
+            "24:3", "2:0", "24:14", "2:1", "24:17", "2:0", "24:20", "2:0", "24:17", "2:0",
+            "24:10", "2:0", "24:5", "3:2", "51:40", "3:1", "51:34", "3:2", "3:1", "51:18"
+    );
+
     private static final List<String> EXPECTED_RANDOM_DRAWS = Arrays.asList(
             "91:30", "3:2", "91:52", "3:0", "91:0", "3:2", "91:31", "3:1",
             "2:0", "3:1", "2:1", "141:43", "4:0", "21:20", "61:55", "4:0",
@@ -1828,6 +1851,67 @@ public final class AiSourceTurnResolutionTraceTest {
                         {107, 475, 34, 891294},
                         {121, 470, 27, 510132},
                         {35, 425, 31, 565716}
+                },
+                new int[][]{
+                        {0, 0, 37, 0, 105},
+                        {59, 97, 54, 84, 138},
+                        {62, 85, 115, 83, 130},
+                        {70, 114, 71, 100, 115},
+                        {107, 41, 67, 43, 167}
+                });
+    }
+
+    @Test
+    public void hardSeededTwentyFirstTurnMatchesSourceActionsAndRandomTrace() {
+        GameSetup setup = new GameSetup(17L);
+        setup.setDifficulty(2);
+        for (int leader : new int[]{0, 9, 18, 5}) {
+            setup.toggleOpponent(leader);
+        }
+        RecordingRandom random = new RecordingRandom(setup.copyGameplayRandom());
+        GameState game = new GameState(setup, random);
+        random.clear();
+        for (int priorTurn = 0; priorTurn < 20; priorTurn++) {
+            queueHumanTurn(game);
+            game.confirmTurn();
+            random.clear();
+        }
+
+        queueHumanTurn(game);
+        game.confirmTurn();
+
+        assertEquals(21, game.getTurn());
+        assertEquals("source turn-twenty-one bounded random trace; actual=" + random.draws,
+                EXPECTED_TWENTY_FIRST_TURN_RANDOM_DRAWS, random.draws);
+        assertEquals("source has two zero-width raw random draws", 2, random.rawDraws);
+        assertEquals(Arrays.asList(GameState.Action.RESOURCES, GameState.Action.MASS_MEDIA),
+                game.getPlayerState(0).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.RESOURCES, GameState.Action.PRODUCTION),
+                game.getPlayerState(1).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.RESOURCES, GameState.Action.PRODUCTION),
+                game.getPlayerState(2).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.MASS_MEDIA,
+                        GameState.Action.PREPARED_ATTACK),
+                game.getPlayerState(3).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.PREPARED_ATTACK,
+                        GameState.Action.DIPLOMACY),
+                game.getPlayerState(4).getLastTurnActions());
+        assertEquals("the third opponent prepares its rocket carrier", "rocket2",
+                game.getPreparedCarrierName(3));
+        assertEquals("the fourth opponent prepares its aircraft carrier", "plane1",
+                game.getPreparedCarrierName(4));
+        assertTrue("prepared attacks do not resolve until the next turn",
+                game.getLastTurnCombatEvents().isEmpty());
+        assertTrue("turn twenty-one has no spy mission",
+                game.getLastTurnSpyMissions().isEmpty());
+
+        assertSeededState(game,
+                new int[][]{
+                        {128, 142, 100, 346236},
+                        {67, 432, 30, 687550},
+                        {50, 475, 27, 951946},
+                        {121, 470, 43, 515732},
+                        {35, 425, 23, 565716}
                 },
                 new int[][]{
                         {0, 0, 37, 0, 105},
