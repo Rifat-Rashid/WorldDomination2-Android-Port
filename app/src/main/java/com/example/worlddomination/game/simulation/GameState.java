@@ -3,6 +3,7 @@ package com.example.worlddomination.game.simulation;
 import com.example.worlddomination.game.ai.OpponentAI;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -1412,10 +1413,7 @@ public final class GameState {
                 || getHuman().turnMoneyMillions >= DIPLOMACY_AMOUNT[proposal.optionIndex]);
     }
 
-    /**
-     * Entry point for a ported opponent AI to send a source-format proposal.
-     * Offer costs are paid when the proposal is sent; a rejected offer is refunded.
-     */
+    /** Validates an interactive proposal request before adding it to the source queue. */
     public boolean submitDiplomacyProposal(int proposerPlayerId, int targetPlayerId,
                                            int optionIndex) {
         validateDiplomacyOption(optionIndex);
@@ -1432,6 +1430,29 @@ public final class GameState {
                 || proposer.ceasefireTurns[targetPlayerId] > 0) {
             return false;
         }
+        return recordDiplomacyProposal(proposer, target, optionIndex);
+    }
+
+    /** Records a proposal already selected for this turn by the source action planner. */
+    private boolean submitResolvedDiplomacyProposal(int proposerPlayerId,
+                                                     int targetPlayerId,
+                                                     int optionIndex) {
+        validateDiplomacyOption(optionIndex);
+        if (proposerPlayerId == targetPlayerId || proposerPlayerId < 0
+                || proposerPlayerId >= players.length || targetPlayerId < 0
+                || targetPlayerId >= players.length) {
+            return false;
+        }
+        PlayerState proposer = players[proposerPlayerId];
+        PlayerState target = players[targetPlayerId];
+        if (!proposer.alive || !target.alive || proposer.ceasefireTurns[targetPlayerId] > 0) {
+            return false;
+        }
+        return recordDiplomacyProposal(proposer, target, optionIndex);
+    }
+
+    private boolean recordDiplomacyProposal(PlayerState proposer, PlayerState target,
+                                            int optionIndex) {
         int amount = DIPLOMACY_AMOUNT[optionIndex];
         boolean offer = optionIndex < 3;
         if (offer && proposer.moneyMillions < amount) {
@@ -1440,10 +1461,10 @@ public final class GameState {
         if (offer) {
             proposer.moneyMillions -= amount;
         }
-        DiplomacyProposal proposal = new DiplomacyProposal(proposerPlayerId, optionIndex);
-        target.pendingDiplomacy[proposerPlayerId] = proposal;
+        DiplomacyProposal proposal = new DiplomacyProposal(proposer.id, optionIndex);
+        target.pendingDiplomacy[proposer.id] = proposal;
         target.pendingDiplomacyOrder.add(proposal);
-        proposer.diplomacyOfferedLastTurn[targetPlayerId] = 2;
+        proposer.diplomacyOfferedLastTurn[target.id] = 2;
         applyDiplomacySentRegard(proposer, target, optionIndex);
         return true;
     }
@@ -2499,7 +2520,7 @@ public final class GameState {
 
     private void resolveDiplomacy(ActionOrder order) {
         PlayerState proposer = playerById(order.playerId);
-        if (!submitDiplomacyProposal(proposer.id, order.targetPlayerId,
+        if (!submitResolvedDiplomacyProposal(proposer.id, order.targetPlayerId,
                 order.diplomacyOption)) {
             addMessage(proposer, "Diplomacy proposal could not be sent.");
             return;
@@ -2545,16 +2566,14 @@ public final class GameState {
             List<DiplomacyProposal> pendingInArrivalOrder =
                     new ArrayList<>(target.pendingDiplomacyOrder);
             target.pendingDiplomacyOrder.clear();
+            Arrays.fill(target.pendingDiplomacy, null);
             for (DiplomacyProposal proposal : pendingInArrivalOrder) {
                 int proposerId = proposal.proposerId;
-                if (target.pendingDiplomacy[proposerId] == proposal) {
-                    boolean accept = shouldAiAccept(target, proposal);
-                    if (accept && proposal.optionIndex >= 3) {
-                        target.turnMoneyMillions -= DIPLOMACY_AMOUNT[proposal.optionIndex];
-                    }
-                    target.pendingDiplomacy[proposerId] = null;
-                    responses.add(new AiDiplomacyResponse(target, proposal, accept));
+                boolean accept = shouldAiAccept(target, proposal);
+                if (accept && proposal.optionIndex >= 3) {
+                    target.turnMoneyMillions -= DIPLOMACY_AMOUNT[proposal.optionIndex];
                 }
+                responses.add(new AiDiplomacyResponse(target, proposal, accept));
             }
         }
         return responses;
@@ -2628,8 +2647,7 @@ public final class GameState {
         if (accepted && optionIndex >= 3 && target.moneyMillions < amount) {
             accepted = false;
         }
-        target.pendingDiplomacy[proposerId] = null;
-        target.pendingDiplomacyOrder.remove(proposal);
+        removePendingDiplomacy(target, proposal);
         if (accepted) {
             target.regardToward[proposerId] += DIPLOMACY_BONUS;
             proposer.regardToward[target.id] += DIPLOMACY_BONUS;
@@ -2663,6 +2681,18 @@ public final class GameState {
             }
             addMessage(target, "Nation " + target.id + " rejected diplomacy with nation "
                     + proposer.id + ".");
+        }
+    }
+
+    private void removePendingDiplomacy(PlayerState target, DiplomacyProposal proposal) {
+        target.pendingDiplomacyOrder.remove(proposal);
+        int proposerId = proposal.proposerId;
+        target.pendingDiplomacy[proposerId] = null;
+        for (DiplomacyProposal remaining : target.pendingDiplomacyOrder) {
+            if (remaining.proposerId == proposerId) {
+                target.pendingDiplomacy[proposerId] = remaining;
+                break;
+            }
         }
     }
 

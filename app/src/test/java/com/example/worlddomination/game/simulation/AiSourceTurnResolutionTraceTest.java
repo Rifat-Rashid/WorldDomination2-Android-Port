@@ -104,6 +104,38 @@ public final class AiSourceTurnResolutionTraceTest {
             {107, 41, 67, 43, 187}
     };
 
+    private static final int[][] EXPECTED_FIFTH_TURN_PLAYER_STATE = {
+            {155, 352, 100, 94356},
+            {72, 450, 26, 320014},
+            {60, 455, 43, 277566},
+            {69, 450, 21, 149164},
+            {40, 445, 22, 132278}
+    };
+
+    private static final int[][] EXPECTED_FIFTH_TURN_CITY_POPULATIONS = {
+            {73, 47, 80, 47, 105},
+            {59, 97, 54, 84, 156},
+            {58, 81, 111, 79, 126},
+            {66, 110, 67, 96, 111},
+            {107, 41, 67, 43, 187}
+    };
+
+    private static final int[][] EXPECTED_SIXTH_TURN_PLAYER_STATE = {
+            {182, 352, 100, 113328},
+            {110, 450, 42, 341772},
+            {101, 475, 37, 293526},
+            {54, 450, 37, 166320},
+            {40, 425, 37, 137578}
+    };
+
+    private static final int[][] EXPECTED_SIXTH_TURN_CITY_POPULATIONS = {
+            {73, 47, 80, 47, 105},
+            {59, 97, 54, 84, 156},
+            {62, 85, 115, 83, 130},
+            {66, 110, 67, 96, 111},
+            {107, 41, 67, 43, 167}
+    };
+
     // Source trace includes one empty-range random() call that Java records
     // separately from bounded nextInt draws.
     private static final List<String> EXPECTED_FOURTH_TURN_RANDOM_DRAWS = Arrays.asList(
@@ -115,6 +147,32 @@ public final class AiSourceTurnResolutionTraceTest {
             "11:3", "11:8", "11:5", "11:10", "51:0", "51:41", "51:5", "51:26",
             "51:7", "51:19", "51:31", "51:48", "3:1", "51:5", "3:2", "3:0",
             "51:10");
+
+    private static final List<String> EXPECTED_FIFTH_TURN_RANDOM_DRAWS = Arrays.asList(
+            "91:73", "3:0", "91:80", "3:0", "91:90", "3:0", "91:8", "3:1",
+            "61:18", "4:2", "21:6", "61:20", "61:1", "61:5", "61:0", "4:1",
+            "21:18", "61:32", "5:1", "5:2", "5:3", "5:4", "4:0", "21:13",
+            "61:18", "6:5", "6:4", "6:3", "6:3", "6:4", "11:0", "11:3",
+            "11:0", "11:1", "11:10", "11:6", "11:2", "11:3", "11:4", "11:0",
+            "11:8", "11:4", "11:0", "11:5", "11:4", "51:38", "51:13", "51:12",
+            "51:25", "51:20", "51:6", "51:37", "51:44", "51:42", "51:33", "3:1",
+            "51:40", "3:0", "51:5", "1:0", "51:27", "3:0", "3:1", "51:41",
+            "3:1", "3:0", "3:0", "3:0", "3:0", "3:0", "3:2", "3:2",
+            "3:1", "3:0", "3:1", "3:2", "3:0", "3:1", "3:2", "3:0",
+            "3:1", "3:2", "3:1", "3:0", "3:2", "3:1", "3:1", "3:1",
+            "3:2", "3:1", "3:2", "3:0", "3:0", "3:0");
+
+    private static final List<String> EXPECTED_SIXTH_TURN_RANDOM_DRAWS = Arrays.asList(
+            "91:65", "3:2", "91:0", "3:0", "91:34", "3:1", "91:36", "3:0",
+            "4:0", "21:14", "61:36", "5:4", "5:1", "5:2", "6:5", "6:4",
+            "6:1", "6:4", "6:2", "11:0", "11:1", "11:5", "11:3", "11:2",
+            "11:7", "11:2", "11:4", "11:5", "11:0", "11:8", "11:2", "11:1",
+            "11:5", "11:2", "51:1", "51:5", "51:2", "51:18", "51:16", "51:10",
+            "51:8", "51:43", "6:3", "3:1", "51:0", "3:2", "3:0", "3:2",
+            "3:1", "3:1", "3:1", "3:1", "3:1", "3:2", "3:0", "3:0",
+            "3:1", "3:0", "3:1", "3:1", "3:0", "3:2", "3:0", "3:1",
+            "3:2", "3:2", "3:2", "3:2", "3:0", "3:0", "3:1", "3:2",
+            "3:1", "3:1", "3:2", "3:0");
 
     // Source trace collected from Model.doTurn through Sub_presenter.turnResults.
     // Empty and zero-width ranges remain because they consume source RNG calls.
@@ -310,6 +368,86 @@ public final class AiSourceTurnResolutionTraceTest {
                 EXPECTED_FOURTH_TURN_RANDOM_DRAWS, random.draws);
     }
 
+    @Test
+    public void hardSeededFifthTurnMatchesSourceResearchProductionAndSettlement() {
+        GameSetup setup = new GameSetup(17L);
+        setup.setDifficulty(2);
+        for (int leader : new int[]{0, 9, 18, 5}) {
+            setup.toggleOpponent(leader);
+        }
+        RecordingRandom random = new RecordingRandom(setup.copyGameplayRandom());
+        GameState game = new GameState(setup, random);
+        random.clear();
+
+        for (int priorTurn = 0; priorTurn < 4; priorTurn++) {
+            queueHumanTurn(game);
+            game.confirmTurn();
+            random.clear();
+        }
+        queueHumanTurn(game);
+        game.confirmTurn();
+
+        assertEquals(5, game.getTurn());
+        assertEquals(Arrays.asList(GameState.Action.RESEARCH, GameState.Action.PRODUCTION),
+                game.getPlayerState(1).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.RESOURCES, GameState.Action.RESEARCH),
+                game.getPlayerState(2).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.RESEARCH, GameState.Action.PRODUCTION),
+                game.getPlayerState(3).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.DIPLOMACY, GameState.Action.PRODUCTION),
+                game.getPlayerState(4).getLastTurnActions());
+        assertSeededState(game, EXPECTED_FIFTH_TURN_PLAYER_STATE,
+                EXPECTED_FIFTH_TURN_CITY_POPULATIONS);
+        assertEquals("fifth-turn AI planning and settlement draws match source",
+                EXPECTED_FIFTH_TURN_RANDOM_DRAWS, random.draws);
+        assertEquals("the empty production list consumes one raw random draw",
+                1, random.rawDraws);
+    }
+
+    @Test
+    public void hardSeededSixthTurnMatchesSourcePropagandaAndMultiTurnRandomState() {
+        GameSetup setup = new GameSetup(17L);
+        setup.setDifficulty(2);
+        for (int leader : new int[]{0, 9, 18, 5}) {
+            setup.toggleOpponent(leader);
+        }
+        RecordingRandom random = new RecordingRandom(setup.copyGameplayRandom());
+        GameState game = new GameState(setup, random);
+        random.clear();
+
+        for (int priorTurn = 0; priorTurn < 5; priorTurn++) {
+            queueHumanTurn(game);
+            game.confirmTurn();
+            if (priorTurn == 4) {
+                GameState.DiplomacyProposal pending =
+                        game.getPendingDiplomacyProposal(0, 4);
+                assertTrue("source leaves the repeated fifth-turn demand pending",
+                        pending != null);
+                assertEquals("source fifth-turn demand option", 5, pending.optionIndex);
+                assertEquals("source cooldown is set when the proposal is recorded", 2,
+                        game.getPlayerState(4).getDiplomacyOfferedLastTurn(0));
+            }
+            random.clear();
+        }
+        queueHumanTurn(game);
+        game.confirmTurn();
+
+        assertEquals(6, game.getTurn());
+        assertEquals(Arrays.asList(GameState.Action.RESOURCES, GameState.Action.MASS_MEDIA),
+                game.getPlayerState(1).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.RESOURCES, GameState.Action.PROPAGANDA),
+                game.getPlayerState(2).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.MASS_MEDIA, GameState.Action.PRODUCTION),
+                game.getPlayerState(3).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.MASS_MEDIA, GameState.Action.DIPLOMACY),
+                game.getPlayerState(4).getLastTurnActions());
+        assertEquals("sixth-turn AI and settlement draws match source",
+                EXPECTED_SIXTH_TURN_RANDOM_DRAWS, random.draws);
+        assertSeededState(game, EXPECTED_SIXTH_TURN_PLAYER_STATE,
+                EXPECTED_SIXTH_TURN_CITY_POPULATIONS);
+        assertEquals("sixth turn has no unbounded random draws", 0, random.rawDraws);
+    }
+
     private static void assertSeededState(GameState game, int[][] players,
                                          int[][] cities) {
         for (int playerId = 0; playerId < players.length; playerId++) {
@@ -340,6 +478,7 @@ public final class AiSourceTurnResolutionTraceTest {
     private static final class RecordingRandom extends Random {
         private final Random delegate;
         private final List<String> draws = new ArrayList<>();
+        private int rawDraws;
 
         RecordingRandom(Random delegate) {
             this.delegate = delegate;
@@ -347,6 +486,7 @@ public final class AiSourceTurnResolutionTraceTest {
 
         void clear() {
             draws.clear();
+            rawDraws = 0;
         }
 
         @Override
@@ -358,6 +498,7 @@ public final class AiSourceTurnResolutionTraceTest {
 
         @Override
         public double nextDouble() {
+            rawDraws++;
             return delegate.nextDouble();
         }
     }
