@@ -169,6 +169,38 @@ public final class AiSourceTurnResolutionTraceTest {
             {107, 41, 67, 43, 167}
     };
 
+    private static final int[][] EXPECTED_NINTH_TURN_PLAYER_STATE = {
+            {201, 334, 100, 165352},
+            {43, 432, 45, 449110},
+            {53, 475, 11, 425452},
+            {92, 470, 38, 191644},
+            {71, 425, 45, 212592}
+    };
+
+    private static final int[][] EXPECTED_NINTH_TURN_CITY_POPULATIONS = {
+            {73, 29, 80, 47, 105},
+            {59, 97, 54, 84, 138},
+            {62, 85, 115, 83, 130},
+            {70, 114, 71, 100, 115},
+            {107, 41, 67, 43, 167}
+    };
+
+    private static final int[][] EXPECTED_TENTH_TURN_PLAYER_STATE = {
+            {145, 334, 100, 184144},
+            {131, 432, 37, 464014},
+            {96, 475, 36, 448332},
+            {72, 470, 57, 215138},
+            {51, 425, 40, 253022}
+    };
+
+    private static final int[][] EXPECTED_TENTH_TURN_CITY_POPULATIONS = {
+            {73, 29, 80, 47, 105},
+            {59, 97, 54, 84, 138},
+            {62, 85, 115, 83, 130},
+            {70, 114, 71, 100, 115},
+            {107, 41, 67, 43, 167}
+    };
+
     // Source trace includes one empty-range random() call that Java records
     // separately from bounded nextInt draws.
     private static final List<String> EXPECTED_FOURTH_TURN_RANDOM_DRAWS = Arrays.asList(
@@ -229,6 +261,50 @@ public final class AiSourceTurnResolutionTraceTest {
             "51:27", "51:11", "51:7", "51:2", "51:35", "51:8", "4:3", "51:33",
             "4:1", "51:45", "4:0", "51:10", "4:3", "4:1", "4:3", "4:1",
             "4:0", "51:47", "4:3", "51:23", "4:2", "4:2", "4:0", "51:38");
+
+    // Turn nine includes an empty-range source random call, counted separately.
+    private static final List<String> EXPECTED_NINTH_TURN_RANDOM_DRAWS = Arrays.asList(
+            "91:44", "3:2", "91:0", "3:1", "91:17", "3:2", "91:2", "3:0",
+            "4:1", "21:17", "61:11", "61:41", "61:48", "61:36", "4:1", "21:15",
+            "61:7", "2:0", "3:2", "2:0", "141:36", "5:0", "5:2", "5:4",
+            "5:0", "5:2", "5:4", "6:0", "6:2", "6:1", "6:3", "6:5",
+            "7:6", "21:6", "4:0", "11:5", "11:10", "11:2", "11:2", "11:4",
+            "11:10", "11:3", "11:2", "11:4", "11:5", "11:2", "11:8", "11:2",
+            "11:5", "11:3", "51:45", "51:49", "51:23", "51:20", "51:20", "51:32",
+            "6:0", "2:0", "24:6", "2:1", "24:8", "2:0", "24:13", "2:1",
+            "24:22", "2:0", "24:4", "2:1", "24:20", "2:0", "24:12", "2:0",
+            "24:23", "2:1", "24:5", "2:1", "24:3", "2:0", "24:22", "2:0",
+            "24:22", "2:1", "24:15", "2:1", "24:17", "2:0", "24:10", "2:0",
+            "24:5", "2:0", "24:16", "2:0", "24:1", "2:1", "24:15", "2:1",
+            "24:13", "2:0", "24:19", "2:1", "24:13", "2:1", "24:8", "2:0",
+            "24:0", "2:0", "24:12", "2:0", "24:22", "2:1", "24:7", "2:0",
+            "24:1", "2:1", "24:18", "2:0", "24:18", "2:0", "24:7", "2:0",
+            "24:0", "4:0", "51:45", "4:0", "51:4", "4:2", "51:16", "4:2",
+            "51:1", "4:0", "51:24", "4:3", "4:0", "4:0", "4:3", "4:3",
+            "4:2", "4:2", "4:1", "4:0", "4:1", "4:1", "4:2", "4:3",
+            "4:3", "4:2", "4:0", "4:2", "4:0", "4:0", "4:1", "4:3",
+            "4:1", "4:2", "4:3", "4:2", "4:0", "4:2");
+
+    // The source has one empty-range random draw during turn-ten AI planning.
+    private static final List<String> EXPECTED_TENTH_TURN_RANDOM_DRAWS = Arrays.asList(
+            "91:24", "3:0", "91:5", "3:2", "91:83", "3:0", "91:37", "3:2",
+            "2:1", "5:3", "4:0", "141:49", "7:0", "5:1", "5:3", "61:15",
+            "61:59", "4:1", "21:10", "61:33", "4:2", "21:14", "61:31", "61:49",
+            "61:35", "2:1", "5:4", "4:3", "141:132", "2:1", "5:2", "4:0",
+            "141:34", "7:3", "5:3", "5:2", "6:0", "6:1", "6:3", "6:1",
+            "7:6", "21:6", "4:0", "5:4", "11:5", "5:1", "11:1", "11:5",
+            "11:10", "11:3", "11:3", "11:9", "11:7", "11:8", "11:0", "11:9",
+            "11:10", "11:4", "11:8", "11:1", "11:2", "51:46", "51:11", "51:19",
+            "51:16", "51:7", "51:46", "3:0", "3:2", "51:17", "3:1", "3:1",
+            "3:0", "3:1", "3:2", "3:1", "3:0", "3:1", "3:2", "3:2",
+            "3:1", "3:2", "3:1", "3:2", "3:1", "3:0", "3:2", "3:2",
+            "3:0", "3:1", "3:1", "3:2", "3:2", "3:0", "3:1", "3:1",
+            "3:1", "3:0", "3:1", "3:2", "3:0", "51:47", "3:2", "51:20",
+            "3:0", "51:10", "3:2", "3:1", "3:2", "3:1", "3:1", "3:0",
+            "3:0", "3:1", "3:0", "3:1", "3:1", "3:0", "3:0", "3:2",
+            "3:2", "3:2", "3:0", "3:1", "3:2", "3:0", "3:1", "3:2",
+            "3:2", "3:0", "3:1", "3:1", "3:1", "3:2", "3:0", "3:2",
+            "51:19", "3:2", "3:2", "3:1", "3:0", "51:11");
 
     // Source trace collected from Model.doTurn through Sub_presenter.turnResults.
     // Empty and zero-width ranges remain because they consume source RNG calls.
@@ -615,6 +691,124 @@ public final class AiSourceTurnResolutionTraceTest {
         assertSeededState(game, EXPECTED_EIGHTH_TURN_PLAYER_STATE,
                 EXPECTED_EIGHTH_TURN_CITY_POPULATIONS);
         assertEquals("turn eight strike casualty consumes one raw random draw",
+                1, random.rawDraws);
+    }
+
+    @Test
+    public void hardSeededNinthTurnMatchesSpyDiplomacyAndProductionSettlement() {
+        GameSetup setup = new GameSetup(17L);
+        setup.setDifficulty(2);
+        for (int leader : new int[]{0, 9, 18, 5}) {
+            setup.toggleOpponent(leader);
+        }
+        RecordingRandom random = new RecordingRandom(setup.copyGameplayRandom());
+        GameState game = new GameState(setup, random);
+        random.clear();
+
+        for (int priorTurn = 0; priorTurn < 8; priorTurn++) {
+            queueHumanTurn(game);
+            game.confirmTurn();
+            random.clear();
+        }
+        int spyStockBefore = game.getPlayerState(4).getWeaponStockByName("spy2");
+
+        queueHumanTurn(game);
+        game.confirmTurn();
+
+        assertEquals(9, game.getTurn());
+        assertEquals(Arrays.asList(GameState.Action.RESOURCES, GameState.Action.MASS_MEDIA),
+                game.getPlayerState(1).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.RESOURCES, GameState.Action.PRODUCTION),
+                game.getPlayerState(2).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.PRODUCTION, GameState.Action.PROPAGANDA),
+                game.getPlayerState(3).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.ATTACK, GameState.Action.DIPLOMACY),
+                game.getPlayerState(4).getLastTurnActions());
+        assertEquals("turn-nine AI and settlement draws match source; actual=" + random.draws,
+                EXPECTED_NINTH_TURN_RANDOM_DRAWS, random.draws);
+        assertSeededState(game, EXPECTED_NINTH_TURN_PLAYER_STATE,
+                EXPECTED_NINTH_TURN_CITY_POPULATIONS);
+
+        assertEquals("source resolves P4's spy against the human", 1,
+                game.getLastTurnSpyMissions().size());
+        GameState.SpyMissionEvent spy = game.getLastTurnSpyMissions().get(0);
+        assertEquals(4, spy.attackerPlayerId);
+        assertEquals(0, spy.defenderPlayerId);
+        assertEquals("religion", spy.actionBuildingFrame);
+        assertEquals("source consumes one ready spy", spyStockBefore - 1,
+                game.getPlayerState(4).getWeaponStockByName("spy2"));
+        assertEquals("a resolved spy becomes unready", 0,
+                game.getPlayerState(4).spyReadiness);
+
+        GameState.DiplomacyProposal proposal = game.getPendingDiplomacyProposal(0, 4);
+        assertTrue("source leaves P4's sixth diplomacy option pending", proposal != null);
+        assertEquals(5, proposal.optionIndex);
+        assertEquals("turn-nine empty filtered list consumes a raw random draw",
+                1, random.rawDraws);
+    }
+
+    @Test
+    public void hardSeededTenthTurnMatchesPairedSpyMissionsAndProduction() {
+        GameSetup setup = new GameSetup(17L);
+        setup.setDifficulty(2);
+        for (int leader : new int[]{0, 9, 18, 5}) {
+            setup.toggleOpponent(leader);
+        }
+        RecordingRandom random = new RecordingRandom(setup.copyGameplayRandom());
+        GameState game = new GameState(setup, random);
+        random.clear();
+
+        for (int priorTurn = 0; priorTurn < 9; priorTurn++) {
+            queueHumanTurn(game);
+            game.confirmTurn();
+            random.clear();
+        }
+        int firstSpyStock = game.getPlayerState(1).getWeaponStockByName("spy2");
+        int fourthSpyStock = game.getPlayerState(4).getWeaponStockByName("spy1");
+        assertTrue("source readies player one's second-tier spy", firstSpyStock > 0);
+        assertTrue("source readies player four's first-tier spy", fourthSpyStock > 0);
+
+        queueHumanTurn(game);
+        game.confirmTurn();
+
+        assertEquals(10, game.getTurn());
+        assertEquals(Arrays.asList(GameState.Action.RESOURCES, GameState.Action.ATTACK),
+                game.getPlayerState(1).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.RESOURCES, GameState.Action.MASS_MEDIA),
+                game.getPlayerState(2).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.PRODUCTION, GameState.Action.MASS_MEDIA),
+                game.getPlayerState(3).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.PRODUCTION, GameState.Action.ATTACK),
+                game.getPlayerState(4).getLastTurnActions());
+        assertEquals("turn-ten AI and settlement draws match source; actual=" + random.draws,
+                EXPECTED_TENTH_TURN_RANDOM_DRAWS, random.draws);
+        assertSeededState(game, EXPECTED_TENTH_TURN_PLAYER_STATE,
+                EXPECTED_TENTH_TURN_CITY_POPULATIONS);
+
+        assertEquals("source resolves two spy missions", 2,
+                game.getLastTurnSpyMissions().size());
+        GameState.SpyMissionEvent firstSpy = game.getLastTurnSpyMissions().get(0);
+        assertEquals(1, firstSpy.attackerPlayerId);
+        assertEquals(0, firstSpy.defenderPlayerId);
+        assertEquals("spyCenter", firstSpy.actionBuildingFrame);
+        GameState.SpyMissionEvent fourthSpy = game.getLastTurnSpyMissions().get(1);
+        assertEquals(4, fourthSpy.attackerPlayerId);
+        assertEquals(0, fourthSpy.defenderPlayerId);
+        assertEquals("religion", fourthSpy.actionBuildingFrame);
+        assertEquals("player one consumes its second-tier spy", firstSpyStock - 1,
+                game.getPlayerState(1).getWeaponStockByName("spy2"));
+        assertEquals("player four produces a replacement first-tier spy after its mission",
+                fourthSpyStock,
+                game.getPlayerState(4).getWeaponStockByName("spy1"));
+        assertEquals("source production adds the unlocked third-tier spy", 1,
+                game.getPlayerState(4).getWeaponStockByName("spy3"));
+        assertEquals(0, game.getPlayerState(1).spyReadiness);
+        assertEquals(0, game.getPlayerState(4).spyReadiness);
+
+        GameState.DiplomacyProposal proposal = game.getPendingDiplomacyProposal(0, 4);
+        assertTrue("turn-nine diplomacy demand remains pending", proposal != null);
+        assertEquals(5, proposal.optionIndex);
+        assertEquals("turn-ten empty filtered list consumes a raw random draw",
                 1, random.rawDraws);
     }
 

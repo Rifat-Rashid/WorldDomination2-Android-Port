@@ -2352,6 +2352,10 @@ public final class GameState {
                     response.accepted, false);
         }
         clearPreviousBiologicalEffects();
+        long[] spyMoneyBases = new long[players.length];
+        for (PlayerState player : players) {
+            spyMoneyBases[player.id] = player.moneyMillions;
+        }
         List<ActionOrder> resolvedDefenses = new ArrayList<>();
         List<BiologicalEffect> biologicalEffects = new ArrayList<>();
         List<ActionOrder> propagandaOrders = new ArrayList<>();
@@ -2363,9 +2367,11 @@ public final class GameState {
             }
         }
         // Resolve every battle before propaganda calculates its city transfer.
-        // Within the battle group, the source likewise visits players in reverse
-        // active-player order and retains each player's action-slot order.
-        for (int playerIndex = players.length - 1; playerIndex >= 0; playerIndex--) {
+        // The Flash builds turn-result records in reverse active-player order,
+        // then Presenter.turnResults walks that array backward. Side effects
+        // such as spy theft and casualty rolls therefore resolve by ascending
+        // player id while preserving each player's action-slot order.
+        for (int playerIndex = 0; playerIndex < players.length; playerIndex++) {
             PlayerState actor = players[playerIndex];
             if (!actor.alive) {
                 continue;
@@ -2375,7 +2381,8 @@ public final class GameState {
                     continue;
                 }
                 if (order.action == Action.ATTACK) {
-                    resolveAttack(order, turnOrders, populationChanges, spyResultMessages);
+                    resolveAttack(order, turnOrders, populationChanges,
+                            spyMoneyBases, spyResultMessages);
                 } else if (order.action == Action.PREPARED_ATTACK) {
                     resolvePreparedAttack(order, resolvedDefenses, biologicalEffects,
                             populationChanges);
@@ -2909,6 +2916,7 @@ public final class GameState {
     /** Source attack casualties are a rounded random 50%-100% of unit maxKills. */
     private void resolveAttack(ActionOrder order, List<ActionOrder> turnOrders,
                                TurnPopulationChanges populationChanges,
+                               long[] spyMoneyBases,
                                List<PlayerMessage> spyResultMessages) {
         PlayerState attacker = playerById(order.playerId);
         PlayerState defender = playerById(order.targetPlayerId);
@@ -2925,7 +2933,8 @@ public final class GameState {
             return;
         }
         if (spyMission) {
-            resolveSpyAttack(attacker, defender, weapon, turnOrders, spyResultMessages);
+            resolveSpyAttack(attacker, defender, weapon, turnOrders,
+                    spyMoneyBases[defender.id], spyResultMessages);
             weapon.inStock--;
             order.actionBuildingResolved = true;
             lastTurnSpyMissions.add(new SpyMissionEvent(attacker.id, defender.id,
@@ -3472,13 +3481,18 @@ public final class GameState {
 
     private void resolveSpyAttack(PlayerState attacker, PlayerState defender,
                                   WeaponState spy, List<ActionOrder> turnOrders,
+                                  long sourceMoneyBase,
                                   List<PlayerMessage> resultMessages) {
         int level = spy.definition.level;
         int[] statistics = SPY_STATISTICS[level - 1];
         int weaponCount = 1 + random.nextInt(statistics[0]);
         int moneyPercent = level * 10
                 + random.nextInt(statistics[1] - level * 10 + 1);
-        long moneyAmount = Math.round((defender.moneyMillions / 100.0d) * moneyPercent);
+        // Sub_presenter creates every spy result array before Presenter applies
+        // any of them, so concurrent missions calculate their offer from the
+        // same pre-battle defender balance. The transfer below still clamps to
+        // the defender's live balance, as the source result handler does.
+        long moneyAmount = Math.round((sourceMoneyBase / 100.0d) * moneyPercent);
         moneyAmount = Math.min(moneyAmount, SPY_MONEY_CAP[difficulty]);
         if (defender.specialPerson) {
             // The source stores the money amount before its later local $20M adjustment.
@@ -3586,7 +3600,10 @@ public final class GameState {
             case RESOURCES:
                 return "resources";
             case PRODUCTION:
-                return "factory";
+                // Source production results are "produce2" and
+                // "production_building", neither of which removes "factory"
+                // from the spy-action choices.
+                return null;
             case RESEARCH:
                 return "tech";
             case MASS_MEDIA:
@@ -3840,8 +3857,29 @@ public final class GameState {
 
     private void resolveProduction(ActionOrder order) {
         PlayerState producer = playerById(order.playerId);
-        for (Map.Entry<String, Integer> investment : order.productionBudgets.entrySet()) {
+        List<Map.Entry<String, Integer>> investments = new ArrayList<>(
+                order.productionBudgets.entrySet());
+        investments.sort((left, right) -> Integer.compare(
+                sourceProductionInvestmentOrder(left.getKey()),
+                sourceProductionInvestmentOrder(right.getKey())));
+        // The Flash's productionInvestmentArr has a fixed display order that
+        // differs from weapon group numbers. Turn results preserve that order.
+        for (Map.Entry<String, Integer> investment : investments) {
             resolveProductionInvestment(producer, investment.getKey(), investment.getValue());
+        }
+    }
+
+    private static int sourceProductionInvestmentOrder(String category) {
+        switch (category) {
+            case "rockets": return 0;
+            case "planes": return 1;
+            case "special": return 2;
+            case "warhead": return 3;
+            case "bioload": return 4;
+            case "soldier": return 5;
+            case "spy": return 6;
+            case "defense": return 7;
+            default: return Integer.MAX_VALUE;
         }
     }
 

@@ -207,6 +207,14 @@ public final class OpponentAI {
 
             List<Decision> attackPlan = planSourceAttack(state, player, random,
                     false, plannedWeaponUse);
+            if (attackPlan.isEmpty()) {
+                // The source keeps the second-slot ActionTarget on its initial
+                // score for one more getTarget call before it advances to a
+                // lower-ranked action. This matters when the first city or
+                // weapon candidate is rejected and the retry becomes available.
+                attackPlan = planSourceAttack(state, player, random,
+                        false, plannedWeaponUse);
+            }
             for (Decision decision : attackPlan) {
                 if (decisions.size() == 2) {
                     break;
