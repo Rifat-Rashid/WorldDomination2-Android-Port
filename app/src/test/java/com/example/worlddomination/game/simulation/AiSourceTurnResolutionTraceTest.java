@@ -30,6 +30,88 @@ public final class AiSourceTurnResolutionTraceTest {
             {107, 41, 67, 43, 187}
     };
 
+    // The source trace's single 10..12 casualty roll is a raw random draw and
+    // is asserted separately below. This list contains every bounded draw.
+    private static final List<String> EXPECTED_EIGHTEENTH_TURN_RANDOM_DRAWS = Arrays.asList(
+            "91:79", "3:2", "91:75", "3:1", "91:14", "3:0", "91:46", "3:0",
+            "4:0", "21:4", "61:1", "4:3", "21:4", "61:48", "61:0", "3:2",
+            "141:98", "4:2", "21:9", "61:40", "2:0", "3:0", "2:0", "141:96",
+            "5:2", "5:0", "5:4", "5:2", "6:5", "6:2", "6:4", "6:2",
+            "6:3", "6:4", "26:5", "26:16", "26:4", "26:6", "26:20", "26:8",
+            "51:9", "11:2", "11:2", "11:8", "11:1", "11:10", "11:3", "11:6",
+            "11:9", "11:6", "11:7", "11:6", "11:4", "11:10", "11:1", "11:6",
+            "51:16", "51:49", "51:38", "51:34", "2:0", "24:0", "2:1", "24:15",
+            "2:1", "24:19", "2:0", "24:16", "2:0", "24:16", "2:1", "24:4",
+            "2:1", "24:2", "2:1", "24:23", "2:0", "24:12", "2:0", "24:18",
+            "2:0", "24:19", "2:1", "24:8", "2:0", "24:14", "2:0", "24:10",
+            "2:0", "24:3", "2:0", "24:3", "2:0", "24:17", "2:1", "24:23",
+            "2:0", "24:18", "2:0", "24:4", "2:0", "24:18", "2:1", "24:17",
+            "2:0", "24:15", "2:1", "24:13", "2:0", "24:17", "2:0", "24:8",
+            "2:1", "24:10", "2:0", "24:10", "2:1", "24:19", "2:0", "24:11",
+            "2:1", "24:2", "2:1", "24:14", "3:1", "51:34", "3:2", "3:1",
+            "3:2", "3:0", "3:2", "3:0", "3:1", "3:1", "3:2", "3:0",
+            "3:1", "3:1", "3:1", "3:0", "3:0", "3:0", "3:0", "3:2",
+            "3:0", "3:0", "3:1", "3:0", "3:2", "3:0", "3:2", "3:0",
+            "3:0", "3:0", "3:1", "3:1", "3:1", "2:0", "2:1", "51:30",
+            "2:0", "2:1", "2:0", "2:1", "2:0", "2:0", "2:1", "2:1",
+            "2:0", "2:0", "2:0", "2:1", "2:0", "2:1", "2:1", "2:1",
+            "2:1", "2:1", "2:0", "2:1", "2:0", "2:0", "2:1", "2:1",
+            "2:0", "2:0", "2:1", "2:1", "2:0", "2:0");
+
+    private static final List<String> EXPECTED_NINETEENTH_TURN_RANDOM_DRAWS = Arrays.asList(
+            "91:65", "3:1", "91:79", "3:2", "91:30", "3:0", "91:36", "3:0",
+            "61:9", "61:15", "4:0", "21:16", "61:41", "4:3", "21:9", "61:49",
+            "61:41", "2:1", "2:1", "4:0", "141:73", "7:3", "5:3", "5:2",
+            "3:1", "141:35", "2:0", "5:1", "6:4", "6:3", "6:1", "6:5",
+            "6:0", "5:4", "11:9", "4:2", "3:0", "51:38", "2:1", "51:6",
+            "1:0", "51:22", "9:2", "31:4", "4:2", "11:6", "11:8", "11:4",
+            "11:4", "11:0", "11:3", "11:9", "11:9", "11:2", "11:6", "11:6",
+            "11:0", "11:0", "11:6", "11:9", "51:26", "51:20", "51:50", "51:20",
+            "51:43", "51:22", "4:1", "24:22", "4:3", "24:3", "4:1", "24:19",
+            "4:3", "24:6", "4:0", "24:22", "4:2", "24:6", "4:1", "24:14",
+            "4:2", "24:1", "4:1", "24:19", "4:3", "24:17", "4:2", "24:19",
+            "4:2", "24:6", "4:3", "24:22", "4:3", "24:19", "4:2", "24:9",
+            "4:2", "24:13", "4:1", "24:19", "4:2", "24:14", "4:2", "24:18",
+            "4:3", "24:15", "4:2", "24:17", "4:0", "24:18", "4:3", "24:13",
+            "4:3", "24:13", "4:0", "24:23", "4:3", "24:7", "4:2", "24:8",
+            "4:1", "24:3", "4:2", "24:8", "4:0", "24:2", "4:3", "24:11",
+            "4:2", "24:10", "2:0", "24:21", "2:1", "24:1", "2:1", "24:19",
+            "2:0", "24:16", "2:0", "24:0", "2:1", "24:14", "2:1", "24:17",
+            "2:1", "24:8", "2:1", "24:14", "2:0", "24:15", "2:0", "24:11",
+            "2:0", "24:16", "2:1", "24:13", "2:1", "24:20", "2:1", "24:1",
+            "2:0", "24:10", "2:1", "24:18", "2:1", "24:4", "2:1", "24:14",
+            "2:0", "24:9", "2:1", "24:11", "2:1", "24:0", "2:0", "24:8",
+            "2:0", "24:5", "2:0", "24:10", "2:0", "24:11", "2:1", "24:6",
+            "2:0", "24:14", "2:1", "24:13", "2:1", "24:2", "2:0", "24:13",
+            "2:1", "24:17", "3:0", "3:2", "51:26", "3:0", "3:0", "3:0",
+            "3:0", "3:1", "3:2", "3:2", "3:0", "3:0", "3:1", "3:1",
+            "3:1", "3:0", "3:0", "3:1", "3:2", "3:0", "3:2", "3:0",
+            "3:0", "3:1", "3:0", "3:0", "3:2", "3:0", "3:0", "3:2",
+            "3:0", "3:0", "3:2");
+
+    // The Python trace has 178 calls, including randRange(0, -1), which maps
+    // to the one raw nextDouble draw asserted separately below.
+    private static final List<String> EXPECTED_TWENTIETH_TURN_RANDOM_DRAWS = Arrays.asList(
+            "91:79", "3:2", "91:0", "3:2", "91:40", "3:2", "91:51", "3:2", "4:1", "21:14",
+            "61:51", "61:0", "61:34", "61:42", "2:1", "2:1", "4:2", "141:15", "7:3", "2:1",
+            "5:2", "4:0", "21:0", "4:2", "21:12", "61:60", "61:12", "61:35", "2:1", "2:1",
+            "4:2", "141:81", "2:1", "2:0", "4:2", "141:122", "5:4", "5:3", "5:4", "6:4",
+            "6:5", "6:5", "6:1", "6:5", "5:3", "11:1", "5:4", "11:1", "11:10", "11:7",
+            "11:5", "11:4", "11:1", "11:0", "11:9", "11:7", "11:4", "11:8", "11:4", "11:0",
+            "11:4", "11:4", "51:43", "51:4", "51:34", "51:9", "51:32", "4:2", "24:0", "4:0",
+            "24:13", "4:0", "24:20", "4:3", "24:6", "4:3", "24:6", "4:1", "24:5", "4:0",
+            "24:8", "4:2", "24:4", "4:1", "24:13", "4:0", "24:9", "4:2", "24:6", "4:0",
+            "24:11", "4:2", "24:13", "4:3", "24:5", "4:1", "24:20", "4:3", "24:8", "4:1",
+            "24:17", "4:3", "24:21", "4:0", "24:23", "4:3", "24:8", "4:3", "24:4", "4:0",
+            "24:21", "4:0", "24:16", "4:1", "24:7", "4:1", "24:2", "4:0", "24:23", "4:3",
+            "24:22", "4:1", "24:17", "4:0", "24:12", "4:1", "24:4", "4:1", "24:21", "4:2",
+            "24:17", "2:0", "51:43", "2:0", "51:8", "2:1", "2:1", "2:1", "2:1", "2:1",
+            "2:0", "51:13", "1:0", "51:1", "1:0", "51:29", "1:0", "51:18", "1:0", "1:0",
+            "1:0", "1:0", "1:0", "1:0", "1:0", "1:0", "1:0", "1:0", "1:0", "1:0",
+            "1:0", "1:0", "1:0", "1:0", "1:0", "1:0", "1:0", "1:0", "1:0", "1:0",
+            "1:0", "1:0", "1:0", "1:0", "1:0", "1:0", "1:0"
+    );
+
     private static final List<String> EXPECTED_RANDOM_DRAWS = Arrays.asList(
             "91:30", "3:2", "91:52", "3:0", "91:0", "3:2", "91:31", "3:1",
             "2:0", "3:1", "2:1", "141:43", "4:0", "21:20", "61:55", "4:0",
@@ -1511,6 +1593,244 @@ public final class AiSourceTurnResolutionTraceTest {
                 },
                 new int[][]{
                         {8, 0, 37, 0, 105},
+                        {59, 97, 54, 84, 138},
+                        {62, 85, 115, 83, 130},
+                        {70, 114, 71, 100, 115},
+                        {107, 41, 67, 43, 167}
+                });
+    }
+
+    @Test
+    public void hardSeededEighteenthTurnMatchesSourceStateActionsAndRandomTrace() {
+        GameSetup setup = new GameSetup(17L);
+        setup.setDifficulty(2);
+        for (int leader : new int[]{0, 9, 18, 5}) {
+            setup.toggleOpponent(leader);
+        }
+        RecordingRandom random = new RecordingRandom(setup.copyGameplayRandom());
+        GameState game = new GameState(setup, random);
+        random.clear();
+
+        for (int priorTurn = 0; priorTurn < 17; priorTurn++) {
+            queueHumanTurn(game);
+            game.confirmTurn();
+            random.clear();
+        }
+        queueHumanTurn(game);
+        game.confirmTurn();
+
+        assertEquals(18, game.getTurn());
+        assertEquals("source turn-eighteen bounded random trace; actual=" + random.draws,
+                EXPECTED_EIGHTEENTH_TURN_RANDOM_DRAWS, random.draws);
+        assertEquals("the source biological strike has one raw casualty draw", 1,
+                random.rawDraws);
+        assertEquals(Arrays.asList(GameState.Action.RESOURCES, GameState.Action.MASS_MEDIA),
+                game.getPlayerState(0).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.RESOURCES, GameState.Action.PRODUCTION),
+                game.getPlayerState(1).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.RESOURCES, GameState.Action.PRODUCTION),
+                game.getPlayerState(2).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.PREPARED_ATTACK, GameState.Action.PRODUCTION),
+                game.getPlayerState(3).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.PREPARED_ATTACK, GameState.Action.DIPLOMACY),
+                game.getPlayerState(4).getLastTurnActions());
+        assertEquals("the fourth opponent stages its level-two rocket", "rocket2",
+                game.getPreparedCarrierName(4));
+        assertTrue(game.isActionBioloaded(0, GameState.Action.PROPAGANDA));
+        assertFalse(game.isActionBioloaded(0, GameState.Action.DIPLOMACY));
+
+        List<GameState.CombatEvent> events = game.getLastTurnCombatEvents();
+        assertEquals("one biological strike resolves on source turn eighteen", 1,
+                events.size());
+        GameState.CombatEvent strike = events.get(0);
+        assertEquals(GameState.CombatEventType.STRIKE_IMPACT, strike.type);
+        assertEquals(3, strike.attackerPlayerId);
+        assertEquals(0, strike.defenderPlayerId);
+        assertEquals(0, strike.cityIndex);
+        assertEquals("rocket1", strike.weaponName);
+        assertEquals("bioload1", strike.payloadName);
+        assertEquals(8, strike.casualtiesMillions);
+
+        assertSeededState(game,
+                new int[][]{
+                        {164, 142, 100, 313056},
+                        {105, 432, 28, 649244},
+                        {80, 475, 25, 829718},
+                        {63, 470, 45, 486834},
+                        {30, 425, 24, 510894}
+                },
+                new int[][]{
+                        {0, 0, 37, 0, 105},
+                        {59, 97, 54, 84, 138},
+                        {62, 85, 115, 83, 130},
+                        {70, 114, 71, 100, 115},
+                        {107, 41, 67, 43, 167}
+                });
+    }
+
+    @Test
+    public void hardSeededNineteenthTurnMatchesSourceStateActionsAndSpyMissions() {
+        GameSetup setup = new GameSetup(17L);
+        setup.setDifficulty(2);
+        for (int leader : new int[]{0, 9, 18, 5}) {
+            setup.toggleOpponent(leader);
+        }
+        RecordingRandom random = new RecordingRandom(setup.copyGameplayRandom());
+        GameState game = new GameState(setup, random);
+        random.clear();
+        for (int priorTurn = 0; priorTurn < 18; priorTurn++) {
+            queueHumanTurn(game);
+            game.confirmTurn();
+            random.clear();
+        }
+        queueHumanTurn(game);
+        game.confirmTurn();
+
+        assertEquals(19, game.getTurn());
+        assertEquals("source turn-nineteen bounded random trace; actual=" + random.draws,
+                EXPECTED_NINETEENTH_TURN_RANDOM_DRAWS, random.draws);
+        assertEquals("source turn nineteen has no raw casualty draws", 0, random.rawDraws);
+        assertEquals(Arrays.asList(GameState.Action.RESOURCES, GameState.Action.MASS_MEDIA),
+                game.getPlayerState(0).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.PRODUCTION, GameState.Action.MASS_MEDIA),
+                game.getPlayerState(1).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.RESOURCES, GameState.Action.PRODUCTION),
+                game.getPlayerState(2).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.RESOURCES, GameState.Action.ATTACK),
+                game.getPlayerState(3).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.ATTACK, GameState.Action.MASS_MEDIA),
+                game.getPlayerState(4).getLastTurnActions());
+        assertTrue(game.getLastTurnCombatEvents().isEmpty());
+
+        int playerThreeMissions = 0;
+        int playerFourMissions = 0;
+        for (GameState.SpyMissionEvent event : game.getLastTurnSpyMissions()) {
+            if (event.attackerPlayerId == 3) {
+                playerThreeMissions++;
+                assertEquals(4, event.defenderPlayerId);
+                assertEquals(1, event.actionBuildingSlot);
+                assertEquals("religion", event.actionBuildingFrame);
+                assertEquals("mus", event.religionCode);
+            } else if (event.attackerPlayerId == 4) {
+                playerFourMissions++;
+                assertEquals(0, event.defenderPlayerId);
+                assertEquals(1, event.actionBuildingSlot);
+                assertEquals("tech", event.actionBuildingFrame);
+                assertEquals("bhu", event.religionCode);
+            }
+        }
+        assertEquals("the third opponent resolves its spy mission", 1,
+                playerThreeMissions);
+        assertEquals("the fourth opponent resolves its spy mission", 1,
+                playerFourMissions);
+
+        assertSeededState(game,
+                new int[][]{
+                        {119, 142, 100, 325490},
+                        {66, 432, 43, 655294},
+                        {64, 475, 19, 865374},
+                        {108, 470, 37, 510132},
+                        {80, 425, 40, 517244}
+                },
+                new int[][]{
+                        {0, 0, 37, 0, 105},
+                        {59, 97, 54, 84, 138},
+                        {62, 85, 115, 83, 130},
+                        {70, 114, 71, 100, 115},
+                        {107, 41, 67, 43, 167}
+                });
+    }
+
+    @Test
+    public void hardSeededSeventeenthShipStrikeUsesSourceRegardFallback() {
+        GameSetup setup = new GameSetup(17L);
+        setup.setDifficulty(2);
+        for (int leader : new int[]{0, 9, 18, 5}) {
+            setup.toggleOpponent(leader);
+        }
+        RecordingRandom random = new RecordingRandom(setup.copyGameplayRandom());
+        GameState game = new GameState(setup, random);
+        random.clear();
+
+        for (int priorTurn = 0; priorTurn < 17; priorTurn++) {
+            queueHumanTurn(game);
+            game.confirmTurn();
+            random.clear();
+        }
+
+        assertEquals(17, game.getTurn());
+        assertEquals("the source ship event falls back to 40 regard loss", 42.0d,
+                game.getPlayerState(2).getRegardTowardExact(0), 0.0001d);
+        assertEquals("the source applies the same loss to both nations", 44.8d,
+                game.getPlayerState(0).getRegardTowardExact(2), 0.0001d);
+        int shipCasualties = 0;
+        for (GameState.CombatEvent event : game.getLastTurnCombatEvents()) {
+            if (event.attackerPlayerId == 2 && event.defenderPlayerId == 0
+                    && "ship".equals(event.weaponName)
+                    && event.type == GameState.CombatEventType.STRIKE_IMPACT) {
+                shipCasualties += event.casualtiesMillions;
+            }
+        }
+        assertEquals("population casualties remain the full resolved ship total", 70,
+                shipCasualties);
+    }
+
+    @Test
+    public void hardSeededTwentiethTurnMatchesSourceStateActionsAndRandomTrace() {
+        GameSetup setup = new GameSetup(17L);
+        setup.setDifficulty(2);
+        for (int leader : new int[]{0, 9, 18, 5}) {
+            setup.toggleOpponent(leader);
+        }
+        RecordingRandom random = new RecordingRandom(setup.copyGameplayRandom());
+        GameState game = new GameState(setup, random);
+        random.clear();
+        for (int priorTurn = 0; priorTurn < 19; priorTurn++) {
+            queueHumanTurn(game);
+            game.confirmTurn();
+            random.clear();
+        }
+
+        queueHumanTurn(game);
+        game.confirmTurn();
+
+        assertEquals(20, game.getTurn());
+        assertEquals("source turn-twenty bounded random trace; actual=" + random.draws,
+                EXPECTED_TWENTIETH_TURN_RANDOM_DRAWS, random.draws);
+        assertEquals("source turn twenty has one raw casualty draw", 1,
+                random.rawDraws);
+        assertEquals(Arrays.asList(GameState.Action.RESOURCES, GameState.Action.MASS_MEDIA),
+                game.getPlayerState(0).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.RESOURCES, GameState.Action.PRODUCTION),
+                game.getPlayerState(1).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.RESOURCES, GameState.Action.MASS_MEDIA),
+                game.getPlayerState(2).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.ATTACK, GameState.Action.PRODUCTION),
+                game.getPlayerState(3).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.PRODUCTION, GameState.Action.DIPLOMACY),
+                game.getPlayerState(4).getLastTurnActions());
+        assertTrue("source turn twenty has no direct combat event",
+                game.getLastTurnCombatEvents().isEmpty());
+
+        List<GameState.SpyMissionEvent> spyMissions = game.getLastTurnSpyMissions();
+        assertEquals("one spy mission resolves on source turn twenty", 1, spyMissions.size());
+        GameState.SpyMissionEvent spyMission = spyMissions.get(0);
+        assertEquals(3, spyMission.attackerPlayerId);
+        assertEquals(0, spyMission.defenderPlayerId);
+        assertEquals(1, spyMission.actionBuildingSlot);
+        assertEquals("religion", spyMission.actionBuildingFrame);
+        assertEquals("mus", spyMission.religionCode);
+
+        assertSeededState(game,
+                new int[][]{
+                        {117, 142, 100, 335844},
+                        {71, 432, 37, 670342},
+                        {107, 475, 34, 891294},
+                        {121, 470, 27, 510132},
+                        {35, 425, 31, 565716}
+                },
+                new int[][]{
+                        {0, 0, 37, 0, 105},
                         {59, 97, 54, 84, 138},
                         {62, 85, 115, 83, 130},
                         {70, 114, 71, 100, 115},

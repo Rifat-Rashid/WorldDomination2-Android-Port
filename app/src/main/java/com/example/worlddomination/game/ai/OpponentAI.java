@@ -297,6 +297,17 @@ public final class OpponentAI {
                         decisions.add(secondOrder);
                         reserve(player, secondOrder);
                         markPlannedUse(secondOrder, plannedWeaponUse);
+                    } else {
+                        // Model.doTurn advances to the next ranked action when
+                        // the companion target is rejected (for example,
+                        // research with no eligible technology). Leaving the
+                        // prepared carrier as the only action skips both that
+                        // fallback and its source random draws.
+                        int companionIndex = scores.indexOf(companion);
+                        if (companionIndex >= 0) {
+                            planRemainingRankedActions(state, player, scores, random,
+                                    decisions, plannedWeaponUse, companionIndex + 1);
+                        }
                     }
                 }
                 return decisions;
