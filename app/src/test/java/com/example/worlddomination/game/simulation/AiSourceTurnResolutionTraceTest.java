@@ -201,6 +201,22 @@ public final class AiSourceTurnResolutionTraceTest {
             {107, 41, 67, 43, 167}
     };
 
+    private static final int[][] EXPECTED_ELEVENTH_TURN_PLAYER_STATE = {
+            {171, 334, 100, 200686},
+            {19, 432, 30, 528722},
+            {73, 475, 28, 482768},
+            {91, 470, 50, 248932},
+            {21, 425, 33, 277378}
+    };
+
+    private static final int[][] EXPECTED_ELEVENTH_TURN_CITY_POPULATIONS = {
+            {73, 29, 80, 47, 105},
+            {59, 97, 54, 84, 138},
+            {62, 85, 115, 83, 130},
+            {70, 114, 71, 100, 115},
+            {107, 41, 67, 43, 167}
+    };
+
     // Source trace includes one empty-range random() call that Java records
     // separately from bounded nextInt draws.
     private static final List<String> EXPECTED_FOURTH_TURN_RANDOM_DRAWS = Arrays.asList(
@@ -305,6 +321,46 @@ public final class AiSourceTurnResolutionTraceTest {
             "3:2", "3:2", "3:0", "3:1", "3:2", "3:0", "3:1", "3:2",
             "3:2", "3:0", "3:1", "3:1", "3:1", "3:2", "3:0", "3:2",
             "51:19", "3:2", "3:2", "3:1", "3:0", "51:11");
+
+    // Source turn eleven has no raw empty-range draws.
+    private static final List<String> EXPECTED_ELEVENTH_TURN_RANDOM_DRAWS = Arrays.asList(
+            "91:85", "3:1", "91:71", "3:0", "91:72", "3:0", "91:60", "3:0",
+            "61:44", "4:2", "21:20", "61:12", "61:25", "61:54", "4:2", "21:2",
+            "61:6", "61:36", "4:0", "21:1", "61:27", "4:1", "21:9", "61:29",
+            "61:40", "2:0", "3:2", "2:0", "141:112", "6:2", "6:2", "6:3",
+            "6:2", "6:2", "11:10", "11:6", "11:6", "11:2", "11:10", "11:7",
+            "11:3", "11:10", "11:2", "11:10", "11:10", "11:8", "11:3", "11:10",
+            "11:5", "51:0", "51:23", "51:27", "51:21", "51:0", "2:0", "24:5",
+            "2:0", "24:6", "2:1", "24:19", "2:1", "24:12", "2:0", "24:10",
+            "2:0", "24:9", "2:0", "24:23", "2:1", "24:9", "2:1", "24:14",
+            "2:1", "24:19", "2:1", "24:6", "2:1", "24:21", "2:0", "24:21",
+            "2:0", "24:1", "2:0", "24:8", "2:0", "24:6", "2:1", "24:14",
+            "2:0", "24:21", "2:1", "24:23", "2:1", "24:23", "2:1", "24:22",
+            "2:0", "24:23", "2:0", "24:17", "2:1", "24:2", "2:1", "24:8",
+            "2:1", "24:23", "2:0", "24:23", "2:0", "24:5", "2:1", "24:18",
+            "2:0", "24:9", "2:0", "24:17", "2:0", "24:13", "3:2", "51:37",
+            "3:0", "51:12", "3:0", "51:22", "3:2", "3:1", "3:1", "3:1",
+            "3:2", "3:2", "3:2", "3:0", "3:0", "3:1", "3:0", "3:0",
+            "3:0", "3:0", "3:0", "3:0", "3:2", "3:2", "3:0", "3:2",
+            "3:2", "3:2", "3:2", "3:0", "3:2", "3:0", "3:1", "3:2",
+            "3:0", "3:0", "51:47", "3:1", "51:9", "2:0", "24:8", "2:0",
+            "24:19", "2:0", "24:14", "2:1", "24:22", "2:1", "24:13", "2:0",
+            "24:14", "2:0", "24:3", "2:1", "24:22", "2:1", "24:2", "2:1",
+            "24:17", "2:1", "24:9", "2:0", "24:18", "2:0", "24:8", "2:0",
+            "24:14", "2:0", "24:18", "2:0", "24:21", "2:0", "24:10", "2:0",
+            "24:7", "2:1", "24:9", "2:0", "24:2", "2:1", "24:0", "2:1",
+            "24:11", "2:1", "24:2", "2:1", "24:3", "2:1", "24:16", "2:1",
+            "24:14", "2:1", "24:14", "2:0", "24:5", "2:0", "24:20", "2:1",
+            "24:11", "2:1", "24:18", "2:1", "24:16", "3:0", "51:28", "3:0",
+            "51:39", "3:1", "3:0", "3:1", "3:2", "3:2", "3:1", "3:0",
+            "3:0", "3:1", "3:0", "3:1", "3:1", "3:1", "3:2", "3:1",
+            "3:2", "3:0", "3:2", "3:1", "3:1", "3:1", "3:0", "3:1",
+            "3:0", "3:1", "3:1", "3:0", "3:1", "3:0", "3:0", "3:2",
+            "51:49", "1:0", "51:15", "1:0", "1:0", "1:0", "1:0", "1:0",
+            "1:0", "1:0", "1:0", "1:0", "1:0", "1:0", "1:0", "1:0",
+            "1:0", "1:0", "1:0", "1:0", "1:0", "1:0", "1:0", "1:0",
+            "1:0", "1:0", "1:0", "1:0", "1:0", "1:0", "1:0", "1:0",
+            "1:0", "1:0", "3:0", "51:7", "3:2", "51:45");
 
     // Source trace collected from Model.doTurn through Sub_presenter.turnResults.
     // Empty and zero-width ranges remain because they consume source RNG calls.
@@ -810,6 +866,46 @@ public final class AiSourceTurnResolutionTraceTest {
         assertEquals(5, proposal.optionIndex);
         assertEquals("turn-ten empty filtered list consumes a raw random draw",
                 1, random.rawDraws);
+    }
+
+    @Test
+    public void hardSeededEleventhTurnMatchesResearchProductionAndPreparedLaunch() {
+        GameSetup setup = new GameSetup(17L);
+        setup.setDifficulty(2);
+        for (int leader : new int[]{0, 9, 18, 5}) {
+            setup.toggleOpponent(leader);
+        }
+        RecordingRandom random = new RecordingRandom(setup.copyGameplayRandom());
+        GameState game = new GameState(setup, random);
+        random.clear();
+
+        for (int priorTurn = 0; priorTurn < 10; priorTurn++) {
+            queueHumanTurn(game);
+            game.confirmTurn();
+            random.clear();
+        }
+
+        queueHumanTurn(game);
+        game.confirmTurn();
+
+        assertEquals(11, game.getTurn());
+        assertEquals(Arrays.asList(GameState.Action.RESEARCH, GameState.Action.PRODUCTION),
+                game.getPlayerState(1).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.RESOURCES, GameState.Action.PRODUCTION),
+                game.getPlayerState(2).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.RESOURCES, GameState.Action.PRODUCTION),
+                game.getPlayerState(3).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.PRODUCTION, GameState.Action.PREPARED_ATTACK),
+                game.getPlayerState(4).getLastTurnActions());
+        assertTrue("source turn eleven researches submarine technology",
+                game.getPlayerState(1).hasTechnology("sub"));
+        assertEquals("source prepares a rocket for the next turn", "rocket1",
+                game.getPreparedCarrierName(4));
+        assertEquals("turn-eleven AI and settlement draws match source; actual=" + random.draws,
+                EXPECTED_ELEVENTH_TURN_RANDOM_DRAWS, random.draws);
+        assertEquals("source turn eleven has no raw random draw", 0, random.rawDraws);
+        assertSeededState(game, EXPECTED_ELEVENTH_TURN_PLAYER_STATE,
+                EXPECTED_ELEVENTH_TURN_CITY_POPULATIONS);
     }
 
     private static void assertSeededState(GameState game, int[][] players,

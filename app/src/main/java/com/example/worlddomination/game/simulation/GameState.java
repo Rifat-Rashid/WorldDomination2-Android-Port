@@ -3938,7 +3938,6 @@ public final class GameState {
                         weapon.investmentMillions -= weapon.definition.costMillions;
                         Integer count = bought.get(weapon.definition.name);
                         bought.put(weapon.definition.name, count == null ? 1 : count + 1);
-                        addToHighscore(producer, 3, weapon.definition.level);
                         unitsBought++;
                     }
                 } else if (weapon.definition.costMillions <= remaining) {
