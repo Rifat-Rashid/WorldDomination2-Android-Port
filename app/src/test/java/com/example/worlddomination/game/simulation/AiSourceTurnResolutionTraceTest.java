@@ -233,6 +233,49 @@ public final class AiSourceTurnResolutionTraceTest {
             {107, 41, 67, 43, 167}
     };
 
+    private static final int[][] EXPECTED_THIRTEENTH_TURN_PLAYER_STATE = {
+            {153, 305, 100, 238378},
+            {45, 432, 13, 562274},
+            {58, 475, 42, 560512},
+            {86, 470, 31, 326230},
+            {30, 425, 39, 327956}
+    };
+
+    private static final int[][] EXPECTED_THIRTEENTH_TURN_CITY_POPULATIONS = {
+            {73, 0, 80, 47, 105},
+            {59, 97, 54, 84, 138},
+            {62, 85, 115, 83, 130},
+            {70, 114, 71, 100, 115},
+            {107, 41, 67, 43, 167}
+    };
+
+    private static final List<String> EXPECTED_THIRTEENTH_TURN_RANDOM_DRAWS = Arrays.asList(
+            "91:44", "3:2", "91:55", "3:1", "91:32", "3:0", "91:49", "3:0",
+            "61:31", "4:1", "21:11", "61:42", "61:11", "4:0", "21:7", "61:51",
+            "61:26", "3:2", "141:34", "2:1", "5:2", "4:2", "141:81", "5:0",
+            "5:1", "5:0", "5:3", "5:0", "5:2", "6:5", "6:4", "6:0",
+            "6:2", "6:5", "51:50", "5:1", "11:6", "4:3", "4:0", "51:17",
+            "3:1", "51:32", "11:5", "11:5", "11:0", "11:0", "11:2", "11:0",
+            "11:4", "11:10", "11:10", "11:2", "11:3", "11:6", "11:8", "11:4",
+            "11:1", "51:28", "51:40", "51:12", "51:41", "51:22", "3:2", "24:3",
+            "3:1", "24:5", "3:0", "24:15", "3:1", "24:22", "3:2", "24:0",
+            "3:1", "24:17", "3:0", "24:16", "3:0", "24:16", "3:1", "24:0",
+            "3:2", "24:3", "3:2", "24:16", "3:0", "24:0", "3:0", "24:14",
+            "3:0", "24:17", "3:0", "24:7", "3:0", "24:16", "3:2", "24:5",
+            "3:1", "24:17", "3:2", "24:4", "3:0", "24:11", "3:0", "24:19",
+            "3:0", "24:16", "3:1", "24:17", "3:0", "24:11", "3:0", "24:21",
+            "3:2", "24:1", "3:1", "24:10", "3:1", "24:9", "3:0", "24:6",
+            "3:2", "24:16", "3:2", "24:11", "3:2", "24:12", "2:1", "24:13",
+            "2:1", "24:20", "2:0", "24:0", "2:1", "24:1", "2:0", "24:9",
+            "2:1", "24:3", "2:1", "24:17", "2:1", "24:8", "2:0", "24:19",
+            "2:0", "24:9", "2:0", "24:18", "2:0", "24:11", "2:0", "24:15",
+            "2:0", "24:16", "2:0", "24:22", "2:0", "24:16", "2:1", "24:9",
+            "2:1", "24:21", "2:1", "24:15", "2:1", "24:22", "2:0", "24:4",
+            "2:0", "24:13", "2:1", "24:0", "2:0", "24:23", "2:1", "24:7",
+            "2:0", "24:3", "2:1", "24:22", "2:1", "24:6", "2:0", "24:5",
+            "2:1", "24:6", "2:0", "24:2", "2:1", "24:20", "3:1", "51:15",
+            "3:2", "51:36", "3:2", "3:0", "51:32");
+
     // Source trace includes one empty-range random() call that Java records
     // separately from bounded nextInt draws.
     private static final List<String> EXPECTED_FOURTH_TURN_RANDOM_DRAWS = Arrays.asList(
@@ -1000,6 +1043,66 @@ public final class AiSourceTurnResolutionTraceTest {
         assertEquals("prepared strike casualty draw", 1, random.rawDraws);
         assertSeededState(game, EXPECTED_TWELFTH_TURN_PLAYER_STATE,
                 EXPECTED_TWELFTH_TURN_CITY_POPULATIONS);
+    }
+
+    @Test
+    public void hardSeededThirteenthTurnMatchesSpyAttackAndAirstrike() {
+        GameSetup setup = new GameSetup(17L);
+        setup.setDifficulty(2);
+        for (int leader : new int[]{0, 9, 18, 5}) {
+            setup.toggleOpponent(leader);
+        }
+        RecordingRandom random = new RecordingRandom(setup.copyGameplayRandom());
+        GameState game = new GameState(setup, random);
+        random.clear();
+
+        for (int priorTurn = 0; priorTurn < 12; priorTurn++) {
+            queueHumanTurn(game);
+            game.confirmTurn();
+            random.clear();
+        }
+        assertEquals("source turn-twelve P2 sub investment",
+                10, game.getPlayerState(2).getWeapons().get("sub").investmentMillions);
+        assertEquals("source turn-twelve P2 ship investment",
+                38, game.getPlayerState(2).getWeapons().get("ship").investmentMillions);
+        assertEquals("turn twelve prepares the source airfield carrier", "plane1",
+                game.getPreparedCarrierName(3));
+
+        queueHumanTurn(game);
+        game.confirmTurn();
+
+        assertEquals(13, game.getTurn());
+        assertEquals("source turn-thirteen bounded draw trace",
+                EXPECTED_THIRTEENTH_TURN_RANDOM_DRAWS, random.draws);
+        assertEquals("source turn-thirteen raw random draws", 2, random.rawDraws);
+        assertEquals(Arrays.asList(GameState.Action.RESEARCH, GameState.Action.PRODUCTION),
+                game.getPlayerState(1).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.RESOURCES, GameState.Action.PRODUCTION),
+                game.getPlayerState(2).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.PREPARED_ATTACK, GameState.Action.RESOURCES),
+                game.getPlayerState(3).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.ATTACK, GameState.Action.DIPLOMACY),
+                game.getPlayerState(4).getLastTurnActions());
+        assertTrue("source researches aircraft carrier technology",
+                game.getPlayerState(1).hasTechnology("ship"));
+        assertEquals("source consumes its prepared airfield carrier", null,
+                game.getPreparedCarrierName(3));
+        assertEquals("turn thirteen has one source spy attack", 1,
+                game.getLastTurnSpyMissions().size());
+        GameState.SpyMissionEvent spy = game.getLastTurnSpyMissions().get(0);
+        assertEquals(4, spy.attackerPlayerId);
+        assertEquals(3, spy.defenderPlayerId);
+        assertEquals("tech", spy.actionBuildingFrame);
+        GameState.DiplomacyProposal proposal = game.getPendingDiplomacyProposal(0, 4);
+        assertTrue("source leaves P4's diplomacy offer to the human pending", proposal != null);
+        assertEquals(5, proposal.optionIndex);
+        GameState.PlayerState secondOpponent = game.getPlayerState(2);
+        assertEquals("source P2 accumulates sub investment",
+                43, secondOpponent.getWeapons().get("sub").investmentMillions);
+        assertEquals("source P2 accumulates ship investment",
+                61, secondOpponent.getWeapons().get("ship").investmentMillions);
+        assertSeededState(game, EXPECTED_THIRTEENTH_TURN_PLAYER_STATE,
+                EXPECTED_THIRTEENTH_TURN_CITY_POPULATIONS);
     }
 
     private static void assertSeededState(GameState game, int[][] players,

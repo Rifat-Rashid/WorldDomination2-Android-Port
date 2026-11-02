@@ -820,6 +820,12 @@ public final class GameStateTest {
     }
 
     @Test
+    public void productionBudgetUsesFlashDoublePrecisionBeforeFlooring() {
+        assertEquals(57, GameState.sourceProductionBudgetMillions(116, 50));
+        assertEquals(46, GameState.sourceProductionBudgetMillions(116, 40));
+    }
+
+    @Test
     public void productionRejectsLockedTechnologyGroupAndKeepsExistingSelection() {
         GameState state = new GameState(1, 0L, false);
         state.selectAction(GameState.Action.PRODUCTION);

@@ -1369,7 +1369,13 @@ public final class OpponentAI {
         int bestEnemyStock = 0;
         int bestSpyLevel = 0;
         int bestTargetId = -1;
-        for (GameState.PlayerState target : state.getPlayers()) {
+        GameState.PlayerState[] players = state.getPlayers();
+        // Model.getTarget scans activePlayerArr with ActionScript for-in, whose
+        // array keys are visited from the last index to the first. Equal stock
+        // candidates keep the first target encountered because the source uses
+        // a strict greater-than comparison when replacing its current choice.
+        for (int playerId = players.length - 1; playerId >= 0; playerId--) {
+            GameState.PlayerState target = players[playerId];
             if (!target.alive || target.id == attacker.id) {
                 continue;
             }
@@ -1666,7 +1672,8 @@ public final class OpponentAI {
         Map<String, Integer> budgets = new LinkedHashMap<>();
         int reserved = 0;
         for (Map.Entry<String, Integer> percentage : percentages.entrySet()) {
-            int budget = player.turnMoneyMillions * percentage.getValue() / 100;
+            int budget = GameState.sourceProductionBudgetMillions(
+                    player.turnMoneyMillions, percentage.getValue());
             if (budget > 0) {
                 budgets.put(percentage.getKey(), budget);
                 reserved += budget;

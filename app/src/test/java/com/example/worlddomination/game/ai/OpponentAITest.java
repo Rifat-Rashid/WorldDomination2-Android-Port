@@ -441,6 +441,40 @@ public final class OpponentAITest {
     }
 
     @Test
+    public void spyTargetTiesKeepTheFirstRivalInSourceReversePlayerOrder() {
+        GameState state = new GameState(1, 72013L);
+        GameState.PlayerState attacker = state.getPlayerState(1);
+        attacker.spyReadiness = 25;
+        for (GameState.PlayerState player : state.getPlayers()) {
+            for (GameState.WeaponState weapon : player.getWeapons().values()) {
+                weapon.inStock = 0;
+            }
+        }
+        for (GameState.WeaponState weapon : attacker.getWeapons().values()) {
+            if ("soldier".equals(weapon.definition.type)) {
+                weapon.inStock = 0;
+            }
+        }
+        GameState.WeaponState spy = attacker.getWeapons().get("spy1");
+        spy.active = true;
+        spy.inStock = 1;
+        state.getPlayerState(2).getWeapons().get("soldier1").inStock = 10;
+        state.getPlayerState(3).getWeapons().get("soldier1").inStock = 10;
+        state.getHuman().moneyMillions = 0;
+
+        SequenceRandom random = new SequenceRandom(0, 0, 0);
+        OpponentAI.Decision decision = OpponentAI.planAttack(state, attacker, random,
+                Collections.<String, Integer>emptyMap());
+
+        assertNotNull(decision);
+        assertEquals("spy1", decision.weaponName);
+        assertEquals("ActionScript for-in visits player three before player two",
+                3, decision.targetPlayerId);
+        assertEquals("cash alert, target city, and building selection draw order",
+                3, random.getDrawCount());
+    }
+
+    @Test
     public void spyLevelTargetingUsesPerLevelStockEvenWhenThatLevelIsInactive() {
         GameState state = prepareSpyTargetScenario(false);
         GameState.PlayerState attacker = state.getPlayerState(1);
