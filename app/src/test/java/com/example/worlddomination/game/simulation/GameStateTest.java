@@ -2308,7 +2308,9 @@ public final class GameStateTest {
 
             int baseDrift = difficulty == 0 ? 3 : difficulty == 1 ? 2 : 1;
             assertEquals(70 + baseDrift, ai.getRegardToward(0));
-            assertEquals(70 + baseDrift + difficulty, ai.getRegardToward(2));
+            assertEquals("the source applies the rival bonus once per regard entry",
+                    70 + baseDrift + difficulty * state.getPlayers().length,
+                    ai.getRegardToward(2));
         }
     }
 

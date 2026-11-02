@@ -591,6 +591,7 @@ public final class GameState {
     private static final int[] PRODUCTION_GROUPS = {1, 2, 3, 4, 5, 6, 7, 8};
     private static final int PLAYER_STOCK_CAP = 4;
     private static final int MAX_TURN_ACTIONS = 2;
+    private static final int SOURCE_SHIP_REGARD_LOSS_FALLBACK = 40;
     private static final int[][] SPY_STATISTICS = {
             {5, 20}, {7, 40}, {9, 60}, {12, 80}
     };
@@ -2852,10 +2853,14 @@ public final class GameState {
                 regard++;
             }
             player.regardToward[otherId] = Math.min(100, regard);
-        }
-        if (!player.human) {
-            for (int otherId = 1; otherId < players.length; otherId++) {
-                player.regardToward[otherId] += difficulty;
+            if (!player.human) {
+                // Sub_presenter.turnResults nests the AI-to-AI adjustment
+                // inside the loop for each regard entry. It therefore applies
+                // the difficulty increment once per relation, not once per
+                // turn, and it runs after that entry's clamp.
+                for (int targetId = 1; targetId < players.length; targetId++) {
+                    player.regardToward[targetId] += difficulty;
+                }
             }
         }
     }
@@ -3376,7 +3381,12 @@ public final class GameState {
                 }
             }
         }
-        applyTurnResultBattleHostilityEffects(attacker, defender, totalCasualties);
+        // Presenter_updatePlayerVars_2 reads casualties from the ship's input
+        // attack array, whose entries contain only city/weapon IDs. Its sum is
+        // NaN and the source falls back to 40 for regard loss, even though the
+        // resolved sortie results may have a different casualty total.
+        applyTurnResultBattleHostilityEffects(attacker, defender,
+                SOURCE_SHIP_REGARD_LOSS_FALLBACK);
     }
 
     /** Source ship counter roll uses randRange(1, 3) == 2: one of three strikes. */
