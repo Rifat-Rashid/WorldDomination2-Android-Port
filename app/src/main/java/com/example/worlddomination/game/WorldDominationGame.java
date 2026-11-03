@@ -10,6 +10,8 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.example.worlddomination.game.rendering.ResourceMenuRenderer;
+import com.example.worlddomination.game.rendering.MessagePanelRenderer;
+import com.example.worlddomination.game.ui.MessagePanelLayout;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
@@ -273,6 +275,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private ShapeRenderer shapes;
     private BitmapFont font;
     private ResourceMenuRenderer resourceMenuRenderer;
+    private MessagePanelRenderer messagePanelRenderer;
     private OriginalUiAssets uiAssets;
     private OriginalSplashAssets splashAssets;
     private OriginalCityAssets cityAssets;
@@ -382,6 +385,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         shapes = new ShapeRenderer();
         font = new BitmapFont();
         resourceMenuRenderer = new ResourceMenuRenderer();
+        messagePanelRenderer = new MessagePanelRenderer();
         font.setColor(Color.WHITE);
         uiAssets = new OriginalUiAssets();
         splashAssets = new OriginalSplashAssets();
@@ -463,9 +467,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
         float footerHeight = 64f;
         messagePanel.set(centerLeft, contentY, centerWidth * 0.67f, footerHeight);
-        messageViewport.set(messagePanel.x + 10f, messagePanel.y + 2f,
-                Math.max(1f, messagePanel.width - 20f),
-                Math.max(1f, messagePanel.height - 4f));
+        MessagePanelLayout.updateViewport(messagePanel, messageViewport);
         messageLayoutWidth = -1f;
         scorePanel.set(messagePanel.x + messagePanel.width + 4f, contentY,
                 centerRight - messagePanel.x - messagePanel.width - 4f, footerHeight);
@@ -1422,6 +1424,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         drawPanelTexture(stockPanel);
         drawPanelTexture(mapFrame);
         drawPanelTexture(messagePanel);
+        messagePanelRenderer.drawBackground(batch, messagePanel);
         drawPanelTexture(scorePanel);
         drawPanelTexture(actionPanel);
         batch.draw(uiAssets.battleMap, mapBounds.x, mapBounds.y,
@@ -2171,9 +2174,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             font.setColor(GREEN);
             batch.flush();
             setScissor(messageViewport);
-            float textBaseline = messagePanel.y + messagePanel.height - 15f
+            float textBaseline = messageViewport.y + messageViewport.height - 3f
                     + messageHistoryScroll.getFirstVisibleLine() * messageLineHeight;
-            font.draw(batch, messageHistoryLayout, messageViewport.x, textBaseline);
+            messagePanelRenderer.getFont().draw(batch, messageHistoryLayout,
+                    messageViewport.x, textBaseline);
             batch.flush();
             Gdx.gl.glDisable(GL20.GL_SCISSOR_TEST);
         }
@@ -3512,9 +3516,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             cachedLatestMessage = latest;
         }
 
-        messageHistoryLayout.setText(font, cachedMessageText, GREEN,
+        BitmapFont messageFont = messagePanelRenderer.getFont();
+        messageHistoryLayout.setText(messageFont, cachedMessageText, MessagePanelRenderer.TEXT_COLOR,
                 messageViewport.width, Align.left, true);
-        messageLineHeight = Math.max(1f, font.getLineHeight());
+        messageLineHeight = Math.max(1f, messageFont.getLineHeight());
         int visibleLines = Math.max(1,
                 (int) Math.floor(messageViewport.height / messageLineHeight));
         int totalLines = Math.max(1,
@@ -4844,6 +4849,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         if (resourceMenuRenderer != null) {
             resourceMenuRenderer.dispose();
+        }
+        if (messagePanelRenderer != null) {
+            messagePanelRenderer.dispose();
         }
         if (shapes != null) {
             shapes.dispose();

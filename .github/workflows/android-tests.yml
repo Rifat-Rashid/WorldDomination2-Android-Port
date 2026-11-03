@@ -234,6 +234,9 @@ jobs:
           - id: resource-dialog-clarity-assets-tests
             check: Resource dialog high resolution art and font coverage
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.OriginalUiAssetManifestTest.resourceDialogUsesHighResolutionArtAndSeparateScalableText"'
+          - id: message-well-layout-tests
+            check: Reference message well clipping and readable rows
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.MessagePanelLayoutTest" --tests "com.example.worlddomination.game.ui.MessageHistoryScrollStateTest"'
           - id: scroll-pane-tests
             check: Independent panel scrolling tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.ScrollPaneStateTest"'
