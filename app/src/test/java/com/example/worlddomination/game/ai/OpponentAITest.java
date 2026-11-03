@@ -994,6 +994,26 @@ public final class OpponentAITest {
     }
 
     @Test
+    public void resourceScoreUsesSourceReserveFormulaAndStrictMoneyCutoff() {
+        GameState state = gameWithRegularFirstOpponent(10300L);
+        GameState.PlayerState actor = state.getPlayerState(1);
+        clearWeaponStock(actor);
+
+        actor.moneyMillions = 100;
+        double stockLevel = OpponentAI.weaponStockLevel(actor);
+        assertEquals(50 - Math.round((float) stockLevel) + 25 - 100 / 10000.0,
+                score(state, actor, GameState.Action.RESOURCES), 0.0);
+
+        actor.moneyMillions = 149;
+        assertEquals(50 - Math.round((float) stockLevel) + 25 - 149 / 10000.0,
+                score(state, actor, GameState.Action.RESOURCES), 0.0);
+
+        actor.moneyMillions = 150;
+        assertEquals("the source leaves the resource score at zero at $150M",
+                0.0, score(state, actor, GameState.Action.RESOURCES), 0.0);
+    }
+
+    @Test
     public void specialLeaderDivertsProductionAndLaterResearchAtSourceTechBoundaries()
             throws Exception {
         GameState state = gameWithRegularFirstOpponent(10700L);
