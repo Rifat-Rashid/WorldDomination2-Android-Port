@@ -213,6 +213,12 @@ jobs:
           - id: setup-source-artwork-tests
             check: Original setup portrait and building artwork
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest.setupPortraitTimelineContainsEverySelectableOriginalLeaderPortrait" --tests "com.example.worlddomination.game.assets.OriginalCityAssetsTest"'
+          - id: action-building-nested-playback-tests
+            check: Source pump research and factory playback
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashActionBuildingAnimationTest"'
+          - id: action-building-animated-artwork-tests
+            check: Original animated building atlas completeness
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.OriginalFlashAnimationAssetsTest.animatedBuildingClipsRetainAllSourceFramesAndCachedArtwork"'
           - id: scroll-pane-tests
             check: Independent panel scrolling tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.ScrollPaneStateTest"'
