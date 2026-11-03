@@ -165,6 +165,9 @@ jobs:
           - id: ai-diplomacy-personality-tests
             check: AI diplomacy personality parity
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.OpponentAITest.diplomacyPlanningDoesNotBranchOnAiPersonality"'
+          - id: ai-diplomacy-response-tests
+            check: AI diplomacy response acceptance parity
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.AiDiplomacyResponseRulesTest"'
           - id: ai-diplomacy-cooldown-tests
             check: AI diplomacy cooldown RNG parity
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.OpponentAITest.diplomacyCooldownTargetsDoNotConsumeRandomCandidateDraws"'

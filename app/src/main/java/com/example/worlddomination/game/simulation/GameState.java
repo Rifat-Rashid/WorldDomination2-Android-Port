@@ -2618,51 +2618,12 @@ public final class GameState {
     private boolean shouldAiAccept(PlayerState receiver, DiplomacyProposal proposal) {
         PlayerState proposer = players[proposal.proposerId];
         int optionIndex = proposal.optionIndex;
-        int accept = 2;
-        int reject = 0;
-        if (optionIndex < 3) {
-            if (receiver.getRegardTowardExact(proposer.id) > 50) {
-                accept++;
-            } else {
-                reject++;
-            }
-            accept += optionIndex * 4;
-            if (strength(receiver) < strength(proposer)) {
-                accept++;
-            } else {
-                reject++;
-            }
-            if (proposer.populationMillions > receiver.populationMillions) {
-                accept++;
-            }
-            if (receiver.moneyMillions < 30) {
-                accept++;
-            }
-        } else {
-            if (receiver.getRegardTowardExact(proposer.id) > 50) {
-                accept++;
-            } else {
-                reject++;
-            }
-            reject += Math.round(optionIndex / 2f);
-            if (strength(receiver) < strength(proposer)) {
-                accept++;
-            } else {
-                reject++;
-            }
-            if (strength(receiver) < strength(proposer) / 2f) {
-                accept += 2;
-            } else {
-                reject++;
-            }
-            if (proposer.populationMillions > receiver.populationMillions) {
-                accept++;
-            } else {
-                reject++;
-            }
-        }
-        return accept > reject && (optionIndex < 3
-                || receiver.turnMoneyMillions >= DIPLOMACY_AMOUNT[optionIndex]);
+        return AiDiplomacyResponseRules.shouldAccept(
+                receiver.getRegardTowardExact(proposer.id),
+                strength(receiver), strength(proposer),
+                receiver.populationMillions, proposer.populationMillions,
+                receiver.moneyMillions, receiver.turnMoneyMillions,
+                optionIndex, DIPLOMACY_AMOUNT[optionIndex]);
     }
 
     private int strength(PlayerState player) {
