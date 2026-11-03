@@ -405,6 +405,12 @@ public final class OpponentAI {
     private static void reserve(GameState.PlayerState player, Decision decision) {
         player.turnMoneyMillions = Math.max(0,
                 player.turnMoneyMillions - decision.reservedMillions);
+        if (decision.action == GameState.Action.PRODUCTION) {
+            // Model.getTarget sums an unfilled productionInvestmentArr row.
+            // In the recovered source this turns turnMoney into NaN, so later
+            // research and diplomacy offers fail their strict budget checks.
+            player.invalidateAiTurnMoney();
+        }
     }
 
     static List<ScoredAction> scoreActions(GameState state,
@@ -1588,9 +1594,14 @@ public final class OpponentAI {
 
     static Decision planDiplomacy(GameState state, GameState.PlayerState actor,
                                   Random random) {
+        GameState.PlayerState[] players = state.getPlayers();
         GameState.PlayerState poorestPopulationTarget = null;
         int lowestTargetPopulation = 0;
-        for (GameState.PlayerState target : state.getPlayers()) {
+        // ActionScript's for-in over activePlayerArr visits numeric array keys
+        // from highest to lowest. Preserve that order so population ties keep
+        // the same first target as the source (including its later budget check).
+        for (int index = players.length - 1; index >= 0; index--) {
+            GameState.PlayerState target = players[index];
             if (!isLivingDiplomacyOpponent(actor, target)) {
                 continue;
             }
@@ -1607,7 +1618,8 @@ public final class OpponentAI {
         Integer randomOfferScoreFloor = poorestPopulationTarget == null
                 ? null : lowestTargetPopulation;
         GameState.PlayerState randomOfferTarget = null;
-        for (GameState.PlayerState target : state.getPlayers()) {
+        for (int index = players.length - 1; index >= 0; index--) {
+            GameState.PlayerState target = players[index];
             if (!isLivingDiplomacyOpponent(actor, target)
                     || actor.getDiplomacyOfferedLastTurn(target.id) != 0) {
                 continue;
@@ -1647,7 +1659,9 @@ public final class OpponentAI {
         int option = -1;
         if (chooseOffer) {
             for (int candidate = 0; candidate < 3; candidate++) {
-                if (state.getDiplomacyOptionAmount(candidate) < actor.turnMoneyMillions) {
+                if (!actor.hasInvalidAiTurnMoney()
+                        && state.getDiplomacyOptionAmount(candidate)
+                        < actor.turnMoneyMillions) {
                     option = candidate;
                 }
             }
@@ -1771,6 +1785,9 @@ public final class OpponentAI {
 
     private static Decision planResearch(GameState state, GameState.PlayerState player,
                                         Random random, int slot) {
+        if (player.hasInvalidAiTurnMoney()) {
+            return null;
+        }
         int budget = slot == 2 ? player.turnMoneyMillions
                 : (int) Math.round(player.turnMoneyMillions
                 * randomInclusive(random, 20, 80) / 100.0);

@@ -90,6 +90,40 @@ public final class OpponentAITest {
     }
 
     @Test
+    public void productionInvalidatesSourceTurnBudgetBeforeSecondDiplomacyOffer()
+            throws Exception {
+        GameState state = findAiWithNeutralHumanRegard();
+        GameState.PlayerState actor = aiWithNeutralHumanRegard(state);
+        actor.moneyMillions = 130;
+        actor.turnMoneyMillions = 130;
+        actor.populationMillions = 1_000;
+        state.getHuman().moneyMillions = 400;
+        setRegardToward(actor, state.getHuman().id, 66);
+        for (GameState.WeaponState weapon : actor.getWeapons().values()) {
+            weapon.active = false;
+        }
+        for (GameState.PlayerState rival : state.getPlayers()) {
+            if (!rival.human && rival.id != actor.id) {
+                rival.moneyMillions = 20;
+            }
+        }
+
+        List<OpponentAI.ScoredAction> scores = Arrays.asList(
+                new OpponentAI.ScoredAction(GameState.Action.PRODUCTION, 143),
+                new OpponentAI.ScoredAction(GameState.Action.DIPLOMACY, 47),
+                new OpponentAI.ScoredAction(GameState.Action.PROPAGANDA, 42));
+        List<OpponentAI.Decision> decisions = OpponentAI.planScoredActions(state,
+                actor, new SequenceRandom(0, 0, 0, 0, 0, 0, 1), scores);
+
+        assertTrue("a production order must invalidate the remaining source budget",
+                actor.hasInvalidAiTurnMoney());
+        assertEquals(2, decisions.size());
+        assertEquals(GameState.Action.PRODUCTION, decisions.get(0).action);
+        assertEquals("an unaffordable offer falls through to the next ranked action",
+                GameState.Action.PROPAGANDA, decisions.get(1).action);
+    }
+
+    @Test
     public void turnPlannerScoresEveryOpponentBeforePlanningAnyOpponent() {
         long seed = firstOrderSensitiveSeed();
         assertTrue("fixture search must find a turn where interleaving changes AI plans",
@@ -207,6 +241,40 @@ public final class OpponentAITest {
         assertNotNull(decision);
         assertEquals(GameState.Action.DIPLOMACY, decision.action);
         assertEquals(poorest.id, decision.targetPlayerId);
+        assertEquals(5, decision.diplomacyOption);
+    }
+
+    @Test
+    public void diplomacyPopulationTiesKeepLastActivePlayerInSourceArrayOrder()
+            throws Exception {
+        GameState state = findAiWithNeutralHumanRegard();
+        GameState.PlayerState actor = aiWithNeutralHumanRegard(state);
+        actor.populationMillions = 1_000;
+        actor.moneyMillions = 100;
+        actor.turnMoneyMillions = 100;
+        setRegardToward(actor, state.getHuman().id, 50);
+        state.getHuman().populationMillions = 500;
+        state.getHuman().moneyMillions = 100;
+
+        GameState.PlayerState expectedTarget = null;
+        for (GameState.PlayerState target : state.getPlayers()) {
+            if (target.alive && !target.human && target.id != actor.id) {
+                target.populationMillions = 100;
+                target.moneyMillions = 50;
+                if (expectedTarget == null || target.id > expectedTarget.id) {
+                    expectedTarget = target;
+                }
+            }
+        }
+        assertNotNull(expectedTarget);
+        expectedTarget.moneyMillions = 150;
+
+        OpponentAI.Decision decision = OpponentAI.planDiplomacy(state, actor,
+                new SequenceRandom(0, 0, 0, 0));
+
+        assertNotNull("the highest-indexed poorest rival has funds to demand", decision);
+        assertEquals("Flash for-in visits array keys from highest to lowest",
+                expectedTarget.id, decision.targetPlayerId);
         assertEquals(5, decision.diplomacyOption);
     }
 
@@ -365,7 +433,9 @@ public final class OpponentAITest {
         state.getHuman().moneyMillions = 50;
 
         List<Integer> candidateIds = new ArrayList<>();
-        for (GameState.PlayerState target : state.getPlayers()) {
+        GameState.PlayerState[] players = state.getPlayers();
+        for (int index = players.length - 1; index >= 0; index--) {
+            GameState.PlayerState target = players[index];
             if (target.id == actor.id || !target.alive
                     || actor.hasCeasefireWith(target.id)) {
                 continue;
