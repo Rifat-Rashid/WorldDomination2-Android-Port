@@ -34,17 +34,17 @@ public final class ResourceMenuRenderer implements Disposable {
         text.update(state);
         batch.setColor(Color.WHITE);
         batch.draw(background, bounds.x, bounds.y, bounds.width, bounds.height);
-        label(batch, bounds, "RESOURCE MENU", 14f, 7f, 16f, Color.WHITE, false);
-        label(batch, bounds, text.getBudget(), 360f, 15f, 8f, INK, true);
-        label(batch, bounds, "Resource Information", 237f, 49f, 8.5f, Color.WHITE, false);
-        label(batch, bounds, "Population:", 237f, 66f, 8f, Color.WHITE, false);
-        label(batch, bounds, text.getPopulation(), 360f, 66f, 8f, Color.WHITE, true);
-        label(batch, bounds, "Resource:", 237f, 81f, 8f, Color.WHITE, false);
-        label(batch, bounds, "OIL", 360f, 81f, 8f, Color.WHITE, true);
-        label(batch, bounds, "Estimated income:", 237f, 117f, 8f, ORANGE, false);
-        label(batch, bounds, text.getIncome(), 360f, 130f, 13f, ORANGE, true);
-        label(batch, bounds, "CANCEL", 81f, 255f, 10f, Color.WHITE, true);
-        label(batch, bounds, "ACCEPT", 332f, 255f, 10f, Color.WHITE, true);
+        label(batch, bounds, "RESOURCE MENU", 9f, 9f, 12.5f, Color.WHITE, false);
+        label(batch, bounds, text.getBudget(), 357f, 16f, 6.8f, INK, true);
+        label(batch, bounds, "Resource Information", 237f, 49f, 6.9f, Color.WHITE, false);
+        label(batch, bounds, "Population:", 237f, 67f, 7.4f, Color.WHITE, false);
+        label(batch, bounds, text.getPopulation(), 357f, 67f, 7.4f, Color.WHITE, true);
+        label(batch, bounds, "Resource:", 237f, 82f, 7.4f, Color.WHITE, false);
+        label(batch, bounds, "OIL", 357f, 82f, 7.4f, Color.WHITE, true);
+        label(batch, bounds, "Estimated income:", 237f, 117f, 7.4f, ORANGE, false);
+        label(batch, bounds, text.getIncome(), 357f, 130f, 10.5f, ORANGE, true);
+        label(batch, bounds, "CANCEL", 76f, 255f, 7.5f, Color.WHITE, true);
+        label(batch, bounds, "ACCEPT", 327f, 255f, 7.5f, Color.WHITE, true);
         batch.setColor(Color.WHITE);
     }
 
