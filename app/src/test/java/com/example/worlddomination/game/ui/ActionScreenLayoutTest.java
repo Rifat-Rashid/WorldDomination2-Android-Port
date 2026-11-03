@@ -12,9 +12,9 @@ import static org.junit.Assert.assertTrue;
 public final class ActionScreenLayoutTest {
     @Test
     public void mapFirstActionsKeepTheBattlefieldVisible() {
-        assertFalse(ActionScreenLayout.opensCenterDialog(GameState.Action.MASS_MEDIA));
+        assertTrue(ActionScreenLayout.opensCenterDialog(GameState.Action.MASS_MEDIA));
         assertFalse(ActionScreenLayout.opensCenterDialog(GameState.Action.ATTACK));
-        assertTrue(ActionScreenLayout.hasInlineActionControls(GameState.Action.MASS_MEDIA));
+        assertFalse(ActionScreenLayout.hasInlineActionControls(GameState.Action.MASS_MEDIA));
         assertTrue(ActionScreenLayout.hasInlineActionControls(GameState.Action.ATTACK));
         assertTrue(ActionScreenLayout.selectsTargetsOnMap(GameState.Action.ATTACK));
         assertFalse(ActionScreenLayout.selectsTargetsOnMap(GameState.Action.MASS_MEDIA));
@@ -23,7 +23,7 @@ public final class ActionScreenLayoutTest {
 
     @Test
     public void technologyCardsFollowSourceCategoryOrderAndFitWithoutOverlap() {
-        int[] expectedGroups = {1, 6, 7, 2, 3, 4, 5};
+        int[] expectedGroups = {1, 6, 4, 5, 7, 2, 3};
         Rectangle modal = new Rectangle(130f, 40f, 335f, 253f);
         Rectangle titleBar = new Rectangle(modal.x + 3f, modal.y + modal.height - 29f,
                 modal.width - 6f, 25f);
@@ -45,6 +45,35 @@ public final class ActionScreenLayoutTest {
             assertFalse("Selected technology summary stays below the category grid",
                     selected.overlaps(card));
         }
+    }
+
+    @Test
+    public void technologyTouchTargetsMatchTheOriginalFlashPanelPositions() {
+        Rectangle modal = new Rectangle(50f, 30f, 365f, 275f);
+        Rectangle first = TechnologyScreenLayout.setCardBounds(0, modal, new Rectangle());
+        Rectangle specialCarrier = TechnologyScreenLayout.setCardBounds(4, modal,
+                new Rectangle());
+        Rectangle warheads = TechnologyScreenLayout.setCardBounds(5, modal, new Rectangle());
+        Rectangle bioloads = TechnologyScreenLayout.setCardBounds(6, modal, new Rectangle());
+
+        assertEquals(modal.x + 14f, first.x, 0.001f);
+        assertEquals(modal.y + 275f - 39f - 50f, first.y, 0.001f);
+        assertEquals(modal.x + 145f, specialCarrier.x, 0.001f);
+        assertEquals(modal.y + 275f - 38f - 89f, specialCarrier.y, 0.001f);
+        assertEquals(modal.x + 245f, warheads.x, 0.001f);
+        assertEquals(modal.x + 245f, bioloads.x, 0.001f);
+        assertTrue(ActionScreenLayout.opensCenterDialog(GameState.Action.RESEARCH));
+    }
+
+    @Test
+    public void researchTextFieldsMatchTheirFlashTimelinePositions() {
+        assertEquals(57.2f, TechnologyScreenLayout.cardCostX(0), 0.001f);
+        assertEquals(46.2f, TechnologyScreenLayout.cardCostBaselineTop(0), 0.001f);
+        assertEquals(151.6f, TechnologyScreenLayout.cardCostX(4), 0.001f);
+        assertEquals(114.7f, TechnologyScreenLayout.cardCostBaselineTop(4), 0.001f);
+        assertEquals(151.5f, TechnologyScreenLayout.selectedNamesBaselineTop(), 0.001f);
+        assertEquals(152f, TechnologyScreenLayout.selectedCostsBaselineTop(), 0.001f);
+        assertEquals(234.1f, TechnologyScreenLayout.estimatedTotalBaselineTop(), 0.001f);
     }
 
     @Test

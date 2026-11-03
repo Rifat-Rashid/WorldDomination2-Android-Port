@@ -7,12 +7,11 @@ public final class ActionScreenLayout {
     private ActionScreenLayout() { }
 
     public static boolean opensCenterDialog(GameState.Action action) {
-        return action != null && action != GameState.Action.MASS_MEDIA
-                && action != GameState.Action.ATTACK;
+        return action != null && action != GameState.Action.ATTACK;
     }
 
     public static boolean hasInlineActionControls(GameState.Action action) {
-        return action == GameState.Action.MASS_MEDIA || action == GameState.Action.ATTACK;
+        return action == GameState.Action.ATTACK;
     }
 
     public static boolean selectsTargetsOnMap(GameState.Action action) {
