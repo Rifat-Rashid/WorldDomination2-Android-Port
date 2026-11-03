@@ -237,6 +237,9 @@ jobs:
           - id: message-well-layout-tests
             check: Reference message well clipping and readable rows
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.MessagePanelLayoutTest" --tests "com.example.worlddomination.game.ui.MessageHistoryScrollStateTest"'
+          - id: expanded-info-panel-layout-tests
+            check: Expanded Funds and information panel row alignment
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.ActionScreenLayoutTest.informationRowsUseTheFormerTitleSpaceAndFitInsideThePanel" --tests "com.example.worlddomination.game.ui.ActionScreenLayoutTest.informationBarsSitInsideTheirRowsInsteadOfOnTextBaselines"'
           - id: scroll-pane-tests
             check: Independent panel scrolling tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.ScrollPaneStateTest"'

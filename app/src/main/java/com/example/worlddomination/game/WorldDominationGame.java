@@ -202,7 +202,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private final Rectangle centerHeader = new Rectangle();
     private final Rectangle navPanel = new Rectangle();
     private final Rectangle infoPanel = new Rectangle();
-    private final Rectangle infoTitlePlate = new Rectangle();
     private final Rectangle scoreTitlePlate = new Rectangle();
     private final Rectangle portraitStrip = new Rectangle();
     private final Rectangle[] portraitCards = new Rectangle[4];
@@ -444,8 +443,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         navPanel.set(leftPanel.x, contentY + 86f, leftWidth, navigationPanelHeight);
         NavigationPanelLayout.setContentBounds(navPanel, navViewport);
         infoPanel.set(leftPanel.x, contentY, leftWidth, 82f);
-        infoTitlePlate.set(infoPanel.x + infoPanel.width / 2f,
-                infoPanel.y + infoPanel.height - 5f, 10f, 14f);
         toolbarPanel.set(rightPanel.x, rightPanel.y + rightPanel.height - 34f,
                 rightWidth, 34f);
         helpButton.set(toolbarPanel.x + 7f, toolbarPanel.y + 6f,
@@ -482,7 +479,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         confirmButton.set(actionPanel.x + actionPanel.width - 35f, tubeY, 27f, 33f);
         portraitStrip.set(centerHeader.x + centerHeader.width * 0.28f,
                 centerHeader.y + 1f, centerHeader.width * 0.44f, 6f);
-        fitTitlePlate(infoTitlePlate, "INFO PANEL");
         fitTitlePlate(scoreTitlePlate, "SCORE");
         for (int i = 0; i < actionFooterButtons.length; i++) {
             ActionFooterLayout.setButtonBounds(messagePanel, i, actionFooterButtons[i]);
@@ -1475,7 +1471,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         drawPanelEdges(actionPanel);
         shapes.end();
         shapes.begin(ShapeRenderer.ShapeType.Filled);
-        drawTitlePlate(infoTitlePlate);
         drawTitlePlate(scoreTitlePlate);
         shapes.end();
 
@@ -2164,8 +2159,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 helpButton.y + helpButton.height / 2f + 3f, 9f);
         drawCentered("MUTE", muteButton.x + muteButton.width / 2f,
                 muteButton.y + muteButton.height / 2f + 3f, 9f);
-        drawCentered("INFO PANEL", infoTitlePlate.x + infoTitlePlate.width / 2f,
-                infoTitlePlate.y + infoTitlePlate.height / 2f - 2f, 8f);
         drawCentered("SCORE", scoreTitlePlate.x + scoreTitlePlate.width / 2f,
                 scoreTitlePlate.y + scoreTitlePlate.height / 2f - 2f, 9f);
 
@@ -2334,7 +2327,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         font.setColor(GOLD);
         font.draw(batch, funds, fundsX, InformationPanelLayout.rowBaseline(infoPanel, 0));
         font.getData().setScale(targetScale);
-        font.setColor(DISABLED_TEXT);
+        font.setColor(TITLE_TEXT);
         font.draw(batch, "technology", x, InformationPanelLayout.rowBaseline(infoPanel, 1));
         font.draw(batch, "propaganda", x, InformationPanelLayout.rowBaseline(infoPanel, 2));
         font.draw(batch, "population", x, InformationPanelLayout.rowBaseline(infoPanel, 3));
@@ -2368,7 +2361,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private void drawInformationBar(float x, float y, float width, int statistic) {
         int value = Math.max(0, Math.min(100, statistic));
         shapes.setColor(0.02f, 0.055f, 0.07f, 1f);
-        shapes.rect(x, y, width, 4.2f);
+        shapes.rect(x, y, width, InformationPanelLayout.BAR_HEIGHT);
         float filledWidth = width * value / 100f;
         for (int band = 0; band < 8; band++) {
             float segmentLeft = x + filledWidth * band / 8f;
@@ -2376,7 +2369,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             float blend = band / 7f;
             shapes.setColor(1f, 0.19f + blend * 0.68f,
                     0.02f + blend * 0.01f, 1f);
-            shapes.rect(segmentLeft, y, segmentWidth, 4.2f);
+            shapes.rect(segmentLeft, y, segmentWidth, InformationPanelLayout.BAR_HEIGHT);
         }
     }
 
