@@ -286,9 +286,9 @@ public final class FlashAnimationTimelineTest {
             throws IOException {
         JsonValue scene = loadSourceScene();
         FlashAnimationTimeline faces = FlashAnimationTimeline.fromSymbol(
-                findSymbol(scene, "faces"), scene.getFloat("fps"));
+                findSymbolById(scene, 3191), scene.getFloat("fps"));
 
-        assertEquals(20, faces.getFrameCount());
+        assertEquals(26, faces.getFrameCount());
         for (int frameIndex = 0; frameIndex < 19; frameIndex++) {
             FlashAnimationTimeline.Frame frame = faces.getFrame(frameIndex);
             assertNotNull("Missing original leader portrait frame " + frameIndex, frame);
