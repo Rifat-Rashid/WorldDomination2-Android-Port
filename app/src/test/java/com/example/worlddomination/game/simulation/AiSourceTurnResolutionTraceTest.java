@@ -2229,6 +2229,78 @@ public final class AiSourceTurnResolutionTraceTest {
                 });
     }
 
+    @Test
+    public void hardSeededTwentyFifthTurnStopsPostBattleProductionAfterDefeat() {
+        GameSetup setup = new GameSetup(17L);
+        setup.setDifficulty(2);
+        for (int leader : new int[]{0, 9, 18, 5}) {
+            setup.toggleOpponent(leader);
+        }
+        RecordingRandom random = new RecordingRandom(setup.copyGameplayRandom());
+        GameState game = new GameState(setup, random);
+        random.clear();
+        for (int priorTurn = 0; priorTurn < 22; priorTurn++) {
+            queueHumanTurn(game);
+            game.confirmTurn();
+            random.clear();
+        }
+
+        for (int turn = 0; turn < 3; turn++) {
+            game.selectAction(GameState.Action.RESOURCES);
+            assertTrue(game.acceptSelectedAction());
+            game.selectAction(GameState.Action.PRODUCTION);
+            assertTrue(game.configureProduction("soldier", 1));
+            assertTrue(game.acceptSelectedAction());
+            game.confirmTurn();
+            if (turn < 2) {
+                random.clear();
+            }
+        }
+
+        assertEquals(25, game.getTurn());
+        assertEquals(GameState.MatchStatus.DEFEAT, game.getMatchStatus());
+        assertEquals("source turn 25 ends result processing at the defeat transition",
+                58, random.draws.size() + random.rawDraws);
+        assertEquals(Arrays.asList(GameState.Action.RESOURCES, GameState.Action.PRODUCTION),
+                game.getPlayerState(0).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.PRODUCTION, GameState.Action.MASS_MEDIA),
+                game.getPlayerState(1).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.ATTACK, GameState.Action.MASS_MEDIA),
+                game.getPlayerState(2).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.ATTACK, GameState.Action.PRODUCTION),
+                game.getPlayerState(3).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.PREPARED_ATTACK,
+                        GameState.Action.MASS_MEDIA),
+                game.getPlayerState(4).getLastTurnActions());
+
+        List<GameState.CombatEvent> combatEvents =
+                game.getLastTurnCombatEventsInSourcePresentationOrder();
+        assertEquals(2, combatEvents.size());
+        assertCombatEvent(combatEvents.get(0), GameState.CombatEventType.DIRECT_ATTACK,
+                3, 0, 4, "soldier4", null, 28);
+        assertCombatEvent(combatEvents.get(1), GameState.CombatEventType.DIRECT_ATTACK,
+                2, 0, 4, "soldier1", null, 2);
+
+        assertSeededState(game,
+                new int[][]{
+                        {123, 0, 80, 365182},
+                        {87, 432, 43, 736854},
+                        {33, 475, 50, 1029634},
+                        {121, 470, 33, 717224},
+                        {20, 425, 42, 699318}
+                },
+                new int[][]{
+                        {0, 0, 0, 0, 0},
+                        {59, 97, 54, 84, 138},
+                        {62, 85, 115, 83, 130},
+                        {70, 114, 71, 100, 115},
+                        {107, 41, 67, 43, 167}
+                });
+        assertEquals("production results are not applied after the defeat transition",
+                1, game.getPlayerState(1).getWeaponStockByName("spy2"));
+        assertFalse(game.getMessages(1).toString().contains("produced:"));
+    }
+
     private static void assertCombatEvent(GameState.CombatEvent event,
                                          GameState.CombatEventType type,
                                          int attacker, int defender, int city,
