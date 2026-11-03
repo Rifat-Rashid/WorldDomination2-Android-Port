@@ -3,6 +3,7 @@ package com.example.worlddomination.game.assets;
 import com.badlogic.gdx.utils.JsonReader;
 import com.badlogic.gdx.utils.JsonValue;
 import com.example.worlddomination.game.rendering.FlashAnimationTimeline;
+import com.example.worlddomination.game.simulation.GameSetup;
 
 import org.junit.Test;
 
@@ -24,6 +25,55 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public final class OriginalFlashAnimationAssetsTest {
+    @Test
+    public void setupAndGameplayPortraitsFollowTheSourceLeaderCardOrder() throws IOException {
+        JsonValue scene = loadScene();
+        Map<String, FlashAnimationTimeline> timelines =
+                OriginalFlashAnimationAssets.loadTimelines(scene);
+        FlashAnimationTimeline portraits = timelines.get(
+                OriginalFlashAnimationAssets.LEADER_PORTRAITS_TIMELINE);
+        // leadersTopMC.aliveMC is the clip addressed by the original menu's
+        // leader frame numbers. The separate "faces" library has a different order.
+        FlashAnimationTimeline cards = FlashAnimationTimeline.fromSymbol(
+                findSymbol(scene, "leadersTopMC"), scene.getFloat("fps"));
+        boolean sourceUsesPortraits = false;
+        for (FlashAnimationTimeline.Layer layer : cards.getFrame(0).layers) {
+            if ("aliveMC".equals(layer.name)) {
+                assertEquals(portraits.symbolId, layer.shapeId);
+                sourceUsesPortraits = true;
+            }
+        }
+        assertTrue(sourceUsesPortraits);
+        Set<Integer> earlyAtlas = OriginalFlashAnimationAssets.collectSetupPortraitShapeIds(
+                timelines, shapeId -> Files.isRegularFile(shapeAsset(shapeId)));
+        for (GameSetup.Leader leader : GameSetup.leaders()) {
+            FlashAnimationTimeline.Frame frame = portraits.getFrame(leader.portraitFrame - 1);
+            assertNotNull("Missing portrait for " + leader.name, frame);
+            assertEquals("Wrong source portrait for " + leader.name,
+                    3150 + leader.id * 2, frame.shapeId);
+            assertTrue("Portrait not loaded before setup: " + leader.name,
+                    earlyAtlas.contains(frame.shapeId));
+            assertTrue(Files.isRegularFile(shapeAsset(frame.shapeId)));
+        }
+    }
+
+    @Test
+    public void binLoaderIsSelectableWithHisOriginalPortraitOnTheFirstCarouselPage()
+            throws IOException {
+        GameSetup setup = new GameSetup();
+        int leaderId = com.example.worlddomination.game.ui.SetupScreenLayout.leaderIdAt(
+                0, 4, GameSetup.leaders().size());
+        setup.selectCandidateLeader(leaderId);
+        assertEquals("Asama Bin Loader", setup.getCandidateLeader().name);
+        assertTrue(setup.toggleOpponent(leaderId));
+        assertTrue(setup.canStart());
+        assertEquals(leaderId, setup.getSelectedOpponents().get(0).id);
+        FlashAnimationTimeline portraits = OriginalFlashAnimationAssets.loadTimelines(loadScene())
+                .get(OriginalFlashAnimationAssets.LEADER_PORTRAITS_TIMELINE);
+        assertEquals(3158, portraits.getFrame(
+                setup.getSelectedOpponents().get(0).portraitFrame - 1).shapeId);
+    }
+
     @Test
     public void cityTimelinesExposeOriginalTwoPropagandaBeamLayersAndFrames()
             throws IOException {
