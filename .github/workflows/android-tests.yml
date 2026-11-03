@@ -240,6 +240,12 @@ jobs:
           - id: expanded-info-panel-layout-tests
             check: Expanded Funds and information panel row alignment
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.ActionScreenLayoutTest.informationRowsUseTheFormerTitleSpaceAndFitInsideThePanel" --tests "com.example.worlddomination.game.ui.ActionScreenLayoutTest.informationBarsSitInsideTheirRowsInsteadOfOnTextBaselines"'
+          - id: action-slot-animation-tests
+            check: Default open action slots preview accept and cancel
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.ActionSlotAnimationTest"'
+          - id: original-action-tube-artwork-tests
+            check: Original action tube animation atlas coverage
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.OriginalUiAssetManifestTest.actionTubeAtlasPackagesEveryOriginalOpeningAndSetFrame"'
           - id: scroll-pane-tests
             check: Independent panel scrolling tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.ScrollPaneStateTest"'

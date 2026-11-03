@@ -12,6 +12,8 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.example.worlddomination.game.rendering.ResourceMenuRenderer;
 import com.example.worlddomination.game.rendering.MessagePanelRenderer;
 import com.example.worlddomination.game.ui.MessagePanelLayout;
+import com.example.worlddomination.game.assets.OriginalActionTubeAssets;
+import com.example.worlddomination.game.ui.ActionSlotAnimation;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
@@ -275,6 +277,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private BitmapFont font;
     private ResourceMenuRenderer resourceMenuRenderer;
     private MessagePanelRenderer messagePanelRenderer;
+    private OriginalActionTubeAssets actionTubeAssets;
+    private final ActionSlotAnimation actionSlotAnimation = new ActionSlotAnimation();
     private OriginalUiAssets uiAssets;
     private OriginalSplashAssets splashAssets;
     private OriginalCityAssets cityAssets;
@@ -385,6 +389,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         font = new BitmapFont();
         resourceMenuRenderer = new ResourceMenuRenderer();
         messagePanelRenderer = new MessagePanelRenderer();
+        actionTubeAssets = new OriginalActionTubeAssets();
         font.setColor(Color.WHITE);
         uiAssets = new OriginalUiAssets();
         splashAssets = new OriginalSplashAssets();
@@ -603,7 +608,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         if (flashAnimationAssets != null && !flashAnimationAssets.isLoaded()) {
             return true;
         }
-        if ((cityRenderer != null && cityRenderer.isAnimating())
+        if (actionSlotAnimation.isAnimating()
+                || (cityRenderer != null && cityRenderer.isAnimating())
                 || !battleAnimations.isEmpty()
                 || turnPlaybackSequence.isBlockingInput()
                 || hasAnimatingActionBuilding()
@@ -641,6 +647,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         showExitPromptSeconds = Math.max(0f, showExitPromptSeconds - seconds);
         advanceBattleAnimations(seconds);
+        if (game != null) {
+            actionSlotAnimation.synchronize(game, turnPlaybackSequence.getCurrentAction());
+            actionSlotAnimation.tick();
+        }
         advanceOutcomeSequence();
     }
 
@@ -1442,9 +1452,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         drawContained(uiAssets.logo, logoPanel.x + 7f, logoPanel.y + 2f,
                 logoPanel.width - 14f, logoPanel.height - 4f);
         drawPortraits();
-        batch.draw(uiAssets.actionControls[0], actionSlots[0].x, actionSlots[0].y,
+        actionSlotAnimation.synchronize(game, turnPlaybackSequence.getCurrentAction());
+        batch.draw(actionTubeAssets.getFrame(actionSlotAnimation.getFrame(0)), actionSlots[0].x, actionSlots[0].y,
                 actionSlots[0].width, actionSlots[0].height);
-        batch.draw(uiAssets.actionControls[1], actionSlots[1].x, actionSlots[1].y,
+        batch.draw(actionTubeAssets.getFrame(actionSlotAnimation.getFrame(1)), actionSlots[1].x, actionSlots[1].y,
                 actionSlots[1].width, actionSlots[1].height);
         batch.draw(uiAssets.actionControls[2], confirmButton.x, confirmButton.y,
                 confirmButton.width, confirmButton.height);
@@ -2188,11 +2199,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         shapes.setProjectionMatrix(camera.combined);
         shapes.begin(ShapeRenderer.ShapeType.Filled);
         drawStatisticsBars();
-        drawQueuedActionBackings();
         shapes.end();
         batch.begin();
         drawQueuedActionLabels();
-        drawPlaybackActionLabel();
         batch.end();
         drawInlineActionFooter();
         drawSettingsGear();
@@ -2393,15 +2402,24 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     private void drawQueuedActionLabels() {
         for (int slot = 0; slot < actionSlots.length; slot++) {
-            GameState.Action action = game.getQueuedAction(slot);
+            GameState.Action action = actionSlotAnimation.getDisplayedAction(slot);
             if (action == null) {
                 continue;
             }
             Rectangle target = actionSlots[slot];
-            font.setColor(QUEUED_ACTION_TEXT);
-            drawCentered(action.label.toUpperCase(), target.x + target.width / 2f,
-                    target.y + target.height / 2f + 3f, 8f);
+            font.setColor(QUEUED_ACTION_TEXT.r, QUEUED_ACTION_TEXT.g,
+                    QUEUED_ACTION_TEXT.b, 0.65f * actionSlotAnimation.getLabelAlpha(slot));
+            if (action == GameState.Action.ATTACK || action == GameState.Action.PREPARED_ATTACK) {
+                drawCentered(action == GameState.Action.ATTACK ? "DIRECT" : "PREPARED",
+                        target.x + target.width / 2f, target.y + target.height / 2f + 7f, 6.5f);
+                drawCentered("ATTACK", target.x + target.width / 2f,
+                        target.y + target.height / 2f - 2f, 6.5f);
+            } else {
+                drawCentered(sourceActionLabel(action), target.x + target.width / 2f,
+                        target.y + target.height / 2f + 3f, 8f);
+            }
         }
+        font.setColor(Color.WHITE);
     }
 
     private void drawPlaybackActionLabel() {
@@ -3744,6 +3762,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             if (setup.canStart()) {
                 initializeGameplayAssets();
                 game = new GameState(setup);
+                actionSlotAnimation.reset();
                 cityRenderer.reset(game);
                 battleAnimations.clear();
                 actionBuildingAnimations.clear();
@@ -4845,6 +4864,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         if (messagePanelRenderer != null) {
             messagePanelRenderer.dispose();
+        }
+        if (actionTubeAssets != null) {
+            actionTubeAssets.dispose();
         }
         if (shapes != null) {
             shapes.dispose();

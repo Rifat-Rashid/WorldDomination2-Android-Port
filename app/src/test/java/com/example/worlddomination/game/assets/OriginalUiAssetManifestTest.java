@@ -32,6 +32,17 @@ public final class OriginalUiAssetManifestTest {
         assertTrue(Files.isRegularFile(assets.resolve("fonts/resource-arial-48.png")));
     }
 
+    @Test
+    public void actionTubeAtlasPackagesEveryOriginalOpeningAndSetFrame() throws IOException {
+        Path assets = findUiAssets();
+        java.util.List<String> atlas = Files.readAllLines(assets.resolve("action-tubes.atlas"));
+        for (int frame = 1; frame <= 11; frame++) {
+            assertTrue("Missing original action tube frame " + frame, atlas.contains("tube" + frame));
+        }
+        int[] size = pngSize(assets.resolve("action-tubes.png"));
+        assertTrue(size[0] <= 2048 && size[1] <= 2048);
+    }
+
     private static final String[] REQUIRED_ATLAS_REGIONS = {
             "metalTile", "button", "resourceModal", "inventoryCounter",
             "inventorySwitch", "inventoryRadio", "actionFirst", "actionSecond",
