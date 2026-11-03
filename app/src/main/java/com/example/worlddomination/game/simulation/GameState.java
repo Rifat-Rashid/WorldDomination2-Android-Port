@@ -102,6 +102,26 @@ public final class GameState {
         }
     }
 
+    /** A resolved propaganda transfer retained for source-specific battlefield playback. */
+    public static final class PropagandaEvent {
+        public final int attackerPlayerId;
+        public final int targetPlayerId;
+        public final int targetCityIndex;
+        public final int transferredMillions;
+        /** Zero-based order of this loss in the target city's source propaganda array. */
+        public final int targetLossSequenceIndex;
+
+        private PropagandaEvent(int attackerPlayerId, int targetPlayerId,
+                                int targetCityIndex, int transferredMillions,
+                                int targetLossSequenceIndex) {
+            this.attackerPlayerId = attackerPlayerId;
+            this.targetPlayerId = targetPlayerId;
+            this.targetCityIndex = targetCityIndex;
+            this.transferredMillions = transferredMillions;
+            this.targetLossSequenceIndex = targetLossSequenceIndex;
+        }
+    }
+
     /** Source action-building clip queued for the latest resolved turn. */
     public static final class ActionBuildingEvent {
         public final int playerId;
@@ -618,6 +638,7 @@ public final class GameState {
     private final List<ActionOrder> queuedActions = new ArrayList<>(MAX_TURN_ACTIONS);
     private final List<CombatEvent> lastTurnCombatEvents = new ArrayList<>();
     private final List<SpyMissionEvent> lastTurnSpyMissions = new ArrayList<>();
+    private final List<PropagandaEvent> lastTurnPropagandaEvents = new ArrayList<>();
     private final List<ActionBuildingEvent> lastTurnActionBuildings = new ArrayList<>();
     private List<String> researchChoicesCache = Collections.emptyList();
     private boolean researchChoicesDirty = true;
@@ -2311,6 +2332,11 @@ public final class GameState {
         return Collections.unmodifiableList(lastTurnSpyMissions);
     }
 
+    /** Returns resolved propaganda city effects from the latest turn in source order. */
+    public List<PropagandaEvent> getLastTurnPropagandaEvents() {
+        return Collections.unmodifiableList(lastTurnPropagandaEvents);
+    }
+
     /** Returns source-ordered original action-building clips for the last turn. */
     public List<ActionBuildingEvent> getLastTurnActionBuildings() {
         return Collections.unmodifiableList(lastTurnActionBuildings);
@@ -2338,6 +2364,7 @@ public final class GameState {
         }
         lastTurnCombatEvents.clear();
         lastTurnSpyMissions.clear();
+        lastTurnPropagandaEvents.clear();
         lastTurnActionBuildings.clear();
         for (PlayerState player : players) {
             player.lastTurnActions.clear();
@@ -3653,11 +3680,15 @@ public final class GameState {
 
         int transfer = calculatePropagandaTransfer(attacker, defender,
                 populationChanges.remainingAfterBattle(targetCity));
+        int targetLossSequenceIndex = populationChanges
+                .propagandaLossesFor(targetCity).size();
         // Source passes the Player object where addToHighscore expects a player
         // ID. That still consumes its 0..50 RNG draw, but its NaN score update
         // is discarded; reproduce this source quirk for seeded parity.
         random.nextInt(51);
         populationChanges.addPropagandaLoss(targetCity, transfer);
+        lastTurnPropagandaEvents.add(new PropagandaEvent(attacker.id, defender.id,
+                order.targetCityIndex, transfer, targetLossSequenceIndex));
         int recipientCount = 0;
         for (CityState city : attacker.cities) {
             if (city.populationMillions > 0

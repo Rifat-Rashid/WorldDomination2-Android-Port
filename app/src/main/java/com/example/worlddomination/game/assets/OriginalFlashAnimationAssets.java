@@ -57,6 +57,10 @@ public final class OriginalFlashAnimationAssets implements Disposable {
     /** Root Flash timeline containing both action-building clips for each nation. */
     public static final int ACTION_BUILDINGS_SYMBOL_ID = 5658;
     public static final String ACTION_BUILDINGS_TIMELINE = "actionBuildings";
+    /** Original city movie clips with named propaganda overlay placements. */
+    private static final int[] CITY_SYMBOL_IDS = {1337, 1363, 1388, 1414, 1441};
+    /** Flash movie clip attached to each city's two propaganda beam layers. */
+    public static final int CITY_PROPAGANDA_BEAMS_SYMBOL_ID = 1309;
     /** Original Flash center-screen dialog containing research and mass-media states. */
     public static final int CENTER_UI_SYMBOL_ID = 4444;
     public static final String CENTER_UI_TIMELINE = "centerScreen";
@@ -91,6 +95,8 @@ public final class OriginalFlashAnimationAssets implements Disposable {
     private final Object loadLock = new Object();
     private volatile Map<String, FlashAnimationTimeline> timelines = Collections.emptyMap();
     private volatile Map<Integer, FlashAnimationTimeline> nestedTimelines =
+            Collections.emptyMap();
+    private volatile Map<Integer, FlashAnimationTimeline> cityTimelines =
             Collections.emptyMap();
     private volatile FlashAnimationTimeline centerUiTimeline;
     private volatile Set<Integer> centerUiArtworkIds = Collections.emptySet();
@@ -206,6 +212,11 @@ public final class OriginalFlashAnimationAssets implements Disposable {
         return nestedTimelines.get(symbolId);
     }
 
+    /** Returns the original city root clip for the selected nation's building style. */
+    public FlashAnimationTimeline getCityTimeline(String religionCode) {
+        return cityTimelines.get(OriginalCityAssets.characterIdForReligion(religionCode));
+    }
+
     public TextureRegion getShape(int shapeId) {
         TextureRegion portrait = setupPortraitRegions.get(shapeId);
         return portrait != null ? portrait : shapeRegions.get(shapeId);
@@ -233,6 +244,10 @@ public final class OriginalFlashAnimationAssets implements Disposable {
             JsonValue scene = new JsonReader().parse(readCompressedUtf8(SCENE_PATH));
             Map<String, FlashAnimationTimeline> loadedTimelines = loadTimelines(scene);
             Map<Integer, FlashAnimationTimeline> loadedNestedTimelines = new LinkedHashMap<>();
+            Map<Integer, FlashAnimationTimeline> loadedCityTimelines =
+                    loadCityTimelines(scene);
+            Map<Integer, FlashAnimationTimeline> cityPropagandaOverlays =
+                    loadCityPropagandaOverlayTimelines(scene, loadedCityTimelines);
             FlashAnimationTimeline loadedCenterUi = loadTimelineBySymbolId(
                     scene, CENTER_UI_SYMBOL_ID);
             int researchFrame = loadedCenterUi.getFrameNumberForLabel("research") - 1;
@@ -291,12 +306,14 @@ public final class OriginalFlashAnimationAssets implements Disposable {
                     loadedTimelines.get(ACTION_BUILDINGS_TIMELINE)));
             loadedNestedTimelines.putAll(loadNestedTimelines(scene,
                     loadedTimelines.get("interface_center_slider_1")));
+            loadedNestedTimelines.putAll(cityPropagandaOverlays);
             synchronized (loadLock) {
                 if (disposed) {
                     return;
                 }
                 timelines = Collections.unmodifiableMap(loadedTimelines);
                 nestedTimelines = Collections.unmodifiableMap(loadedNestedTimelines);
+                cityTimelines = Collections.unmodifiableMap(loadedCityTimelines);
             }
 
             packer = new PixmapPacker(1024, 1024,
@@ -576,6 +593,38 @@ public final class OriginalFlashAnimationAssets implements Disposable {
             }
         }
         throw new IllegalStateException("Missing original Flash symbol " + symbolId);
+    }
+
+    static Map<Integer, FlashAnimationTimeline> loadCityTimelines(JsonValue scene) {
+        Map<Integer, FlashAnimationTimeline> result = new LinkedHashMap<>();
+        for (int symbolId : CITY_SYMBOL_IDS) {
+            result.put(symbolId, loadTimelineBySymbolId(scene, symbolId));
+        }
+        return result;
+    }
+
+    static Map<Integer, FlashAnimationTimeline> loadCityPropagandaOverlayTimelines(
+            JsonValue scene, Map<Integer, FlashAnimationTimeline> cityTimelines) {
+        Map<Integer, FlashAnimationTimeline> result = new LinkedHashMap<>();
+        for (FlashAnimationTimeline city : cityTimelines.values()) {
+            FlashAnimationTimeline.Frame firstFrame = city.getFrame(0);
+            if (firstFrame == null) {
+                continue;
+            }
+            for (FlashAnimationTimeline.Layer layer : firstFrame.layers) {
+                if (!"propagandaBeams".equals(layer.name)
+                        && !"propagandaBeams2".equals(layer.name)) {
+                    continue;
+                }
+                if (!result.containsKey(layer.shapeId)) {
+                    FlashAnimationTimeline overlay = loadTimelineBySymbolId(
+                            scene, layer.shapeId);
+                    result.put(layer.shapeId, overlay);
+                    result.putAll(loadNestedTimelines(scene, overlay));
+                }
+            }
+        }
+        return result;
     }
 
     private static Set<Integer> collectFrameShapeIds(FlashAnimationTimeline timeline,
@@ -860,6 +909,7 @@ public final class OriginalFlashAnimationAssets implements Disposable {
             setupPortraitRegions = Collections.emptyMap();
             shapeOrigins = Collections.emptyMap();
             nestedTimelines = Collections.emptyMap();
+            cityTimelines = Collections.emptyMap();
             setupPortraitsLoaded = false;
             timelines = Collections.emptyMap();
         }

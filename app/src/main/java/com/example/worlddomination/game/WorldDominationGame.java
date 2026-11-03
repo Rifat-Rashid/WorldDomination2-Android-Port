@@ -644,7 +644,16 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     }
 
     private void advanceBattleAnimations(float seconds) {
-        turnPlaybackSequence.advance(seconds);
+        TurnPlaybackSequence.Phase previousPhase = turnPlaybackSequence.getPhase();
+        GameState.Action revealedAction = turnPlaybackSequence.advance(seconds);
+        if (revealedAction == GameState.Action.PROPAGANDA && cityRenderer != null) {
+            cityRenderer.playPropagandaEvents(game, game.getLastTurnPropagandaEvents());
+        }
+        if (previousPhase == TurnPlaybackSequence.Phase.RESET_BARRIER
+                && turnPlaybackSequence.getPhase() == TurnPlaybackSequence.Phase.IDLE
+                && cityRenderer != null) {
+            cityRenderer.resetPropagandaPlayback();
+        }
         if (flashAnimationAssets == null || !flashAnimationAssets.isLoaded()) {
             return;
         }
@@ -4829,6 +4838,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         if (cityAssets != null) {
             cityAssets.dispose();
+        }
+        if (cityRenderer != null) {
+            cityRenderer.dispose();
         }
         if (flashAnimationAssets != null) {
             flashAnimationAssets.dispose();
