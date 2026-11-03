@@ -22,6 +22,30 @@ import static org.junit.Assert.assertTrue;
 
 public final class OpponentAITest {
     @Test
+    public void propagandaTiesFollowReverseSourcePlayerAndCityOrder() throws Exception {
+        GameState state = gameWithRegularFirstOpponent(7401L);
+        GameState.PlayerState actor = state.getPlayerState(1);
+        for (GameState.PlayerState target : state.getPlayers()) {
+            target.alive = true;
+            target.religion = 0;
+            setRegardToward(actor, target.id, 0);
+            for (int city = 0; city < 5; city++) {
+                target.getCity(city).populationMillions = city == 1 || city == 3 ? 60 : 10;
+            }
+        }
+
+        OpponentAI.Decision decision = OpponentAI.planAction(state, actor,
+                GameState.Action.PROPAGANDA, new SequenceRandom(), 1,
+                Collections.<String, Integer>emptyMap());
+
+        assertNotNull(decision);
+        assertEquals("equal target scores retain the first reversed source key", 4,
+                decision.targetPlayerId);
+        assertEquals("equal city populations retain the first reversed source key", 3,
+                decision.targetCityIndex);
+    }
+
+    @Test
     public void researchTurnBonusStopsGrowingAtTheSourceSixtyTurnCap() {
         assertEquals(0.0, OpponentAI.researchTurnRatio(0, 5), 0.0);
         assertEquals(54.0, OpponentAI.researchTurnRatio(30, 5), 0.0);

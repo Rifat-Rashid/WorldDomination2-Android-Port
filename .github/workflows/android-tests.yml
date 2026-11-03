@@ -52,8 +52,11 @@ jobs:
             check: AI retries rejected second-slot candidates
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.OpponentAITest.rejectedInitialSecondSlotCandidateIsRetriedBeforeFallback"'
           - id: ai-resolved-source-session-tests
-            check: AI thirty-turn resolved source-session traces
+            check: AI forty-turn and terminal source-session traces
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.AiSourceResolvedTurnParityTest"'
+          - id: ai-propaganda-tie-order-tests
+            check: AI propaganda target and city tie order
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.OpponentAITest.propagandaTiesFollowReverseSourcePlayerAndCityOrder"'
           - id: ai-turn-sixteen-source-trace-tests
             check: AI turn sixteen source resolution trace
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.AiSourceTurnResolutionTraceTest.hardSeededSixteenthTurnMatchesSourceAttacksAndCarrierPreparation"'

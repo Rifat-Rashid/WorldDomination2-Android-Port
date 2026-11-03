@@ -215,11 +215,13 @@ public final class OpponentAI {
 
             List<Decision> attackPlan = planSourceAttack(state, player, random,
                     false, plannedWeaponUse);
-            if (attackPlan.isEmpty()) {
+            if (attackPlan.isEmpty() && precedingOrder != null) {
                 // The source keeps the second-slot ActionTarget on its initial
                 // score for one more getTarget call before it advances to a
                 // lower-ranked action. This matters when the first city or
                 // weapon candidate is rejected and the retry becomes available.
+                // If the preceding action failed, this attack instead belongs
+                // to the first slot's advancing score cursor and gets one try.
                 attackPlan = planSourceAttack(state, player, random,
                         false, plannedWeaponUse);
             }
@@ -1567,7 +1569,11 @@ public final class OpponentAI {
         GameState.PlayerState bestTarget = null;
         CityState bestCity = null;
         double bestValue = 0;
-        for (GameState.PlayerState target : state.getPlayers()) {
+        GameState.PlayerState[] players = state.getPlayers();
+        // Both Model.getTarget and Player.largest_city enumerate Flash array
+        // keys in reverse and keep the first strict maximum when values tie.
+        for (int index = players.length - 1; index >= 0; index--) {
+            GameState.PlayerState target = players[index];
             if (!target.alive || target.id == attacker.id
                     || attacker.hasCeasefireWith(target.id)) {
                 continue;
@@ -1909,7 +1915,9 @@ public final class OpponentAI {
 
     private static CityState largestCity(GameState.PlayerState player) {
         CityState largest = null;
-        for (CityState city : player.getCities()) {
+        List<CityState> cities = player.getCities();
+        for (int index = cities.size() - 1; index >= 0; index--) {
+            CityState city = cities.get(index);
             if (largest == null || city.populationMillions > largest.populationMillions) {
                 largest = city;
             }

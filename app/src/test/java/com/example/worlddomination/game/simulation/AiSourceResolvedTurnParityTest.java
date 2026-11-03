@@ -23,7 +23,8 @@ import static org.junit.Assert.assertTrue;
 
 /**
  * Compares resolved multi-turn Android state to recovered Python game sessions.
- * Source rows come from SetupMenu.start_game and Game.advance with the human
+ * Source rows cover forty turns (or the terminal defeat at turn 38) and come
+ * from SetupMenu.start_game and Game.advance with the human
  * queuing Resources and Mass Media on each turn. Rows include each active
  * player's funds, population, religion, score, city populations, regular weapon
  * stock, and invented technologies; defense counters remain in their own source
@@ -62,7 +63,17 @@ public final class AiSourceResolvedTurnParityTest {
                     "9be22721168034c0004eb6526f461b336ad43809536c53dccae525c9e2b579e5",
                     "ec6d708a440f17ab275853ad2adcd1d3e974ab7ad48961620c177967cb7dc137",
                     "e14862975ccbe16d8a4c71f589d07869415c7c51e26bebb9ad1ebfa4bd48cda6",
-                    "2cc4ea041d8bd112e420e21a74dbf285111ca438487601881256c6db735cbb6a"
+                    "2cc4ea041d8bd112e420e21a74dbf285111ca438487601881256c6db735cbb6a",
+                    "94c9baf12d9cc0981776a32d0a832e9b2a0f60d12b374e802759f81426994a87",
+                    "3b2befe099540579edfce36c66b5746bbff7f363d30cf4f90486741e5d4f5650",
+                    "3154db4590f7c6266326d56c9d344129fc43169ecfad154143680b8106abf806",
+                    "f97fe711cf9f452526abd9bf3349c9ef7fdd0e7a5f3dcf23b9b0943ab38d133e",
+                    "06d9baadf78c365efa19adb80670836e4c0ac8b65fc2ead5f093a318b8af58d7",
+                    "30b06709efe3dcdf37990450ae980ed60437a969d2c351f5167c90dd72fd71e8",
+                    "7b1797d60915e1567dddfbae9829ab8b0f546457e6af08569e813352684c7f9f",
+                    "8e018ed5a856f7cef5e8c067c1202888e945c828aafede72707a6a9a98f51ff4",
+                    "e02501aaff0d970ba92873dfac95972509f28edc091188c1c855cac5532e0928",
+                    "7c6303715698a2a32ea059bffe2af1fcc4299880f95200eb3baed3b1f66577d7"
             },
             {
                     "3b14348e00af8c1f0c59ee3438ba743cbd101b4a8718637e032057dc67ad4d9b",
@@ -94,7 +105,17 @@ public final class AiSourceResolvedTurnParityTest {
                     "da27f178b7aae44282659079ad84c14846885747c9040485c2bfa612a3da8f47",
                     "d5ad50ef61382dbd410a7cf0d3c305c702b700f1d28233fc612f05a75a78c7fa",
                     "43aa78aedb3d2eb578948fdd7ac398ce0400743d32eb7cc3d3bb1aaa0df246b9",
-                    "b16c3d94ce131cc773fb2c5fbda5cbe21f67e4a342678608ff8bb083e1f0e040"
+                    "b16c3d94ce131cc773fb2c5fbda5cbe21f67e4a342678608ff8bb083e1f0e040",
+                    "66f7ed9a374f712bf1e759e37d21a37ce5f77a678ef5250fb7d90879d8b2a653",
+                    "f2f1c0c5e467f67d73c247153ea1b2b672425e67f30bcb763d7fc9b4c7453630",
+                    "8c148945c1d96680373b579ebb81219702a305aa998ee341f8b23f4325c86fd2",
+                    "d99da543f8458ac3e85d1152fdcbb4794f319900a1c41253aced8f886ff3fd77",
+                    "1eaf8edb306cb5bb82fba10ce85054b284bd91fea82e145c67dba99ff2abebe1",
+                    "a9e8c84ff50e03d9f60b94928a5f666faf3222c287bd0d1e4e6ab1cfc06a5f1e",
+                    "04f82150ae84f61edce7c4a40541e7193c83491d090b1fb0d2cc8c39887e3fb7",
+                    "b74148f019b7a404a69b94d9d874cc4e717adeb7b5948c472d16ab1184cc7a05",
+                    "93441dca302b7dac9d3df8a56fcba602e55c23590fb9974284cbbd24a3a51d43",
+                    "fb42db09d7e20ee8fc8d52744ebea08b47d5d55c70765e2a68154e32094fe7d7"
             },
             {
                     "83a970dbf9e09e977f4f8b97c3e8220c554b4e71b5c76c102e349593b948dc47",
@@ -126,7 +147,15 @@ public final class AiSourceResolvedTurnParityTest {
                     "acbaa8573473c01c8d7488e85a528e1a5f60fbfa9e256885e5c5afa7719f3a79",
                     "b737a186035c0464243ea08206136c1560100d4a92f663b1cd3fdc7b9e6d7c0c",
                     "33d15439e1fdf7657315d6137bf7a105f9767a68caf060cd242cae5d0a8b3add",
-                    "b5cbbcd5c5d15c3cf0edcdc7b9c72ce6648748b2c728b0988d03380f37c2a197"
+                    "b5cbbcd5c5d15c3cf0edcdc7b9c72ce6648748b2c728b0988d03380f37c2a197",
+                    "ab01eb2773eb879a3e26b8485a09f354f1f7e9467e74f2fe84ce29ab027c6637",
+                    "50be5dce88372622c55a697626ad8d48eca68d72b0f9fec08fe1e57e98406729",
+                    "ebd27f7ce28afcdb35498c9fb6235966b2f3071c83710c84b7628578609dcd83",
+                    "c873768550ce196b2ab982f8ccfa7ed6ab269de93934e86753ad3c65851cdac9",
+                    "31b9d82985ec669004d6e8ba64af7b7ea2da767cb4c97d504224a46155e072da",
+                    "7e68e8f69158e63d56bb9cc6d07673b8bce762d617951a6feea03010740d8df2",
+                    "0f09f80d20612c03d6e60283d4de6ec5e95b309c74d65eed0ad23e22ba34e864",
+                    "b4bceaf23cc282a4e7a00a2a6f9ecdc9d5839a7f7e03da5ef991b9dd983a457a"
             },
             {
                     "a7dfcd5215bd3c2cfc37c352218a26faa027afaa36389ba804bdda4badc106e7",
@@ -158,7 +187,17 @@ public final class AiSourceResolvedTurnParityTest {
                     "a0a4501529e9b66859eb65a08dd5b7c7ae1fd6579c35674174d63f6895b585e6",
                     "15b46c8b52d2bd1358fb5a252558b7e9a9e3c12f4dc69d349f37cf7042593bd7",
                     "5d23f07a5f12f00bcf8a37b46ede7ca251cb1e30facd39f52093abbfa8c061ae",
-                    "f1484127a2ac38705aad24a747b44487acc40f70b5ba93e77194de1bd1782ae8"
+                    "f1484127a2ac38705aad24a747b44487acc40f70b5ba93e77194de1bd1782ae8",
+                    "d9d40b8bf1fd32cd64e53be5fe166d7c84a452e4183fc6f9cf40922132c7ee11",
+                    "7b319a26b057c0119b7773eaacdcde5f12a4b06875df77f10fb49d0ff6b7b97e",
+                    "4f64454dc2ab589764696ccf8c600d0fb64e2c38c1f151d1248e520c1124a32a",
+                    "463e465623f69ee59e283a95c331f6c26d39277c548bccc190e06e22abf5df64",
+                    "e147da7c8db378a66d998a52ea6b08b233ad7378ad4bfd64492a64ff5a3eaa47",
+                    "b525b91b83dd47c389dd225aad05aaa9554ee61c72916976a42ba65404278333",
+                    "8dba20cb1964d02ecdf1c3062b78d4b581b58dc6cda7b44fa0c3cf9177b1ca6d",
+                    "00f32c6e5d1d2a965c50ed1c7fcd2e3e59e4771b0316bd65db3768d4630da7d0",
+                    "3db62d1f3b86e7df90b2ecf14847e0c090dce981eb678f7362fd80a85e89692c",
+                    "52ee8a6671cb5598f5ea5f14c007a81789729dae0f88c7475331327777bbbb10"
             },
     };
 
@@ -186,7 +225,7 @@ public final class AiSourceResolvedTurnParityTest {
     }
 
     @Test
-    public void thirtyResolvedTurnsMatchRecoveredPythonSession() throws Exception {
+    public void extendedResolvedTurnsMatchRecoveredPythonSession() throws Exception {
         GameSetup setup = new GameSetup(seed);
         setup.setDifficulty(difficulty);
         for (int rival : rivals) {
@@ -215,6 +254,12 @@ public final class AiSourceResolvedTurnParityTest {
                             + "\nrecent actions: " + recentRows(actionHistory, 4)
                             + "\nrecent random streams: " + recentRows(randomHistory, 4),
                     SOURCE_TURN_HASHES[scenario][turn - 1], sha256(trace));
+        }
+        if (scenario == 2) {
+            assertEquals("the source Hard session terminates on turn 38",
+                    GameState.MatchStatus.DEFEAT, game.getMatchStatus());
+            assertEquals("defeat skips payload stock settlement", 3,
+                    game.getWeaponStock(1, "bioload4"));
         }
     }
 
