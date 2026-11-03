@@ -38,6 +38,16 @@ import java.util.zip.GZIPInputStream;
 
 /** Loads original Flash timelines and caches their shapes, prioritizing setup portraits. */
 public final class OriginalFlashAnimationAssets implements Disposable {
+    private static final class ShapeOrigin {
+        final float x;
+        final float y;
+
+        ShapeOrigin(float x, float y) {
+            this.x = x;
+            this.y = y;
+        }
+    }
+
     /** Body artwork nested in the source Flash rocket movie clip. */
     public static final int ROCKET_BODY_SHAPE_ID = 792;
     /** Smoke puff nested in the source Flash trail movie clip. */
@@ -47,11 +57,15 @@ public final class OriginalFlashAnimationAssets implements Disposable {
     /** Root Flash timeline containing both action-building clips for each nation. */
     public static final int ACTION_BUILDINGS_SYMBOL_ID = 5658;
     public static final String ACTION_BUILDINGS_TIMELINE = "actionBuildings";
+    /** Original Flash center-screen dialog containing research and mass-media states. */
+    public static final int CENTER_UI_SYMBOL_ID = 4444;
+    public static final String CENTER_UI_TIMELINE = "centerScreen";
     /** White source triangle used by each production investment slider. */
     public static final int PRODUCTION_SLIDER_HANDLE_SHAPE_ID = 3274;
 
     private static final String SCENE_PATH = "original/runtime/scene.json.gz";
     private static final String SHAPE_PATH = "original/runtime/shapes/";
+    private static final String TEXT_PATH = "original/runtime/texts/";
     private static final String WEBP_PREFIX = "data:image/webp;base64,";
     private static final String[] REQUIRED_LINKAGES = {
             "faces",
@@ -78,8 +92,12 @@ public final class OriginalFlashAnimationAssets implements Disposable {
     private volatile Map<String, FlashAnimationTimeline> timelines = Collections.emptyMap();
     private volatile Map<Integer, FlashAnimationTimeline> nestedTimelines =
             Collections.emptyMap();
+    private volatile FlashAnimationTimeline centerUiTimeline;
+    private volatile Set<Integer> centerUiArtworkIds = Collections.emptySet();
+    private volatile Set<Integer> earlyCenterUiArtworkIds = Collections.emptySet();
     private volatile Map<Integer, TextureRegion> shapeRegions = Collections.emptyMap();
     private volatile Map<Integer, TextureRegion> setupPortraitRegions = Collections.emptyMap();
+    private volatile Map<Integer, ShapeOrigin> shapeOrigins = Collections.emptyMap();
     private volatile RuntimeException loadFailure;
     private volatile boolean disposed;
     private volatile boolean loaded;
@@ -133,7 +151,9 @@ public final class OriginalFlashAnimationAssets implements Disposable {
 
         Map<Integer, TextureRegion> generatedRegions = new LinkedHashMap<>();
         Set<Integer> battleShapeIds = collectShapeIds(timelines, nestedTimelines);
-        battleShapeIds.removeAll(collectSetupPortraitShapeIds(timelines));
+        battleShapeIds.addAll(centerUiArtworkIds);
+        battleShapeIds = excludeAlreadyPackedShapes(battleShapeIds,
+                collectSetupPortraitShapeIds(timelines), earlyCenterUiArtworkIds);
         for (int shapeId : battleShapeIds) {
             TextureRegion region = generatedAtlas.findRegion(regionName(shapeId));
             if (region == null) {
@@ -165,8 +185,20 @@ public final class OriginalFlashAnimationAssets implements Disposable {
         return setupPortraitsLoaded;
     }
 
+    /** True once the original center-screen dialog art is available for rendering. */
+    public boolean areCenterUiAssetsLoaded() {
+        return setupPortraitsLoaded;
+    }
+
     public FlashAnimationTimeline getTimeline(String linkage) {
+        if (CENTER_UI_TIMELINE.equals(linkage)) {
+            return centerUiTimeline;
+        }
         return timelines.get(linkage);
+    }
+
+    public FlashAnimationTimeline getCenterUiTimeline() {
+        return centerUiTimeline;
     }
 
     /** Returns a nested source movie clip by its Flash character ID. */
@@ -179,6 +211,18 @@ public final class OriginalFlashAnimationAssets implements Disposable {
         return portrait != null ? portrait : shapeRegions.get(shapeId);
     }
 
+    /** Horizontal source-space origin adjustment recovered from the SVG registration group. */
+    public float getShapeOriginX(int shapeId) {
+        ShapeOrigin origin = shapeOrigins.get(shapeId);
+        return origin == null ? 0f : origin.x;
+    }
+
+    /** Vertical source-space origin adjustment recovered from the SVG registration group. */
+    public float getShapeOriginY(int shapeId) {
+        ShapeOrigin origin = shapeOrigins.get(shapeId);
+        return origin == null ? 0f : origin.y;
+    }
+
     private void loadInBackground() {
         PixmapPacker portraitPacker = new PixmapPacker(1024, 1024,
                 Pixmap.Format.RGBA8888, 2, true);
@@ -189,6 +233,48 @@ public final class OriginalFlashAnimationAssets implements Disposable {
             JsonValue scene = new JsonReader().parse(readCompressedUtf8(SCENE_PATH));
             Map<String, FlashAnimationTimeline> loadedTimelines = loadTimelines(scene);
             Map<Integer, FlashAnimationTimeline> loadedNestedTimelines = new LinkedHashMap<>();
+            FlashAnimationTimeline loadedCenterUi = loadTimelineBySymbolId(
+                    scene, CENTER_UI_SYMBOL_ID);
+            int researchFrame = loadedCenterUi.getFrameNumberForLabel("research") - 1;
+            int massMediaFrame = loadedCenterUi.getFrameNumberForLabel("religion") - 1;
+            Map<Integer, FlashAnimationTimeline> centerUiChildren = loadNestedTimelines(
+                    scene, loadedCenterUi, new int[]{researchFrame, massMediaFrame});
+            Set<Integer> loadedCenterUiArt = collectCenterUiArtworkIds(loadedCenterUi,
+                    centerUiChildren, new int[]{researchFrame, massMediaFrame},
+                    OriginalFlashAnimationAssets::hasPackagedCenterUiArt);
+            Set<Integer> loadedEarlyCenterUiArt = collectInitialCenterUiArtworkIds(
+                    loadedCenterUi, centerUiChildren,
+                    new int[]{researchFrame, massMediaFrame},
+                    OriginalFlashAnimationAssets::hasPackagedCenterUiArt);
+
+            synchronized (loadLock) {
+                if (disposed) {
+                    return;
+                }
+                timelines = Collections.unmodifiableMap(loadedTimelines);
+                nestedTimelines = Collections.unmodifiableMap(centerUiChildren);
+                centerUiTimeline = loadedCenterUi;
+                centerUiArtworkIds = Collections.unmodifiableSet(loadedCenterUiArt);
+                earlyCenterUiArtworkIds = Collections.unmodifiableSet(loadedEarlyCenterUiArt);
+            }
+
+            Set<Integer> earlyShapeIds = collectSetupPortraitShapeIds(loadedTimelines);
+            earlyShapeIds.addAll(loadedEarlyCenterUiArt);
+            Map<Integer, ShapeOrigin> loadedShapeOrigins = new LinkedHashMap<>();
+            packShapes(portraitPacker, earlyShapeIds, loadedShapeOrigins);
+            synchronized (loadLock) {
+                if (disposed) {
+                    return;
+                }
+                shapeOrigins = Collections.unmodifiableMap(
+                        new LinkedHashMap<>(loadedShapeOrigins));
+                pendingSetupPortraitPacker = portraitPacker;
+                setupPortraitSourceReady = true;
+                portraitTransferred = true;
+            }
+            Gdx.graphics.requestRendering();
+
+            loadedNestedTimelines.putAll(centerUiChildren);
             loadedNestedTimelines.putAll(loadNestedTimelines(scene,
                     loadedTimelines.get("buildings_antiAir")));
             loadedNestedTimelines.putAll(loadNestedTimelines(scene,
@@ -213,29 +299,23 @@ public final class OriginalFlashAnimationAssets implements Disposable {
                 nestedTimelines = Collections.unmodifiableMap(loadedNestedTimelines);
             }
 
-            Set<Integer> portraitShapeIds = collectSetupPortraitShapeIds(loadedTimelines);
-            packShapes(portraitPacker, portraitShapeIds);
-            synchronized (loadLock) {
-                if (disposed) {
-                    return;
-                }
-                pendingSetupPortraitPacker = portraitPacker;
-                setupPortraitSourceReady = true;
-                portraitTransferred = true;
-            }
-            Gdx.graphics.requestRendering();
-
             packer = new PixmapPacker(1024, 1024,
                     Pixmap.Format.RGBA8888, 2, true);
             Set<Integer> battleShapeIds = collectShapeIds(loadedTimelines,
                     loadedNestedTimelines);
-            battleShapeIds.removeAll(portraitShapeIds);
-            packShapes(packer, battleShapeIds);
+            battleShapeIds.addAll(loadedCenterUiArt);
+            battleShapeIds.addAll(collectFrameShapeIds(loadedCenterUi,
+                    new int[]{researchFrame, massMediaFrame},
+                    OriginalFlashAnimationAssets::hasPackagedShape));
+            battleShapeIds.removeAll(earlyShapeIds);
+            packShapes(packer, battleShapeIds, loadedShapeOrigins);
 
             synchronized (loadLock) {
                 if (disposed) {
                     return;
                 }
+                shapeOrigins = Collections.unmodifiableMap(
+                        new LinkedHashMap<>(loadedShapeOrigins));
                 pendingPacker = packer;
                 sourceReady = true;
                 battleTransferred = true;
@@ -276,7 +356,9 @@ public final class OriginalFlashAnimationAssets implements Disposable {
         }
 
         Map<Integer, TextureRegion> generatedRegions = new LinkedHashMap<>();
-        for (int shapeId : collectSetupPortraitShapeIds(timelines)) {
+        Set<Integer> setupShapeIds = collectSetupPortraitShapeIds(timelines);
+        setupShapeIds.addAll(earlyCenterUiArtworkIds);
+        for (int shapeId : setupShapeIds) {
             TextureRegion region = generatedAtlas.findRegion(regionName(shapeId));
             if (region == null) {
                 generatedAtlas.dispose();
@@ -297,12 +379,15 @@ public final class OriginalFlashAnimationAssets implements Disposable {
         }
     }
 
-    private void packShapes(PixmapPacker packer, Set<Integer> shapeIds) {
+    private void packShapes(PixmapPacker packer, Set<Integer> shapeIds,
+                            Map<Integer, ShapeOrigin> origins) {
+        float[] origin = new float[2];
         for (int shapeId : shapeIds) {
             if (disposed) {
                 return;
             }
-            Pixmap pixmap = decodeShape(shapeId);
+            Pixmap pixmap = decodeShape(shapeId, origin);
+            origins.put(shapeId, new ShapeOrigin(origin[0], origin[1]));
             try {
                 packer.pack(regionName(shapeId), pixmap);
             } finally {
@@ -388,6 +473,11 @@ public final class OriginalFlashAnimationAssets implements Disposable {
         return Gdx.files.internal(SHAPE_PATH + shapeId + ".svgz").exists();
     }
 
+    private static boolean hasPackagedCenterUiArt(int assetId) {
+        return hasPackagedShape(assetId)
+                || Gdx.files.internal(TEXT_PATH + assetId + ".svgz").exists();
+    }
+
     static Map<String, FlashAnimationTimeline> loadTimelines(JsonValue scene) {
         float frameRate = scene.getFloat("fps");
         JsonValue symbols = scene.get("symbols");
@@ -419,6 +509,11 @@ public final class OriginalFlashAnimationAssets implements Disposable {
 
     static Map<Integer, FlashAnimationTimeline> loadNestedTimelines(
             JsonValue scene, FlashAnimationTimeline rootTimeline) {
+        return loadNestedTimelines(scene, rootTimeline, null);
+    }
+
+    static Map<Integer, FlashAnimationTimeline> loadNestedTimelines(
+            JsonValue scene, FlashAnimationTimeline rootTimeline, int[] rootFrameIndexes) {
         if (rootTimeline == null) {
             throw new IllegalStateException("Original Flash root timeline is missing");
         }
@@ -431,7 +526,7 @@ public final class OriginalFlashAnimationAssets implements Disposable {
         Map<Integer, FlashAnimationTimeline> result = new LinkedHashMap<>();
         Set<Integer> visited = new HashSet<>();
         Deque<Integer> pending = new ArrayDeque<>();
-        enqueueChildSymbols(rootTimeline, pending);
+        enqueueChildSymbols(rootTimeline, pending, rootFrameIndexes);
         float frameRate = scene.getFloat("fps");
         while (!pending.isEmpty()) {
             int symbolId = pending.removeFirst();
@@ -454,7 +549,14 @@ public final class OriginalFlashAnimationAssets implements Disposable {
 
     private static void enqueueChildSymbols(FlashAnimationTimeline timeline,
                                             Deque<Integer> pending) {
-        for (int frameIndex = 0; frameIndex < timeline.getFrameCount(); frameIndex++) {
+        enqueueChildSymbols(timeline, pending, null);
+    }
+
+    private static void enqueueChildSymbols(FlashAnimationTimeline timeline,
+                                            Deque<Integer> pending, int[] frameIndexes) {
+        int frameCount = frameIndexes == null ? timeline.getFrameCount() : frameIndexes.length;
+        for (int index = 0; index < frameCount; index++) {
+            int frameIndex = frameIndexes == null ? index : frameIndexes[index];
             FlashAnimationTimeline.Frame frame = timeline.getFrame(frameIndex);
             if (frame == null) {
                 continue;
@@ -465,8 +567,135 @@ public final class OriginalFlashAnimationAssets implements Disposable {
         }
     }
 
-    private static Pixmap decodeShape(int shapeId) {
-        String svg = readCompressedUtf8(SHAPE_PATH + shapeId + ".svgz");
+    static FlashAnimationTimeline loadTimelineBySymbolId(JsonValue scene, int symbolId) {
+        JsonValue symbols = scene.get("symbols");
+        for (JsonValue symbol = symbols == null ? null : symbols.child;
+             symbol != null; symbol = symbol.next) {
+            if (symbol.getInt("id", -1) == symbolId) {
+                return FlashAnimationTimeline.fromSymbol(symbol, scene.getFloat("fps"));
+            }
+        }
+        throw new IllegalStateException("Missing original Flash symbol " + symbolId);
+    }
+
+    private static Set<Integer> collectFrameShapeIds(FlashAnimationTimeline timeline,
+                                                      int[] frameIndexes,
+                                                      IntPredicate hasShapeAsset) {
+        Set<Integer> shapeIds = new LinkedHashSet<>();
+        for (int frameIndex : frameIndexes) {
+            FlashAnimationTimeline.Frame frame = timeline.getFrame(frameIndex);
+            if (frame == null) {
+                continue;
+            }
+            for (FlashAnimationTimeline.Layer layer : frame.layers) {
+                if (hasShapeAsset.test(layer.shapeId)) {
+                    shapeIds.add(layer.shapeId);
+                }
+            }
+        }
+        return shapeIds;
+    }
+
+    static Set<Integer> collectCenterUiArtworkIds(
+            FlashAnimationTimeline centerUi,
+            Map<Integer, FlashAnimationTimeline> nestedTimelines,
+            int[] frameIndexes, IntPredicate hasArtwork) {
+        Set<Integer> shapeIds = collectShapeIds(Collections.emptyMap(), nestedTimelines,
+                false, hasArtwork);
+        shapeIds.addAll(collectFrameShapeIds(centerUi, frameIndexes, hasArtwork));
+        return shapeIds;
+    }
+
+    static Set<Integer> excludeAlreadyPackedShapes(Set<Integer> atlasShapeIds,
+                                                    Set<Integer> setupPortraitShapeIds,
+                                                    Set<Integer> earlyCenterUiShapeIds) {
+        Set<Integer> remaining = new LinkedHashSet<>(atlasShapeIds);
+        remaining.removeAll(setupPortraitShapeIds);
+        remaining.removeAll(earlyCenterUiShapeIds);
+        return remaining;
+    }
+
+    static Set<Integer> collectInitialCenterUiArtworkIds(
+            FlashAnimationTimeline centerUi,
+            Map<Integer, FlashAnimationTimeline> nestedTimelines,
+            int[] frameIndexes, IntPredicate hasArtwork) {
+        Set<Integer> shapeIds = new LinkedHashSet<>();
+        Set<Long> visitedFrames = new HashSet<>();
+        for (int frameIndex : frameIndexes) {
+            collectInitialCenterUiFrame(centerUi, frameIndex, nestedTimelines,
+                    hasArtwork, shapeIds, visitedFrames, 0);
+        }
+        return shapeIds;
+    }
+
+    private static void collectInitialCenterUiFrame(
+            FlashAnimationTimeline timeline, int frameIndex,
+            Map<Integer, FlashAnimationTimeline> nestedTimelines,
+            IntPredicate hasArtwork, Set<Integer> shapeIds, Set<Long> visitedFrames,
+            int depth) {
+        if (timeline == null || depth > 20) {
+            return;
+        }
+        FlashAnimationTimeline.Frame frame = timeline.getFrame(frameIndex);
+        if (frame == null) {
+            return;
+        }
+        long visitKey = ((long) timeline.symbolId << 32) | (frameIndex & 0xffffffffL);
+        if (!visitedFrames.add(visitKey)) {
+            return;
+        }
+        for (FlashAnimationTimeline.Layer layer : frame.layers) {
+            if (isDynamicCenterUiText(layer.name)) {
+                continue;
+            }
+            if (hasArtwork.test(layer.shapeId)) {
+                shapeIds.add(layer.shapeId);
+            }
+            FlashAnimationTimeline nested = nestedTimelines.get(layer.shapeId);
+            if (nested == null || nested.getFrameCount() == 0) {
+                continue;
+            }
+            if (isResearchLayer(layer.name)) {
+                for (int level = 0; level < 3; level++) {
+                    collectInitialCenterUiFrame(nested, level, nestedTimelines,
+                            hasArtwork, shapeIds, visitedFrames, depth + 1);
+                    int selectedFrame = level + 4;
+                    if (selectedFrame < nested.getFrameCount()) {
+                        collectInitialCenterUiFrame(nested, selectedFrame, nestedTimelines,
+                                hasArtwork, shapeIds, visitedFrames, depth + 1);
+                    }
+                }
+                int completedFrame = nested.getFrameNumberForLabel("allInvented") - 1;
+                if (completedFrame >= 0 && completedFrame > 6) {
+                    collectInitialCenterUiFrame(nested, completedFrame, nestedTimelines,
+                            hasArtwork, shapeIds, visitedFrames, depth + 1);
+                }
+            } else if ("MC1".equals(layer.name)) {
+                for (int nestedIndex = 0; nestedIndex < nested.getFrameCount(); nestedIndex++) {
+                    collectInitialCenterUiFrame(nested, nestedIndex, nestedTimelines,
+                            hasArtwork, shapeIds, visitedFrames, depth + 1);
+                }
+            } else {
+                collectInitialCenterUiFrame(nested, 0, nestedTimelines, hasArtwork,
+                        shapeIds, visitedFrames, depth + 1);
+            }
+        }
+    }
+
+    private static boolean isDynamicCenterUiText(String name) {
+        return name != null && (name.startsWith("text") || name.startsWith("txt"));
+    }
+
+    private static boolean isResearchLayer(String name) {
+        return name != null && name.length() == 5
+                && name.startsWith("tech") && name.charAt(4) >= '1' && name.charAt(4) <= '7';
+    }
+
+    private static Pixmap decodeShape(int shapeId, float[] origin) {
+        String path = Gdx.files.internal(SHAPE_PATH + shapeId + ".svgz").exists()
+                ? SHAPE_PATH : TEXT_PATH;
+        String svg = readCompressedUtf8(path + shapeId + ".svgz");
+        parseRegistrationOrigin(svg, origin);
         int dataStart = svg.indexOf(WEBP_PREFIX);
         if (dataStart < 0) {
             return decodeVectorShape(svg, shapeId);
@@ -573,6 +802,40 @@ public final class OriginalFlashAnimationAssets implements Disposable {
         return "flashshape" + shapeId;
     }
 
+    static void parseRegistrationOrigin(String svg, float[] output) {
+        if (output == null || output.length < 2) {
+            throw new IllegalArgumentException("Two registration-origin values are required");
+        }
+        output[0] = 0f;
+        output[1] = 0f;
+        if (svg == null) {
+            return;
+        }
+        int groupStart = svg.indexOf("<g");
+        int groupEnd = groupStart < 0 ? -1 : svg.indexOf('>', groupStart);
+        int transformStart = groupStart < 0 ? -1 : svg.indexOf("transform", groupStart);
+        if (transformStart < 0 || groupEnd < transformStart) {
+            return;
+        }
+        int matrixStart = svg.indexOf("matrix(", transformStart);
+        int matrixEnd = matrixStart < 0 ? -1 : svg.indexOf(')', matrixStart);
+        if (matrixEnd < 0 || matrixEnd > groupEnd) {
+            return;
+        }
+        String[] components = svg.substring(matrixStart + 7, matrixEnd)
+                .trim().split("[,\\s]+");
+        if (components.length != 6) {
+            return;
+        }
+        try {
+            output[0] = -Float.parseFloat(components[4]);
+            output[1] = -Float.parseFloat(components[5]);
+        } catch (NumberFormatException ignored) {
+            output[0] = 0f;
+            output[1] = 0f;
+        }
+    }
+
     @Override
     public void dispose() {
         synchronized (loadLock) {
@@ -595,6 +858,7 @@ public final class OriginalFlashAnimationAssets implements Disposable {
             }
             shapeRegions = Collections.emptyMap();
             setupPortraitRegions = Collections.emptyMap();
+            shapeOrigins = Collections.emptyMap();
             nestedTimelines = Collections.emptyMap();
             setupPortraitsLoaded = false;
             timelines = Collections.emptyMap();

@@ -25,6 +25,135 @@ import static org.junit.Assert.assertTrue;
 
 public final class OriginalFlashAnimationAssetsTest {
     @Test
+    public void centerDialogUsesSourceResearchAndMassMediaFramesAndArtwork() throws IOException {
+        JsonValue scene = loadScene();
+        FlashAnimationTimeline centerScreen = OriginalFlashAnimationAssets.loadTimelineBySymbolId(
+                scene, OriginalFlashAnimationAssets.CENTER_UI_SYMBOL_ID);
+
+        assertEquals(10, centerScreen.getFrameNumberForLabel("research"));
+        assertEquals(14, centerScreen.getFrameNumberForLabel("religion"));
+        Map<Integer, FlashAnimationTimeline> nested =
+                OriginalFlashAnimationAssets.loadNestedTimelines(scene, centerScreen,
+                        new int[]{9, 13});
+        Set<Integer> techClipIds = Set.of(3396, 3419, 3463, 3516, 3561, 3606, 3654);
+        for (int techClipId : techClipIds) {
+            assertTrue("Missing original technology panel " + techClipId,
+                    nested.containsKey(techClipId));
+        }
+        assertTrue("Missing original mass-media speaker clip", nested.containsKey(3727));
+
+        for (int frameIndex : new int[]{9, 13}) {
+            FlashAnimationTimeline.Frame frame = centerScreen.getFrame(frameIndex);
+            for (FlashAnimationTimeline.Layer layer : frame.layers) {
+                assertTrue("Center-screen source layer is missing: " + layer.shapeId,
+                        nested.containsKey(layer.shapeId)
+                                || Files.isRegularFile(shapeAsset(layer.shapeId))
+                                || Files.isRegularFile(textAsset(layer.shapeId)));
+            }
+        }
+        for (FlashAnimationTimeline clip : nested.values()) {
+            for (int frameIndex = 0; frameIndex < clip.getFrameCount(); frameIndex++) {
+                FlashAnimationTimeline.Frame frame = clip.getFrame(frameIndex);
+                if (frame == null) {
+                    continue;
+                }
+                for (FlashAnimationTimeline.Layer layer : frame.layers) {
+                    assertTrue("Center-screen artwork is missing: " + layer.shapeId,
+                            nested.containsKey(layer.shapeId)
+                                    || Files.isRegularFile(shapeAsset(layer.shapeId))
+                                    || Files.isRegularFile(textAsset(layer.shapeId)));
+                }
+            }
+        }
+    }
+
+    @Test
+    public void earlyAtlasIncludesResearchAndMassMediaDialogArt() throws IOException {
+        JsonValue scene = loadScene();
+        FlashAnimationTimeline centerScreen = OriginalFlashAnimationAssets.loadTimelineBySymbolId(
+                scene, OriginalFlashAnimationAssets.CENTER_UI_SYMBOL_ID);
+        Map<Integer, FlashAnimationTimeline> nested =
+                OriginalFlashAnimationAssets.loadNestedTimelines(scene, centerScreen,
+                        new int[]{9, 13});
+
+        Set<Integer> artwork = OriginalFlashAnimationAssets.collectCenterUiArtworkIds(
+                centerScreen, nested, new int[]{9, 13},
+                shapeId -> Files.isRegularFile(shapeAsset(shapeId))
+                        || Files.isRegularFile(textAsset(shapeId)));
+
+        for (int shapeId : new int[]{3258, 3278, 3281, 3306, 3331, 3728, 3737}) {
+            assertTrue("Missing center-screen art from the early atlas: " + shapeId,
+                    artwork.contains(shapeId));
+            assertTrue("Missing center-screen source vector " + shapeId,
+                    Files.isRegularFile(shapeAsset(shapeId))
+                            || Files.isRegularFile(textAsset(shapeId)));
+        }
+    }
+
+    @Test
+    public void firstCenterDialogAtlasPrioritizesVisiblePanelsAndControls()
+            throws IOException {
+        JsonValue scene = loadScene();
+        FlashAnimationTimeline centerScreen = OriginalFlashAnimationAssets.loadTimelineBySymbolId(
+                scene, OriginalFlashAnimationAssets.CENTER_UI_SYMBOL_ID);
+        int[] sourceFrames = {9, 13};
+        Map<Integer, FlashAnimationTimeline> nested =
+                OriginalFlashAnimationAssets.loadNestedTimelines(scene, centerScreen,
+                        sourceFrames);
+        java.util.function.IntPredicate hasArtwork = shapeId ->
+                Files.isRegularFile(shapeAsset(shapeId))
+                        || Files.isRegularFile(textAsset(shapeId));
+
+        Set<Integer> initial = OriginalFlashAnimationAssets.collectInitialCenterUiArtworkIds(
+                centerScreen, nested, sourceFrames, hasArtwork);
+        Set<Integer> complete = OriginalFlashAnimationAssets.collectCenterUiArtworkIds(
+                centerScreen, nested, sourceFrames, hasArtwork);
+
+        assertTrue("The prioritized dialog atlas should contain original artwork",
+                initial.size() > 0);
+        assertTrue("The battle atlas should retain deferred technology variants",
+                initial.size() < complete.size());
+        for (int shapeId : new int[]{3258, 3278, 3281, 3306, 3331, 3397, 3401, 3728, 3737}) {
+            assertTrue("Missing first-frame dialog artwork " + shapeId,
+                    initial.contains(shapeId));
+        }
+    }
+
+    @Test
+    public void lateAtlasDoesNotRequireDialogArtAlreadyPackedInTheEarlyAtlas() {
+        Set<Integer> allFlashShapes = Set.of(3278, 3281, 4000, 5000);
+        Set<Integer> setupPortraits = Set.of(5000);
+        Set<Integer> earlyDialogArt = Set.of(3278, 3281);
+
+        Set<Integer> remaining = OriginalFlashAnimationAssets.excludeAlreadyPackedShapes(
+                allFlashShapes, setupPortraits, earlyDialogArt);
+
+        assertEquals(Set.of(4000), remaining);
+    }
+
+    @Test
+    public void textAssetRegistrationOffsetPreservesItsFlashOrigin() throws IOException {
+        String svg;
+        try (InputStream file = Files.newInputStream(textAsset(3281));
+             InputStream gzip = new GZIPInputStream(file);
+             InputStreamReader reader = new InputStreamReader(gzip, StandardCharsets.UTF_8)) {
+            StringBuilder source = new StringBuilder();
+            char[] buffer = new char[1024];
+            int count;
+            while ((count = reader.read(buffer)) != -1) {
+                source.append(buffer, 0, count);
+            }
+            svg = source.toString();
+        }
+
+        float[] origin = new float[2];
+        OriginalFlashAnimationAssets.parseRegistrationOrigin(svg, origin);
+
+        assertEquals(52.25f, origin[0], 0.001f);
+        assertEquals(-0.35f, origin[1], 0.001f);
+    }
+
+    @Test
     public void loadsOriginalActionBuildingFramesAndReligionVariantsIntoTheBattleAtlas()
             throws IOException {
         JsonValue scene = loadScene();
@@ -431,5 +560,9 @@ public final class OriginalFlashAnimationAssetsTest {
 
     private static Path shapeAsset(int shapeId) {
         return projectAsset("original/runtime/shapes/" + shapeId + ".svgz");
+    }
+
+    private static Path textAsset(int textId) {
+        return projectAsset("original/runtime/texts/" + textId + ".svgz");
     }
 }

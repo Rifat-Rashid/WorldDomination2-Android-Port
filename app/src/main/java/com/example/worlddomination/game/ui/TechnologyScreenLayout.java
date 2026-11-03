@@ -7,14 +7,28 @@ public final class TechnologyScreenLayout {
     public static final int CARD_COUNT = 7;
     public static final float ART_WIDTH = 365f;
     public static final float ART_HEIGHT = 275f;
-    private static final int[] SOURCE_GROUP_ORDER = {1, 6, 7, 2, 3, 4, 5};
-    private static final float SIDE_INSET = 8f;
-    private static final float COLUMN_GAP = 4f;
-    private static final float GRID_TOP_INSET = 42f;
-    private static final float GRID_BOTTOM_INSET = 89f;
-    private static final float ROW_GAP = 3f;
-    private static final float SELECTED_BOTTOM = 33f;
-    private static final float SELECTED_HEIGHT = 47f;
+    // The seven original Flash tech clips appear in this order in centerScreen.
+    private static final int[] SOURCE_GROUP_ORDER = {1, 6, 4, 5, 7, 2, 3};
+    private static final float[] SOURCE_X = {14f, 15f, 14f, 14f, 145f, 245f, 245f};
+    private static final float[] SOURCE_Y = {39f, 92f, 141f, 194f, 38f, 36f, 80f};
+    private static final float[] SOURCE_WIDTH = {111f, 111f, 111f, 111f, 96f, 110f, 110f};
+    private static final float[] SOURCE_HEIGHT = {50f, 46f, 50f, 50f, 89f, 42f, 47f};
+    private static final float SELECTED_LEFT = 126f;
+    private static final float SELECTED_BOTTOM = 130f;
+    private static final float SELECTED_WIDTH = 230f;
+    private static final float SELECTED_HEIGHT = 112f;
+    private static final float STANDARD_COST_FIELD_X = 43.2f;
+    private static final float STANDARD_COST_FIELD_Y = 2.2f;
+    private static final float CARRIER_COST_FIELD_X = 6.6f;
+    private static final float CARRIER_COST_FIELD_Y = 71.7f;
+    private static final float FLASH_TEXT_BASELINE_OFFSET = 5f;
+
+    public static final float SELECTED_NAMES_X = 136.4f;
+    public static final float SELECTED_COSTS_X = 232.8f;
+    public static final float SELECTED_NAMES_FIELD_Y = 141.5f;
+    public static final float SELECTED_COSTS_FIELD_Y = 142f;
+    public static final float ESTIMATED_TOTAL_X = 83.15f;
+    public static final float ESTIMATED_TOTAL_FIELD_Y = 224.1f;
 
     private TechnologyScreenLayout() { }
 
@@ -32,30 +46,50 @@ public final class TechnologyScreenLayout {
         return -1;
     }
 
+    /** Source position for the dynamic cost field inside a technology clip. */
+    public static float cardCostX(int cardIndex) {
+        checkCard(cardIndex);
+        return SOURCE_X[cardIndex] + (SOURCE_GROUP_ORDER[cardIndex] == 7
+                ? CARRIER_COST_FIELD_X : STANDARD_COST_FIELD_X);
+    }
+
+    /** Source baseline for the first line in a technology clip's cost field. */
+    public static float cardCostBaselineTop(int cardIndex) {
+        checkCard(cardIndex);
+        float localY = SOURCE_GROUP_ORDER[cardIndex] == 7
+                ? CARRIER_COST_FIELD_Y : STANDARD_COST_FIELD_Y;
+        return SOURCE_Y[cardIndex] + localY + FLASH_TEXT_BASELINE_OFFSET;
+    }
+
+    public static float selectedNamesBaselineTop() {
+        return SELECTED_NAMES_FIELD_Y + 10f;
+    }
+
+    public static float selectedCostsBaselineTop() {
+        return SELECTED_COSTS_FIELD_Y + 10f;
+    }
+
+    public static float estimatedTotalBaselineTop() {
+        return ESTIMATED_TOTAL_FIELD_Y + 10f;
+    }
+
     public static Rectangle setCardBounds(int cardIndex, Rectangle modal, Rectangle output) {
         checkCard(cardIndex);
         float scaleX = modal.width / ART_WIDTH;
         float scaleY = modal.height / ART_HEIGHT;
-        int column = cardIndex % 3;
-        int row = cardIndex / 3;
-        float gapX = COLUMN_GAP * scaleX;
-        float left = modal.x + SIDE_INSET * scaleX;
-        float width = (modal.width - SIDE_INSET * 2f * scaleX - gapX * 2f) / 3f;
-        float gridTop = modal.y + modal.height - GRID_TOP_INSET * scaleY;
-        float gridBottom = modal.y + GRID_BOTTOM_INSET * scaleY;
-        float gapY = ROW_GAP * scaleY;
-        float height = (gridTop - gridBottom - gapY * 2f) / 3f;
-        float x = left + column * (width + gapX);
-        float y = gridTop - (row + 1) * height - row * gapY;
-        return output.set(x, y, width, height);
+        return output.set(modal.x + SOURCE_X[cardIndex] * scaleX,
+                modal.y + modal.height - (SOURCE_Y[cardIndex] + SOURCE_HEIGHT[cardIndex])
+                        * scaleY,
+                SOURCE_WIDTH[cardIndex] * scaleX,
+                SOURCE_HEIGHT[cardIndex] * scaleY);
     }
 
     public static Rectangle setSelectedBounds(Rectangle modal, Rectangle output) {
         float scaleX = modal.width / ART_WIDTH;
         float scaleY = modal.height / ART_HEIGHT;
-        return output.set(modal.x + SIDE_INSET * scaleX,
-                modal.y + SELECTED_BOTTOM * scaleY,
-                modal.width - SIDE_INSET * 2f * scaleX,
+        return output.set(modal.x + SELECTED_LEFT * scaleX,
+                modal.y + (ART_HEIGHT - SELECTED_BOTTOM - SELECTED_HEIGHT) * scaleY,
+                SELECTED_WIDTH * scaleX,
                 SELECTED_HEIGHT * scaleY);
     }
 

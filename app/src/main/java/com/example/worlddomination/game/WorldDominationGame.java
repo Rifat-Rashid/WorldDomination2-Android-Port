@@ -40,6 +40,7 @@ import com.example.worlddomination.game.rendering.FlashSatelliteAnimation;
 import com.example.worlddomination.game.rendering.FlashSoldierOneAnimation;
 import com.example.worlddomination.game.rendering.FlashSubmarineAnimation;
 import com.example.worlddomination.game.rendering.FlashAnimationTimeline;
+import com.example.worlddomination.game.rendering.FlashCenterUiRenderer;
 import com.example.worlddomination.game.rendering.RenderLoopPolicy;
 import com.example.worlddomination.game.rendering.SourceCombatAnimationMapping;
 import com.example.worlddomination.game.rendering.TurnPlaybackSequence;
@@ -78,8 +79,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private static final float MAP_HEIGHT = 318f;
     private static final int RESEARCH_ROWS_PER_PAGE = 6;
     private static final String[] RESEARCH_GROUP_LABELS = {
-            "ROCKETS", "AIRCRAFT", "SPECIAL CARRIER", "WARHEAD", "BIOLOAD",
-            "INFANTRY", "INTELLIGENCE"
+            "ROCKETS", "AIRCRAFT", "INFANTRY", "INTELLIGENCE", "SPECIAL CARRIER",
+            "WARHEAD", "BIOLOAD"
     };
     private static final String[] DIFFICULTY_LABELS = {"EASY", "MEDIUM", "HARD"};
     private static final Color[] SETUP_PLAYER_COLORS = {
@@ -238,6 +239,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private final String[] researchChoiceByCard =
             new String[TechnologyScreenLayout.CARD_COUNT];
     private final StringBuilder selectedResearchSummary = new StringBuilder(128);
+    private final int[] researchFrameIndexes = new int[TechnologyScreenLayout.CARD_COUNT];
     private final StringBuilder actionFooterText = new StringBuilder(96);
     private final Rectangle technologySelectedArea = new Rectangle();
     private final Rectangle[] actionFooterButtons = {
@@ -270,6 +272,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private BattlefieldCityRenderer cityRenderer;
     private BattleExplosionRenderer explosionRenderer;
     private FlashBattleUnitRenderer battleUnitRenderer;
+    private final FlashCenterUiRenderer centerUiRenderer = new FlashCenterUiRenderer();
     private java.util.Map<String, FlashBattleRoutes.Point> battleAnchors;
     private float accumulator;
     private float worldWidth;
@@ -2457,6 +2460,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             drawTechnologyModal();
             return;
         }
+        if (action == GameState.Action.MASS_MEDIA && drawMassMediaModal()) {
+            return;
+        }
 
         java.util.List<String> researchChoices = action == GameState.Action.RESEARCH
                 ? game.getResearchChoices() : java.util.Collections.emptyList();
@@ -2675,6 +2681,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         java.util.List<String> choices = game.getResearchChoices();
         updateResearchChoiceCards(choices);
 
+        if (drawOriginalTechnologyModal()) {
+            return;
+        }
+
         shapes.setProjectionMatrix(camera.combined);
         shapes.begin(ShapeRenderer.ShapeType.Filled);
         drawPanelFill(modal);
@@ -2776,6 +2786,116 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         drawTechnologyFrame(technologySelectedArea);
         drawPanelEdges(modal);
         shapes.end();
+    }
+
+    private boolean drawOriginalTechnologyModal() {
+        for (int i = 0; i < researchFrameIndexes.length; i++) {
+            String technology = researchChoiceByCard[i];
+            if (technology == null) {
+                researchFrameIndexes[i] = -1;
+                continue;
+            }
+            TechnologyCatalog.Definition definition = TechnologyCatalog.byName(technology);
+            researchFrameIndexes[i] = definition == null ? -1
+                    : definition.level - 1
+                    + (game.isResearchTechnologySelected(technology) ? 4 : 0);
+        }
+
+        batch.setProjectionMatrix(camera.combined);
+        batch.begin();
+        boolean drawn = centerUiRenderer.draw(batch, flashAnimationAssets, modal,
+                FlashCenterUiRenderer.RESEARCH_FRAME,
+                game.getHuman().getReligionCode(), researchFrameIndexes);
+        if (drawn) {
+            drawOriginalTechnologyText();
+        }
+        batch.end();
+        return drawn;
+    }
+
+    private void drawOriginalTechnologyText() {
+        for (int slot = 0; slot < technologyCards.length; slot++) {
+            String technology = researchChoiceByCard[slot];
+            if (technology == null) {
+                continue;
+            }
+            int cost = game.getTechnologyCost(technology);
+            boolean available = game.isResearchAvailable(technology);
+            drawSourceText("$ " + sourceMillions(cost),
+                    TechnologyScreenLayout.cardCostX(slot),
+                    TechnologyScreenLayout.cardCostBaselineTop(slot), 10f,
+                    available ? Color.BLACK : RESEARCH_UNAVAILABLE_TEXT);
+        }
+
+        int row = 0;
+        for (TechnologyCatalog.Definition definition : TechnologyCatalog.all()) {
+            String technology = definition.name;
+            if (!game.isResearchTechnologySelected(technology)) {
+                continue;
+            }
+            drawSourceText(game.getTechnologyLabel(technology),
+                    TechnologyScreenLayout.SELECTED_NAMES_X,
+                    TechnologyScreenLayout.selectedNamesBaselineTop() + row * 12f,
+                    10f, TITLE_TEXT);
+            drawSourceTextRight(sourceMillions(game.getTechnologyCost(technology)),
+                    360f, TechnologyScreenLayout.selectedCostsBaselineTop() + row * 12f,
+                    10f, TITLE_TEXT);
+            row++;
+        }
+        if (row > 0) {
+            drawSourceText("estimated total: "
+                            + sourceMillions(game.getSelectedResearchCostMillions()),
+                    TechnologyScreenLayout.ESTIMATED_TOTAL_X,
+                    TechnologyScreenLayout.estimatedTotalBaselineTop(), 10f, TITLE_TEXT);
+        }
+    }
+
+    private boolean drawMassMediaModal() {
+        batch.setProjectionMatrix(camera.combined);
+        batch.begin();
+        boolean drawn = centerUiRenderer.draw(batch, flashAnimationAssets, modal,
+                FlashCenterUiRenderer.MASS_MEDIA_FRAME,
+                game.getHuman().getReligionCode(), null);
+        if (drawn) {
+            GameState.PlayerState human = game.getHuman();
+            int gain = game.getMassMediaGain();
+            drawSourceTextRight(sourceMillions(human.populationMillions), 337f, 75f,
+                    10f, TITLE_TEXT);
+            drawSourceTextRight(human.religion + "%", 337f, 90f, 10f, TITLE_TEXT);
+            drawSourceTextRight("+" + gain + "%", 337f, 161.15f,
+                    20f, MODAL_ORANGE);
+        }
+        batch.end();
+        return drawn;
+    }
+
+    private void drawSourceText(String text, float sourceX, float sourceTop,
+                                float sourceHeight, Color color) {
+        float scaleX = modal.width / FlashCenterUiRenderer.ART_WIDTH;
+        float scaleY = modal.height / FlashCenterUiRenderer.ART_HEIGHT;
+        float originalScale = font.getScaleX();
+        font.getData().setScale(sourceHeight * scaleY
+                / Math.max(font.getLineHeight(), 1f));
+        font.setColor(color);
+        font.draw(batch, text, modal.x + sourceX * scaleX,
+                modal.y + modal.height - sourceTop * scaleY);
+        font.getData().setScale(originalScale);
+        font.setColor(Color.WHITE);
+    }
+
+    private void drawSourceTextRight(String text, float sourceRight, float sourceTop,
+                                     float sourceHeight, Color color) {
+        float scaleX = modal.width / FlashCenterUiRenderer.ART_WIDTH;
+        float scaleY = modal.height / FlashCenterUiRenderer.ART_HEIGHT;
+        float originalScale = font.getScaleX();
+        font.getData().setScale(sourceHeight * scaleY
+                / Math.max(font.getLineHeight(), 1f));
+        glyphLayout.setText(font, text);
+        font.setColor(color);
+        font.draw(batch, text, modal.x + sourceRight * scaleX - glyphLayout.width,
+                modal.y + modal.height - sourceTop * scaleY);
+        font.getData().setScale(originalScale);
+        font.setColor(Color.WHITE);
     }
 
     private void drawTechnologyFrame(Rectangle rectangle) {
@@ -3387,6 +3507,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     private static String formatMillions(int millions) {
         return String.format(java.util.Locale.US, "%,d.000.000", millions);
+    }
+
+    private static String sourceMillions(int millions) {
+        return millions + ".000.000";
     }
 
     private static boolean isEquipmentHeading(int row) {
