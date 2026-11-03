@@ -48,6 +48,9 @@ jobs:
           - id: ai-turn-sixteen-source-trace-tests
             check: AI turn sixteen source resolution trace
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.AiSourceTurnResolutionTraceTest.hardSeededSixteenthTurnMatchesSourceAttacksAndCarrierPreparation"'
+          - id: ai-source-resolved-turn-tests
+            check: AI resolved-turn source parity
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.AiSourceResolvedTurnParityTest"'
           - id: ai-soldier-array-order-tests
             check: AI soldier selection source array order
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.OpponentAITest.directAttackSelectsSoldierBySourceIndexAfterReverseArrayEnumeration" --tests "com.example.worlddomination.game.ai.OpponentAITest.sourceDirectAttackChoiceUsesReverseKeysAfterMaxKillSort"'
