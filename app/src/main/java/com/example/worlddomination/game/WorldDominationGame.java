@@ -20,6 +20,7 @@ import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.example.worlddomination.game.audio.OriginalAudio;
 import com.example.worlddomination.game.assets.OriginalCityAssets;
 import com.example.worlddomination.game.assets.OriginalFlashAnimationAssets;
+import com.example.worlddomination.game.assets.OriginalSplashAssets;
 import com.example.worlddomination.game.assets.OriginalUiAssets;
 import com.example.worlddomination.game.persistence.LibGdxScorePreferenceBackend;
 import com.example.worlddomination.game.persistence.PersonalBestStore;
@@ -60,6 +61,8 @@ import com.example.worlddomination.game.ui.NavigationPanelLayout;
 import com.example.worlddomination.game.ui.PreparedShipStrikeSelection;
 import com.example.worlddomination.game.ui.ProductionScreenLayout;
 import com.example.worlddomination.game.ui.ScrollPaneState;
+import com.example.worlddomination.game.ui.SplashScreenLayout;
+import com.example.worlddomination.game.ui.SplashScreenState;
 import com.example.worlddomination.game.ui.SetupScreenLayout;
 import com.example.worlddomination.game.ui.TechnologyScreenLayout;
 
@@ -164,6 +167,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     private GameState game;
     private GameSetup setup;
+    private final SplashScreenState splashState = new SplashScreenState();
+    private final Rectangle splashBounds = new Rectangle();
     private PersonalBestStore personalBestStore;
     private String outcomePersonalBestText = "";
     private final OriginalAudio audio = new OriginalAudio();
@@ -267,6 +272,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private ShapeRenderer shapes;
     private BitmapFont font;
     private OriginalUiAssets uiAssets;
+    private OriginalSplashAssets splashAssets;
     private OriginalCityAssets cityAssets;
     private OriginalFlashAnimationAssets flashAnimationAssets;
     private BattlefieldCityRenderer cityRenderer;
@@ -322,6 +328,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private String setupMessage = "SELECT ONE TO FOUR OPPONENTS TO BEGIN";
     private boolean showSetupMessage;
     private boolean satelliteFlightCuePlayed;
+    private boolean splashPointerDown;
 
     public WorldDominationGame() {
         for (int i = 0; i < navRows.length; i++) {
@@ -374,14 +381,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         font = new BitmapFont();
         font.setColor(Color.WHITE);
         uiAssets = new OriginalUiAssets();
-        cityAssets = new OriginalCityAssets();
-        flashAnimationAssets = new OriginalFlashAnimationAssets();
-        cityRenderer = new BattlefieldCityRenderer(cityAssets, flashAnimationAssets);
-        explosionRenderer = new BattleExplosionRenderer(flashAnimationAssets);
-        battleUnitRenderer = new FlashBattleUnitRenderer(flashAnimationAssets);
-        battleAnchors = FlashBattleRoutes.parseAnchors(
-                Gdx.files.internal("original/runtime/battle_anchors.json")
-                        .readString("UTF-8"));
+        splashAssets = new OriginalSplashAssets();
+        cityAssets = new OriginalCityAssets(true);
         Preferences scorePreferences = Gdx.app.getPreferences("world_domination_2_scores");
         personalBestStore = new PersonalBestStore(
                 new LibGdxScorePreferenceBackend(scorePreferences));
@@ -414,6 +415,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         camera.update();
         worldWidth = viewport.getWorldWidth();
         worldHeight = viewport.getWorldHeight();
+        SplashScreenLayout.fit(worldWidth, worldHeight, splashBounds);
 
         float contentX = safeLeft + 4f;
         float contentY = safeBottom + 4f;
@@ -569,7 +571,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         Gdx.gl.glClearColor(0.006f, 0.016f, 0.022f, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         camera.update();
-        if (game == null) {
+        if (game == null && splashState.isVisible()) {
+            drawOriginalSplash();
+        } else if (game == null) {
             drawSetupScreen();
         } else if (MatchOutcomePresentation.isFinished(game.getMatchStatus())
                 && outcomeSequence.isEndgameVisible()) {
@@ -631,7 +635,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private void fixedUpdate(float seconds) {
         navigationScroll.tick(seconds);
         equipmentScroll.tick(seconds);
-        cityRenderer.tick(game);
+        if (cityRenderer != null) {
+            cityRenderer.tick(game);
+        }
         showExitPromptSeconds = Math.max(0f, showExitPromptSeconds - seconds);
         advanceBattleAnimations(seconds);
         advanceOutcomeSequence();
@@ -1004,6 +1010,18 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         pendingSafeBottom = Math.max(0f, bottom);
         safeAreaChanged = true;
         Gdx.graphics.requestRendering();
+    }
+
+    private void drawOriginalSplash() {
+        batch.setProjectionMatrix(camera.combined);
+        batch.begin();
+        batch.setColor(0.36f, 0.44f, 0.48f, 1f);
+        batch.draw(uiAssets.metalPanel, 0f, 0f, worldWidth, worldHeight,
+                0f, 0f, worldWidth / 240f, worldHeight / 168f);
+        batch.setColor(Color.WHITE);
+        batch.draw(splashAssets.getTexture(), splashBounds.x, splashBounds.y,
+                splashBounds.width, splashBounds.height);
+        batch.end();
     }
 
     private void drawSetupScreen() {
@@ -3726,6 +3744,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         if (setupLayout.startButton.contains(x, y)) {
             if (setup.canStart()) {
+                initializeGameplayAssets();
                 game = new GameState(setup);
                 cityRenderer.reset(game);
                 battleAnimations.clear();
@@ -3752,6 +3771,31 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 showSetupMessage = true;
             }
         }
+    }
+
+    /** Loads city textures on demand so the title and setup screens can start quickly. */
+    private void initializeGameplayAssets() {
+        startFlashAssetLoading();
+        if (cityAssets == null) {
+            cityAssets = new OriginalCityAssets(true);
+        }
+        cityAssets.loadGameplayFrames();
+        if (cityRenderer == null) {
+            cityRenderer = new BattlefieldCityRenderer(cityAssets, flashAnimationAssets);
+        }
+    }
+
+    /** Defers large Flash timeline decoding until the player leaves the title splash. */
+    private void startFlashAssetLoading() {
+        if (flashAnimationAssets != null) {
+            return;
+        }
+        flashAnimationAssets = new OriginalFlashAnimationAssets();
+        explosionRenderer = new BattleExplosionRenderer(flashAnimationAssets);
+        battleUnitRenderer = new FlashBattleUnitRenderer(flashAnimationAssets);
+        battleAnchors = FlashBattleRoutes.parseAnchors(
+                Gdx.files.internal("original/runtime/battle_anchors.json")
+                        .readString("UTF-8"));
     }
 
     private void initializePreparedAttackSelection() {
@@ -4479,6 +4523,11 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     private boolean handleBack() {
         if (game == null) {
+            if (splashState.isVisible()) {
+                splashState.dismiss();
+                startFlashAssetLoading();
+                return true;
+            }
             if (showExitPromptSeconds > 0f) {
                 Gdx.app.exit();
             } else {
@@ -4530,6 +4579,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         if (pointerIndex != 0) {
             return false;
         }
+        if (splashState.isVisible()) {
+            splashPointerDown = true;
+            return true;
+        }
         if (turnPlaybackSequence.isBlockingInput()) {
             ignorePlaybackTouchUntilUp = true;
             gestureArea = GESTURE_NONE;
@@ -4577,6 +4630,16 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         if (pointerIndex != 0) {
             return false;
         }
+        if (splashPointerDown) {
+            splashPointerDown = false;
+            splashState.dismiss();
+            startFlashAssetLoading();
+            Gdx.graphics.requestRendering();
+            return true;
+        }
+        if (splashState.isVisible()) {
+            return true;
+        }
         if (ignorePlaybackTouchUntilUp) {
             ignorePlaybackTouchUntilUp = false;
             gestureArea = GESTURE_NONE;
@@ -4616,6 +4679,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     @Override
     public boolean touchCancelled(int screenX, int screenY, int pointerIndex, int button) {
+        if (pointerIndex == 0 && splashPointerDown) {
+            splashPointerDown = false;
+            return true;
+        }
         if (pointerIndex == 0) {
             ignorePlaybackTouchUntilUp = false;
             gestureArea = GESTURE_NONE;
@@ -4629,6 +4696,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     @Override
     public boolean touchDragged(int screenX, int screenY, int pointerIndex) {
+        if (splashPointerDown || splashState.isVisible()) {
+            return true;
+        }
         if (ignorePlaybackTouchUntilUp || turnPlaybackSequence.isBlockingInput()) {
             return true;
         }
@@ -4751,6 +4821,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         satelliteBattleAnimations.clear();
         pendingBattleAnimations.clear();
         audio.dispose();
+        if (splashAssets != null) {
+            splashAssets.dispose();
+        }
         if (uiAssets != null) {
             uiAssets.dispose();
         }
