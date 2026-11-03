@@ -57,6 +57,9 @@ jobs:
           - id: ai-propaganda-tie-order-tests
             check: AI propaganda target and city tie order
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.OpponentAITest.propagandaTiesFollowReverseSourcePlayerAndCityOrder"'
+          - id: defeat-satellite-settlement-tests
+            check: Defeat turn stock readiness and bonus settlement
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.satelliteLaunchOnHumanDefeatSkipsStockAndScoreBonusSettlement" --tests "com.example.worlddomination.game.simulation.GameStateTest.spaceLaunchCountsSatelliteAndTerminalScoreIncludesSourceFlagBonus" --tests "com.example.worlddomination.game.simulation.SimultaneousSpyMissionResolutionTest.defeatSkipsSpyReadinessResetAfterTheMissionResolves"'
           - id: ai-turn-sixteen-source-trace-tests
             check: AI turn sixteen source resolution trace
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.AiSourceTurnResolutionTraceTest.hardSeededSixteenthTurnMatchesSourceAttacksAndCarrierPreparation"'

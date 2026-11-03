@@ -1292,6 +1292,45 @@ public final class GameStateTest {
     }
 
     @Test
+    public void satelliteLaunchOnHumanDefeatSkipsStockAndScoreBonusSettlement() {
+        GameState state = new GameState(1, 211L, false);
+        GameState.PlayerState human = state.getHuman();
+        for (String name : new String[]{"space", "specialLoad"}) {
+            GameState.WeaponState weapon = human.getWeapons().get(name);
+            weapon.active = true;
+            weapon.inStock = 1;
+        }
+        state.selectAction(GameState.Action.PREPARED_ATTACK);
+        assertTrue(state.configurePreparedCarrier("space"));
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+
+        // Source updatePlayerVars_1 performs elimination after the battle,
+        // then skips updatePlayerVars_2 when no human population remains.
+        for (CityState city : human.getCities()) {
+            city.populationMillions = 0;
+        }
+        human.populationMillions = 0;
+        state.selectAction(GameState.Action.PREPARED_ATTACK);
+        assertTrue(state.configurePreparedLaunch(1, 0, "specialLoad"));
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+
+        assertEquals(GameState.MatchStatus.DEFEAT, state.getMatchStatus());
+        assertEquals("the battle still resolves before the defeat check", 1,
+                state.getLastTurnCombatEvents().size());
+        assertEquals("the source skips the satellite bonus after defeat", 0,
+                human.getSatellitesUsed());
+        assertEquals(0, state.getFinalScoreBreakdown().getSatelliteCount());
+        assertEquals("the same skipped phase preserves the launch payload", 1,
+                state.getWeaponStock(0, "specialLoad"));
+    }
+
+    @Test
     public void spaceLaunchCountsSatelliteAndTerminalScoreIncludesSourceFlagBonus() {
         GameState state = new GameState(1, 211L, false);
         GameState.PlayerState human = state.getHuman();

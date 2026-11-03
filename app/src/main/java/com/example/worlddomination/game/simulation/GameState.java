@@ -671,6 +671,7 @@ public final class GameState {
     private final List<ActionOrder> queuedActions = new ArrayList<>(MAX_TURN_ACTIONS);
     private final List<CombatEvent> lastTurnCombatEvents = new ArrayList<>();
     private final List<WeaponState> battleStockUses = new ArrayList<>();
+    private final int[] battleSatelliteLaunches = new int[5];
     private final List<SpyMissionEvent> lastTurnSpyMissions = new ArrayList<>();
     private final List<PropagandaEvent> lastTurnPropagandaEvents = new ArrayList<>();
     private final List<ActionBuildingEvent> lastTurnActionBuildings = new ArrayList<>();
@@ -2398,6 +2399,7 @@ public final class GameState {
         }
         lastTurnCombatEvents.clear();
         battleStockUses.clear();
+        Arrays.fill(battleSatelliteLaunches, 0);
         lastTurnSpyMissions.clear();
         lastTurnPropagandaEvents.clear();
         lastTurnActionBuildings.clear();
@@ -2538,6 +2540,12 @@ public final class GameState {
             // elimination checks; that phase does not run after human defeat.
             for (WeaponState used : battleStockUses) {
                 used.inStock = Math.max(0, used.inStock - 1);
+            }
+            for (PlayerState player : players) {
+                player.satellitesUsed += battleSatelliteLaunches[player.id];
+            }
+            for (SpyOutcome outcome : spyOutcomes) {
+                outcome.attacker.spyReadiness = 0;
             }
             applyBiologicalEffects(biologicalEffects);
         }
@@ -3310,7 +3318,7 @@ public final class GameState {
         attacker.preparedCarrierName = null;
         battleStockUses.add(payload);
         if ("space".equals(carrier.definition.type)) {
-            attacker.satellitesUsed++;
+            battleSatelliteLaunches[attacker.id]++;
         }
         int rolledCasualties = sourceStrikeCasualties(payload.definition.maxKillsMillions,
                 attacker.human, defender.human);
@@ -3645,7 +3653,6 @@ public final class GameState {
             addToHighscore(attacker, 2, 1);
         }
         outcomes.add(new SpyOutcome(attacker, defender, moneyAmount, stolenWeapons));
-        attacker.spyReadiness = 0;
     }
 
     private void applySpyOutcome(SpyOutcome outcome, List<PlayerMessage> resultMessages) {
