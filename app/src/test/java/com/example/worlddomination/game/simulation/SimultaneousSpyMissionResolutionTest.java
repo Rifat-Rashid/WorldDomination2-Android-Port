@@ -8,6 +8,33 @@ import static org.junit.Assert.assertTrue;
 /** Source-parity coverage for spy missions that resolve in the same turn. */
 public final class SimultaneousSpyMissionResolutionTest {
     @Test
+    public void defeatSkipsSpyReadinessResetAfterTheMissionResolves() {
+        GameState state = new GameState(1, 211L, false);
+        GameState.PlayerState human = state.getHuman();
+        human.spyReadiness = 75;
+        for (CityState city : human.getCities()) {
+            city.populationMillions = 0;
+        }
+        human.populationMillions = 0;
+        GameState.WeaponState spy = human.getWeapons().get("spy1");
+        spy.active = true;
+        spy.inStock = 1;
+
+        state.selectAction(GameState.Action.ATTACK);
+        assertTrue(state.configureAttack(1, 0, "spy1"));
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+
+        assertEquals(GameState.MatchStatus.DEFEAT, state.getMatchStatus());
+        assertEquals(1, state.getLastTurnSpyMissions().size());
+        assertEquals("upkeep advances readiness but the skipped result phase cannot reset it",
+                100, human.spyReadiness);
+        assertEquals(1, spy.inStock);
+    }
+
+    @Test
     public void concurrentSpyAttacksUseTheSameSourceStockSnapshot() {
         GameState state = new GameState(1, 123L, false);
         GameState.PlayerState attacker = state.getHuman();
