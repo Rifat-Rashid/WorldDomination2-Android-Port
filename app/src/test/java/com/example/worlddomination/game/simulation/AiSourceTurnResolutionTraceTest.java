@@ -135,6 +135,23 @@ public final class AiSourceTurnResolutionTraceTest {
             "24:10", "2:0", "24:5", "3:2", "51:40", "3:1", "51:34", "3:2", "3:1", "51:18"
     );
 
+    // The two source casualty rolls are consumed through Java nextDouble().
+    private static final List<String> EXPECTED_TWENTY_SECOND_TURN_RANDOM_DRAWS = Arrays.asList(
+            "91:69", "3:0", "91:30", "3:0", "91:60", "3:0", "91:45", "3:2", "4:0", "21:3",
+            "61:53", "2:1", "2:0", "4:2", "141:12", "2:1", "5:0", "3:2", "2:1", "4:1",
+            "21:5", "3:1", "141:94", "6:4", "6:4", "6:1", "6:5", "6:1", "7:3", "21:6",
+            "4:1", "6:3", "6:2", "26:22", "26:13", "26:18", "26:6", "26:23", "26:9", "26:18",
+            "26:0", "26:9", "26:8", "51:50", "51:41", "11:4", "11:1", "11:0", "11:9", "11:7",
+            "11:1", "11:2", "11:6", "11:8", "11:3", "11:8", "11:3", "11:1", "11:5", "11:5",
+            "51:24", "51:32", "51:11", "51:7", "51:42", "4:2", "24:7", "4:3", "24:14", "4:1",
+            "24:11", "4:3", "24:17", "4:1", "24:15", "4:0", "24:17", "4:1", "24:9", "4:3",
+            "24:12", "4:0", "24:13", "4:2", "24:9", "4:1", "24:19", "4:3", "24:11", "4:2",
+            "24:14", "4:0", "24:3", "4:3", "24:11", "4:3", "24:10", "4:2", "24:23", "4:2",
+            "24:9", "4:0", "24:13", "4:0", "24:2", "4:2", "24:4", "4:1", "24:8", "4:3",
+            "24:22", "4:0", "24:21", "4:0", "24:16", "4:2", "24:21", "4:3", "24:22", "4:1",
+            "24:2", "4:0", "24:14", "4:1", "24:18", "4:2", "24:5", "4:3", "24:16"
+    );
+
     private static final List<String> EXPECTED_RANDOM_DRAWS = Arrays.asList(
             "91:30", "3:2", "91:52", "3:0", "91:0", "3:2", "91:31", "3:1",
             "2:0", "3:1", "2:1", "141:43", "4:0", "21:20", "61:55", "4:0",
@@ -1915,6 +1932,98 @@ public final class AiSourceTurnResolutionTraceTest {
                 },
                 new int[][]{
                         {0, 0, 37, 0, 105},
+                        {59, 97, 54, 84, 138},
+                        {62, 85, 115, 83, 130},
+                        {70, 114, 71, 100, 115},
+                        {107, 41, 67, 43, 167}
+                });
+    }
+
+    @Test
+    public void hardSeededTwentySecondTurnMatchesSourceCombatAndRandomTrace() {
+        GameSetup setup = new GameSetup(17L);
+        setup.setDifficulty(2);
+        for (int leader : new int[]{0, 9, 18, 5}) {
+            setup.toggleOpponent(leader);
+        }
+        RecordingRandom random = new RecordingRandom(setup.copyGameplayRandom());
+        GameState game = new GameState(setup, random);
+        random.clear();
+        for (int priorTurn = 0; priorTurn < 21; priorTurn++) {
+            queueHumanTurn(game);
+            game.confirmTurn();
+            random.clear();
+        }
+
+        queueHumanTurn(game);
+        game.confirmTurn();
+
+        assertEquals(22, game.getTurn());
+        assertEquals("source turn-twenty-two bounded random trace; actual=" + random.draws,
+                EXPECTED_TWENTY_SECOND_TURN_RANDOM_DRAWS, random.draws);
+        assertEquals("source strike casualty calculation uses two raw draws", 2,
+                random.rawDraws);
+        assertEquals(Arrays.asList(GameState.Action.RESOURCES, GameState.Action.MASS_MEDIA),
+                game.getPlayerState(0).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.RESOURCES, GameState.Action.PRODUCTION),
+                game.getPlayerState(1).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.MASS_MEDIA, GameState.Action.ATTACK),
+                game.getPlayerState(2).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.PREPARED_ATTACK,
+                        GameState.Action.PRODUCTION),
+                game.getPlayerState(3).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.PREPARED_ATTACK,
+                        GameState.Action.MASS_MEDIA),
+                game.getPlayerState(4).getLastTurnActions());
+
+        List<GameState.CombatEvent> combatEvents = game.getLastTurnCombatEvents();
+        assertEquals("two prepared strikes resolve on source turn twenty-two", 2,
+                combatEvents.size());
+        GameState.CombatEvent rocketStrike = null;
+        GameState.CombatEvent aircraftStrike = null;
+        for (GameState.CombatEvent event : combatEvents) {
+            if (event.attackerPlayerId == 3) {
+                rocketStrike = event;
+            } else if (event.attackerPlayerId == 4) {
+                aircraftStrike = event;
+            }
+        }
+        assertTrue("the third opponent resolves its bioloaded rocket", rocketStrike != null);
+        assertEquals(GameState.CombatEventType.STRIKE_IMPACT, rocketStrike.type);
+        assertEquals(0, rocketStrike.defenderPlayerId);
+        assertEquals(2, rocketStrike.cityIndex);
+        assertEquals("rocket2", rocketStrike.weaponName);
+        assertEquals("bioload2", rocketStrike.payloadName);
+        assertEquals(37, rocketStrike.casualtiesMillions);
+        assertTrue("the fourth opponent resolves its aircraft strike",
+                aircraftStrike != null);
+        assertEquals(GameState.CombatEventType.STRIKE_IMPACT, aircraftStrike.type);
+        assertEquals(0, aircraftStrike.defenderPlayerId);
+        assertEquals(2, aircraftStrike.cityIndex);
+        assertEquals("plane1", aircraftStrike.weaponName);
+        assertEquals("warhead2", aircraftStrike.payloadName);
+        assertEquals(0, aircraftStrike.casualtiesMillions);
+
+        List<GameState.SpyMissionEvent> spyMissions = game.getLastTurnSpyMissions();
+        assertEquals("one spy mission resolves alongside the prepared strikes", 1,
+                spyMissions.size());
+        GameState.SpyMissionEvent spyMission = spyMissions.get(0);
+        assertEquals(2, spyMission.attackerPlayerId);
+        assertEquals(0, spyMission.defenderPlayerId);
+        assertEquals(1, spyMission.actionBuildingSlot);
+        assertEquals("spyCenter", spyMission.actionBuildingFrame);
+        assertEquals("com", spyMission.religionCode);
+
+        assertSeededState(game,
+                new int[][]{
+                        {106, 105, 100, 357160},
+                        {73, 432, 20, 702454},
+                        {86, 475, 46, 958596},
+                        {121, 470, 34, 609194},
+                        {35, 425, 39, 574474}
+                },
+                new int[][]{
+                        {0, 0, 0, 0, 105},
                         {59, 97, 54, 84, 138},
                         {62, 85, 115, 83, 130},
                         {70, 114, 71, 100, 115},
