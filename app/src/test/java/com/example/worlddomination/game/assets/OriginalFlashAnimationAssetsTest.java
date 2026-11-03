@@ -25,6 +25,43 @@ import static org.junit.Assert.assertTrue;
 
 public final class OriginalFlashAnimationAssetsTest {
     @Test
+    public void cityTimelinesExposeOriginalTwoPropagandaBeamLayersAndFrames()
+            throws IOException {
+        JsonValue scene = loadScene();
+        Map<Integer, FlashAnimationTimeline> cities =
+                OriginalFlashAnimationAssets.loadCityTimelines(scene);
+        Map<Integer, FlashAnimationTimeline> overlays =
+                OriginalFlashAnimationAssets.loadCityPropagandaOverlayTimelines(scene, cities);
+
+        assertEquals(5, cities.size());
+        FlashAnimationTimeline city = cities.get(1363);
+        assertNotNull(city);
+        boolean foundFirstBeam = false;
+        boolean foundSecondBeam = false;
+        for (FlashAnimationTimeline.Layer layer : city.getFrame(0).layers) {
+            if ("propagandaBeams".equals(layer.name)) {
+                foundFirstBeam = true;
+                assertEquals(OriginalFlashAnimationAssets.CITY_PROPAGANDA_BEAMS_SYMBOL_ID,
+                        layer.shapeId);
+            } else if ("propagandaBeams2".equals(layer.name)) {
+                foundSecondBeam = true;
+                assertEquals(OriginalFlashAnimationAssets.CITY_PROPAGANDA_BEAMS_SYMBOL_ID,
+                        layer.shapeId);
+            }
+        }
+        assertTrue("City source timeline is missing its first propaganda beam", foundFirstBeam);
+        assertTrue("City source timeline is missing its second propaganda beam", foundSecondBeam);
+        assertEquals(18, overlays.get(
+                OriginalFlashAnimationAssets.CITY_PROPAGANDA_BEAMS_SYMBOL_ID).getFrameCount());
+
+        Set<Integer> beamShapeIds = OriginalFlashAnimationAssets.collectShapeIds(
+                Collections.<String, FlashAnimationTimeline>emptyMap(), overlays,
+                shapeId -> Files.isRegularFile(shapeAsset(shapeId)));
+        assertTrue("Original propaganda beam artwork is missing from the Flash atlas",
+                beamShapeIds.contains(1307));
+    }
+
+    @Test
     public void centerDialogUsesSourceResearchAndMassMediaFramesAndArtwork() throws IOException {
         JsonValue scene = loadScene();
         FlashAnimationTimeline centerScreen = OriginalFlashAnimationAssets.loadTimelineBySymbolId(

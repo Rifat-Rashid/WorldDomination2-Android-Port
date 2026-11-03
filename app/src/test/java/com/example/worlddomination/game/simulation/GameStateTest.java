@@ -1968,6 +1968,41 @@ public final class GameStateTest {
         assertEquals(450 + expectedPlayerGain, attacker.populationMillions);
         assertEquals(defenderPopulationBefore - transfer, defender.populationMillions);
         assertTrue(attacker.score > 0);
+        assertEquals(1, state.getLastTurnPropagandaEvents().size());
+        GameState.PropagandaEvent event = state.getLastTurnPropagandaEvents().get(0);
+        assertEquals(attacker.id, event.attackerPlayerId);
+        assertEquals(defender.id, event.targetPlayerId);
+        assertEquals(0, event.targetCityIndex);
+        assertEquals(transfer, event.transferredMillions);
+        assertEquals(0, event.targetLossSequenceIndex);
+    }
+
+    @Test
+    public void repeatedPropagandaOnOneCityRetainsSourceBeamOrderAndClearsNextTurn() {
+        GameState state = new GameState(1, 329L, false);
+        GameState.PlayerState defender = state.getPlayerState(1);
+
+        for (int index = 0; index < 2; index++) {
+            state.selectAction(GameState.Action.PROPAGANDA);
+            assertTrue(state.configurePropaganda(defender.id, 2));
+            assertTrue(state.acceptSelectedAction());
+        }
+        state.confirmTurn();
+
+        assertEquals(2, state.getLastTurnPropagandaEvents().size());
+        GameState.PropagandaEvent first = state.getLastTurnPropagandaEvents().get(0);
+        GameState.PropagandaEvent second = state.getLastTurnPropagandaEvents().get(1);
+        assertEquals(2, first.targetCityIndex);
+        assertEquals(2, second.targetCityIndex);
+        assertEquals(0, first.targetLossSequenceIndex);
+        assertEquals(1, second.targetLossSequenceIndex);
+
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+        assertTrue(state.getLastTurnPropagandaEvents().isEmpty());
     }
 
     @Test
