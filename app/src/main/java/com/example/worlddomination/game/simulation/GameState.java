@@ -2451,9 +2451,23 @@ public final class GameState {
                 }
             }
         }
+        // The Flash applies battle and propaganda population changes before
+        // Presenter.updatePlayerVars_2. If the human is eliminated, that
+        // result phase is skipped, including research and production.
+        applyPopulationChanges(populationChanges);
+        for (PlayerState player : players) {
+            if (player.alive && player.populationMillions <= 0) {
+                eliminatePlayer(player);
+            }
+        }
+        boolean humanSurvivedBattle = getHuman().alive;
+        if (humanSurvivedBattle) {
+            applyBiologicalEffects(biologicalEffects);
+        }
         // updatePlayerVars_2 applies propaganda hostility after doTR_from_battle
         // has finished all of its score draws.
-        for (ActionOrder order : propagandaOrders) {
+        for (ActionOrder order : humanSurvivedBattle ? propagandaOrders
+                : Collections.<ActionOrder>emptyList()) {
             PlayerState attacker = playerById(order.playerId);
             PlayerState defender = playerById(order.targetPlayerId);
             applyPropagandaHostilityEffects(attacker, defender);
@@ -2461,7 +2475,8 @@ public final class GameState {
         // updatePlayerVars_2 settles all research results in player order before
         // updatePlayerVars_3 handles any production purchases. Keeping these as
         // separate passes preserves the shared score and purchase RNG sequence.
-        for (int playerIndex = 0; playerIndex < players.length; playerIndex++) {
+        for (int playerIndex = 0; humanSurvivedBattle
+                && playerIndex < players.length; playerIndex++) {
             PlayerState actor = players[playerIndex];
             if (!actor.alive) {
                 continue;
@@ -2475,7 +2490,8 @@ public final class GameState {
                 }
             }
         }
-        for (int playerIndex = 0; playerIndex < players.length; playerIndex++) {
+        for (int playerIndex = 0; humanSurvivedBattle
+                && playerIndex < players.length; playerIndex++) {
             PlayerState actor = players[playerIndex];
             if (!actor.alive) {
                 continue;
@@ -2500,9 +2516,9 @@ public final class GameState {
                 }
             }
         }
-        applyBiologicalEffects(biologicalEffects);
-        applyPopulationChanges(populationChanges);
-        clearExpiredPreparedAttacks(turnOrders);
+        if (humanSurvivedBattle) {
+            clearExpiredPreparedAttacks(turnOrders);
+        }
         for (PlayerState player : players) {
             player.religion = Math.min(100, Math.max(0, player.religion));
             player.turnMoneyMillions = player.moneyMillions;
