@@ -34,28 +34,33 @@ public final class ResourceMenuRenderer implements Disposable {
         text.update(state);
         batch.setColor(Color.WHITE);
         batch.draw(background, bounds.x, bounds.y, bounds.width, bounds.height);
-        label(batch, bounds, "RESOURCE MENU", 9f, 9f, 12.5f, Color.WHITE, false);
-        label(batch, bounds, text.getBudget(), 357f, 16f, 6.8f, INK, true);
-        label(batch, bounds, "Resource Information", 237f, 49f, 6.9f, Color.WHITE, false);
-        label(batch, bounds, "Population:", 237f, 67f, 7.4f, Color.WHITE, false);
-        label(batch, bounds, text.getPopulation(), 357f, 67f, 7.4f, Color.WHITE, true);
-        label(batch, bounds, "Resource:", 237f, 82f, 7.4f, Color.WHITE, false);
-        label(batch, bounds, "OIL", 357f, 82f, 7.4f, Color.WHITE, true);
-        label(batch, bounds, "Estimated income:", 237f, 117f, 7.4f, ORANGE, false);
-        label(batch, bounds, text.getIncome(), 357f, 130f, 10.5f, ORANGE, true);
-        label(batch, bounds, "CANCEL", 76f, 255f, 7.5f, Color.WHITE, true);
-        label(batch, bounds, "ACCEPT", 327f, 255f, 7.5f, Color.WHITE, true);
+        label(batch, bounds, "RESOURCE MENU", 9f, 9f, 12.5f, 190f, Color.WHITE, false);
+        label(batch, bounds, text.getBudget(), 357f, 16f, 6.8f, 140f, INK, true);
+        label(batch, bounds, "Resource Information", 237f, 49f, 6.9f, 120f, Color.WHITE, false);
+        label(batch, bounds, "Population:", 237f, 67f, 7.4f, 55f, Color.WHITE, false);
+        label(batch, bounds, text.getPopulation(), 357f, 67f, 7.4f, 60f, Color.WHITE, true);
+        label(batch, bounds, "Resource:", 237f, 82f, 7.4f, 55f, Color.WHITE, false);
+        label(batch, bounds, "OIL", 357f, 82f, 7.4f, 60f, Color.WHITE, true);
+        label(batch, bounds, "Estimated income:", 237f, 117f, 7.4f, 120f, ORANGE, false);
+        label(batch, bounds, text.getIncome(), 357f, 130f, 10.5f, 120f, ORANGE, true);
+        label(batch, bounds, "CANCEL", 76f, 255f, 7.5f, 45f, Color.WHITE, true);
+        label(batch, bounds, "ACCEPT", 327f, 255f, 7.5f, 45f, Color.WHITE, true);
         batch.setColor(Color.WHITE);
     }
 
     private void label(SpriteBatch batch, Rectangle bounds, String value,
-                       float x, float top, float capHeight, Color color, boolean right) {
+                       float x, float top, float capHeight, float maxSourceWidth,
+                       Color color, boolean right) {
         float scaleX = bounds.width / FlashCenterUiRenderer.ART_WIDTH;
         float scaleY = bounds.height / FlashCenterUiRenderer.ART_HEIGHT;
         font.getData().setScale(1f);
         font.getData().setScale(capHeight * scaleY / font.getCapHeight());
         font.setColor(color);
         layout.setText(font, value);
+        if (layout.width > maxSourceWidth * scaleX) {
+            font.getData().setScale(font.getScaleX() * maxSourceWidth * scaleX / layout.width);
+            layout.setText(font, value);
+        }
         float targetX = bounds.x + x * scaleX;
         if (right) {
             targetX -= layout.width;
