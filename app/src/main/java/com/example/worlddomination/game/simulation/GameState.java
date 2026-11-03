@@ -2400,8 +2400,14 @@ public final class GameState {
         }
         clearPreviousBiologicalEffects();
         long[] spyMoneyBases = new long[players.length];
+        Map<Integer, Map<String, Integer>> spyWeaponStockBases = new LinkedHashMap<>();
         for (PlayerState player : players) {
             spyMoneyBases[player.id] = player.moneyMillions;
+            Map<String, Integer> weaponStocks = new LinkedHashMap<>();
+            for (WeaponState weapon : player.weapons.values()) {
+                weaponStocks.put(weapon.definition.name, weapon.inStock);
+            }
+            spyWeaponStockBases.put(player.id, weaponStocks);
         }
         List<ActionOrder> resolvedDefenses = new ArrayList<>();
         List<BiologicalEffect> biologicalEffects = new ArrayList<>();
@@ -2428,7 +2434,7 @@ public final class GameState {
                 }
                 if (order.action == Action.ATTACK) {
                     resolveAttack(order, turnOrders, populationChanges,
-                            spyMoneyBases, spyResultMessages);
+                            spyMoneyBases, spyWeaponStockBases, spyResultMessages);
                 } else if (order.action == Action.PREPARED_ATTACK) {
                     resolvePreparedAttack(order, resolvedDefenses, biologicalEffects,
                             populationChanges);
@@ -2938,6 +2944,7 @@ public final class GameState {
     private void resolveAttack(ActionOrder order, List<ActionOrder> turnOrders,
                                TurnPopulationChanges populationChanges,
                                long[] spyMoneyBases,
+                               Map<Integer, Map<String, Integer>> spyWeaponStockBases,
                                List<PlayerMessage> spyResultMessages) {
         PlayerState attacker = playerById(order.playerId);
         PlayerState defender = playerById(order.targetPlayerId);
@@ -2955,7 +2962,8 @@ public final class GameState {
         }
         if (spyMission) {
             resolveSpyAttack(attacker, defender, weapon, turnOrders,
-                    spyMoneyBases[defender.id], spyResultMessages);
+                    spyMoneyBases[defender.id], spyWeaponStockBases.get(defender.id),
+                    spyResultMessages);
             weapon.inStock--;
             order.actionBuildingResolved = true;
             lastTurnSpyMissions.add(new SpyMissionEvent(attacker.id, defender.id,
@@ -3516,6 +3524,7 @@ public final class GameState {
     private void resolveSpyAttack(PlayerState attacker, PlayerState defender,
                                   WeaponState spy, List<ActionOrder> turnOrders,
                                   long sourceMoneyBase,
+                                  Map<String, Integer> sourceWeaponStock,
                                   List<PlayerMessage> resultMessages) {
         int level = spy.definition.level;
         int[] statistics = SPY_STATISTICS[level - 1];
@@ -3523,9 +3532,10 @@ public final class GameState {
         int moneyPercent = level * 10
                 + random.nextInt(statistics[1] - level * 10 + 1);
         // Sub_presenter creates every spy result array before Presenter applies
-        // any of them, so concurrent missions calculate their offer from the
-        // same pre-battle defender balance. The transfer below still clamps to
-        // the defender's live balance, as the source result handler does.
+        // any of them, so concurrent missions calculate their offers and theft
+        // candidates from the same pre-battle defender snapshot. Transfers and
+        // stock removal below still clamp to live balances, as the source result
+        // handler does.
         long moneyAmount = Math.round((sourceMoneyBase / 100.0d) * moneyPercent);
         moneyAmount = Math.min(moneyAmount, SPY_MONEY_CAP[difficulty]);
         if (defender.specialPerson) {
@@ -3556,7 +3566,9 @@ public final class GameState {
         for (int index = defenderWeapons.size() - 1; index >= 0; index--) {
             WeaponState targetWeapon = defenderWeapons.get(index);
             int maximumTargetLevel = defender.specialPerson ? 1 : level;
-            if (targetWeapon.inStock > 0 && targetWeapon.definition.level <= maximumTargetLevel
+            Integer sourceStock = sourceWeaponStock.get(targetWeapon.definition.name);
+            if (sourceStock != null && sourceStock > 0
+                    && targetWeapon.definition.level <= maximumTargetLevel
                     && !"spy".equals(targetWeapon.definition.type)
                     // Source counter weapons live in WeaponStock.counterArr,
                     // outside the weaponArr searched by createSpyStealArray.
