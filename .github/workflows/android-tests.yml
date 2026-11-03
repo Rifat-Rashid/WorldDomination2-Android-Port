@@ -222,6 +222,12 @@ jobs:
           - id: source-leader-portrait-order-tests
             check: Original leader portrait order and Bin Loader selection
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.OriginalFlashAnimationAssetsTest.setupAndGameplayPortraitsFollowTheSourceLeaderCardOrder" --tests "com.example.worlddomination.game.assets.OriginalFlashAnimationAssetsTest.binLoaderIsSelectableWithHisOriginalPortraitOnTheFirstCarouselPage"'
+          - id: action-building-nested-playback-tests
+            check: Source pump research and factory playback
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashActionBuildingAnimationTest"'
+          - id: action-building-animated-artwork-tests
+            check: Original animated building atlas completeness
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.OriginalFlashAnimationAssetsTest.animatedBuildingClipsRetainAllSourceFramesAndCachedArtwork"'
           - id: scroll-pane-tests
             check: Independent panel scrolling tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.ScrollPaneStateTest"'

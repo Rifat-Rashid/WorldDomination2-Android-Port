@@ -659,6 +659,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         for (FlashActionBuildingAnimation animation : actionBuildingAnimations) {
             animation.tick();
+            animation.revealAction(revealedAction);
         }
         if (turnPlaybackSequence.isWaitingForActionLabels()) {
             return;
@@ -941,13 +942,15 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 game.getLastTurnActionBuildings().size());
         for (GameState.ActionBuildingEvent event : game.getLastTurnActionBuildings()) {
             resolvedActions.add(event.action);
+            FlashActionBuildingAnimation reused = null;
             for (int index = actionBuildingAnimations.size() - 1; index >= 0; index--) {
                 FlashActionBuildingAnimation previous = actionBuildingAnimations.get(index);
                 if (previous.playerId == event.playerId && previous.slot == event.slot) {
+                    reused = previous;
                     actionBuildingAnimations.remove(index);
                 }
             }
-            actionBuildingAnimations.add(new FlashActionBuildingAnimation(event));
+            actionBuildingAnimations.add(new FlashActionBuildingAnimation(event, reused));
         }
         turnPlaybackSequence.begin(resolvedActions);
     }

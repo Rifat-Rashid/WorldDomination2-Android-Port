@@ -75,6 +75,33 @@ public final class OriginalFlashAnimationAssetsTest {
     }
 
     @Test
+    public void animatedBuildingClipsRetainAllSourceFramesAndCachedArtwork() throws IOException {
+        JsonValue scene = loadScene();
+        Map<String, FlashAnimationTimeline> timelines = OriginalFlashAnimationAssets.loadTimelines(scene);
+        Map<Integer, FlashAnimationTimeline> nested = OriginalFlashAnimationAssets.loadNestedTimelines(
+                scene, timelines.get(OriginalFlashAnimationAssets.ACTION_BUILDINGS_TIMELINE));
+        Set<Integer> cached = OriginalFlashAnimationAssets.collectShapeIds(
+                Collections.emptyMap(), nested,
+                shapeId -> Files.isRegularFile(shapeAsset(shapeId)));
+        int[][] expected = {{5334, 31}, {3707, 25}, {3996, 50}};
+        for (int[] clip : expected) {
+            FlashAnimationTimeline timeline = nested.get(clip[0]);
+            assertNotNull("Missing original animated building " + clip[0], timeline);
+            assertEquals(clip[1], timeline.getFrameCount());
+            for (int frameIndex = 0; frameIndex < clip[1]; frameIndex++) {
+                FlashAnimationTimeline.Frame frame = timeline.getFrame(frameIndex);
+                if (frame == null) {
+                    continue;
+                }
+                for (FlashAnimationTimeline.Layer layer : frame.layers) {
+                    assertTrue("Animated art missing from cached atlas: " + layer.shapeId,
+                            cached.contains(layer.shapeId) || nested.containsKey(layer.shapeId));
+                }
+            }
+        }
+    }
+
+    @Test
     public void cityTimelinesExposeOriginalTwoPropagandaBeamLayersAndFrames()
             throws IOException {
         JsonValue scene = loadScene();

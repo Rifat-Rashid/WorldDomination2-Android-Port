@@ -97,15 +97,16 @@ public final class FlashBattleUnitRenderer {
                     animation.playerId, animation.slot);
             actionBuildingTransformScratch[0].setIdentity();
             drawActionBuildingFrame(batch, mapBounds, frame, position.x, position.y,
-                    animation.playerId, animation.religionCode, animation.getAlpha(), 0);
+                    animation, animation.getAlpha(), 0);
         }
         batch.setColor(com.badlogic.gdx.graphics.Color.WHITE);
     }
 
     private void drawActionBuildingFrame(SpriteBatch batch, Rectangle mapBounds,
                                          FlashAnimationTimeline.Frame frame,
-                                         float sourceX, float sourceY, int playerId,
-                                         String religionCode, float parentAlpha, int depth) {
+                                         float sourceX, float sourceY,
+                                         FlashActionBuildingAnimation animation,
+                                         float parentAlpha, int depth) {
         if (frame == null || parentAlpha <= 0f
                 || depth >= MAX_ACTION_BUILDING_CLIP_DEPTH) {
             return;
@@ -125,7 +126,7 @@ public final class FlashBattleUnitRenderer {
                 float width = region.getRegionWidth() * mapScale;
                 float height = region.getRegionHeight() * mapScale;
                 float x = BattlefieldCityLayout.sourceX(mapBounds,
-                        sourceX + transformed.tx, playerId);
+                        sourceX + transformed.tx, animation.playerId);
                 float top = BattlefieldCityLayout.sourceY(mapBounds,
                         sourceY + transformed.ty);
                 batch.setColor(1f, 1f, 1f, alpha);
@@ -139,12 +140,13 @@ public final class FlashBattleUnitRenderer {
             if (nested == null || nested.getFrameCount() == 0) {
                 continue;
             }
-            FlashAnimationTimeline.Frame nestedFrame = nested.getFrameByLabel(religionCode);
+            FlashAnimationTimeline.Frame nestedFrame = nested.getFrameByLabel(animation.religionCode);
             if (nestedFrame == null) {
-                nestedFrame = nested.getFrame(0);
+                nestedFrame = nested.getFrame(animation.getNestedFrameIndex(
+                        nested.symbolId, nested.getFrameCount()));
             }
             drawActionBuildingFrame(batch, mapBounds, nestedFrame, sourceX, sourceY,
-                    playerId, religionCode, alpha, depth + 1);
+                    animation, alpha, depth + 1);
         }
     }
 
