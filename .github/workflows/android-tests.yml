@@ -228,6 +228,12 @@ jobs:
           - id: action-building-animated-artwork-tests
             check: Original animated building atlas completeness
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.OriginalFlashAnimationAssetsTest.animatedBuildingClipsRetainAllSourceFramesAndCachedArtwork"'
+          - id: resource-dialog-live-text-tests
+            check: Resource dialog live source values and budget
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.ResourceMenuTextTest"'
+          - id: resource-dialog-clarity-assets-tests
+            check: Resource dialog high resolution art and font coverage
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.OriginalUiAssetManifestTest.resourceDialogUsesHighResolutionArtAndSeparateScalableText"'
           - id: scroll-pane-tests
             check: Independent panel scrolling tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.ScrollPaneStateTest"'

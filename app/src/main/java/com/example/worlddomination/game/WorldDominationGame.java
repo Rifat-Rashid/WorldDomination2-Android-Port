@@ -9,6 +9,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.example.worlddomination.game.rendering.ResourceMenuRenderer;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
@@ -271,6 +272,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private SpriteBatch batch;
     private ShapeRenderer shapes;
     private BitmapFont font;
+    private ResourceMenuRenderer resourceMenuRenderer;
     private OriginalUiAssets uiAssets;
     private OriginalSplashAssets splashAssets;
     private OriginalCityAssets cityAssets;
@@ -379,6 +381,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         batch = new SpriteBatch();
         shapes = new ShapeRenderer();
         font = new BitmapFont();
+        resourceMenuRenderer = new ResourceMenuRenderer();
         font.setColor(Color.WHITE);
         uiAssets = new OriginalUiAssets();
         splashAssets = new OriginalSplashAssets();
@@ -2467,24 +2470,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         if (action == GameState.Action.RESOURCES) {
             batch.setProjectionMatrix(camera.combined);
             batch.begin();
-            batch.draw(uiAssets.resourceModal, modal.x, modal.y,
-                    modal.width, modal.height);
+            resourceMenuRenderer.draw(batch, modal, game);
             batch.end();
-            if (game.getHuman().moneyMillions != 65) {
-                shapes.setProjectionMatrix(camera.combined);
-                shapes.begin(ShapeRenderer.ShapeType.Filled);
-                shapes.setColor(MODAL_ORANGE);
-                shapes.rect(modal.x + modal.width * 0.60f,
-                        modal.y + modal.height * 0.88f,
-                        modal.width * 0.34f, modal.height * 0.07f);
-                shapes.end();
-                batch.begin();
-                font.setColor(Color.BLACK);
-                font.draw(batch, "Budget: " + formatMillions(game.getHuman().moneyMillions),
-                        modal.x + modal.width * 0.62f,
-                        modal.y + modal.height * 0.93f);
-                batch.end();
-            }
             return;
         }
         if (action == GameState.Action.RESEARCH) {
@@ -4854,6 +4841,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         if (font != null) {
             font.dispose();
+        }
+        if (resourceMenuRenderer != null) {
+            resourceMenuRenderer.dispose();
         }
         if (shapes != null) {
             shapes.dispose();
