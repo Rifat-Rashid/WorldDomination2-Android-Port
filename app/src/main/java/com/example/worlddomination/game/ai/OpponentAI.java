@@ -432,7 +432,7 @@ public final class OpponentAI {
         double attackTransferredToProduction = 0;
         String preparedCarrier = player.getPreparedCarrierName();
         if (preparedCarrier != null) {
-            if (state.getAvailablePreparedPayloads(player.id, preparedCarrier).isEmpty()) {
+            if (!sourcePayloadAvailableForAttackScore(player, preparedCarrier)) {
                 attackTransferredToProduction = attack;
                 attack = -999;
             } else {
@@ -548,6 +548,43 @@ public final class OpponentAI {
             }
         }
         return scores;
+    }
+
+    /**
+     * Mirrors WeaponStock.payloadAvailable as used by Model.calcPoints. This
+     * source score check is looser than launch validation: rockets test catalog
+     * levels without checking payload category or stock; planes test payload
+     * stock plus carrier level, while ships/submarines test payload stock alone.
+     * These checks use raw inStock and do not require the item to be active.
+     */
+    private static boolean sourcePayloadAvailableForAttackScore(
+            GameState.PlayerState player, String carrierName) {
+        GameState.WeaponState carrier = player.getWeapons().get(carrierName);
+        if (carrier == null) {
+            return false;
+        }
+        String carrierType = carrier.definition.type;
+        if ("space".equals(carrierType)) {
+            GameState.WeaponState satellite = player.getWeapons().get("specialLoad");
+            return satellite != null && satellite.inStock > 0;
+        }
+        for (GameState.WeaponState candidate : player.getWeapons().values()) {
+            if ("rocket".equals(carrierType)
+                    && candidate.definition.level >= carrier.definition.level) {
+                return true;
+            }
+            boolean payloadInStock = "rocketload".equals(candidate.definition.type)
+                    && candidate.inStock > 0;
+            if ("plane".equals(carrierType) && payloadInStock
+                    && carrier.definition.level >= candidate.definition.level) {
+                return true;
+            }
+            if (("sub".equals(carrierType) || "ship".equals(carrierType))
+                    && payloadInStock) {
+                return true;
+            }
+        }
+        return false;
     }
 
     static double scoreForAction(GameState state, GameState.PlayerState player,

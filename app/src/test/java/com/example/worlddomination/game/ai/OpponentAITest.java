@@ -1095,6 +1095,52 @@ public final class OpponentAITest {
     }
 
     @Test
+    public void readyCarrierAttackScoreUsesSourcePayloadAvailableRules() throws Exception {
+        GameState state = null;
+        for (long seed = 920; seed < 1420; seed++) {
+            GameState candidate = new GameState(1, seed);
+            GameState.PlayerState candidateActor = candidate.getPlayerState(1);
+            if (!candidateActor.isSpecialPerson() && !candidateActor.isSuicidePerson()) {
+                state = candidate;
+                break;
+            }
+        }
+        assertNotNull("seed sweep should find a regular first opponent", state);
+        GameState.PlayerState actor = state.getPlayerState(1);
+        double sourceBaseScore = OpponentAI.baseAttackScore(state, actor);
+
+        for (String carrierName : Arrays.asList("rocket1", "plane1", "sub", "ship", "space")) {
+            clearWeaponStock(actor);
+            GameState.WeaponState carrier = actor.getWeapons().get(carrierName);
+            carrier.active = true;
+            setPreparedCarrier(actor, carrierName);
+
+            if ("rocket1".equals(carrierName)) {
+                // WeaponStock.payloadAvailable checks weapon levels for rockets,
+                // without checking category, active state, or stock.
+                assertTrue(state.getAvailablePreparedPayloads(actor.id, carrierName).isEmpty());
+            } else {
+                assertEquals("empty source payload stock for " + carrierName,
+                        -999.0,
+                        OpponentAI.scoreForAction(state, actor, new Random(920L),
+                                GameState.Action.ATTACK), 0.0);
+                GameState.WeaponState payload = actor.getWeapons().get("warhead1");
+                if ("space".equals(carrierName)) {
+                    payload = actor.getWeapons().get("specialLoad");
+                }
+                payload.inStock = 1;
+                payload.active = false;
+                assertTrue(state.getAvailablePreparedPayloads(actor.id, carrierName).isEmpty());
+            }
+
+            assertEquals("source payloadAvailable score for " + carrierName,
+                    sourceBaseScore + 200,
+                    OpponentAI.scoreForAction(state, actor, new Random(920L),
+                            GameState.Action.ATTACK), 0.0);
+        }
+    }
+
+    @Test
     public void preCounterScoreUsesTheThreateningEnemyRegardAndLowPopulationBonus() {
         GameState state = null;
         for (long seed = 0; seed < 500; seed++) {
