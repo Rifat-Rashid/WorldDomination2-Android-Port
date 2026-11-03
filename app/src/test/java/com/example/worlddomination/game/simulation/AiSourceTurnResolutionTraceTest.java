@@ -152,6 +152,37 @@ public final class AiSourceTurnResolutionTraceTest {
             "24:2", "4:0", "24:14", "4:1", "24:18", "4:2", "24:5", "4:3", "24:16"
     );
 
+    // Source turn 23 has 214 randRange calls. One direct casualty roll and
+    // four empty-range calls map to nextDouble; the remaining 209 are bounded.
+    private static final List<String> EXPECTED_TWENTY_THIRD_TURN_RANDOM_DRAWS = Arrays.asList(
+            "91:44", "3:2", "91:9", "3:2", "91:1", "3:0", "91:45", "3:0",
+            "61:39", "61:30", "4:2", "21:6", "61:11", "61:23", "61:9", "4:2",
+            "21:13", "61:50", "61:21", "2:0", "3:0", "4:0", "141:97", "61:55",
+            "61:17", "1:0", "4:1", "4:3", "21:1", "2:0", "3:2", "1:0",
+            "141:7", "4:3", "21:13", "61:16", "61:23", "61:49", "61:28", "6:0",
+            "6:4", "6:2", "6:4", "6:0", "51:2", "11:1", "11:0", "11:2",
+            "11:3", "11:5", "11:1", "11:4", "11:3", "11:0", "11:2", "11:9",
+            "11:0", "11:6", "11:10", "11:3", "51:13", "51:45", "4:1", "24:18",
+            "4:1", "24:6", "4:0", "24:1", "4:1", "24:10", "4:2", "24:0",
+            "4:1", "24:9", "4:1", "24:16", "4:3", "24:5", "4:1", "24:22",
+            "4:3", "24:15", "4:1", "24:2", "4:2", "24:9", "4:3", "24:16",
+            "4:1", "24:9", "4:0", "24:11", "4:2", "24:10", "4:1", "24:5",
+            "4:0", "24:21", "4:1", "24:8", "4:3", "24:12", "4:3", "24:10",
+            "4:1", "24:5", "4:0", "24:0", "1:0", "51:19", "2:1", "24:17",
+            "2:0", "24:5", "2:1", "24:18", "2:1", "24:4", "2:1", "24:1",
+            "2:0", "24:7", "2:1", "24:9", "2:1", "24:4", "2:1", "24:23",
+            "2:1", "24:5", "2:1", "24:10", "2:1", "24:14", "2:1", "24:5",
+            "2:0", "24:1", "2:1", "24:2", "2:0", "24:13", "2:1", "24:5",
+            "2:0", "24:12", "2:0", "24:1", "2:1", "24:8", "2:1", "24:17",
+            "2:0", "24:22", "2:0", "24:18", "2:0", "24:8", "2:0", "24:17",
+            "2:1", "24:7", "2:0", "24:2", "2:0", "24:21", "2:0", "24:10",
+            "2:1", "24:20", "2:0", "24:17", "2:0", "24:5", "2:1", "51:7",
+            "2:0", "2:0", "2:1", "2:1", "2:0", "2:1", "2:1", "2:1",
+            "2:1", "2:1", "2:1", "2:0", "2:0", "2:0", "2:1", "2:0",
+            "2:1", "2:1", "2:1", "2:1", "2:0", "2:1", "2:0", "2:1",
+            "2:1", "2:0", "2:0", "2:1", "2:1", "2:0", "2:1", "2:1",
+            "51:20");
+
     private static final List<String> EXPECTED_RANDOM_DRAWS = Arrays.asList(
             "91:30", "3:2", "91:52", "3:0", "91:0", "3:2", "91:31", "3:1",
             "2:0", "3:1", "2:1", "141:43", "4:0", "21:20", "61:55", "4:0",
@@ -2024,6 +2055,79 @@ public final class AiSourceTurnResolutionTraceTest {
                 },
                 new int[][]{
                         {0, 0, 0, 0, 105},
+                        {59, 97, 54, 84, 138},
+                        {62, 85, 115, 83, 130},
+                        {70, 114, 71, 100, 115},
+                        {107, 41, 67, 43, 167}
+                });
+    }
+
+    @Test
+    public void hardSeededTwentyThirdTurnMatchesSourceActionsCombatAndRandomTrace() {
+        GameSetup setup = new GameSetup(17L);
+        setup.setDifficulty(2);
+        for (int leader : new int[]{0, 9, 18, 5}) {
+            setup.toggleOpponent(leader);
+        }
+        RecordingRandom random = new RecordingRandom(setup.copyGameplayRandom());
+        GameState game = new GameState(setup, random);
+        random.clear();
+        for (int priorTurn = 0; priorTurn < 22; priorTurn++) {
+            queueHumanTurn(game);
+            game.confirmTurn();
+            random.clear();
+        }
+
+        // Mass Media is bioload-disabled after turn 22; use a valid 1% soldier
+        // investment as the human's second action for this source trace.
+        game.selectAction(GameState.Action.RESOURCES);
+        assertTrue(game.acceptSelectedAction());
+        game.selectAction(GameState.Action.PRODUCTION);
+        assertTrue(game.configureProduction("soldier", 1));
+        assertTrue(game.acceptSelectedAction());
+        game.confirmTurn();
+
+        assertEquals(23, game.getTurn());
+        assertEquals("source turn-twenty-three bounded random trace; actual=" + random.draws,
+                EXPECTED_TWENTY_THIRD_TURN_RANDOM_DRAWS, random.draws);
+        assertEquals("one direct casualty roll and four empty source ranges use nextDouble",
+                5, random.rawDraws);
+        assertEquals(Arrays.asList(GameState.Action.RESOURCES, GameState.Action.PRODUCTION),
+                game.getPlayerState(0).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.PRODUCTION, GameState.Action.MASS_MEDIA),
+                game.getPlayerState(1).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.PRODUCTION,
+                        GameState.Action.PREPARED_ATTACK),
+                game.getPlayerState(2).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.ATTACK, GameState.Action.PRODUCTION),
+                game.getPlayerState(3).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.PREPARED_ATTACK,
+                        GameState.Action.PRODUCTION),
+                game.getPlayerState(4).getLastTurnActions());
+        assertEquals("rocket1", game.getPreparedCarrierName(2));
+        assertEquals("plane1", game.getPreparedCarrierName(4));
+
+        List<GameState.CombatEvent> combatEvents = game.getLastTurnCombatEvents();
+        assertEquals("one direct city strike resolves on source turn twenty-three", 1,
+                combatEvents.size());
+        GameState.CombatEvent attack = combatEvents.get(0);
+        assertEquals(GameState.CombatEventType.DIRECT_ATTACK, attack.type);
+        assertEquals(3, attack.attackerPlayerId);
+        assertEquals(0, attack.defenderPlayerId);
+        assertEquals(4, attack.cityIndex);
+        assertEquals("soldier2", attack.weaponName);
+        assertEquals(8, attack.casualtiesMillions);
+
+        assertSeededState(game,
+                new int[][]{
+                        {114, 97, 95, 361080},
+                        {56, 432, 36, 716234},
+                        {27, 475, 39, 974660},
+                        {121, 470, 25, 628634},
+                        {20, 425, 34, 586600}
+                },
+                new int[][]{
+                        {0, 0, 0, 0, 97},
                         {59, 97, 54, 84, 138},
                         {62, 85, 115, 83, 130},
                         {70, 114, 71, 100, 115},
