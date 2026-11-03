@@ -45,6 +45,15 @@ jobs:
           - id: ai-per-player-upkeep-tests
             check: AI per-player upkeep RNG and target timing
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.upkeepRetargetsBeforeReligionDrawAndSkipsEliminatedPlayers" --tests "com.example.worlddomination.game.simulation.GameStateTest.targetEliminatedDuringResultPassIsRetargetedOnNextUpkeep"'
+          - id: ai-production-budget-parity-tests
+            check: AI production invalidates later source budget checks
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.OpponentAITest.productionInvalidatesSourceTurnBudgetBeforeSecondDiplomacyOffer" --tests "com.example.worlddomination.game.ai.OpponentAITest.diplomacyPopulationTiesKeepLastActivePlayerInSourceArrayOrder"'
+          - id: ai-second-slot-retry-tests
+            check: AI retries rejected second-slot candidates
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.OpponentAITest.rejectedInitialSecondSlotCandidateIsRetriedBeforeFallback"'
+          - id: ai-resolved-source-session-tests
+            check: AI thirty-turn resolved source-session traces
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.AiSourceResolvedTurnParityTest"'
           - id: ai-turn-sixteen-source-trace-tests
             check: AI turn sixteen source resolution trace
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.AiSourceTurnResolutionTraceTest.hardSeededSixteenthTurnMatchesSourceAttacksAndCarrierPreparation"'

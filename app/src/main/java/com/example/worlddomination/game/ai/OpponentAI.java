@@ -335,11 +335,9 @@ public final class OpponentAI {
                         && scored.score - 50 > scores.get(1).score;
                 List<Decision> attackPlan = planSourceAttack(state, player, random,
                         duplicateAttack, plannedWeaponUse);
-                if (attackPlan.isEmpty() && firstActionIndex == 0 && index == 0) {
-                    // Model.doTurn calls getTarget on the ActionTarget's initial
-                    // top-ranked action before advancing its score cursor. If
-                    // that first target fails, the loop assigns the same top
-                    // action and asks getTarget again before moving down.
+                if (attackPlan.isEmpty() && index == decisions.size()) {
+                    // Model.doTurn retries the initial candidate for the
+                    // current slot once before advancing its score cursor.
                     attackPlan = planSourceAttack(state, player, random,
                             duplicateAttack, plannedWeaponUse);
                 }
@@ -354,9 +352,9 @@ public final class OpponentAI {
 
             Decision decision = planRankedAction(state, player, scored, random,
                     decisions.size() + 1, plannedWeaponUse);
-            if (decision == null && firstActionIndex == 0 && index == 0) {
-                // A rejected initial target is tested again once by the source
-                // loop before it advances to the next ranked action.
+            if (decision == null && index == decisions.size()) {
+                // A rejected initial candidate for this slot is tested again
+                // once before the source advances to the next ranked action.
                 decision = planRankedAction(state, player, scored, random,
                         decisions.size() + 1, plannedWeaponUse);
             }
@@ -405,6 +403,12 @@ public final class OpponentAI {
     private static void reserve(GameState.PlayerState player, Decision decision) {
         player.turnMoneyMillions = Math.max(0,
                 player.turnMoneyMillions - decision.reservedMillions);
+        if (decision.action == GameState.Action.PRODUCTION) {
+            // Model.getTarget sums an unfilled productionInvestmentArr row.
+            // In the recovered source this turns turnMoney into NaN, so later
+            // research and diplomacy offers fail their strict budget checks.
+            player.invalidateAiTurnMoney();
+        }
     }
 
     static List<ScoredAction> scoreActions(GameState state,
@@ -786,12 +790,12 @@ public final class OpponentAI {
                 // even when the human's funds stay below the sampled threshold.
                 SpyTarget spyTarget = findSpyTarget(state, attacker, random);
                 if (spyTarget != null && spyTarget.cashAlert) {
-                    Decision spyAttack = planCashAlertSpyAttack(state, attacker,
-                            spyTarget, random);
-                    if (spyAttack != null) {
-                        decisions.clear();
-                        decisions.add(spyAttack);
-                    }
+                    // Model.getTarget stages the spy mission in the second slot
+                    // while keeping the ship strike in the first. The second
+                    // slot is rejected as a duplicate attack and the planner
+                    // fills it from the next ranked action. Consume the source
+                    // city/building draws but do not replace the ship strike.
+                    planCashAlertSpyAttack(state, attacker, spyTarget, random);
                 }
                 // A ship may stage a conventional companion in its source
                 // ActionTarget, but doTurn rejects that second-slot attack and
@@ -1588,9 +1592,14 @@ public final class OpponentAI {
 
     static Decision planDiplomacy(GameState state, GameState.PlayerState actor,
                                   Random random) {
+        GameState.PlayerState[] players = state.getPlayers();
         GameState.PlayerState poorestPopulationTarget = null;
         int lowestTargetPopulation = 0;
-        for (GameState.PlayerState target : state.getPlayers()) {
+        // ActionScript's for-in over activePlayerArr visits numeric array keys
+        // from highest to lowest. Preserve that order so population ties keep
+        // the same first target as the source (including its later budget check).
+        for (int index = players.length - 1; index >= 0; index--) {
+            GameState.PlayerState target = players[index];
             if (!isLivingDiplomacyOpponent(actor, target)) {
                 continue;
             }
@@ -1607,7 +1616,8 @@ public final class OpponentAI {
         Integer randomOfferScoreFloor = poorestPopulationTarget == null
                 ? null : lowestTargetPopulation;
         GameState.PlayerState randomOfferTarget = null;
-        for (GameState.PlayerState target : state.getPlayers()) {
+        for (int index = players.length - 1; index >= 0; index--) {
+            GameState.PlayerState target = players[index];
             if (!isLivingDiplomacyOpponent(actor, target)
                     || actor.getDiplomacyOfferedLastTurn(target.id) != 0) {
                 continue;
@@ -1647,7 +1657,9 @@ public final class OpponentAI {
         int option = -1;
         if (chooseOffer) {
             for (int candidate = 0; candidate < 3; candidate++) {
-                if (state.getDiplomacyOptionAmount(candidate) < actor.turnMoneyMillions) {
+                if (!actor.hasInvalidAiTurnMoney()
+                        && state.getDiplomacyOptionAmount(candidate)
+                        < actor.turnMoneyMillions) {
                     option = candidate;
                 }
             }
@@ -1771,6 +1783,9 @@ public final class OpponentAI {
 
     private static Decision planResearch(GameState state, GameState.PlayerState player,
                                         Random random, int slot) {
+        if (player.hasInvalidAiTurnMoney()) {
+            return null;
+        }
         int budget = slot == 2 ? player.turnMoneyMillions
                 : (int) Math.round(player.turnMoneyMillions
                 * randomInclusive(random, 20, 80) / 100.0);

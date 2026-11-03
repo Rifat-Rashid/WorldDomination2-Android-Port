@@ -217,6 +217,7 @@ public final class GameState {
         public int populationMillions;
         public int moneyMillions;
         public int turnMoneyMillions;
+        private boolean aiTurnMoneyInvalid;
         public int religion;
         public long score;
         public int spyReadiness = 25;
@@ -406,6 +407,23 @@ public final class GameState {
         public int getDesiredStock(String weaponName) {
             Integer desire = desiredStock.get(weaponName);
             return desire == null ? 0 : desire;
+        }
+
+        /**
+         * The reference AI's production target sums an empty investment row,
+         * making its remaining ActionScript turnMoney NaN for later targets.
+         */
+        public boolean hasInvalidAiTurnMoney() {
+            return aiTurnMoneyInvalid;
+        }
+
+        /** Marks the source's remaining AI planning budget as NaN. */
+        public void invalidateAiTurnMoney() {
+            aiTurnMoneyInvalid = true;
+        }
+
+        private void resetAiTurnMoneyValidity() {
+            aiTurnMoneyInvalid = false;
         }
 
         public DiplomacyProposal getPendingDiplomacyFrom(int playerId) {
@@ -2548,6 +2566,7 @@ public final class GameState {
         for (PlayerState player : players) {
             player.religion = Math.min(100, Math.max(0, player.religion));
             player.turnMoneyMillions = player.moneyMillions;
+            player.resetAiTurnMoneyValidity();
         }
         tickCeasefires();
         refreshMatchStatus();
@@ -2606,6 +2625,7 @@ public final class GameState {
                 continue;
             }
             player.turnMoneyMillions = player.moneyMillions;
+            player.resetAiTurnMoneyValidity();
         }
     }
 
@@ -3350,6 +3370,20 @@ public final class GameState {
             }
             results.add(new ShipStrikeResult(strike, payload.definition.name,
                     rolledCasualties, intercepted));
+        }
+
+        // Sub_presenter.turnResults builds a second bioHazardDeactivateArray
+        // for every entry in the ship's attack array after it has generated
+        // the strike results. Preserve those source random draws and the
+        // additional deactivation pass before scoring the ship casualties.
+        for (ShipStrike strike : order.shipStrikes) {
+            if (!strike.payloadName.startsWith("bioload")) {
+                continue;
+            }
+            int level = strike.payloadName.charAt(
+                    strike.payloadName.length() - 1) - '0';
+            biologicalEffects.add(createBiologicalEffect(defender,
+                    defender.getCity(strike.cityIndex), level));
         }
 
         attacker.preparedCarrierName = null;

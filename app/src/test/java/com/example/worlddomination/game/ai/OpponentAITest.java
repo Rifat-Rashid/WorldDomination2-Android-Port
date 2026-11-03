@@ -90,6 +90,79 @@ public final class OpponentAITest {
     }
 
     @Test
+    public void productionInvalidatesSourceTurnBudgetBeforeSecondDiplomacyOffer()
+            throws Exception {
+        GameState state = findAiWithNeutralHumanRegard();
+        GameState.PlayerState actor = aiWithNeutralHumanRegard(state);
+        actor.moneyMillions = 130;
+        actor.turnMoneyMillions = 130;
+        actor.populationMillions = 1_000;
+        state.getHuman().moneyMillions = 400;
+        setRegardToward(actor, state.getHuman().id, 66);
+        for (GameState.WeaponState weapon : actor.getWeapons().values()) {
+            weapon.active = false;
+        }
+        for (GameState.PlayerState rival : state.getPlayers()) {
+            if (!rival.human && rival.id != actor.id) {
+                rival.moneyMillions = 20;
+            }
+        }
+
+        List<OpponentAI.ScoredAction> scores = Arrays.asList(
+                new OpponentAI.ScoredAction(GameState.Action.PRODUCTION, 143),
+                new OpponentAI.ScoredAction(GameState.Action.DIPLOMACY, 47),
+                new OpponentAI.ScoredAction(GameState.Action.PROPAGANDA, 42));
+        List<OpponentAI.Decision> decisions = OpponentAI.planScoredActions(state,
+                actor, new SequenceRandom(0, 0, 0, 0, 0, 0, 1), scores);
+
+        assertTrue("a production order must invalidate the remaining source budget",
+                actor.hasInvalidAiTurnMoney());
+        assertEquals(2, decisions.size());
+        assertEquals(GameState.Action.PRODUCTION, decisions.get(0).action);
+        assertEquals("an unaffordable offer falls through to the next ranked action",
+                GameState.Action.PROPAGANDA, decisions.get(1).action);
+    }
+
+    @Test
+    public void rejectedInitialSecondSlotCandidateIsRetriedBeforeFallback()
+            throws Exception {
+        GameState state = gameWithRegularFirstOpponent(7402L);
+        GameState.PlayerState actor = state.getPlayerState(1);
+        actor.moneyMillions = 100;
+        actor.turnMoneyMillions = 100;
+        actor.populationMillions = 1_000_000;
+        state.getHuman().moneyMillions = 20;
+        setRegardToward(actor, state.getHuman().id, 50);
+        for (GameState.PlayerState target : state.getPlayers()) {
+            if (target.id != actor.id) {
+                target.moneyMillions = 20;
+                target.populationMillions = 100;
+            }
+        }
+
+        SequenceRandom random = new SequenceRandom();
+        List<OpponentAI.Decision> decisions = OpponentAI.planScoredActions(state,
+                actor, random, Arrays.asList(
+                        new OpponentAI.ScoredAction(GameState.Action.RESOURCES, 100),
+                        new OpponentAI.ScoredAction(GameState.Action.DIPLOMACY, 90),
+                        new OpponentAI.ScoredAction(GameState.Action.PROPAGANDA, 80)));
+
+        int rejectedDiplomacyTargetDraws = 0;
+        for (GameState.PlayerState target : state.getPlayers()) {
+            if (target.alive && target.id != actor.id
+                    && !actor.hasCeasefireWith(target.id)) {
+                rejectedDiplomacyTargetDraws += 2;
+            }
+        }
+        assertEquals(2, decisions.size());
+        assertEquals(GameState.Action.RESOURCES, decisions.get(0).action);
+        assertEquals("the next ranked action fills the rejected diplomacy slot",
+                GameState.Action.PROPAGANDA, decisions.get(1).action);
+        assertEquals("the source retries the rejected second-slot target once",
+                rejectedDiplomacyTargetDraws, random.getDrawCount());
+    }
+
+    @Test
     public void turnPlannerScoresEveryOpponentBeforePlanningAnyOpponent() {
         long seed = firstOrderSensitiveSeed();
         assertTrue("fixture search must find a turn where interleaving changes AI plans",
@@ -207,6 +280,40 @@ public final class OpponentAITest {
         assertNotNull(decision);
         assertEquals(GameState.Action.DIPLOMACY, decision.action);
         assertEquals(poorest.id, decision.targetPlayerId);
+        assertEquals(5, decision.diplomacyOption);
+    }
+
+    @Test
+    public void diplomacyPopulationTiesKeepLastActivePlayerInSourceArrayOrder()
+            throws Exception {
+        GameState state = findAiWithNeutralHumanRegard();
+        GameState.PlayerState actor = aiWithNeutralHumanRegard(state);
+        actor.populationMillions = 1_000;
+        actor.moneyMillions = 100;
+        actor.turnMoneyMillions = 100;
+        setRegardToward(actor, state.getHuman().id, 50);
+        state.getHuman().populationMillions = 500;
+        state.getHuman().moneyMillions = 100;
+
+        GameState.PlayerState expectedTarget = null;
+        for (GameState.PlayerState target : state.getPlayers()) {
+            if (target.alive && !target.human && target.id != actor.id) {
+                target.populationMillions = 100;
+                target.moneyMillions = 50;
+                if (expectedTarget == null || target.id > expectedTarget.id) {
+                    expectedTarget = target;
+                }
+            }
+        }
+        assertNotNull(expectedTarget);
+        expectedTarget.moneyMillions = 150;
+
+        OpponentAI.Decision decision = OpponentAI.planDiplomacy(state, actor,
+                new SequenceRandom(0, 0, 0, 0));
+
+        assertNotNull("the highest-indexed poorest rival has funds to demand", decision);
+        assertEquals("Flash for-in visits array keys from highest to lowest",
+                expectedTarget.id, decision.targetPlayerId);
         assertEquals(5, decision.diplomacyOption);
     }
 
@@ -365,7 +472,9 @@ public final class OpponentAITest {
         state.getHuman().moneyMillions = 50;
 
         List<Integer> candidateIds = new ArrayList<>();
-        for (GameState.PlayerState target : state.getPlayers()) {
+        GameState.PlayerState[] players = state.getPlayers();
+        for (int index = players.length - 1; index >= 0; index--) {
+            GameState.PlayerState target = players[index];
             if (target.id == actor.id || !target.alive
                     || actor.hasCeasefireWith(target.id)) {
                 continue;
@@ -1561,6 +1670,33 @@ public final class OpponentAITest {
         assertNull(attacker.getPreparedCarrierName());
         assertEquals(0, attacker.getWeaponStockByName("warhead1"));
         assertEquals(0, attacker.getWeaponStockByName("bioload1"));
+    }
+
+    @Test
+    public void readyShipStrikeSurvivesCashAlertForRejectedDuplicateSlot()
+            throws Exception {
+        GameState state = gameWithRegularFirstOpponent(1, 918L);
+        GameState.PlayerState actor = state.getPlayerState(1);
+        configureSourcePreparationScenario(actor, "ship");
+        setPreparedCarrier(actor, "ship");
+        actor.spyReadiness = 100;
+        GameState.WeaponState spy = actor.getWeapons().get("spy1");
+        spy.active = true;
+        spy.inStock = 1;
+        state.getHuman().moneyMillions = 200;
+
+        List<OpponentAI.Decision> decisions = OpponentAI.planScoredActions(state, actor,
+                new SequenceRandom(), Arrays.asList(
+                        new OpponentAI.ScoredAction(GameState.Action.ATTACK, 300),
+                        new OpponentAI.ScoredAction(GameState.Action.RESOURCES, 100)));
+
+        assertEquals(2, decisions.size());
+        assertEquals("the source keeps the staged ship strike in slot one",
+                GameState.Action.PREPARED_ATTACK, decisions.get(0).action);
+        assertEquals("ship", decisions.get(0).weaponName);
+        assertFalse(decisions.get(0).prepareCarrier);
+        assertEquals("the rejected cash-alert attack falls through to Resources",
+                GameState.Action.RESOURCES, decisions.get(1).action);
     }
 
     @Test
