@@ -183,6 +183,25 @@ public final class AiSourceTurnResolutionTraceTest {
             "2:1", "2:0", "2:0", "2:1", "2:1", "2:0", "2:1", "2:1",
             "51:20");
 
+    // Source turn 24 has 117 randRange calls; three combat rolls and one empty
+    // range are consumed as raw nextDouble draws, leaving 113 bounded draws.
+    private static final List<String> EXPECTED_TWENTY_FOURTH_TURN_RANDOM_DRAWS = Arrays.asList(
+            "91:54", "3:0", "91:24", "3:1", "91:53", "3:2", "91:88", "3:1",
+            "4:0", "21:17", "61:5", "3:0", "1:0", "1:0", "141:58", "5:2",
+            "5:3", "5:2", "5:0", "61:58", "61:58", "1:0", "4:1", "3:0",
+            "1:0", "1:0", "141:55", "5:3", "5:0", "5:4", "5:4", "6:5",
+            "6:4", "6:1", "6:4", "6:2", "51:9", "51:23", "51:25", "11:8",
+            "11:5", "11:3", "11:2", "11:2", "11:7", "11:6", "11:4", "11:9",
+            "11:10", "11:4", "11:7", "11:5", "11:7", "11:5", "51:10", "51:10",
+            "51:29", "4:2", "24:3", "4:1", "24:20", "4:1", "24:16", "4:2",
+            "24:1", "4:2", "24:14", "4:1", "24:16", "4:0", "24:17", "4:1",
+            "24:11", "4:2", "24:3", "4:3", "24:23", "4:2", "24:10", "4:3",
+            "24:11", "4:3", "24:23", "4:2", "24:18", "4:1", "24:13", "4:3",
+            "24:19", "4:0", "24:18", "4:3", "24:22", "4:0", "24:6", "4:0",
+            "24:16", "4:1", "24:13", "4:2", "24:5", "4:3", "24:15", "4:1",
+            "24:11", "4:3", "24:0", "4:2", "24:2", "4:0", "24:4", "4:1",
+            "24:0");
+
     private static final List<String> EXPECTED_RANDOM_DRAWS = Arrays.asList(
             "91:30", "3:2", "91:52", "3:0", "91:0", "3:2", "91:31", "3:1",
             "2:0", "3:1", "2:1", "141:43", "4:0", "21:20", "61:55", "4:0",
@@ -2133,6 +2152,94 @@ public final class AiSourceTurnResolutionTraceTest {
                         {70, 114, 71, 100, 115},
                         {107, 41, 67, 43, 167}
                 });
+    }
+
+    @Test
+    public void hardSeededTwentyFourthTurnMatchesSourceActionsCombatAndRandomTrace() {
+        GameSetup setup = new GameSetup(17L);
+        setup.setDifficulty(2);
+        for (int leader : new int[]{0, 9, 18, 5}) {
+            setup.toggleOpponent(leader);
+        }
+        RecordingRandom random = new RecordingRandom(setup.copyGameplayRandom());
+        GameState game = new GameState(setup, random);
+        random.clear();
+        for (int priorTurn = 0; priorTurn < 22; priorTurn++) {
+            queueHumanTurn(game);
+            game.confirmTurn();
+            random.clear();
+        }
+
+        for (int turn = 0; turn < 2; turn++) {
+            game.selectAction(GameState.Action.RESOURCES);
+            assertTrue(game.acceptSelectedAction());
+            game.selectAction(GameState.Action.PRODUCTION);
+            assertTrue(game.configureProduction("soldier", 1));
+            assertTrue(game.acceptSelectedAction());
+            game.confirmTurn();
+            if (turn == 0) {
+                random.clear();
+            }
+        }
+
+        assertEquals(24, game.getTurn());
+        assertEquals("source turn-twenty-four bounded random trace; actual="
+                        + random.draws,
+                EXPECTED_TWENTY_FOURTH_TURN_RANDOM_DRAWS, random.draws);
+        assertEquals("three combat rolls and one empty source range use nextDouble",
+                4, random.rawDraws);
+        assertEquals(Arrays.asList(GameState.Action.RESOURCES, GameState.Action.PRODUCTION),
+                game.getPlayerState(0).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.RESOURCES, GameState.Action.PRODUCTION),
+                game.getPlayerState(1).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.PREPARED_ATTACK,
+                        GameState.Action.DIPLOMACY),
+                game.getPlayerState(2).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.MASS_MEDIA, GameState.Action.ATTACK),
+                game.getPlayerState(3).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.PREPARED_ATTACK,
+                        GameState.Action.DIPLOMACY),
+                game.getPlayerState(4).getLastTurnActions());
+
+        List<GameState.CombatEvent> combatEvents =
+                game.getLastTurnCombatEventsInSourcePresentationOrder();
+        assertEquals("source turn 24 resolves two prepared strikes and a direct attack", 3,
+                combatEvents.size());
+        assertCombatEvent(combatEvents.get(0), GameState.CombatEventType.STRIKE_IMPACT,
+                4, 0, 4, "plane1", "warhead2", 43);
+        assertCombatEvent(combatEvents.get(1), GameState.CombatEventType.DIRECT_ATTACK,
+                3, 0, 4, "soldier2", null, 6);
+        assertCombatEvent(combatEvents.get(2), GameState.CombatEventType.STRIKE_IMPACT,
+                2, 0, 4, "rocket1", "warhead1", 18);
+
+        assertSeededState(game,
+                new int[][]{
+                        {121, 30, 88, 364286},
+                        {87, 432, 27, 731354},
+                        {30, 475, 33, 1018652},
+                        {121, 470, 41, 649016},
+                        {20, 425, 24, 693068}
+                },
+                new int[][]{
+                        {0, 0, 0, 0, 30},
+                        {59, 97, 54, 84, 138},
+                        {62, 85, 115, 83, 130},
+                        {70, 114, 71, 100, 115},
+                        {107, 41, 67, 43, 167}
+                });
+    }
+
+    private static void assertCombatEvent(GameState.CombatEvent event,
+                                         GameState.CombatEventType type,
+                                         int attacker, int defender, int city,
+                                         String weapon, String payload, int casualties) {
+        assertEquals(type, event.type);
+        assertEquals(attacker, event.attackerPlayerId);
+        assertEquals(defender, event.defenderPlayerId);
+        assertEquals(city, event.cityIndex);
+        assertEquals(weapon, event.weaponName);
+        assertEquals(payload, event.payloadName);
+        assertEquals(casualties, event.casualtiesMillions);
     }
 
     private static void assertSeededState(GameState game, int[][] players,
