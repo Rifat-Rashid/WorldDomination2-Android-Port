@@ -217,6 +217,7 @@ public final class GameState {
         public int populationMillions;
         public int moneyMillions;
         public int turnMoneyMillions;
+        private boolean aiTurnMoneyInvalid;
         public int religion;
         public long score;
         public int spyReadiness = 25;
@@ -408,6 +409,23 @@ public final class GameState {
             return desire == null ? 0 : desire;
         }
 
+        /**
+         * The reference AI's production target sums an empty investment row,
+         * making its remaining ActionScript turnMoney NaN for later targets.
+         */
+        public boolean hasInvalidAiTurnMoney() {
+            return aiTurnMoneyInvalid;
+        }
+
+        /** Marks the source's remaining AI planning budget as NaN. */
+        public void invalidateAiTurnMoney() {
+            aiTurnMoneyInvalid = true;
+        }
+
+        private void resetAiTurnMoneyValidity() {
+            aiTurnMoneyInvalid = false;
+        }
+
         public DiplomacyProposal getPendingDiplomacyFrom(int playerId) {
             if (playerId < 0 || playerId >= pendingDiplomacy.length) {
                 throw new IllegalArgumentException("Invalid player index");
@@ -588,6 +606,21 @@ public final class GameState {
         }
     }
 
+    private static final class SpyOutcome {
+        final PlayerState attacker;
+        final PlayerState defender;
+        final long money;
+        final List<WeaponState> weapons;
+
+        SpyOutcome(PlayerState attacker, PlayerState defender, long money,
+                   List<WeaponState> weapons) {
+            this.attacker = attacker;
+            this.defender = defender;
+            this.money = money;
+            this.weapons = weapons;
+        }
+    }
+
     private static final int[] PLAYER_START_MONEY = {80, 65, 55};
     private static final int[] ENEMY_START_MONEY = {50, 65, 60};
     private static final int[] PLAYER_START_POPULATION = {500, 450, 400};
@@ -637,6 +670,8 @@ public final class GameState {
     private final PlayerState[] players = new PlayerState[5];
     private final List<ActionOrder> queuedActions = new ArrayList<>(MAX_TURN_ACTIONS);
     private final List<CombatEvent> lastTurnCombatEvents = new ArrayList<>();
+    private final List<WeaponState> battleStockUses = new ArrayList<>();
+    private final int[] battleSatelliteLaunches = new int[5];
     private final List<SpyMissionEvent> lastTurnSpyMissions = new ArrayList<>();
     private final List<PropagandaEvent> lastTurnPropagandaEvents = new ArrayList<>();
     private final List<ActionBuildingEvent> lastTurnActionBuildings = new ArrayList<>();
@@ -2363,6 +2398,8 @@ public final class GameState {
             player.turnResourcesGained = 0;
         }
         lastTurnCombatEvents.clear();
+        battleStockUses.clear();
+        Arrays.fill(battleSatelliteLaunches, 0);
         lastTurnSpyMissions.clear();
         lastTurnPropagandaEvents.clear();
         lastTurnActionBuildings.clear();
@@ -2413,6 +2450,7 @@ public final class GameState {
         List<BiologicalEffect> biologicalEffects = new ArrayList<>();
         TurnPopulationChanges populationChanges = new TurnPopulationChanges();
         List<PlayerMessage> spyResultMessages = new ArrayList<>();
+        List<SpyOutcome> spyOutcomes = new ArrayList<>();
         for (ActionOrder order : turnOrders) {
             if (order.action == Action.DEFENSE) {
                 resolveDefense(order, resolvedDefenses);
@@ -2434,7 +2472,7 @@ public final class GameState {
                 }
                 if (order.action == Action.ATTACK) {
                     resolveAttack(order, turnOrders, populationChanges,
-                            spyMoneyBases, spyWeaponStockBases, spyResultMessages);
+                            spyMoneyBases, spyWeaponStockBases, spyOutcomes);
                 } else if (order.action == Action.PREPARED_ATTACK) {
                     resolvePreparedAttack(order, resolvedDefenses, biologicalEffects,
                             populationChanges);
@@ -2445,6 +2483,11 @@ public final class GameState {
         // draws during turnResults, then creates the battle script and consumes
         // its 15 presentation timer values before later result scoring.
         consumeSourceBattleTimerDraws();
+        // Battle.createBattleScriptVars replays spy results in reverse order.
+        // Build every theft first; only then clamp transfers to live balances.
+        for (int index = spyOutcomes.size() - 1; index >= 0; index--) {
+            applySpyOutcome(spyOutcomes.get(index), spyResultMessages);
+        }
         // Battle.createBattleScriptVars builds its result list in action order,
         // then replays that list backwards. Its score/event order is therefore
         // propaganda, religion (Mass Media), resources. These calls consume the
@@ -2493,6 +2536,17 @@ public final class GameState {
         }
         boolean humanSurvivedBattle = getHuman().alive;
         if (humanSurvivedBattle) {
+            // Presenter.updatePlayerVars_2 reduces battle stock after city
+            // elimination checks; that phase does not run after human defeat.
+            for (WeaponState used : battleStockUses) {
+                used.inStock = Math.max(0, used.inStock - 1);
+            }
+            for (PlayerState player : players) {
+                player.satellitesUsed += battleSatelliteLaunches[player.id];
+            }
+            for (SpyOutcome outcome : spyOutcomes) {
+                outcome.attacker.spyReadiness = 0;
+            }
             applyBiologicalEffects(biologicalEffects);
         }
         // updatePlayerVars_2 consumes its turn-result records in player order
@@ -2548,6 +2602,7 @@ public final class GameState {
         for (PlayerState player : players) {
             player.religion = Math.min(100, Math.max(0, player.religion));
             player.turnMoneyMillions = player.moneyMillions;
+            player.resetAiTurnMoneyValidity();
         }
         tickCeasefires();
         refreshMatchStatus();
@@ -2606,6 +2661,7 @@ public final class GameState {
                 continue;
             }
             player.turnMoneyMillions = player.moneyMillions;
+            player.resetAiTurnMoneyValidity();
         }
     }
 
@@ -2945,7 +3001,7 @@ public final class GameState {
                                TurnPopulationChanges populationChanges,
                                long[] spyMoneyBases,
                                Map<Integer, Map<String, Integer>> spyWeaponStockBases,
-                               List<PlayerMessage> spyResultMessages) {
+                               List<SpyOutcome> spyOutcomes) {
         PlayerState attacker = playerById(order.playerId);
         PlayerState defender = playerById(order.targetPlayerId);
         CityState city = defender.getCity(order.targetCityIndex);
@@ -2963,8 +3019,8 @@ public final class GameState {
         if (spyMission) {
             resolveSpyAttack(attacker, defender, weapon, turnOrders,
                     spyMoneyBases[defender.id], spyWeaponStockBases.get(defender.id),
-                    spyResultMessages);
-            weapon.inStock--;
+                    spyOutcomes);
+            battleStockUses.add(weapon);
             order.actionBuildingResolved = true;
             lastTurnSpyMissions.add(new SpyMissionEvent(attacker.id, defender.id,
                     order.actionBuildingSlot,
@@ -2999,7 +3055,7 @@ public final class GameState {
         } else {
             throw new IllegalStateException("Direct attack only supports soldier units");
         }
-        weapon.inStock--;
+        battleStockUses.add(weapon);
     }
 
     /** Assigns source action-building frames and the two per-player Flash positions. */
@@ -3217,7 +3273,7 @@ public final class GameState {
             addMessage(defender, "Defense cancelled: counter stock is no longer available.");
             return;
         }
-        counter.inStock--;
+        battleStockUses.add(counter);
         resolvedDefenses.add(order);
         addMessage(defender, "Nation " + defender.id + " used " + order.weaponName + " defense.");
     }
@@ -3235,7 +3291,7 @@ public final class GameState {
                 addMessage(attacker, "Strike preparation cancelled: carrier or payload is unavailable.");
                 return;
             }
-            carrier.inStock--;
+            battleStockUses.add(carrier);
             attacker.preparedCarrierName = order.weaponName;
             addMessage(attacker, "Nation " + attacker.id + " prepared " + order.weaponName + ".");
             return;
@@ -3260,9 +3316,9 @@ public final class GameState {
         }
 
         attacker.preparedCarrierName = null;
-        payload.inStock--;
+        battleStockUses.add(payload);
         if ("space".equals(carrier.definition.type)) {
-            attacker.satellitesUsed++;
+            battleSatelliteLaunches[attacker.id]++;
         }
         int rolledCasualties = sourceStrikeCasualties(payload.definition.maxKillsMillions,
                 attacker.human, defender.human);
@@ -3352,9 +3408,23 @@ public final class GameState {
                     rolledCasualties, intercepted));
         }
 
+        // Sub_presenter.turnResults builds a second bioHazardDeactivateArray
+        // for every entry in the ship's attack array after it has generated
+        // the strike results. Preserve those source random draws and the
+        // additional deactivation pass before scoring the ship casualties.
+        for (ShipStrike strike : order.shipStrikes) {
+            if (!strike.payloadName.startsWith("bioload")) {
+                continue;
+            }
+            int level = strike.payloadName.charAt(
+                    strike.payloadName.length() - 1) - '0';
+            biologicalEffects.add(createBiologicalEffect(defender,
+                    defender.getCity(strike.cityIndex), level));
+        }
+
         attacker.preparedCarrierName = null;
         for (ShipStrike strike : order.shipStrikes) {
-            attacker.weapons.get(strike.payloadName).inStock--;
+            battleStockUses.add(attacker.weapons.get(strike.payloadName));
         }
         int totalCasualties = 0;
         for (ShipStrikeResult result : results) {
@@ -3525,7 +3595,7 @@ public final class GameState {
                                   WeaponState spy, List<ActionOrder> turnOrders,
                                   long sourceMoneyBase,
                                   Map<String, Integer> sourceWeaponStock,
-                                  List<PlayerMessage> resultMessages) {
+                                  List<SpyOutcome> outcomes) {
         int level = spy.definition.level;
         int[] statistics = SPY_STATISTICS[level - 1];
         int weaponCount = 1 + random.nextInt(statistics[0]);
@@ -3577,14 +3647,23 @@ public final class GameState {
             }
         }
         weaponCount = Math.min(weaponCount, availableTargets.size());
-        int stolenMoney = (int) Math.min(defender.moneyMillions, moneyAmount);
+        List<WeaponState> stolenWeapons = new ArrayList<>(weaponCount);
+        for (int i = 0; i < weaponCount; i++) {
+            stolenWeapons.add(availableTargets.remove(random.nextInt(availableTargets.size())));
+            addToHighscore(attacker, 2, 1);
+        }
+        outcomes.add(new SpyOutcome(attacker, defender, moneyAmount, stolenWeapons));
+    }
+
+    private void applySpyOutcome(SpyOutcome outcome, List<PlayerMessage> resultMessages) {
+        PlayerState attacker = outcome.attacker;
+        PlayerState defender = outcome.defender;
+        int stolenMoney = (int) Math.min(defender.moneyMillions, outcome.money);
         defender.moneyMillions -= stolenMoney;
         attacker.moneyMillions += stolenMoney;
-        List<String> attackerDetails = new ArrayList<>(weaponCount);
+        List<String> attackerDetails = new ArrayList<>(outcome.weapons.size());
         List<String> defenderDetails = new ArrayList<>();
-        for (int i = 0; i < weaponCount; i++) {
-            WeaponState targetWeapon = availableTargets.remove(
-                    random.nextInt(availableTargets.size()));
+        for (WeaponState targetWeapon : outcome.weapons) {
             WeaponState matchingWeapon = attacker.weapons.get(targetWeapon.definition.name);
             String prettyName = getTechnologyLabel(targetWeapon.definition.technology);
             if (matchingWeapon.active) {
@@ -3602,9 +3681,7 @@ public final class GameState {
                 }
                 attackerDetails.add("TECHNOLOGY: " + prettyName);
             }
-            addToHighscore(attacker, 2, 1);
         }
-        attacker.spyReadiness = 0;
         resultMessages.add(new PlayerMessage(attacker.id,
                 formatSpyMissionResult(true, false, stolenMoney,
                         attackerDetails, defenderDetails)));
