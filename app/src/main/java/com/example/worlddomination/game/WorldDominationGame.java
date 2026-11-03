@@ -1368,7 +1368,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             return;
         }
         if (flashAnimationAssets != null && flashAnimationAssets.areSetupPortraitsLoaded()) {
-            FlashAnimationTimeline faces = flashAnimationAssets.getTimeline("faces");
+            FlashAnimationTimeline faces = flashAnimationAssets.getTimeline(
+                    OriginalFlashAnimationAssets.LEADER_PORTRAITS_TIMELINE);
             GameSetup.Leader leader = GameSetup.leader(leaderId);
             FlashAnimationTimeline.Frame frame = faces == null ? null
                     : faces.getFrame(leader.portraitFrame - 1);

@@ -213,6 +213,9 @@ jobs:
           - id: setup-source-artwork-tests
             check: Original setup portrait and building artwork
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest.setupPortraitTimelineContainsEverySelectableOriginalLeaderPortrait" --tests "com.example.worlddomination.game.assets.OriginalCityAssetsTest"'
+          - id: source-leader-portrait-order-tests
+            check: Original leader portrait order and Bin Loader selection
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.OriginalFlashAnimationAssetsTest.setupAndGameplayPortraitsFollowTheSourceLeaderCardOrder" --tests "com.example.worlddomination.game.assets.OriginalFlashAnimationAssetsTest.binLoaderIsSelectableWithHisOriginalPortraitOnTheFirstCarouselPage"'
           - id: scroll-pane-tests
             check: Independent panel scrolling tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.ScrollPaneStateTest"'
