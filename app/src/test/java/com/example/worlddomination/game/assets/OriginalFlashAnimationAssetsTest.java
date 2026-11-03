@@ -49,6 +49,18 @@ public final class OriginalFlashAnimationAssetsTest {
                 }
             }
         }
+        for (JsonValue symbol : scene.get("symbols")) {
+            int id = symbol.getInt("id");
+            if (id == 5334 || id == 3707) {
+                assertEquals("Autoplay clips must not contain a scripted stop", 0,
+                        symbol.get("timeline").get("action_frames").size);
+            } else if (id == 3996) {
+                JsonValue scripts = symbol.get("timeline").get("action_frames");
+                assertEquals(2, scripts.size);
+                assertEquals(1, scripts.getInt(0));
+                assertEquals(41, scripts.getInt(1));
+            }
+        }
     }
 
     @Test
