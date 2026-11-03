@@ -45,7 +45,17 @@ public final class AiSourceResolvedTurnParityTest {
                     "f0d0a31f2ae9eaf7cbd11d630d9de55550f56b71a0ab3c40f427c8da7c9defbc",
                     "ad221e151d1a5f4920f310290d08229c4625744266008589e08a28b882520a10",
                     "0067efc606dbb4b3372ee2422920982c4076a756bf1fbdc988bc43dd0b1584e9",
-                    "204044106f1bc12078de39be64b2117b5835d328615f3efc79acf8d6afcace2a"
+                    "204044106f1bc12078de39be64b2117b5835d328615f3efc79acf8d6afcace2a",
+                    "0b4d6516c93e43b0a92f7735bc7852cf5140f28580d36f11e065b47351c6622c",
+                    "842b5987675a3bc4b1884a35ec6d3d9828288f85c78165854af16547f33d2f9d",
+                    "dbfe6cc09bd941e18206d10b4f5db9c29a7f5adc10e6660bfe790c9f7080f03d",
+                    "c66112be1264360c7b921f3e6fa69793119f74e8078a7abe8472f2d23e1cee8e",
+                    "50c93c3f44887db0ea28e01a11deeb7c51b775657eef04d13acd3cebdfa914e9",
+                    "cb1f7bd8664d9f35621c10a57ec9e60ffae37a6cf662664f40f34fce04e38bae",
+                    "978809f2ca7004e5188ec21db771926868c0435c65dd66133c2d4836be97e240",
+                    "4e40a1acaa99568db489b6fb74874e29e7275f840d737e12d3e229e93a6bef8f",
+                    "423488f1eb237b439f2fe57b505ce78212191ae356f485d79ff5379f8f2c6633",
+                    "27defcf9d1c13cb568de5a2284296639d186e837486c424afc64baa6f8bc6899"
             },
             {
                     "3b14348e00af8c1f0c59ee3438ba743cbd101b4a8718637e032057dc67ad4d9b",
@@ -57,7 +67,17 @@ public final class AiSourceResolvedTurnParityTest {
                     "da5a79b65a980466cbd77db8a75c98fe0e0d6f79c06fb16ceca4a41d04094e46",
                     "0ec9927d06daa38f1fd9e9c4d12bc67b02259060f14aecb0e83156f966f00797",
                     "84a059b51c3613c0bc84703364b6c866ba80d1897e965ac8cbb9f6d22269d819",
-                    "82873bcdadd08d68e2324bb17902207b14e157c9404a89d30a07b3c952fc77e7"
+                    "82873bcdadd08d68e2324bb17902207b14e157c9404a89d30a07b3c952fc77e7",
+                    "a838ff909aa18718423d5acef36dc410d15002643360847846b961c62879a917",
+                    "e2633efc82727eebec3fd9c758e560d7d7f7e7ff8c635f5ff593bfda035ea23a",
+                    "188eb792a72bf2e6fb1cde9818320f1f0b482ee555c36c6f4d593ae2bea1f3ea",
+                    "dcd033d5e6a6a7278e7bf4386b239eeb3a980ac277cb283fe8e30bae30316976",
+                    "f2ea1952d42f161cd4e5cd5496a0ac3e4a167f33932e7f36f0f1605f74726c85",
+                    "a630556cd41248c5bfb97049e084d9192bdf010731edf32cbeb178944b4fe30b",
+                    "19f770c0bab03e9d6c2cba6d2d5d792700444eb0bbd539e6b40b4072f084e679",
+                    "13544da0e309fd3986a17d47e8550e0ae2111455fe7ac02e8ebdf65355099df8",
+                    "1f91ae980e7eb28cc671a55cf088031ab62e987c6cd66897666f59fe89076af9",
+                    "61934f809b71c41e13ccfb4a8876291e27c61ab2ddf3b7404ba5d87e2adfa468"
             },
             {
                     "83a970dbf9e09e977f4f8b97c3e8220c554b4e71b5c76c102e349593b948dc47",
@@ -69,7 +89,17 @@ public final class AiSourceResolvedTurnParityTest {
                     "11610b3cba551b0e3797ac224411659ca7d9c7d57e31597d700fe003ccb348cb",
                     "85b4653a3e444429c5b3e59d2b75215479a1c9b1bf7e3698644d0879e8be4733",
                     "6586d1c3e6f3a607abd92967a994d6ec583b589aa80f13af533410dbb6f56993",
-                    "cfe1da9d2e134fad89199c7b15c3277a34c366f2ea7b93164c1842afeaaaf7c7"
+                    "cfe1da9d2e134fad89199c7b15c3277a34c366f2ea7b93164c1842afeaaaf7c7",
+                    "5fbc289567e7a7b3e56802db051a82b6d7edf309261f66dde7e08ec8a777be33",
+                    "5d06bd2f53b72f6ecee11b1a887366f688cee7617a1a443412cf1965d269ee69",
+                    "030e1a27bf21c358a1cd24a6023861744c461ef574d3c392ab18423759ab97e1",
+                    "91641e2ce080de4a20776eba96f8eba34d09d10f0a411e600f91fc72a1d357ed",
+                    "cb83aaca888a5356fef01c81869d5b254c0ea1c4fe505ffcccf96b871b1b8ff3",
+                    "5ec55c98ddb804d677f4a43d2cddc8c4fc9d2592f88495194f470ec1d3aab098",
+                    "4550b11d718ba47e9928cd485eae6dc5fd003d7816bf6117417c8a8c284861be",
+                    "bf9e64a0e7a72d299c10f0d8a78730e4066b1d664669469d23ca60246fa746eb",
+                    "f5c8e87729d13d6969f0674e8eb40b39f635ddfc568b88b96dae7644dc6c6f74",
+                    "7f7210978f1a3ea410112cccbda53b9419e3029fa14b1a7dc4a8f616feb15a52"
             },
             {
                     "a7dfcd5215bd3c2cfc37c352218a26faa027afaa36389ba804bdda4badc106e7",
@@ -81,7 +111,17 @@ public final class AiSourceResolvedTurnParityTest {
                     "5e2403be58ed4fddf98df9f6fe645d045d3f8fcbfa8cc0a4cc81ca0183d9ccc5",
                     "293f38bd15df2016fe82d753871803283996712061d72a24df800c946dfbde67",
                     "77dca5dd612761dd168ec19fd29fc9012c1c8ddba5103366e5b521180d6d6b56",
-                    "fecabf806621eb5efbd7ff154dd25b38ca6b0fe9fe8f47f466ca637bf6990c6a"
+                    "fecabf806621eb5efbd7ff154dd25b38ca6b0fe9fe8f47f466ca637bf6990c6a",
+                    "cd6dbb49cbdf608b0805decc4916172f02e24aad676d90f25413eb5f811a5662",
+                    "5e28be26a466cb1390f7184d20eb5aeea0369e456eb9d62324262435fc67bd9b",
+                    "e08eb1d3e06382b61a14ee67cbf6c9cf6e185fc0ec48bd873365d98aaa511e25",
+                    "b07f014f89063aae752c982e0bf35acccda3f00758744c81a3ce989e8c3974c3",
+                    "2d3fe3d447a499c4853ed375e1b1ba214609f16cef8783d9044f0bb023003a34",
+                    "edb1bc98451f5b7950aa6037a3c551c330a74b1975fb09a1f2cae81ee27442b3",
+                    "15c5620a74db272a6d63acbbb8afc7a040c8eea56d3faaa8df3947fb2f7e02b6",
+                    "0fb0d6b13cbfd99fc89401d358dce3ec10426c491a09277131b8c739a1fa5e8b",
+                    "26c38523a64f760f72cd296cb1ae49e02414548ad818a688ea6e158fd5e912dc",
+                    "283036c7f333acadbfaad1da4ddf4a295e9d2d47d0cfb362944333b76634b6e7"
             },
     };
 
@@ -109,7 +149,7 @@ public final class AiSourceResolvedTurnParityTest {
     }
 
     @Test
-    public void tenResolvedTurnsMatchRecoveredPythonSession() throws Exception {
+    public void twentyResolvedTurnsMatchRecoveredPythonSession() throws Exception {
         GameSetup setup = new GameSetup(seed);
         setup.setDifficulty(difficulty);
         for (int rival : rivals) {
@@ -126,7 +166,8 @@ public final class AiSourceResolvedTurnParityTest {
         List<String> actionScoreHistory = new ArrayList<>();
         for (int turn = 1; turn <= SOURCE_TURN_HASHES[scenario].length; turn++) {
             queueHumanResourcesAndMassMedia(game);
-            if (turn == SOURCE_TURN_HASHES[scenario].length) {
+            if (turn == 9 || turn == 10 || turn == 11
+                    || turn == SOURCE_TURN_HASHES[scenario].length) {
                 actionScoreHistory.add("turn " + turn + ": "
                         + actionScoresBeforePlanning(game, random));
             }
