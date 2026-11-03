@@ -335,11 +335,9 @@ public final class OpponentAI {
                         && scored.score - 50 > scores.get(1).score;
                 List<Decision> attackPlan = planSourceAttack(state, player, random,
                         duplicateAttack, plannedWeaponUse);
-                if (attackPlan.isEmpty() && firstActionIndex == 0 && index == 0) {
-                    // Model.doTurn calls getTarget on the ActionTarget's initial
-                    // top-ranked action before advancing its score cursor. If
-                    // that first target fails, the loop assigns the same top
-                    // action and asks getTarget again before moving down.
+                if (attackPlan.isEmpty() && index == decisions.size()) {
+                    // Model.doTurn retries the initial candidate for the
+                    // current slot once before advancing its score cursor.
                     attackPlan = planSourceAttack(state, player, random,
                             duplicateAttack, plannedWeaponUse);
                 }
@@ -354,9 +352,9 @@ public final class OpponentAI {
 
             Decision decision = planRankedAction(state, player, scored, random,
                     decisions.size() + 1, plannedWeaponUse);
-            if (decision == null && firstActionIndex == 0 && index == 0) {
-                // A rejected initial target is tested again once by the source
-                // loop before it advances to the next ranked action.
+            if (decision == null && index == decisions.size()) {
+                // A rejected initial candidate for this slot is tested again
+                // once before the source advances to the next ranked action.
                 decision = planRankedAction(state, player, scored, random,
                         decisions.size() + 1, plannedWeaponUse);
             }
@@ -792,12 +790,12 @@ public final class OpponentAI {
                 // even when the human's funds stay below the sampled threshold.
                 SpyTarget spyTarget = findSpyTarget(state, attacker, random);
                 if (spyTarget != null && spyTarget.cashAlert) {
-                    Decision spyAttack = planCashAlertSpyAttack(state, attacker,
-                            spyTarget, random);
-                    if (spyAttack != null) {
-                        decisions.clear();
-                        decisions.add(spyAttack);
-                    }
+                    // Model.getTarget stages the spy mission in the second slot
+                    // while keeping the ship strike in the first. The second
+                    // slot is rejected as a duplicate attack and the planner
+                    // fills it from the next ranked action. Consume the source
+                    // city/building draws but do not replace the ship strike.
+                    planCashAlertSpyAttack(state, attacker, spyTarget, random);
                 }
                 // A ship may stage a conventional companion in its source
                 // ActionTarget, but doTurn rejects that second-slot attack and

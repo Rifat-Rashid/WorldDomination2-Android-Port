@@ -48,8 +48,11 @@ jobs:
           - id: ai-production-budget-parity-tests
             check: AI production invalidates later source budget checks
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.OpponentAITest.productionInvalidatesSourceTurnBudgetBeforeSecondDiplomacyOffer" --tests "com.example.worlddomination.game.ai.OpponentAITest.diplomacyPopulationTiesKeepLastActivePlayerInSourceArrayOrder"'
+          - id: ai-second-slot-retry-tests
+            check: AI retries rejected second-slot candidates
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.OpponentAITest.rejectedInitialSecondSlotCandidateIsRetriedBeforeFallback"'
           - id: ai-resolved-source-session-tests
-            check: AI twenty-turn resolved source-session traces
+            check: AI thirty-turn resolved source-session traces
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.AiSourceResolvedTurnParityTest"'
           - id: ai-turn-sixteen-source-trace-tests
             check: AI turn sixteen source resolution trace

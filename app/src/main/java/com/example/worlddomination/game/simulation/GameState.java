@@ -3372,6 +3372,20 @@ public final class GameState {
                     rolledCasualties, intercepted));
         }
 
+        // Sub_presenter.turnResults builds a second bioHazardDeactivateArray
+        // for every entry in the ship's attack array after it has generated
+        // the strike results. Preserve those source random draws and the
+        // additional deactivation pass before scoring the ship casualties.
+        for (ShipStrike strike : order.shipStrikes) {
+            if (!strike.payloadName.startsWith("bioload")) {
+                continue;
+            }
+            int level = strike.payloadName.charAt(
+                    strike.payloadName.length() - 1) - '0';
+            biologicalEffects.add(createBiologicalEffect(defender,
+                    defender.getCity(strike.cityIndex), level));
+        }
+
         attacker.preparedCarrierName = null;
         for (ShipStrike strike : order.shipStrikes) {
             attacker.weapons.get(strike.payloadName).inStock--;

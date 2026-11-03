@@ -3067,13 +3067,14 @@ public final class GameStateTest {
     }
 
     @Test
-    public void originalAiRemainsStableAcrossFortyTurnDifficultyAndSeedCases() {
+    public void originalAiRunsFortyTurnsOrSourceBioloadLockoutAcrossSeedCases() {
         int[][] cases = {{0, 0}, {0, 9}, {1, 0}, {1, 9}, {2, 0}, {2, 9}};
         for (int[] testCase : cases) {
             int difficulty = testCase[0];
             long seed = testCase[1];
             GameState state = new GameState(difficulty, seed);
             int completedTurns = 0;
+            boolean reachedSourceBioloadLockout = false;
 
             for (int turn = 0; turn < 40
                     && state.getHuman().alive
@@ -3081,10 +3082,21 @@ public final class GameStateTest {
                 List<GameState.Action> humanActions = new ArrayList<>(2);
                 for (int slot = 0; slot < 2; slot++) {
                     GameState.Action action = queueNextAvailableAction(state, humanActions);
-                    assertTrue("A legal human action should remain available at difficulty "
-                            + difficulty + " seed " + seed + " turn " + turn,
-                            action != null);
+                    if (action == null) {
+                        assertEquals("the source lockout occurs after the first defense slot",
+                                Collections.singletonList(GameState.Action.DEFENSE),
+                                humanActions);
+                        assertEquals("all six source-disabled actions remain locked",
+                                6, state.getHuman().getBioloadedActions().size());
+                        assertTrue("no direct attack weapon remains available",
+                                state.getAvailableAttackWeapons().isEmpty());
+                        reachedSourceBioloadLockout = true;
+                        break;
+                    }
                     humanActions.add(action);
+                }
+                if (reachedSourceBioloadLockout) {
+                    break;
                 }
                 state.confirmTurn();
                 completedTurns++;
@@ -3105,9 +3117,11 @@ public final class GameStateTest {
                             player.getLastTurnActions().size() <= 2);
                 }
             }
-            assertTrue("each case should run forty turns or reach a terminal result",
+            assertTrue("each case should run forty turns, reach a terminal result, "
+                            + "or reproduce the source biological lockout",
                     completedTurns == 40
-                            || state.getMatchStatus() != GameState.MatchStatus.ONGOING);
+                            || state.getMatchStatus() != GameState.MatchStatus.ONGOING
+                            || reachedSourceBioloadLockout);
         }
     }
 

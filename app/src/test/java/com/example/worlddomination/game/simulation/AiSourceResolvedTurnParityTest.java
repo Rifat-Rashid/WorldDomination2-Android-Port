@@ -4,9 +4,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.nio.charset.StandardCharsets;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,8 +17,6 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
-
-import com.example.worlddomination.game.ai.OpponentAI;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -55,7 +52,17 @@ public final class AiSourceResolvedTurnParityTest {
                     "978809f2ca7004e5188ec21db771926868c0435c65dd66133c2d4836be97e240",
                     "4e40a1acaa99568db489b6fb74874e29e7275f840d737e12d3e229e93a6bef8f",
                     "423488f1eb237b439f2fe57b505ce78212191ae356f485d79ff5379f8f2c6633",
-                    "27defcf9d1c13cb568de5a2284296639d186e837486c424afc64baa6f8bc6899"
+                    "27defcf9d1c13cb568de5a2284296639d186e837486c424afc64baa6f8bc6899",
+                    "6b3222ee1e90f28d7c68024d1fc6a5c0fcaaba3dcbb5a07a834c40f4bc01112e",
+                    "7e0523a1ada0ff691e4b17868b7192484712e6f7d746ad32dd7f4fe8f16ecceb",
+                    "b0ee76f74989533f7bcb1447b9c3c5836751327e0c5b5d526199075b9612b8a4",
+                    "4bb5ce937d845f38d2a9ef57895ea7c74e221cc7e0f1ae2c45560a16221b6ea0",
+                    "b0bd582dc6bd1cd94ea96e47f7a4ce59ad02433b24f901a5ab76259d97ccf810",
+                    "4b7d2dbb3d8f996f529939dc94316f1820d6c612aa99386b3376e7533c3d4bd2",
+                    "9be22721168034c0004eb6526f461b336ad43809536c53dccae525c9e2b579e5",
+                    "ec6d708a440f17ab275853ad2adcd1d3e974ab7ad48961620c177967cb7dc137",
+                    "e14862975ccbe16d8a4c71f589d07869415c7c51e26bebb9ad1ebfa4bd48cda6",
+                    "2cc4ea041d8bd112e420e21a74dbf285111ca438487601881256c6db735cbb6a"
             },
             {
                     "3b14348e00af8c1f0c59ee3438ba743cbd101b4a8718637e032057dc67ad4d9b",
@@ -77,7 +84,17 @@ public final class AiSourceResolvedTurnParityTest {
                     "19f770c0bab03e9d6c2cba6d2d5d792700444eb0bbd539e6b40b4072f084e679",
                     "13544da0e309fd3986a17d47e8550e0ae2111455fe7ac02e8ebdf65355099df8",
                     "1f91ae980e7eb28cc671a55cf088031ab62e987c6cd66897666f59fe89076af9",
-                    "61934f809b71c41e13ccfb4a8876291e27c61ab2ddf3b7404ba5d87e2adfa468"
+                    "61934f809b71c41e13ccfb4a8876291e27c61ab2ddf3b7404ba5d87e2adfa468",
+                    "1c63e2e2967177d1f834d233fe1803d7042336ad70e863db1854e9579391f758",
+                    "38b7097e49db60a152332520e9041c1e573b66fbdf57db1ecc588d5eaa51bb98",
+                    "8b425dea5d80ae2389b3bc800d259512cb3652806c1b64abb5599ed4120f4301",
+                    "1eacafe014d92adebe6ff8a7acc0045946abe61f0ea087bd64c757b0b4d096e7",
+                    "d7de2d4bae1561a56b566264bfbacfa49f46e82fa7b608ca6bed613dbe211f72",
+                    "672d5303c82fb864d3af75418da47d2895bc6a28de2c91cc6dd9f8757bacf577",
+                    "da27f178b7aae44282659079ad84c14846885747c9040485c2bfa612a3da8f47",
+                    "d5ad50ef61382dbd410a7cf0d3c305c702b700f1d28233fc612f05a75a78c7fa",
+                    "43aa78aedb3d2eb578948fdd7ac398ce0400743d32eb7cc3d3bb1aaa0df246b9",
+                    "b16c3d94ce131cc773fb2c5fbda5cbe21f67e4a342678608ff8bb083e1f0e040"
             },
             {
                     "83a970dbf9e09e977f4f8b97c3e8220c554b4e71b5c76c102e349593b948dc47",
@@ -99,7 +116,17 @@ public final class AiSourceResolvedTurnParityTest {
                     "4550b11d718ba47e9928cd485eae6dc5fd003d7816bf6117417c8a8c284861be",
                     "bf9e64a0e7a72d299c10f0d8a78730e4066b1d664669469d23ca60246fa746eb",
                     "f5c8e87729d13d6969f0674e8eb40b39f635ddfc568b88b96dae7644dc6c6f74",
-                    "7f7210978f1a3ea410112cccbda53b9419e3029fa14b1a7dc4a8f616feb15a52"
+                    "7f7210978f1a3ea410112cccbda53b9419e3029fa14b1a7dc4a8f616feb15a52",
+                    "ab85ac54de4fd8946a0069ecb19926de96903e82fe546c58ed9bac8e02f01901",
+                    "6f0719cc5549ce41c5c2299bf8da8bda0aede20141061a81167823f84aefaa6f",
+                    "255756ced244b084eb8d6be2e4ac9776504365ff6f14e9057db73e067b8b087f",
+                    "9fc642ee1000e6ebac3f49bf17146adca1a5c7e02773938cc31e114a60856ff2",
+                    "6179c488f545db17c821e4e3f8d250d8d6d6dc2886c6a4847789b656a0c25913",
+                    "73de9f760c82c8d14de7c915fc593c771453f2c6f7318c51203f86dcf31ce6a2",
+                    "acbaa8573473c01c8d7488e85a528e1a5f60fbfa9e256885e5c5afa7719f3a79",
+                    "b737a186035c0464243ea08206136c1560100d4a92f663b1cd3fdc7b9e6d7c0c",
+                    "33d15439e1fdf7657315d6137bf7a105f9767a68caf060cd242cae5d0a8b3add",
+                    "b5cbbcd5c5d15c3cf0edcdc7b9c72ce6648748b2c728b0988d03380f37c2a197"
             },
             {
                     "a7dfcd5215bd3c2cfc37c352218a26faa027afaa36389ba804bdda4badc106e7",
@@ -121,7 +148,17 @@ public final class AiSourceResolvedTurnParityTest {
                     "15c5620a74db272a6d63acbbb8afc7a040c8eea56d3faaa8df3947fb2f7e02b6",
                     "0fb0d6b13cbfd99fc89401d358dce3ec10426c491a09277131b8c739a1fa5e8b",
                     "26c38523a64f760f72cd296cb1ae49e02414548ad818a688ea6e158fd5e912dc",
-                    "283036c7f333acadbfaad1da4ddf4a295e9d2d47d0cfb362944333b76634b6e7"
+                    "283036c7f333acadbfaad1da4ddf4a295e9d2d47d0cfb362944333b76634b6e7",
+                    "2add3057054624748d39235159d97b5c52b154cd85174d3bc718c476153af6eb",
+                    "45af138c60e468eace0ec6a197f79b1dc534577228d6cb2864c697abd077d477",
+                    "42dca3e5b5f01c3bf8533da46a779908cb350adf3ce51d19718ec8058615d235",
+                    "5d008c8187deab778e256397fe3497e6d5cba68661fa1c8992732303b4d82b6a",
+                    "7e6ebbf0a5088c00cce2d37d130f4543feacb7a90524bfc08d4af7c4835854c5",
+                    "46cb98e5da9804057e5bb320e27b8a13d9cce6d597d1860270c579ea91c2d5a2",
+                    "a0a4501529e9b66859eb65a08dd5b7c7ae1fd6579c35674174d63f6895b585e6",
+                    "15b46c8b52d2bd1358fb5a252558b7e9a9e3c12f4dc69d349f37cf7042593bd7",
+                    "5d23f07a5f12f00bcf8a37b46ede7ca251cb1e30facd39f52093abbfa8c061ae",
+                    "f1484127a2ac38705aad24a747b44487acc40f70b5ba93e77194de1bd1782ae8"
             },
     };
 
@@ -149,7 +186,7 @@ public final class AiSourceResolvedTurnParityTest {
     }
 
     @Test
-    public void twentyResolvedTurnsMatchRecoveredPythonSession() throws Exception {
+    public void thirtyResolvedTurnsMatchRecoveredPythonSession() throws Exception {
         GameSetup setup = new GameSetup(seed);
         setup.setDifficulty(difficulty);
         for (int rival : rivals) {
@@ -162,32 +199,27 @@ public final class AiSourceResolvedTurnParityTest {
 
         List<String> actionHistory = new ArrayList<>();
         List<String> randomHistory = new ArrayList<>();
-        List<String> hiddenStateHistory = new ArrayList<>();
-        List<String> actionScoreHistory = new ArrayList<>();
         for (int turn = 1; turn <= SOURCE_TURN_HASHES[scenario].length; turn++) {
             queueHumanResourcesAndMassMedia(game);
-            if (turn == 9 || turn == 10 || turn == 11
-                    || turn == SOURCE_TURN_HASHES[scenario].length) {
-                actionScoreHistory.add("turn " + turn + ": "
-                        + actionScoresBeforePlanning(game, random));
-            }
             random.clear();
             game.confirmTurn();
 
-            actionHistory.add("turn " + turn + ": " + lastTurnActions(game));
-            String drawSummary = turn <= 2 ? String.join(",", random.draws)
-                    : random.draws.size() + ":" + sha256(String.join(",", random.draws));
-            randomHistory.add("turn " + turn + "=" + drawSummary);
-            hiddenStateHistory.add("turn " + turn + ": " + hiddenStateTrace(game));
+            actionHistory.add("turn " + turn + ": " + lastTurnActions(game)
+                    + " combat=" + combatEvents(game));
+            randomHistory.add("turn " + turn + "=" + random.draws.size() + ":"
+                    + sha256(String.join(",", random.draws)));
             String trace = resolvedStateTrace(game, turn);
-            assertEquals("source resolved-turn mismatch; state trace:\n" + trace
-                            + "\nlast-turn actions by turn: " + String.join("; ", actionHistory)
-                            + "\nrandom stream by turn: " + String.join("; ", randomHistory)
-                            + "\nhidden state by turn: " + String.join("; ", hiddenStateHistory)
-                            + "\naction scores before planning: "
-                            + String.join("; ", actionScoreHistory),
+            assertEquals("source resolved-turn mismatch; scenario=" + scenario
+                            + " turn=" + turn + "\nresolved state:\n" + trace
+                            + "\nhidden state:\n" + hiddenStateTrace(game)
+                            + "\nrecent actions: " + recentRows(actionHistory, 4)
+                            + "\nrecent random streams: " + recentRows(randomHistory, 4),
                     SOURCE_TURN_HASHES[scenario][turn - 1], sha256(trace));
         }
+    }
+
+    private static String recentRows(List<String> rows, int limit) {
+        return String.join("; ", rows.subList(Math.max(0, rows.size() - limit), rows.size()));
     }
 
     private String resolvedStateTrace(GameState game, int turn) {
@@ -261,6 +293,16 @@ public final class AiSourceResolvedTurnParityTest {
         return String.join(", ", actions);
     }
 
+    private String combatEvents(GameState game) {
+        List<String> events = new ArrayList<>();
+        for (GameState.CombatEvent event : game.getLastTurnCombatEvents()) {
+            events.add(event.type + ":P" + event.attackerPlayerId + "->P"
+                    + event.defenderPlayerId + "/C" + event.cityIndex + "/"
+                    + event.payloadName + "/" + event.casualtiesMillions);
+        }
+        return events.toString();
+    }
+
     private String hiddenStateTrace(GameState game) {
         List<String> rows = new ArrayList<>();
         for (int playerId = 0; playerId <= rivals.length; playerId++) {
@@ -298,6 +340,7 @@ public final class AiSourceResolvedTurnParityTest {
                     player.isSuicidePerson() ? "suicide" : "ordinary",
                     "enemy=" + player.getPrimaryEnemyId() + "/"
                             + player.getSecondaryEnemyId(),
+                    "prepared=" + player.getPreparedCarrierName(),
                     "spy=" + player.spyReadiness,
                     "regard=" + regard,
                     "cease=" + ceasefire,
@@ -311,39 +354,30 @@ public final class AiSourceResolvedTurnParityTest {
         return String.join(";", rows);
     }
 
-    private String actionScoresBeforePlanning(GameState game, RecordingRandom random)
-            throws Exception {
-        Method scoreActions = OpponentAI.class.getDeclaredMethod("scoreActions",
-                GameState.class, GameState.PlayerState.class, Random.class);
-        scoreActions.setAccessible(true);
-        Field actionField = Class.forName(
-                "com.example.worlddomination.game.ai.OpponentAI$ScoredAction")
-                .getDeclaredField("action");
-        Field scoreField = Class.forName(
-                "com.example.worlddomination.game.ai.OpponentAI$ScoredAction")
-                .getDeclaredField("score");
-        actionField.setAccessible(true);
-        scoreField.setAccessible(true);
-
-        ReferenceRandom randomCopy = ((ReferenceRandom) random.delegate).copy();
-        List<String> players = new ArrayList<>();
-        for (int playerId = rivals.length; playerId >= 1; playerId--) {
-            GameState.PlayerState player = game.getPlayerState(playerId);
-            List<?> scores = (List<?>) scoreActions.invoke(null, game, player, randomCopy);
-            List<String> entries = new ArrayList<>();
-            for (Object score : scores) {
-                entries.add(actionField.get(score) + "=" + scoreField.get(score));
-            }
-            players.add("P" + playerId + "[" + String.join(",", entries) + "]");
-        }
-        return String.join(" ", players);
-    }
-
     private static void queueHumanResourcesAndMassMedia(GameState game) {
-        game.selectAction(GameState.Action.RESOURCES);
-        assertTrue(game.acceptSelectedAction());
-        game.selectAction(GameState.Action.MASS_MEDIA);
-        assertTrue(game.acceptSelectedAction());
+        try {
+            Field contaminatedActions = GameState.PlayerState.class
+                    .getDeclaredField("bioloadedActions");
+            contaminatedActions.setAccessible(true);
+            @SuppressWarnings("unchecked")
+            Set<GameState.Action> locked = (Set<GameState.Action>)
+                    contaminatedActions.get(game.getHuman());
+            Set<GameState.Action> original = new java.util.LinkedHashSet<>(locked);
+            // The Python source-session adapter queues actions directly, without
+            // consulting the touch UI's temporary biological lockout.
+            locked.clear();
+            try {
+                game.selectAction(GameState.Action.RESOURCES);
+                assertTrue(game.acceptSelectedAction());
+                game.selectAction(GameState.Action.MASS_MEDIA);
+                assertTrue(game.acceptSelectedAction());
+            } finally {
+                locked.addAll(original);
+            }
+        } catch (ReflectiveOperationException exception) {
+            throw new AssertionError("Could not reproduce source-session action queuing",
+                    exception);
+        }
     }
 
     private static String sha256(String value) throws Exception {
