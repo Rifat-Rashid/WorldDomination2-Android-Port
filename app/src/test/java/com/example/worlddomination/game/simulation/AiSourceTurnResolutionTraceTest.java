@@ -2301,6 +2301,66 @@ public final class AiSourceTurnResolutionTraceTest {
         assertFalse(game.getMessages(1).toString().contains("produced:"));
     }
 
+    @Test
+    public void normalSeededEighthTurnMatchesSourcePropagandaAndResearchOrder() {
+        GameSetup setup = new GameSetup(17L);
+        setup.setDifficulty(1);
+        for (int leader : new int[]{0, 9, 18, 5}) {
+            setup.toggleOpponent(leader);
+        }
+        RecordingRandom random = new RecordingRandom(setup.copyGameplayRandom());
+        GameState game = new GameState(setup, random);
+        random.clear();
+        for (int priorTurn = 0; priorTurn < 7; priorTurn++) {
+            queueHumanTurn(game);
+            game.confirmTurn();
+            random.clear();
+        }
+        queueHumanTurn(game);
+        game.confirmTurn();
+
+        List<String> expectedDraws = Arrays.asList(
+                "91:57", "3:2", "91:39", "3:2", "91:22", "3:0", "91:20", "3:0",
+                "61:0", "4:3", "21:2", "61:5", "61:39", "4:1", "21:11", "61:1",
+                "61:3", "6:2", "6:5", "6:1", "6:0", "6:4", "11:8", "11:5",
+                "11:8", "11:3", "11:2", "11:3", "11:3", "11:6", "11:8", "11:8",
+                "11:7", "11:2", "11:7", "11:2", "11:1", "51:21", "51:50", "51:20",
+                "51:34", "51:39", "51:32", "6:1", "51:33", "6:4", "51:13", "51:6",
+                "51:2");
+
+        assertEquals(8, game.getTurn());
+        assertEquals("source T8 interleaves propaganda hostility and research scoring",
+                expectedDraws, random.draws);
+        assertEquals("source T8 has one empty random range", 1, random.rawDraws);
+        assertEquals(Arrays.asList(GameState.Action.RESOURCES, GameState.Action.MASS_MEDIA),
+                game.getPlayerState(0).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.RESOURCES, GameState.Action.PROPAGANDA),
+                game.getPlayerState(1).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.RESEARCH, GameState.Action.PROPAGANDA),
+                game.getPlayerState(2).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.RESOURCES, GameState.Action.PRODUCTION),
+                game.getPlayerState(3).getLastTurnActions());
+        assertEquals(Arrays.asList(GameState.Action.RESEARCH, GameState.Action.PRODUCTION),
+                game.getPlayerState(4).getLastTurnActions());
+        assertTrue(game.getLastTurnCombatEvents().isEmpty());
+
+        assertSeededState(game,
+                new int[][]{
+                        {366, 450, 100, 104794},
+                        {112, 460, 50, 183446},
+                        {115, 470, 54, 228415},
+                        {120, 421, 45, 113845},
+                        {65, 450, 18, 191713}
+                },
+                new int[][]{
+                        {97, 54, 84, 80, 135},
+                        {82, 112, 80, 68, 118},
+                        {114, 71, 100, 107, 78},
+                        {41, 67, 43, 95, 175},
+                        {113, 50, 99, 99, 89}
+                });
+    }
+
     private static void assertCombatEvent(GameState.CombatEvent event,
                                          GameState.CombatEventType type,
                                          int attacker, int defender, int city,

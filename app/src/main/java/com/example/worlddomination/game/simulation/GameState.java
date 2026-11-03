@@ -2378,7 +2378,6 @@ public final class GameState {
         }
         List<ActionOrder> resolvedDefenses = new ArrayList<>();
         List<BiologicalEffect> biologicalEffects = new ArrayList<>();
-        List<ActionOrder> propagandaOrders = new ArrayList<>();
         TurnPopulationChanges populationChanges = new TurnPopulationChanges();
         List<PlayerMessage> spyResultMessages = new ArrayList<>();
         for (ActionOrder order : turnOrders) {
@@ -2424,7 +2423,6 @@ public final class GameState {
             }
             for (ActionOrder order : turnOrders) {
                 if (order.playerId == actor.id && order.action == Action.PROPAGANDA) {
-                    propagandaOrders.add(order);
                     resolvePropaganda(order, populationChanges);
                 }
             }
@@ -2464,17 +2462,9 @@ public final class GameState {
         if (humanSurvivedBattle) {
             applyBiologicalEffects(biologicalEffects);
         }
-        // updatePlayerVars_2 applies propaganda hostility after doTR_from_battle
-        // has finished all of its score draws.
-        for (ActionOrder order : humanSurvivedBattle ? propagandaOrders
-                : Collections.<ActionOrder>emptyList()) {
-            PlayerState attacker = playerById(order.playerId);
-            PlayerState defender = playerById(order.targetPlayerId);
-            applyPropagandaHostilityEffects(attacker, defender);
-        }
-        // updatePlayerVars_2 settles all research results in player order before
-        // updatePlayerVars_3 handles any production purchases. Keeping these as
-        // separate passes preserves the shared score and purchase RNG sequence.
+        // updatePlayerVars_2 consumes its turn-result records in player order
+        // and action-slot order. Interleave propaganda regard changes with
+        // research score draws because both consume the shared random stream.
         for (int playerIndex = 0; humanSurvivedBattle
                 && playerIndex < players.length; playerIndex++) {
             PlayerState actor = players[playerIndex];
@@ -2485,8 +2475,11 @@ public final class GameState {
                 if (order.playerId != actor.id) {
                     continue;
                 }
-                if (order.action == Action.RESEARCH) {
-                        resolveResearch(order);
+                if (order.action == Action.PROPAGANDA) {
+                    PlayerState defender = playerById(order.targetPlayerId);
+                    applyPropagandaHostilityEffects(actor, defender);
+                } else if (order.action == Action.RESEARCH) {
+                    resolveResearch(order);
                 }
             }
         }
