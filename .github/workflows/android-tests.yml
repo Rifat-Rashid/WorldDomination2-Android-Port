@@ -246,6 +246,15 @@ jobs:
           - id: original-action-tube-artwork-tests
             check: Original action tube animation atlas coverage
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.OriginalUiAssetManifestTest.actionTubeAtlasPackagesEveryOriginalOpeningAndSetFrame"'
+          - id: high-resolution-hud-font-tests
+            check: High resolution HUD font metrics and scale restoration
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.InterfaceFontDataTest"'
+          - id: technology-sharp-artwork-tests
+            check: High resolution technology artwork across research states
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.OriginalFlashAnimationAssetsTest.highResolutionTechnologyAtlasIncludesEverySourceResearchCardState"'
+          - id: technology-source-cost-alignment-tests
+            check: Technology costs align to original source text fields
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.OriginalFlashAnimationAssetsTest.technologyCostAlignmentUsesTheOriginalEditTextFieldBounds"'
           - id: scroll-pane-tests
             check: Independent panel scrolling tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.ScrollPaneStateTest"'

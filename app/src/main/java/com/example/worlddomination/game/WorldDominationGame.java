@@ -14,6 +14,8 @@ import com.example.worlddomination.game.rendering.MessagePanelRenderer;
 import com.example.worlddomination.game.ui.MessagePanelLayout;
 import com.example.worlddomination.game.assets.OriginalActionTubeAssets;
 import com.example.worlddomination.game.ui.ActionSlotAnimation;
+import com.example.worlddomination.game.assets.HighResolutionBitmapFont;
+import com.example.worlddomination.game.assets.TechnologyArtworkAssets;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
@@ -279,6 +281,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private MessagePanelRenderer messagePanelRenderer;
     private OriginalActionTubeAssets actionTubeAssets;
     private final ActionSlotAnimation actionSlotAnimation = new ActionSlotAnimation();
+    private TechnologyArtworkAssets technologyArtwork;
     private OriginalUiAssets uiAssets;
     private OriginalSplashAssets splashAssets;
     private OriginalCityAssets cityAssets;
@@ -386,10 +389,12 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         Gdx.input.setCatchKey(Input.Keys.BACK, true);
         batch = new SpriteBatch();
         shapes = new ShapeRenderer();
-        font = new BitmapFont();
         resourceMenuRenderer = new ResourceMenuRenderer();
         messagePanelRenderer = new MessagePanelRenderer();
         actionTubeAssets = new OriginalActionTubeAssets();
+        font = new HighResolutionBitmapFont();
+        technologyArtwork = new TechnologyArtworkAssets();
+        centerUiRenderer.setTechnologyArtwork(technologyArtwork);
         font.setColor(Color.WHITE);
         uiAssets = new OriginalUiAssets();
         splashAssets = new OriginalSplashAssets();
@@ -2854,10 +2859,15 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             }
             int cost = game.getTechnologyCost(technology);
             boolean available = game.isResearchAvailable(technology);
-            drawSourceText("$ " + sourceMillions(cost),
-                    TechnologyScreenLayout.cardCostX(slot),
-                    TechnologyScreenLayout.cardCostBaselineTop(slot), 10f,
-                    available ? Color.BLACK : RESEARCH_UNAVAILABLE_TEXT);
+            String costText = "$ " + sourceMillions(cost);
+            Color costColor = available ? Color.BLACK : RESEARCH_UNAVAILABLE_TEXT;
+            if (TechnologyScreenLayout.sourceGroupAtCard(slot) == 7) {
+                drawSourceTextCentered(costText, TechnologyScreenLayout.cardCostCenter(slot),
+                        TechnologyScreenLayout.cardCostBaselineTop(slot), 10f, costColor);
+            } else {
+                drawSourceTextRight(costText, TechnologyScreenLayout.cardCostRight(slot),
+                        TechnologyScreenLayout.cardCostBaselineTop(slot), 10f, costColor);
+            }
         }
 
         int row = 0;
@@ -2926,6 +2936,20 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         glyphLayout.setText(font, text);
         font.setColor(color);
         font.draw(batch, text, modal.x + sourceRight * scaleX - glyphLayout.width,
+                modal.y + modal.height - sourceTop * scaleY);
+        font.getData().setScale(originalScale);
+        font.setColor(Color.WHITE);
+    }
+
+    private void drawSourceTextCentered(String text, float sourceCenter, float sourceTop,
+                                        float sourceHeight, Color color) {
+        float scaleX = modal.width / FlashCenterUiRenderer.ART_WIDTH;
+        float scaleY = modal.height / FlashCenterUiRenderer.ART_HEIGHT;
+        float originalScale = font.getScaleX();
+        font.getData().setScale(sourceHeight * scaleY / Math.max(font.getLineHeight(), 1f));
+        glyphLayout.setText(font, text);
+        font.setColor(color);
+        font.draw(batch, text, modal.x + sourceCenter * scaleX - glyphLayout.width / 2f,
                 modal.y + modal.height - sourceTop * scaleY);
         font.getData().setScale(originalScale);
         font.setColor(Color.WHITE);
@@ -4867,6 +4891,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         if (actionTubeAssets != null) {
             actionTubeAssets.dispose();
+        }
+        if (technologyArtwork != null) {
+            technologyArtwork.dispose();
         }
         if (shapes != null) {
             shapes.dispose();
