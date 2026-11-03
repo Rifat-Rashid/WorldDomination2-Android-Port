@@ -31,10 +31,31 @@ public final class OriginalCityAssets implements Disposable {
     private final Frame[][] frames = new Frame[CHARACTER_IDS.length][16];
     private final List<Texture> textures = new ArrayList<>(60);
     private float artworkScale;
+    private boolean gameplayFramesLoaded;
 
     public OriginalCityAssets() {
+        this(false);
+    }
+
+    /** Loads only setup building previews when gameplay frames can be deferred. */
+    public OriginalCityAssets(boolean setupPreviewsOnly) {
+        gameplayFramesLoaded = !setupPreviewsOnly;
         try {
-            loadManifest();
+            loadManifest(setupPreviewsOnly);
+        } catch (RuntimeException error) {
+            dispose();
+            throw error;
+        }
+    }
+
+    /** Completes the source city frames before entering a match. */
+    public void loadGameplayFrames() {
+        if (gameplayFramesLoaded) {
+            return;
+        }
+        try {
+            loadManifest(false);
+            gameplayFramesLoaded = true;
         } catch (RuntimeException error) {
             dispose();
             throw error;
@@ -75,7 +96,7 @@ public final class OriginalCityAssets implements Disposable {
         return 1;
     }
 
-    private void loadManifest() {
+    private void loadManifest(boolean setupPreviewsOnly) {
         JsonValue manifest = new JsonReader().parse(
                 Gdx.files.internal(ASSET_ROOT + "manifest.json"));
         artworkScale = manifest.getFloat("scale");
@@ -92,6 +113,10 @@ public final class OriginalCityAssets implements Disposable {
             JsonValue symbolFrames = symbol.get("frames");
             for (JsonValue entry = symbolFrames.child; entry != null; entry = entry.next) {
                 int frameNumber = Integer.parseInt(entry.name);
+                if ((setupPreviewsOnly && frameNumber != 6)
+                        || frames[theme][frameNumber] != null) {
+                    continue;
+                }
                 String path = ASSET_ROOT + entry.getString("file");
                 Texture texture = new Texture(Gdx.files.internal(path), true);
                 texture.setFilter(TextureFilter.Linear, TextureFilter.Linear);
@@ -102,11 +127,14 @@ public final class OriginalCityAssets implements Disposable {
             }
         }
         for (int theme = 0; theme < frames.length; theme++) {
-            for (int frame = 1; frame <= 6; frame++) {
-                requireFrame(theme, frame);
-            }
-            for (int frame = 10; frame <= 15; frame++) {
-                requireFrame(theme, frame);
+            requireFrame(theme, 6);
+            if (!setupPreviewsOnly) {
+                for (int frame = 1; frame <= 5; frame++) {
+                    requireFrame(theme, frame);
+                }
+                for (int frame = 10; frame <= 15; frame++) {
+                    requireFrame(theme, frame);
+                }
             }
         }
         if (artworkScale <= 0f) {
