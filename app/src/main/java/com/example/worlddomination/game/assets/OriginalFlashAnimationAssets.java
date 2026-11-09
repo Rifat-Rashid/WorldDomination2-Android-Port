@@ -64,6 +64,9 @@ public final class OriginalFlashAnimationAssets implements Disposable {
     /** Original Flash center-screen dialog containing research and mass-media states. */
     public static final int CENTER_UI_SYMBOL_ID = 4444;
     public static final String CENTER_UI_TIMELINE = "centerScreen";
+    /** Alive portrait clip used by both the source setup and gameplay leader cards. */
+    public static final int LEADER_PORTRAITS_SYMBOL_ID = 3191;
+    public static final String LEADER_PORTRAITS_TIMELINE = "leaderPortraits";
     /** White source triangle used by each production investment slider. */
     public static final int PRODUCTION_SLIDER_HANDLE_SHAPE_ID = 3274;
 
@@ -72,7 +75,6 @@ public final class OriginalFlashAnimationAssets implements Disposable {
     private static final String TEXT_PATH = "original/runtime/texts/";
     private static final String WEBP_PREFIX = "data:image/webp;base64,";
     private static final String[] REQUIRED_LINKAGES = {
-            "faces",
             "interface_center_slider_1",
             "buildings_antiAir",
             "bioCloud",
@@ -415,12 +417,17 @@ public final class OriginalFlashAnimationAssets implements Disposable {
 
     private static Set<Integer> collectSetupPortraitShapeIds(
             Map<String, FlashAnimationTimeline> timelines) {
-        FlashAnimationTimeline faces = timelines.get("faces");
+        return collectSetupPortraitShapeIds(timelines, OriginalFlashAnimationAssets::hasPackagedShape);
+    }
+
+    static Set<Integer> collectSetupPortraitShapeIds(
+            Map<String, FlashAnimationTimeline> timelines, IntPredicate hasShapeAsset) {
+        FlashAnimationTimeline faces = timelines.get(LEADER_PORTRAITS_TIMELINE);
         Map<String, FlashAnimationTimeline> setupTimelines = new LinkedHashMap<>();
         if (faces != null) {
-            setupTimelines.put("faces", faces);
+            setupTimelines.put(LEADER_PORTRAITS_TIMELINE, faces);
         }
-        return collectShapeIds(setupTimelines, false);
+        return collectShapeIds(setupTimelines, Collections.emptyMap(), false, hasShapeAsset);
     }
 
     private static Set<Integer> collectShapeIds(
@@ -521,6 +528,8 @@ public final class OriginalFlashAnimationAssets implements Disposable {
         if (!result.containsKey(ACTION_BUILDINGS_TIMELINE)) {
             throw new IllegalStateException("Missing original Flash action-building timeline");
         }
+        result.put(LEADER_PORTRAITS_TIMELINE,
+                loadTimelineBySymbolId(scene, LEADER_PORTRAITS_SYMBOL_ID));
         return result;
     }
 

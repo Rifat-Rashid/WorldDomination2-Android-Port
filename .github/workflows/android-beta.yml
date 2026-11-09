@@ -1,0 +1,120 @@
+name: Android beta release validation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  release-build:
+    name: Beta release bundle, release tests, and lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+      - name: Install compile SDK using preinstalled tools
+        shell: bash
+        run: |
+          sdk_root="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          sdkmanager="$sdk_root/cmdline-tools/latest/bin/sdkmanager"
+          set +o pipefail
+          yes | "$sdkmanager" --licenses
+          set -o pipefail
+          "$sdkmanager" 'platform-tools' 'platforms;android-37.0' 'build-tools;36.0.0'
+      - name: Build and test the real release variant without upload credentials
+        run: ./gradlew --no-daemon --stacktrace :app:bundleRelease :app:testReleaseUnitTest :app:lintRelease
+      - name: Verify release JUnit reports
+        run: python3 scripts/verify_junit_results.py app/build/test-results/testReleaseUnitTest
+      - name: Retain unsigned bundle for packaging verification
+        uses: actions/upload-artifact@v6
+        with:
+          name: beta-release-bundle-unsigned
+          path: app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+          retention-days: 7
+      - name: Preserve release diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: beta-release-failure-reports
+          path: app/build/reports/
+
+  bundle-integrity:
+    name: Release bundle structure, offline assets, and 16 KB natives
+    needs: release-build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/download-artifact@v7
+        with:
+          name: beta-release-bundle-unsigned
+          path: artifacts
+      - name: Download checksum-pinned official bundletool
+        run: |
+          curl --fail --location --retry 3 -o bundletool.jar https://github.com/google/bundletool/releases/download/1.18.3/bundletool-all-1.18.3.jar
+          echo 'a099cfa1543f55593bc2ed16a70a7c67fe54b1747bb7301f37fdfd6d91028e29  bundletool.jar' | sha256sum --check
+      - name: Validate bundle and export its compiled manifest
+        run: |
+          java -jar bundletool.jar validate --bundle=artifacts/app-release.aab > artifacts/bundle-validation.txt
+          java -jar bundletool.jar dump manifest --bundle=artifacts/app-release.aab > artifacts/manifest.xml
+          java -jar bundletool.jar dump config --bundle=artifacts/app-release.aab > artifacts/bundle-config.json
+      - name: Verify release identity, packaged latest UI, audio, and ELF page alignment
+        run: |
+          python3 scripts/verify_android_bundle.py artifacts/app-release.aab --manifest artifacts/manifest.xml
+          python3 -c 'import json; c=json.load(open("artifacts/bundle-config.json")); assert c["optimizations"]["uncompressNativeLibraries"]["alignment"] == "PAGE_ALIGNMENT_16K"'
+      - name: Preserve validation evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: beta-bundle-validation
+          path: |
+            artifacts/*.txt
+            artifacts/*.xml
+            artifacts/*.json
+
+  native-mask-tests:
+    name: Android GLES mask and drawing-state regression tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+      - name: Enable KVM for Android emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Execute native renderer tests on Android
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: ./gradlew --no-daemon --stacktrace :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.example.worlddomination.game.rendering.FlashStencilMasksInstrumentedTest
+      - name: Preserve Android test results
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: android-gles-mask-results
+          path: |
+            app/build/reports/androidTests/
+            app/build/outputs/androidTest-results/

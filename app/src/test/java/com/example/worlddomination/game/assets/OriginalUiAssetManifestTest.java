@@ -15,6 +15,34 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public final class OriginalUiAssetManifestTest {
+    @Test
+    public void resourceDialogUsesHighResolutionArtAndSeparateScalableText() throws IOException {
+        Path assets = findUiAssets();
+        int[] art = pngSize(assets.resolve("resource-menu-hd.png"));
+        assertEquals(1460, art[0]);
+        assertEquals(1100, art[1]);
+        assertEquals(365f / 275f, (float) art[0] / art[1], 0.001f);
+        String font = Files.readString(assets.resolve("fonts/resource-arial-48.fnt"));
+        assertTrue(font.contains("size=48"));
+        assertTrue(font.contains("file=\"resource-arial-48.png\""));
+        for (char glyph : "Budget: Population Resource OIL Estimated income CANCEL ACCEPT0123456789.,".toCharArray()) {
+            assertTrue("Dialog font is missing " + glyph,
+                    font.contains("char id=" + (int) glyph + " "));
+        }
+        assertTrue(Files.isRegularFile(assets.resolve("fonts/resource-arial-48.png")));
+    }
+
+    @Test
+    public void actionTubeAtlasPackagesEveryOriginalOpeningAndSetFrame() throws IOException {
+        Path assets = findUiAssets();
+        java.util.List<String> atlas = Files.readAllLines(assets.resolve("action-tubes.atlas"));
+        for (int frame = 1; frame <= 11; frame++) {
+            assertTrue("Missing original action tube frame " + frame, atlas.contains("tube" + frame));
+        }
+        int[] size = pngSize(assets.resolve("action-tubes.png"));
+        assertTrue(size[0] <= 2048 && size[1] <= 2048);
+    }
+
     private static final String[] REQUIRED_ATLAS_REGIONS = {
             "metalTile", "button", "resourceModal", "inventoryCounter",
             "inventorySwitch", "inventoryRadio", "actionFirst", "actionSecond",

@@ -18,6 +18,9 @@ jobs:
       max-parallel: 6
       matrix:
         include:
+          - id: flash-mask-placement-tests
+            check: Flash mask depths and exported artwork registration
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashSpriteQuadTest" --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest.diplomacyCoverageShapesRemainMasksAtEverySourceStyle" --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest.newNonMovePlacementResetsPriorMaskTransformNameAndAlpha" --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest.sourceAlphaAdditionIsInByteUnitsAndClampedAfterConversion"'
           - id: unit-tests
             check: JVM unit tests
             task: ':app:testDebugUnitTest'
@@ -60,6 +63,12 @@ jobs:
           - id: defeat-satellite-settlement-tests
             check: Defeat turn stock readiness and bonus settlement
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.satelliteLaunchOnHumanDefeatSkipsStockAndScoreBonusSettlement" --tests "com.example.worlddomination.game.simulation.GameStateTest.spaceLaunchCountsSatelliteAndTerminalScoreIncludesSourceFlagBonus" --tests "com.example.worlddomination.game.simulation.SimultaneousSpyMissionResolutionTest.defeatSkipsSpyReadinessResetAfterTheMissionResolves"'
+          - id: human-action-source-session-tests
+            check: Mixed human action source session
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.HumanSourceActionSessionTest"'
+          - id: ceasefire-result-clock-tests
+            check: Ceasefire zero counter and defeat timing
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.ceasefireRemainsActiveAtZeroUntilTheFollowingResultUpdate" --tests "com.example.worlddomination.game.simulation.GameStateTest.humanDefeatSkipsTheCeasefireResultCountdown"'
           - id: ai-turn-sixteen-source-trace-tests
             check: AI turn sixteen source resolution trace
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.AiSourceTurnResolutionTraceTest.hardSeededSixteenthTurnMatchesSourceAttacksAndCarrierPreparation"'
@@ -213,6 +222,42 @@ jobs:
           - id: setup-source-artwork-tests
             check: Original setup portrait and building artwork
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest.setupPortraitTimelineContainsEverySelectableOriginalLeaderPortrait" --tests "com.example.worlddomination.game.assets.OriginalCityAssetsTest"'
+          - id: source-leader-portrait-order-tests
+            check: Original leader portrait order and Bin Loader selection
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.OriginalFlashAnimationAssetsTest.setupAndGameplayPortraitsFollowTheSourceLeaderCardOrder" --tests "com.example.worlddomination.game.assets.OriginalFlashAnimationAssetsTest.binLoaderIsSelectableWithHisOriginalPortraitOnTheFirstCarouselPage"'
+          - id: action-building-nested-playback-tests
+            check: Source pump research and factory playback
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashActionBuildingAnimationTest"'
+          - id: action-building-animated-artwork-tests
+            check: Original animated building atlas completeness
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.OriginalFlashAnimationAssetsTest.animatedBuildingClipsRetainAllSourceFramesAndCachedArtwork"'
+          - id: resource-dialog-live-text-tests
+            check: Resource dialog live source values and budget
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.ResourceMenuTextTest"'
+          - id: resource-dialog-clarity-assets-tests
+            check: Resource dialog high resolution art and font coverage
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.OriginalUiAssetManifestTest.resourceDialogUsesHighResolutionArtAndSeparateScalableText"'
+          - id: message-well-layout-tests
+            check: Reference message well clipping and readable rows
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.MessagePanelLayoutTest" --tests "com.example.worlddomination.game.ui.MessageHistoryScrollStateTest"'
+          - id: expanded-info-panel-layout-tests
+            check: Expanded Funds and information panel row alignment
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.ActionScreenLayoutTest.informationRowsUseTheFormerTitleSpaceAndFitInsideThePanel" --tests "com.example.worlddomination.game.ui.ActionScreenLayoutTest.informationBarsSitInsideTheirRowsInsteadOfOnTextBaselines" --tests "com.example.worlddomination.game.ui.InformationTextAlignmentTest"'
+          - id: action-slot-animation-tests
+            check: Default open action slots preview accept and cancel
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.ActionSlotAnimationTest"'
+          - id: original-action-tube-artwork-tests
+            check: Original action tube animation atlas coverage
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.OriginalUiAssetManifestTest.actionTubeAtlasPackagesEveryOriginalOpeningAndSetFrame"'
+          - id: high-resolution-hud-font-tests
+            check: High resolution HUD font metrics and scale restoration
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.InterfaceFontDataTest"'
+          - id: technology-sharp-artwork-tests
+            check: High resolution technology artwork across research states
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.OriginalFlashAnimationAssetsTest.highResolutionTechnologyAtlasIncludesEverySourceResearchCardState"'
+          - id: technology-source-cost-alignment-tests
+            check: Technology costs align to original source text fields
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.OriginalFlashAnimationAssetsTest.technologyCostAlignmentUsesTheOriginalEditTextFieldBounds"'
           - id: scroll-pane-tests
             check: Independent panel scrolling tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.ScrollPaneStateTest"'

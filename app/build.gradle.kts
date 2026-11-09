@@ -29,6 +29,22 @@ val copyGdxAndroidNatives = tasks.register<Copy>("copyGdxAndroidNatives") {
     into(generatedNativesDirectory)
 }
 
+// Set these outside the repository (environment or user-level Gradle properties).
+val betaApplicationId = providers.gradleProperty("wd2ApplicationId")
+    .getOrElse("com.example.worlddomination")
+fun uploadSetting(property: String, environment: String) =
+    providers.gradleProperty(property).orElse(providers.environmentVariable(environment)).orNull
+val uploadStoreFile = uploadSetting("wd2UploadStoreFile", "WD2_UPLOAD_STORE_FILE")
+val uploadStorePassword = uploadSetting("wd2UploadStorePassword", "WD2_UPLOAD_STORE_PASSWORD")
+val uploadKeyAlias = uploadSetting("wd2UploadKeyAlias", "WD2_UPLOAD_KEY_ALIAS")
+val uploadKeyPassword = uploadSetting("wd2UploadKeyPassword", "WD2_UPLOAD_KEY_PASSWORD")
+val uploadSettings = listOf(uploadStoreFile, uploadStorePassword, uploadKeyAlias, uploadKeyPassword)
+val hasUploadSigning = uploadSettings.all { !it.isNullOrBlank() }
+check(uploadSettings.all { it.isNullOrBlank() } || hasUploadSigning) {
+    "Upload signing is incomplete: provide all four wd2Upload properties or WD2_UPLOAD variables."
+}
+val uploadKeyExists = uploadStoreFile?.let { file(it).isFile } ?: false
+
 android {
     namespace = "com.example.worlddomination"
     compileSdk {
@@ -36,19 +52,28 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.worlddomination"
+        applicationId = betaApplicationId
         minSdk = 24
         targetSdk = 37
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "0.1.0-beta.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     sourceSets.getByName("main").jniLibs.srcDir(generatedNativesDirectory)
 
+    val uploadSigning = if (hasUploadSigning) signingConfigs.create("upload") {
+        storeFile = file(uploadStoreFile!!)
+        storePassword = uploadStorePassword
+        keyAlias = uploadKeyAlias
+        keyPassword = uploadKeyPassword
+    } else null
+
     buildTypes {
         release {
+            isDebuggable = false
+            if (uploadSigning != null) signingConfig = uploadSigning
             optimization {
                 enable = true
                 packageScope = setOf("androidx.**", "kotlin.**", "kotlinx.**")
@@ -58,6 +83,12 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+    }
+}
+
+androidComponents {
+    beforeVariants(selector().withBuildType("release")) {
+        it.hostTests[com.android.build.api.variant.HostTestBuilder.UNIT_TEST_TYPE]?.enable = true
     }
 }
 
@@ -71,4 +102,30 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.espresso.core)
     androidTestImplementation(libs.ext.junit)
+}
+
+val verifyPlayUploadConfiguration = tasks.register("verifyPlayUploadConfiguration") {
+    group = "verification"
+    description = "Rejects placeholder application IDs and missing upload signing before a Play build."
+    val applicationIdForUpload = betaApplicationId
+    val signingAvailable = hasUploadSigning && uploadKeyExists
+    doLast {
+        check(!applicationIdForUpload.startsWith("com.example.") &&
+                applicationIdForUpload.matches(Regex("[A-Za-z][A-Za-z0-9_]*(\\.[A-Za-z][A-Za-z0-9_]*)+"))) {
+            "Set -Pwd2ApplicationId to the permanent Play application ID before preparing an upload."
+        }
+        check(signingAvailable) {
+            "Configure a real upload keystore using the external wd2Upload properties or WD2_UPLOAD variables."
+        }
+    }
+}
+
+tasks.register("preparePlayBeta") {
+    group = "build"
+    description = "Builds the release AAB only after validating the permanent ID and upload signing."
+    dependsOn(verifyPlayUploadConfiguration, "bundleRelease")
+}
+
+tasks.matching { it.name == "bundleRelease" }.configureEach {
+    mustRunAfter(verifyPlayUploadConfiguration)
 }
