@@ -95,8 +95,8 @@ public final class ActionScreenLayoutTest {
         float scale = InformationPanelLayout.fontScale(panel, 15f);
         float renderedLineHeight = scale * 15f;
         float rowHeight = InformationPanelLayout.rowHeight(panel);
-        float firstRowTop = InformationPanelLayout.rowBaseline(panel, 0) + renderedLineHeight;
-        float lastRowBottom = InformationPanelLayout.rowBaseline(panel, 4);
+        float firstRowTop = InformationPanelLayout.rowCenter(panel, 0) + renderedLineHeight / 2f;
+        float lastRowBottom = InformationPanelLayout.rowCenter(panel, 4) - renderedLineHeight / 2f;
 
         assertTrue("Funds row clears the outer frame", firstRowTop <= panel.y + panel.height - 4f);
         assertTrue("Removing the title makes labels larger", scale > 0.64f);
@@ -104,18 +104,18 @@ public final class ActionScreenLayoutTest {
                 rowHeight >= renderedLineHeight);
         assertTrue("Spy row remains above the bottom panel frame", lastRowBottom >= panel.y + 8f);
         assertTrue(InformationPanelLayout.barY(panel, 1)
-                < InformationPanelLayout.rowBaseline(panel, 1));
+                < InformationPanelLayout.rowCenter(panel, 1));
     }
 
     @Test
     public void informationBarsSitInsideTheirRowsInsteadOfOnTextBaselines() {
         Rectangle panel = new Rectangle(0f, 20f, 190f, 82f);
-        float baseline = InformationPanelLayout.rowBaseline(panel, 2);
+        float baseline = InformationPanelLayout.rowCenter(panel, 2);
         float barY = InformationPanelLayout.barY(panel, 2);
 
         assertTrue("Bars are vertically centered in the label row", barY < baseline);
         assertTrue("Bars remain below the preceding row", barY + InformationPanelLayout.BAR_HEIGHT
-                < InformationPanelLayout.rowBaseline(panel, 1));
+                < InformationPanelLayout.rowCenter(panel, 1));
         assertTrue("Bars remain within their own row", barY
                 < baseline + InformationPanelLayout.rowHeight(panel));
     }

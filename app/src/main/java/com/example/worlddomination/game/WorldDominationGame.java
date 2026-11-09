@@ -16,6 +16,7 @@ import com.example.worlddomination.game.assets.OriginalActionTubeAssets;
 import com.example.worlddomination.game.ui.ActionSlotAnimation;
 import com.example.worlddomination.game.assets.HighResolutionBitmapFont;
 import com.example.worlddomination.game.assets.TechnologyArtworkAssets;
+import com.example.worlddomination.game.ui.InformationTextAlignment;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
@@ -2330,7 +2331,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         float targetScale = InformationPanelLayout.fontScale(infoPanel, font.getLineHeight());
         font.getData().setScale(targetScale);
         font.setColor(TITLE_TEXT);
-        font.draw(batch, "FUNDS", x, InformationPanelLayout.rowBaseline(infoPanel, 0));
+        drawInformationText("FUNDS", x, 0);
         String funds = "$ " + formatMillions(human.turnMoneyMillions);
         float fundsX = x + width * 0.43f;
         float fundsWidth = width * 0.57f;
@@ -2339,14 +2340,19 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             font.getData().setScale(targetScale * fundsWidth / glyphLayout.width);
         }
         font.setColor(GOLD);
-        font.draw(batch, funds, fundsX, InformationPanelLayout.rowBaseline(infoPanel, 0));
+        drawInformationText(funds, fundsX, 0);
         font.getData().setScale(targetScale);
         font.setColor(TITLE_TEXT);
-        font.draw(batch, "technology", x, InformationPanelLayout.rowBaseline(infoPanel, 1));
-        font.draw(batch, "propaganda", x, InformationPanelLayout.rowBaseline(infoPanel, 2));
-        font.draw(batch, "population", x, InformationPanelLayout.rowBaseline(infoPanel, 3));
-        font.draw(batch, "spy", x, InformationPanelLayout.rowBaseline(infoPanel, 4));
+        drawInformationText("technology", x, 1);
+        drawInformationText("propaganda", x, 2);
+        drawInformationText("population", x, 3);
+        drawInformationText("spy", x, 4);
         font.getData().setScale(originalScale);
+    }
+
+    private void drawInformationText(String text, float x, int row) {
+        float center = InformationPanelLayout.rowCenter(infoPanel, row);
+        font.draw(batch, text, x, InformationTextAlignment.drawY(font.getData(), text, center));
     }
 
     private void drawStatisticsBars() {

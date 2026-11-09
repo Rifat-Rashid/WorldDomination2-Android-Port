@@ -239,7 +239,7 @@ jobs:
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.MessagePanelLayoutTest" --tests "com.example.worlddomination.game.ui.MessageHistoryScrollStateTest"'
           - id: expanded-info-panel-layout-tests
             check: Expanded Funds and information panel row alignment
-            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.ActionScreenLayoutTest.informationRowsUseTheFormerTitleSpaceAndFitInsideThePanel" --tests "com.example.worlddomination.game.ui.ActionScreenLayoutTest.informationBarsSitInsideTheirRowsInsteadOfOnTextBaselines"'
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.ActionScreenLayoutTest.informationRowsUseTheFormerTitleSpaceAndFitInsideThePanel" --tests "com.example.worlddomination.game.ui.ActionScreenLayoutTest.informationBarsSitInsideTheirRowsInsteadOfOnTextBaselines" --tests "com.example.worlddomination.game.ui.InformationTextAlignmentTest"'
           - id: action-slot-animation-tests
             check: Default open action slots preview accept and cancel
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.ActionSlotAnimationTest"'
