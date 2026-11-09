@@ -89,3 +89,14 @@ jobs:
 
       - name: Test gameplay boundary check failure cases
         run: python3 -m unittest discover -s scripts/tests -p "test_*.py" -v
+
+  neutral-button-artwork:
+    name: Original button chrome has no baked action labels
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+      - name: Check cached label-free chrome
+        run: python3 -m unittest discover -s scripts/tests -p "test_neutral_button_art.py" -v
