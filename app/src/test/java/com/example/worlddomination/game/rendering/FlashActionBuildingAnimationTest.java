@@ -85,7 +85,27 @@ public final class FlashActionBuildingAnimationTest {
         reused.revealAction(GameState.Action.PRODUCTION);
         assertFrameTrace(reused, 3996, 50,
                 new int[]{0, 1, 9, 10, 25}, new int[]{41, 42, 50, 1, 1});
+        assertTrue("The selection highlight is still playing after factory smoke stops", reused.isAnimating());
+        for (int tick = 25; tick < 30; tick++) reused.tick();
         assertFalse(reused.isAnimating());
+    }
+
+    @Test
+    public void eachNationsSelectionRingPlaysThirtyFramesOnlyForItsAnnouncedAction() {
+        FlashActionBuildingAnimation animation = new FlashActionBuildingAnimation(
+                eventFor(GameState.Action.MASS_MEDIA));
+        for (int i = 0; i < 30; i++) animation.tick();
+        animation.revealAction(GameState.Action.RESOURCES);
+        assertEquals(0, animation.getNestedFrameIndex(5277, 30));
+        animation.revealAction(GameState.Action.MASS_MEDIA);
+        assertTrue(animation.isAnimating());
+        for (int expected = 1; expected < 30; expected++) {
+            animation.tick();
+            assertEquals(expected, animation.getNestedFrameIndex(5277, 30));
+        }
+        animation.tick();
+        assertEquals(0, animation.getNestedFrameIndex(5277, 30));
+        assertFalse(animation.isAnimating());
     }
 
     private static void assertFrameTrace(FlashActionBuildingAnimation animation,

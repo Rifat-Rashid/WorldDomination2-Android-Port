@@ -10,6 +10,8 @@ public final class FlashActionBuildingAnimation {
     public static final int RESOURCE_PUMP_SYMBOL_ID = 5334;
     public static final int TECHNOLOGY_LIGHT_SYMBOL_ID = 3707;
     public static final int FACTORY_SMOKE_SYMBOL_ID = 3996;
+    public static final int ACTION_SELECTION_SYMBOL_ID = 5277;
+    public static final int ACTION_SELECTION_FRAME_COUNT = 30;
 
     public final int playerId;
     public final GameState.Action action;
@@ -22,6 +24,8 @@ public final class FlashActionBuildingAnimation {
     private long playbackTicks;
     private int factorySmokeFrame;
     private boolean factorySmokePlaying;
+    private int selectionFrame;
+    private boolean selectionPlaying;
 
     public FlashActionBuildingAnimation(GameState.ActionBuildingEvent event) {
         this(event, null);
@@ -49,6 +53,8 @@ public final class FlashActionBuildingAnimation {
             playbackTicks = previous.playbackTicks;
             factorySmokeFrame = previous.factorySmokeFrame;
             factorySmokePlaying = previous.factorySmokePlaying;
+            selectionFrame = previous.selectionFrame;
+            selectionPlaying = previous.selectionPlaying;
         }
     }
 
@@ -58,6 +64,10 @@ public final class FlashActionBuildingAnimation {
             elapsedTicks++;
         }
         playbackTicks++;
+        if (selectionPlaying) {
+            selectionFrame = (selectionFrame + 1) % ACTION_SELECTION_FRAME_COUNT;
+            selectionPlaying = selectionFrame != 0;
+        }
         if (factorySmokePlaying) {
             factorySmokeFrame = (factorySmokeFrame + 1) % 50;
             // Original factory_smoke stops at frames 1 and 41.
@@ -68,6 +78,10 @@ public final class FlashActionBuildingAnimation {
 
     /** Source play_AB_selectMC starts factory smoke when Production is announced. */
     public void revealAction(GameState.Action revealedAction) {
+        if (revealedAction == action) {
+            selectionFrame = 0;
+            selectionPlaying = true;
+        }
         if (revealedAction == action && "factory".equals(frameName)) {
             factorySmokePlaying = true;
         }
@@ -81,6 +95,9 @@ public final class FlashActionBuildingAnimation {
         if (symbolId == RESOURCE_PUMP_SYMBOL_ID || symbolId == TECHNOLOGY_LIGHT_SYMBOL_ID) {
             return (int) (playbackTicks % frameCount);
         }
+        if (symbolId == ACTION_SELECTION_SYMBOL_ID) {
+            return Math.min(selectionFrame, frameCount - 1);
+        }
         if (symbolId == FACTORY_SMOKE_SYMBOL_ID) {
             return Math.min(factorySmokeFrame, frameCount - 1);
         }
@@ -90,7 +107,7 @@ public final class FlashActionBuildingAnimation {
     /** Autoplaying pump and research lights continue after their parent fade finishes. */
     public boolean isAnimating() {
         return !isFadeComplete() || "resources".equals(frameName) || "tech".equals(frameName)
-                || factorySmokePlaying;
+                || factorySmokePlaying || selectionPlaying;
     }
 
     public boolean isFadeComplete() {
