@@ -50,6 +50,10 @@ public final class FlashBattleUnitRenderer {
                     + "  gl_FragColor = transformed * v_color;\n"
                     + "}\n";
     private final OriginalFlashAnimationAssets assets;
+    private final FlashStencilMasks actionBuildingMasks = new FlashStencilMasks();
+    private final float[] actionBuildingVertices = new float[20];
+    private final int[][] actionBuildingMaskEnds =
+            new int[MAX_ACTION_BUILDING_CLIP_DEPTH][FlashStencilMasks.MAX_MASKS];
     private final float[] satelliteLaserOriginScratch = new float[4];
     private ShaderProgram submarineTintShader;
     private boolean submarineTintShaderChecked;
@@ -110,10 +114,15 @@ public final class FlashBattleUnitRenderer {
                 || depth >= MAX_ACTION_BUILDING_CLIP_DEPTH) {
             return;
         }
-        float mapScale = BattlefieldCityLayout.sourceScale(mapBounds);
+        int ownMaskCount = 0;
+        int[] maskEnds = actionBuildingMaskEnds[depth];
         FlashAffineTransform parent = actionBuildingTransformScratch[depth];
         FlashAffineTransform transformed = actionBuildingTransformScratch[depth + 1];
         for (FlashAnimationTimeline.Layer layer : frame.layers) {
+            while (ownMaskCount > 0 && layer.depth > maskEnds[ownMaskCount - 1]) {
+                actionBuildingMasks.pop(batch);
+                ownMaskCount--;
+            }
             float alpha = parentAlpha * layer.alpha;
             if (alpha <= 0f) {
                 continue;
@@ -122,16 +131,33 @@ public final class FlashBattleUnitRenderer {
                     layer.tx, layer.ty);
             TextureRegion region = assets.getShape(layer.shapeId);
             if (region != null) {
-                float width = region.getRegionWidth() * mapScale;
-                float height = region.getRegionHeight() * mapScale;
-                float x = BattlefieldCityLayout.sourceX(mapBounds,
-                        sourceX + transformed.tx, playerId);
-                float top = BattlefieldCityLayout.sourceY(mapBounds,
-                        sourceY + transformed.ty);
-                batch.setColor(1f, 1f, 1f, alpha);
-                batch.draw(region, x, top - height, 0f, height, width, height,
-                        transformed.scaleX, transformed.scaleY,
-                        transformed.rotationDegrees);
+                boolean mask = layer.clipDepth > layer.depth;
+                if (mask) {
+                    actionBuildingMasks.beginCoverage(batch);
+                    maskEnds[ownMaskCount++] = layer.clipDepth;
+                }
+                FlashSpriteQuad.positions(actionBuildingVertices, transformed, mapBounds,
+                        sourceX, sourceY, playerId,
+                        assets.getShapeOriginX(layer.shapeId),
+                        assets.getShapeOriginY(layer.shapeId),
+                        region.getRegionWidth(), region.getRegionHeight());
+                batch.setColor(1f, 1f, 1f, mask ? 1f : alpha);
+                float color = batch.getPackedColor();
+                for (int vertex = 0; vertex < 20; vertex += 5) {
+                    actionBuildingVertices[vertex + 2] = color;
+                }
+                actionBuildingVertices[3] = region.getU();
+                actionBuildingVertices[4] = region.getV2();
+                actionBuildingVertices[8] = region.getU();
+                actionBuildingVertices[9] = region.getV();
+                actionBuildingVertices[13] = region.getU2();
+                actionBuildingVertices[14] = region.getV();
+                actionBuildingVertices[18] = region.getU2();
+                actionBuildingVertices[19] = region.getV2();
+                batch.draw(region.getTexture(), actionBuildingVertices, 0, 20);
+                if (mask) {
+                    actionBuildingMasks.endCoverage(batch);
+                }
                 continue;
             }
 
@@ -145,6 +171,9 @@ public final class FlashBattleUnitRenderer {
             }
             drawActionBuildingFrame(batch, mapBounds, nestedFrame, sourceX, sourceY,
                     playerId, religionCode, alpha, depth + 1);
+        }
+        while (ownMaskCount-- > 0) {
+            actionBuildingMasks.pop(batch);
         }
     }
 
@@ -265,6 +294,7 @@ public final class FlashBattleUnitRenderer {
 
     /** Releases the cached player-tint shader with the other renderer-owned resources. */
     public void dispose() {
+        actionBuildingMasks.dispose();
         if (submarineTintShader != null) {
             submarineTintShader.dispose();
             submarineTintShader = null;

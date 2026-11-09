@@ -371,6 +371,51 @@ public final class FlashAnimationTimelineTest {
         assertNull(sequence.getCurrentFrame());
     }
 
+    @Test
+    public void diplomacyCoverageShapesRemainMasksAtEverySourceStyle() throws IOException {
+        FlashAnimationTimeline timeline = FlashAnimationTimeline.fromSymbol(
+                findSymbolById(loadSourceScene(), 5171), 24f);
+        int[] coverage = {5158, 5162, 5165, 5168, 5170};
+        for (int frame = 0; frame < coverage.length; frame++) {
+            FlashAnimationTimeline.Layer[] layers = timeline.getFrame(frame).layers;
+            assertEquals(3, layers.length);
+            assertEquals(1, layers[0].depth);
+            assertEquals(0, layers[0].clipDepth);
+            assertEquals(coverage[frame], layers[1].shapeId);
+            assertEquals(2, layers[1].depth);
+            assertEquals(5, layers[1].clipDepth);
+            assertEquals(3, layers[2].depth);
+            assertEquals(5159, layers[2].shapeId);
+        }
+    }
+
+    @Test
+    public void newNonMovePlacementResetsPriorMaskTransformNameAndAlpha() {
+        JsonValue symbol = new JsonReader().parse("{id:7,linkage:fixture,timeline:{frames:["
+                + "[{depth:2,values:{character_id:41,clip_depth:5,name:mask,"
+                + "matrix:{tx:12,ty:18},color:{mult:[1,1,1,0.5]}}}],"
+                + "[{depth:2,move:false,values:{character_id:42}}]]}}");
+        FlashAnimationTimeline timeline = FlashAnimationTimeline.fromSymbol(symbol, 24f);
+        FlashAnimationTimeline.Layer replacement = timeline.getFrame(1).layers[0];
+        assertEquals(0, replacement.clipDepth);
+        assertEquals(0f, replacement.tx, 0f);
+        assertEquals(0f, replacement.ty, 0f);
+        assertEquals("", replacement.name);
+        assertEquals(1f, replacement.alpha, 0f);
+        assertEquals(5, timeline.getFrame(0).layers[0].clipDepth);
+    }
+
+    @Test
+    public void sourceAlphaAdditionIsInByteUnitsAndClampedAfterConversion() {
+        JsonValue symbol = new JsonReader().parse("{id:7,linkage:fixture,timeline:{frames:["
+                + "[{depth:1,values:{character_id:41,color:{mult:[1,1,1,0.5],"
+                + "add:[0,0,0,-64]}}}],"
+                + "[{depth:1,move:true,values:{color:{mult:[1,1,1,0],add:[0,0,0,128]}}}]]}}");
+        FlashAnimationTimeline timeline = FlashAnimationTimeline.fromSymbol(symbol, 24f);
+        assertEquals(0.5f - 64f / 255f, timeline.getFrame(0).layers[0].alpha, 0.00001f);
+        assertEquals(128f / 255f, timeline.getFrame(1).layers[0].alpha, 0.00001f);
+    }
+
     private static JsonValue loadSourceScene() throws IOException {
         Path asset = projectAsset("original/runtime/scene.json.gz");
         try (InputStream file = Files.newInputStream(asset);

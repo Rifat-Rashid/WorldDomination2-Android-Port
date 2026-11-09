@@ -1419,6 +1419,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         drawPanelTexture(actionPanel);
         batch.draw(uiAssets.battleMap, mapBounds.x, mapBounds.y,
                 mapBounds.width, mapBounds.height);
+        batch.flush();
+        setScissor(mapBounds);
         cityRenderer.draw(batch, mapBounds, game);
         battleUnitRenderer.drawActionBuildings(batch, mapBounds, actionBuildingAnimations);
         battleUnitRenderer.drawSubmarines(batch, mapBounds, submarineBattleAnimations);
@@ -1433,6 +1435,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 antiDefenseTrackingAnimations);
         battleUnitRenderer.drawSatellites(batch, mapBounds, satelliteBattleAnimations);
         explosionRenderer.draw(batch, mapBounds, battleAnimations);
+        batch.flush();
+        Gdx.gl.glDisable(GL20.GL_SCISSOR_TEST);
         drawContained(uiAssets.logo, logoPanel.x + 7f, logoPanel.y + 2f,
                 logoPanel.width - 14f, logoPanel.height - 4f);
         drawPortraits();
@@ -1450,7 +1454,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         drawPortraitMeters();
 
         shapes.begin(ShapeRenderer.ShapeType.Line);
+        setScissor(mapBounds);
         battleUnitRenderer.drawSatelliteBeams(shapes, mapBounds, satelliteBattleAnimations);
+        shapes.flush();
+        Gdx.gl.glDisable(GL20.GL_SCISSOR_TEST);
         drawPanelEdges(leftPanel);
         drawPanelEdges(rightPanel);
         drawPanelEdges(logoPanel);
