@@ -18,6 +18,9 @@ jobs:
       max-parallel: 6
       matrix:
         include:
+          - id: flash-mask-placement-tests
+            check: Flash mask depths and exported artwork registration
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashSpriteQuadTest" --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest.diplomacyCoverageShapesRemainMasksAtEverySourceStyle" --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest.newNonMovePlacementResetsPriorMaskTransformNameAndAlpha" --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest.sourceAlphaAdditionIsInByteUnitsAndClampedAfterConversion"'
           - id: unit-tests
             check: JVM unit tests
             task: ':app:testDebugUnitTest'

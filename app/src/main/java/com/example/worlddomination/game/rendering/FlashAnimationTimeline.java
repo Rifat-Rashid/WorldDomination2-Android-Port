@@ -12,6 +12,8 @@ public final class FlashAnimationTimeline {
     /** One Flash display-list entry, including its shape or nested symbol ID. */
     public static final class Layer {
         public final int shapeId;
+        public final int depth;
+        public final int clipDepth;
         public final float a;
         public final float b;
         public final float c;
@@ -21,7 +23,9 @@ public final class FlashAnimationTimeline {
         public final String name;
         public final float alpha;
 
-        private Layer(DisplayObject object) {
+        private Layer(int depth, DisplayObject object) {
+            this.depth = depth;
+            clipDepth = object.clipDepth;
             shapeId = object.shapeId;
             a = object.a;
             b = object.b;
@@ -60,6 +64,7 @@ public final class FlashAnimationTimeline {
 
     private static final class DisplayObject {
         int shapeId = -1;
+        int clipDepth;
         float a = 1f;
         float b;
         float c;
@@ -114,7 +119,8 @@ public final class FlashAnimationTimeline {
                     continue;
                 }
                 DisplayObject object = displayList.get(depth);
-                if (object == null) {
+                if (object == null || (values.has("character_id")
+                        && !operation.getBoolean("move", false))) {
                     object = new DisplayObject();
                     displayList.put(depth, object);
                 }
@@ -132,6 +138,7 @@ public final class FlashAnimationTimeline {
                     object.ty = getFloat(matrix, "ty", object.ty);
                 }
                 object.name = values.getString("name", object.name);
+                object.clipDepth = values.getInt("clip_depth", object.clipDepth);
                 JsonValue color = values.get("color");
                 if (color != null) {
                     JsonValue multipliers = color.get("mult");
@@ -139,15 +146,16 @@ public final class FlashAnimationTimeline {
                     float alphaMultiplier = getArrayFloat(multipliers, 3, 1f);
                     float alphaAddition = getArrayFloat(additions, 3, 0f);
                     object.alpha = Math.max(0f, Math.min(1f,
-                            alphaMultiplier + alphaAddition));
+                            alphaMultiplier + alphaAddition / 255f));
                 }
             }
 
             Layer[] layers = new Layer[displayList.size()];
             int layerIndex = 0;
-            for (DisplayObject object : displayList.values()) {
+            for (Map.Entry<Integer, DisplayObject> entry : displayList.entrySet()) {
+                DisplayObject object = entry.getValue();
                 if (object.shapeId > 0) {
-                    layers[layerIndex++] = new Layer(object);
+                    layers[layerIndex++] = new Layer(entry.getKey(), object);
                 }
             }
             if (layerIndex > 0) {
