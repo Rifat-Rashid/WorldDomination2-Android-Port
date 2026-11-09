@@ -1678,7 +1678,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 float patchRight = column == 0 ? x1 : column == 1 ? x2 : x3;
                 float patchY = row == 0 ? y0 : row == 1 ? y1 : y2;
                 float patchTop = row == 0 ? y1 : row == 1 ? y2 : y3;
-                batch.draw(uiAssets.buttonPatches[row][column], patchX, patchY,
+                batch.draw(uiAssets.buttonPatches[2 - row][column], patchX, patchY,
                         patchRight - patchX, patchTop - patchY);
             }
         }

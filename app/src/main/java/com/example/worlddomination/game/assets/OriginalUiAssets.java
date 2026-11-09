@@ -14,6 +14,7 @@ public final class OriginalUiAssets implements Disposable {
     private final Texture logoTexture;
     private final Texture battleMapTexture;
     private final Texture productionModalTexture;
+    private final Texture neutralButtonTexture;
     public final Texture metalPanel;
     public final TextureRegion[][] buttonPatches = new TextureRegion[3][3];
 
@@ -36,7 +37,10 @@ public final class OriginalUiAssets implements Disposable {
         metalPanel.setFilter(TextureFilter.Linear, TextureFilter.Linear);
         metalPanel.setWrap(TextureWrap.Repeat, TextureWrap.Repeat);
         metalTile = require("metalTile");
-        button = require("button");
+        neutralButtonTexture = new Texture(
+                Gdx.files.internal("original/ui/neutral-button.png"), true);
+        neutralButtonTexture.setFilter(TextureFilter.MipMapLinearLinear, TextureFilter.Linear);
+        button = new TextureRegion(neutralButtonTexture);
         logoTexture = new Texture(Gdx.files.internal("original/ui/logo-mark.png"), true);
         logoTexture.setFilter(TextureFilter.Linear, TextureFilter.Linear);
         logo = new TextureRegion(logoTexture);
@@ -66,7 +70,7 @@ public final class OriginalUiAssets implements Disposable {
         navigationIcons[3] = require("navMedia");
         navigationIcons[4] = require("navAttack");
 
-        int edge = 4;
+        int edge = 16;
         int[] sourceX = {0, edge, button.getRegionWidth() - edge};
         int[] sourceY = {0, edge, button.getRegionHeight() - edge};
         int[] sourceWidth = {edge, button.getRegionWidth() - 2 * edge, edge};
@@ -94,5 +98,6 @@ public final class OriginalUiAssets implements Disposable {
         battleMapTexture.dispose();
         productionModalTexture.dispose();
         metalPanel.dispose();
+        neutralButtonTexture.dispose();
     }
 }
