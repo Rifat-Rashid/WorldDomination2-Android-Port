@@ -1152,6 +1152,12 @@ public final class GameState {
         selectedMapCityIndex = -1;
     }
 
+    /** Clears an unconfirmed city marker without selecting a different island. */
+    public void clearBattlefieldCitySelection() {
+        selectedMapCityOwner = -1;
+        selectedMapCityIndex = -1;
+    }
+
     /** Selects a populated, living city tapped on the original battlefield. */
     public boolean selectBattlefieldCity(int playerId, int cityIndex) {
         if (playerId < 0 || playerId >= players.length || cityIndex < 0 || cityIndex >= 5) {
@@ -1559,6 +1565,54 @@ public final class GameState {
         return configureAttack(selectedTargetPlayer, selectedTargetCity, weaponName);
     }
 
+    /** Equipment preview must not depend on the previously selected map target. */
+    public boolean previewAttackWeapon(String weaponName) {
+        if (selectedAction != Action.ATTACK || !getAvailableAttackWeapons().contains(weaponName)) {
+            return false;
+        }
+        selectedAttackWeapon = weaponName;
+        return true;
+    }
+
+    public boolean selectDiplomacyTarget(int playerId) {
+        if (selectedAction != Action.DIPLOMACY || playerId <= 0 || playerId >= players.length
+                || !players[playerId].alive || getHuman().hasCeasefireWith(playerId)
+                || players[playerId].pendingDiplomacy[0] != null) return false;
+        selectedTargetPlayer = playerId;
+        return true;
+    }
+
+    public boolean selectDiplomacyOption(int optionIndex) {
+        if (selectedAction != Action.DIPLOMACY || optionIndex < 0
+                || optionIndex >= DIPLOMACY_AMOUNT.length) return false;
+        selectedDiplomacyOption = optionIndex;
+        return true;
+    }
+
+    public boolean selectSpyBuilding(String building) {
+        if (!isSelectedAttackSpy()) return false;
+        for (String candidate : SPY_BUILDINGS) {
+            if (candidate.equals(building)) {
+                selectedSpyBuilding = building;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public String getSelectedPreparedCarrier() { return selectedPreparedCarrier; }
+    public String getSelectedPreparedPayload() { return selectedPreparedPayload; }
+    public String getSelectedDefenseWeapon() { return selectedDefenseWeapon; }
+
+    /** Source cancelPreAttack discards the already consumed carrier without a refund. */
+    public boolean cancelPreparedAttack() {
+        if (selectedAction != Action.PREPARED_ATTACK || getHuman().preparedCarrierName == null
+                || "ship".equals(getHuman().preparedCarrierName)) return false;
+        getHuman().preparedCarrierName = null;
+        cancelSelection();
+        return true;
+    }
+
     public int getSpyReadiness() {
         return getHuman().spyReadiness;
     }
@@ -1636,6 +1690,17 @@ public final class GameState {
                     weapon.definition.name).isEmpty()) {
                 available.add(weapon.definition.name);
             }
+        }
+        return Collections.unmodifiableList(available);
+    }
+
+    /** Human stock selection permits preparing a carrier before acquiring its payload. */
+    public List<String> getAvailablePreparedCarrierStock(int playerId) {
+        PlayerState player = playerById(playerId);
+        List<String> available = new ArrayList<>();
+        for (WeaponState weapon : player.weapons.values()) {
+            if (isCarrier(weapon) && weapon.active && availableWeaponStock(playerId, weapon) > 0)
+                available.add(weapon.definition.name);
         }
         return Collections.unmodifiableList(available);
     }
@@ -1729,7 +1794,7 @@ public final class GameState {
     /** Selects a carrier for the first half of a strike. */
     public boolean configurePreparedCarrier(String carrierName) {
         if (selectedAction != Action.PREPARED_ATTACK || getHuman().preparedCarrierName != null
-                || !getAvailablePreparedCarriers(0).contains(carrierName)) {
+                || !getAvailablePreparedCarrierStock(0).contains(carrierName)) {
             return false;
         }
         selectedPreparedCarrier = carrierName;
@@ -1840,7 +1905,7 @@ public final class GameState {
         }
         if (getHuman().preparedCarrierName == null) {
             return selectedPreparedCarrier != null
-                    && getAvailablePreparedCarriers(0).contains(selectedPreparedCarrier);
+                    && getAvailablePreparedCarrierStock(0).contains(selectedPreparedCarrier);
         }
         WeaponState carrier = getHuman().weapons.get(getHuman().preparedCarrierName);
         if (carrier != null && "ship".equals(carrier.definition.type)) {
@@ -1857,7 +1922,7 @@ public final class GameState {
     }
 
     private boolean canAcceptPreparedShipAttack() {
-        if (selectedShipStrikes.size() != 3) {
+        if (selectedShipStrikes.isEmpty() || selectedShipStrikes.size() > 3) {
             return false;
         }
         int targetId = selectedShipStrikes.get(0).targetPlayerId;
@@ -2313,6 +2378,13 @@ public final class GameState {
     public boolean isWeaponBioloaded(int playerId, String name) {
         WeaponState weapon = playerById(playerId).weapons.get(name);
         return weapon != null && weapon.bioloaded;
+    }
+
+    /** Available human stock excludes already queued orders, as source inUse does. */
+    public int getAvailableWeaponStock(int playerId, String name) {
+        PlayerState player = playerById(playerId);
+        WeaponState weapon = player.weapons.get(name);
+        return weapon == null ? 0 : Math.max(0, availableWeaponStock(playerId, weapon));
     }
 
     public int getWeaponStock(String name) {
@@ -3301,8 +3373,7 @@ public final class GameState {
         if (order.prepareCarrier) {
             WeaponState carrier = attacker.weapons.get(order.weaponName);
             if (attacker.preparedCarrierName != null || !isCarrier(carrier)
-                    || !carrier.active || carrier.inStock <= 0
-                    || getAvailablePreparedPayloads(attacker.id, order.weaponName).isEmpty()) {
+                    || !carrier.active || carrier.inStock <= 0) {
                 addMessage(attacker, "Strike preparation cancelled: carrier or payload is unavailable.");
                 return;
             }
@@ -3377,7 +3448,7 @@ public final class GameState {
                                           TurnPopulationChanges populationChanges) {
         if (!order.weaponName.equals(attacker.preparedCarrierName)
                 || !defender.alive || defender.hasCeasefireWith(attacker.id)
-                || order.shipStrikes.size() != 3) {
+                || order.shipStrikes.isEmpty() || order.shipStrikes.size() > 3) {
             addMessage(attacker, "Ship strike cancelled: target or payload sequence is unavailable.");
             return;
         }
