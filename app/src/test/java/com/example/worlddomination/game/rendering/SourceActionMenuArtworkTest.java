@@ -19,7 +19,7 @@ public final class SourceActionMenuArtworkTest {
         return new JsonReader().parse(Files.readString(asset("menus.json")));
     }
     @Test public void everySourceVariantHasFourTimesArtworkAndValidTextGeometry() throws Exception {
-        JsonValue menus = menus(); assertEquals(93, menus.size);
+        JsonValue menus = menus(); assertEquals(94, menus.size);
         for (JsonValue menu : menus) {
             try (DataInputStream png = new DataInputStream(Files.newInputStream(asset(menu.name + ".png")))) {
                 assertEquals(0x89504e470d0a1a0aL, png.readLong());
@@ -99,4 +99,16 @@ public final class SourceActionMenuArtworkTest {
         }
     }
 
+    @Test public void skipUsesTheRecoveredDialogAndFooterRegistration() throws Exception {
+        JsonValue menu = menus().get("skip_action");
+        assertNotNull(menu); assertFalse(menu.getBoolean("map"));
+        assertEquals("skip_action", menu.getString("frame"));
+        assertEquals(-4.95f, menu.get("origin").getFloat(0), .001f);
+        assertEquals(1.05f, menu.get("origin").getFloat(1), .001f);
+        boolean prompt = false;
+        for (JsonValue field : menu.get("fields"))
+            if (field.getString("text").contains("Accept to skip this action and leave it empty.")) prompt = true;
+        assertTrue(prompt); assertTrue(menu.getBoolean("buttons"));
+        assertEquals(2, menu.get("controls").size);
+    }
 }

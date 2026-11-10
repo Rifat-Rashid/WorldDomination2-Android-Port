@@ -152,7 +152,8 @@ public final class GameState {
         PREPARED_ATTACK("Prepared Attack"),
         DEFENSE("Defense"),
         PROPAGANDA("Propaganda"),
-        DIPLOMACY("Diplomacy");
+        DIPLOMACY("Diplomacy"),
+        SKIP("Skip Action");
 
         public final String label;
 
@@ -160,10 +161,16 @@ public final class GameState {
             this.label = label;
         }
 
+        /** Skip is selected through an empty action tube, never a navigation row. */
+        public static Action[] navigationValues() {
+            return new Action[]{RESOURCES, PRODUCTION, RESEARCH, MASS_MEDIA, ATTACK,
+                    PREPARED_ATTACK, DEFENSE, PROPAGANDA, DIPLOMACY};
+        }
+
         public boolean isPorted() {
             return this == RESOURCES || this == PRODUCTION || this == RESEARCH
                     || this == MASS_MEDIA || this == ATTACK || this == PROPAGANDA
-                    || this == DIPLOMACY || this == PREPARED_ATTACK || this == DEFENSE;
+                    || this == DIPLOMACY || this == PREPARED_ATTACK || this == DEFENSE || this == SKIP;
         }
     }
 
@@ -481,6 +488,7 @@ public final class GameState {
         final String spyBuilding;
         final int diplomacyOption;
         final List<ShipStrike> shipStrikes;
+        int humanActionSlot = -1;
         int actionBuildingSlot = -1;
         String actionBuildingFrameName;
         boolean actionBuildingResolved;
@@ -2241,7 +2249,8 @@ public final class GameState {
                 selectedAction == Action.PREPARED_ATTACK
                         && getHuman().preparedCarrierName == null,
                 selectedSpyBuilding, selectedDiplomacyOption, selectedShipStrikes);
-        queuedActions.add(order);
+        order.humanActionSlot = getNextActionSlot();
+        queuedActions.add(order.humanActionSlot, order);
         if (selectedAction == Action.RESEARCH) {
             invalidateResearchChoices();
         }
@@ -2307,8 +2316,9 @@ public final class GameState {
     }
 
     public void removeQueuedAction(int slot) {
-        if (slot >= 0 && slot < queuedActions.size()) {
-            ActionOrder removed = queuedActions.remove(slot);
+        ActionOrder removed = queuedOrderAt(slot);
+        if (removed != null) {
+            queuedActions.remove(removed);
             if (removed.action == Action.RESEARCH) {
                 invalidateResearchChoices();
             }
@@ -2330,8 +2340,8 @@ public final class GameState {
     }
 
     public Action getQueuedAction(int slot) {
-        return slot >= 0 && slot < queuedActions.size()
-                ? queuedActions.get(slot).action : null;
+        ActionOrder order = queuedOrderAt(slot);
+        return order == null ? null : order.action;
     }
 
     public int getResourceIncomeMillions() {
@@ -2348,6 +2358,22 @@ public final class GameState {
     private int resourceIncome(PlayerState player) {
         int[] divisors = player.human ? PLAYER_RESOURCE_DIVISOR : ENEMY_RESOURCE_DIVISOR;
         return Math.round((float) player.populationMillions / divisors[difficulty]);
+    }
+
+    /** Source Player.getNextTurnAction returns the first unassigned fixed slot. */
+    public int getNextActionSlot() {
+        for (int slot = 0; slot < MAX_TURN_ACTIONS; slot++) {
+            if (queuedOrderAt(slot) == null) return slot;
+        }
+        return -1;
+    }
+
+    private ActionOrder queuedOrderAt(int slot) {
+        if (slot < 0 || slot >= MAX_TURN_ACTIONS) return null;
+        for (ActionOrder order : queuedActions) {
+            if (order.humanActionSlot == slot) return order;
+        }
+        return null;
     }
 
     /** Sub_Presenter_interface previews the source gain after its ten-point upkeep. */
@@ -2676,7 +2702,8 @@ public final class GameState {
                         && order.action != Action.PREPARED_ATTACK
                         && order.action != Action.DEFENSE
                         && order.action != Action.PROPAGANDA
-                        && order.action != Action.RESEARCH) {
+                        && order.action != Action.RESEARCH
+                        && order.action != Action.SKIP) {
                     throw new IllegalStateException("Unported action entered the turn queue: "
                             + order.action);
                 }

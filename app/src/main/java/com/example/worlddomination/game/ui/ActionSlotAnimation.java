@@ -22,7 +22,7 @@ public final class ActionSlotAnimation {
             if (playbackBlocking || (confirming && (slot == 0
                     || confirmationSeconds >= ConfirmTurnAnimation.SECOND_TUBE_DELAY_SECONDS))) {
                 target = 1;
-            } else if (!confirming && queued == null && slot == state.getQueuedActionCount()) {
+            } else if (!confirming && queued == null && slot == state.getNextActionSlot()) {
                 next = state.getSelectedAction();
             }
             if (next != displayed[slot]) {

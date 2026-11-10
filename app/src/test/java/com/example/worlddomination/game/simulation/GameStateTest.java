@@ -525,7 +525,7 @@ public final class GameStateTest {
     }
 
     @Test
-    public void tappingQueuedResourcesCanFillSecondSlotAndSlotControlRemovesIt() {
+    public void modelCanQueueDuplicateResourcesAndSlotControlRemovesOnlyTheSecond() {
         GameState state = new GameState(1, 54L, false);
         state.selectAction(GameState.Action.RESOURCES);
         assertTrue(state.acceptSelectedAction());

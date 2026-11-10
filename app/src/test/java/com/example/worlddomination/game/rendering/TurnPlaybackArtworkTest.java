@@ -31,7 +31,9 @@ public final class TurnPlaybackArtworkTest {
         JsonValue labels = symbol(4683).get("timeline").get("labels");
         TextureAtlas.TextureAtlasData data = atlas("turn-announcements.atlas");
         assertEquals(39, data.getRegions().size);
-        for (GameState.Action action : GameState.Action.values()) {
+        assertFalse("Source Skip has no announcement frame", labels.has("skip_action"));
+        assertEquals("skip_action", TurnControlRenderer.sourceLabel(GameState.Action.SKIP));
+        for (GameState.Action action : GameState.Action.navigationValues()) {
             String label = TurnControlRenderer.sourceLabel(action);
             assertTrue("No recovered source frame for " + action, labels.has(label));
             assertEquals(832, region(data, label).width);

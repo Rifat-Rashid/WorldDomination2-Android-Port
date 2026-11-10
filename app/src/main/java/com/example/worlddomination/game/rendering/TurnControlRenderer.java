@@ -28,7 +28,7 @@ public final class TurnControlRenderer implements Disposable {
         for (int index = 0; index < confirmFrames.length; index++) {
             confirmFrames[index] = require(confirmAtlas, "confirm" + (index + 1));
         }
-        for (GameState.Action action : GameState.Action.values()) {
+        for (GameState.Action action : GameState.Action.navigationValues()) {
             actionFrames[action.ordinal()] = require(announcementAtlas, sourceLabel(action));
         }
         for (int player = 0; player < 5; player++) {
@@ -52,7 +52,8 @@ public final class TurnControlRenderer implements Disposable {
 
     public void drawAnnouncement(SpriteBatch batch, Rectangle mapBounds, TurnActionDisplay display,
                                  GameState state) {
-        if (display.getAction() == null || display.getAlpha() <= 0) return;
+        if (display.getAction() == null || display.getAction() == GameState.Action.SKIP
+                || display.getAlpha() <= 0) return;
         batch.setColor(1, 1, 1, display.getAlpha());
         drawSource(batch, actionFrames[display.getAction().ordinal()], mapBounds, displaySource);
         for (int player = 0; player < 5; player++) {
@@ -93,6 +94,7 @@ public final class TurnControlRenderer implements Disposable {
             case DEFENSE: return "defense";
             case PROPAGANDA: return "propaganda";
             case DIPLOMACY: return "diplomacy";
+            case SKIP: return "skip_action";
             default: throw new IllegalArgumentException("Unknown source action " + action);
         }
     }
