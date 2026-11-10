@@ -29,7 +29,7 @@ jobs:
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.TurnActionDisplayTest" --tests "com.example.worlddomination.game.rendering.TurnPlaybackArtworkTest" --tests "com.example.worlddomination.game.rendering.FlashActionBuildingAnimationTest.eachNationsSelectionRingPlaysThirtyFramesOnlyForItsAnnouncedAction"'
           - id: source-action-menu-tests
             check: Source diplomacy propaganda defense and attack menu transitions
-            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.SourceActionMenuStateTest" --tests "com.example.worlddomination.game.rendering.SourceActionMenuArtworkTest"'
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.SourceActionMenuStateTest" --tests "com.example.worlddomination.game.rendering.SourceActionMenuArtworkTest" --tests "com.example.worlddomination.game.ui.SourceEquipmentFlowParityTest"'
           - id: unit-tests
             check: JVM unit tests
             task: ':app:testDebugUnitTest'

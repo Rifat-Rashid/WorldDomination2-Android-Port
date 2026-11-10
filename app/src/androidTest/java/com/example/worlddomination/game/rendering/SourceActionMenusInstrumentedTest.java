@@ -82,6 +82,36 @@ public final class SourceActionMenusInstrumentedTest {
                     capture(app, "source-prepared-step-two.png");
                     accept(app, state, GameState.Action.PREPARED_ATTACK);
 
+                    state = fresh(app); stock(state, "soldier1", 2);
+                    equipment(app, "soldier1");
+                    assertEquals(GameState.Action.ATTACK, state.getSelectedAction());
+                    assertEquals("attack1", menu(app).getKey());
+                    equipment(app, "soldier1"); assertEquals("attackSelect", menu(app).getKey());
+                    assertNull(menu(app).getSelectedEquipment());
+                    assertEquals("", field("selectedEquipment").get(app));
+                    app.keyDown(com.badlogic.gdx.Input.Keys.BACK);
+                    assertNull(state.getSelectedAction());
+
+                    state = fresh(app); stock(state, "ship", 1); stock(state, "warhead1", 1);
+                    begin(app, GameState.Action.PREPARED_ATTACK); equipment(app, "ship");
+                    accept(app, state, GameState.Action.PREPARED_ATTACK);
+                    state.selectAction(GameState.Action.RESOURCES); assertTrue(state.acceptSelectedAction());
+                    state.confirmTurn();
+                    while (state.getPendingHumanDiplomacyProposal() != null) assertTrue(state.respondToDiplomacyProposal(false));
+                    begin(app, GameState.Action.PREPARED_ATTACK); equipment(app, "warhead1"); cityTap(app, 1, 0);
+                    assertEquals("ship1-1", menu(app).getKey()); assertTrue(menu(app).isAcceptVisible());
+                    capture(app, "source-ship-one-payload.png");
+                    accept(app, state, GameState.Action.PREPARED_ATTACK);
+
+                    state = fresh(app); begin(app, GameState.Action.DIPLOMACY);
+                    state.getHuman().turnMoneyMillions = 0;
+                    sourceTap(app, 50, 80); sourceTap(app, 70, 169);
+                    assertEquals("diplomacy_error", menu(app).getKey()); assertFalse(menu(app).hasOption());
+                    capture(app, "source-diplomacy-unaffordable-option.png");
+                    sourceControlTap(app, "diplomacy_error", "error_window/btnOK");
+                    assertEquals("diplomacy", menu(app).getKey()); assertTrue(menu(app).hasLeader());
+                    app.keyDown(com.badlogic.gdx.Input.Keys.BACK); assertNull(state.getSelectedAction());
+
                     state = fresh(app); assertTrue(state.submitDiplomacyProposal(1, 0, 0));
                     capture(app, "source-diplomacy-offer.png"); sourceTap(app, 307, 258);
                     assertNull(state.getPendingHumanDiplomacyProposal());

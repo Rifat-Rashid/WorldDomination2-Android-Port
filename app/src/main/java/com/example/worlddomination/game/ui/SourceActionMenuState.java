@@ -8,6 +8,8 @@ public final class SourceActionMenuState {
     private GameState.Action action;
     private boolean weaponChosen, cityChosen, leaderChosen, optionChosen, cancelling;
     private boolean pendingError;
+    private String equipment;
+    private int shipStrikeCount;
     private String payload;
     private String error;
     private String key;
@@ -22,10 +24,13 @@ public final class SourceActionMenuState {
     public void begin(GameState game) {
         action = game.getSelectedAction();
         weaponChosen = cityChosen = leaderChosen = optionChosen = cancelling = false;
-        payload = error = null;
+        equipment = payload = error = null;
+        game.clearBattlefieldCitySelection();
         pendingError = false;
         refresh(game);
     }
+
+    public String getSelectedEquipment() { return equipment; }
 
     public String getKey() { return key; }
     public int getRevision() { return revision; }
@@ -34,9 +39,27 @@ public final class SourceActionMenuState {
     public boolean hasLeader() { return leaderChosen; }
     public boolean hasOption() { return optionChosen; }
 
+    /** Presenter_interface selects the appropriate action when idle stock is tapped. */
+    public static GameState.Action actionForEquipment(GameState game, String name) {
+        GameState.WeaponState weapon = game.getHuman().getWeapons().get(name);
+        if (weapon == null || !weapon.active || weapon.inStock <= 0
+                || game.getSelectedAction() != null || game.getQueuedActionCount() >= 2) return null;
+        String type = weapon.definition.type;
+        if ("soldier".equals(type) || "spy".equals(type)) return GameState.Action.ATTACK;
+        if ("anti".equals(type)) return GameState.Action.DEFENSE;
+        String carrier = game.getPreparedCarrierName(0);
+        if (carrier == null && game.getAvailablePreparedCarrierStock(0).contains(name)
+                || carrier != null && game.getAvailablePreparedPayloads(0, carrier).contains(name))
+            return GameState.Action.PREPARED_ATTACK;
+        return null;
+    }
+
     public boolean chooseEquipment(GameState game, String name) {
         WeaponCatalog.Definition weapon = WeaponCatalog.byName(name);
         if (weapon == null || game.getSelectedAction() != action || cancelling) return false;
+        cityChosen = false;
+        game.clearBattlefieldCitySelection();
+        if (availableStock(game, name) <= 0) { refresh(game); return false; }
         boolean selected = false;
         if (action == GameState.Action.ATTACK) {
             selected = game.previewAttackWeapon(name);
@@ -50,22 +73,42 @@ public final class SourceActionMenuState {
         } else if (action == GameState.Action.PREPARED_ATTACK) {
             String carrier = game.getPreparedCarrierName(0);
             if (carrier == null) selected = game.configurePreparedCarrier(name);
-            else if (game.getAvailablePreparedPayloads(0, carrier).contains(name)) {
+            else if (canChoosePayload(game, carrier, name)) {
                 payload = name;
                 selected = true;
             }
         }
         if (selected) {
-            weaponChosen = true;
-            // The source keeps the selected target when switching compatible equipment.
-            if (action == GameState.Action.ATTACK && cityChosen) {
-                cityChosen = game.configureAttack(game.getSelectedTargetPlayer(),
-                        game.getSelectedTargetCity(), name);
-            } else if (action == GameState.Action.PREPARED_ATTACK) cityChosen = false;
+            boolean toggledOff = name.equals(equipment);
+            equipment = toggledOff ? null : name;
+            weaponChosen = !toggledOff;
+            if (toggledOff) payload = null;
             error = null;
         }
         refresh(game);
         return selected;
+    }
+
+    /** Source HUD stockAmount subtracts both queued and current-selection inUse. */
+    public int availableStock(GameState game, String name) {
+        int remaining = game.getAvailableWeaponStock(0, name);
+        if (game.getSelectedAction() != action) return remaining;
+        for (GameState.ShipStrike strike : game.getSelectedShipStrikes())
+            if (name.equals(strike.payloadName)) remaining--;
+        boolean selectingShipPayload = action == GameState.Action.PREPARED_ATTACK
+                && "ship".equals(game.getPreparedCarrierName(0));
+        if (!selectingShipPayload && name.equals(equipment)) remaining--;
+        return Math.max(0, remaining);
+    }
+
+    private static boolean canChoosePayload(GameState game, String carrier, String name) {
+        if (!game.getAvailablePreparedPayloads(0, carrier).contains(name)) return false;
+        int remaining = game.getAvailableWeaponStock(0, name);
+        if ("ship".equals(carrier)) {
+            for (GameState.ShipStrike strike : game.getSelectedShipStrikes())
+                if (name.equals(strike.payloadName)) remaining--;
+        }
+        return remaining > 0;
     }
 
     public boolean chooseCity(GameState game, int player, int city) {
@@ -80,7 +123,7 @@ public final class SourceActionMenuState {
             if ("ship".equals(game.getPreparedCarrierName(0))) {
                 selected = PreparedShipStrikeSelection.tryAddTargetCity(game, player, city, payload)
                         == PreparedShipStrikeSelection.Result.ADDED;
-                if (selected) payload = null;
+                if (selected) { payload = null; equipment = null; }
             } else selected = game.configurePreparedLaunch(player, city, payload);
         }
         if (selected) {
@@ -99,6 +142,12 @@ public final class SourceActionMenuState {
     }
 
     public boolean chooseOption(GameState game, int option) {
+        if (option < 0 || option > 5 || game.getSelectedAction() != GameState.Action.DIPLOMACY) return false;
+        if (option < 3 && game.getDiplomacyOptionAmount(option) > game.getHuman().turnMoneyMillions) {
+            error = "money";
+            refresh(game);
+            return false;
+        }
         if (!game.selectDiplomacyOption(option)) return false;
         optionChosen = true;
         refresh(game);
@@ -120,6 +169,8 @@ public final class SourceActionMenuState {
         if (action == GameState.Action.DEFENSE) return weaponChosen;
         if (action == GameState.Action.PROPAGANDA) return cityChosen;
         if (action == GameState.Action.ATTACK) return weaponChosen && cityChosen;
+        if (action == GameState.Action.PREPARED_ATTACK && shipStrikeCount > 0
+                && (key.startsWith("ship1-") || "preAttack4-ship".equals(key))) return true;
         return key != null && (key.startsWith("preAttack-") || key.startsWith("preAttack3-")
                 || "preAttack_space".equals(key) || "ship2".equals(key));
     }
@@ -164,6 +215,7 @@ public final class SourceActionMenuState {
     public void dismissError(GameState game) { error = null; pendingError = false; refresh(game); }
 
     private void refresh(GameState game) {
+        shipStrikeCount = game.getSelectedShipStrikeCount();
         if (error != null) key = "spy".equals(error) ? "spy_error" : "diplomacy_error";
         else if (cancelling) key = "preCancel";
         else if (action == GameState.Action.DIPLOMACY) key = "diplomacy";

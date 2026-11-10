@@ -79,12 +79,12 @@ public final class SourceActionMenuStateTest {
         assertFalse(menu.chooseLeader(game, 1)); assertFalse(menu.chooseOption(game, -1));
         assertFalse(menu.chooseOption(game, 6)); assertFalse(menu.isAcceptVisible());
     }
-    @Test public void unaffordableOfferShowsSourceWarningAndPreservesChoices() {
+    @Test public void unaffordableOfferShowsWarningOnOptionTapWithoutSelectingIt() {
         begin(GameState.Action.DIPLOMACY); game.getHuman().turnMoneyMillions = 0;
-        assertTrue(menu.chooseLeader(game, 1)); assertTrue(menu.chooseOption(game, 0));
-        assertFalse(menu.accept(game)); assertEquals("diplomacy_error", menu.getKey());
+        assertTrue(menu.chooseLeader(game, 1)); assertFalse(menu.chooseOption(game, 0));
+        assertEquals("diplomacy_error", menu.getKey()); assertFalse(menu.accept(game));
         menu.dismissError(game); assertEquals("diplomacy", menu.getKey());
-        assertTrue(menu.hasLeader()); assertTrue(menu.hasOption()); assertEquals(0, game.getQueuedActionCount());
+        assertTrue(menu.hasLeader()); assertFalse(menu.hasOption()); assertEquals(0, game.getQueuedActionCount());
     }
     @Test public void demandDoesNotReserveHumanMoney() {
         begin(GameState.Action.DIPLOMACY); game.getHuman().turnMoneyMillions = 0;

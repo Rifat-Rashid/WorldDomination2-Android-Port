@@ -1956,7 +1956,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 Rectangle row = equipmentRows[start + item + 1];
                 row.set(bodyX + itemColumn * (cellWidth + gap), itemY,
                         cellWidth, EQUIPMENT_ROW_HEIGHT - 4f);
-                if (EQUIPMENT_ROWS[start + item + 1].equals(selectedEquipment)) {
+                if (EQUIPMENT_WEAPON_NAMES[start + item + 1].equals(selectedEquipment)) {
                     shapes.setColor(BUTTON_SELECTED);
                     shapes.rect(row.x, row.y, row.width, row.height);
                 }
@@ -2131,7 +2131,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         String weaponName = equipmentWeaponName(rowIndex);
         return weaponName == null || (!game.isWeaponActive(0, weaponName)
                 && !game.isWeaponBioloaded(0, weaponName))
-                ? -1 : game.getWeaponStock(weaponName);
+                ? -1 : sourceActionMenu.availableStock(game, weaponName);
     }
 
     /** Draws the recovered Flash contamination artwork over the affected control. */
@@ -3752,6 +3752,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 }
                 audio.play(OriginalAudio.Cue.ACTION_SWITCH_OFF);
                 game.cancelSelection();
+                selectedEquipment = "";
                 modalOpen = false;
                 audio.play(OriginalAudio.Cue.ACTION_CLOSE);
                 audio.playAmbient(OriginalAudio.Cue.GAME_AMBIENT);
@@ -3762,10 +3763,11 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                     researchPage = 0;
                 } else if (action == GameState.Action.PRODUCTION) {
                     refreshProductionSummary();
-                } else if (action == GameState.Action.ATTACK) {
-                    syncSelectedAttackEquipment();
                 }
-                if (SourceActionMenuState.supports(game.getSelectedAction())) sourceActionMenu.begin(game);
+                if (SourceActionMenuState.supports(game.getSelectedAction())) {
+                    sourceActionMenu.begin(game);
+                    selectedEquipment = "";
+                }
                 modalOpen = SourceActionMenuState.supports(game.getSelectedAction())
                         ? !sourceActionMenu.isMapSelection()
                         : ActionScreenLayout.opensCenterDialog(game.getSelectedAction());
@@ -3792,14 +3794,25 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         for (int i = 0; i < equipmentRows.length; i++) {
             if (!isEquipmentHeading(i) && equipmentRows[i].contains(x, y)) {
                 String weapon = EQUIPMENT_WEAPON_NAMES[i];
+                GameState.Action automatic = SourceActionMenuState.actionForEquipment(game, weapon);
+                if (automatic != null) {
+                    game.selectAction(automatic);
+                    sourceActionMenu.begin(game);
+                    audio.play(OriginalAudio.Cue.ACTION_SWITCH);
+                }
                 if (SourceActionMenuState.supports(game.getSelectedAction()) && weapon != null) {
                     if (sourceActionMenu.chooseEquipment(game, weapon)) {
-                        selectedEquipment = EQUIPMENT_ROWS[i];
-                        audio.play(OriginalAudio.Cue.STOCK_SELECT);
+                        String selected = sourceActionMenu.getSelectedEquipment();
+                        selectedEquipment = selected == null ? "" : selected;
+                        if (selected != null) audio.play(OriginalAudio.Cue.STOCK_SELECT);
                     }
                     modalOpen = !sourceActionMenu.isMapSelection();
+                    if (automatic != null) {
+                        audio.playAmbient(OriginalAudio.ambientForAction(automatic));
+                        if (modalOpen) audio.play(OriginalAudio.Cue.ACTION_OPEN);
+                    }
                 } else {
-                    selectedEquipment = EQUIPMENT_ROWS[i];
+                    selectedEquipment = weapon;
                     audio.play(OriginalAudio.Cue.STOCK_SELECT);
                 }
                 return;
@@ -3814,7 +3827,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         for (int i = 0; i < EQUIPMENT_WEAPON_NAMES.length; i++) {
             if (weapon.equals(EQUIPMENT_WEAPON_NAMES[i])) {
-                selectedEquipment = EQUIPMENT_ROWS[i];
+                selectedEquipment = weapon;
                 return;
             }
         }
@@ -4161,6 +4174,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             else if ("btnAccept".equals(control)) {
                 boolean accepted = pending ? game.respondToDiplomacyProposal(true) : sourceActionMenu.accept(game);
                 if (accepted) {
+                    selectedEquipment = "";
                     if (pending) game.cancelSelection();
                     modalOpen = false;
                     audio.play(OriginalAudio.Cue.ACTION_ACCEPT);
@@ -4171,6 +4185,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             } else if ("btnCancel".equals(control)) {
                 boolean closed = pending ? game.respondToDiplomacyProposal(false) : sourceActionMenu.cancel(game);
                 if (closed) {
+                    selectedEquipment = "";
                     if (pending) game.cancelSelection();
                     modalOpen = false;
                     audio.play(OriginalAudio.Cue.ACTION_CLOSE);
@@ -4194,6 +4209,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                     address / BattlefieldCityLayout.CITIES_PER_PLAYER,
                     address % BattlefieldCityLayout.CITIES_PER_PLAYER)) {
                 modalOpen = !sourceActionMenu.isMapSelection();
+                String selected = sourceActionMenu.getSelectedEquipment();
+                selectedEquipment = selected == null ? "" : selected;
                 audio.play(OriginalAudio.Cue.UNIT_SELECT);
                 if (modalOpen) audio.play(OriginalAudio.Cue.ACTION_OPEN);
             }
@@ -4750,6 +4767,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         if (SourceActionMenuState.supports(game.getSelectedAction())) {
             modalOpen = !sourceActionMenu.cancel(game);
+            if (!modalOpen) selectedEquipment = "";
             audio.playAmbient(OriginalAudio.Cue.GAME_AMBIENT);
             return true;
         }
