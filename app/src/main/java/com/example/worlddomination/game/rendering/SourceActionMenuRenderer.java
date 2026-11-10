@@ -38,6 +38,8 @@ public final class SourceActionMenuRenderer implements Disposable {
     private String key;
     private int revision = -1, funds = Integer.MIN_VALUE, opinion;
     private GameState.DiplomacyProposal lastProposal;
+    private final GlyphLayout propagandaLayout = new GlyphLayout();
+    private int propagandaOpinion = Integer.MIN_VALUE;
     private TextField[] fields = new TextField[0];
 
     private static final class TextField {
@@ -144,7 +146,8 @@ public final class SourceActionMenuRenderer implements Disposable {
     }
 
     public void draw(SpriteBatch batch, Rectangle container, GameState game,
-                     SourceActionMenuState state, PortraitDrawer portraits, TurnControlRenderer turnControls) {
+                     SourceActionMenuState state, PortraitDrawer portraits, TurnControlRenderer turnControls,
+                     TextureRegion sourceGlass, BitmapFont propagandaFont) {
         prepare(game, state);
         if (screen == null) return;
         fit(container, scratch);
@@ -191,14 +194,26 @@ public final class SourceActionMenuRenderer implements Disposable {
         for (TextField field : fields) {
             JsonValue b = field.source.get("bounds");
             if (b.getFloat(0) >= 365 || b.getFloat(1) >= 275) continue;
+            if ("propaganda2".equals(key) && "text1".equals(field.source.getString("name"))) continue;
             font.getData().setScale(field.scale);
             font.draw(batch, field.glyph, field.x, -b.getFloat(1) - 4);
+        }
+        if ("propaganda2".equals(key)) {
+            propagandaFont.getData().setScale(.25f);
+            if (propagandaOpinion != opinion) {
+                propagandaOpinion = opinion;
+                propagandaLayout.setText(propagandaFont, "Propaganda strength: " + opinion + " %",
+                        new Color(1, .47f, 0, 1), 98.2f, Align.right, true);
+            }
+            propagandaFont.draw(batch, propagandaLayout, 37, -125.75f);
         }
         batch.setTransformMatrix(savedTransform);
         boolean pending = proposal != null && !state.hasPendingError();
         if (proposal != null ? pending : state.isAcceptVisible()) button(batch, accept, 279.15f, scale);
         if (proposal != null ? pending : state.isCancelVisible()) button(batch, cancel, 28.15f, scale);
         batch.setColor(Color.WHITE);
+        if (!screen.getBoolean("map"))
+            batch.draw(sourceGlass, scratch.x, scratch.y, scratch.width, scratch.height);
     }
 
     private void button(SpriteBatch batch, Texture image, float x, float scale) {
