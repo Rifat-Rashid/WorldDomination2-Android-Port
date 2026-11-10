@@ -2,7 +2,7 @@
 
 The beta uses the native Android `:app` module, Java 11 source compatibility,
 JDK 17, and the Gradle wrapper. It runs offline. The current beta version is
-`0.1.0-beta.4`, version code `5`.
+`0.1.0-beta.5`, version code `6`.
 
 ## Build and verify
 
@@ -17,7 +17,7 @@ uses the debug key to sign a store bundle and does not publish to Play.
 
 CI separately validates release compilation/tests/lint, bundletool structure,
 offline audio/UI contents, 16 KB native-library compatibility, and Android GLES
-mask rendering, confirm/AI playback, and source action-menu touch routing on an emulator. The regular debug and deterministic gameplay
+mask rendering, confirm/AI playback, source action-menu touch routing, and Resources/Production/Technology budgeting and cancellation on an emulator. The regular debug and deterministic gameplay
 checks also remain enabled.
 
 ## Prepare a Play upload
@@ -62,9 +62,11 @@ Increase the version code for each subsequent Play upload.
 
 The beta includes the current sharper Resources, Technology and bounded Mass Media screens, larger
 information rows with the INFO PANEL heading removed, original action-slot
-animation, animated confirm closure and original AI action announcements, source diplomacy/propaganda/defense/prepared/direct-attack menus, corrected enemy portraits, custom launcher icon, and recovered
+animation, fixed first/second action slots and the original empty-slot Skip dialog, animated confirm closure and original AI action announcements, source diplomacy/propaganda/defense/prepared/direct-attack menus, corrected enemy portraits, custom launcher icon, and recovered
 gameplay rules. It is a work-in-progress port, not a claim of complete Flash
-parity. Broader visual/animation/audio comparisons, long play sessions,
+parity. AI scoring and resolved-turn tests compare seeded Python reference sessions of up to 40 turns, including a terminal defeat. This verifies those scenarios; it does not establish exhaustive AI parity.
+
+Broader visual/animation/audio comparisons, long play sessions,
 additional physical devices, and lifecycle recovery remain part of testing.
 
 For an internal or closed Play test, complete the Play Console listing,
