@@ -16,7 +16,7 @@ public final class SourceActionMenuState {
     private int revision;
 
     public static boolean supports(GameState.Action action) {
-        return action == GameState.Action.ATTACK || action == GameState.Action.PREPARED_ATTACK
+        return action == GameState.Action.MASS_MEDIA || action == GameState.Action.ATTACK || action == GameState.Action.PREPARED_ATTACK
                 || action == GameState.Action.DEFENSE || action == GameState.Action.PROPAGANDA
                 || action == GameState.Action.DIPLOMACY;
     }
@@ -165,6 +165,7 @@ public final class SourceActionMenuState {
     public boolean isAcceptVisible() {
         if (error != null) return false;
         if (cancelling) return true;
+        if (action == GameState.Action.MASS_MEDIA) return true;
         if (action == GameState.Action.DIPLOMACY) return leaderChosen && optionChosen;
         if (action == GameState.Action.DEFENSE) return weaponChosen;
         if (action == GameState.Action.PROPAGANDA) return cityChosen;
@@ -218,6 +219,7 @@ public final class SourceActionMenuState {
         shipStrikeCount = game.getSelectedShipStrikeCount();
         if (error != null) key = "spy".equals(error) ? "spy_error" : "diplomacy_error";
         else if (cancelling) key = "preCancel";
+        else if (action == GameState.Action.MASS_MEDIA) key = "religion-" + game.getHuman().getReligionCode();
         else if (action == GameState.Action.DIPLOMACY) key = "diplomacy";
         else if (action == GameState.Action.PROPAGANDA) key = cityChosen ? "propaganda2" : "propaganda1";
         else if (action == GameState.Action.DEFENSE) key = weaponChosen

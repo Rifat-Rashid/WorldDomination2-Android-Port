@@ -41,6 +41,13 @@ public final class SourceActionMenusInstrumentedTest {
                     Object splash = field("splashState").get(app);
                     splash.getClass().getMethod("dismiss").invoke(splash);
                     GameState state = fresh(app);
+                    begin(app, GameState.Action.MASS_MEDIA);
+                    assertEquals("religion-chr", menu(app).getKey());
+                    assertEquals(65, state.getHuman().religion);
+                    assertEquals(20, state.getMassMediaPreviewGain());
+                    capture(app, "source-mass-media.png");
+                    accept(app, state, GameState.Action.MASS_MEDIA);
+                    state = fresh(app);
                     begin(app, GameState.Action.DIPLOMACY);
                     sourceTap(app, 50, 80); sourceTap(app, 70, 169);
                     assertTrue(menu(app).hasLeader()); assertTrue(menu(app).hasOption());
