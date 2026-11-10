@@ -110,8 +110,9 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
           script: |
-            ./gradlew --no-daemon --stacktrace :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.example.worlddomination.game.rendering.FlashStencilMasksInstrumentedTest,com.example.worlddomination.game.rendering.TurnControlsInstrumentedTest,com.example.worlddomination.game.rendering.SourceActionMenusInstrumentedTest -Pandroid.injected.androidTest.leaveApksInstalledAfterRun=true
+            ./gradlew --no-daemon --stacktrace :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.example.worlddomination.game.rendering.FlashStencilMasksInstrumentedTest,com.example.worlddomination.game.rendering.TurnControlsInstrumentedTest,com.example.worlddomination.game.rendering.SourceActionMenusInstrumentedTest,com.example.worlddomination.game.ui.PropagandaUiInstrumentedTest -Pandroid.injected.androidTest.leaveApksInstalledAfterRun=true
             adb pull /sdcard/Android/data/com.example.worlddomination/files/beta-ui-evidence app/build/reports/androidTests/beta-ui-evidence
+            adb pull /sdcard/Android/data/com.example.worlddomination/files/propaganda-evidence app/build/reports/androidTests/propaganda-evidence
       - name: Preserve Android test results
         if: always()
         uses: actions/upload-artifact@v6

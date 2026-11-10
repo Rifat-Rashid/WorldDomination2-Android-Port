@@ -116,13 +116,26 @@ public final class PropagandaUiInstrumentedTest {
                 tapNav(view, 0);
                 tap(view, field(view, "modalAccept"));
                 assertEquals(2, game.getQueuedActionCount());
+                // First tick synchronizes the newly filled slots; ten more open the hatch.
+                advance(view, 11);
+                com.example.worlddomination.game.ui.ConfirmTurnAnimation confirm = field(view, "confirmTurnAnimation");
+                assertEquals(11, confirm.getFrame());
                 tap(view, field(view, "confirmButton"));
+                assertTrue(confirm.isPending());
+                assertEquals(0, game.getTurn());
+                advance(view, 20);
                 assertEquals(1, game.getLastTurnPropagandaEvents().size());
                 assertEquals(2, game.getLastTurnPropagandaEvents().get(0).targetPlayerId);
                 assertEquals(3, game.getLastTurnPropagandaEvents().get(0).targetCityIndex);
             });
             capture(scenario, "propaganda-queued-turn");
         }
+    }
+
+    private static void advance(WorldDominationGame view, int ticks) throws Exception {
+        java.lang.reflect.Method update = WorldDominationGame.class.getDeclaredMethod("fixedUpdate", float.class);
+        update.setAccessible(true);
+        for (int tick = 0; tick < ticks; tick++) update.invoke(view, 1f / 24f);
     }
 
     private static void tapNav(WorldDominationGame view, int index) throws Exception {
