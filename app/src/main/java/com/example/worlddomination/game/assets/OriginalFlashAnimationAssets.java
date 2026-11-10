@@ -254,14 +254,16 @@ public final class OriginalFlashAnimationAssets implements Disposable {
                     scene, CENTER_UI_SYMBOL_ID);
             int researchFrame = loadedCenterUi.getFrameNumberForLabel("research") - 1;
             int massMediaFrame = loadedCenterUi.getFrameNumberForLabel("religion") - 1;
+            int propagandaFrame = loadedCenterUi.getFrameNumberForLabel("propaganda2") - 1;
+            int[] centerUiFrames = {researchFrame, massMediaFrame, propagandaFrame};
             Map<Integer, FlashAnimationTimeline> centerUiChildren = loadNestedTimelines(
-                    scene, loadedCenterUi, new int[]{researchFrame, massMediaFrame});
+                    scene, loadedCenterUi, centerUiFrames);
             Set<Integer> loadedCenterUiArt = collectCenterUiArtworkIds(loadedCenterUi,
-                    centerUiChildren, new int[]{researchFrame, massMediaFrame},
+                    centerUiChildren, centerUiFrames,
                     OriginalFlashAnimationAssets::hasPackagedCenterUiArt);
             Set<Integer> loadedEarlyCenterUiArt = collectInitialCenterUiArtworkIds(
                     loadedCenterUi, centerUiChildren,
-                    new int[]{researchFrame, massMediaFrame},
+                    centerUiFrames,
                     OriginalFlashAnimationAssets::hasPackagedCenterUiArt);
 
             synchronized (loadLock) {

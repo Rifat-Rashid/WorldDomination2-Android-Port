@@ -26,6 +26,53 @@ import static org.junit.Assert.assertTrue;
 
 public final class OriginalFlashAnimationAssetsTest {
     @Test
+    public void propagandaFrameAndEmbeddedFontKeepAlphaFormatAndDynamicGlyphs() throws IOException {
+        Path ui = shapeAsset(3886).getParent().getParent().getParent().resolve("ui");
+        byte[] frame = Files.readAllBytes(ui.resolve("propaganda-frame.png"));
+        java.nio.ByteBuffer header = java.nio.ByteBuffer.wrap(frame);
+        assertEquals(0x89504e470d0a1a0aL, header.getLong(0));
+        assertEquals(365 * 3, header.getInt(16));
+        assertEquals(275 * 3, header.getInt(20));
+        assertEquals("The source glass requires RGBA transparency", 6, frame[25]);
+        com.badlogic.gdx.graphics.g2d.BitmapFont.BitmapFontData font =
+                new com.badlogic.gdx.graphics.g2d.BitmapFont.BitmapFontData(
+                        new com.badlogic.gdx.files.FileHandle(ui.resolve(
+                                "fonts/propaganda-source-36.fnt").toFile()), false);
+        for (char glyph : "Propaganda strength: 0123456789%".toCharArray()) {
+            assertNotNull("Missing dynamic propaganda glyph " + glyph, font.getGlyph(glyph));
+        }
+        assertTrue(Files.isRegularFile(ui.resolve("fonts/propaganda-source-36.png")));
+    }
+
+    @Test
+    public void propagandaConfirmationArtworkIsAvailableBeforeBattleLoading() throws IOException {
+        JsonValue scene = loadScene();
+        FlashAnimationTimeline centerScreen = OriginalFlashAnimationAssets.loadTimelineBySymbolId(
+                scene, OriginalFlashAnimationAssets.CENTER_UI_SYMBOL_ID);
+        int propagandaFrame = centerScreen.getFrameNumberForLabel("propaganda2") - 1;
+        assertEquals(74, propagandaFrame);
+        int[] sourceFrames = {9, 13, propagandaFrame};
+        Map<Integer, FlashAnimationTimeline> nested =
+                OriginalFlashAnimationAssets.loadNestedTimelines(scene, centerScreen, sourceFrames);
+        Set<Integer> initial = OriginalFlashAnimationAssets.collectInitialCenterUiArtworkIds(
+                centerScreen, nested, sourceFrames, shapeId -> Files.isRegularFile(shapeAsset(shapeId))
+                        || Files.isRegularFile(textAsset(shapeId)));
+        for (int id : new int[]{3278, 3280, 3281, 3284, 3285, 3880, 3881, 3882,
+                3883, 3884, 3886, 3889}) {
+            assertTrue("Missing original propaganda panel artwork " + id, initial.contains(id));
+        }
+        for (FlashAnimationTimeline.Layer layer : centerScreen.getFrame(propagandaFrame).layers) {
+            if ("text1".equals(layer.name)) {
+                assertEquals(3887, layer.shapeId);
+                assertEquals(37f, layer.tx, 0.001f);
+                assertEquals(122f, layer.ty, 0.001f);
+                return;
+            }
+        }
+        throw new AssertionError("Original propaganda strength field is missing");
+    }
+
+    @Test
     public void setupAndGameplayPortraitsFollowTheSourceLeaderCardOrder() throws IOException {
         JsonValue scene = loadScene();
         Map<String, FlashAnimationTimeline> timelines =

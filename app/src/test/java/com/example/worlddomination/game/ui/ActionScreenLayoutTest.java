@@ -11,6 +11,13 @@ import static org.junit.Assert.assertTrue;
 
 public final class ActionScreenLayoutTest {
     @Test
+    public void propagandaKeepsTheMapVisibleUntilACityIsChosen() {
+        assertFalse(ActionScreenLayout.opensCenterDialog(GameState.Action.PROPAGANDA));
+        assertTrue(ActionScreenLayout.hasInlineActionControls(GameState.Action.PROPAGANDA));
+        assertTrue(ActionScreenLayout.selectsTargetsOnMap(GameState.Action.PROPAGANDA));
+    }
+
+    @Test
     public void mapFirstActionsKeepTheBattlefieldVisible() {
         assertTrue(ActionScreenLayout.opensCenterDialog(GameState.Action.MASS_MEDIA));
         assertFalse(ActionScreenLayout.opensCenterDialog(GameState.Action.ATTACK));

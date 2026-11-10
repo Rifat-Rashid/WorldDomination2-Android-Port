@@ -682,6 +682,7 @@ public final class GameState {
     private boolean researchChoicesDirty = true;
     private final Random random;
     private Action selectedAction;
+    private boolean propagandaCitySelected;
     private String selectedProductionCategory = "soldier";
     private final Map<String, Integer> selectedProductionPercentages = new LinkedHashMap<>();
     private final Set<String> selectedResearchTechnologies = new LinkedHashSet<>();
@@ -1161,6 +1162,9 @@ public final class GameState {
         if (!owner.alive || city == null || city.populationMillions <= 0) {
             return false;
         }
+        if (selectedAction == Action.PROPAGANDA && !configurePropaganda(playerId, cityIndex)) {
+            return false;
+        }
         selectedIsland = playerId;
         selectedMapCityOwner = playerId;
         selectedMapCityIndex = cityIndex;
@@ -1195,6 +1199,7 @@ public final class GameState {
             return;
         }
         selectedAction = action;
+        propagandaCitySelected = false;
         selectedResearchTechnologies.clear();
         resetTargetFromMapSelection();
         selectedAttackWeapon = firstAvailableAttackWeapon();
@@ -3863,18 +3868,26 @@ public final class GameState {
     }
 
     public boolean configurePropaganda(int targetPlayerId, int cityIndex) {
-        if (selectedAction != Action.PROPAGANDA || targetPlayerId <= 0
-                || targetPlayerId >= players.length || cityIndex < 0 || cityIndex >= 5) {
-            return false;
-        }
-        PlayerState target = players[targetPlayerId];
-        CityState city = target.getCity(cityIndex);
-        if (!target.alive || city == null || city.populationMillions <= 0) {
+        if (selectedAction != Action.PROPAGANDA
+                || !canTargetPropagandaCity(targetPlayerId, cityIndex)) {
             return false;
         }
         selectedTargetPlayer = targetPlayerId;
         selectedTargetCity = cityIndex;
+        propagandaCitySelected = true;
         return true;
+    }
+
+    /** Source attackable-city selection excludes the human and active ceasefires. */
+    public boolean canTargetPropagandaCity(int targetPlayerId, int cityIndex) {
+        if (targetPlayerId <= 0 || targetPlayerId >= players.length
+                || cityIndex < 0 || cityIndex >= 5) {
+            return false;
+        }
+        PlayerState target = players[targetPlayerId];
+        CityState city = target.getCity(cityIndex);
+        return target.alive && city != null && city.populationMillions > 0
+                && !getHuman().hasCeasefireWith(targetPlayerId);
     }
 
     public void cyclePropagandaTarget(int direction) {
@@ -3885,7 +3898,7 @@ public final class GameState {
             int candidate = 1 + Math.floorMod(selectedTargetPlayer - 1
                     + Integer.signum(direction) * step, players.length - 1);
             int cityIndex = firstPopulatedCity(players[candidate], selectedTargetCity);
-            if (players[candidate].alive && cityIndex >= 0) {
+            if (canTargetPropagandaCity(candidate, cityIndex)) {
                 configurePropaganda(candidate, cityIndex);
                 return;
             }
@@ -3908,10 +3921,8 @@ public final class GameState {
     }
 
     public boolean canAcceptPropaganda() {
-        PlayerState target = selectedTargetPlayer > 0 && selectedTargetPlayer < players.length
-                ? players[selectedTargetPlayer] : null;
-        CityState city = target == null ? null : target.getCity(selectedTargetCity);
-        return target != null && target.alive && city != null && city.populationMillions > 0;
+        return selectedAction == Action.PROPAGANDA && propagandaCitySelected
+                && canTargetPropagandaCity(selectedTargetPlayer, selectedTargetCity);
     }
 
     /** Source upper bound used by the propaganda action preview, in millions. */
