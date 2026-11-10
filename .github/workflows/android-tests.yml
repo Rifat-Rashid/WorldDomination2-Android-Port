@@ -219,6 +219,9 @@ jobs:
           - id: ai-planning-matrix
             check: AI planning scenario matrix
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.AiPlanningScenarioMatrixTest"'
+          - id: ai-source-decision-traces
+            check: AI recovered-source decision trace parity
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.AiSourceDecisionTraceParityTest"'
           - id: ui-tests
             check: Touch and presentation tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.*"'
