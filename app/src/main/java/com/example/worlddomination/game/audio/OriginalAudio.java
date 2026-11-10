@@ -21,6 +21,8 @@ public final class OriginalAudio {
         ACTION_SWITCH_OFF("56_interface_Switch Action selection2.wav.mp3.gz"),
         STOCK_SELECT("54_interface_Switch Sounds 1.wav.mp3.gz"),
         UNIT_SELECT("59_interface_select unit bleep.wav.mp3.gz"),
+        CONFIRM_OPEN("62_interface_Closeconfirmbutton.wav.mp3.gz"),
+        CONFIRM_CLOSE("60_interface_Openconfirmbutton.wav.mp3.gz"),
         ACTION_ACCEPT("64_interface_Accept action bleep.wav.mp3.gz"),
         ACTION_OPEN("61_interface_openactiondevice.wav.mp3.gz"),
         ACTION_CLOSE("63_interface_closeactiondevice.wav.mp3.gz"),

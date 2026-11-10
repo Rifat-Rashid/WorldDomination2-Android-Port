@@ -21,6 +21,12 @@ jobs:
           - id: flash-mask-placement-tests
             check: Flash mask depths and exported artwork registration
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashSpriteQuadTest" --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest.diplomacyCoverageShapesRemainMasksAtEverySourceStyle" --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest.newNonMovePlacementResetsPriorMaskTransformNameAndAlpha" --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest.sourceAlphaAdditionIsInByteUnitsAndClampedAfterConversion"'
+          - id: confirm-turn-animation-tests
+            check: Original confirm opening closing and delayed turn input
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.ConfirmTurnAnimationTest" --tests "com.example.worlddomination.game.ui.ActionSlotAnimationTest"'
+          - id: enemy-action-announcement-tests
+            check: Enemy action scheme and original selection playback
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.TurnActionDisplayTest" --tests "com.example.worlddomination.game.rendering.TurnPlaybackArtworkTest" --tests "com.example.worlddomination.game.rendering.FlashActionBuildingAnimationTest.eachNationsSelectionRingPlaysThirtyFramesOnlyForItsAnnouncedAction"'
           - id: unit-tests
             check: JVM unit tests
             task: ':app:testDebugUnitTest'

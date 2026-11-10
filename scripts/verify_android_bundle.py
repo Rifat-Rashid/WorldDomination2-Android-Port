@@ -70,7 +70,8 @@ def verify_bundle(path, audio_directory, require_upload=False):
             if name not in entries:
                 raise ValueError(f"Missing original audio: {name}")
         required_ui = ("neutral-button.png", "resource-menu-hd.png", "message-well.png",
-                       "action-tubes.png", "technology-hd/technology-0.png")
+                       "action-tubes.png", "technology-hd/technology-0.png",
+                       "confirm-turn.png", "turn-announcements.png", "turn-announcements.json")
         for image in required_ui:
             name = "base/assets/original/ui/" + image
             if name not in entries:

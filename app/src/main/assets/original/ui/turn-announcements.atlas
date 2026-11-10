@@ -1,0 +1,278 @@
+turn-announcements.png
+size: 2048, 2048
+format: RGBA8888
+filter: Linear, Linear
+repeat: none
+resources
+  rotate: false
+  xy: 2, 2
+  size: 832, 200
+  orig: 832, 200
+  offset: 0, 0
+  index: -1
+production
+  rotate: false
+  xy: 838, 2
+  size: 832, 200
+  orig: 832, 200
+  offset: 0, 0
+  index: -1
+research
+  rotate: false
+  xy: 2, 206
+  size: 832, 200
+  orig: 832, 200
+  offset: 0, 0
+  index: -1
+religion
+  rotate: false
+  xy: 838, 206
+  size: 832, 200
+  orig: 832, 200
+  offset: 0, 0
+  index: -1
+preAttack
+  rotate: false
+  xy: 2, 410
+  size: 832, 200
+  orig: 832, 200
+  offset: 0, 0
+  index: -1
+attack
+  rotate: false
+  xy: 838, 410
+  size: 832, 200
+  orig: 832, 200
+  offset: 0, 0
+  index: -1
+defense
+  rotate: false
+  xy: 2, 614
+  size: 832, 200
+  orig: 832, 200
+  offset: 0, 0
+  index: -1
+propaganda
+  rotate: false
+  xy: 838, 614
+  size: 832, 200
+  orig: 832, 200
+  offset: 0, 0
+  index: -1
+diplomacy
+  rotate: false
+  xy: 2, 818
+  size: 832, 200
+  orig: 832, 200
+  offset: 0, 0
+  index: -1
+player0color0
+  rotate: false
+  xy: 838, 818
+  size: 160, 160
+  orig: 160, 160
+  offset: 0, 0
+  index: -1
+player0color1
+  rotate: false
+  xy: 1002, 818
+  size: 160, 160
+  orig: 160, 160
+  offset: 0, 0
+  index: -1
+player0color2
+  rotate: false
+  xy: 1166, 818
+  size: 160, 160
+  orig: 160, 160
+  offset: 0, 0
+  index: -1
+player0color3
+  rotate: false
+  xy: 1330, 818
+  size: 160, 160
+  orig: 160, 160
+  offset: 0, 0
+  index: -1
+player0color4
+  rotate: false
+  xy: 1494, 818
+  size: 160, 160
+  orig: 160, 160
+  offset: 0, 0
+  index: -1
+player0color5
+  rotate: false
+  xy: 1658, 818
+  size: 160, 160
+  orig: 160, 160
+  offset: 0, 0
+  index: -1
+player1color0
+  rotate: false
+  xy: 1822, 818
+  size: 160, 160
+  orig: 160, 160
+  offset: 0, 0
+  index: -1
+player1color1
+  rotate: false
+  xy: 2, 1022
+  size: 160, 160
+  orig: 160, 160
+  offset: 0, 0
+  index: -1
+player1color2
+  rotate: false
+  xy: 166, 1022
+  size: 160, 160
+  orig: 160, 160
+  offset: 0, 0
+  index: -1
+player1color3
+  rotate: false
+  xy: 330, 1022
+  size: 160, 160
+  orig: 160, 160
+  offset: 0, 0
+  index: -1
+player1color4
+  rotate: false
+  xy: 494, 1022
+  size: 160, 160
+  orig: 160, 160
+  offset: 0, 0
+  index: -1
+player1color5
+  rotate: false
+  xy: 658, 1022
+  size: 160, 160
+  orig: 160, 160
+  offset: 0, 0
+  index: -1
+player2color0
+  rotate: false
+  xy: 822, 1022
+  size: 160, 160
+  orig: 160, 160
+  offset: 0, 0
+  index: -1
+player2color1
+  rotate: false
+  xy: 986, 1022
+  size: 160, 160
+  orig: 160, 160
+  offset: 0, 0
+  index: -1
+player2color2
+  rotate: false
+  xy: 1150, 1022
+  size: 160, 160
+  orig: 160, 160
+  offset: 0, 0
+  index: -1
+player2color3
+  rotate: false
+  xy: 1314, 1022
+  size: 160, 160
+  orig: 160, 160
+  offset: 0, 0
+  index: -1
+player2color4
+  rotate: false
+  xy: 1478, 1022
+  size: 160, 160
+  orig: 160, 160
+  offset: 0, 0
+  index: -1
+player2color5
+  rotate: false
+  xy: 1642, 1022
+  size: 160, 160
+  orig: 160, 160
+  offset: 0, 0
+  index: -1
+player3color0
+  rotate: false
+  xy: 1806, 1022
+  size: 160, 160
+  orig: 160, 160
+  offset: 0, 0
+  index: -1
+player3color1
+  rotate: false
+  xy: 2, 1186
+  size: 160, 160
+  orig: 160, 160
+  offset: 0, 0
+  index: -1
+player3color2
+  rotate: false
+  xy: 166, 1186
+  size: 160, 160
+  orig: 160, 160
+  offset: 0, 0
+  index: -1
+player3color3
+  rotate: false
+  xy: 330, 1186
+  size: 160, 160
+  orig: 160, 160
+  offset: 0, 0
+  index: -1
+player3color4
+  rotate: false
+  xy: 494, 1186
+  size: 160, 160
+  orig: 160, 160
+  offset: 0, 0
+  index: -1
+player3color5
+  rotate: false
+  xy: 658, 1186
+  size: 160, 160
+  orig: 160, 160
+  offset: 0, 0
+  index: -1
+player4color0
+  rotate: false
+  xy: 822, 1186
+  size: 160, 160
+  orig: 160, 160
+  offset: 0, 0
+  index: -1
+player4color1
+  rotate: false
+  xy: 986, 1186
+  size: 160, 160
+  orig: 160, 160
+  offset: 0, 0
+  index: -1
+player4color2
+  rotate: false
+  xy: 1150, 1186
+  size: 160, 160
+  orig: 160, 160
+  offset: 0, 0
+  index: -1
+player4color3
+  rotate: false
+  xy: 1314, 1186
+  size: 160, 160
+  orig: 160, 160
+  offset: 0, 0
+  index: -1
+player4color4
+  rotate: false
+  xy: 1478, 1186
+  size: 160, 160
+  orig: 160, 160
+  offset: 0, 0
+  index: -1
+player4color5
+  rotate: false
+  xy: 1642, 1186
+  size: 160, 160
+  orig: 160, 160
+  offset: 0, 0
+  index: -1

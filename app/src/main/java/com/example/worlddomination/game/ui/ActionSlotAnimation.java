@@ -13,15 +13,16 @@ public final class ActionSlotAnimation {
     private final GameState.Action[] displayed = new GameState.Action[2];
 
     /** Preview the selected action in the next free slot; accepting still owns the queue. */
-    public void synchronize(GameState state, GameState.Action playbackAction) {
+    public void synchronize(GameState state, boolean playbackBlocking,
+                            boolean confirming, float confirmationSeconds) {
         for (int slot = 0; slot < 2; slot++) {
             GameState.Action queued = state.getQueuedAction(slot);
-            GameState.Action next = queued;
+            GameState.Action next = playbackBlocking ? null : queued;
             int target = queued == null ? OPEN_FRAME : SET_FRAME;
-            if (slot == 0 && playbackAction != null) {
-                next = playbackAction;
-                target = OPEN_FRAME;
-            } else if (queued == null && slot == state.getQueuedActionCount()) {
+            if (playbackBlocking || (confirming && (slot == 0
+                    || confirmationSeconds >= ConfirmTurnAnimation.SECOND_TUBE_DELAY_SECONDS))) {
+                target = 1;
+            } else if (!confirming && queued == null && slot == state.getQueuedActionCount()) {
                 next = state.getSelectedAction();
             }
             if (next != displayed[slot]) {
@@ -51,7 +52,8 @@ public final class ActionSlotAnimation {
 
     public int getFrame(int slot) { return frames[slot]; }
     public GameState.Action getDisplayedAction(int slot) { return displayed[slot]; }
-    public float getLabelAlpha(int slot) { return labelTicks[slot] / (float) LABEL_FILL_TICKS; }
+    public float getLabelAlpha(int slot) { return labelTicks[slot] / (float) LABEL_FILL_TICKS
+            * Math.min(1f, (frames[slot] - 1) / 9f); }
 
     public boolean isAnimating() {
         for (int slot = 0; slot < 2; slot++) {
