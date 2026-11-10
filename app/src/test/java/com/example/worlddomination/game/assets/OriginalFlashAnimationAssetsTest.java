@@ -3,6 +3,7 @@ package com.example.worlddomination.game.assets;
 import com.badlogic.gdx.utils.JsonReader;
 import com.badlogic.gdx.utils.JsonValue;
 import com.example.worlddomination.game.rendering.FlashAnimationTimeline;
+import com.example.worlddomination.game.simulation.GameSetup;
 
 import org.junit.Test;
 
@@ -24,6 +25,175 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public final class OriginalFlashAnimationAssetsTest {
+    @Test
+    public void setupAndGameplayPortraitsFollowTheSourceLeaderCardOrder() throws IOException {
+        JsonValue scene = loadScene();
+        Map<String, FlashAnimationTimeline> timelines =
+                OriginalFlashAnimationAssets.loadTimelines(scene);
+        FlashAnimationTimeline portraits = timelines.get(
+                OriginalFlashAnimationAssets.LEADER_PORTRAITS_TIMELINE);
+        // leadersTopMC.aliveMC is the clip addressed by the original menu's
+        // leader frame numbers. The separate "faces" library has a different order.
+        FlashAnimationTimeline cards = FlashAnimationTimeline.fromSymbol(
+                findSymbol(scene, "leadersTopMC"), scene.getFloat("fps"));
+        boolean sourceUsesPortraits = false;
+        for (FlashAnimationTimeline.Layer layer : cards.getFrame(0).layers) {
+            if ("aliveMC".equals(layer.name)) {
+                assertEquals(portraits.symbolId, layer.shapeId);
+                sourceUsesPortraits = true;
+            }
+        }
+        assertTrue(sourceUsesPortraits);
+        Set<Integer> earlyAtlas = OriginalFlashAnimationAssets.collectSetupPortraitShapeIds(
+                timelines, shapeId -> Files.isRegularFile(shapeAsset(shapeId)));
+        for (GameSetup.Leader leader : GameSetup.leaders()) {
+            FlashAnimationTimeline.Frame frame = portraits.getFrame(leader.portraitFrame - 1);
+            assertNotNull("Missing portrait for " + leader.name, frame);
+            assertEquals("Wrong source portrait for " + leader.name,
+                    3150 + leader.id * 2, frame.shapeId);
+            assertTrue("Portrait not loaded before setup: " + leader.name,
+                    earlyAtlas.contains(frame.shapeId));
+            assertTrue(Files.isRegularFile(shapeAsset(frame.shapeId)));
+        }
+    }
+
+    @Test
+    public void binLoaderIsSelectableWithHisOriginalPortraitOnTheFirstCarouselPage()
+            throws IOException {
+        GameSetup setup = new GameSetup();
+        int leaderId = com.example.worlddomination.game.ui.SetupScreenLayout.leaderIdAt(
+                0, 4, GameSetup.leaders().size());
+        setup.selectCandidateLeader(leaderId);
+        assertEquals("Asama Bin Loader", setup.getCandidateLeader().name);
+        assertTrue(setup.toggleOpponent(leaderId));
+        assertTrue(setup.canStart());
+        assertEquals(leaderId, setup.getSelectedOpponents().get(0).id);
+        FlashAnimationTimeline portraits = OriginalFlashAnimationAssets.loadTimelines(loadScene())
+                .get(OriginalFlashAnimationAssets.LEADER_PORTRAITS_TIMELINE);
+        assertEquals(3158, portraits.getFrame(
+                setup.getSelectedOpponents().get(0).portraitFrame - 1).shapeId);
+    }
+
+    @Test
+    public void animatedBuildingClipsRetainAllSourceFramesAndCachedArtwork() throws IOException {
+        JsonValue scene = loadScene();
+        Map<String, FlashAnimationTimeline> timelines = OriginalFlashAnimationAssets.loadTimelines(scene);
+        Map<Integer, FlashAnimationTimeline> nested = OriginalFlashAnimationAssets.loadNestedTimelines(
+                scene, timelines.get(OriginalFlashAnimationAssets.ACTION_BUILDINGS_TIMELINE));
+        Set<Integer> cached = OriginalFlashAnimationAssets.collectShapeIds(
+                Collections.emptyMap(), nested,
+                shapeId -> Files.isRegularFile(shapeAsset(shapeId)));
+        int[][] expected = {{5334, 31}, {3707, 25}, {3996, 50}};
+        for (int[] clip : expected) {
+            FlashAnimationTimeline timeline = nested.get(clip[0]);
+            assertNotNull("Missing original animated building " + clip[0], timeline);
+            assertEquals(clip[1], timeline.getFrameCount());
+            for (int frameIndex = 0; frameIndex < clip[1]; frameIndex++) {
+                FlashAnimationTimeline.Frame frame = timeline.getFrame(frameIndex);
+                if (frame == null) {
+                    continue;
+                }
+                for (FlashAnimationTimeline.Layer layer : frame.layers) {
+                    assertTrue("Animated art missing from cached atlas: " + layer.shapeId,
+                            cached.contains(layer.shapeId) || nested.containsKey(layer.shapeId));
+                }
+            }
+        }
+        for (JsonValue symbol : scene.get("symbols")) {
+            int id = symbol.getInt("id");
+            if (id == 5334 || id == 3707) {
+                assertEquals("Autoplay clips must not contain a scripted stop", 0,
+                        symbol.get("timeline").get("action_frames").size);
+            } else if (id == 3996) {
+                JsonValue scripts = symbol.get("timeline").get("action_frames");
+                assertEquals(2, scripts.size);
+                assertEquals(1, scripts.getInt(0));
+                assertEquals(41, scripts.getInt(1));
+            }
+        }
+    }
+
+    @Test
+    public void technologyCostAlignmentUsesTheOriginalEditTextFieldBounds() throws IOException {
+        JsonValue scene = loadScene();
+        FlashAnimationTimeline center = OriginalFlashAnimationAssets.loadTimelineBySymbolId(scene, 4444);
+        int[] sourceCardNames = {1, 2, 6, 7, 3, 4, 5};
+        for (int card = 0; card < sourceCardNames.length; card++) {
+            FlashAnimationTimeline.Layer placement = null;
+            for (FlashAnimationTimeline.Layer layer : center.getFrame(9).layers) {
+                if (("tech" + sourceCardNames[card]).equals(layer.name)) {
+                    placement = layer;
+                }
+            }
+            assertNotNull(placement);
+            FlashAnimationTimeline clip = OriginalFlashAnimationAssets.loadTimelineBySymbolId(
+                    scene, placement.shapeId);
+            FlashAnimationTimeline.Layer field = null;
+            for (FlashAnimationTimeline.Layer layer : clip.getFrame(0).layers) {
+                if ("text1".equals(layer.name)) {
+                    field = layer;
+                }
+            }
+            assertNotNull(field);
+            JsonValue edit = scene.get("text_fields").get(Integer.toString(field.shapeId));
+            float left = edit.get("bounds").getFloat(0);
+            float right = edit.get("bounds").getFloat(1);
+            assertEquals(placement.tx + field.tx + right - 2f,
+                    com.example.worlddomination.game.ui.TechnologyScreenLayout.cardCostRight(card), 0.001f);
+            assertEquals(placement.tx + field.tx + (left + right) / 2f,
+                    com.example.worlddomination.game.ui.TechnologyScreenLayout.cardCostCenter(card), 0.001f);
+            assertEquals(card == 4 ? 2 : 1, edit.getInt("align"));
+        }
+    }
+
+    @Test
+    public void highResolutionTechnologyAtlasIncludesEverySourceResearchCardState()
+            throws IOException {
+        Path originFile = projectAsset("original/ui/technology-hd/origins.json");
+        JsonValue manifest = new JsonReader().parse(Files.readString(originFile));
+        assertEquals(4, manifest.getInt("scale"));
+        Set<Integer> available = new java.util.HashSet<>();
+        java.util.List<String> atlas = Files.readAllLines(
+                projectAsset("original/ui/technology-hd/technology.atlas"));
+        for (JsonValue entry : manifest.get("artwork")) {
+            available.add(entry.getInt("id"));
+            assertTrue(atlas.contains("art" + entry.getInt("id")));
+        }
+        JsonValue scene = loadScene();
+        Set<Integer> visited = new java.util.HashSet<>();
+        java.util.ArrayDeque<FlashAnimationTimeline> pending = new java.util.ArrayDeque<>();
+        for (int card : new int[]{3396, 3419, 3463, 3516, 3561, 3606, 3654}) {
+            pending.add(OriginalFlashAnimationAssets.loadTimelineBySymbolId(scene, card));
+        }
+        while (!pending.isEmpty()) {
+            FlashAnimationTimeline clip = pending.removeFirst();
+            if (!visited.add(clip.symbolId)) {
+                continue;
+            }
+            Map<Integer, FlashAnimationTimeline> nested =
+                    OriginalFlashAnimationAssets.loadNestedTimelines(scene, clip);
+            for (int frameIndex = 0; frameIndex < clip.getFrameCount(); frameIndex++) {
+                FlashAnimationTimeline.Frame frame = clip.getFrame(frameIndex);
+                if (frame == null) {
+                    continue;
+                }
+                for (FlashAnimationTimeline.Layer layer : frame.layers) {
+                    if (layer.name.startsWith("text") || layer.name.startsWith("txt")) {
+                        continue;
+                    }
+                    if (nested.containsKey(layer.shapeId)) {
+                        pending.add(nested.get(layer.shapeId));
+                    } else if (Files.isRegularFile(shapeAsset(layer.shapeId))
+                            || Files.isRegularFile(textAsset(layer.shapeId))) {
+                        assertTrue("Missing high-resolution source card state " + layer.shapeId,
+                                available.contains(layer.shapeId));
+                    }
+                }
+            }
+        }
+        assertTrue("Research atlas must include all seven source card trees", visited.size() >= 7);
+    }
+
     @Test
     public void cityTimelinesExposeOriginalTwoPropagandaBeamLayersAndFrames()
             throws IOException {

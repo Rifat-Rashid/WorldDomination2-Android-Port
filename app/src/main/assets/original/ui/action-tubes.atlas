@@ -1,0 +1,82 @@
+action-tubes.png
+size: 2048, 1024
+format: RGBA8888
+filter: Linear, Linear
+repeat: none
+tube1
+  rotate: false
+  xy: 2, 2
+  size: 608, 228
+  orig: 608, 228
+  offset: 0, 0
+  index: -1
+tube2
+  rotate: false
+  xy: 614, 2
+  size: 608, 228
+  orig: 608, 228
+  offset: 0, 0
+  index: -1
+tube3
+  rotate: false
+  xy: 1226, 2
+  size: 608, 228
+  orig: 608, 228
+  offset: 0, 0
+  index: -1
+tube4
+  rotate: false
+  xy: 2, 234
+  size: 608, 228
+  orig: 608, 228
+  offset: 0, 0
+  index: -1
+tube5
+  rotate: false
+  xy: 614, 234
+  size: 608, 228
+  orig: 608, 228
+  offset: 0, 0
+  index: -1
+tube6
+  rotate: false
+  xy: 1226, 234
+  size: 608, 228
+  orig: 608, 228
+  offset: 0, 0
+  index: -1
+tube7
+  rotate: false
+  xy: 2, 466
+  size: 608, 228
+  orig: 608, 228
+  offset: 0, 0
+  index: -1
+tube8
+  rotate: false
+  xy: 614, 466
+  size: 608, 228
+  orig: 608, 228
+  offset: 0, 0
+  index: -1
+tube9
+  rotate: false
+  xy: 1226, 466
+  size: 608, 228
+  orig: 608, 228
+  offset: 0, 0
+  index: -1
+tube10
+  rotate: false
+  xy: 2, 698
+  size: 608, 228
+  orig: 608, 228
+  offset: 0, 0
+  index: -1
+tube11
+  rotate: false
+  xy: 614, 698
+  size: 608, 228
+  orig: 608, 228
+  offset: 0, 0
+  index: -1

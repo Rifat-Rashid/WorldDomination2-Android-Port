@@ -88,3 +88,7 @@ The Python implementation is kept as a read-only behavioral reference. For curre
 ## License
 
 Source code is licensed under Apache-2.0. See [LICENSE](LICENSE).
+
+## Android beta builds
+
+See [the beta release guide](docs/BETA_RELEASE.md) for release validation, external upload signing, and the remaining beta testing scope. CI builds an unsigned validation bundle; store uploads require the permanent app ID and upload key.

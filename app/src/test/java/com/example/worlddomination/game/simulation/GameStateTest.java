@@ -2336,6 +2336,45 @@ public final class GameStateTest {
     }
 
     @Test
+    public void humanDefeatSkipsTheCeasefireResultCountdown() {
+        GameState state = new GameState(1, 211L, false);
+        setCeasefireTurns(state.getHuman(), 1, 1);
+        setCeasefireTurns(state.getPlayerState(1), 0, 1);
+        for (CityState city : state.getHuman().getCities()) {
+            city.populationMillions = 0;
+        }
+        state.getHuman().populationMillions = 0;
+
+        completeTurnWithResourcesAndMedia(state);
+
+        assertEquals(GameState.MatchStatus.DEFEAT, state.getMatchStatus());
+        assertEquals(1, state.getHuman().getCeasefireTurnsWith(1));
+        assertEquals(1, state.getPlayerState(1).getCeasefireTurnsWith(0));
+        assertTrue(state.getHuman().hasCeasefireWith(1));
+    }
+
+    @Test
+    public void ceasefireRemainsActiveAtZeroUntilTheFollowingResultUpdate() {
+        GameState state = new GameState(1, 551L, false);
+        setCeasefireTurns(state.getHuman(), 1, 1);
+        setCeasefireTurns(state.getPlayerState(1), 0, 1);
+
+        completeTurnWithResourcesAndMedia(state);
+        assertEquals(0, state.getHuman().getCeasefireTurnsWith(1));
+        assertTrue("source _status stays true when _turnsLeft is decremented to zero",
+                state.getHuman().hasCeasefireWith(1));
+        assertTrue(state.getPlayerState(1).hasCeasefireWith(0));
+        state.selectAction(GameState.Action.ATTACK);
+        assertFalse(state.configureAttack(1, 0, "soldier1"));
+        assertFalse(state.submitDiplomacyProposal(0, 1, 0));
+
+        completeTurnWithResourcesAndMedia(state);
+        assertEquals(0, state.getHuman().getCeasefireTurnsWith(1));
+        assertFalse(state.getHuman().hasCeasefireWith(1));
+        assertFalse(state.getPlayerState(1).hasCeasefireWith(0));
+    }
+
+    @Test
     public void diplomacyOfferIsResolvedByAiAndCreatesTimedSymmetricCeasefire() {
         GameState state = new GameState(1, 18L, false);
         int opponentRegardBeforeOffer = state.getPlayerState(1).getRegardToward(0);
@@ -2366,6 +2405,9 @@ public final class GameStateTest {
 
         completeTurnWithResourcesAndMedia(state);
         assertEquals(1, state.getHuman().getCeasefireTurnsWith(1));
+        completeTurnWithResourcesAndMedia(state);
+        assertEquals(0, state.getHuman().getCeasefireTurnsWith(1));
+        assertTrue(state.getHuman().hasCeasefireWith(1));
         completeTurnWithResourcesAndMedia(state);
         assertFalse(state.getHuman().hasCeasefireWith(1));
     }

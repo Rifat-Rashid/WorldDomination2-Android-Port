@@ -227,6 +227,9 @@ public final class GameState {
         int lastAttackedByCasualties;
         private final double[] regardToward = new double[5];
         private final int[] ceasefireTurns = new int[5];
+        // Source keeps _status true on the update that decrements _turnsLeft
+        // to zero, then clears it on the following result update.
+        private final boolean[] ceasefireAtZero = new boolean[5];
         private final int[] diplomacyOfferedLastTurn = new int[5];
         private final DiplomacyProposal[] pendingDiplomacy = new DiplomacyProposal[5];
         // The Flash source uses diplomacyPendingArr in append order; accepted
@@ -387,7 +390,7 @@ public final class GameState {
             if (playerId < 0 || playerId >= ceasefireTurns.length) {
                 throw new IllegalArgumentException("Invalid player index");
             }
-            return ceasefireTurns[playerId] > 0;
+            return ceasefireTurns[playerId] > 0 || ceasefireAtZero[playerId];
         }
 
         public int getCeasefireTurnsWith(int playerId) {
@@ -1484,7 +1487,7 @@ public final class GameState {
         if (!proposer.alive || !target.alive || target.pendingDiplomacy[proposerPlayerId] != null
                 || (!proposer.human
                 && proposer.diplomacyOfferedLastTurn[targetPlayerId] > 0)
-                || proposer.ceasefireTurns[targetPlayerId] > 0) {
+                || proposer.hasCeasefireWith(targetPlayerId)) {
             return false;
         }
         return recordDiplomacyProposal(proposer, target, optionIndex);
@@ -1502,7 +1505,7 @@ public final class GameState {
         }
         PlayerState proposer = players[proposerPlayerId];
         PlayerState target = players[targetPlayerId];
-        if (!proposer.alive || !target.alive || proposer.ceasefireTurns[targetPlayerId] > 0) {
+        if (!proposer.alive || !target.alive || proposer.hasCeasefireWith(targetPlayerId)) {
             return false;
         }
         return recordDiplomacyProposal(proposer, target, optionIndex);
@@ -2604,7 +2607,9 @@ public final class GameState {
             player.turnMoneyMillions = player.moneyMillions;
             player.resetAiTurnMoneyValidity();
         }
-        tickCeasefires();
+        if (humanSurvivedBattle) {
+            tickCeasefires();
+        }
         refreshMatchStatus();
         appendTurnSummaryMessages();
         for (PlayerState player : players) {
@@ -2754,6 +2759,8 @@ public final class GameState {
             int duration = DIPLOMACY_DURATION[optionIndex];
             target.ceasefireTurns[proposerId] = duration;
             proposer.ceasefireTurns[target.id] = duration;
+            target.ceasefireAtZero[proposerId] = false;
+            proposer.ceasefireAtZero[target.id] = false;
             addMessage(target, "Nation " + target.id + " accepted diplomacy with nation "
                     + proposer.id + ".");
         } else {
@@ -2899,7 +2906,7 @@ public final class GameState {
     private void updateDiplomacyRelations(PlayerState player) {
         for (int otherId = 0; otherId < players.length; otherId++) {
             double regard = player.regardToward[otherId];
-            if (player.ceasefireTurns[otherId] > 0) {
+            if (player.hasCeasefireWith(otherId)) {
                 regard += 2;
             }
             if (regard < 100) {
@@ -2937,6 +2944,9 @@ public final class GameState {
             for (int otherId = 0; otherId < players.length; otherId++) {
                 if (player.ceasefireTurns[otherId] > 0) {
                     player.ceasefireTurns[otherId]--;
+                    player.ceasefireAtZero[otherId] = player.ceasefireTurns[otherId] == 0;
+                } else {
+                    player.ceasefireAtZero[otherId] = false;
                 }
             }
         }

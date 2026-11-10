@@ -4,6 +4,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Rectangle;
 import com.example.worlddomination.game.assets.OriginalFlashAnimationAssets;
+import com.example.worlddomination.game.assets.TechnologyArtworkAssets;
 
 /** Draws the source Flash center-screen dialog from its original vector symbols. */
 public final class FlashCenterUiRenderer {
@@ -13,6 +14,11 @@ public final class FlashCenterUiRenderer {
     public static final float ART_HEIGHT = 275f;
     private static final int MAX_DEPTH = 20;
     private final FlashAffineTransform[] transformScratch = createTransformScratch();
+    private TechnologyArtworkAssets technologyArtwork;
+
+    public void setTechnologyArtwork(TechnologyArtworkAssets artwork) {
+        technologyArtwork = artwork;
+    }
 
     public boolean draw(SpriteBatch batch, OriginalFlashAnimationAssets assets,
                         Rectangle bounds, String frameLabel, String religionCode,
@@ -50,21 +56,24 @@ public final class FlashCenterUiRenderer {
         FlashAffineTransform transform = transformScratch[depth + 1];
         transform.setProduct(parentTransform, layer.a, layer.b, layer.c, layer.d,
                 layer.tx, layer.ty);
-        TextureRegion region = assets.getShape(layer.shapeId);
+        TechnologyArtworkAssets.Artwork sharp = researchFrames == null || technologyArtwork == null
+                ? null : technologyArtwork.get(layer.shapeId);
+        TextureRegion region = sharp == null ? assets.getShape(layer.shapeId) : sharp.region;
         if (region != null) {
             if (transform.scaleX == 0f || transform.scaleY == 0f) {
                 return;
             }
-            float originX = assets.getShapeOriginX(layer.shapeId);
-            float originY = assets.getShapeOriginY(layer.shapeId);
+            float originX = sharp == null ? assets.getShapeOriginX(layer.shapeId) : sharp.originX;
+            float originY = sharp == null ? assets.getShapeOriginY(layer.shapeId) : sharp.originY;
             float sourceX = transform.tx + transform.a * originX + transform.c * originY;
             float sourceY = transform.ty + transform.b * originX + transform.d * originY;
             float x = bounds.x + sourceX * sourceScaleX;
             float top = bounds.y + bounds.height - sourceY * sourceScaleY;
             float drawScaleX = sourceScaleX * transform.scaleX;
             float drawScaleY = sourceScaleY * transform.scaleY;
-            float width = region.getRegionWidth() * Math.abs(drawScaleX);
-            float height = region.getRegionHeight() * Math.abs(drawScaleY);
+            float density = sharp == null ? 1f : TechnologyArtworkAssets.RASTER_SCALE;
+            float width = region.getRegionWidth() / density * Math.abs(drawScaleX);
+            float height = region.getRegionHeight() / density * Math.abs(drawScaleY);
             batch.setColor(1f, 1f, 1f, Math.max(0f,
                     Math.min(1f, parentAlpha * layer.alpha)));
             batch.draw(region, x, top - height, 0f, height, width, height,

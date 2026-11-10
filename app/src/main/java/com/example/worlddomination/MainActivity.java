@@ -24,6 +24,7 @@ public final class MainActivity extends AndroidApplication {
         configuration.useImmersiveMode = true;
         configuration.useGL30 = false;
         configuration.numSamples = 0;
+        configuration.stencil = 8;
         configuration.useWakelock = false;
         initialize(game, configuration);
         applyImmersiveMode();

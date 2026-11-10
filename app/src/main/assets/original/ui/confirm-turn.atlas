@@ -1,0 +1,89 @@
+confirm-turn.png
+size: 1024, 1024
+format: RGBA8888
+filter: Linear, Linear
+repeat: none
+confirm1
+  rotate: false
+  xy: 2, 2
+  size: 240, 228
+  orig: 240, 228
+  offset: 0, 0
+  index: -1
+confirm2
+  rotate: false
+  xy: 246, 2
+  size: 240, 228
+  orig: 240, 228
+  offset: 0, 0
+  index: -1
+confirm3
+  rotate: false
+  xy: 490, 2
+  size: 240, 228
+  orig: 240, 228
+  offset: 0, 0
+  index: -1
+confirm4
+  rotate: false
+  xy: 734, 2
+  size: 240, 228
+  orig: 240, 228
+  offset: 0, 0
+  index: -1
+confirm5
+  rotate: false
+  xy: 2, 234
+  size: 240, 228
+  orig: 240, 228
+  offset: 0, 0
+  index: -1
+confirm6
+  rotate: false
+  xy: 246, 234
+  size: 240, 228
+  orig: 240, 228
+  offset: 0, 0
+  index: -1
+confirm7
+  rotate: false
+  xy: 490, 234
+  size: 240, 228
+  orig: 240, 228
+  offset: 0, 0
+  index: -1
+confirm8
+  rotate: false
+  xy: 734, 234
+  size: 240, 228
+  orig: 240, 228
+  offset: 0, 0
+  index: -1
+confirm9
+  rotate: false
+  xy: 2, 466
+  size: 240, 228
+  orig: 240, 228
+  offset: 0, 0
+  index: -1
+confirm10
+  rotate: false
+  xy: 246, 466
+  size: 240, 228
+  orig: 240, 228
+  offset: 0, 0
+  index: -1
+confirm11
+  rotate: false
+  xy: 490, 466
+  size: 240, 228
+  orig: 240, 228
+  offset: 0, 0
+  index: -1
+confirm12
+  rotate: false
+  xy: 734, 466
+  size: 240, 228
+  orig: 240, 228
+  offset: 0, 0
+  index: -1

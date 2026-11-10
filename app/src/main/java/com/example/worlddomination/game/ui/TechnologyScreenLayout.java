@@ -53,6 +53,16 @@ public final class TechnologyScreenLayout {
                 ? CARRIER_COST_FIELD_X : STANDARD_COST_FIELD_X);
     }
 
+    /** Right-aligned source field ends two points inside its 71.5-point edit box. */
+    public static float cardCostRight(int cardIndex) {
+        return cardCostX(cardIndex) + 67.5f;
+    }
+
+    /** The carrier cost is centered in the same authored edit box below its list. */
+    public static float cardCostCenter(int cardIndex) {
+        return cardCostX(cardIndex) + 33.75f;
+    }
+
     /** Source baseline for the first line in a technology clip's cost field. */
     public static float cardCostBaselineTop(int cardIndex) {
         checkCard(cardIndex);
