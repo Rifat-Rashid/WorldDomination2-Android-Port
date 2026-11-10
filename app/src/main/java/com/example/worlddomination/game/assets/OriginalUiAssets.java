@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.Texture.TextureFilter;
 import com.badlogic.gdx.graphics.Texture.TextureWrap;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.utils.Disposable;
 
 /** Cached, build-time converted Flash artwork used by the landscape presentation. */
@@ -15,6 +16,9 @@ public final class OriginalUiAssets implements Disposable {
     private final Texture battleMapTexture;
     private final Texture productionModalTexture;
     private final Texture neutralButtonTexture;
+    private final Texture propagandaFrameTexture;
+    public final TextureRegion propagandaFrame;
+    public final BitmapFont propagandaStrengthFont;
     public final Texture metalPanel;
     public final TextureRegion[][] buttonPatches = new TextureRegion[3][3];
 
@@ -52,6 +56,15 @@ public final class OriginalUiAssets implements Disposable {
                 Gdx.files.internal("original/ui/production-modal.png"), true);
         productionModalTexture.setFilter(TextureFilter.Linear, TextureFilter.Linear);
         productionModal = new TextureRegion(productionModalTexture);
+        propagandaFrameTexture = new Texture(
+                Gdx.files.internal("original/ui/propaganda-frame.png"), true);
+        propagandaFrameTexture.setFilter(TextureFilter.MipMapLinearLinear, TextureFilter.Linear);
+        propagandaFrame = new TextureRegion(propagandaFrameTexture);
+        propagandaStrengthFont = new BitmapFont(
+                Gdx.files.internal("original/ui/fonts/propaganda-source-36.fnt"), false);
+        propagandaStrengthFont.getRegion().getTexture().setFilter(
+                TextureFilter.Linear, TextureFilter.Linear);
+        propagandaStrengthFont.setUseIntegerPositions(false);
         resourceModal = require("resourceModal");
         inventoryCounter = require("inventoryCounter");
         inventorySwitch = require("inventorySwitch");
@@ -97,6 +110,8 @@ public final class OriginalUiAssets implements Disposable {
         logoTexture.dispose();
         battleMapTexture.dispose();
         productionModalTexture.dispose();
+        propagandaFrameTexture.dispose();
+        propagandaStrengthFont.dispose();
         metalPanel.dispose();
         neutralButtonTexture.dispose();
     }

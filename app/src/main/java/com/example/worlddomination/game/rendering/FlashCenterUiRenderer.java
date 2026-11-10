@@ -10,6 +10,7 @@ import com.example.worlddomination.game.assets.TechnologyArtworkAssets;
 public final class FlashCenterUiRenderer {
     public static final String RESEARCH_FRAME = "research";
     public static final String MASS_MEDIA_FRAME = "religion";
+    public static final String PROPAGANDA_FRAME = "propaganda2";
     public static final float ART_WIDTH = 365f;
     public static final float ART_HEIGHT = 275f;
     private static final int MAX_DEPTH = 20;
