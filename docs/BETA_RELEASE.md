@@ -2,7 +2,7 @@
 
 The beta uses the native Android `:app` module, Java 11 source compatibility,
 JDK 17, and the Gradle wrapper. It runs offline. The current beta version is
-`0.1.0-beta.1`, version code `2`.
+`0.1.0-beta.2`, version code `3`.
 
 ## Build and verify
 
@@ -62,7 +62,7 @@ Increase the version code for each subsequent Play upload.
 
 The beta includes the current sharper Resources and Technology screens, larger
 information rows with the INFO PANEL heading removed, original action-slot
-animation, corrected enemy portraits, custom launcher icon, and recovered
+animation, animated confirm closure and original AI action announcements, corrected enemy portraits, custom launcher icon, and recovered
 gameplay rules. It is a work-in-progress port, not a claim of complete Flash
 parity. Broader visual/animation/audio comparisons, long play sessions,
 additional physical devices, and lifecycle recovery remain part of testing.
