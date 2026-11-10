@@ -160,4 +160,22 @@ public final class SourceActionMenuStateTest {
         assertNotNull(game.getPendingHumanDiplomacyProposal());
     }
 
+    @Test public void massMediaUsesSourceReligionCardAndQueuesExistingRule() {
+        begin(GameState.Action.MASS_MEDIA);
+        assertEquals("religion-chr", menu.getKey()); assertTrue(menu.isAcceptVisible());
+        assertTrue(menu.isCancelVisible()); assertFalse(menu.isMapSelection());
+        assertTrue(menu.accept(game)); assertEquals(GameState.Action.MASS_MEDIA, game.getQueuedAction(0));
+    }
+    @Test public void massMediaPreviewUsesSourceUpkeepAndCapWithoutChangingGrossRule() {
+        int[][] cases = {{0,65,20,30}, {1,65,20,30}, {2,65,15,25},
+                {1,95,5,30}, {0,100,0,30}, {0,125,0,30}, {1,0,20,30}};
+        for (int[] row : cases) {
+            GameState state = new GameState(row[0], 17L);
+            state.getHuman().religion = row[1];
+            assertEquals(row[2], state.getMassMediaPreviewGain());
+            assertEquals(row[3], state.getMassMediaGain());
+            assertEquals(row[1], state.getHuman().religion);
+        }
+    }
+
 }

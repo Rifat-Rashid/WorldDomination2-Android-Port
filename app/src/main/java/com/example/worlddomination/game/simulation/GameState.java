@@ -2350,6 +2350,12 @@ public final class GameState {
         return Math.round((float) player.populationMillions / divisors[difficulty]);
     }
 
+    /** Sub_Presenter_interface previews the source gain after its ten-point upkeep. */
+    public int getMassMediaPreviewGain() {
+        return Math.max(0, Math.min(100 - getHuman().religion,
+                PLAYER_RELIGION_ADDITION[difficulty] - 10));
+    }
+
     public int getMassMediaGain() {
         return PLAYER_RELIGION_ADDITION[difficulty];
     }

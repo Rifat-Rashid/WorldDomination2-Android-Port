@@ -31,6 +31,8 @@ public final class SourceActionMenuRenderer implements Disposable {
     private final Texture selected = texture("leader-selected");
     private final Texture readiness = texture("spy-readiness");
     private final TextureRegion readinessRegion = new TextureRegion(readiness);
+    private final Texture mediaOpinion = texture("media-opinion");
+    private final TextureRegion opinionRegion = new TextureRegion(mediaOpinion);
     private final BitmapFont font = new BitmapFont(Gdx.files.internal("original/ui/fonts/resource-arial-48.fnt"));
     private final Rectangle scratch = new Rectangle();
     private final Matrix4 savedTransform = new Matrix4(), textTransform = new Matrix4();
@@ -90,6 +92,11 @@ public final class SourceActionMenuRenderer implements Disposable {
                          GameState.DiplomacyProposal proposal) {
         String name = field.getString("name");
         if ("textFunds".equals(name)) return "Budget: " + funds + ".000.000";
+        if (key.startsWith("religion-")) {
+            if ("text1".equals(name)) return game.getHuman().populationMillions + ".000.000";
+            if ("text2".equals(name)) return opinion + "%";
+            if ("text3".equals(name)) return "+" + game.getMassMediaPreviewGain() + " %";
+        }
         if ("diplomacy".equals(key)) {
             if (name.startsWith("btn") && name.endsWith("/text1")) {
                 int option = name.charAt(3) - '1';
@@ -165,6 +172,16 @@ public final class SourceActionMenuRenderer implements Disposable {
                         bar.getFloat(2) * scale * amount, bar.getFloat(3) * scale);
             }
         }
+        JsonValue opinionBar = screen.get("opinion");
+        if (opinionBar != null && !opinionBar.isNull()) {
+            float amount = Math.max(0, Math.min(100, opinion)) / 100f;
+            if (amount > 0) {
+                opinionRegion.setRegion(0, 0, Math.round(mediaOpinion.getWidth() * amount), mediaOpinion.getHeight());
+                batch.draw(opinionRegion, scratch.x + opinionBar.getFloat(0) * scale,
+                        scratch.y + scratch.height - (opinionBar.getFloat(1) + opinionBar.getFloat(3)) * scale,
+                        opinionBar.getFloat(2) * scale * amount, opinionBar.getFloat(3) * scale);
+            }
+        }
         JsonValue scheme = screen.get("scheme");
         if (proposal != null && scheme != null && !scheme.isNull()) {
             turnControls.drawDiplomacyScheme(batch, scratch.x + scheme.getFloat(0) * scale,
@@ -217,8 +234,10 @@ public final class SourceActionMenuRenderer implements Disposable {
     }
 
     private void button(SpriteBatch batch, Texture image, float x, float scale) {
-        batch.draw(image, scratch.x + x * scale,
-                scratch.y + scratch.height - 270.45f * scale, 55 * scale, 24 * scale);
+        JsonValue origin = screen.get("origin");
+        batch.draw(image, scratch.x + (x + origin.getFloat(0)) * scale,
+                scratch.y + scratch.height - (270.45f + origin.getFloat(1)) * scale,
+                55 * scale, 24 * scale);
     }
 
     public String controlAt(Rectangle container, float x, float y, GameState game,
@@ -229,9 +248,11 @@ public final class SourceActionMenuRenderer implements Disposable {
         float sourceX = (x - scratch.x) * 365f / scratch.width;
         float sourceY = (scratch.y + scratch.height - y) * 275f / scratch.height;
         boolean pending = game.getPendingHumanDiplomacyProposal() != null && !state.hasPendingError();
-        if (inside(sourceX, sourceY, 279.15f, 246.45f, 55, 24)
+        JsonValue origin = screen.get("origin");
+        float footerY = 246.45f + origin.getFloat(1);
+        if (inside(sourceX, sourceY, 279.15f + origin.getFloat(0), footerY, 55, 24)
                 && (game.getPendingHumanDiplomacyProposal() != null ? pending : state.isAcceptVisible())) return "btnAccept";
-        if (inside(sourceX, sourceY, 28.15f, 246.45f, 55, 24)
+        if (inside(sourceX, sourceY, 28.15f + origin.getFloat(0), footerY, 55, 24)
                 && (game.getPendingHumanDiplomacyProposal() != null ? pending : state.isCancelVisible())) return "btnCancel";
         if ("diplomacy".equals(key)) {
             JsonValue leaders = screen.get("portraits");
@@ -265,6 +286,6 @@ public final class SourceActionMenuRenderer implements Disposable {
     }
     @Override public void dispose() {
         for (Texture texture : cache.values()) texture.dispose();
-        cache.clear(); accept.dispose(); cancel.dispose(); selected.dispose(); readiness.dispose(); font.dispose();
+        cache.clear(); accept.dispose(); cancel.dispose(); selected.dispose(); readiness.dispose(); mediaOpinion.dispose(); font.dispose();
     }
 }

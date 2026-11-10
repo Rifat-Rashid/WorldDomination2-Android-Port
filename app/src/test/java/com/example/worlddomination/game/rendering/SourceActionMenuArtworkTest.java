@@ -19,7 +19,7 @@ public final class SourceActionMenuArtworkTest {
         return new JsonReader().parse(Files.readString(asset("menus.json")));
     }
     @Test public void everySourceVariantHasFourTimesArtworkAndValidTextGeometry() throws Exception {
-        JsonValue menus = menus(); assertEquals(88, menus.size);
+        JsonValue menus = menus(); assertEquals(93, menus.size);
         for (JsonValue menu : menus) {
             try (DataInputStream png = new DataInputStream(Files.newInputStream(asset(menu.name + ".png")))) {
                 assertEquals(0x89504e470d0a1a0aL, png.readLong());
@@ -80,4 +80,23 @@ public final class SourceActionMenuArtworkTest {
             assertEquals(container.y + container.height / 2, fit.y + fit.height / 2, .001f);
         }
     }
+    @Test public void allFiveMassMediaStylesUseOriginalFieldAndProgressRegistration() throws Exception {
+        JsonValue menus = menus();
+        for (String style : new String[]{"chr", "mus", "bhu", "com", "jew"}) {
+            JsonValue menu = menus.get("religion-" + style);
+            assertNotNull(menu); assertEquals("religion", menu.getString("frame"));
+            assertFalse(menu.getBoolean("map"));
+            JsonValue bar = menu.get("opinion"); assertFalse(bar.isNull());
+            assertEquals(229.45f, bar.getFloat(0), .001f);
+            assertEquals(121.45f, bar.getFloat(1), .001f);
+            boolean gain = false;
+            for (JsonValue field : menu.get("fields")) if (field.getString("name").equals("text3")) {
+                assertEquals(140.2f, field.get("bounds").getFloat(1), .001f);
+                assertEquals(76f, field.get("bounds").getFloat(2), .001f);
+                gain = true;
+            }
+            assertTrue(gain);
+        }
+    }
+
 }
