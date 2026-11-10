@@ -65,6 +65,16 @@ public final class TurnControlRenderer implements Disposable {
         batch.setColor(1, 1, 1, 1);
     }
 
+    /** Pending diplomacy highlights only the nation making the original offer/demand. */
+    public void drawDiplomacyScheme(SpriteBatch batch, float x, float y, float width, float height,
+                                    int proposer, GameState state) {
+        batch.setColor(1, 1, 1, 1);
+        for (int player = 0; player < 5; player++) {
+            int color = player == proposer ? state.getPlayerState(player).getPlayerColor() : 0;
+            batch.draw(schemeFrames[player][color], x, y, width, height);
+        }
+    }
+
     private static void drawSource(SpriteBatch batch, TextureRegion region, Rectangle map, Rectangle source) {
         float scale = BattlefieldCityLayout.sourceScale(map);
         batch.draw(region, BattlefieldCityLayout.sourceX(map, source.x, 0),

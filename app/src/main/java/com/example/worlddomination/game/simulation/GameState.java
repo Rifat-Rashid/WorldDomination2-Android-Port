@@ -1554,6 +1554,54 @@ public final class GameState {
         return configureAttack(selectedTargetPlayer, selectedTargetCity, weaponName);
     }
 
+    /** Equipment preview must not depend on the previously selected map target. */
+    public boolean previewAttackWeapon(String weaponName) {
+        if (selectedAction != Action.ATTACK || !getAvailableAttackWeapons().contains(weaponName)) {
+            return false;
+        }
+        selectedAttackWeapon = weaponName;
+        return true;
+    }
+
+    public boolean selectDiplomacyTarget(int playerId) {
+        if (selectedAction != Action.DIPLOMACY || playerId <= 0 || playerId >= players.length
+                || !players[playerId].alive || getHuman().hasCeasefireWith(playerId)
+                || players[playerId].pendingDiplomacy[0] != null) return false;
+        selectedTargetPlayer = playerId;
+        return true;
+    }
+
+    public boolean selectDiplomacyOption(int optionIndex) {
+        if (selectedAction != Action.DIPLOMACY || optionIndex < 0
+                || optionIndex >= DIPLOMACY_AMOUNT.length) return false;
+        selectedDiplomacyOption = optionIndex;
+        return true;
+    }
+
+    public boolean selectSpyBuilding(String building) {
+        if (!isSelectedAttackSpy()) return false;
+        for (String candidate : SPY_BUILDINGS) {
+            if (candidate.equals(building)) {
+                selectedSpyBuilding = building;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public String getSelectedPreparedCarrier() { return selectedPreparedCarrier; }
+    public String getSelectedPreparedPayload() { return selectedPreparedPayload; }
+    public String getSelectedDefenseWeapon() { return selectedDefenseWeapon; }
+
+    /** Source cancelPreAttack discards the already consumed carrier without a refund. */
+    public boolean cancelPreparedAttack() {
+        if (selectedAction != Action.PREPARED_ATTACK || getHuman().preparedCarrierName == null
+                || "ship".equals(getHuman().preparedCarrierName)) return false;
+        getHuman().preparedCarrierName = null;
+        cancelSelection();
+        return true;
+    }
+
     public int getSpyReadiness() {
         return getHuman().spyReadiness;
     }
