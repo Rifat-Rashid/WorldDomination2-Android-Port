@@ -2225,6 +2225,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         if (!ActionScreenLayout.hasInlineActionControls(action) || modalOpen) {
             return;
         }
+        if (action == GameState.Action.PROPAGANDA) {
+            drawPropagandaCityPrompt();
+            return;
+        }
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
         for (Rectangle button : actionFooterButtons) {
@@ -2261,6 +2265,27 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         drawCentered("ACCEPT", actionFooterButtons[2].x
                         + actionFooterButtons[2].width / 2f,
                 actionFooterButtons[2].y + actionFooterButtons[2].height / 2f + 2f, 7.5f);
+        batch.end();
+    }
+
+    private void drawPropagandaCityPrompt() {
+        Rectangle cancel = actionFooterButtons[1];
+        batch.setProjectionMatrix(camera.combined);
+        batch.begin();
+        drawOriginalButton(cancel);
+        batch.end();
+        shapes.setProjectionMatrix(camera.combined);
+        shapes.begin(ShapeRenderer.ShapeType.Filled);
+        drawButtonGradient(cancel, false);
+        shapes.end();
+        batch.begin();
+        font.setColor(GREEN);
+        drawFittedLeft("PROPAGANDA: SELECT AN ENEMY CITY", messagePanel.x + 8f,
+                messagePanel.y + messagePanel.height - 10f,
+                messagePanel.width - 16f, 9f);
+        font.setColor(TITLE_TEXT);
+        drawCentered("CANCEL", cancel.x + cancel.width / 2f,
+                cancel.y + cancel.height / 2f + 2f, 7.5f);
         batch.end();
     }
 
@@ -2514,6 +2539,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         if (action == GameState.Action.MASS_MEDIA && drawMassMediaModal()) {
             return;
         }
+        if (action == GameState.Action.PROPAGANDA) {
+            drawPropagandaModal();
+            return;
+        }
 
         java.util.List<String> researchChoices = action == GameState.Action.RESEARCH
                 ? game.getResearchChoices() : java.util.Collections.emptyList();
@@ -2560,7 +2589,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             shapes.rect(researchNext.x, researchNext.y,
                     researchNext.width, researchNext.height);
         } else if (action == GameState.Action.ATTACK
-                || action == GameState.Action.PROPAGANDA
                 || action == GameState.Action.DIPLOMACY) {
             drawAttackControlRow(attackTargetPrevious, attackTargetNext);
             drawAttackControlRow(attackCityPrevious, attackCityNext);
@@ -2639,7 +2667,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                         modal.x + modal.width / 2f, modal.y + modal.height / 2f, 8f);
             }
         } else if (action == GameState.Action.ATTACK
-                || action == GameState.Action.PROPAGANDA
                 || action == GameState.Action.DIPLOMACY) {
             GameState.PlayerState target = game.getPlayerState(game.getSelectedTargetPlayer());
             CityState city = target.getCity(game.getSelectedTargetCity());
@@ -2700,15 +2727,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                     drawCentered(game.isSelectedAttackSpy()
                                     ? "Spy readiness or available spy stock is too low."
                                     : "Choose a living target and available unit.",
-                            modal.x + modal.width / 2f, modal.y + modal.height * 0.18f, 7f);
-                }
-            } else if (action == GameState.Action.PROPAGANDA) {
-                drawCentered("ESTIMATED CITIZEN TRANSFER: "
-                                + game.getPropagandaTransferEstimate(target.id, city.index) + "M",
-                        modal.x + modal.width / 2f,
-                        attackWeaponPrevious.y + attackWeaponPrevious.height / 2f + 3f, 7f);
-                if (!game.canAcceptPropaganda()) {
-                    drawCentered("Choose a living nation and populated city.",
                             modal.x + modal.width / 2f, modal.y + modal.height * 0.18f, 7f);
                 }
             }
@@ -2923,6 +2941,30 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         batch.end();
         return drawn;
+    }
+
+    private void drawPropagandaModal() {
+        setScissor(modal);
+        batch.setProjectionMatrix(camera.combined);
+        batch.begin();
+        boolean drawn = centerUiRenderer.draw(batch, flashAnimationAssets, modal,
+                FlashCenterUiRenderer.PROPAGANDA_FRAME, null, null);
+        if (drawn) {
+            // centerScreen.text1 at (37, 122), 9pt, right aligned in a 102.2pt field.
+            float scaleX = modal.width / FlashCenterUiRenderer.ART_WIDTH;
+            float scaleY = modal.height / FlashCenterUiRenderer.ART_HEIGHT;
+            BitmapFont strengthFont = uiAssets.propagandaStrengthFont;
+            strengthFont.getData().setScale(scaleY / 4f);
+            strengthFont.setColor(MODAL_ORANGE);
+            strengthFont.draw(batch, "Propaganda strength: " + game.getHuman().religion + " %",
+                    modal.x + 37f * scaleX, modal.y + modal.height - 125.75f * scaleY,
+                    98.2f * scaleX, com.badlogic.gdx.utils.Align.right, true);
+            // The source HUD paints this glass/border layer above centerScreen.
+            batch.setColor(Color.WHITE);
+            batch.draw(uiAssets.propagandaFrame, modal.x, modal.y, modal.width, modal.height);
+        }
+        batch.end();
+        Gdx.gl.glDisable(GL20.GL_SCISSOR_TEST);
     }
 
     private void drawSourceText(String text, float sourceX, float sourceTop,
@@ -4109,7 +4151,19 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             return;
         }
         GameState.Action selectedAction = game.getSelectedAction();
-        if (!modalOpen && ActionScreenLayout.hasInlineActionControls(selectedAction)) {
+        if (!modalOpen && selectedAction == GameState.Action.PROPAGANDA) {
+            if (actionFooterButtons[1].contains(x, y)) {
+                game.cancelSelection();
+                audio.play(OriginalAudio.Cue.ACTION_CLOSE);
+                audio.playAmbient(OriginalAudio.Cue.GAME_AMBIENT);
+                return;
+            }
+            if (mapBounds.contains(x, y)) {
+                selectMapTargetCity(selectedAction, x, y);
+                return;
+            }
+        }
+        if (!modalOpen && selectedAction == GameState.Action.ATTACK) {
             if (actionFooterButtons[0].contains(x, y)) {
                 modalOpen = true;
                 audio.play(OriginalAudio.Cue.ACTION_OPEN);
@@ -4138,13 +4192,11 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         if (modalOpen) {
             GameState.Action action = game.getSelectedAction();
+            if (navViewport.contains(x, y)) {
+                activateNavigationRow(x, y);
+                return;
+            }
             if (action == GameState.Action.PRODUCTION) {
-                for (Rectangle row : navRows) {
-                    if (row.contains(x, y)) {
-                        activateNavigationRow(x, y);
-                        return;
-                    }
-                }
                 if (productionSummaryCount > 0 && modalAccept.contains(x, y)) {
                     acceptProductionSelection();
                     return;
@@ -4271,23 +4323,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 }
                 if (attackWeaponNext.contains(x, y)) {
                     game.cycleAttackWeapon(1);
-                    return;
-                }
-            } else if (action == GameState.Action.PROPAGANDA) {
-                if (attackTargetPrevious.contains(x, y)) {
-                    game.cyclePropagandaTarget(-1);
-                    return;
-                }
-                if (attackTargetNext.contains(x, y)) {
-                    game.cyclePropagandaTarget(1);
-                    return;
-                }
-                if (attackCityPrevious.contains(x, y)) {
-                    game.cyclePropagandaCity(-1);
-                    return;
-                }
-                if (attackCityNext.contains(x, y)) {
-                    game.cyclePropagandaCity(1);
                     return;
                 }
             } else if (action == GameState.Action.DIPLOMACY) {
@@ -4495,7 +4530,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     }
 
     private boolean selectMapTargetCity(GameState.Action action, float x, float y) {
-        if (isActionModalControlAt(action, x, y)) {
+        if (modalOpen && (isActionModalControlAt(action, x, y)
+                || action == GameState.Action.PROPAGANDA && modal.contains(x, y))) {
             return false;
         }
         boolean targetAction = action == GameState.Action.ATTACK
@@ -4542,7 +4578,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         if (game.selectBattlefieldCity(playerId, cityIndex)) {
             audio.play(OriginalAudio.Cue.UNIT_SELECT);
-            if (action == GameState.Action.PREPARED_ATTACK) {
+            if (action == GameState.Action.PROPAGANDA) {
+                modalOpen = true;
+                audio.play(OriginalAudio.Cue.ACTION_OPEN);
+            } else if (action == GameState.Action.PREPARED_ATTACK) {
                 preparedTargetPlayer = playerId;
                 preparedCityIndex = cityIndex;
                 refreshPreparedLaunch();
@@ -4555,8 +4594,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         if (modalAccept.contains(x, y) || modalCancel.contains(x, y)) {
             return true;
         }
-        if (action == GameState.Action.ATTACK
-                || action == GameState.Action.PROPAGANDA) {
+        if (action == GameState.Action.ATTACK) {
             return attackTargetPrevious.contains(x, y) || attackTargetNext.contains(x, y)
                     || attackCityPrevious.contains(x, y) || attackCityNext.contains(x, y)
                     || action == GameState.Action.ATTACK
