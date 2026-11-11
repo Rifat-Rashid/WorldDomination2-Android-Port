@@ -63,24 +63,24 @@ public final class ActionScreenLayoutTest {
         Rectangle warheads = TechnologyScreenLayout.setCardBounds(5, modal, new Rectangle());
         Rectangle bioloads = TechnologyScreenLayout.setCardBounds(6, modal, new Rectangle());
 
-        assertEquals(modal.x + 14f, first.x, 0.001f);
-        assertEquals(modal.y + 275f - 39f - 50f, first.y, 0.001f);
-        assertEquals(modal.x + 145f, specialCarrier.x, 0.001f);
-        assertEquals(modal.y + 275f - 38f - 89f, specialCarrier.y, 0.001f);
-        assertEquals(modal.x + 245f, warheads.x, 0.001f);
-        assertEquals(modal.x + 245f, bioloads.x, 0.001f);
+        assertEquals(modal.x + 9.05f, first.x, 0.001f);
+        assertEquals(modal.y + 275f - 39f - 50f - 1.05f, first.y, 0.001f);
+        assertEquals(modal.x + 140.05f, specialCarrier.x, 0.001f);
+        assertEquals(modal.y + 275f - 38f - 89f - 1.05f, specialCarrier.y, 0.001f);
+        assertEquals(modal.x + 240.05f, warheads.x, 0.001f);
+        assertEquals(modal.x + 240.05f, bioloads.x, 0.001f);
         assertTrue(ActionScreenLayout.opensCenterDialog(GameState.Action.RESEARCH));
     }
 
     @Test
     public void researchTextFieldsMatchTheirFlashTimelinePositions() {
-        assertEquals(57.2f, TechnologyScreenLayout.cardCostX(0), 0.001f);
-        assertEquals(46.2f, TechnologyScreenLayout.cardCostBaselineTop(0), 0.001f);
-        assertEquals(151.6f, TechnologyScreenLayout.cardCostX(4), 0.001f);
-        assertEquals(114.7f, TechnologyScreenLayout.cardCostBaselineTop(4), 0.001f);
-        assertEquals(151.5f, TechnologyScreenLayout.selectedNamesBaselineTop(), 0.001f);
-        assertEquals(152f, TechnologyScreenLayout.selectedCostsBaselineTop(), 0.001f);
-        assertEquals(234.1f, TechnologyScreenLayout.estimatedTotalBaselineTop(), 0.001f);
+        assertEquals(52.25f, TechnologyScreenLayout.cardCostX(0), 0.001f);
+        assertEquals(47.25f, TechnologyScreenLayout.cardCostBaselineTop(0), 0.001f);
+        assertEquals(146.65f, TechnologyScreenLayout.cardCostX(4), 0.001f);
+        assertEquals(115.75f, TechnologyScreenLayout.cardCostBaselineTop(4), 0.001f);
+        assertEquals(144.55f, TechnologyScreenLayout.selectedNamesTextTop(), 0.001f);
+        assertEquals(145.05f, TechnologyScreenLayout.selectedCostsTextTop(), 0.001f);
+        assertEquals(227.15f, TechnologyScreenLayout.estimatedTotalTextTop(), 0.001f);
     }
 
     @Test

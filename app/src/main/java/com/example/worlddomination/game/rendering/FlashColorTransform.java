@@ -25,6 +25,48 @@ public final class FlashColorTransform {
         this.alphaAdd = alphaAdd;
     }
 
+    public static final FlashColorTransform IDENTITY = source(1, 1, 1, 1, 0, 0, 0, 0);
+
+    /** Flash multipliers are normalized; additive channels are source 0..255 units. */
+    public static FlashColorTransform source(float red, float green, float blue, float alpha,
+                                              float addRed, float addGreen, float addBlue,
+                                              float addAlpha) {
+        return new FlashColorTransform(red, addRed / 255f, green, addGreen / 255f,
+                blue, addBlue / 255f, alpha, addAlpha / 255f);
+    }
+
+    /** Reused during traversal: the child color transform is applied before its parent. */
+    public static final class Composition {
+        public float redMultiplier, greenMultiplier, blueMultiplier, alphaMultiplier;
+        public float redAdd, greenAdd, blueAdd, alphaAdd;
+
+        public Composition() { identity(); }
+
+        public Composition identity() {
+            redMultiplier = greenMultiplier = blueMultiplier = alphaMultiplier = 1;
+            redAdd = greenAdd = blueAdd = alphaAdd = 0;
+            return this;
+        }
+
+        public Composition setProduct(Composition parent, FlashColorTransform child) {
+            redAdd = parent.redMultiplier * child.redAdd + parent.redAdd;
+            greenAdd = parent.greenMultiplier * child.greenAdd + parent.greenAdd;
+            blueAdd = parent.blueMultiplier * child.blueAdd + parent.blueAdd;
+            alphaAdd = parent.alphaMultiplier * child.alphaAdd + parent.alphaAdd;
+            redMultiplier = parent.redMultiplier * child.redMultiplier;
+            greenMultiplier = parent.greenMultiplier * child.greenMultiplier;
+            blueMultiplier = parent.blueMultiplier * child.blueMultiplier;
+            alphaMultiplier = parent.alphaMultiplier * child.alphaMultiplier;
+            return this;
+        }
+
+        public boolean isIdentity() {
+            return redMultiplier == 1 && greenMultiplier == 1 && blueMultiplier == 1
+                    && alphaMultiplier == 1 && redAdd == 0 && greenAdd == 0
+                    && blueAdd == 0 && alphaAdd == 0;
+        }
+    }
+
     /** Returns the source ColorTransform for setup colors 1 (blue) through 5 (green). */
     public static FlashColorTransform forPlayerColor(int playerColor) {
         switch (playerColor) {

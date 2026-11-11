@@ -22,6 +22,7 @@ public final class FlashAnimationTimeline {
         public final float ty;
         public final String name;
         public final float alpha;
+        public final FlashColorTransform colorTransform;
 
         private Layer(int depth, DisplayObject object) {
             this.depth = depth;
@@ -35,6 +36,7 @@ public final class FlashAnimationTimeline {
             ty = object.ty;
             name = object.name;
             alpha = object.alpha;
+            colorTransform = object.colorTransform;
         }
     }
 
@@ -73,6 +75,7 @@ public final class FlashAnimationTimeline {
         float ty;
         String name = "";
         float alpha = 1f;
+        FlashColorTransform colorTransform = FlashColorTransform.IDENTITY;
     }
 
     public final int symbolId;
@@ -143,6 +146,11 @@ public final class FlashAnimationTimeline {
                 if (color != null) {
                     JsonValue multipliers = color.get("mult");
                     JsonValue additions = color.get("add");
+                    object.colorTransform = FlashColorTransform.source(
+                            getArrayFloat(multipliers, 0, 1f), getArrayFloat(multipliers, 1, 1f),
+                            getArrayFloat(multipliers, 2, 1f), getArrayFloat(multipliers, 3, 1f),
+                            getArrayFloat(additions, 0, 0f), getArrayFloat(additions, 1, 0f),
+                            getArrayFloat(additions, 2, 0f), getArrayFloat(additions, 3, 0f));
                     float alphaMultiplier = getArrayFloat(multipliers, 3, 1f);
                     float alphaAddition = getArrayFloat(additions, 3, 0f);
                     object.alpha = Math.max(0f, Math.min(1f,

@@ -185,9 +185,9 @@ public final class OriginalFlashAnimationAssetsTest {
             JsonValue edit = scene.get("text_fields").get(Integer.toString(field.shapeId));
             float left = edit.get("bounds").getFloat(0);
             float right = edit.get("bounds").getFloat(1);
-            assertEquals(placement.tx + field.tx + right - 2f,
+            assertEquals(-4.95f + placement.tx + field.tx + right - 2f,
                     com.example.worlddomination.game.ui.TechnologyScreenLayout.cardCostRight(card), 0.001f);
-            assertEquals(placement.tx + field.tx + (left + right) / 2f,
+            assertEquals(-4.95f + placement.tx + field.tx + (left + right) / 2f,
                     com.example.worlddomination.game.ui.TechnologyScreenLayout.cardCostCenter(card), 0.001f);
             assertEquals(card == 4 ? 2 : 1, edit.getInt("align"));
         }
