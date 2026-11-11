@@ -18,6 +18,9 @@ jobs:
       max-parallel: 6
       matrix:
         include:
+          - id: battlefield-terrain-parity
+            check: Original terrain styles unused islands and conquest retention
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.BattlefieldTerrainStateTest" --tests "com.example.worlddomination.game.assets.BattlefieldTerrainAssetsTest"'
           - id: battlefield-flag-parity
             check: Source flag ownership colors and original waving artwork
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.BattlefieldFlagStateTest" --tests "com.example.worlddomination.game.assets.BattlefieldFlagAssetsTest"'

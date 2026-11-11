@@ -1,0 +1,403 @@
+{
+  "format": 1,
+  "sourceStage": [
+    800,
+    600
+  ],
+  "rasterScale": 2,
+  "sourceSceneSha256": "7213f06fac4e887050ad89e0d3c9a67f47789096d559af8e08333991f7616629",
+  "sourceRule": "View.setMapFrames: original player religion, including defeated players; absent slots are ocean",
+  "ocean": {
+    "file": "ocean.png",
+    "stageCrop": [
+      358,
+      159,
+      48,
+      50
+    ],
+    "rasterScale": 3,
+    "sha256": "cc3951491f82b5cb270fd4fce64274892bda788f46926607dc21eed7977a2434"
+  },
+  "islands": [
+    {
+      "island": 0,
+      "symbol": 5253,
+      "variants": {
+        "chr": {
+          "file": "island-0-chr.png",
+          "frame": 1,
+          "shape": 5240,
+          "sourceOffset": [
+            230.5,
+            197.0
+          ],
+          "pixelSize": [
+            745,
+            546
+          ],
+          "sha256": "b6c6472941c152fe50d6f19ab8acd4900f261e3faa7ca15faeb35ef434723e86"
+        },
+        "bhu": {
+          "file": "island-0-bhu.png",
+          "frame": 2,
+          "shape": 5243,
+          "sourceOffset": [
+            230.5,
+            197.0
+          ],
+          "pixelSize": [
+            745,
+            545
+          ],
+          "sha256": "b8f982ac1117b2a187aa8bc16f3aa7115c0f6e8dc4071dd3b4f24b504eb16d5e"
+        },
+        "com": {
+          "file": "island-0-com.png",
+          "frame": 3,
+          "shape": 5246,
+          "sourceOffset": [
+            231.0,
+            197.0
+          ],
+          "pixelSize": [
+            744,
+            546
+          ],
+          "sha256": "ec836701e55a88c59e004bbbbe1e87cc079ad7f0acf8fe26ff5c585a5a8ae50c"
+        },
+        "jew": {
+          "file": "island-0-jew.png",
+          "frame": 4,
+          "shape": 5249,
+          "sourceOffset": [
+            226.0,
+            197.0
+          ],
+          "pixelSize": [
+            754,
+            548
+          ],
+          "sha256": "660e8bea617002edfdf393c54c8dac2e22f24bc83b6f8e43f37abbab883699f9"
+        },
+        "mus": {
+          "file": "island-0-mus.png",
+          "frame": 5,
+          "shape": 5252,
+          "sourceOffset": [
+            230.5,
+            197.0
+          ],
+          "pixelSize": [
+            745,
+            546
+          ],
+          "sha256": "3c09bb8f461cf84ea6ddf22f8fe81b66c72db681e466203aae278d43919b9b40"
+        }
+      }
+    },
+    {
+      "island": 1,
+      "symbol": 5237,
+      "variants": {
+        "chr": {
+          "file": "island-1-chr.png",
+          "frame": 1,
+          "shape": 5224,
+          "sourceOffset": [
+            0.0,
+            0.0
+          ],
+          "pixelSize": [
+            602,
+            616
+          ],
+          "sha256": "392291bf8de6eab5515dc31139e075957a94a79bda2e884ff5e3a5d2a4c352a9"
+        },
+        "bhu": {
+          "file": "island-1-bhu.png",
+          "frame": 2,
+          "shape": 5227,
+          "sourceOffset": [
+            0.0,
+            0.0
+          ],
+          "pixelSize": [
+            602,
+            616
+          ],
+          "sha256": "6a3f573d05486c0c098f7407bc9fd94c8d02446e3c92d829712b753a7f83c43d"
+        },
+        "com": {
+          "file": "island-1-com.png",
+          "frame": 3,
+          "shape": 5230,
+          "sourceOffset": [
+            0.0,
+            0.0
+          ],
+          "pixelSize": [
+            602,
+            616
+          ],
+          "sha256": "0bd3c204785a7c412073626e3c36b65d29fcf146452c6fabe41cb8e84132f443"
+        },
+        "jew": {
+          "file": "island-1-jew.png",
+          "frame": 4,
+          "shape": 5233,
+          "sourceOffset": [
+            0.0,
+            0.0
+          ],
+          "pixelSize": [
+            602,
+            616
+          ],
+          "sha256": "21fcacd27273cb518f7e9983201486e2238639702e334b7ca2686e2c747c6a86"
+        },
+        "mus": {
+          "file": "island-1-mus.png",
+          "frame": 5,
+          "shape": 5236,
+          "sourceOffset": [
+            0.0,
+            0.0
+          ],
+          "pixelSize": [
+            602,
+            616
+          ],
+          "sha256": "2ee2368983fe867473feb9e9e6c9d0a327b8470bbf6e0ddd6e3effac08117de2"
+        }
+      }
+    },
+    {
+      "island": 2,
+      "symbol": 5221,
+      "variants": {
+        "chr": {
+          "file": "island-2-chr.png",
+          "frame": 1,
+          "shape": 5208,
+          "sourceOffset": [
+            470.0,
+            0.0
+          ],
+          "pixelSize": [
+            660,
+            600
+          ],
+          "sha256": "f98c8aa6193187e43d875084c90f05f7daaf2571b00a7b541409317c083ea218"
+        },
+        "bhu": {
+          "file": "island-2-bhu.png",
+          "frame": 2,
+          "shape": 5211,
+          "sourceOffset": [
+            470.0,
+            0.0
+          ],
+          "pixelSize": [
+            660,
+            600
+          ],
+          "sha256": "80a736e6a8afe3f5fb4e2019d27fe1b33bdc3bc04643afce64d24eee3320881f"
+        },
+        "com": {
+          "file": "island-2-com.png",
+          "frame": 3,
+          "shape": 5214,
+          "sourceOffset": [
+            470.0,
+            0.0
+          ],
+          "pixelSize": [
+            660,
+            600
+          ],
+          "sha256": "96484c1882576183bd7927fdc59de47a44dedc7315001cf6efbe163e4606eb79"
+        },
+        "jew": {
+          "file": "island-2-jew.png",
+          "frame": 4,
+          "shape": 5217,
+          "sourceOffset": [
+            470.0,
+            0.0
+          ],
+          "pixelSize": [
+            660,
+            600
+          ],
+          "sha256": "75f69aff997dc8179593522d21c4f23e0a376191d885d6871b52a6077664941f"
+        },
+        "mus": {
+          "file": "island-2-mus.png",
+          "frame": 5,
+          "shape": 5220,
+          "sourceOffset": [
+            470.0,
+            0.0
+          ],
+          "pixelSize": [
+            660,
+            600
+          ],
+          "sha256": "4188c3f71d23e96e19bcbb0e838592dbeece1f22cfb93db72304ac7b3e33542c"
+        }
+      }
+    },
+    {
+      "island": 3,
+      "symbol": 5205,
+      "variants": {
+        "chr": {
+          "file": "island-3-chr.png",
+          "frame": 1,
+          "shape": 5192,
+          "sourceOffset": [
+            0.0,
+            382.0
+          ],
+          "pixelSize": [
+            748,
+            436
+          ],
+          "sha256": "41a2d1c391530ce5c52df8fde4ca11fa08ac21a249606ac7f540b34af914ba0a"
+        },
+        "bhu": {
+          "file": "island-3-bhu.png",
+          "frame": 2,
+          "shape": 5195,
+          "sourceOffset": [
+            0.0,
+            382.0
+          ],
+          "pixelSize": [
+            748,
+            436
+          ],
+          "sha256": "01e9981fc6308deefce5a29c168f84735cf9486d5e174ab96727a11b43b843b7"
+        },
+        "com": {
+          "file": "island-3-com.png",
+          "frame": 3,
+          "shape": 5198,
+          "sourceOffset": [
+            0.0,
+            382.0
+          ],
+          "pixelSize": [
+            748,
+            436
+          ],
+          "sha256": "aa9337eb1c7a87c3a26f5ba15d5f7412807178b6157ca34482899e101adeba68"
+        },
+        "jew": {
+          "file": "island-3-jew.png",
+          "frame": 4,
+          "shape": 5201,
+          "sourceOffset": [
+            0.0,
+            382.0
+          ],
+          "pixelSize": [
+            748,
+            436
+          ],
+          "sha256": "c251df50be1ce7f0c34be5fe2311ce225e5aac4610780c17ba0ae04ba1738824"
+        },
+        "mus": {
+          "file": "island-3-mus.png",
+          "frame": 5,
+          "shape": 5204,
+          "sourceOffset": [
+            0.0,
+            382.0
+          ],
+          "pixelSize": [
+            748,
+            436
+          ],
+          "sha256": "908478871b0f8890abe691d0329c1cd9e7572780a70ebb3426aea8a061dd0ae6"
+        }
+      }
+    },
+    {
+      "island": 4,
+      "symbol": 5189,
+      "variants": {
+        "chr": {
+          "file": "island-4-chr.png",
+          "frame": 1,
+          "shape": 5176,
+          "sourceOffset": [
+            456.0,
+            346.0
+          ],
+          "pixelSize": [
+            688,
+            508
+          ],
+          "sha256": "53989dd6d3f03522b8c58e15317fe90c6cc267c32bf33b97613057fd4cd8196e"
+        },
+        "bhu": {
+          "file": "island-4-bhu.png",
+          "frame": 2,
+          "shape": 5179,
+          "sourceOffset": [
+            456.0,
+            346.0
+          ],
+          "pixelSize": [
+            688,
+            508
+          ],
+          "sha256": "a741c8d164035e0e78701979ee6c6a20626ddc028d6678d65d4f84284930974f"
+        },
+        "com": {
+          "file": "island-4-com.png",
+          "frame": 3,
+          "shape": 5182,
+          "sourceOffset": [
+            456.0,
+            346.0
+          ],
+          "pixelSize": [
+            688,
+            508
+          ],
+          "sha256": "4f5f472402b576a32737e17438336487ba487d9a9145f241220fa9154623b9d6"
+        },
+        "jew": {
+          "file": "island-4-jew.png",
+          "frame": 4,
+          "shape": 5185,
+          "sourceOffset": [
+            456.0,
+            346.0
+          ],
+          "pixelSize": [
+            688,
+            508
+          ],
+          "sha256": "c5c93c0ed3cde1b35c87e17bcb1b89574ec409aec58893d7c9f994baef2b1671"
+        },
+        "mus": {
+          "file": "island-4-mus.png",
+          "frame": 5,
+          "shape": 5188,
+          "sourceOffset": [
+            456.0,
+            346.0
+          ],
+          "pixelSize": [
+            688,
+            508
+          ],
+          "sha256": "b31c51ee8d3e0940ae963b46df896e0874d53d3c030b92e89d6b84e055d7bd0a"
+        }
+      }
+    }
+  ]
+}

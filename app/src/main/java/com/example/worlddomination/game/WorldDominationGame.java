@@ -39,6 +39,7 @@ import com.example.worlddomination.game.rendering.BattleAnimationSequence;
 import com.example.worlddomination.game.rendering.BattleExplosionRenderer;
 import com.example.worlddomination.game.rendering.BattlefieldCityRenderer;
 import com.example.worlddomination.game.rendering.BattlefieldFlagRenderer;
+import com.example.worlddomination.game.rendering.BattlefieldTerrainRenderer;
 import com.example.worlddomination.game.rendering.FlashAntiDefenseTrackingAnimation;
 import com.example.worlddomination.game.rendering.FlashActionBuildingAnimation;
 import com.example.worlddomination.game.rendering.FlashBattleRoutes;
@@ -303,6 +304,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private OriginalFlashAnimationAssets flashAnimationAssets;
     private BattlefieldCityRenderer cityRenderer;
     private BattlefieldFlagRenderer flagRenderer;
+    private BattlefieldTerrainRenderer terrainRenderer;
+    private GameState preparedTerrainGame;
     private BattleExplosionRenderer explosionRenderer;
     private FlashBattleUnitRenderer battleUnitRenderer;
     private final FlashCenterUiRenderer centerUiRenderer = new FlashCenterUiRenderer();
@@ -580,6 +583,11 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         if (cityRenderer != null) {
             cityRenderer.updateTargets(game);
+        }
+        if (terrainRenderer != null && game != preparedTerrainGame) {
+            // Match transitions upload selected tiles before beginning any draw batch.
+            terrainRenderer.prepare(game);
+            preparedTerrainGame = game;
         }
         synchronizeOutcomeSequence();
         boolean discardElapsedTime = skipNextFrameDelta || !continuousRenderingEnabled;
@@ -1471,10 +1479,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         messagePanelRenderer.drawBackground(batch, messagePanel);
         drawPanelTexture(scorePanel);
         drawPanelTexture(actionPanel);
-        batch.draw(uiAssets.battleMap, mapBounds.x, mapBounds.y,
-                mapBounds.width, mapBounds.height);
         batch.flush();
         setScissor(mapBounds);
+        terrainRenderer.draw(batch, mapBounds);
         flagRenderer.draw(batch, mapBounds, game);
         cityRenderer.draw(batch, mapBounds, game);
         battleUnitRenderer.drawActionBuildings(batch, mapBounds, actionBuildingAnimations);
@@ -3966,6 +3973,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         if (flagRenderer == null) {
             flagRenderer = new BattlefieldFlagRenderer(flashAnimationAssets);
         }
+        if (terrainRenderer == null) {
+            terrainRenderer = new BattlefieldTerrainRenderer();
+        }
     }
 
     /** Defers large Flash timeline decoding until the player leaves the title splash. */
@@ -5118,6 +5128,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         if (flagRenderer != null) {
             flagRenderer.dispose();
+        }
+        if (terrainRenderer != null) {
+            terrainRenderer.dispose();
         }
         if (flashAnimationAssets != null) {
             flashAnimationAssets.dispose();

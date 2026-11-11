@@ -69,7 +69,7 @@ def verify_bundle(path, audio_directory, require_upload=False):
             name = f"base/assets/original/runtime/audio/{source.name[:-3]}"
             if name not in entries:
                 raise ValueError(f"Missing original audio: {name}")
-        required_ui = ("battle-terrain.png", "neutral-button.png", "resource-menu-hd.png", "message-well.png",
+        required_ui = ("terrain/manifest.json", "terrain/ocean.png", "battle-terrain.png", "neutral-button.png", "resource-menu-hd.png", "message-well.png",
                        "action-tubes.png", "technology-hd/technology-0.png",
                        "confirm-turn.png", "turn-announcements.png", "turn-announcements.json",
                        "action-menus/menus.json", "action-menus/diplomacy.png",
@@ -85,6 +85,11 @@ def verify_bundle(path, audio_directory, require_upload=False):
             name = "base/assets/original/ui/" + image
             if name not in entries:
                 raise ValueError(f"Latest UI artwork missing from beta: {image}")
+        for island in range(5):
+            for faith in ("chr", "bhu", "com", "jew", "mus"):
+                name = f"base/assets/original/ui/terrain/island-{island}-{faith}.png"
+                if name not in entries:
+                    raise ValueError(f"Original terrain variant missing from beta: {name}")
         forbidden = (".swf", ".py", ".pyc", ".jks", ".keystore", ".aab", ".apk")
         for name in entries:
             if name.lower().endswith(forbidden) or "/analysis/" in name.lower():

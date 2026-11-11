@@ -2,7 +2,7 @@
 
 The beta uses the native Android `:app` module, Java 11 source compatibility,
 JDK 17, and the Gradle wrapper. It runs offline. The current beta version is
-`0.1.0-beta.8`, version code `9`.
+`0.1.0-beta.9`, version code `10`.
 
 ## Build and verify
 
@@ -63,9 +63,10 @@ Increase the version code for each subsequent Play upload.
 The beta includes source flag colors, faith poles and 24 Hz cloth animation,
 conquest ownership updates, empty flags for unused islands, and a clean original
 terrain layer with native cities instead of fixed buildings underneath them.
-Existing enhanced map and font assets remain preserved. The terrain currently
-retains the prior map's island skins; dynamic terrain-style selection remains
-a parity task. It also includes the sharper Resources, Technology and bounded Mass Media screens, source Technology color transforms and clipped HUD compositing, original Production/Technology warning dialogs that retain selected budgets, larger
+Terrain uses each original nation's selected faith, retains that style after
+conquest, and shows ocean for unused island slots. Only selected terrain tiles
+are cached on the GPU. Existing enhanced map and font assets remain preserved.
+It also includes the sharper Resources, Technology and bounded Mass Media screens, source Technology color transforms and clipped HUD compositing, original Production/Technology warning dialogs that retain selected budgets, larger
 information rows with the INFO PANEL heading removed, original action-slot
 animation, fixed first/second action slots and the original empty-slot Skip dialog, animated confirm closure and original AI action announcements, source diplomacy/propaganda/defense/prepared/direct-attack menus, corrected enemy portraits, custom launcher icon, and recovered
 gameplay rules. It is a work-in-progress port, not a claim of complete Flash
