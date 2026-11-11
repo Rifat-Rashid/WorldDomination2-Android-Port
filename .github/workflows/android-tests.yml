@@ -153,6 +153,9 @@ jobs:
           - id: resources-economy-tests
             check: Resources and mass media economy tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.normalResourcesAndMassMediaResolveOneTurn" --tests "com.example.worlddomination.game.simulation.GameStateTest.resourcesAndMassMediaAddTheirSourceHighscoreWeights" --tests "com.example.worlddomination.game.simulation.GameStateTest.resourceYieldUsesDifficultyDividerAndSourceRounding" --tests "com.example.worlddomination.game.simulation.GameStateTest.zeroHighscoreMultiplierDefaultsToOneLikeTheSource"'
+          - id: research-live-funds-score
+            check: Source research score and RNG after lost live funds
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.ResearchScoreParityTest"'
           - id: technology-research-tests
             check: Technology research parity tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.researchRequiresPrerequisiteAndReservesItsSourceCost" --tests "com.example.worlddomination.game.simulation.GameStateTest.researchCompletesAndActivatesTheCorrespondingWeapon" --tests "com.example.worlddomination.game.simulation.GameStateTest.specialTechnologiesUnlockAfterFourLevelFourTechnologies" --tests "com.example.worlddomination.game.simulation.GameStateTest.researchSelectsMultipleGroupsReservesCombinedCostAndCompletesThem"'

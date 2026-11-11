@@ -3085,7 +3085,13 @@ public final class GameState {
         List<String> invented = new ArrayList<>();
         for (String technologyName : order.technologies) {
             TechnologyCatalog.Definition technology = TechnologyCatalog.byName(technologyName);
-            if (technology == null || researcher.hasTechnology(technology.name)
+            if (technology == null) {
+                continue;
+            }
+            // Presenter.updatePlayerVars_2 scores each research result before
+            // checking live funds; spy theft can make a queued purchase fail.
+            addToHighscore(researcher, 4, technology.level);
+            if (researcher.hasTechnology(technology.name)
                     || (technology.group == 7 && !researcher.allowsSpecialTechnologies())
                     || researcher.moneyMillions < technology.costMillions
                     || (technology.prerequisite != null
@@ -3101,7 +3107,6 @@ public final class GameState {
                 weapon.active = true;
             }
             researcher.moneyMillions -= technology.costMillions;
-            addToHighscore(researcher, 4, technology.level);
             invented.add(technology.name.toUpperCase(java.util.Locale.US));
         }
         if (invented.isEmpty()) {
