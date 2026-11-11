@@ -1889,6 +1889,11 @@ public final class GameState {
         return selectedShipStrikes.size();
     }
 
+    /** Source userSelectedShipCityPlrNum, without allocating a list view while drawing. */
+    public int getSelectedShipTargetPlayerId() {
+        return selectedShipStrikes.isEmpty() ? -1 : selectedShipStrikes.get(0).targetPlayerId;
+    }
+
     public List<ShipStrike> getSelectedShipStrikes() {
         return Collections.unmodifiableList(selectedShipStrikes);
     }

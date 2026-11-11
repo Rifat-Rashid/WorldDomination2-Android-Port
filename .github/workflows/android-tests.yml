@@ -18,6 +18,9 @@ jobs:
       max-parallel: 6
       matrix:
         include:
+          - id: battlefield-city-selection
+            check: Source city targeting colors ceasefires and ship restrictions
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.BattlefieldCitySelectionTest"'
           - id: battlefield-terrain-parity
             check: Original terrain styles unused islands and conquest retention
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.BattlefieldTerrainStateTest" --tests "com.example.worlddomination.game.assets.BattlefieldTerrainAssetsTest"'

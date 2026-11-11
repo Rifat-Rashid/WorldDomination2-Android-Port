@@ -1483,7 +1483,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         setScissor(mapBounds);
         terrainRenderer.draw(batch, mapBounds);
         flagRenderer.draw(batch, mapBounds, game);
-        cityRenderer.draw(batch, mapBounds, game);
+        cityRenderer.draw(batch, mapBounds, game, sourceActionMenu.getSelectedEquipment());
         battleUnitRenderer.drawActionBuildings(batch, mapBounds, actionBuildingAnimations);
         battleUnitRenderer.drawSubmarines(batch, mapBounds, submarineBattleAnimations);
         battleUnitRenderer.draw(batch, mapBounds, soldierBattleAnimations);
