@@ -49,7 +49,7 @@ public final class OriginalUiAssets implements Disposable {
         logoTexture.setFilter(TextureFilter.Linear, TextureFilter.Linear);
         logo = new TextureRegion(logoTexture);
         battleMapTexture = new Texture(
-                Gdx.files.internal("original/ui/battle-map-hd.png"), true);
+                Gdx.files.internal("original/ui/battle-terrain.png"), true);
         battleMapTexture.setFilter(TextureFilter.Linear, TextureFilter.Linear);
         battleMap = new TextureRegion(battleMapTexture);
         productionModalTexture = new Texture(

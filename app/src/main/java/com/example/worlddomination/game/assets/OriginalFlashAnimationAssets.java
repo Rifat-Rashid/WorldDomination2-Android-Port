@@ -75,6 +75,7 @@ public final class OriginalFlashAnimationAssets implements Disposable {
     private static final String TEXT_PATH = "original/runtime/texts/";
     private static final String WEBP_PREFIX = "data:image/webp;base64,";
     private static final String[] REQUIRED_LINKAGES = {
+            "flag_pole",
             "interface_center_slider_1",
             "buildings_antiAir",
             "bioCloud",
@@ -294,6 +295,8 @@ public final class OriginalFlashAnimationAssets implements Disposable {
             Gdx.graphics.requestRendering();
 
             loadedNestedTimelines.putAll(centerUiChildren);
+            loadedNestedTimelines.putAll(loadNestedTimelines(scene,
+                    loadedTimelines.get("flag_pole")));
             loadedNestedTimelines.putAll(loadNestedTimelines(scene,
                     loadedTimelines.get("buildings_antiAir")));
             loadedNestedTimelines.putAll(loadNestedTimelines(scene,
