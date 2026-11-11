@@ -2501,7 +2501,7 @@ public final class GameStateTest {
     }
 
     @Test
-    public void incomingAiDemandsSpendTheRecipientBudgetInProposalArrivalOrder() {
+    public void incomingAiDemandsSpendTheRecipientBudgetInReverseArrivalOrder() {
         GameState state = new GameState(1, 21L, false);
         GameState.PlayerState receiver = state.getPlayerState(1);
         GameState.PlayerState firstProposer = state.getPlayerState(3);
@@ -2514,8 +2514,9 @@ public final class GameStateTest {
         secondProposer.moneyMillions = 1_000;
         secondProposer.populationMillions = 500;
 
-        // The source keeps diplomacyPendingArr insertion order. Both demands
-        // qualify on score, but only the first can spend the recipient budget.
+        // Executed generated Model.doTurn with this fixture: pending is ASArray,
+        // keys are ["1", "0"], and accepted/rejected leaders are [2]/[3].
+        // Both demands qualify on score; only the last arrival fits the budget.
         assertTrue(state.submitDiplomacyProposal(firstProposer.id, receiver.id, 3));
         assertTrue(state.submitDiplomacyProposal(secondProposer.id, receiver.id, 3));
         setRegard(receiver, firstProposer.id, 80);
@@ -2523,11 +2524,46 @@ public final class GameStateTest {
 
         completeTurnWithResourcesAndMedia(state);
 
-        assertTrue(receiver.hasCeasefireWith(firstProposer.id));
-        assertFalse(receiver.hasCeasefireWith(secondProposer.id));
+        assertFalse(receiver.hasCeasefireWith(firstProposer.id));
+        assertTrue(receiver.hasCeasefireWith(secondProposer.id));
         assertEquals(0, receiver.moneyMillions);
-        assertEquals(1_010, firstProposer.moneyMillions);
-        assertEquals(1_000, secondProposer.moneyMillions);
+        assertEquals(1_000, firstProposer.moneyMillions);
+        assertEquals(1_010, secondProposer.moneyMillions);
+    }
+
+    @Test
+    public void threeIncomingAiDemandsReserveFundsInReverseArrivalOrder() {
+        GameState state = new GameState(1, 23L, false);
+        GameState.PlayerState receiver = state.getPlayerState(1);
+        receiver.moneyMillions = 20;
+        receiver.turnMoneyMillions = 20;
+        receiver.populationMillions = 100;
+        for (int proposerId : new int[]{2, 3, 4}) {
+            GameState.PlayerState proposer = state.getPlayerState(proposerId);
+            proposer.moneyMillions = 1_000;
+            proposer.populationMillions = 500;
+            assertTrue(state.submitDiplomacyProposal(proposerId, receiver.id, 3));
+            setRegard(receiver, proposerId, 80);
+        }
+
+        completeTurnWithResourcesAndMedia(state);
+
+        assertFalse(receiver.hasCeasefireWith(2));
+        assertTrue(receiver.hasCeasefireWith(3));
+        assertTrue(receiver.hasCeasefireWith(4));
+        assertEquals(0, receiver.moneyMillions);
+        assertEquals(1_000, state.getPlayerState(2).moneyMillions);
+        assertEquals(1_010, state.getPlayerState(3).moneyMillions);
+        assertEquals(1_010, state.getPlayerState(4).moneyMillions);
+        // Executed Presenter.updatePlayerVars_2 applies this fixture as
+        // rejected 2, accepted 4, accepted 3 after the source's two reversals.
+        List<String> messages = state.getMessages(receiver.id);
+        int secondRejected = messages.indexOf("Nation 1 rejected diplomacy with nation 2.");
+        int fourthAccepted = messages.indexOf("Nation 1 accepted diplomacy with nation 4.");
+        int thirdAccepted = messages.indexOf("Nation 1 accepted diplomacy with nation 3.");
+        assertTrue(secondRejected >= 0);
+        assertTrue(fourthAccepted > secondRejected);
+        assertTrue(thirdAccepted > fourthAccepted);
     }
 
     @Test

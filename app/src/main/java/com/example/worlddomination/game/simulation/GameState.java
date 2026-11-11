@@ -2797,20 +2797,29 @@ public final class GameState {
             if (!target.alive) {
                 continue;
             }
-            // A fixed proposer-id scan changes which demands fit the recipient's
-            // remaining turn money when several proposals arrive together.
+            // Model.doTurn iterates diplomacyPendingArr through ASArray.keys(),
+            // which visits array indices from last to first. Accepted demands
+            // reserve turn money as each proposal is considered.
             List<DiplomacyProposal> pendingInArrivalOrder =
                     new ArrayList<>(target.pendingDiplomacyOrder);
             target.pendingDiplomacyOrder.clear();
             Arrays.fill(target.pendingDiplomacy, null);
-            for (DiplomacyProposal proposal : pendingInArrivalOrder) {
-                int proposerId = proposal.proposerId;
+            List<AiDiplomacyResponse> accepted = new ArrayList<>();
+            List<AiDiplomacyResponse> rejected = new ArrayList<>();
+            for (int index = pendingInArrivalOrder.size() - 1; index >= 0; index--) {
+                DiplomacyProposal proposal = pendingInArrivalOrder.get(index);
                 boolean accept = shouldAiAccept(target, proposal);
                 if (accept && proposal.optionIndex >= 3) {
                     target.turnMoneyMillions -= DIPLOMACY_AMOUNT[proposal.optionIndex];
                 }
-                responses.add(new AiDiplomacyResponse(target, proposal, accept));
+                (accept ? accepted : rejected).add(
+                        new AiDiplomacyResponse(target, proposal, accept));
             }
+            // The source groups accepted and rejected turn results, then
+            // Presenter.updatePlayerVars_2 visits the full array in reverse:
+            // rejected decisions settle first, each group in decision order.
+            responses.addAll(rejected);
+            responses.addAll(accepted);
         }
         return responses;
     }
