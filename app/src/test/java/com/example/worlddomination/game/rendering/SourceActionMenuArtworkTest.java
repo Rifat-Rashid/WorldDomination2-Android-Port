@@ -19,7 +19,7 @@ public final class SourceActionMenuArtworkTest {
         return new JsonReader().parse(Files.readString(asset("menus.json")));
     }
     @Test public void everySourceVariantHasFourTimesArtworkAndValidTextGeometry() throws Exception {
-        JsonValue menus = menus(); assertEquals(94, menus.size);
+        JsonValue menus = menus(); assertEquals(100, menus.size);
         for (JsonValue menu : menus) {
             try (DataInputStream png = new DataInputStream(Files.newInputStream(asset(menu.name + ".png")))) {
                 assertEquals(0x89504e470d0a1a0aL, png.readLong());
@@ -97,6 +97,23 @@ public final class SourceActionMenuArtworkTest {
             }
             assertTrue(gain);
         }
+    }
+
+    @Test public void researchWarningsRetainAllFiveOriginalBuildingStyles() throws Exception {
+        JsonValue menus = menus();
+        java.util.Set<String> hashes = new java.util.HashSet<>();
+        for (String religion : new String[]{"chr", "mus", "bhu", "com", "jew"}) {
+            JsonValue menu = menus.get("research_error-" + religion);
+            assertNotNull(menu); assertEquals("research_error", menu.getString("frame"));
+            assertEquals(religion, menu.getString("researchReligion"));
+            assertEquals(-4.95f, menu.get("origin").getFloat(0), .001f);
+            assertEquals(1.05f, menu.get("origin").getFloat(1), .001f);
+            assertEquals("error_window/btnOK", menu.get("controls").get(0).getString("name"));
+            hashes.add(java.util.Base64.getEncoder().encodeToString(java.security.MessageDigest
+                    .getInstance("SHA-256").digest(Files.readAllBytes(asset(menu.name + ".png")))));
+        }
+        assertEquals("The source warning keeps each nation's original technology building", 5, hashes.size());
+        assertFalse(menus.has("research_error"));
     }
 
     @Test public void skipUsesTheRecoveredDialogAndFooterRegistration() throws Exception {

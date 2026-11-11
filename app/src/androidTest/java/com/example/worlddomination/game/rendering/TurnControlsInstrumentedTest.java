@@ -64,6 +64,9 @@ public final class TurnControlsInstrumentedTest {
                     app.touchUp(Math.round(screen.x), Gdx.graphics.getHeight() - Math.round(screen.y), 0, 0);
                     assertTrue("Real confirm touch must start closure", confirm.isPending());
                     assertEquals(12, confirm.getFrame());
+                    assertTrue(app.keyDown(com.badlogic.gdx.Input.Keys.BACK));
+                    assertEquals("Back must not clear accepted orders during confirm closure", 2, state.getQueuedActionCount());
+                    assertTrue(confirm.isPending());
                     assertEquals(0, state.getTurn());
                     advance(app, 6);
                     capture(app, "confirm-closing.png");
@@ -77,6 +80,9 @@ public final class TurnControlsInstrumentedTest {
                     TurnActionDisplay display = (TurnActionDisplay) field("turnActionDisplay").get(app);
                     assertEquals(GameState.Action.RESOURCES, display.getAction());
                     assertTrue(display.includesPlayer(0));
+                    assertTrue(app.keyDown(com.badlogic.gdx.Input.Keys.BACK));
+                    assertEquals("Back must not open an exit prompt during enemy playback", 0f,
+                            field("showExitPromptSeconds").getFloat(app), 0f);
                     capture(app, "source-action-announcement.png");
                     boolean includesAi = false;
                     for (int action = 0; action < 9; action++) {

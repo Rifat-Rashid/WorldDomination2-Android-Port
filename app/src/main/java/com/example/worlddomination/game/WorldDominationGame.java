@@ -64,6 +64,7 @@ import com.example.worlddomination.game.simulation.TechnologyCatalog;
 import com.example.worlddomination.game.ui.ActionFooterLayout;
 import com.example.worlddomination.game.ui.ActionScreenLayout;
 import com.example.worlddomination.game.ui.SourceActionMenuState;
+import com.example.worlddomination.game.ui.EconomyWarningText;
 import com.example.worlddomination.game.rendering.SourceActionMenuRenderer;
 import com.example.worlddomination.game.ui.BattlefieldCityLayout;
 import com.example.worlddomination.game.ui.InformationPanelLayout;
@@ -2552,7 +2553,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     private void drawActionModal() {
         GameState.Action action = game.getSelectedAction();
-        if (SourceActionMenuState.supports(action)) {
+        if (SourceActionMenuState.supports(action) || sourceActionMenu.isEconomyWarning(game)) {
             drawSourceActionMenu();
             return;
         }
@@ -3314,6 +3315,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         boolean updated = game.configureProduction(category, percent);
         if (updated) {
             refreshProductionSummary();
+        } else {
+            sourceActionMenu.showEconomyWarning(game, EconomyWarningText.PRODUCTION_LOCKED);
         }
         Gdx.graphics.requestRendering();
         return updated;
@@ -3708,7 +3711,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     }
 
     private int pointArea(float x, float y) {
-        if (modalOpen && game != null
+        if (modalOpen && game != null && !sourceActionMenu.isEconomyWarning(game)
                 && game.getSelectedAction() == GameState.Action.PRODUCTION) {
             for (int i = 0; i < productionSliderHitTargets.length; i++) {
                 if (productionSliderHitTargets[i].contains(x, y)) {
@@ -3744,6 +3747,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 continue;
             }
             GameState.Action action = ACTIONS[i];
+            sourceActionMenu.clearEconomyWarning();
             for (int slot = 0; slot < actionSlots.length; slot++) {
                 if (game.getQueuedAction(slot) == action) {
                     activateActionSlot(slot);
@@ -4273,6 +4277,14 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 return;
             }
         }
+        if (sourceActionMenu.isEconomyWarning(game)) {
+            if (navViewport.contains(x, y)) activateNavigationRow(x, y);
+            else {
+                String control = sourceActionMenuRenderer.controlAt(modal, x, y, game, sourceActionMenu);
+                if (control != null && control.endsWith("btnOK")) sourceActionMenu.dismissError(game);
+            }
+            return;
+        }
         if (SourceActionMenuState.supports(game.getSelectedAction())) {
             if (navViewport.contains(x, y)) activateNavigationRow(x, y);
             else if (equipmentViewport.contains(x, y)) activateEquipmentRow(x, y);
@@ -4352,9 +4364,13 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                         continue;
                     }
                     String technology = researchChoiceByCard[i];
-                    if (technology != null
-                            && game.selectResearchTechnology(technology)) {
-                        audio.play(OriginalAudio.Cue.STOCK_SELECT);
+                    if (technology != null) {
+                        boolean selected = game.selectResearchTechnology(technology);
+                        if (!selected) {
+                            String warning = EconomyWarningText.research(game, technology);
+                            if (warning != null) sourceActionMenu.showEconomyWarning(game, warning);
+                        }
+                        audio.play(OriginalAudio.Cue.UNIT_SELECT);
                     }
                     return;
                 }
@@ -4766,6 +4782,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     }
 
     private boolean handleBack() {
+        if (isTurnInputBlocked()) return true;
         if (game == null) {
             if (splashState.isVisible()) {
                 splashState.dismiss();
@@ -4789,6 +4806,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             return true;
         }
         if (game.getPendingHumanDiplomacyProposal() != null) {
+            return true;
+        }
+        if (sourceActionMenu.isEconomyWarning(game)) {
+            sourceActionMenu.dismissError(game);
             return true;
         }
         if (SourceActionMenuState.supports(game.getSelectedAction())) {

@@ -112,6 +112,7 @@ public final class SourceActionMenuRenderer implements Disposable {
             if ("text1".equals(name)) return " $ " + game.getDiplomacyOptionAmount(proposal.optionIndex) + ".000.000";
             if ("btn1/text1".equals(name)) return Integer.toString(game.getDiplomacyOptionDuration(proposal.optionIndex));
         }
+        if ("error_window/text1".equals(name) && state.isEconomyWarning(game)) return state.getError();
         if ("error_window/text1".equals(name)) return "spy_error".equals(key)
                 ? "Your spy readiness is not high enough to use this spy.\nChoose a different spy or wait a few turns."
                 : "Not enough money";

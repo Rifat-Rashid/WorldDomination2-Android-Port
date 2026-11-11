@@ -8,6 +8,7 @@ public final class SourceActionMenuState {
     private GameState.Action action;
     private boolean weaponChosen, cityChosen, leaderChosen, optionChosen, cancelling;
     private boolean pendingError;
+    private boolean economyWarning;
     private String equipment;
     private int shipStrikeCount;
     private String payload;
@@ -27,7 +28,31 @@ public final class SourceActionMenuState {
         equipment = payload = error = null;
         game.clearBattlefieldCitySelection();
         pendingError = false;
+        economyWarning = false;
         refresh(game);
+    }
+
+    /** The source error frames replace the economy menu without losing its selections. */
+    public void showEconomyWarning(GameState game, String message) {
+        GameState.Action selected = game.getSelectedAction();
+        if (selected != GameState.Action.PRODUCTION && selected != GameState.Action.RESEARCH)
+            throw new IllegalStateException("Economy warnings require Production or Technology");
+        if (message == null || message.isEmpty()) throw new IllegalArgumentException("Warning text is required");
+        action = selected;
+        error = message;
+        economyWarning = true;
+        pendingError = false;
+        key = selected == GameState.Action.PRODUCTION ? "production_error" : "research_error-" + game.getHuman().getReligionCode();
+        revision++;
+    }
+
+    public boolean isEconomyWarning(GameState game) {
+        return economyWarning && game != null && action == game.getSelectedAction();
+    }
+
+    public void clearEconomyWarning() {
+        if (!economyWarning) return;
+        economyWarning = false; error = null; key = null; revision++;
     }
 
     public String getSelectedEquipment() { return equipment; }
@@ -213,7 +238,10 @@ public final class SourceActionMenuState {
         refresh(game);
     }
 
-    public void dismissError(GameState game) { error = null; pendingError = false; refresh(game); }
+    public void dismissError(GameState game) {
+        if (economyWarning) { clearEconomyWarning(); return; }
+        error = null; pendingError = false; refresh(game);
+    }
 
     private void refresh(GameState game) {
         shipStrikeCount = game.getSelectedShipStrikeCount();

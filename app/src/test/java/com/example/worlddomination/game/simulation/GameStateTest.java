@@ -664,16 +664,19 @@ public final class GameStateTest {
         state.getHuman().turnMoneyMillions = 0;
         assertTrue(state.getResearchChoices().contains(ordinaryChoice));
         assertFalse(state.getAvailableResearch().contains(ordinaryChoice));
+        String beforeFundsWarning = state.getLatestMessage();
         assertFalse(state.selectResearchTechnology(ordinaryChoice));
-        assertEquals("Not enough money!", state.getLatestMessage());
+        assertEquals("Source validation uses its warning modal, not the turn log",
+                beforeFundsWarning, state.getLatestMessage());
         assertTrue(state.getSelectedResearchTechnologies().isEmpty());
 
         GameState locked = new GameState(1, 36L);
         locked.selectAction(GameState.Action.RESEARCH);
         assertTrue(locked.getResearchChoices().contains("sub"));
         assertFalse(locked.isResearchAvailable("sub"));
+        String beforeSpecialWarning = locked.getLatestMessage();
         assertFalse(locked.selectResearchTechnology("sub"));
-        assertTrue(locked.getLatestMessage().contains("4 complete technologies"));
+        assertEquals(beforeSpecialWarning, locked.getLatestMessage());
         assertTrue(locked.getSelectedResearchTechnologies().isEmpty());
     }
 
@@ -689,11 +692,12 @@ public final class GameStateTest {
         state.getHuman().turnMoneyMillions = firstCost + secondCost - 1;
 
         assertTrue(state.selectResearchTechnology(first));
+        String beforeCombinedWarning = state.getLatestMessage();
         assertFalse(state.selectResearchTechnology(second));
         assertEquals(firstCost, state.getSelectedResearchCostMillions());
         assertTrue(state.getResearchChoices().contains(second));
         assertFalse(state.getAvailableResearch().contains(second));
-        assertEquals("Not enough money!", state.getLatestMessage());
+        assertEquals(beforeCombinedWarning, state.getLatestMessage());
     }
 
     @Test
@@ -831,11 +835,11 @@ public final class GameStateTest {
         state.selectAction(GameState.Action.PRODUCTION);
 
         assertTrue(state.configureProduction("soldier", 30));
+        String beforeProductionWarning = state.getLatestMessage();
         assertFalse(state.configureProduction("special", 40));
         assertEquals("soldier", state.getSelectedProductionCategory());
         assertEquals(30, state.getSelectedProductionPercent());
-        assertEquals("You have not yet invented this Technology",
-                state.getLatestMessage());
+        assertEquals(beforeProductionWarning, state.getLatestMessage());
 
         assertTrue("Defense group 8 is always available",
                 state.configureProduction("defense", 30));
