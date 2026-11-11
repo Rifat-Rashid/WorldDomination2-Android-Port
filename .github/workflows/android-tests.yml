@@ -18,6 +18,9 @@ jobs:
       max-parallel: 6
       matrix:
         include:
+          - id: battlefield-flag-parity
+            check: Source flag ownership colors and original waving artwork
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.BattlefieldFlagStateTest" --tests "com.example.worlddomination.game.assets.BattlefieldFlagAssetsTest"'
           - id: flash-mask-placement-tests
             check: Flash mask depths and exported artwork registration
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashSpriteQuadTest" --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest.diplomacyCoverageShapesRemainMasksAtEverySourceStyle" --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest.newNonMovePlacementResetsPriorMaskTransformNameAndAlpha" --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest.sourceAlphaAdditionIsInByteUnitsAndClampedAfterConversion"'

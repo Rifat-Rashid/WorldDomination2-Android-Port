@@ -38,6 +38,7 @@ import com.example.worlddomination.game.persistence.PersonalBestStore;
 import com.example.worlddomination.game.rendering.BattleAnimationSequence;
 import com.example.worlddomination.game.rendering.BattleExplosionRenderer;
 import com.example.worlddomination.game.rendering.BattlefieldCityRenderer;
+import com.example.worlddomination.game.rendering.BattlefieldFlagRenderer;
 import com.example.worlddomination.game.rendering.FlashAntiDefenseTrackingAnimation;
 import com.example.worlddomination.game.rendering.FlashActionBuildingAnimation;
 import com.example.worlddomination.game.rendering.FlashBattleRoutes;
@@ -301,6 +302,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private OriginalCityAssets cityAssets;
     private OriginalFlashAnimationAssets flashAnimationAssets;
     private BattlefieldCityRenderer cityRenderer;
+    private BattlefieldFlagRenderer flagRenderer;
     private BattleExplosionRenderer explosionRenderer;
     private FlashBattleUnitRenderer battleUnitRenderer;
     private final FlashCenterUiRenderer centerUiRenderer = new FlashCenterUiRenderer();
@@ -628,6 +630,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         if (game == null) {
             return false;
         }
+        // The source flag cloth loops at 24 Hz even between player actions.
+        if (flagRenderer != null) return true;
         if (flashAnimationAssets != null && !flashAnimationAssets.isLoaded()) {
             return true;
         }
@@ -666,6 +670,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private void fixedUpdate(float seconds) {
         navigationScroll.tick(seconds);
         equipmentScroll.tick(seconds);
+        if (game != null && flagRenderer != null) flagRenderer.tick();
         if (cityRenderer != null) {
             cityRenderer.tick(game);
         }
@@ -1470,6 +1475,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 mapBounds.width, mapBounds.height);
         batch.flush();
         setScissor(mapBounds);
+        flagRenderer.draw(batch, mapBounds, game);
         cityRenderer.draw(batch, mapBounds, game);
         battleUnitRenderer.drawActionBuildings(batch, mapBounds, actionBuildingAnimations);
         battleUnitRenderer.drawSubmarines(batch, mapBounds, submarineBattleAnimations);
@@ -3920,6 +3926,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 confirmTurnAnimation.reset();
                 turnActionDisplay.reset();
                 cityRenderer.reset(game);
+                flagRenderer.reset();
                 battleAnimations.clear();
                 actionBuildingAnimations.clear();
                 turnPlaybackSequence.reset();
@@ -3955,6 +3962,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         cityAssets.loadGameplayFrames();
         if (cityRenderer == null) {
             cityRenderer = new BattlefieldCityRenderer(cityAssets, flashAnimationAssets);
+        }
+        if (flagRenderer == null) {
+            flagRenderer = new BattlefieldFlagRenderer(flashAnimationAssets);
         }
     }
 
@@ -4541,6 +4551,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     private void confirmTurnAndPreparePlayback() {
         game.confirmTurn();
+        // original_gameplay.refresh -> View.update_flags recreates the child clips.
+        flagRenderer.reset();
         queueActionBuildingAnimations();
         audio.play(OriginalAudio.Cue.ACTION_ACCEPT);
         int animationIndex = 0;
@@ -5103,6 +5115,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         if (cityRenderer != null) {
             cityRenderer.dispose();
+        }
+        if (flagRenderer != null) {
+            flagRenderer.dispose();
         }
         if (flashAnimationAssets != null) {
             flashAnimationAssets.dispose();
