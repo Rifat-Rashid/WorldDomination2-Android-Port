@@ -1250,7 +1250,6 @@ public final class GameState {
             throw new IllegalArgumentException("Production percentage must be 0..100");
         }
         if (!isProductionGroupUnlocked(getHuman(), group)) {
-            addMessage("You have not yet invented this Technology");
             return false;
         }
         if (percent > getProductionMaximumPercent(category)) {
@@ -1278,13 +1277,10 @@ public final class GameState {
             return false;
         }
         if (definition.group == 7 && !getHuman().allowsSpecialTechnologies()) {
-            addMessage("You need to invent 4 complete technologies before you can start "
-                    + "inventing special weapons.");
             return false;
         }
         if (definition.costMillions > getHuman().turnMoneyMillions
                 - getSelectedResearchCostMillions()) {
-            addMessage("Not enough money!");
             return false;
         }
         selectedResearchTechnologies.add(technology);

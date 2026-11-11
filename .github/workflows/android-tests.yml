@@ -33,6 +33,9 @@ jobs:
           - id: technology-color-transform
             check: Original Technology color transforms and selected-list fields
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashCenterColorTest"'
+          - id: economy-warning-parity
+            check: Source economy warning dialogs and retained budgets
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.EconomyWarningStateTest"'
           - id: source-action-menu-tests
             check: Source diplomacy propaganda defense and attack menu transitions
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.SourceActionMenuStateTest" --tests "com.example.worlddomination.game.rendering.SourceActionMenuArtworkTest" --tests "com.example.worlddomination.game.ui.SourceEquipmentFlowParityTest"'

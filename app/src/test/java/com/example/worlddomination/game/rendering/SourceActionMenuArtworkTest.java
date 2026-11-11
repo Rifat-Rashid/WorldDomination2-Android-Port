@@ -19,7 +19,7 @@ public final class SourceActionMenuArtworkTest {
         return new JsonReader().parse(Files.readString(asset("menus.json")));
     }
     @Test public void everySourceVariantHasFourTimesArtworkAndValidTextGeometry() throws Exception {
-        JsonValue menus = menus(); assertEquals(94, menus.size);
+        JsonValue menus = menus(); assertEquals(96, menus.size);
         for (JsonValue menu : menus) {
             try (DataInputStream png = new DataInputStream(Files.newInputStream(asset(menu.name + ".png")))) {
                 assertEquals(0x89504e470d0a1a0aL, png.readLong());
