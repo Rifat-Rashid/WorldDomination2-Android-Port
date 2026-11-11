@@ -12,6 +12,7 @@ import com.example.worlddomination.game.assets.OriginalCityAssets.Frame;
 import com.example.worlddomination.game.simulation.CityState;
 import com.example.worlddomination.game.simulation.GameState;
 import com.example.worlddomination.game.ui.BattlefieldCityLayout;
+import com.example.worlddomination.game.ui.BattlefieldCitySelection;
 
 import java.util.List;
 
@@ -26,6 +27,7 @@ public final class BattlefieldCityRenderer {
                     + "varying vec2 v_texCoords;\n"
                     + "void main() {\n"
                     + "  v_color = a_color;\n"
+                    + "  v_color.a *= 255.0 / 254.0;\n"
                     + "  v_texCoords = a_texCoord0;\n"
                     + "  gl_Position = u_projTrans * a_position;\n"
                     + "}\n";
@@ -166,6 +168,11 @@ public final class BattlefieldCityRenderer {
     }
 
     public void draw(SpriteBatch batch, Rectangle mapBounds, GameState game) {
+        draw(batch, mapBounds, game, null);
+    }
+
+    public void draw(SpriteBatch batch, Rectangle mapBounds, GameState game,
+                     String selectedEquipment) {
         if (game == null) {
             return;
         }
@@ -198,7 +205,24 @@ public final class BattlefieldCityRenderer {
                     if (alpha < 1f) {
                         batch.setColor(red, green, blue, previousAlpha * alpha);
                     }
+                    BattlefieldCitySelection.Tint selection = BattlefieldCitySelection.tint(
+                            game, playerId, cityIndex, selectedEquipment);
+                    ShaderProgram previousShader = batch.getShader();
+                    if (selection != BattlefieldCitySelection.Tint.DEFAULT) {
+                        ensurePropagandaTintShader();
+                        if (propagandaTintShader == null)
+                            throw new IllegalStateException("Source city color shader is unavailable");
+                        FlashColorTransform tint = selection == BattlefieldCitySelection.Tint.RED
+                                ? FlashColorTransform.CITY_RED : FlashColorTransform.CITY_GREEN;
+                        batch.setShader(propagandaTintShader);
+                        propagandaTintShader.setUniformf("u_flashMultipliers", tint.redMultiplier,
+                                tint.greenMultiplier, tint.blueMultiplier, tint.alphaMultiplier);
+                        propagandaTintShader.setUniformf("u_flashAdditions", tint.redAdd,
+                                tint.greenAdd, tint.blueAdd, tint.alphaAdd);
+                    }
                     batch.draw(frame.region, x, y, width, height);
+                    if (selection != BattlefieldCitySelection.Tint.DEFAULT)
+                        batch.setShader(previousShader);
                     if (alpha < 1f) {
                         batch.setColor(red, green, blue, previousAlpha);
                     }

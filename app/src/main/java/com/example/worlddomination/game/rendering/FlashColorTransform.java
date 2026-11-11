@@ -26,6 +26,9 @@ public final class FlashColorTransform {
     }
 
     public static final FlashColorTransform IDENTITY = source(1, 1, 1, 1, 0, 0, 0, 0);
+    // WD_colors.city_red/city_green: percentage multipliers and byte additions.
+    public static final FlashColorTransform CITY_RED = source(1, 1, 1, .75f, 200, 0, 0, 0);
+    public static final FlashColorTransform CITY_GREEN = source(.5f, 1, .5f, .75f, 0, 100, 0, 0);
 
     /** Flash multipliers are normalized; additive channels are source 0..255 units. */
     public static FlashColorTransform source(float red, float green, float blue, float alpha,
