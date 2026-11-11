@@ -18,6 +18,9 @@ jobs:
       max-parallel: 6
       matrix:
         include:
+          - id: source-enemy-selection
+            check: Source enemy removal artwork and responsive selection layout
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.OriginalFlashAnimationAssetsTest.setupRemovalButtonRetainsEmptyAndVisibleSourceFramesAndEarlyArtwork" --tests "com.example.worlddomination.game.ui.SetupScreenLayoutTest.removalArtworkKeepsSourceAspectRatioInsideEveryOccupiedCard"'
           - id: battlefield-city-selection
             check: Source city targeting colors ceasefires and ship restrictions
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.BattlefieldCitySelectionTest"'

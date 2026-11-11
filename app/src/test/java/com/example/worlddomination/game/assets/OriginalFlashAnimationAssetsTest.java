@@ -26,6 +26,20 @@ import static org.junit.Assert.assertTrue;
 
 public final class OriginalFlashAnimationAssetsTest {
     @Test
+    public void setupRemovalButtonRetainsEmptyAndVisibleSourceFramesAndEarlyArtwork()
+            throws IOException {
+        JsonValue scene = loadScene();
+        FlashAnimationTimeline remove = OriginalFlashAnimationAssets.loadTimelineBySymbolId(scene, 5826);
+        assertEquals("Unoccupied source slots have no removal artwork", null, remove.getFrame(0));
+        assertEquals(5825, remove.getFrame(1).shapeId);
+        Set<Integer> early = OriginalFlashAnimationAssets.collectSetupPortraitShapeIds(
+                OriginalFlashAnimationAssets.loadTimelines(scene),
+                shape -> Files.isRegularFile(shapeAsset(shape)));
+        assertTrue("Removal art must be available with the setup portraits", early.contains(5825));
+        assertTrue(Files.isRegularFile(shapeAsset(5825)));
+    }
+
+    @Test
     public void propagandaFrameAndEmbeddedFontKeepAlphaFormatAndDynamicGlyphs() throws IOException {
         Path ui = shapeAsset(3886).getParent().getParent().getParent().resolve("ui");
         byte[] frame = Files.readAllBytes(ui.resolve("propaganda-frame.png"));

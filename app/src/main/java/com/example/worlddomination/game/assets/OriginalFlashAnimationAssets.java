@@ -67,6 +67,8 @@ public final class OriginalFlashAnimationAssets implements Disposable {
     /** Alive portrait clip used by both the source setup and gameplay leader cards. */
     public static final int LEADER_PORTRAITS_SYMBOL_ID = 3191;
     public static final String LEADER_PORTRAITS_TIMELINE = "leaderPortraits";
+    /** Visible second frame of the source setup btnCancel movie clip (5826). */
+    public static final int SETUP_REMOVE_LEADER_SHAPE_ID = 5825;
     /** White source triangle used by each production investment slider. */
     public static final int PRODUCTION_SLIDER_HANDLE_SHAPE_ID = 3274;
 
@@ -432,7 +434,12 @@ public final class OriginalFlashAnimationAssets implements Disposable {
         if (faces != null) {
             setupTimelines.put(LEADER_PORTRAITS_TIMELINE, faces);
         }
-        return collectShapeIds(setupTimelines, Collections.emptyMap(), false, hasShapeAsset);
+        Set<Integer> shapes = collectShapeIds(setupTimelines, Collections.emptyMap(), false,
+                hasShapeAsset);
+        if (hasShapeAsset.test(SETUP_REMOVE_LEADER_SHAPE_ID)) {
+            shapes.add(SETUP_REMOVE_LEADER_SHAPE_ID);
+        }
+        return shapes;
     }
 
     private static Set<Integer> collectShapeIds(
