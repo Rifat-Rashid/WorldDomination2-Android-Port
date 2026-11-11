@@ -4782,6 +4782,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     }
 
     private boolean handleBack() {
+        if (isTurnInputBlocked()) return true;
         if (game == null) {
             if (splashState.isVisible()) {
                 splashState.dismiss();
