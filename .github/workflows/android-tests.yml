@@ -84,6 +84,9 @@ jobs:
           - id: ai-resolved-source-session-tests
             check: AI forty-turn and terminal source-session traces
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.AiSourceResolvedTurnParityTest"'
+          - id: ai-concurrent-strike-defense-tests
+            check: Concurrent AI strikes and matching defense parity
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.ConcurrentAiStrikeDefenseParityTest"'
           - id: ai-propaganda-tie-order-tests
             check: AI propaganda target and city tie order
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.OpponentAITest.propagandaTiesFollowReverseSourcePlayerAndCityOrder"'
