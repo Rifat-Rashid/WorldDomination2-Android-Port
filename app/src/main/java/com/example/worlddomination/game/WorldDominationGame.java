@@ -149,6 +149,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private static final Color PANEL_EDGE = new Color(0.40f, 0.56f, 0.63f, 1f);
     private static final Color BUTTON = new Color(0.10f, 0.20f, 0.26f, 1f);
     private static final Color BUTTON_SELECTED = new Color(0.12f, 0.34f, 0.45f, 1f);
+    private static final Color RESEARCH_TOTAL_TEXT = new Color(0f, 36f / 255f, 60f / 255f, 1f);
     private static final Color RESEARCH_UNAVAILABLE_TEXT = new Color(0.95f, 0.36f, 0.25f, 1f);
     private static final Color DISABLED_TEXT = new Color(0.55f, 0.65f, 0.69f, 1f);
     private static final Color GREEN = new Color(0.17f, 0.95f, 0.30f, 1f);
@@ -2904,6 +2905,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                     + (game.isResearchTechnologySelected(technology) ? 4 : 0);
         }
 
+        // The source HUD's foreground hides centerScreen's oversized backing shape.
+        setScissor(modal);
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
         boolean drawn = centerUiRenderer.draw(batch, flashAnimationAssets, modal,
@@ -2911,8 +2914,11 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 game.getHuman().getReligionCode(), researchFrameIndexes);
         if (drawn) {
             drawOriginalTechnologyText();
+            batch.setColor(Color.WHITE);
+            batch.draw(uiAssets.propagandaFrame, modal.x, modal.y, modal.width, modal.height);
         }
         batch.end();
+        Gdx.gl.glDisable(GL20.GL_SCISSOR_TEST);
         return drawn;
     }
 
@@ -2943,18 +2949,20 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             }
             drawSourceText(game.getTechnologyLabel(technology),
                     TechnologyScreenLayout.SELECTED_NAMES_X,
-                    TechnologyScreenLayout.selectedNamesBaselineTop() + row * 12f,
+                    TechnologyScreenLayout.selectedNamesTextTop() + row * 12f,
                     10f, TITLE_TEXT);
             drawSourceTextRight(sourceMillions(game.getTechnologyCost(technology)),
-                    360f, TechnologyScreenLayout.selectedCostsBaselineTop() + row * 12f,
-                    10f, TITLE_TEXT);
+                    TechnologyScreenLayout.SELECTED_COSTS_RIGHT,
+                    TechnologyScreenLayout.selectedCostsTextTop() + row * 12f,
+                    10f, Color.WHITE);
             row++;
         }
         if (row > 0) {
-            drawSourceText("estimated total: "
+            drawSourceTextRight("estimated total: "
                             + sourceMillions(game.getSelectedResearchCostMillions()),
-                    TechnologyScreenLayout.ESTIMATED_TOTAL_X,
-                    TechnologyScreenLayout.estimatedTotalBaselineTop(), 10f, TITLE_TEXT);
+                    TechnologyScreenLayout.ESTIMATED_TOTAL_RIGHT,
+                    TechnologyScreenLayout.estimatedTotalTextTop(), 10f,
+                    RESEARCH_TOTAL_TEXT);
         }
     }
 
@@ -5097,6 +5105,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         if (actionTubeAssets != null) {
             actionTubeAssets.dispose();
         }
+        centerUiRenderer.dispose();
         if (technologyArtwork != null) {
             technologyArtwork.dispose();
         }

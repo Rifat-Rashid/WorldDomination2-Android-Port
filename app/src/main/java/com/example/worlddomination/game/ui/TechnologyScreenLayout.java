@@ -5,6 +5,9 @@ import com.badlogic.gdx.math.Rectangle;
 /** Original category ordering and responsive bounds for the technology screen. */
 public final class TechnologyScreenLayout {
     public static final int CARD_COUNT = 7;
+    // Live source centerScreen stage (200.05,136.05) relative to HUD viewport (205,135).
+    public static final float SOURCE_ORIGIN_X = -4.95f;
+    public static final float SOURCE_ORIGIN_Y = 1.05f;
     public static final float ART_WIDTH = 365f;
     public static final float ART_HEIGHT = 275f;
     // The seven original Flash tech clips appear in this order in centerScreen.
@@ -23,11 +26,14 @@ public final class TechnologyScreenLayout {
     private static final float CARRIER_COST_FIELD_Y = 71.7f;
     private static final float FLASH_TEXT_BASELINE_OFFSET = 5f;
 
-    public static final float SELECTED_NAMES_X = 136.4f;
-    public static final float SELECTED_COSTS_X = 232.8f;
+    public static final float SELECTED_NAMES_X = 136.4f + SOURCE_ORIGIN_X;
+    public static final float SELECTED_COSTS_X = 232.8f + SOURCE_ORIGIN_X;
     public static final float SELECTED_NAMES_FIELD_Y = 141.5f;
     public static final float SELECTED_COSTS_FIELD_Y = 142f;
-    public static final float ESTIMATED_TOTAL_X = 83.15f;
+    // Source EditText 3330 and 3328 right edges, including the two-point text inset.
+    public static final float SELECTED_COSTS_RIGHT = SELECTED_COSTS_X + 125.2f - 2f;
+    public static final float ESTIMATED_TOTAL_X = 83.15f + 51.9f + SOURCE_ORIGIN_X;
+    public static final float ESTIMATED_TOTAL_RIGHT = 83.15f + 275.35f - 2f + SOURCE_ORIGIN_X;
     public static final float ESTIMATED_TOTAL_FIELD_Y = 224.1f;
 
     private TechnologyScreenLayout() { }
@@ -49,7 +55,7 @@ public final class TechnologyScreenLayout {
     /** Source position for the dynamic cost field inside a technology clip. */
     public static float cardCostX(int cardIndex) {
         checkCard(cardIndex);
-        return SOURCE_X[cardIndex] + (SOURCE_GROUP_ORDER[cardIndex] == 7
+        return SOURCE_ORIGIN_X + SOURCE_X[cardIndex] + (SOURCE_GROUP_ORDER[cardIndex] == 7
                 ? CARRIER_COST_FIELD_X : STANDARD_COST_FIELD_X);
     }
 
@@ -68,27 +74,27 @@ public final class TechnologyScreenLayout {
         checkCard(cardIndex);
         float localY = SOURCE_GROUP_ORDER[cardIndex] == 7
                 ? CARRIER_COST_FIELD_Y : STANDARD_COST_FIELD_Y;
-        return SOURCE_Y[cardIndex] + localY + FLASH_TEXT_BASELINE_OFFSET;
+        return SOURCE_ORIGIN_Y + SOURCE_Y[cardIndex] + localY + FLASH_TEXT_BASELINE_OFFSET;
     }
 
-    public static float selectedNamesBaselineTop() {
-        return SELECTED_NAMES_FIELD_Y + 10f;
+    public static float selectedNamesTextTop() {
+        return SOURCE_ORIGIN_Y + SELECTED_NAMES_FIELD_Y + 2f;
     }
 
-    public static float selectedCostsBaselineTop() {
-        return SELECTED_COSTS_FIELD_Y + 10f;
+    public static float selectedCostsTextTop() {
+        return SOURCE_ORIGIN_Y + SELECTED_COSTS_FIELD_Y + 2f;
     }
 
-    public static float estimatedTotalBaselineTop() {
-        return ESTIMATED_TOTAL_FIELD_Y + 10f;
+    public static float estimatedTotalTextTop() {
+        return SOURCE_ORIGIN_Y + ESTIMATED_TOTAL_FIELD_Y + 2f;
     }
 
     public static Rectangle setCardBounds(int cardIndex, Rectangle modal, Rectangle output) {
         checkCard(cardIndex);
         float scaleX = modal.width / ART_WIDTH;
         float scaleY = modal.height / ART_HEIGHT;
-        return output.set(modal.x + SOURCE_X[cardIndex] * scaleX,
-                modal.y + modal.height - (SOURCE_Y[cardIndex] + SOURCE_HEIGHT[cardIndex])
+        return output.set(modal.x + (SOURCE_ORIGIN_X + SOURCE_X[cardIndex]) * scaleX,
+                modal.y + modal.height - (SOURCE_ORIGIN_Y + SOURCE_Y[cardIndex] + SOURCE_HEIGHT[cardIndex])
                         * scaleY,
                 SOURCE_WIDTH[cardIndex] * scaleX,
                 SOURCE_HEIGHT[cardIndex] * scaleY);
@@ -97,8 +103,8 @@ public final class TechnologyScreenLayout {
     public static Rectangle setSelectedBounds(Rectangle modal, Rectangle output) {
         float scaleX = modal.width / ART_WIDTH;
         float scaleY = modal.height / ART_HEIGHT;
-        return output.set(modal.x + SELECTED_LEFT * scaleX,
-                modal.y + (ART_HEIGHT - SELECTED_BOTTOM - SELECTED_HEIGHT) * scaleY,
+        return output.set(modal.x + (SOURCE_ORIGIN_X + SELECTED_LEFT) * scaleX,
+                modal.y + (ART_HEIGHT - SOURCE_ORIGIN_Y - SELECTED_BOTTOM - SELECTED_HEIGHT) * scaleY,
                 SELECTED_WIDTH * scaleX,
                 SELECTED_HEIGHT * scaleY);
     }
