@@ -17,6 +17,7 @@ public final class OriginalUiAssets implements Disposable {
     private final Texture productionModalTexture;
     private final Texture neutralButtonTexture;
     private final Texture propagandaFrameTexture;
+    private final Texture[] stockControlTextures = new Texture[4];
     public final TextureRegion propagandaFrame;
     public final BitmapFont propagandaStrengthFont;
     public final Texture metalPanel;
@@ -33,6 +34,8 @@ public final class OriginalUiAssets implements Disposable {
     public final TextureRegion inventoryCounter;
     public final TextureRegion inventorySwitch;
     public final TextureRegion inventoryRadio;
+    public final TextureRegion stockCounter;
+    public final TextureRegion[] stockSwitches = new TextureRegion[3];
     public final TextureRegion[] actionControls = new TextureRegion[3];
 
     public OriginalUiAssets() {
@@ -69,6 +72,17 @@ public final class OriginalUiAssets implements Disposable {
         inventoryCounter = require("inventoryCounter");
         inventorySwitch = require("inventorySwitch");
         inventoryRadio = require("inventoryRadio");
+        String[] stockFiles = {"counter", "unavailable", "eligible", "selected"};
+        for (int index = 0; index < stockFiles.length; index++) {
+            Texture texture = new Texture(Gdx.files.internal(
+                    "original/ui/stock-controls/" + stockFiles[index] + ".png"), true);
+            texture.setFilter(TextureFilter.MipMapLinearLinear, TextureFilter.Linear);
+            stockControlTextures[index] = texture;
+        }
+        stockCounter = new TextureRegion(stockControlTextures[0]);
+        for (int index = 0; index < stockSwitches.length; index++) {
+            stockSwitches[index] = new TextureRegion(stockControlTextures[index + 1]);
+        }
         actionControls[0] = require("actionFirst");
         actionControls[1] = require("actionSecond");
         actionControls[2] = require("actionConfirm");
@@ -114,5 +128,6 @@ public final class OriginalUiAssets implements Disposable {
         propagandaStrengthFont.dispose();
         metalPanel.dispose();
         neutralButtonTexture.dispose();
+        for (Texture texture : stockControlTextures) texture.dispose();
     }
 }
