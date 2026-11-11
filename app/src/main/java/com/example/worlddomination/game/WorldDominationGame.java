@@ -113,7 +113,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private static final int GESTURE_PRODUCTION = 3;
     private static final int GESTURE_MESSAGE = 4;
 
-    private static final GameState.Action[] ACTIONS = GameState.Action.values();
+    private static final GameState.Action[] ACTIONS = GameState.Action.navigationValues();
     private static final String[] EQUIPMENT_ROWS = {
             "ROCKETS", "10 meg", "25 meg", "50 meg", "95 meg",
             "AIRCRAFT", "Fighter", "Bomber",
@@ -2525,6 +2525,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 return "PROPAGANDA";
             case DIPLOMACY:
                 return "DIPLOMACY";
+            case SKIP:
+                return "SKIP";
             default:
                 return action.label.toUpperCase(java.util.Locale.US);
         }
@@ -3734,6 +3736,12 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 continue;
             }
             GameState.Action action = ACTIONS[i];
+            for (int slot = 0; slot < actionSlots.length; slot++) {
+                if (game.getQueuedAction(slot) == action) {
+                    activateActionSlot(slot);
+                    return;
+                }
+            }
             if (!action.isPorted()) {
                 audio.play(OriginalAudio.Cue.ACTION_SWITCH);
                 game.cancelSelection();
@@ -4251,6 +4259,12 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             activateSourceActionMenu(x, y, true);
             return;
         }
+        for (int slot = 0; slot < actionSlots.length; slot++) {
+            if (actionSlots[slot].contains(x, y)) {
+                activateActionSlot(slot);
+                return;
+            }
+        }
         if (SourceActionMenuState.supports(game.getSelectedAction())) {
             if (navViewport.contains(x, y)) activateNavigationRow(x, y);
             else if (equipmentViewport.contains(x, y)) activateEquipmentRow(x, y);
@@ -4313,16 +4327,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                     modalOpen = false;
                     audio.play(OriginalAudio.Cue.ACTION_CLOSE);
                     audio.playAmbient(OriginalAudio.Cue.GAME_AMBIENT);
-                    return;
-                }
-                for (int slot = 0; slot < actionSlots.length; slot++) {
-                    if (!actionSlots[slot].contains(x, y)) {
-                        continue;
-                    }
-                    if (game.getQueuedAction(slot) != null) {
-                        game.removeQueuedAction(slot);
-                        audio.play(OriginalAudio.Cue.ACTION_CLOSE);
-                    }
                     return;
                 }
                 for (int i = 0; i < productionSliderHitTargets.length; i++) {
@@ -4475,12 +4479,26 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             if (confirmTurnAnimation.press(game.getQueuedActionCount(), turnPlaybackSequence.isBlockingInput())) {
                 audio.play(OriginalAudio.Cue.CONFIRM_CLOSE);
             }
-        } else if (actionSlots[0].contains(x, y)) {
-            game.removeQueuedAction(0);
-            audio.play(OriginalAudio.Cue.ACTION_CLOSE);
-        } else if (actionSlots[1].contains(x, y)) {
-            game.removeQueuedAction(1);
-            audio.play(OriginalAudio.Cue.ACTION_CLOSE);
+        }
+    }
+
+    /** Original btnPressed_tube cancels an assigned action or offers Skip when idle. */
+    private void activateActionSlot(int slot) {
+        if (game.getQueuedAction(slot) != null) {
+            game.removeQueuedAction(slot);
+            game.cancelSelection();
+            selectedEquipment = "";
+            modalOpen = false;
+            audio.play(OriginalAudio.Cue.ACTION_OPEN);
+            audio.playAmbient(OriginalAudio.Cue.GAME_AMBIENT);
+        } else if (game.getSelectedAction() == null) {
+            game.selectAction(GameState.Action.SKIP);
+            if (game.getSelectedAction() != GameState.Action.SKIP) return;
+            sourceActionMenu.begin(game);
+            selectedEquipment = "";
+            modalOpen = true;
+            audio.play(OriginalAudio.Cue.ACTION_OPEN);
+            audio.playAmbient(OriginalAudio.Cue.GAME_AMBIENT);
         }
     }
 
