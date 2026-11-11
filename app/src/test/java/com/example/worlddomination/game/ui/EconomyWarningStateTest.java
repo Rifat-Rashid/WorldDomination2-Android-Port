@@ -35,7 +35,7 @@ public final class EconomyWarningStateTest {
         assertFalse(game.selectResearchTechnology("rocket2"));
         SourceActionMenuState state = new SourceActionMenuState();
         state.showEconomyWarning(game, EconomyWarningText.research(game, "rocket2"));
-        assertEquals("research_error", state.getKey()); assertEquals("Not enough money!", state.getError());
+        assertEquals("research_error-" + game.getHuman().getReligionCode(), state.getKey()); assertEquals("Not enough money!", state.getError());
         assertEquals(9, game.getTurnMoneyMillions()); assertEquals(0, game.getSelectedResearchCostMillions());
         assertFalse(state.accept(game)); assertFalse(state.isCancelVisible());
     }
@@ -84,6 +84,17 @@ public final class EconomyWarningStateTest {
         assertFalse(state.isEconomyWarning(game));
         game.cancelSelection(); state.begin(game); assertFalse(state.isEconomyWarning(game));
     }
+    @Test public void researchWarningUsesTheOriginalHeaderForEverySelectedBuildingStyle() {
+        String[] expected = {"bhu", "chr", "com", "jew", "mus"};
+        for (int style = 1; style <= expected.length; style++) {
+            GameSetup setup = new GameSetup(0L); setup.toggleOpponent(0); setup.setStartingBuilding(style);
+            GameState game = new GameState(setup); game.selectAction(GameState.Action.RESEARCH);
+            SourceActionMenuState state = new SourceActionMenuState();
+            state.showEconomyWarning(game, EconomyWarningText.RESEARCH_SPECIAL);
+            assertEquals("research_error-" + expected[style - 1], state.getKey());
+        }
+    }
+
     @Test public void staleWarningsCannotReplaceADifferentActionScreen() {
         GameState game = game(); game.selectAction(GameState.Action.RESEARCH);
         SourceActionMenuState state = new SourceActionMenuState();

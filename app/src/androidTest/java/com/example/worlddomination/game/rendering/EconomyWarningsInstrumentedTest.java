@@ -49,7 +49,7 @@ public final class EconomyWarningsInstrumentedTest {
                     navigation(app, GameState.Action.RESEARCH);
                     tap(app, ((Rectangle[]) field("technologyCards").get(app))[4]);
                     assertTrue(menu(app).isEconomyWarning(game));
-                    assertEquals("research_error", menu(app).getKey());
+                    assertEquals("research_error-" + game.getHuman().getReligionCode(), menu(app).getKey());
                     assertEquals(EconomyWarningText.RESEARCH_SPECIAL, menu(app).getError());
                     capture(app, "source-technology-special-warning.png");
                     tap(app, (Rectangle) field("modalAccept").get(app));
@@ -65,7 +65,7 @@ public final class EconomyWarningsInstrumentedTest {
                     tap(app, cards[1]);
                     assertEquals(EconomyWarningText.RESEARCH_FUNDS, menu(app).getError());
                     capture(app, "source-technology-funds-warning.png");
-                    ok(app, "research_error");
+                    ok(app, menu(app).getKey());
                     assertFalse(menu(app).isEconomyWarning(game));
                     assertEquals(10, game.getSelectedResearchCostMillions());
                     assertEquals(10, game.getTurnMoneyMillions());

@@ -42,7 +42,7 @@ public final class SourceActionMenuState {
         error = message;
         economyWarning = true;
         pendingError = false;
-        key = selected == GameState.Action.PRODUCTION ? "production_error" : "research_error";
+        key = selected == GameState.Action.PRODUCTION ? "production_error" : "research_error-" + game.getHuman().getReligionCode();
         revision++;
     }
 
