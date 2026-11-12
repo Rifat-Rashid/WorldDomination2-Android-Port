@@ -60,7 +60,7 @@ public final class BattlefieldCitySelectionTest {
         game.selectAction(GameState.Action.PREPARED_ATTACK);
         assertTrue(game.configurePreparedShipStrike(2, 0, "warhead1"));
         assertEquals(2, game.getSelectedShipTargetPlayerId());
-        assertEquals(Tint.GREEN, BattlefieldCitySelection.tint(game, 2, 0, "warhead1"));
+        assertEquals(Tint.DEFAULT, BattlefieldCitySelection.tint(game, 2, 0, "warhead1"));
         assertEquals(Tint.RED, BattlefieldCitySelection.tint(game, 1, 0, "warhead1"));
         assertEquals(Tint.RED, BattlefieldCitySelection.tint(game, 3, 0, "warhead1"));
     }

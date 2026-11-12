@@ -75,6 +75,8 @@ public final class OriginalFlashAnimationAssets implements Disposable {
     private static final String TEXT_PATH = "original/runtime/texts/";
     private static final String WEBP_PREFIX = "data:image/webp;base64,";
     private static final String[] REQUIRED_LINKAGES = {
+            "map_icon_crosshair", "map_icon_soldier", "map_icon_rocket",
+            "map_icon_plane", "map_icon_propaganda", "map_icon_special",
             "flag_pole",
             "interface_center_slider_1",
             "buildings_antiAir",

@@ -1559,7 +1559,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         drawNavigationRows();
         drawEquipmentRows();
         drawPortraitCardEdges();
-        drawMapSelection();
     }
 
     private void drawPanelTexture(Rectangle rectangle) {
@@ -2177,49 +2176,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 ? null : EQUIPMENT_WEAPON_NAMES[rowIndex];
     }
 
-    private void drawMapSelection() {
-        int selected = game.getSelectedIsland();
-        boolean showShipStrikes = game.getSelectedAction() == GameState.Action.PREPARED_ATTACK
-                && isPreparedShipCarrier() && game.getSelectedShipStrikeCount() > 0;
-        if (selected < 0 && !showShipStrikes) {
-            return;
-        }
-        shapes.begin(ShapeRenderer.ShapeType.Line);
-        if (selected >= 0) {
-            float cx = mapBounds.x + mapBounds.width * ISLAND_CENTERS[selected][0] / MAP_WIDTH;
-            float cy = mapBounds.y + mapBounds.height
-                    * (MAP_HEIGHT - ISLAND_CENTERS[selected][1]) / MAP_HEIGHT;
-            shapes.setColor(GREEN);
-            shapes.circle(cx, cy, 17f, 24);
-            shapes.circle(cx, cy, 22f, 24);
-            int selectedCityOwner = game.getSelectedMapCityOwner();
-            int selectedCityIndex = game.getSelectedMapCityIndex();
-            if (selectedCityOwner >= 0 && selectedCityIndex >= 0) {
-                GameState.PlayerState owner = game.getPlayerState(selectedCityOwner);
-                CityState city = owner.getCity(selectedCityIndex);
-                if (owner.alive && city != null && city.populationMillions > 0) {
-                    float cityX = BattlefieldCityLayout.x(mapBounds,
-                            selectedCityOwner, selectedCityIndex);
-                    float cityY = BattlefieldCityLayout.y(mapBounds,
-                            selectedCityOwner, selectedCityIndex);
-                    shapes.circle(cityX, cityY,
-                            BattlefieldCityLayout.selectionRadius(mapBounds), 24);
-                }
-            }
-        }
-        if (showShipStrikes) {
-            shapes.setColor(MODAL_ORANGE);
-            float radius = BattlefieldCityLayout.selectionRadius(mapBounds) + 4f;
-            for (GameState.ShipStrike strike : game.getSelectedShipStrikes()) {
-                float cityX = BattlefieldCityLayout.x(mapBounds,
-                        strike.targetPlayerId, strike.cityIndex);
-                float cityY = BattlefieldCityLayout.y(mapBounds,
-                        strike.targetPlayerId, strike.cityIndex);
-                shapes.circle(cityX, cityY, radius, 24);
-            }
-        }
-        shapes.end();
-    }
+
 
     private void drawTextAndControls() {
         updateMessageHistoryLayout();
