@@ -18,6 +18,9 @@ jobs:
       max-parallel: 6
       matrix:
         include:
+          - id: source-action-instructions
+            check: Source action instruction timing warnings and selection transitions
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.SourceActionInstructionTest"'
           - id: battlefield-city-selection
             check: Source city targeting colors ceasefires and ship restrictions
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.BattlefieldCitySelectionTest"'
