@@ -18,6 +18,9 @@ jobs:
       max-parallel: 6
       matrix:
         include:
+          - id: source-action-instructions
+            check: Source action instruction timing warnings and selection transitions
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.SourceActionInstructionTest"'
           - id: source-enemy-selection
             check: Source enemy removal artwork and responsive selection layout
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.OriginalFlashAnimationAssetsTest.setupRemovalButtonRetainsEmptyAndVisibleSourceFramesAndEarlyArtwork" --tests "com.example.worlddomination.game.ui.SetupScreenLayoutTest.removalArtworkKeepsSourceAspectRatioInsideEveryOccupiedCard"'

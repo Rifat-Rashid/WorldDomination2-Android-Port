@@ -66,6 +66,7 @@ import com.example.worlddomination.game.simulation.TechnologyCatalog;
 import com.example.worlddomination.game.ui.ActionFooterLayout;
 import com.example.worlddomination.game.ui.ActionScreenLayout;
 import com.example.worlddomination.game.ui.SourceActionMenuState;
+import com.example.worlddomination.game.ui.SourceActionInstruction;
 import com.example.worlddomination.game.ui.EconomyWarningText;
 import com.example.worlddomination.game.rendering.SourceActionMenuRenderer;
 import com.example.worlddomination.game.ui.BattlefieldCityLayout;
@@ -283,6 +284,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private final GlyphLayout glyphLayout = new GlyphLayout();
     private final GlyphLayout productionSummaryLayout = new GlyphLayout();
     private final GlyphLayout messageHistoryLayout = new GlyphLayout();
+    private final GlyphLayout instructionLayout = new GlyphLayout();
+    private String laidOutInstruction;
+    private float instructionLayoutWidth = -1f;
+    private final Rectangle instructionViewport = new Rectangle();
 
     private SpriteBatch batch;
     private ShapeRenderer shapes;
@@ -290,6 +295,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private ResourceMenuRenderer resourceMenuRenderer;
     private SourceActionMenuRenderer sourceActionMenuRenderer;
     private final SourceActionMenuState sourceActionMenu = new SourceActionMenuState();
+    private final SourceActionInstruction sourceActionInstruction = new SourceActionInstruction();
     private final SourceActionMenuRenderer.PortraitDrawer menuPortraitDrawer = this::drawSetupLeaderPortrait;
     private MessagePanelRenderer messagePanelRenderer;
     private OriginalActionTubeAssets actionTubeAssets;
@@ -676,6 +682,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     }
 
     private void fixedUpdate(float seconds) {
+        if (game != null) sourceActionInstruction.tick();
         navigationScroll.tick(seconds);
         equipmentScroll.tick(seconds);
         if (game != null && flagRenderer != null) flagRenderer.tick();
@@ -2234,17 +2241,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 scoreTitlePlate.y + scoreTitlePlate.height / 2f - 2f, 9f);
 
         drawStatistics();
-        if (!ActionScreenLayout.hasInlineActionControls(game.getSelectedAction())) {
-            font.setColor(GREEN);
-            batch.flush();
-            setScissor(messageViewport);
-            float textBaseline = messageViewport.y + messageViewport.height - 3f
-                    + messageHistoryScroll.getFirstVisibleLine() * messageLineHeight;
-            messagePanelRenderer.getFont().draw(batch, messageHistoryLayout,
-                    messageViewport.x, textBaseline);
-            batch.flush();
-            Gdx.gl.glDisable(GL20.GL_SCISSOR_TEST);
-        }
+        if (!ActionScreenLayout.hasInlineActionControls(game.getSelectedAction())
+                || SourceActionMenuState.supports(game.getSelectedAction())) drawMessageWell();
         font.setColor(TITLE_TEXT);
         drawCentered(Long.toString(game.getHuman().score),
                 scorePanel.x + scorePanel.width / 2f, scorePanel.y + scorePanel.height / 2f + 2f, 13f);
@@ -2265,6 +2263,38 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         batch.end();
         drawInlineActionFooter();
         drawSettingsGear();
+    }
+
+    private void drawMessageWell() {
+        instructionViewport.set(messageViewport);
+        if (game.getSelectedAction() == GameState.Action.PROPAGANDA
+                && sourceActionMenu.isMapSelection()) {
+            float lowerEdge = actionFooterButtons[1].y + actionFooterButtons[1].height + 3f;
+            float top = messageViewport.y + messageViewport.height;
+            instructionViewport.y = Math.max(messageViewport.y, lowerEdge);
+            instructionViewport.height = Math.max(1f, top - instructionViewport.y);
+        }
+        batch.flush();
+        setScissor(instructionViewport);
+        String instruction = sourceActionInstruction.getText();
+        if (instruction == null) {
+            float textBaseline = instructionViewport.y + instructionViewport.height - 3f
+                    + messageHistoryScroll.getFirstVisibleLine() * messageLineHeight;
+            messagePanelRenderer.getFont().draw(batch, messageHistoryLayout,
+                    instructionViewport.x, textBaseline);
+        } else {
+            if (!instruction.equals(laidOutInstruction)
+                    || Math.abs(instructionViewport.width - instructionLayoutWidth) > 0.01f) {
+                instructionLayout.setText(messagePanelRenderer.getFont(), instruction,
+                        MessagePanelRenderer.TEXT_COLOR, instructionViewport.width, Align.left, true);
+                laidOutInstruction = instruction;
+                instructionLayoutWidth = instructionViewport.width;
+            }
+            messagePanelRenderer.getFont().draw(batch, instructionLayout,
+                    instructionViewport.x, instructionViewport.y + instructionViewport.height - 3f);
+        }
+        batch.flush();
+        Gdx.gl.glDisable(GL20.GL_SCISSOR_TEST);
     }
 
     private void drawInlineActionFooter() {
@@ -2329,10 +2359,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         drawButtonGradient(cancel, false);
         shapes.end();
         batch.begin();
-        font.setColor(GREEN);
-        drawFittedLeft("PROPAGANDA: SELECT AN ENEMY CITY", messagePanel.x + 8f,
-                messagePanel.y + messagePanel.height - 10f,
-                messagePanel.width - 16f, 9f);
         font.setColor(TITLE_TEXT);
         drawCentered("CANCEL", cancel.x + cancel.width / 2f,
                 cancel.y + cancel.height / 2f + 2f, 7.5f);
@@ -3452,6 +3478,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         showExitPromptSeconds = 0f;
         accumulator = 0f;
         game = null;
+        laidOutInstruction = null;
         battleAnimations.clear();
         soldierBattleAnimations.clear();
         apacheMarineAnimations.clear();
@@ -3806,6 +3833,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 }
                 if (SourceActionMenuState.supports(game.getSelectedAction())) {
                     sourceActionMenu.begin(game);
+                    sourceActionInstruction.onSelectionUpdate(game.getSelectedAction(),
+                            sourceActionMenu.getKey());
                     selectedEquipment = "";
                 }
                 modalOpen = SourceActionMenuState.supports(game.getSelectedAction())
@@ -3838,10 +3867,15 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 if (automatic != null) {
                     game.selectAction(automatic);
                     sourceActionMenu.begin(game);
+                    sourceActionInstruction.onSelectionUpdate(game.getSelectedAction(),
+                            sourceActionMenu.getKey());
                     audio.play(OriginalAudio.Cue.ACTION_SWITCH);
                 }
                 if (SourceActionMenuState.supports(game.getSelectedAction()) && weapon != null) {
-                    if (sourceActionMenu.chooseEquipment(game, weapon)) {
+                    boolean chosen = sourceActionMenu.chooseEquipment(game, weapon);
+                    sourceActionInstruction.onSelectionUpdate(game.getSelectedAction(),
+                            sourceActionMenu.getKey());
+                    if (chosen) {
                         String selected = sourceActionMenu.getSelectedEquipment();
                         selectedEquipment = selected == null ? "" : selected;
                         if (selected != null) audio.play(OriginalAudio.Cue.STOCK_SELECT);
@@ -3936,6 +3970,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             if (setup.canStart()) {
                 initializeGameplayAssets();
                 game = new GameState(setup);
+                sourceActionInstruction.resetWelcome();
+                laidOutInstruction = null;
                 actionSlotAnimation.reset();
                 confirmTurnAnimation.reset();
                 turnActionDisplay.reset();
@@ -4179,6 +4215,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             return;
         }
         int selectedCity = BattlefieldCityLayout.hitTest(x, y, mapBounds);
+        if (selectedCity >= 0) {
+            int owner = selectedCity / BattlefieldCityLayout.CITIES_PER_PLAYER;
+            sourceActionInstruction.onCityAttempt(owner, game.getHuman().hasCeasefireWith(owner));
+        }
         if (selectedCity >= 0 && game.selectBattlefieldCity(
                 selectedCity / BattlefieldCityLayout.CITIES_PER_PLAYER,
                 selectedCity % BattlefieldCityLayout.CITIES_PER_PLAYER)) {
@@ -4217,7 +4257,11 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         String control = sourceActionMenuRenderer.controlAt(modal, x, y, game, sourceActionMenu);
         if (control != null) {
-            if (control.endsWith("btnOK")) sourceActionMenu.dismissError(game);
+            if (control.endsWith("btnOK")) {
+                sourceActionMenu.dismissError(game);
+                sourceActionInstruction.onSelectionUpdate(game.getSelectedAction(),
+                        sourceActionMenu.getKey());
+            }
             else if ("btnAccept".equals(control)) {
                 boolean accepted = pending ? game.respondToDiplomacyProposal(true) : sourceActionMenu.accept(game);
                 if (accepted) {
@@ -4241,25 +4285,36 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             } else if (!pending && control.startsWith("leader")) {
                 if (sourceActionMenu.chooseLeader(game, control.charAt(6) - '0'))
                     audio.play(OriginalAudio.Cue.UNIT_SELECT);
+                sourceActionInstruction.onSelectionUpdate(game.getSelectedAction(),
+                        sourceActionMenu.getKey());
             } else if (!pending && control.matches("btn[1-6]")) {
                 int index = control.charAt(3) - '1';
                 boolean chosen = game.getSelectedAction() == GameState.Action.DIPLOMACY
                         ? sourceActionMenu.chooseOption(game, index)
                         : sourceActionMenu.chooseSpyBuilding(game, index);
                 if (chosen) audio.play(OriginalAudio.Cue.STOCK_SELECT);
+                sourceActionInstruction.onSelectionUpdate(game.getSelectedAction(),
+                        sourceActionMenu.getKey());
             }
             return;
         }
         if (!pending && sourceActionMenu.isMapSelection() && mapBounds.contains(x, y)) {
             int address = BattlefieldCityLayout.hitTest(x, y, mapBounds);
-            if (address >= 0 && sourceActionMenu.chooseCity(game,
-                    address / BattlefieldCityLayout.CITIES_PER_PLAYER,
-                    address % BattlefieldCityLayout.CITIES_PER_PLAYER)) {
-                modalOpen = !sourceActionMenu.isMapSelection();
-                String selected = sourceActionMenu.getSelectedEquipment();
-                selectedEquipment = selected == null ? "" : selected;
-                audio.play(OriginalAudio.Cue.UNIT_SELECT);
-                if (modalOpen) audio.play(OriginalAudio.Cue.ACTION_OPEN);
+            if (address >= 0) {
+                int owner = address / BattlefieldCityLayout.CITIES_PER_PLAYER;
+                boolean chosen = sourceActionMenu.chooseCity(game, owner,
+                        address % BattlefieldCityLayout.CITIES_PER_PLAYER);
+                if (chosen) {
+                    sourceActionInstruction.onSelectionUpdate(game.getSelectedAction(),
+                            sourceActionMenu.getKey());
+                    modalOpen = !sourceActionMenu.isMapSelection();
+                    String selected = sourceActionMenu.getSelectedEquipment();
+                    selectedEquipment = selected == null ? "" : selected;
+                    audio.play(OriginalAudio.Cue.UNIT_SELECT);
+                    if (modalOpen) audio.play(OriginalAudio.Cue.ACTION_OPEN);
+                }
+                sourceActionInstruction.onCityAttempt(owner,
+                        game.getHuman().hasCeasefireWith(owner));
             }
         }
     }
@@ -4546,6 +4601,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             game.selectAction(GameState.Action.SKIP);
             if (game.getSelectedAction() != GameState.Action.SKIP) return;
             sourceActionMenu.begin(game);
+            sourceActionInstruction.onSelectionUpdate(game.getSelectedAction(),
+                    sourceActionMenu.getKey());
             selectedEquipment = "";
             modalOpen = true;
             audio.play(OriginalAudio.Cue.ACTION_OPEN);
