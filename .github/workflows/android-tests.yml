@@ -18,6 +18,9 @@ jobs:
       max-parallel: 6
       matrix:
         include:
+          - id: source-action-instructions
+            check: Source action instruction timing warnings and selection transitions
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.SourceActionInstructionTest"'
           - id: source-stock-controls
             check: Source equipment eligibility switch states and stock reservations
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.SourceStockControlStateTest" --tests "com.example.worlddomination.game.assets.StockControlArtworkTest"'
