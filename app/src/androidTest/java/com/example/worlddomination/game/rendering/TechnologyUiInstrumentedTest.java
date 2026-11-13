@@ -1,6 +1,6 @@
 package com.example.worlddomination.game.rendering;
 
-import androidx.test.core.app.ActivityScenario;
+import com.example.worlddomination.testing.GameActivityScenario;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 import com.badlogic.gdx.Gdx;
@@ -31,7 +31,7 @@ import static org.junit.Assert.*;
 @RunWith(AndroidJUnit4.class)
 public final class TechnologyUiInstrumentedTest {
     @Test public void originalResearchIsClippedWhiteTintedAndTouchAligned() throws Exception {
-        try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
+        try (GameActivityScenario scenario = GameActivityScenario.launch(MainActivity.class)) {
             CountDownLatch done = new CountDownLatch(1);
             AtomicReference<Throwable> failure = new AtomicReference<>();
             scenario.onActivity(activity -> Gdx.app.postRunnable(() -> {

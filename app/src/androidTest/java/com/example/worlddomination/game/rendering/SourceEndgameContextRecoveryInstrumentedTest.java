@@ -5,7 +5,7 @@ import android.opengl.EGLContext;
 import android.opengl.EGLDisplay;
 import android.opengl.GLSurfaceView;
 import androidx.lifecycle.Lifecycle;
-import androidx.test.core.app.ActivityScenario;
+import com.example.worlddomination.testing.GameActivityScenario;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.backends.android.AndroidGraphics;
@@ -33,7 +33,7 @@ public final class SourceEndgameContextRecoveryInstrumentedTest {
             5884, 5886, 5888, 5891, 5894, 5902};
 
     @Test public void allEndgameLeavesRestoreAfterEglContextLoss() throws Exception {
-        try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
+        try (GameActivityScenario scenario = GameActivityScenario.launch(MainActivity.class)) {
             boolean[] previousPreserve = new boolean[1];
             OriginalEndgameAssets assets = new OriginalEndgameAssets();
             try {
@@ -118,7 +118,7 @@ public final class SourceEndgameContextRecoveryInstrumentedTest {
         }
     }
 
-    private static <T> T onGlThread(ActivityScenario<MainActivity> scenario,
+    private static <T> T onGlThread(GameActivityScenario scenario,
                                     Callable<T> work) throws Exception {
         CountDownLatch done = new CountDownLatch(1);
         AtomicReference<T> result = new AtomicReference<>();

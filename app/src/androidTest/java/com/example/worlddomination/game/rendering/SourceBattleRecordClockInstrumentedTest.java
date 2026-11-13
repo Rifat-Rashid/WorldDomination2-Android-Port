@@ -1,6 +1,6 @@
 package com.example.worlddomination.game.rendering;
 
-import androidx.test.core.app.ActivityScenario;
+import com.example.worlddomination.testing.GameActivityScenario;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 import com.badlogic.gdx.Gdx;
@@ -29,7 +29,7 @@ import static org.junit.Assert.*;
 @RunWith(AndroidJUnit4.class)
 public final class SourceBattleRecordClockInstrumentedTest {
     @Test public void labelsRecordSlotsAndCarriedCounterGateRealBoatPlayback() throws Exception {
-        try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
+        try (GameActivityScenario scenario = GameActivityScenario.launch(MainActivity.class)) {
             CountDownLatch done = new CountDownLatch(1);
             AtomicReference<Throwable> failure = new AtomicReference<>();
             scenario.onActivity(activity -> Gdx.app.postRunnable(() -> {
@@ -80,17 +80,14 @@ public final class SourceBattleRecordClockInstrumentedTest {
                     assertEquals(2, boats.size());
                     openBattleGate(app, playback, clock);
                     for (int tick = 0; tick < 20; tick++) advance(app);
-                    assertFalse("Carried counter holds first record for twenty ticks",
-                            boats.get(1).getActor(0).visible);
-                    assertFalse(boats.get(0).getActor(0).visible);
+                    assertWaitingBoat(boats.get(1));
+                    assertWaitingBoat(boats.get(0));
                     advance(app);
-                    assertTrue("Slot one activates at eligible tick21",
-                            boats.get(1).getActor(0).visible);
-                    assertFalse("Slot two waits one further source tick",
-                            boats.get(0).getActor(0).visible);
+                    assertMovingBoat(boats.get(1)); // Slot one activates on eligible tick 21.
+                    assertWaitingBoat(boats.get(0)); // Slot two waits one more source tick.
                     capture(app, "source-record-clock-first-boat.png");
                     advance(app);
-                    assertTrue(boats.get(0).getActor(0).visible);
+                    assertMovingBoat(boats.get(0));
                     capture(app, "source-record-clock-second-boat.png");
                     finishTurn(app, playback);
 
@@ -102,12 +99,11 @@ public final class SourceBattleRecordClockInstrumentedTest {
                     assertEquals(1, boats.size());
                     openBattleGate(app, playback, clock);
                     advance(app); // Pending building zeroes the carried20.
-                    assertFalse(boats.get(0).getActor(0).visible);
+                    assertWaitingBoat(boats.get(0));
                     advance(app); // Resources startNum1 activates.
-                    assertFalse(boats.get(0).getActor(0).visible);
+                    assertWaitingBoat(boats.get(0));
                     advance(app); // Soldier startNum2 activates.
-                    assertTrue("Pending building resets carry; attack starts on tick3",
-                            boats.get(0).getActor(0).visible);
+                    assertMovingBoat(boats.get(0)); // Pending building resets carry: tick 3.
                     capture(app, "source-record-clock-building-reset.png");
                     finishTurn(app, playback);
                     assertEquals(3, game.getTurn());
@@ -123,7 +119,7 @@ public final class SourceBattleRecordClockInstrumentedTest {
     }
 
     @Test public void resolvedTurnBuildsSoldierRoutesFromSourceBattleRandomBoundary() throws Exception {
-        try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
+        try (GameActivityScenario scenario = GameActivityScenario.launch(MainActivity.class)) {
             CountDownLatch done = new CountDownLatch(1);
             AtomicReference<Throwable> failure = new AtomicReference<>();
             scenario.onActivity(activity -> Gdx.app.postRunnable(() -> {
@@ -185,7 +181,7 @@ public final class SourceBattleRecordClockInstrumentedTest {
     }
 
     @Test public void pairedTankAndBoatUseSourceRandomOrderAndTurretCoordinates() throws Exception {
-        try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
+        try (GameActivityScenario scenario = GameActivityScenario.launch(MainActivity.class)) {
             CountDownLatch done = new CountDownLatch(1);
             AtomicReference<Throwable> failure = new AtomicReference<>();
             scenario.onActivity(activity -> Gdx.app.postRunnable(() -> {
@@ -305,6 +301,21 @@ public final class SourceBattleRecordClockInstrumentedTest {
         while (playback.isBlockingInput() && ticks++ < 6200) advance(app);
         assertEquals("Real animations and reset barrier must complete",
                 TurnPlaybackSequence.Phase.IDLE, playback.getPhase());
+    }
+
+    private static void assertWaitingBoat(FlashSoldierOneAnimation animation) {
+        FlashSoldierOneAnimation.Actor boat = animation.getActor(0);
+        assertTrue("The source draws boats while their records wait", boat.visible);
+        assertEquals("A waiting record cannot advance X", 410f, boat.sourceX, 0f);
+        assertEquals("A waiting record cannot advance Y", 474f, boat.sourceY, 0f);
+        assertEquals("Source waiting direction frame 7", 6, boat.sourceFrame);
+    }
+
+    private static void assertMovingBoat(FlashSoldierOneAnimation animation) {
+        FlashSoldierOneAnimation.Actor boat = animation.getActor(0);
+        assertTrue(boat.visible);
+        assertTrue("An activated record advances the boat",
+                boat.sourceX != 410f || boat.sourceY != 474f);
     }
 
     private static void stockSoldiers(GameState state, int count) {

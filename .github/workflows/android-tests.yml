@@ -471,6 +471,9 @@ jobs:
           - id: chinook-deployment-traces
             check: Source Chinook deployment and four-island movement traces
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashChinookSourceTraceTest"'
+          - id: source-infantry-lifecycle
+            check: Source infantry frames, random inputs, and delayed cleanup
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashSoldierOneSourceTraceTest" --tests "com.example.worlddomination.game.rendering.SourceBattleInterfaceFramesTest" --tests "com.example.worlddomination.game.rendering.SourceStoppedClipQueueTest" --tests "com.example.worlddomination.game.rendering.FlashSoldierOneStepTest"'
           - id: chinook-flight-crop
             check: Chinook flight crop continuity
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashChinookCropProjectionTest"'
