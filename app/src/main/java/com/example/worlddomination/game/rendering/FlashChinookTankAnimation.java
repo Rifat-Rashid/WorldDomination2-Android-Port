@@ -38,6 +38,7 @@ public final class FlashChinookTankAnimation {
     private final Actor chinook = new Actor();
     private final Actor tank = new Actor();
     private final Actor turret = new Actor();
+    private final Actor chinookShadow = new Actor();
     private final Actor[] actors = {chinook, tank, turret};
     private final OriginalAudio.Cue[] pendingAudio = new OriginalAudio.Cue[8];
     private int delayTicks;
@@ -60,6 +61,7 @@ public final class FlashChinookTankAnimation {
     private float tankPreviousX;
     private float tankPreviousY;
     private float tankArrivalRange = ARRIVAL_RANGE;
+    private float tankShadowOffsetY = 40f;
     private OriginalAudio.Cue lastAudioCue;
     private Phase phase = Phase.CHINOOK_FLIGHT;
 
@@ -74,7 +76,9 @@ public final class FlashChinookTankAnimation {
         chinook.sourceX = route.chinookStart.x;
         chinook.sourceY = route.chinookStart.y;
         chinook.islandPlayerId = route.attackerPlayerId;
-        tank.linkage = "tankBase";
+        // Flash's export lookup is case-insensitive; symbol 714 is exported
+        // as tank_noshade while Unit uses tank_noShade.
+        tank.linkage = "tank_noshade";
         tank.sourceX = route.tankStart.x;
         tank.sourceY = route.tankStart.y;
         tank.islandPlayerId = route.targetPlayerId;
@@ -82,7 +86,11 @@ public final class FlashChinookTankAnimation {
         turret.sourceX = route.turretStart.x;
         turret.sourceY = route.turretStart.y;
         turret.islandPlayerId = route.targetPlayerId;
+        chinookShadow.linkage = "chinook_shadow";
         followChinook();
+        // The waiting tail has no movement; View holds Flash direction frame 9.
+        tank.sourceFrame = 8;
+        updateChinookShadow();
     }
 
     /** Advances one original 24 Hz presentation tick. */
@@ -99,6 +107,7 @@ public final class FlashChinookTankAnimation {
             case CHINOOK_FLIGHT:
                 if (!chinook.visible) {
                     chinook.visible = true;
+                    tank.visible = true;
                     turret.visible = true;
                     enqueueAudio(OriginalAudio.Cue.TANK_CHOPPER);
                 }
@@ -142,6 +151,7 @@ public final class FlashChinookTankAnimation {
             default:
                 throw new IllegalStateException("Unknown Chinook/tank phase");
         }
+        updateChinookShadow();
     }
 
     private void tickTankFire() {
@@ -177,6 +187,24 @@ public final class FlashChinookTankAnimation {
     /** Returns stable actor records without allocating during rendering. */
     public Actor getActor(int index) {
         return actors[index];
+    }
+
+    /** Separate source shadow clip, with its inner mc following the carrier frame. */
+    public Actor getChinookShadow() {
+        return chinookShadow;
+    }
+
+    public boolean isTankDeployed() {
+        return phase == Phase.TANK_DRIVE || phase == Phase.TANK_FIRE || phase == Phase.FINISHED;
+    }
+
+    public boolean isTankShadowVisible() {
+        return phase == Phase.TANK_DROP && dropTicks > 0;
+    }
+
+    /** Script offset from the authored child placement, including parent-frame rewinds. */
+    public float getTankShadowOffsetY() {
+        return tankShadowOffsetY;
     }
 
     public boolean isFinished() {
@@ -224,15 +252,21 @@ public final class FlashChinookTankAnimation {
         tankPreviousY = tank.sourceY;
         tank.sourceX = chinook.sourceX + 2f;
         tank.sourceY = chinook.sourceY + 30f;
+        tank.islandPlayerId = chinook.islandPlayerId;
+        updateAttachedTankFrame();
     }
 
     private void tickTankDrop() {
         if (dropTicks < TANK_DROP_TICKS) {
             dropTicks++;
             tank.sourceY += 2f;
+            tankShadowOffsetY -= 2f;
+            updateAttachedTankFrame();
         } else {
+            tank.linkage = "tankBase";
             tank.visible = true;
             turret.visible = true;
+            tank.islandPlayerId = route.targetPlayerId;
             tank.sourceFrame = Math.max(0, directionFrame(tank.sourceX - tankPreviousX,
                     tank.sourceY - tankPreviousY) - 1);
             phase = Phase.TANK_DRIVE;
@@ -243,8 +277,26 @@ public final class FlashChinookTankAnimation {
     private void aimTurret() {
         turret.sourceX = tank.sourceX;
         turret.sourceY = tank.sourceY;
+        turret.islandPlayerId = tank.islandPlayerId;
         turret.sourceFrame = Math.max(0, directionFrame(route.turretAimPoint.x - turret.sourceX,
                 route.turretAimPoint.y - turret.sourceY) * 2 - 2);
+    }
+
+    private void updateAttachedTankFrame() {
+        int frame = Math.max(0, directionFrame(tank.sourceX - tankPreviousX,
+                tank.sourceY - tankPreviousY) - 1);
+        // Reference gotoAndStop rewinds reapply the authored child matrix,
+        // while the script-set visibility survives the seek.
+        if (frame < tank.sourceFrame) tankShadowOffsetY = 0f;
+        tank.sourceFrame = frame;
+    }
+
+    private void updateChinookShadow() {
+        chinookShadow.sourceX = chinook.sourceX;
+        chinookShadow.sourceY = chinook.sourceY + 70f;
+        chinookShadow.sourceFrame = chinook.sourceFrame;
+        chinookShadow.islandPlayerId = chinook.islandPlayerId;
+        chinookShadow.visible = chinook.visible;
     }
 
     private void updateChinookFrame() {

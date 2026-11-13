@@ -248,7 +248,7 @@ public final class SourceBattleRecordClockInstrumentedTest {
                     int ticks = 0;
                     while (playback.isBlockingInput() && ticks++ < 1200) {
                         advance(app);
-                        if (tank.getActor(1).visible) {
+                        if (tank.isTankDeployed() && tank.getActor(1).visible) {
                             assertTrue(tank.getActor(2).visible);
                             assertEquals(tank.getActor(1).sourceX, tank.getActor(2).sourceX, 0f);
                             assertEquals(tank.getActor(1).sourceY, tank.getActor(2).sourceY, 0f);

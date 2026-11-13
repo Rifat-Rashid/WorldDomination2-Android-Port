@@ -19,9 +19,14 @@ public final class FlashBattleUnitRenderer {
     private static final int[][] SATELLITE_LASER_COLORS = buildSatelliteLaserColors();
     private static final int MAX_SATELLITE_CLIP_DEPTH = 8;
     private static final int MAX_ACTION_BUILDING_CLIP_DEPTH = 8;
+    private static final int MAX_DEPLOYMENT_CLIP_DEPTH = 8;
     private final FlashAffineTransform[] planeTransformScratch = createPlaneTransformScratch();
     private final FlashAffineTransform[] actionBuildingTransformScratch =
             createActionBuildingTransformScratch();
+    private final FlashAffineTransform[] deploymentTransformScratch = createPlaneTransformScratch();
+    private final FlashColorTransform.Composition[] deploymentColorScratch =
+            createDeploymentColorScratch();
+    private final float[] deploymentVertices = new float[20];
     private static final String SUBMARINE_TINT_VERTEX_SHADER =
             "attribute vec4 a_position;\n"
                     + "attribute vec4 a_color;\n"
@@ -31,6 +36,7 @@ public final class FlashBattleUnitRenderer {
                     + "varying vec2 v_texCoords;\n"
                     + "void main() {\n"
                     + "  v_color = a_color;\n"
+                    + "  v_color.a *= (255.0 / 254.0);\n"
                     + "  v_texCoords = a_texCoord0;\n"
                     + "  gl_Position = u_projTrans * a_position;\n"
                     + "}\n";
@@ -223,14 +229,107 @@ public final class FlashBattleUnitRenderer {
         if (!assets.isLoaded()) {
             return;
         }
-        for (FlashChinookTankAnimation animation : animations) {
-            for (int index = 0; index < animation.getActorCount(); index++) {
-                FlashChinookTankAnimation.Actor actor = animation.getActor(index);
-                drawActor(batch, mapBounds, actor.linkage, actor.sourceFrame,
-                        actor.sourceX, actor.sourceY, actor.islandPlayerId,
-                        1f, 1f, actor.visible);
+        ShaderProgram previousShader = batch.getShader();
+        float previousColor = batch.getPackedColor();
+        try {
+            for (int index = 0; index < animations.size(); index++) {
+                FlashChinookTankAnimation animation = animations.get(index);
+                // Unit.appMC_depth: attached base = carrier - 2, turret =
+                // base + 1. The separate shadow is attached after the carrier.
+                drawDeploymentActor(batch, mapBounds, animation, animation.getActor(1));
+                drawDeploymentActor(batch, mapBounds, animation, animation.getActor(2));
+                drawDeploymentActor(batch, mapBounds, animation, animation.getActor(0));
+                drawDeploymentActor(batch, mapBounds, animation, animation.getChinookShadow());
             }
+        } finally {
+            batch.setShader(previousShader);
+            batch.setPackedColor(previousColor);
         }
+    }
+
+    private void drawDeploymentActor(SpriteBatch batch, Rectangle mapBounds,
+                                      FlashChinookTankAnimation animation,
+                                      FlashChinookTankAnimation.Actor actor) {
+        if (!actor.visible) return;
+        FlashAnimationTimeline timeline = assets.getTimeline(actor.linkage);
+        if (timeline == null || timeline.getFrameCount() == 0) return;
+        deploymentTransformScratch[0].setIdentity();
+        deploymentColorScratch[0].identity();
+        drawDeploymentFrame(batch, mapBounds, timeline.getFrame(
+                Math.min(actor.sourceFrame, timeline.getFrameCount() - 1)), animation, actor, 0);
+    }
+
+    /** Walk only the recovered deployment clips; do not change other unit render paths. */
+    private void drawDeploymentFrame(SpriteBatch batch, Rectangle mapBounds,
+                                      FlashAnimationTimeline.Frame frame,
+                                      FlashChinookTankAnimation animation,
+                                      FlashChinookTankAnimation.Actor actor, int depth) {
+        if (frame == null || depth >= MAX_DEPLOYMENT_CLIP_DEPTH) return;
+        FlashAffineTransform parent = deploymentTransformScratch[depth];
+        FlashAffineTransform transform = deploymentTransformScratch[depth + 1];
+        FlashColorTransform.Composition parentColor = deploymentColorScratch[depth];
+        FlashColorTransform.Composition color = deploymentColorScratch[depth + 1];
+        for (FlashAnimationTimeline.Layer layer : frame.layers) {
+            boolean tankShadow = layer.shapeId == 677;
+            if (tankShadow && !animation.isTankShadowVisible()) continue;
+            float localY = layer.ty + (tankShadow ? animation.getTankShadowOffsetY() : 0f);
+            transform.setProduct(parent, layer.a, layer.b, layer.c, layer.d, layer.tx, localY);
+            color.setProduct(parentColor, layer.colorTransform);
+            TextureRegion region = assets.getShape(layer.shapeId);
+            if (region != null) {
+                if (!setDeploymentColor(batch, color)) continue;
+                FlashSpriteQuad.positions(deploymentVertices, transform, mapBounds,
+                        actor.sourceX, actor.sourceY, actor.islandPlayerId,
+                        assets.getShapeOriginX(layer.shapeId), assets.getShapeOriginY(layer.shapeId),
+                        region.getRegionWidth(), region.getRegionHeight());
+                float packed = batch.getPackedColor();
+                for (int vertex = 0; vertex < 20; vertex += 5) {
+                    deploymentVertices[vertex + 2] = packed;
+                }
+                deploymentVertices[3] = region.getU();
+                deploymentVertices[4] = region.getV2();
+                deploymentVertices[8] = region.getU();
+                deploymentVertices[9] = region.getV();
+                deploymentVertices[13] = region.getU2();
+                deploymentVertices[14] = region.getV();
+                deploymentVertices[18] = region.getU2();
+                deploymentVertices[19] = region.getV2();
+                batch.draw(region.getTexture(), deploymentVertices, 0, 20);
+                continue;
+            }
+            FlashAnimationTimeline nested = assets.getTimelineBySymbolId(layer.shapeId);
+            if (nested == null || nested.getFrameCount() == 0) continue;
+            // View explicitly seeks chinook_shadow.mc to the carrier's frame;
+            // the tank's nested shadow is a one-frame clip.
+            int childFrame = layer.shapeId == 2373 ? actor.sourceFrame : 0;
+            drawDeploymentFrame(batch, mapBounds, nested.getFrame(
+                    Math.min(childFrame, nested.getFrameCount() - 1)), animation, actor, depth + 1);
+        }
+    }
+
+    private boolean setDeploymentColor(SpriteBatch batch, FlashColorTransform.Composition color) {
+        if (color.isIdentity()) {
+            batch.setShader(null);
+        } else {
+            ensureSubmarineTintShader();
+            if (submarineTintShader == null) return false;
+            // Uniforms may change even when the shader object is unchanged.
+            batch.flush();
+            batch.setShader(submarineTintShader);
+            submarineTintShader.setUniformf("u_flashMultipliers", color.redMultiplier,
+                    color.greenMultiplier, color.blueMultiplier, color.alphaMultiplier);
+            submarineTintShader.setUniformf("u_flashAdditions", color.redAdd,
+                    color.greenAdd, color.blueAdd, color.alphaAdd);
+        }
+        batch.setColor(com.badlogic.gdx.graphics.Color.WHITE);
+        return true;
+    }
+
+    private static FlashColorTransform.Composition[] createDeploymentColorScratch() {
+        FlashColorTransform.Composition[] colors =
+                new FlashColorTransform.Composition[MAX_DEPLOYMENT_CLIP_DEPTH + 1];
+        for (int i = 0; i < colors.length; i++) colors[i] = new FlashColorTransform.Composition();
+        return colors;
     }
 
     /** Draws the recovered Flash rocket sprite and its original fading smoke artwork. */

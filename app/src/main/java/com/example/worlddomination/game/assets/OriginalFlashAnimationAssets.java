@@ -334,6 +334,10 @@ public final class OriginalFlashAnimationAssets implements Disposable {
             loadedNestedTimelines.putAll(loadNestedTimelines(scene,
                     loadedTimelines.get("plane002_shadow")));
             loadedNestedTimelines.putAll(loadNestedTimelines(scene,
+                    loadedTimelines.get("tank_noshade")));
+            loadedNestedTimelines.putAll(loadNestedTimelines(scene,
+                    loadedTimelines.get("chinook_shadow")));
+            loadedNestedTimelines.putAll(loadNestedTimelines(scene,
                     loadedTimelines.get(ACTION_BUILDINGS_TIMELINE)));
             loadedNestedTimelines.putAll(loadNestedTimelines(scene,
                     loadedTimelines.get("interface_center_slider_1")));
