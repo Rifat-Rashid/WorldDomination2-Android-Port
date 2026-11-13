@@ -20,6 +20,11 @@ public final class FlashBattleUnitRenderer {
     private static final int MAX_SATELLITE_CLIP_DEPTH = 8;
     private static final int MAX_ACTION_BUILDING_CLIP_DEPTH = 8;
     private static final int MAX_DEPLOYMENT_CLIP_DEPTH = 8;
+    private static final FlashColorTransform[] APACHE_TINTS = {
+            FlashColorTransform.forPlayerColor(1), FlashColorTransform.forPlayerColor(2),
+            FlashColorTransform.forPlayerColor(3), FlashColorTransform.forPlayerColor(4),
+            FlashColorTransform.forPlayerColor(5)
+    };
     private final FlashAffineTransform[] planeTransformScratch = createPlaneTransformScratch();
     private final FlashAffineTransform[] actionBuildingTransformScratch =
             createActionBuildingTransformScratch();
@@ -253,15 +258,96 @@ public final class FlashBattleUnitRenderer {
 
     public void drawApacheMarine(SpriteBatch batch, Rectangle mapBounds,
                                  List<FlashApacheMarineAnimation> animations) {
-        if (!assets.isLoaded()) {
-            return;
+        if (!assets.isLoaded() || !hasVisibleApacheActor(animations)) return;
+        ShaderProgram previousShader = batch.getShader();
+        float previousColor = batch.getPackedColor();
+        try {
+            for (FlashApacheMarineAnimation animation : animations) {
+                FlashColorTransform tint = apacheTint(animation.getColorName());
+                for (int index = 0; index < animation.getActorCount(); index++) {
+                    FlashApacheMarineAnimation.Actor actor = animation.getActor(index);
+                    if (actor.visible) {
+                        drawApacheClip(batch, mapBounds, actor, actor.linkage, null);
+                    }
+                    // Unit attaches the separate shadow between Apache body and tint.
+                    if (index == 0 && animation.getApacheShadow().visible) {
+                        drawApacheClip(batch, mapBounds, animation.getApacheShadow(),
+                                "apache_shadow", null);
+                    }
+                    if (!actor.visible) continue;
+                    String tintLinkage = index == 0 ? "apache_tint"
+                            : "soldier001_shoot".equals(actor.linkage)
+                            ? "soldier001_shoot_tint" : "soldier001_tint";
+                    drawApacheClip(batch, mapBounds, actor, tintLinkage, tint);
+                }
+            }
+        } finally {
+            batch.setShader(previousShader);
+            batch.setPackedColor(previousColor);
         }
-        for (FlashApacheMarineAnimation animation : animations) {
-            for (int index = 0; index < animation.getActorCount(); index++) {
-                FlashApacheMarineAnimation.Actor actor = animation.getActor(index);
-                drawActor(batch, mapBounds, actor.linkage, actor.sourceFrame,
-                        actor.sourceX, actor.sourceY, actor.islandPlayerId,
-                        actor.scale, actor.alpha, actor.visible);
+    }
+
+    private static boolean hasVisibleApacheActor(List<FlashApacheMarineAnimation> animations) {
+        for (int index = 0; index < animations.size(); index++) {
+            FlashApacheMarineAnimation animation = animations.get(index);
+            if (animation.getApacheShadow().visible) return true;
+            for (int actor = 0; actor < animation.getActorCount(); actor++) {
+                if (animation.getActor(actor).visible) return true;
+            }
+        }
+        return false;
+    }
+
+    private static FlashColorTransform apacheTint(String colorName) {
+        switch (colorName) {
+            case "blue": return APACHE_TINTS[0];
+            case "red": return APACHE_TINTS[1];
+            case "orange": return APACHE_TINTS[2];
+            case "yellow": return APACHE_TINTS[3];
+            case "green": return APACHE_TINTS[4];
+            default: throw new IllegalArgumentException("Unknown Apache player color");
+        }
+    }
+
+    private void drawApacheClip(SpriteBatch batch, Rectangle bounds,
+                                FlashApacheMarineAnimation.Actor actor, String linkage,
+                                FlashColorTransform tint) {
+        FlashAnimationTimeline timeline = assets.getTimeline(linkage);
+        if (timeline == null || timeline.getFrameCount() == 0) return;
+        deploymentTransformScratch[0].setIdentity();
+        deploymentTransformScratch[1].setProduct(deploymentTransformScratch[0],
+                actor.scale, 0f, 0f, actor.scale, 0f, 0f);
+        deploymentColorScratch[0].identity();
+        deploymentColorScratch[1].identity();
+        deploymentColorScratch[1].alphaMultiplier = actor.alpha;
+        if (tint != null) {
+            deploymentColorScratch[1].setProduct(deploymentColorScratch[1], tint);
+        }
+        drawApacheFrame(batch, bounds, timeline.getFrame(Math.min(actor.sourceFrame,
+                timeline.getFrameCount() - 1)), actor, 1);
+    }
+
+    private void drawApacheFrame(SpriteBatch batch, Rectangle bounds,
+                                 FlashAnimationTimeline.Frame frame,
+                                 FlashApacheMarineAnimation.Actor actor, int depth) {
+        if (frame == null || depth >= MAX_DEPLOYMENT_CLIP_DEPTH) return;
+        FlashAffineTransform parent = deploymentTransformScratch[depth];
+        FlashAffineTransform transform = deploymentTransformScratch[depth + 1];
+        FlashColorTransform.Composition parentColor = deploymentColorScratch[depth];
+        FlashColorTransform.Composition color = deploymentColorScratch[depth + 1];
+        for (FlashAnimationTimeline.Layer layer : frame.layers) {
+            transform.setProduct(parent, layer.a, layer.b, layer.c, layer.d, layer.tx, layer.ty);
+            color.setProduct(parentColor, layer.colorTransform);
+            TextureRegion region = assets.getShape(layer.shapeId);
+            if (region != null) {
+                drawTransformedLeaf(batch, bounds, region, layer.shapeId, transform, color,
+                        actor.sourceX, actor.sourceY, actor.islandPlayerId, 0f);
+                continue;
+            }
+            FlashAnimationTimeline nested = assets.getTimelineBySymbolId(layer.shapeId);
+            if (nested != null && nested.getFrameCount() > 0) {
+                int nestedFrame = Math.min(actor.sourceFrame, nested.getFrameCount() - 1);
+                drawApacheFrame(batch, bounds, nested.getFrame(nestedFrame), actor, depth + 1);
             }
         }
     }

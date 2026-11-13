@@ -32,10 +32,17 @@ public final class FlashApacheMarineAnimationTest {
         assertEquals(0f, apache.sourceX, 0f);
         assertEquals(0f, apache.sourceY, 0f);
         assertEquals(0.5f, apache.scale, 0f);
+        FlashApacheMarineAnimation.Actor shadow = animation.getApacheShadow();
+        assertSame(shadow, animation.getApacheShadow());
+        assertTrue(shadow.visible);
+        assertEquals(0.5f, shadow.scale, 0f);
         animation.presentWaitingFrame();
         assertEquals(396.25f, apache.sourceX, 0f);
         assertEquals(352.25f, apache.sourceY, 0f);
         assertEquals(6, apache.sourceFrame);
+        assertEquals(apache.sourceX, shadow.sourceX, 0f);
+        assertEquals(apache.sourceY, shadow.sourceY, 0f);
+        assertEquals(apache.sourceFrame, shadow.sourceFrame);
         animation.tick();
         assertEquals(396.25f, apache.sourceX, 0f);
         animation.tick();
@@ -75,6 +82,7 @@ public final class FlashApacheMarineAnimationTest {
         animation.registerStoppedClips(queue);
         assertEquals(4, queue.size());
         assertEquals(4, queue.removeAtAllUnitsDone());
+        assertFalse("Paired Apache shadow detaches with its body", animation.getApacheShadow().visible);
         for (int actor = 0; actor < 4; actor++) {
             assertFalse(animation.getActor(actor).visible);
         }
@@ -189,6 +197,8 @@ public final class FlashApacheMarineAnimationTest {
         interfaceFrames.begin();
         List<String> rows = Files.readAllLines(projectSourceFixture(), StandardCharsets.UTF_8);
         assertEquals("Four source wrappers on every host tick", 1 + 526 * 4, rows.size());
+        List<String> shadowRows = Files.readAllLines(projectShadowFixture(), StandardCharsets.UTF_8);
+        assertEquals("Apache body/shadow at every host tick", 1 + 526, shadowRows.size());
         Field queuedClipsField = SourceStoppedClipQueue.class.getDeclaredField("clips");
         queuedClipsField.setAccessible(true);
         Field marineTracksField = FlashApacheMarineAnimation.class.getDeclaredField("marines");
@@ -297,6 +307,33 @@ public final class FlashApacheMarineAnimationTest {
                     marineRemovedThisTick, earlyReturn);
             compare(mismatches, "tick=" + tick + " queued wrappers", sourceQueued,
                     queue.size());
+            String[] visual = shadowRows.get(1 + tick).split(",", -1);
+            compare(mismatches, "tick=" + tick + " shadow fixture clock", tick,
+                    Integer.parseInt(visual[0]));
+            FlashApacheMarineAnimation.Actor apacheBody = animation.getActor(0);
+            FlashApacheMarineAnimation.Actor shadow = animation.getApacheShadow();
+            compareFloat(mismatches, "tick=" + tick + " Apache body X",
+                    Float.parseFloat(visual[1]), apacheBody.sourceX);
+            compareFloat(mismatches, "tick=" + tick + " Apache body Y",
+                    Float.parseFloat(visual[2]), apacheBody.sourceY);
+            compareFloat(mismatches, "tick=" + tick + " Apache body scale",
+                    Float.parseFloat(visual[3]) / 100f, apacheBody.scale);
+            compare(mismatches, "tick=" + tick + " Apache body frame",
+                    Integer.parseInt(visual[4]), apacheBody.sourceFrame + 1);
+            compare(mismatches, "tick=" + tick + " Apache body visibility",
+                    Boolean.parseBoolean(visual[5]), apacheBody.visible);
+            compareFloat(mismatches, "tick=" + tick + " shadow X",
+                    Float.parseFloat(visual[6]), shadow.sourceX);
+            compareFloat(mismatches, "tick=" + tick + " shadow Y",
+                    Float.parseFloat(visual[7]), shadow.sourceY);
+            compareFloat(mismatches, "tick=" + tick + " shadow scale",
+                    Float.parseFloat(visual[8]) / 100f, shadow.scale);
+            compare(mismatches, "tick=" + tick + " shadow child frame",
+                    Integer.parseInt(visual[9]), shadow.sourceFrame + 1);
+            compare(mismatches, "tick=" + tick + " shadow visibility",
+                    Boolean.parseBoolean(visual[10]), shadow.visible);
+            compareFloat(mismatches, "tick=" + tick + " shadow Y offset",
+                    Float.parseFloat(visual[11]), shadow.sourceY - apacheBody.sourceY);
             @SuppressWarnings("unchecked")
             List<SourceStoppedClipQueue.Clip> actualQueued =
                     (List<SourceStoppedClipQueue.Clip>) queuedClipsField.get(queue);
@@ -420,6 +457,12 @@ public final class FlashApacheMarineAnimationTest {
 
     private static Path projectSourceFixture() {
         String relative = "source/apache_marine_seed0_three_turns.csv";
+        Path module = Paths.get("app", "src", "test", "resources", relative);
+        return Files.isRegularFile(module) ? module : Paths.get("src", "test", "resources", relative);
+    }
+
+    private static Path projectShadowFixture() {
+        String relative = "source/apache_shadow_seed0_three_turns.csv";
         Path module = Paths.get("app", "src", "test", "resources", relative);
         return Files.isRegularFile(module) ? module : Paths.get("src", "test", "resources", relative);
     }

@@ -27,6 +27,28 @@ import static org.junit.Assert.assertTrue;
 
 public final class OriginalFlashAnimationAssetsTest {
     @Test
+    public void apacheShadowResolvesItsBodyChildAndAuthoredColorTransform() throws IOException {
+        JsonValue scene = loadScene();
+        Map<String, FlashAnimationTimeline> roots =
+                OriginalFlashAnimationAssets.loadTimelines(scene);
+        FlashAnimationTimeline shadow = roots.get("apache_shadow");
+        assertNotNull(shadow);
+        assertEquals(1, shadow.getFrameCount());
+        FlashAnimationTimeline.Layer placement = shadow.getFrame(0).layers[0];
+        assertEquals(787, placement.shapeId);
+        assertEquals(-1f, placement.colorTransform.redMultiplier, 0f);
+        assertEquals(-1f, placement.colorTransform.redAdd, 0f);
+        assertEquals(0.44921875f, placement.colorTransform.alphaMultiplier, 0f);
+        Map<Integer, FlashAnimationTimeline> children =
+                OriginalFlashAnimationAssets.loadNestedTimelines(scene, shadow);
+        FlashAnimationTimeline body = children.get(787);
+        assertNotNull(body);
+        assertEquals(roots.get("apache").getFrameCount(), body.getFrameCount());
+        assertEquals(728, body.getFrame(6).shapeId);
+        assertTrue(Files.isRegularFile(shapeAsset(728)));
+    }
+
+    @Test
     public void setupRemovalButtonRetainsEmptyAndVisibleSourceFramesAndEarlyArtwork()
             throws IOException {
         JsonValue scene = loadScene();
