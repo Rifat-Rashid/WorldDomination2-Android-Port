@@ -5,6 +5,8 @@ import com.badlogic.gdx.math.Rectangle;
 /** Responsive hit and render geometry for the landscape game setup screen. */
 public final class SetupScreenLayout {
     public static final int VISIBLE_LEADERS = 6;
+    /** Presenter_gameMenu.update_leader_list uses _alpha = 20 for selected rivals. */
+    public static final float SELECTED_LEADER_ALPHA = 0.2f;
 
     public final Rectangle logo = new Rectangle();
     public final Rectangle difficultyPanel = new Rectangle();
@@ -21,6 +23,7 @@ public final class SetupScreenLayout {
     public final Rectangle[] colorSwatches = rectangles(5);
     public final Rectangle[] buildingButtons = rectangles(5);
     public final Rectangle[] opponentSlots = rectangles(4);
+    public final Rectangle[] opponentRemoveIcons = rectangles(4);
     public final Rectangle[] leaderCards = rectangles(VISIBLE_LEADERS);
 
     /** Lays out the mockup's top difficulty row, split player style, rival picker and footer. */
@@ -83,6 +86,13 @@ public final class SetupScreenLayout {
         for (int i = 0; i < opponentSlots.length; i++) {
             opponentSlots[i].set(slotX + i * (slotWidth + slotGap), slotY,
                     slotWidth, slotHeight);
+            // Original shape 5825 is 17.3 x 17.1 inside a 67.38 x 72.69 card.
+            // Keep its aspect ratio when adapting the card to a wide phone layout.
+            float iconHeight = Math.min(slotHeight * (17.1f / 72.69f),
+                    slotWidth * (17.1f / 67.38f));
+            float iconWidth = iconHeight * (17.3f / 17.1f);
+            opponentRemoveIcons[i].set(opponentSlots[i].x + slotWidth * 0.97f - iconWidth,
+                    slotY + slotHeight * 0.9925f - iconHeight, iconWidth, iconHeight);
         }
         opponentArrow.set(enemiesPanel.x + enemiesPanel.width * 0.12f,
                 slotY + slotHeight * 0.37f,

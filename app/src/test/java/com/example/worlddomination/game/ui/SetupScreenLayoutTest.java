@@ -9,6 +9,21 @@ import static org.junit.Assert.assertTrue;
 
 public final class SetupScreenLayoutTest {
     @Test
+    public void removalArtworkKeepsSourceAspectRatioInsideEveryOccupiedCard() {
+        for (float[] size : new float[][]{{800, 600}, {1194, 552}, {2424, 1080}}) {
+            SetupScreenLayout layout = new SetupScreenLayout();
+            layout.update(size[0], size[1], 0, 0, 0, 0);
+            for (int i = 0; i < layout.opponentSlots.length; i++) {
+                Rectangle card = layout.opponentSlots[i], icon = layout.opponentRemoveIcons[i];
+                assertTrue(card.contains(icon));
+                assertTrue(icon.x > card.x + card.width * .6f);
+                assertTrue(icon.y > card.y + card.height * .6f);
+                assertEquals(17.3f / 17.1f, icon.width / icon.height, .0001f);
+            }
+        }
+    }
+
+    @Test
     public void setupSectionsAndControlsFitCommonLandscapeSizesAndSafeInsets() {
         assertLayout(896f, 414f, 0f, 0f, 0f, 0f);
         assertLayout(1854f, 849f, 34f, 12f, 22f, 10f);

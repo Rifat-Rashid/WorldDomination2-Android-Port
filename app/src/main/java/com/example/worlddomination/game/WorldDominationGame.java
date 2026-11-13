@@ -1186,9 +1186,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         drawSetupDirectionArrow(setupLayout.opponentArrow);
         drawSetupInsetFill(setupLayout.leaderDescription);
         for (int i = 0; i < setupLayout.leaderCards.length; i++) {
-            int leaderId = SetupScreenLayout.leaderIdAt(setupLeaderListStart, i,
-                    GameSetup.leaders().size());
-            drawSetupButtonGradient(setupLayout.leaderCards[i], selectedIds.contains(leaderId));
+            drawSetupButtonGradient(setupLayout.leaderCards[i], false);
         }
         drawSetupButtonGradient(setupLayout.leaderPrevious, false);
         drawSetupButtonGradient(setupLayout.leaderNext, false);
@@ -1243,13 +1241,24 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             int leaderId = SetupScreenLayout.leaderIdAt(setupLeaderListStart, i,
                     GameSetup.leaders().size());
             Rectangle card = setupLayout.leaderCards[i];
+            boolean selected = selectedIds.contains(leaderId);
+            if (selected) batch.setColor(1f, 1f, 1f, SetupScreenLayout.SELECTED_LEADER_ALPHA);
             drawSetupLeaderPortrait(leaderId, card.x + 3f, card.y + 3f,
                     card.width - 6f, card.height - 6f);
+            if (selected) batch.setColor(Color.WHITE);
         }
         for (int i = 0; i < selectedIds.size(); i++) {
             Rectangle slot = setupLayout.opponentSlots[i];
             drawSetupLeaderPortrait(selectedIds.get(i), slot.x + 3f, slot.y + 3f,
                     slot.width - 6f, slot.height - 6f);
+            if (flashAnimationAssets != null && flashAnimationAssets.areSetupPortraitsLoaded()) {
+                com.badlogic.gdx.graphics.g2d.TextureRegion removeIcon = flashAnimationAssets.getShape(
+                        OriginalFlashAnimationAssets.SETUP_REMOVE_LEADER_SHAPE_ID);
+                if (removeIcon != null) {
+                    Rectangle icon = setupLayout.opponentRemoveIcons[i];
+                    batch.draw(removeIcon, icon.x, icon.y, icon.width, icon.height);
+                }
+            }
         }
         font.setColor(showSetupMessage ? GOLD : TITLE_TEXT);
         drawCentered(showSetupMessage ? setupMessage : "",
@@ -1294,9 +1303,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         for (int i = 0; i < setupLayout.leaderCards.length; i++) {
             Rectangle card = setupLayout.leaderCards[i];
-            int leaderId = SetupScreenLayout.leaderIdAt(setupLeaderListStart, i,
-                    GameSetup.leaders().size());
-            drawSetupButtonEdges(card, setup.getSelectedOpponentIds().contains(leaderId));
+            drawSetupButtonEdges(card, false);
         }
         drawSetupButtonEdges(setupLayout.leaderPrevious, false);
         drawSetupButtonEdges(setupLayout.leaderNext, false);
