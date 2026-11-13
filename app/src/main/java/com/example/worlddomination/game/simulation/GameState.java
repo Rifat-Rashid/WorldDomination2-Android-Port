@@ -1894,6 +1894,15 @@ public final class GameState {
         return selectedShipStrikes.isEmpty() ? -1 : selectedShipStrikes.get(0).targetPlayerId;
     }
 
+    /** Current preview reservations for one ship payload, without a list wrapper. */
+    public int getSelectedShipPayloadUseCount(String payloadName) {
+        int count = 0;
+        for (int index = 0; index < selectedShipStrikes.size(); index++) {
+            if (selectedShipStrikes.get(index).payloadName.equals(payloadName)) count++;
+        }
+        return count;
+    }
+
     public List<ShipStrike> getSelectedShipStrikes() {
         return Collections.unmodifiableList(selectedShipStrikes);
     }

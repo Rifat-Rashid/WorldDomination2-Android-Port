@@ -66,6 +66,7 @@ import com.example.worlddomination.game.simulation.TechnologyCatalog;
 import com.example.worlddomination.game.ui.ActionFooterLayout;
 import com.example.worlddomination.game.ui.ActionScreenLayout;
 import com.example.worlddomination.game.ui.SourceActionMenuState;
+import com.example.worlddomination.game.ui.SourceStockControlState;
 import com.example.worlddomination.game.ui.SourceActionInstruction;
 import com.example.worlddomination.game.ui.EconomyWarningText;
 import com.example.worlddomination.game.rendering.SourceActionMenuRenderer;
@@ -1978,10 +1979,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 Rectangle row = equipmentRows[start + item + 1];
                 row.set(bodyX + itemColumn * (cellWidth + gap), itemY,
                         cellWidth, EQUIPMENT_ROW_HEIGHT - 4f);
-                if (EQUIPMENT_WEAPON_NAMES[start + item + 1].equals(selectedEquipment)) {
-                    shapes.setColor(BUTTON_SELECTED);
-                    shapes.rect(row.x, row.y, row.width, row.height);
-                }
             }
             top = cardY - 3f;
         }
@@ -2002,49 +1999,17 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 continue;
             }
             float controlHeight = Math.min(19f, row.height - 5f);
-            float controlWidth = controlHeight * 0.95f;
-            boolean stocked = isEquipmentAvailable(rowIndex);
-            TextureRegion control = stocked ? uiAssets.inventoryCounter
-                    : uiAssets.inventorySwitch;
-            float controlX = row.x + row.width - controlWidth - 15f;
             float controlY = row.y + (row.height - controlHeight) / 2f;
-            batch.draw(control, controlX, controlY, controlWidth, controlHeight);
+            float counterWidth = controlHeight * 32f / 26f;
+            float switchWidth = controlHeight * 30f / 26f;
+            float counterX = row.x + row.width - counterWidth - switchWidth - 5f;
+            int stockState = SourceStockControlState.state(game, sourceActionMenu,
+                    equipmentWeaponName(rowIndex));
+            batch.draw(uiAssets.stockSwitches[SourceStockControlState.switchIndex(stockState)],
+                    counterX + counterWidth + 2f, controlY, switchWidth, controlHeight);
+            batch.draw(uiAssets.stockCounter, counterX, controlY, counterWidth, controlHeight);
         }
         batch.end();
-
-        shapes.begin(ShapeRenderer.ShapeType.Filled);
-        for (int rowIndex = 0; rowIndex < EQUIPMENT_ROWS.length; rowIndex++) {
-            if (isEquipmentHeading(rowIndex)) {
-                continue;
-            }
-            Rectangle row = equipmentRows[rowIndex];
-            if (row.y + row.height < equipmentViewport.y
-                    || row.y > equipmentViewport.y + equipmentViewport.height) {
-                continue;
-            }
-            float controlHeight = Math.min(19f, row.height - 5f);
-            float controlWidth = controlHeight * 0.95f;
-            float controlX = row.x + row.width - controlWidth - 15f;
-            float controlY = row.y + (row.height - controlHeight) / 2f;
-            shapes.setColor(0.02f, 0.06f, 0.08f, 1f);
-            shapes.rect(controlX + controlWidth * 0.24f, controlY + controlHeight * 0.24f,
-                    controlWidth * 0.52f, controlHeight * 0.52f);
-            if (isEquipmentAvailable(rowIndex)) {
-                shapes.setColor(0.015f, 0.045f, 0.055f, 1f);
-                shapes.rect(controlX + controlWidth * 0.18f,
-                        controlY + controlHeight * 0.18f,
-                        controlWidth * 0.56f, controlHeight * 0.64f);
-            }
-            float indicatorX = row.x + row.width - 7f;
-            float indicatorY = row.y + row.height / 2f;
-            shapes.setColor(0.04f, 0.10f, 0.13f, 1f);
-            shapes.circle(indicatorX, indicatorY, 5.2f, 12);
-            shapes.setColor(0.57f, 0.19f, 0.13f, 1f);
-            shapes.circle(indicatorX, indicatorY, 3.0f, 12);
-            shapes.setColor(0.91f, 0.42f, 0.25f, 1f);
-            shapes.circle(indicatorX - 0.7f, indicatorY + 0.9f, 1.0f, 8);
-        }
-        shapes.end();
 
         shapes.begin(ShapeRenderer.ShapeType.Line);
         for (Rectangle card : equipmentCards) {
@@ -2079,13 +2044,26 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                     || row.y > equipmentViewport.y + equipmentViewport.height) {
                 continue;
             }
-            font.setColor(isEquipmentAvailable(rowIndex) ? TITLE_TEXT : DISABLED_TEXT);
-            float countWidth = Math.min(21f, row.height - 7f);
-            float countX = row.x + row.width - countWidth - 15f;
+            int stockState = SourceStockControlState.state(game, sourceActionMenu,
+                    equipmentWeaponName(rowIndex));
+            font.setColor(SourceStockControlState.usesGrayLabel(stockState)
+                    ? DISABLED_TEXT : TITLE_TEXT);
+            float controlHeight = Math.min(19f, row.height - 5f);
+            float countWidth = controlHeight * 32f / 26f;
+            float switchWidth = controlHeight * 30f / 26f;
+            float countX = row.x + row.width - countWidth - switchWidth - 5f;
+            float labelScale = font.getScaleX();
+            float labelWidth = Math.max(1f, countX - row.x - 6f);
+            glyphLayout.setText(font, EQUIPMENT_ROWS[rowIndex]);
+            if (glyphLayout.width > labelWidth) {
+                font.getData().setScale(labelScale * labelWidth / glyphLayout.width);
+            }
             font.draw(batch, EQUIPMENT_ROWS[rowIndex], row.x + 2f,
-                    row.y + row.height / 2f + font.getLineHeight() * 0.32f);
+                    row.y + row.height / 2f + font.getCapHeight() / 2f);
+            font.getData().setScale(labelScale);
             font.setColor(Color.WHITE);
-            int stock = equipmentStock(rowIndex);
+            int stock = SourceStockControlState.displayedCount(game, sourceActionMenu,
+                    equipmentWeaponName(rowIndex));
             drawCentered(stock >= 0 ? Integer.toString(stock) : "-",
                     countX + countWidth / 2f, row.y + row.height / 2f + 3f, 9f);
             if (isEquipmentBioloaded(rowIndex)) {
@@ -2147,13 +2125,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private boolean isEquipmentBioloaded(int rowIndex) {
         String weaponName = equipmentWeaponName(rowIndex);
         return weaponName != null && game.isWeaponBioloaded(0, weaponName);
-    }
-
-    private int equipmentStock(int rowIndex) {
-        String weaponName = equipmentWeaponName(rowIndex);
-        return weaponName == null || (!game.isWeaponActive(0, weaponName)
-                && !game.isWeaponBioloaded(0, weaponName))
-                ? -1 : sourceActionMenu.availableStock(game, weaponName);
     }
 
     /** Draws the recovered Flash contamination artwork over the affected control. */

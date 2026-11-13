@@ -80,7 +80,9 @@ def verify_bundle(path, audio_directory, require_upload=False):
                        "action-menus/skip_action.png", "action-menus/production_error.png",
                        "action-menus/research_error-chr.png", "action-menus/research_error-mus.png",
                        "action-menus/research_error-bhu.png", "action-menus/research_error-com.png",
-                       "action-menus/research_error-jew.png")
+                       "action-menus/research_error-jew.png",
+                       "stock-controls/counter.png", "stock-controls/unavailable.png",
+                       "stock-controls/eligible.png", "stock-controls/selected.png")
         for image in required_ui:
             name = "base/assets/original/ui/" + image
             if name not in entries:
