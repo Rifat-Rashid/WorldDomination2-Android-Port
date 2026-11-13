@@ -1048,6 +1048,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     /** The phone adapter releases playback at the endBattle handoff. */
     private void finishBattlePresentation() {
+        audio.finishSatelliteAudio();
         battleRecordClock.finishBattle();
         battleInterfaceFrames.reset();
         sourceStoppedClips.reset();
@@ -3496,6 +3497,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     }
 
     private void beginNewGameSetup() {
+        audio.finishSatelliteAudio();
         GameSetup nextSetup = setup == null
                 ? new GameSetup(System.nanoTime()) : setup.createNextSetup();
         stopScoreCounterSound();
@@ -4839,6 +4841,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         // Presenter initializes religion child clips after constructing routes.
         // These callbacks share the private presentation stream with the units.
+        audio.prepareSatelliteAudio(satelliteBattleAnimations.size());
         battleActionFrames.begin(actionBuildingAnimations,
                 game.getLastTurnActionBuildings(), presentationRandom);
         if (game.getPendingHumanDiplomacyProposal() != null) {

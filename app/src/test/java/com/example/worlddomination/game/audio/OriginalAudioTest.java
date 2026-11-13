@@ -15,6 +15,12 @@ import static org.junit.Assert.assertTrue;
 
 public final class OriginalAudioTest {
     @Test
+    public void satelliteCompletionUsesTheRecoveredAttackSound() {
+        assertEquals("original/runtime/audio/32_Sattelite attack.wav.mp3",
+                OriginalAudio.internalPath(OriginalAudio.Cue.SATELLITE_ATTACK));
+    }
+
+    @Test
     public void religionLabelUsesTheFourRecoveredMassMediaVariations() {
         assertNull(OriginalAudio.massMediaRevealCue(0));
         for (int variant = 1; variant <= 4; variant++) {
