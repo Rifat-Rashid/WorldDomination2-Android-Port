@@ -571,16 +571,6 @@ public final class FlashBattleRoutes {
                 event.type == GameState.CombatEventType.STRIKE_INTERCEPTED);
     }
 
-    /** All payload planes in one Flash ship battle record have the same startNum. */
-    public static int carrierPlaneDelayTicks(int nextRecordIndex, int shipPayloadIndex) {
-        if (nextRecordIndex < 0 || shipPayloadIndex < 0
-                || shipPayloadIndex >= SHIP_PLANE_START_OFFSETS.length
-                || (shipPayloadIndex > 0 && nextRecordIndex == 0)) {
-            throw new IllegalArgumentException("Invalid carrier sortie timing");
-        }
-        return (nextRecordIndex - (shipPayloadIndex == 0 ? 0 : 1)) * 36;
-    }
-
     /** Recreates Battle.createToSpawnUnitsArr's carrier, launch offsets, and source waypoints. */
     public static CarrierPlaneStrike createCarrierPlaneStrike(int attackerPlayerId,
                                                                int targetPlayerId,

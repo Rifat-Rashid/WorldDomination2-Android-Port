@@ -521,7 +521,7 @@ jobs:
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateActionBuildingEventTest" --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest" --tests "com.example.worlddomination.game.rendering.FlashActionBuildingAnimationTest" --tests "com.example.worlddomination.game.assets.OriginalFlashAnimationAssetsTest.loadsOriginalActionBuildingFramesAndReligionVariantsIntoTheBattleAtlas"'
           - id: turn-playback-sequence-tests
             check: Source action-label timing and turn playback barrier
-            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.TurnPlaybackSequenceTest"'
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.TurnPlaybackSequenceTest" --tests "com.example.worlddomination.game.rendering.SourceBattleRecordClockTest" --tests "com.example.worlddomination.game.simulation.GameStateBattleRecordTest"'
     steps:
       - name: Check out source
         uses: actions/checkout@v5

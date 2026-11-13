@@ -47,7 +47,7 @@ public final class CarrierSortieInstrumentedTest {
                     assertEquals("Two ship records must produce five actual payload outcomes", 5,
                             events.size());
                     assertEquals(5, animations.size());
-                    // The AI's three payloads are presented before the human's two.
+                    // Physical source spawn construction is reversed; activation uses record ordinals.
                     int[] attackers = {1, 1, 1, 0, 0};
                     int[] payloadIndices = {0, 1, 2, 0, 1};
                     float[] expectedX = {353.95f, 316.95f, 287.95f, 458.5f, 421.5f};
@@ -73,8 +73,11 @@ public final class CarrierSortieInstrumentedTest {
                     assertEquals(delays[0], delays[1]);
                     assertEquals(delays[0], delays[2]);
                     assertEquals(delays[3], delays[4]);
-                    assertTrue("The next ship record advances the current native clock",
-                            delays[3] > delays[2]);
+                    assertEquals("Human resource record precedes its battle record", 2, delays[3]);
+                    assertEquals("AI battle follows the human record on the next source tick", 3,
+                            delays[0]);
+                    assertTrue("Human activates before AI despite reverse construction order",
+                            delays[3] < delays[2]);
                 } catch (Throwable error) {
                     failure.set(error);
                 } finally {
