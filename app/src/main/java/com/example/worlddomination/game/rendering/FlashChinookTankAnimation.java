@@ -25,7 +25,8 @@ public final class FlashChinookTankAnimation {
     private static final int TANK_SHOT_COUNT = 60;
     private static final int TANK_DROP_TICKS = 20;
     private static final int CHINOOK_FLY_OFF_TICKS = 250;
-    private static final int GUN_SOUND_INTERVAL = 26;
+    private static final int TANK_PRESHOT_THRESHOLD = 25;
+    private static final int TANK_FLASH_RESET_THRESHOLD = 3;
     private static final float CHINOOK_STEP = 8f;
     private static final float TANK_STEP = 2f;
     private static final float ARRIVAL_RANGE = 10f;
@@ -45,7 +46,7 @@ public final class FlashChinookTankAnimation {
     private int dropTicks;
     private int chinookFlyOffTicks;
     private int tankWaypointIndex;
-    private int firingTicks;
+    private int tankPreshotCount;
     private int shotCount;
     private boolean tankFireFinished;
     private int frameOffset;
@@ -109,8 +110,8 @@ public final class FlashChinookTankAnimation {
                     turret.visible = true;
                     tank.sourceX = route.tankStart.x;
                     tank.sourceY = route.tankStart.y + 40f; // Source shadow offset at deploy.
-                    turret.sourceX = tank.sourceX + 2f;
-                    turret.sourceY = tank.sourceY + 30f;
+                    turret.sourceX = tank.sourceX;
+                    turret.sourceY = tank.sourceY;
                     phase = Phase.TANK_DRIVE;
                     enqueueAudio(OriginalAudio.Cue.TANK_DRIVE);
                 }
@@ -119,22 +120,30 @@ public final class FlashChinookTankAnimation {
                 tickChinookFlyOff();
                 if (moveTankAlongSourceRoute()) {
                     phase = Phase.TANK_FIRE;
-                    firingTicks = 0;
+                    tankPreshotCount = 0;
                     shotCount = 0;
                 }
                 break;
             case TANK_FIRE:
                 tickChinookFlyOff();
                 if (!tankFireFinished) {
-                    firingTicks++;
-                    shotCount++;
-                    if (firingTicks > GUN_SOUND_INTERVAL) {
-                        firingTicks = 0;
-                        enqueueAudio(OriginalAudio.Cue.TANK_GUN);
-                        turret.sourceFrame = (turret.sourceFrame & 1) == 0
-                                ? turret.sourceFrame + 1 : turret.sourceFrame - 1;
-                    }
-                    if (shotCount >= TANK_SHOT_COUNT) {
+                    if (shotCount < TANK_SHOT_COUNT) {
+                        int restingFrame = directionFrame(
+                                route.turretAimPoint.x - tank.sourceX,
+                                route.turretAimPoint.y - tank.sourceY) * 2 - 2;
+                        if (turret.sourceFrame == restingFrame
+                                && tankPreshotCount > TANK_PRESHOT_THRESHOLD) {
+                            turret.sourceFrame = restingFrame + 1;
+                            tankPreshotCount = 0;
+                            enqueueAudio(OriginalAudio.Cue.TANK_GUN);
+                        } else if (tankPreshotCount > TANK_FLASH_RESET_THRESHOLD) {
+                            turret.sourceFrame = restingFrame;
+                        }
+                        shotCount++;
+                        // The source increments after resetting: subsequent shots
+                        // start with count one and keep the flash for four frames.
+                        tankPreshotCount++;
+                    } else {
                         tank.visible = false;
                         turret.visible = false;
                         tankFireFinished = true;
@@ -196,17 +205,12 @@ public final class FlashChinookTankAnimation {
         FlashBattleRoutes.Point target = route.tankWaypoints[tankWaypointIndex];
         if (moveToward(tank, target, TANK_STEP, false)) {
             tankWaypointIndex++;
-            if (tankWaypointIndex >= route.tankWaypoints.length) {
-                turret.sourceX = tank.sourceX + 2f;
-                turret.sourceY = tank.sourceY + 30f;
-                return true;
-            }
         }
-        turret.sourceX = tank.sourceX + 2f;
-        turret.sourceY = tank.sourceY + 30f;
-        turret.sourceFrame = directionFrame(route.tankFirePoint.x - turret.sourceX,
-                route.tankFirePoint.y - turret.sourceY) * 2 - 2;
-        return false;
+        turret.sourceX = tank.sourceX;
+        turret.sourceY = tank.sourceY;
+        turret.sourceFrame = directionFrame(route.turretAimPoint.x - turret.sourceX,
+                route.turretAimPoint.y - turret.sourceY) * 2 - 2;
+        return tankWaypointIndex >= route.tankWaypoints.length;
     }
 
     private boolean moveToward(Actor actor, FlashBattleRoutes.Point target,

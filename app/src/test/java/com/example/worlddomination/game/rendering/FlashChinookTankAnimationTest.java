@@ -4,11 +4,16 @@ import com.example.worlddomination.game.audio.OriginalAudio;
 
 import org.junit.Test;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -53,6 +58,10 @@ public final class FlashChinookTankAnimationTest {
                 tankDeployed = true;
                 assertEquals(route.targetPlayerId, animation.getActor(1).islandPlayerId);
                 assertEquals(route.targetPlayerId, animation.getActor(2).islandPlayerId);
+                assertEquals(animation.getActor(1).sourceX,
+                        animation.getActor(2).sourceX, 0f);
+                assertEquals(animation.getActor(1).sourceY,
+                        animation.getActor(2).sourceY, 0f);
             }
             ticks++;
         }
@@ -104,6 +113,115 @@ public final class FlashChinookTankAnimationTest {
         }
         assertTrue(animation.isFinished());
         assertFalse(animation.getActor(0).visible);
+    }
+
+    @Test
+    public void turretFacesTheCityWhileTankDrivesToItsOffsetFirePoint() throws Exception {
+        FlashBattleRoutes.ChinookTankAttack route = FlashBattleRoutes.createSoldierThreeAttack(
+                0, 2, 0, 1, "blue", loadAnchors());
+        FlashChinookTankAnimation animation = new FlashChinookTankAnimation(route, 0);
+        FlashChinookTankAnimation.Actor tank = animation.getActor(1);
+        tank.sourceX = 490f;
+        tank.sourceY = 90f;
+
+        Method moveTank = FlashChinookTankAnimation.class.getDeclaredMethod(
+                "moveTankAlongSourceRoute");
+        moveTank.setAccessible(true);
+        assertFalse((Boolean) moveTank.invoke(animation));
+
+        FlashChinookTankAnimation.Actor turret = animation.getActor(2);
+        assertEquals(491f, tank.sourceX, 0f);
+        assertEquals(90f, tank.sourceY, 0f);
+        assertEquals(491f, turret.sourceX, 0f);
+        assertEquals(90f, turret.sourceY, 0f);
+        // Source tankTop follows the base position, and its direction uses
+        // the city-center waypoint (541, 79). Flash frame 19 is index 18.
+        assertEquals(18, turret.sourceFrame);
+
+        Field phaseField = FlashChinookTankAnimation.class.getDeclaredField("phase");
+        phaseField.setAccessible(true);
+        for (Object phase : phaseField.getType().getEnumConstants()) {
+            if ("TANK_FIRE".equals(phase.toString())) {
+                phaseField.set(animation, phase);
+                break;
+            }
+        }
+        for (int tick = 0; tick < 26; tick++) {
+            animation.tick();
+            assertEquals(18, turret.sourceFrame);
+        }
+        animation.tick();
+        // Source nextFrame advances gotoAndStop(19) to Flash frame 20.
+        assertEquals(19, turret.sourceFrame);
+        assertEquals(OriginalAudio.Cue.TANK_GUN, takeCue(animation));
+    }
+
+    @Test
+    public void arrivingAtFinalWaypointReaimsTurretBeforeItsFirstShot() throws Exception {
+        FlashBattleRoutes.ChinookTankAttack route = FlashBattleRoutes.createSoldierThreeAttack(
+                0, 2, 0, 1, "blue", loadAnchors());
+        FlashChinookTankAnimation animation = new FlashChinookTankAnimation(route, 0);
+        FlashChinookTankAnimation.Actor tank = animation.getActor(1);
+        tank.sourceX = 541f;
+        tank.sourceY = 104f;
+        Field waypoint = FlashChinookTankAnimation.class.getDeclaredField("tankWaypointIndex");
+        waypoint.setAccessible(true);
+        waypoint.setInt(animation, route.tankWaypoints.length - 1);
+        animation.getActor(2).sourceFrame = 0;
+        Method moveTank = FlashChinookTankAnimation.class.getDeclaredMethod(
+                "moveTankAlongSourceRoute");
+        moveTank.setAccessible(true);
+        assertTrue((Boolean) moveTank.invoke(animation));
+        assertEquals(541f, animation.getActor(2).sourceX, 0f);
+        assertEquals(104f, animation.getActor(2).sourceY, 0f);
+        // Executed source Unit: tankTopDirection=14, gotoAndStop(27).
+        assertEquals(26, animation.getActor(2).sourceFrame);
+        Field phaseField = FlashChinookTankAnimation.class.getDeclaredField("phase");
+        phaseField.setAccessible(true);
+        for (Object phase : phaseField.getType().getEnumConstants()) {
+            if ("TANK_FIRE".equals(phase.toString())) phaseField.set(animation, phase);
+        }
+        for (int tick = 0; tick < 26; tick++) animation.tick();
+        assertEquals(26, animation.getActor(2).sourceFrame);
+        animation.tick();
+        assertEquals(27, animation.getActor(2).sourceFrame);
+        assertEquals(OriginalAudio.Cue.TANK_GUN, takeCue(animation));
+    }
+
+    @Test
+    public void sourceFiringTracePreservesFlashHoldGunCadenceAndFinalStopTick() throws Exception {
+        FlashBattleRoutes.ChinookTankAttack route = FlashBattleRoutes.createSoldierThreeAttack(
+                0, 2, 0, 1, "blue", loadAnchors());
+        FlashChinookTankAnimation animation = new FlashChinookTankAnimation(route, 0);
+        Field phaseField = FlashChinookTankAnimation.class.getDeclaredField("phase");
+        phaseField.setAccessible(true);
+        for (Object phase : phaseField.getType().getEnumConstants()) {
+            if ("TANK_FIRE".equals(phase.toString())) phaseField.set(animation, phase);
+        }
+        for (int actor = 1; actor <= 2; actor++) {
+            animation.getActor(actor).sourceX = 491f;
+            animation.getActor(actor).sourceY = 90f;
+            animation.getActor(actor).visible = true;
+        }
+        animation.getActor(2).sourceFrame = 18;
+        List<Integer> gunTicks = new ArrayList<>();
+        // Executed generated Unit.moveUnit, starting its firing counter at zero.
+        for (int tick = 1; tick <= 85; tick++) {
+            animation.tick();
+            boolean flash = (tick >= 27 && tick <= 30) || (tick >= 53 && tick <= 56);
+            assertEquals("Source flash frame at firing tick " + tick,
+                    flash ? 19 : 18, animation.getActor(2).sourceFrame);
+            assertEquals("Source base visibility at firing tick " + tick,
+                    tick <= 60, animation.getActor(1).visible);
+            assertEquals(tick <= 60, animation.getActor(2).visible);
+            assertEquals("Source stop tick", tick >= 61, animation.isFinished());
+            OriginalAudio.Cue cue;
+            while ((cue = takeCueOrNull(animation)) != null) {
+                assertEquals(OriginalAudio.Cue.TANK_GUN, cue);
+                gunTicks.add(tick);
+            }
+        }
+        assertEquals(Arrays.asList(27, 53), gunTicks);
     }
 
     private static OriginalAudio.Cue takeCue(FlashChinookTankAnimation animation) {

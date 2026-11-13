@@ -473,7 +473,7 @@ jobs:
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashSpriteTransformTest"'
           - id: presentation-rng-isolation-tests
             check: Presentation RNG isolation tests
-            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.ReferenceRandomTest.copiedRandomPreservesTheStreamWithoutAdvancingCanonicalState" --tests "com.example.worlddomination.game.simulation.GameStateBattleRandomTest" --tests "com.example.worlddomination.game.rendering.FlashApacheMarineAnimationTest.marineActivationUsesSourceSeededXFrameYRangeOrder"'
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.ReferenceRandomTest.copiedRandomPreservesTheStreamWithoutAdvancingCanonicalState" --tests "com.example.worlddomination.game.simulation.GameStateBattleRandomTest" --tests "com.example.worlddomination.game.rendering.FlashApacheMarineAnimationTest.marineActivationUsesSourceSeededXFrameYRangeOrder" --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.soldierThreeConsumesOneSourceTurretDrawWithoutMovingTheTankFirePoint"'
           - id: match-outcome-tests
             check: Match outcome sequence tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.MatchOutcomeSequenceTest" --tests "com.example.worlddomination.game.ui.MatchOutcomePresentationTest" --tests "com.example.worlddomination.game.assets.OriginalEndgameAssetsTest" --tests "com.example.worlddomination.game.ui.EndgameScreenLayoutTest"'
