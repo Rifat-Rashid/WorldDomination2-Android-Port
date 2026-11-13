@@ -313,6 +313,22 @@ public final class SourceBattleCleanupInstrumentedTest {
                         field(FlashCarrierPlaneAnimation.class, "delayTicks").getInt(originalPlane),
                         originalPlane.getImpactLinkage(), originalPlane.getImpactCue());
                 planes.set(0, plane);
+                // This synthetic stalled actor replaces the real factory
+                // actor in both its render list and source update registry.
+                SourceBattleUnitPlayback sourceUnits = (SourceBattleUnitPlayback)
+                        field(WorldDominationGame.class, "sourceUnitPlayback").get(app);
+                assertEquals("Fixture has one registered carrier", 1, sourceUnits.size());
+                sourceUnits.reset();
+                Method advanceCarrier = WorldDominationGame.class.getDeclaredMethod(
+                        "advanceCarrierPlaneUnit", FlashCarrierPlaneAnimation.class);
+                advanceCarrier.setAccessible(true);
+                sourceUnits.add(() -> {
+                    try {
+                        return (Boolean) advanceCarrier.invoke(app, plane);
+                    } catch (ReflectiveOperationException error) {
+                        throw new AssertionError("Stalled carrier source update", error);
+                    }
+                });
                 for (int tick = 1; tick <= 800; tick++) {
                     advance(app);
                     assertEquals("Source frame " + tick, tick, ticker.getFrameCount());

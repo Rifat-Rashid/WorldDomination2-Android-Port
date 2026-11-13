@@ -12,13 +12,19 @@ public final class FlashChinookTankAnimation {
         FINISHED
     }
 
-    public static final class Actor {
+    public static final class Actor implements SourceStoppedClipQueue.Clip {
         public String linkage;
         public int sourceFrame;
         public float sourceX;
         public float sourceY;
         public int islandPlayerId;
         public boolean visible;
+        private Actor pairedShadow;
+
+        @Override public void detach() {
+            visible = false;
+            if (pairedShadow != null) pairedShadow.visible = false;
+        }
     }
 
     private static final int CHINOOK_FRAME_COUNT = 37;
@@ -51,6 +57,15 @@ public final class FlashChinookTankAnimation {
     private int tankPreshotCount;
     private int shotCount;
     private boolean tankFireFinished;
+    private boolean chinookStopped;
+    private boolean chinookRemoved;
+    private boolean tankStopped;
+    private boolean tankRemoved;
+    private boolean turretStopped;
+    private boolean turretRemoved;
+    private boolean chinookQueued;
+    private boolean tankQueued;
+    private boolean turretQueued;
     // View has already presented the waiting liftOff frame before activation.
     private int frameOffset = 1;
     private float chinookXStep;
@@ -90,6 +105,7 @@ public final class FlashChinookTankAnimation {
         turret.sourceY = route.turretStart.y;
         turret.islandPlayerId = route.targetPlayerId;
         chinookShadow.linkage = "chinook_shadow";
+        chinook.pairedShadow = chinookShadow;
         followChinook();
         // The waiting tail has no movement; View holds Flash direction frame 9.
         tank.sourceFrame = 8;
@@ -150,7 +166,7 @@ public final class FlashChinookTankAnimation {
             case TANK_FIRE:
                 tickChinookFlyOff();
                 tickTankFire();
-                if (tankFireFinished && !chinook.visible) {
+                if (tankRemoved && turretRemoved && chinookRemoved) {
                     phase = Phase.FINISHED;
                 }
                 break;
@@ -163,7 +179,13 @@ public final class FlashChinookTankAnimation {
     }
 
     private void tickTankFire() {
-        if (!tankFireFinished) {
+        if (tankStopped) {
+            // View checks stop before the next moveUnit call, then splices both
+            // stable wrappers. Their clips remain until Presenter.allUnitsDone.
+            tankRemoved = true;
+            turretRemoved = true;
+            tankFireFinished = true;
+        } else if (!tankFireFinished) {
             if (shotCount < TANK_SHOT_COUNT) {
                 int restingFrame = directionFrame(
                         route.turretAimPoint.x - tank.sourceX,
@@ -181,9 +203,10 @@ public final class FlashChinookTankAnimation {
                 // start with count one and keep the flash for four frames.
                 tankPreshotCount++;
             } else {
-                tank.visible = false;
-                turret.visible = false;
-                tankFireFinished = true;
+                // Unit.tank_top_shoot sets the base and turret actions to stop
+                // together on the post-60-shot tick; View removes them next tick.
+                tankStopped = true;
+                turretStopped = true;
             }
         }
     }
@@ -249,7 +272,30 @@ public final class FlashChinookTankAnimation {
     }
 
     public boolean isFinished() {
-        return phase == Phase.FINISHED;
+        return chinookRemoved && tankRemoved && turretRemoved;
+    }
+
+    public boolean isChinookStopped() { return chinookStopped; }
+    public boolean isChinookRemoved() { return chinookRemoved; }
+    public boolean isTankStopped() { return tankStopped; }
+    public boolean isTurretStopped() { return turretStopped; }
+    public boolean isTankRemoved() { return tankRemoved; }
+    public boolean isTurretRemoved() { return turretRemoved; }
+
+    /** Physical View.for-in removal order is Chinook, tank base, then turret. */
+    public void registerStoppedClips(SourceStoppedClipQueue queue) {
+        if (chinookRemoved && !chinookQueued) {
+            queue.add(chinook);
+            chinookQueued = true;
+        }
+        if (tankRemoved && !tankQueued) {
+            queue.add(tank);
+            tankQueued = true;
+        }
+        if (turretRemoved && !turretQueued) {
+            queue.add(turret);
+            turretQueued = true;
+        }
     }
 
     public boolean takeAudioCue() {
@@ -268,14 +314,21 @@ public final class FlashChinookTankAnimation {
     }
 
     private void tickChinookFlyOff() {
-        if (!chinook.visible) {
+        if (chinookRemoved) {
+            return;
+        }
+        if (chinookStopped) {
+            // Unlike soldier/marine, View continues processing the wrapper
+            // after splicing it, so activeAndMoving advances one final step.
+            continueChinookFlight();
+            chinookRemoved = true;
             return;
         }
         if (chinookFlyOffTicks > 0) {
             if (chinookFlyOffTicks < CHINOOK_FLY_OFF_COUNT) {
                 chinookFlyOffTicks++;
             } else {
-                chinook.visible = false;
+                chinookStopped = true;
             }
         }
         chinookFlyOffTicks++;

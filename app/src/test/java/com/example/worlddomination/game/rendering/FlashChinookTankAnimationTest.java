@@ -69,9 +69,17 @@ public final class FlashChinookTankAnimationTest {
         assertTrue("The source unit route should deploy its tank", tankDeployed);
         assertTrue("The source unit route should play the tank engine cue", tankDrove);
         assertTrue("Chinook and tank source sequences should finish", animation.isFinished());
+        assertTrue("Stopped Chinook body survives until allUnitsDone", animation.getActor(0).visible);
+        assertTrue("Stopped tank body survives until allUnitsDone", animation.getActor(1).visible);
+        assertTrue("Stopped tank top survives until allUnitsDone", animation.getActor(2).visible);
+        SourceStoppedClipQueue queue = new SourceStoppedClipQueue();
+        animation.registerStoppedClips(queue);
+        assertEquals(3, queue.size());
+        assertEquals(3, queue.removeAtAllUnitsDone());
         assertFalse(animation.getActor(0).visible);
         assertFalse(animation.getActor(1).visible);
         assertFalse(animation.getActor(2).visible);
+        assertFalse(animation.getChinookShadow().visible);
         // flyOff's 250 counter advances twice on ordinary source ticks.
         assertTrue("The source countdown takes at least 127 flyOff ticks", ticks >= 127);
     }
@@ -98,12 +106,13 @@ public final class FlashChinookTankAnimationTest {
         }
         assertTrue("Chinook must deploy the tank", animation.getActor(1).visible);
 
-        while (animation.getActor(1).visible && ticks < 700) {
+        while (!animation.isTankStopped() && ticks < 700) {
             animation.tick();
             ticks++;
         }
-        assertFalse("The tank should finish this short source route first",
-                animation.getActor(1).visible);
+        assertTrue("The tank should stop this short source route first",
+                animation.isTankStopped());
+        assertTrue("The stopped tank clip remains attached", animation.getActor(1).visible);
         assertTrue("Chinook remains through its 250-count flyOff countdown",
                 animation.getActor(0).visible);
         assertFalse("The overall presentation waits for the Chinook", animation.isFinished());
@@ -113,7 +122,7 @@ public final class FlashChinookTankAnimationTest {
             ticks++;
         }
         assertTrue(animation.isFinished());
-        assertFalse(animation.getActor(0).visible);
+        assertTrue("Removed Chinook clip survives until allUnitsDone", animation.getActor(0).visible);
     }
 
     @Test
@@ -212,10 +221,14 @@ public final class FlashChinookTankAnimationTest {
             boolean flash = (tick >= 27 && tick <= 30) || (tick >= 53 && tick <= 56);
             assertEquals("Source flash frame at firing tick " + tick,
                     flash ? 19 : 18, animation.getActor(2).sourceFrame);
-            assertEquals("Source base visibility at firing tick " + tick,
-                    tick <= 60, animation.getActor(1).visible);
-            assertEquals(tick <= 60, animation.getActor(2).visible);
-            assertEquals("Source stop tick", tick >= 61, animation.isFinished());
+            assertTrue("Source base clip retained at firing tick " + tick,
+                    animation.getActor(1).visible);
+            assertTrue("Source turret clip retained at firing tick " + tick,
+                    animation.getActor(2).visible);
+            assertEquals("Base stop tick", tick >= 61, animation.isTankStopped());
+            assertEquals("Turret stop tick", tick >= 61, animation.isTurretStopped());
+            assertEquals("Base removal tick", tick >= 62, animation.isTankRemoved());
+            assertEquals("Turret removal tick", tick >= 62, animation.isTurretRemoved());
             OriginalAudio.Cue cue;
             while ((cue = takeCueOrNull(animation)) != null) {
                 assertEquals(OriginalAudio.Cue.TANK_GUN, cue);
@@ -223,6 +236,99 @@ public final class FlashChinookTankAnimationTest {
             }
         }
         assertEquals(Arrays.asList(27, 53), gunTicks);
+    }
+
+    @Test
+    public void tankFirstRouteQueuesByRemovalTickAndChinookTakesFinalStep() throws Exception {
+        FlashBattleRoutes.ChinookTankAttack route = FlashBattleRoutes.createSoldierThreeAttack(
+                0, 1, 0, 2, "blue", loadAnchors());
+        FlashChinookTankAnimation animation = new FlashChinookTankAnimation(route, 0);
+        SourceStoppedClipQueue queue = new SourceStoppedClipQueue();
+        int ticks = 0;
+        while (!animation.isChinookStopped() && ticks++ < 900) {
+            animation.tick();
+            animation.registerStoppedClips(queue);
+        }
+        assertTrue("Source flyOff reaches stop", animation.isChinookStopped());
+        assertFalse("View removes Chinook on the following tick", animation.isChinookRemoved());
+        // On this short 0->1 route both tank wrappers are removed earlier.
+        // Queue order follows removal ticks; only same-tick wrappers use
+        // View's physical body-before-top visitation order.
+        assertTrue(animation.isTankRemoved());
+        assertTrue(animation.isTurretRemoved());
+        assertEquals(2, queue.size());
+        float stoppedX = animation.getActor(0).sourceX;
+        float stoppedY = animation.getActor(0).sourceY;
+        Field xStep = FlashChinookTankAnimation.class.getDeclaredField("chinookXStep");
+        Field yStep = FlashChinookTankAnimation.class.getDeclaredField("chinookYStep");
+        xStep.setAccessible(true);
+        yStep.setAccessible(true);
+        float lastXStep = xStep.getFloat(animation);
+        float lastYStep = yStep.getFloat(animation);
+        animation.tick();
+        animation.registerStoppedClips(queue);
+        assertTrue(animation.isChinookRemoved());
+        assertEquals(stoppedX + lastXStep, animation.getActor(0).sourceX, 0f);
+        assertEquals(stoppedY + lastYStep, animation.getActor(0).sourceY, 0f);
+        assertTrue("Removed Chinook and shadow clips remain visible",
+                animation.getActor(0).visible && animation.getChinookShadow().visible);
+        assertEquals(3, queue.size());
+        while (!animation.isFinished() && ticks++ < 900) {
+            animation.tick();
+            animation.registerStoppedClips(queue);
+        }
+        assertTrue("All three source wrappers are removed", animation.isFinished());
+        assertEquals(3, queue.size());
+        Field clips = SourceStoppedClipQueue.class.getDeclaredField("clips");
+        clips.setAccessible(true);
+        List<?> queued = (List<?>) clips.get(queue);
+        assertTrue(queued.get(0) == animation.getActor(1));
+        assertTrue(queued.get(1) == animation.getActor(2));
+        assertTrue(queued.get(2) == animation.getActor(0));
+        animation.registerStoppedClips(queue);
+        assertEquals("Wrappers enqueue only once", 3, queue.size());
+        assertTrue(animation.getActor(1).visible && animation.getActor(2).visible);
+        assertEquals(3, queue.removeAtAllUnitsDone());
+        assertFalse(animation.getActor(0).visible);
+        assertFalse(animation.getChinookShadow().visible);
+        assertFalse(animation.getActor(1).visible);
+        assertFalse(animation.getActor(2).visible);
+    }
+
+    @Test
+    public void canonicalPlayerOneStrikeQueuesChinookBeforeTankBodyAndTop() throws Exception {
+        // Valid source turn 28: weapon 14, player 1 -> 0, target city 3.
+        // View removes Chinook first, then body and turret on their shared tick.
+        FlashBattleRoutes.ChinookTankAttack route = FlashBattleRoutes.createSoldierThreeAttack(
+                1, 0, 3, 1, "blue", loadAnchors());
+        FlashChinookTankAnimation animation = new FlashChinookTankAnimation(route, 0);
+        SourceStoppedClipQueue queue = new SourceStoppedClipQueue();
+        int chinookRemoval = -1;
+        int tankRemoval = -1;
+        for (int tick = 1; tick <= 900 && !animation.isFinished(); tick++) {
+            animation.tick();
+            animation.registerStoppedClips(queue);
+            if (chinookRemoval < 0 && animation.isChinookRemoved()) chinookRemoval = tick;
+            if (tankRemoval < 0 && animation.isTankRemoved()) tankRemoval = tick;
+        }
+        assertTrue(animation.isFinished());
+        assertTrue("Source Chinook removes before the tank wrappers",
+                chinookRemoval > 0 && chinookRemoval < tankRemoval);
+        assertEquals(3, queue.size());
+        Field clips = SourceStoppedClipQueue.class.getDeclaredField("clips");
+        clips.setAccessible(true);
+        List<?> queued = (List<?>) clips.get(queue);
+        assertTrue(queued.get(0) == animation.getActor(0));
+        assertTrue(queued.get(1) == animation.getActor(1));
+        assertTrue(queued.get(2) == animation.getActor(2));
+        assertTrue(animation.getActor(0).visible);
+        assertTrue(animation.getActor(1).visible);
+        assertTrue(animation.getActor(2).visible);
+        assertEquals(3, queue.removeAtAllUnitsDone());
+        assertFalse(animation.getActor(0).visible);
+        assertFalse(animation.getChinookShadow().visible);
+        assertFalse(animation.getActor(1).visible);
+        assertFalse(animation.getActor(2).visible);
     }
 
     private static OriginalAudio.Cue takeCue(FlashChinookTankAnimation animation) {

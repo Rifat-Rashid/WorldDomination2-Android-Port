@@ -456,6 +456,9 @@ jobs:
           - id: satellite-playback-tests
             check: Satellite flight and laser timing
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashSatelliteAnimationTest" --tests "com.example.worlddomination.game.simulation.GameStateTest.spaceLaunchCountsSatelliteAndTerminalScoreIncludesSourceFlagBonus"'
+          - id: satellite-source-lifecycle
+            check: Source satellite frames and mixed-unit update order
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashSatelliteSourceTraceTest" --tests "com.example.worlddomination.game.rendering.SourceBattleUnitPlaybackTest"'
           - id: satellite-source-art-tests
             check: Nested satellite art and audio mapping
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.OriginalFlashAnimationAssetsTest" --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest.satelliteFlashLabelsSelectTheFiveOriginalReligionFrames" --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest.satelliteReligionClipsLoadTheirAnimatedBodyAndLaserAnchorFrames" --tests "com.example.worlddomination.game.rendering.FlashBattleUnitRendererTest" --tests "com.example.worlddomination.game.rendering.SourceCombatAnimationMappingTest.allWarheadAndBioloadLevelsUseTheirOriginalSymbols" --tests "com.example.worlddomination.game.audio.OriginalAudioTest.combatCuesPointToTheOriginalPackagedSounds"'

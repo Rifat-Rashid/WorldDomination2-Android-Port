@@ -704,7 +704,7 @@ public final class FlashBattleUnitRenderer {
         return transforms;
     }
 
-    /** Draws the original religion-specific satellite symbol while it approaches orbit. */
+    /** Draws original satellite clips through their retained cleanup poses. */
     public void drawSatellites(SpriteBatch batch, Rectangle mapBounds,
                                List<FlashSatelliteAnimation> animations) {
         if (!assets.isLoaded()) {
@@ -714,16 +714,29 @@ public final class FlashBattleUnitRenderer {
         if (timeline == null) {
             return;
         }
-        for (FlashSatelliteAnimation animation : animations) {
-            if (!animation.isStarted() || animation.isFinished()) {
-                continue;
+        boolean visible = false;
+        for (int index = 0; index < animations.size(); index++) {
+            FlashSatelliteAnimation animation = animations.get(index);
+            visible |= animation.isClipVisible();
+        }
+        if (!visible) return;
+        ShaderProgram previousShader = batch.getShader();
+        float previousColor = batch.getPackedColor();
+        try {
+            for (int index = 0; index < animations.size(); index++) {
+                FlashSatelliteAnimation animation = animations.get(index);
+                if (!animation.isClipVisible()) continue;
+                FlashBattleRoutes.SatelliteStrike route = animation.getRoute();
+                deploymentTransformScratch[0].setIdentity();
+                deploymentColorScratch[0].identity();
+                drawSatelliteTimelineFrame(batch, mapBounds,
+                        timeline.getFrameByLabel(route.religionCode),
+                        animation.getDisplaySourceX(), animation.getDisplaySourceY(),
+                        route.attackerPlayerId, animation.getSourceClipFrameNumber() - 1, 0);
             }
-            FlashBattleRoutes.SatelliteStrike route = animation.getRoute();
-            drawSatelliteTimelineFrame(batch, mapBounds,
-                    timeline.getFrameByLabel(route.religionCode),
-                    animation.getSourceX(), animation.getSourceY(),
-                    route.attackerPlayerId, animation.getSourceClipFrameNumber() - 1,
-                    1f, 0);
+        } finally {
+            batch.setShader(previousShader);
+            batch.setPackedColor(previousColor);
         }
     }
 
@@ -777,28 +790,19 @@ public final class FlashBattleUnitRenderer {
                                             FlashAnimationTimeline.Frame frame,
                                             float sourceX, float sourceY,
                                             int islandPlayerId, int clipFrameIndex,
-                                            float parentAlpha, int depth) {
-        if (frame == null || parentAlpha <= 0f || depth > MAX_SATELLITE_CLIP_DEPTH) {
-            return;
-        }
-        float mapScale = BattlefieldCityLayout.sourceScale(mapBounds);
+                                            int depth) {
+        if (frame == null || depth >= MAX_DEPLOYMENT_CLIP_DEPTH) return;
+        FlashAffineTransform parent = deploymentTransformScratch[depth];
+        FlashAffineTransform transform = deploymentTransformScratch[depth + 1];
+        FlashColorTransform.Composition parentColor = deploymentColorScratch[depth];
+        FlashColorTransform.Composition color = deploymentColorScratch[depth + 1];
         for (FlashAnimationTimeline.Layer layer : frame.layers) {
-            float layerAlpha = parentAlpha * layer.alpha;
-            if (layerAlpha <= 0f) {
-                continue;
-            }
+            transform.setProduct(parent, layer.a, layer.b, layer.c, layer.d, layer.tx, layer.ty);
+            color.setProduct(parentColor, layer.colorTransform);
             TextureRegion region = assets.getShape(layer.shapeId);
             if (region != null) {
-                float width = region.getRegionWidth() * mapScale;
-                float height = region.getRegionHeight() * mapScale;
-                float x = BattlefieldCityLayout.sourceX(mapBounds,
-                        sourceX + layer.tx, islandPlayerId);
-                float top = BattlefieldCityLayout.sourceY(mapBounds, sourceY + layer.ty);
-                FlashSpriteTransform transform = FlashSpriteTransform.fromMatrix(
-                        layer.a, layer.b, layer.c, layer.d);
-                batch.setColor(1f, 1f, 1f, layerAlpha);
-                batch.draw(region, x, top - height, 0f, height, width, height,
-                        transform.scaleX, transform.scaleY, transform.rotationDegrees);
+                drawTransformedLeaf(batch, mapBounds, region, layer.shapeId, transform, color,
+                        sourceX, sourceY, islandPlayerId, 0f);
                 continue;
             }
 
@@ -808,10 +812,8 @@ public final class FlashBattleUnitRenderer {
             }
             int nestedFrameIndex = Math.min(clipFrameIndex, nested.getFrameCount() - 1);
             drawSatelliteTimelineFrame(batch, mapBounds, nested.getFrame(nestedFrameIndex),
-                    sourceX + layer.tx, sourceY + layer.ty, islandPlayerId,
-                    clipFrameIndex, layerAlpha, depth + 1);
+                    sourceX, sourceY, islandPlayerId, clipFrameIndex, depth + 1);
         }
-        batch.setColor(com.badlogic.gdx.graphics.Color.WHITE);
     }
 
     private void drawSubmarineTimelineFrame(SpriteBatch batch, Rectangle mapBounds,

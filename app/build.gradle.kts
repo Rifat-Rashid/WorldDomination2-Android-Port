@@ -62,6 +62,8 @@ android {
     }
 
     sourceSets.getByName("main").jniLibs.srcDir(generatedNativesDirectory)
+    // Share deterministic source fixtures with device tests, never the game APK.
+    sourceSets.getByName("androidTest").assets.srcDir("src/test/resources")
 
     val uploadSigning = if (hasUploadSigning) signingConfigs.create("upload") {
         storeFile = file(uploadStoreFile!!)
