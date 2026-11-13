@@ -101,6 +101,50 @@ public final class TurnControlsInstrumentedTest {
         }
     }
 
+    @Test public void idleBackPreservesAcceptedOrdersAndShowsExitPrompt() throws Exception {
+        try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
+            CountDownLatch done = new CountDownLatch(1);
+            AtomicReference<Throwable> failure = new AtomicReference<>();
+            scenario.onActivity(activity -> Gdx.app.postRunnable(() -> {
+                try {
+                    WorldDominationGame app = (WorldDominationGame) Gdx.app.getApplicationListener();
+                    invoke(app, "initializeGameplayAssets");
+                    Object splash = field("splashState").get(app);
+                    splash.getClass().getMethod("dismiss").invoke(splash);
+                    for (int accepted = 1; accepted <= 2; accepted++) {
+                        GameState state = new GameState(1, 17L);
+                        field("game").set(app, state);
+                        ((BattlefieldCityRenderer) field("cityRenderer").get(app)).reset(state);
+                        field("modalOpen").setBoolean(app, false);
+                        field("showExitPromptSeconds").setFloat(app, 0f);
+                        ((ConfirmTurnAnimation) field("confirmTurnAnimation").get(app)).reset();
+                        state.selectAction(GameState.Action.RESOURCES);
+                        assertTrue(state.acceptSelectedAction());
+                        if (accepted == 2) {
+                            state.selectAction(GameState.Action.MASS_MEDIA);
+                            assertTrue(state.acceptSelectedAction());
+                        }
+                        double random = state.createPresentationRandomCopy().nextDouble();
+                        int funds = state.getTurnMoneyMillions();
+                        assertTrue(app.keyDown(com.badlogic.gdx.Input.Keys.BACK));
+                        assertTrue("Idle Back asks to exit instead of cancelling orders",
+                                field("showExitPromptSeconds").getFloat(app) > 0f);
+                        assertEquals(accepted, state.getQueuedActionCount());
+                        assertEquals(GameState.Action.RESOURCES, state.getQueuedAction(0));
+                        if (accepted == 2) assertEquals(GameState.Action.MASS_MEDIA, state.getQueuedAction(1));
+                        assertEquals(funds, state.getTurnMoneyMillions());
+                        assertEquals(0, state.getTurn());
+                        assertEquals(random, state.createPresentationRandomCopy().nextDouble(), 0d);
+                        field("showExitPromptSeconds").setFloat(app, 0f);
+                    }
+                } catch (Throwable error) { failure.set(error); }
+                finally { done.countDown(); }
+            }));
+            assertTrue("Idle Back integration timed out", done.await(60, TimeUnit.SECONDS));
+            if (failure.get() != null) throw new AssertionError("Accepted orders after Back", failure.get());
+        }
+    }
+
     private static Field field(String name) throws Exception {
         Field field = WorldDominationGame.class.getDeclaredField(name);
         field.setAccessible(true);
