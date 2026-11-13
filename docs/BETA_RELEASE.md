@@ -67,7 +67,8 @@ Terrain uses each original nation's selected faith, retains that style after
 conquest, and shows ocean for unused island slots. Only selected terrain tiles
 are cached on the GPU. Existing enhanced map and font assets remain preserved.
 This candidate adds original enemy-removal artwork, equipment eligibility switch
-states, source action instructions, and queued city action markers. Its JUnit
+states, source action instructions, queued city action markers, and building-frame touch
+bounds so city roofs select alongside their bases. Its JUnit
 checks share the executed full-suite reports while validating each named filter
 and the complete report inventory.
 It also includes the sharper Resources, Technology and bounded Mass Media screens, source Technology color transforms and clipped HUD compositing, original Production/Technology warning dialogs that retain selected budgets, larger
