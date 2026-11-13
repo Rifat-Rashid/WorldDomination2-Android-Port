@@ -59,6 +59,9 @@ public final class BattlefieldCityRenderer {
     private final CityPropagandaBeamSequence[] propagandaSequences =
             new CityPropagandaBeamSequence[CITY_COUNT];
     private final int[] trackedTargets = new int[CITY_COUNT];
+    private final Rectangle[] hitBounds = new Rectangle[CITY_COUNT];
+    private final boolean[] hitVisible = new boolean[CITY_COUNT];
+    private final Rectangle drawBounds = new Rectangle();
     private final FlashAffineTransform[] beamTransforms = createBeamTransforms();
     private ShaderProgram propagandaTintShader;
     private boolean propagandaTintShaderChecked;
@@ -73,7 +76,34 @@ public final class BattlefieldCityRenderer {
             citySequences[address] = new CityShrinkSequence();
             propagandaSequences[address] = new CityPropagandaBeamSequence();
             trackedTargets[address] = Integer.MIN_VALUE;
+            hitBounds[address] = new Rectangle();
         }
+    }
+
+    /** Hits current presentation frames using the phone reference's island and depth dispatch. */
+    public int hitTest(float x, float y, Rectangle mapBounds, GameState game) {
+        if (game == null || !mapBounds.contains(x, y)) {
+            return -1;
+        }
+        for (int address = 0; address < CITY_COUNT; address++) {
+            int playerId = address / BattlefieldCityLayout.CITIES_PER_PLAYER;
+            int cityIndex = address % BattlefieldCityLayout.CITIES_PER_PLAYER;
+            GameState.PlayerState owner = game.getPlayerState(playerId);
+            CityState city = owner == null ? null : owner.getCity(cityIndex);
+            CityShrinkSequence sequence = citySequences[address];
+            int frameNumber = sequence.getFrameNumber();
+            Frame frame = city == null || frameNumber < 1
+                    ? null : cityAssets.getFrame(owner.getReligionCode(), frameNumber);
+            hitVisible[address] = frame != null;
+            if (frame != null) {
+                CitySpriteHitGeometry.setBounds(hitBounds[address], mapBounds, playerId,
+                        cityIndex, frame.offsetX, frame.offsetY,
+                        frame.region.getRegionWidth(), frame.region.getRegionHeight(),
+                        cityAssets.getArtworkScale());
+            }
+        }
+        return CitySpriteHitGeometry.hitTest(x, y, mapBounds,
+                hitBounds, hitVisible, CITY_RENDER_ORDER);
     }
 
     /** Seeds presentation frames when a match starts, without animating initial cities. */
@@ -178,7 +208,6 @@ public final class BattlefieldCityRenderer {
         if (game == null) {
             return;
         }
-        float scale = CitySpriteLayout.scale(mapBounds, cityAssets.getArtworkScale());
         int markerIndex = 0;
         for (int address : CITY_RENDER_ORDER) {
             int cityDepth = BattlefieldCityLayout.sourceDepth(address);
@@ -201,12 +230,10 @@ public final class BattlefieldCityRenderer {
             if (frameNumber >= 1) {
                 Frame frame = cityAssets.getFrame(owner.getReligionCode(), frameNumber);
                 if (frame != null) {
-                    float width = frame.region.getRegionWidth() * scale;
-                    float height = frame.region.getRegionHeight() * scale;
-                    float x = BattlefieldCityLayout.x(mapBounds, playerId, cityIndex)
-                            + frame.offsetX * scale;
-                    float y = BattlefieldCityLayout.y(mapBounds, playerId, cityIndex)
-                            - frame.offsetY * scale - height;
+                    CitySpriteHitGeometry.setBounds(drawBounds, mapBounds, playerId,
+                            cityIndex, frame.offsetX, frame.offsetY,
+                            frame.region.getRegionWidth(), frame.region.getRegionHeight(),
+                            cityAssets.getArtworkScale());
                     float red = batch.getColor().r;
                     float green = batch.getColor().g;
                     float blue = batch.getColor().b;
@@ -230,7 +257,8 @@ public final class BattlefieldCityRenderer {
                         propagandaTintShader.setUniformf("u_flashAdditions", tint.redAdd,
                                 tint.greenAdd, tint.blueAdd, tint.alphaAdd);
                     }
-                    batch.draw(frame.region, x, y, width, height);
+                    batch.draw(frame.region, drawBounds.x, drawBounds.y,
+                            drawBounds.width, drawBounds.height);
                     if (selection != BattlefieldCitySelection.Tint.DEFAULT)
                         batch.setShader(previousShader);
                     if (alpha < 1f) {

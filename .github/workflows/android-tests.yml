@@ -102,6 +102,9 @@ jobs:
           - id: battlefield-city-selection
             check: Source city targeting colors ceasefires and ship restrictions
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.BattlefieldCitySelectionTest"'
+          - id: source-city-hit-bounds
+            check: Source city frame hit bounds and island touch mapping
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.CitySpriteHitGeometryTest"'
           - id: battlefield-terrain-parity
             check: Original terrain styles unused islands and conquest retention
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.BattlefieldTerrainStateTest" --tests "com.example.worlddomination.game.assets.BattlefieldTerrainAssetsTest"'

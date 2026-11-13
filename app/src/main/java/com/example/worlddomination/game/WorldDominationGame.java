@@ -4142,7 +4142,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         if (!mapBounds.contains(x, y)) {
             return;
         }
-        int selectedCity = BattlefieldCityLayout.hitTest(x, y, mapBounds);
+        int selectedCity = cityRenderer == null ? -1
+                : cityRenderer.hitTest(x, y, mapBounds, game);
         if (selectedCity >= 0) {
             int owner = selectedCity / BattlefieldCityLayout.CITIES_PER_PLAYER;
             sourceActionInstruction.onCityAttempt(owner, game.getHuman().hasCeasefireWith(owner));
@@ -4227,7 +4228,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             return;
         }
         if (!pending && sourceActionMenu.isMapSelection() && mapBounds.contains(x, y)) {
-            int address = BattlefieldCityLayout.hitTest(x, y, mapBounds);
+            int address = cityRenderer == null ? -1
+                    : cityRenderer.hitTest(x, y, mapBounds, game);
             if (address >= 0) {
                 int owner = address / BattlefieldCityLayout.CITIES_PER_PLAYER;
                 boolean chosen = sourceActionMenu.chooseCity(game, owner,
@@ -4727,7 +4729,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         if (!targetAction || !mapBounds.contains(x, y)) {
             return false;
         }
-        int address = BattlefieldCityLayout.hitTest(x, y, mapBounds);
+        int address = cityRenderer == null ? -1
+                : cityRenderer.hitTest(x, y, mapBounds, game);
         if (address < 0) {
             return false;
         }
