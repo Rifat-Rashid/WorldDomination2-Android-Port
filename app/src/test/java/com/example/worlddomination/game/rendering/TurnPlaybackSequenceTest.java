@@ -58,7 +58,7 @@ public final class TurnPlaybackSequenceTest {
     }
 
     @Test
-    public void inputRemainsBlockedUntilTwoSecondEndOfBattleBarrierCompletes() {
+    public void inputRemainsBlockedForSixtyCleanupTicksAndOneHandoffTick() {
         TurnPlaybackSequence sequence = new TurnPlaybackSequence();
         sequence.begin(Collections.<GameState.Action>emptyList());
         sequence.advance(1.6f);
@@ -66,12 +66,71 @@ public final class TurnPlaybackSequenceTest {
 
         sequence.completeBattlePlayback();
         assertEquals(TurnPlaybackSequence.Phase.RESET_BARRIER, sequence.getPhase());
+        assertTrue(sequence.isCleaningUp());
         assertTrue(sequence.isBlockingInput());
-        sequence.advance(1.999f);
+        for (int tick = 1; tick < 60; tick++) {
+            sequence.advance(1f / 24f);
+            assertEquals("Cleanup cannot end on tick " + tick,
+                    TurnPlaybackSequence.Phase.RESET_BARRIER, sequence.getPhase());
+        }
+        sequence.advance(1f / 24f);
+        assertEquals(TurnPlaybackSequence.Phase.CLEANUP_HANDOFF, sequence.getPhase());
+        assertTrue(sequence.isCleaningUp());
         assertTrue(sequence.isBlockingInput());
-        sequence.advance(0.001f);
+        sequence.advance(1f / 24f);
         assertEquals(TurnPlaybackSequence.Phase.IDLE, sequence.getPhase());
+        assertFalse(sequence.isCleaningUp());
         assertFalse(sequence.isBlockingInput());
+    }
+
+    @Test
+    public void actionLabelsKeepRevealingDuringCleanupWithoutRestartingTheWait() {
+        TurnPlaybackSequence sequence = new TurnPlaybackSequence();
+        sequence.begin(Arrays.asList(GameState.Action.ATTACK,
+                GameState.Action.RESOURCES, GameState.Action.DIPLOMACY));
+        sequence.completeBattlePlayback();
+        assertEquals(TurnPlaybackSequence.Phase.RESET_BARRIER, sequence.getPhase());
+        assertTrue(sequence.isWaitingForActionLabels());
+        assertFalse(sequence.isReadyForBattle());
+        assertNull(sequence.advance(1.599f));
+        assertEquals(GameState.Action.RESOURCES, sequence.advance(0.001f));
+        assertEquals(GameState.Action.RESOURCES, sequence.getCurrentAction());
+        assertTrue(sequence.isWaitingForActionLabels());
+        assertEquals(TurnPlaybackSequence.Phase.RESET_BARRIER, sequence.getPhase());
+        sequence.advance(0.9f);
+        assertEquals(TurnPlaybackSequence.Phase.CLEANUP_HANDOFF, sequence.getPhase());
+        assertTrue(sequence.isBlockingInput());
+        sequence.advance(1f / 24f);
+        assertEquals(TurnPlaybackSequence.Phase.IDLE, sequence.getPhase());
+        assertFalse(sequence.isWaitingForActionLabels());
+        assertNull(sequence.getCurrentAction());
+    }
+
+    @Test
+    public void duplicateCompletionDoesNotResetCleanupTimer() {
+        TurnPlaybackSequence sequence = new TurnPlaybackSequence();
+        sequence.begin(Collections.<GameState.Action>emptyList());
+        sequence.completeBattlePlayback();
+        sequence.advance(1.25f);
+        sequence.completeBattlePlayback();
+        sequence.advance(1.25f);
+        assertEquals(TurnPlaybackSequence.Phase.CLEANUP_HANDOFF, sequence.getPhase());
+        sequence.completeBattlePlayback();
+        assertEquals(TurnPlaybackSequence.Phase.CLEANUP_HANDOFF, sequence.getPhase());
+        sequence.advance(1f / 24f);
+        assertEquals(TurnPlaybackSequence.Phase.IDLE, sequence.getPhase());
+    }
+
+    @Test
+    public void longDeltaCannotConsumeCleanupAndHandoffInOneCall() {
+        TurnPlaybackSequence sequence = new TurnPlaybackSequence();
+        sequence.begin(Collections.<GameState.Action>emptyList());
+        sequence.completeBattlePlayback();
+        sequence.advance(10f);
+        assertEquals(TurnPlaybackSequence.Phase.CLEANUP_HANDOFF, sequence.getPhase());
+        assertTrue(sequence.isBlockingInput());
+        sequence.advance(10f);
+        assertEquals(TurnPlaybackSequence.Phase.IDLE, sequence.getPhase());
     }
 
     @Test
@@ -79,10 +138,13 @@ public final class TurnPlaybackSequenceTest {
         TurnPlaybackSequence sequence = new TurnPlaybackSequence();
         sequence.begin(Collections.singletonList(GameState.Action.ATTACK));
         assertEquals(GameState.Action.ATTACK, sequence.advance(1.6f));
+        sequence.completeBattlePlayback();
+        assertTrue(sequence.isCleaningUp());
 
         sequence.begin(Collections.singletonList(GameState.Action.RESOURCES));
 
         assertNull(sequence.getCurrentAction());
+        assertFalse(sequence.isCleaningUp());
         assertEquals(GameState.Action.RESOURCES, sequence.advance(1.6f));
     }
 }

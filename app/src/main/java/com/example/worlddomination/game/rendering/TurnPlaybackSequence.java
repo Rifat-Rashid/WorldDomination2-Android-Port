@@ -11,11 +11,13 @@ public final class TurnPlaybackSequence {
         IDLE,
         ACTION_LABELS,
         BATTLE,
-        RESET_BARRIER
+        RESET_BARRIER,
+        CLEANUP_HANDOFF
     }
 
     public static final float ACTION_LABEL_INTERVAL_SECONDS = 1.6f;
-    public static final float RESET_BARRIER_SECONDS = 2f;
+    public static final float RESET_BARRIER_SECONDS = 2.5f;
+    public static final float HANDOFF_SECONDS = 1f / 24f;
     private static final double TIMING_EPSILON_SECONDS = 0.000001d;
 
     private static final GameState.Action[] SOURCE_ACTION_ORDER = {
@@ -34,7 +36,9 @@ public final class TurnPlaybackSequence {
     private Phase phase = Phase.IDLE;
     private int actionCount;
     private int actionIndex;
-    private double secondsUntilNextStep;
+    private double secondsUntilNextLabel;
+    private double secondsUntilCleanupStep;
+    private boolean labelPassActive;
     private GameState.Action currentAction;
 
     /** Starts the original 1.6-second action-label pass for one resolved turn. */
@@ -48,7 +52,9 @@ public final class TurnPlaybackSequence {
                 actions[actionCount++] = sourceAction;
             }
         }
-        secondsUntilNextStep = ACTION_LABEL_INTERVAL_SECONDS;
+        secondsUntilNextLabel = ACTION_LABEL_INTERVAL_SECONDS;
+        secondsUntilCleanupStep = 0d;
+        labelPassActive = true;
         phase = Phase.ACTION_LABELS;
     }
 
@@ -57,32 +63,40 @@ public final class TurnPlaybackSequence {
         if (elapsedSeconds <= 0f) {
             return null;
         }
-        if (phase == Phase.ACTION_LABELS) {
-            secondsUntilNextStep -= elapsedSeconds;
-            if (secondsUntilNextStep > TIMING_EPSILON_SECONDS) {
-                return null;
-            }
-            secondsUntilNextStep += ACTION_LABEL_INTERVAL_SECONDS;
-            if (actionIndex < actionCount) {
-                currentAction = actions[actionIndex++];
-                return currentAction;
-            }
-            currentAction = null;
-            phase = Phase.BATTLE;
-        } else if (phase == Phase.RESET_BARRIER) {
-            secondsUntilNextStep -= elapsedSeconds;
-            if (secondsUntilNextStep <= TIMING_EPSILON_SECONDS) {
-                reset();
+        GameState.Action revealedAction = null;
+        // Flash's action-building interval keeps running after the unit ticker stops.
+        if (labelPassActive) {
+            secondsUntilNextLabel -= elapsedSeconds;
+            if (secondsUntilNextLabel <= TIMING_EPSILON_SECONDS) {
+                secondsUntilNextLabel += ACTION_LABEL_INTERVAL_SECONDS;
+                if (actionIndex < actionCount) {
+                    currentAction = actions[actionIndex++];
+                    revealedAction = currentAction;
+                } else {
+                    currentAction = null;
+                    labelPassActive = false;
+                    if (phase == Phase.ACTION_LABELS) phase = Phase.BATTLE;
+                }
             }
         }
-        return null;
+        // One transition per call: an oversized frame never consumes the handoff tick.
+        if (phase == Phase.RESET_BARRIER) {
+            secondsUntilCleanupStep -= elapsedSeconds;
+            if (secondsUntilCleanupStep <= TIMING_EPSILON_SECONDS) {
+                phase = Phase.CLEANUP_HANDOFF;
+                secondsUntilCleanupStep = HANDOFF_SECONDS;
+            }
+        } else if (phase == Phase.CLEANUP_HANDOFF) {
+            secondsUntilCleanupStep -= elapsedSeconds;
+            if (secondsUntilCleanupStep <= TIMING_EPSILON_SECONDS) reset();
+        }
+        return revealedAction;
     }
 
-    /** Opens the two-second end-of-battle barrier after every combat animation has cleared. */
+    /** Starts the source post-empty wait, including when action labels are still running. */
     public void completeBattlePlayback() {
-        if (phase == Phase.BATTLE) {
-            currentAction = null;
-            secondsUntilNextStep = RESET_BARRIER_SECONDS;
+        if (phase == Phase.ACTION_LABELS || phase == Phase.BATTLE) {
+            secondsUntilCleanupStep = RESET_BARRIER_SECONDS;
             phase = Phase.RESET_BARRIER;
         }
     }
@@ -92,7 +106,9 @@ public final class TurnPlaybackSequence {
         phase = Phase.IDLE;
         actionCount = 0;
         actionIndex = 0;
-        secondsUntilNextStep = 0d;
+        secondsUntilNextLabel = 0d;
+        secondsUntilCleanupStep = 0d;
+        labelPassActive = false;
         currentAction = null;
     }
 
@@ -105,11 +121,15 @@ public final class TurnPlaybackSequence {
     }
 
     public boolean isWaitingForActionLabels() {
-        return phase == Phase.ACTION_LABELS;
+        return labelPassActive;
     }
 
     public boolean isReadyForBattle() {
         return phase == Phase.BATTLE;
+    }
+
+    public boolean isCleaningUp() {
+        return phase == Phase.RESET_BARRIER || phase == Phase.CLEANUP_HANDOFF;
     }
 
     public boolean isBlockingInput() {

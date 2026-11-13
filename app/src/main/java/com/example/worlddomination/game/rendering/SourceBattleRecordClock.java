@@ -80,10 +80,14 @@ public final class SourceBattleRecordClock {
         return elapsedTicks;
     }
 
-    /** Ends the battle after record activation; source carries 20 into the next turn. */
+    public int getActivatedRecordCount() {
+        return activatedRecordCount;
+    }
+
+    /** Ends the source ticker, which can leave silent or watchdog-aborted records unstarted. */
     public void finishBattle() {
-        if (!battleActive || hasPendingRecords()) {
-            throw new IllegalStateException("Battle records are still pending or no battle began");
+        if (!battleActive) {
+            throw new IllegalStateException("No battle has begun");
         }
         carriedCounter = END_BATTLE_COUNTER;
         battleActive = false;
