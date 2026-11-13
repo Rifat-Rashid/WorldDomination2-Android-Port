@@ -24,8 +24,59 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public final class OriginalFlashAnimationAssetsTest {
+    @Test
+    public void firstStageContainsEverySourcePortraitAndRemovalButNoMarkers()
+            throws IOException {
+        JsonValue scene = loadScene();
+        FlashAnimationTimeline portraits = OriginalFlashAnimationAssets.loadTimelineBySymbolId(
+                scene, OriginalFlashAnimationAssets.LEADER_PORTRAITS_SYMBOL_ID);
+        Set<Integer> firstStage = OriginalFlashAnimationAssets.collectPortraitShapeIds(
+                portraits, shape -> Files.isRegularFile(shapeAsset(shape)));
+        assertEquals("Nineteen distinct source portraits plus the remove button", 20,
+                firstStage.size());
+        assertTrue(firstStage.contains(OriginalFlashAnimationAssets.SETUP_REMOVE_LEADER_SHAPE_ID));
+        for (GameSetup.Leader leader : GameSetup.leaders()) {
+            int expected = 3150 + leader.id * 2;
+            assertEquals(expected, portraits.getFrame(leader.portraitFrame - 1).shapeId);
+            assertTrue("First-stage portrait " + leader.name, firstStage.contains(expected));
+        }
+        for (int firstPage = 0; firstPage < 6; firstPage++) {
+            GameSetup.Leader leader = GameSetup.leaders().get(firstPage);
+            assertTrue("Initial carousel portrait " + leader.name,
+                    firstStage.contains(portraits.getFrame(leader.portraitFrame - 1).shapeId));
+        }
+        Set<Integer> markers = Set.of(2218, 2221, 2224, 2227, 2230, 2233);
+        for (int marker : markers) assertFalse("Marker belongs to stage two", firstStage.contains(marker));
+
+        Set<Integer> combined = OriginalFlashAnimationAssets.collectSetupPortraitShapeIds(
+                OriginalFlashAnimationAssets.loadTimelines(scene),
+                shape -> Files.isRegularFile(shapeAsset(shape)));
+        assertTrue(combined.containsAll(firstStage));
+        combined.removeAll(firstStage);
+        assertTrue("Stage two still has all city markers", combined.containsAll(markers));
+        Set<Integer> battleCandidates = new java.util.LinkedHashSet<>(firstStage);
+        battleCandidates.addAll(combined);
+        battleCandidates.add(9999);
+        assertEquals(Set.of(9999), OriginalFlashAnimationAssets.excludeAlreadyPackedShapes(
+                battleCandidates, firstStage, combined));
+    }
+
+    @Test
+    public void firstStageRejectsAnyMissingSelectablePortrait() throws IOException {
+        FlashAnimationTimeline portraits = OriginalFlashAnimationAssets.loadTimelineBySymbolId(
+                loadScene(), OriginalFlashAnimationAssets.LEADER_PORTRAITS_SYMBOL_ID);
+        try {
+            OriginalFlashAnimationAssets.collectPortraitShapeIds(portraits,
+                    shape -> shape != 3150 && Files.isRegularFile(shapeAsset(shape)));
+            fail("Missing first selectable portrait must fail before publication");
+        } catch (IllegalStateException expected) {
+            assertTrue(expected.getMessage().contains("nineteen"));
+        }
+    }
+
     @Test
     public void apacheShadowResolvesItsBodyChildAndAuthoredColorTransform() throws IOException {
         JsonValue scene = loadScene();

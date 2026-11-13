@@ -38,10 +38,11 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
-/** Proves the early runtime-packed Flash marker atlas survives EGL context loss. */
+/** Proves the separate early portrait and marker atlases survive EGL context loss. */
 @RunWith(AndroidJUnit4.class)
 public final class FlashAtlasContextRecoveryInstrumentedTest {
     private static final int[] MARKERS = {2218, 2221, 2224, 2227, 2230, 2233};
+    private static final int[] PORTRAITS = {3158, 3160};
 
     @Test
     public void earlyFlashAtlasRestoresAfterEglContextLoss() throws Exception {
@@ -62,19 +63,33 @@ public final class FlashAtlasContextRecoveryInstrumentedTest {
                 field.setAccessible(true);
                 OriginalFlashAnimationAssets assets = (OriginalFlashAnimationAssets) field.get(app);
                 long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(45);
-                while (!assets.areSetupPortraitsLoaded() && System.nanoTime() < deadline) {
+                while (!(assets.areSetupPortraitsLoaded()
+                        && assets.areBattlefieldFlagsLoaded()
+                        && assets.areCenterUiAssetsLoaded()) && System.nanoTime() < deadline) {
                     assets.update();
                     Thread.sleep(10);
                 }
-                assertTrue("Early Flash atlas did not finish loading",
+                assertTrue("Portrait atlas did not finish loading",
                         assets.areSetupPortraitsLoaded());
-                TextureRegion[] regions = new TextureRegion[MARKERS.length];
+                assertTrue("Early marker/dialog atlas did not finish loading",
+                        assets.areBattlefieldFlagsLoaded()
+                                && assets.areCenterUiAssetsLoaded());
+                TextureRegion[] regions = new TextureRegion[MARKERS.length + PORTRAITS.length];
                 for (int index = 0; index < MARKERS.length; index++) {
                     regions[index] = assets.getShape(MARKERS[index]);
                     assertNotNull("Missing original marker " + MARKERS[index], regions[index]);
                     assertTrue("Generated atlas texture must be managed",
                             regions[index].getTexture().isManaged());
                 }
+                for (int index = 0; index < PORTRAITS.length; index++) {
+                    regions[MARKERS.length + index] = assets.getShape(PORTRAITS[index]);
+                    assertNotNull("Missing original portrait " + PORTRAITS[index],
+                            regions[MARKERS.length + index]);
+                    assertTrue("Portrait atlas texture must be managed",
+                            regions[MARKERS.length + index].getTexture().isManaged());
+                }
+                assertFalse("Portraits and markers must occupy separate staged atlases",
+                        regions[0].getTexture() == regions[MARKERS.length].getTexture());
                 EGLContext context = EGL14.eglGetCurrentContext();
                 EGLDisplay display = EGL14.eglGetCurrentDisplay();
                 assertFalse("No EGL context on render thread", EGL14.EGL_NO_CONTEXT.equals(context));
@@ -126,6 +141,12 @@ public final class FlashAtlasContextRecoveryInstrumentedTest {
                             before.assets.getShape(MARKERS[index]));
                     assertTrue(before.regions[index].getTexture().isManaged());
                 }
+                for (int index = 0; index < PORTRAITS.length; index++) {
+                    int regionIndex = MARKERS.length + index;
+                    assertSame("The same portrait region must be reused",
+                            before.regions[regionIndex], before.assets.getShape(PORTRAITS[index]));
+                    assertTrue(before.regions[regionIndex].getTexture().isManaged());
+                }
                 assertEquals("Restored source artwork must render identically",
                         before.pixelHash, render(before.regions));
                 assertEquals(GL20.GL_NO_ERROR, Gdx.gl.glGetError());
@@ -154,11 +175,11 @@ public final class FlashAtlasContextRecoveryInstrumentedTest {
     }
 
     private static long render(TextureRegion[] regions) {
-        FrameBuffer buffer = new FrameBuffer(Pixmap.Format.RGBA8888, 256, 128, false);
+        FrameBuffer buffer = new FrameBuffer(Pixmap.Format.RGBA8888, 352, 128, false);
         SpriteBatch batch = new SpriteBatch();
         Pixmap pixels = null;
         try {
-            batch.setProjectionMatrix(new Matrix4().setToOrtho2D(0, 0, 256, 128));
+            batch.setProjectionMatrix(new Matrix4().setToOrtho2D(0, 0, 352, 128));
             buffer.begin();
             Gdx.gl.glClearColor(0, 0, 0, 0);
             Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
@@ -167,18 +188,26 @@ public final class FlashAtlasContextRecoveryInstrumentedTest {
                 batch.draw(regions[index], 12 + index * 40, 40, 32, 32);
             }
             batch.end();
-            pixels = ScreenUtils.getFrameBufferPixmap(0, 0, 256, 128);
+            pixels = ScreenUtils.getFrameBufferPixmap(0, 0, 352, 128);
             buffer.end();
             long hash = 0xcbf29ce484222325L;
-            int paintedPixels = 0;
+            int[] paintedByRegion = new int[regions.length];
             for (int y = 0; y < pixels.getHeight(); y++) {
                 for (int x = 0; x < pixels.getWidth(); x++) {
                     int color = pixels.getPixel(x, y);
-                    if ((color & 0xff) != 0) paintedPixels++;
+                    if ((color & 0xff) != 0) {
+                        for (int index = 0; index < regions.length; index++) {
+                            if (x >= 12 + index * 40 && x < 44 + index * 40)
+                                paintedByRegion[index]++;
+                        }
+                    }
                     hash = (hash ^ color) * 0x100000001b3L;
                 }
             }
-            assertTrue("Original marker atlas rendered no visible pixels", paintedPixels > 0);
+            for (int index = 0; index < regions.length; index++) {
+                assertTrue("Early atlas region " + index + " rendered no visible pixels",
+                        paintedByRegion[index] > 0);
+            }
             return hash;
         } finally {
             if (pixels != null) pixels.dispose();

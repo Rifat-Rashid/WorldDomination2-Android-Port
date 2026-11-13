@@ -48,11 +48,13 @@ public final class SourceCityOrderMarkersInstrumentedTest {
                     field.setAccessible(true);
                     OriginalFlashAnimationAssets assets = (OriginalFlashAnimationAssets) field.get(app);
                     long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(45);
-                    while (!assets.areSetupPortraitsLoaded() && System.nanoTime() < deadline) {
+                    while (!(assets.areBattlefieldFlagsLoaded()
+                            && assets.areCenterUiAssetsLoaded()) && System.nanoTime() < deadline) {
                         assets.update(); Thread.sleep(10);
                     }
                     assertTrue("Early original marker artwork must be cached",
-                            assets.areSetupPortraitsLoaded());
+                            assets.areBattlefieldFlagsLoaded()
+                                    && assets.areCenterUiAssetsLoaded());
                     for (int shape : new int[]{2218, 2221, 2224, 2227, 2230, 2233})
                         assertNotNull("Missing original shape " + shape, assets.getShape(shape));
                     GameState game = new GameState(1, 65L);
