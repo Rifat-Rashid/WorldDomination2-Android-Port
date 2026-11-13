@@ -122,7 +122,8 @@ public final class SourceActionMenusInstrumentedTest {
                     state = fresh(app); assertTrue(state.submitDiplomacyProposal(1, 0, 0));
                     capture(app, "source-diplomacy-offer.png"); sourceTap(app, 307, 258);
                     assertNull(state.getPendingHumanDiplomacyProposal());
-                    assertTrue(state.getHuman().hasCeasefireWith(1));
+                    assertFalse("The source settles the answer on the next turn",
+                            state.getHuman().hasCeasefireWith(1));
                     state = fresh(app); assertTrue(state.submitDiplomacyProposal(1, 0, 3));
                     state.getHuman().turnMoneyMillions = 0;
                     capture(app, "source-diplomacy-demand.png"); sourceTap(app, 307, 258);

@@ -741,6 +741,10 @@ public final class GameState {
     private final List<ActionOrder> queuedActions = new ArrayList<>(MAX_TURN_ACTIONS);
     private final List<CombatEvent> lastTurnCombatEvents = new ArrayList<>();
     private final List<BattlePresentationRecord> lastTurnBattleRecords = new ArrayList<>();
+    // Presenter_interface moves answered human proposals out of the modal now;
+    // Presenter.updatePlayerVars_2 applies their results on the next turn.
+    private final List<DiplomacyProposal> acceptedHumanDiplomacy = new ArrayList<>();
+    private final List<DiplomacyProposal> rejectedHumanDiplomacy = new ArrayList<>();
     private ReferenceRandom lastTurnBattleRandom;
     private final List<WeaponState> battleStockUses = new ArrayList<>();
     private final int[] battleSatelliteLaunches = new int[5];
@@ -1624,8 +1628,24 @@ public final class GameState {
         if (accept && !canAcceptPendingHumanDiplomacy()) {
             return false;
         }
-        resolveDiplomacyResponse(players[0], proposal, accept);
+        // Presenter_interface.accept_pending_diplomacy reserves a demanded
+        // payment in turnMoney immediately; the actual transfer is a result
+        // on the next turn, after the opponents have chosen their actions.
+        if (accept && proposal.optionIndex >= 3) {
+            getHuman().turnMoneyMillions -= DIPLOMACY_AMOUNT[proposal.optionIndex];
+        }
+        removePendingDiplomacy(players[0], proposal);
+        (accept ? acceptedHumanDiplomacy : rejectedHumanDiplomacy).add(proposal);
         return true;
+    }
+
+    private void settleHumanDiplomacyResponses() {
+        for (DiplomacyProposal proposal : rejectedHumanDiplomacy) {
+            resolveDiplomacyResponse(getHuman(), proposal, false, false);
+        }
+        for (DiplomacyProposal proposal : acceptedHumanDiplomacy) {
+            resolveDiplomacyResponse(getHuman(), proposal, true, false);
+        }
     }
 
     public String getSelectedAttackWeapon() {
@@ -2817,9 +2837,10 @@ public final class GameState {
             }
             applyBiologicalEffects(biologicalEffects);
         }
-        // updatePlayerVars_2 consumes its turn-result records in player order
-        // and action-slot order. Interleave propaganda regard changes with
-        // research score draws because both consume the shared random stream.
+        // updatePlayerVars_2 consumes research and propaganda turn results in
+        // player and action-slot order. Human diplomacy answers follow the
+        // human's results, before the next player's results. Production and
+        // outgoing diplomacy belong to the later updatePlayerVars_3 phase.
         for (int playerIndex = 0; humanSurvivedBattle
                 && playerIndex < players.length; playerIndex++) {
             PlayerState actor = players[playerIndex];
@@ -2836,6 +2857,9 @@ public final class GameState {
                 } else if (order.action == Action.RESEARCH) {
                     resolveResearch(order);
                 }
+            }
+            if (actor.human) {
+                settleHumanDiplomacyResponses();
             }
         }
         for (int playerIndex = 0; humanSurvivedBattle
@@ -2865,6 +2889,10 @@ public final class GameState {
                 }
             }
         }
+        // Sub_presenter.turnResults clears both answered arrays even when the
+        // human died and updatePlayerVars_2 did not run.
+        acceptedHumanDiplomacy.clear();
+        rejectedHumanDiplomacy.clear();
         if (humanSurvivedBattle) {
             clearExpiredPreparedAttacks(turnOrders);
         }
@@ -3010,9 +3038,8 @@ public final class GameState {
         PlayerState proposer = players[proposerId];
         int optionIndex = proposal.optionIndex;
         int amount = DIPLOMACY_AMOUNT[optionIndex];
-        if (accepted && optionIndex >= 3 && target.moneyMillions < amount) {
-            accepted = false;
-        }
+        // The source checks affordability when the answer is selected (or the
+        // AI decides), then applies that result without another balance test.
         removePendingDiplomacy(target, proposal);
         if (accepted) {
             target.regardToward[proposerId] += DIPLOMACY_BONUS;
