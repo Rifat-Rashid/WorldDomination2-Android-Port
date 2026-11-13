@@ -78,6 +78,7 @@ public final class OriginalFlashAnimationAssets implements Disposable {
     public static final int PRODUCTION_SLIDER_HANDLE_SHAPE_ID = 3274;
 
     private static final String SCENE_PATH = "original/runtime/scene.json.gz";
+    private static final FlashSceneMetadataCache SCENE_METADATA = new FlashSceneMetadataCache();
     private static final String SHAPE_PATH = "original/runtime/shapes/";
     private static final String TEXT_PATH = "original/runtime/texts/";
     private static final String WEBP_PREFIX = "data:image/webp;base64,";
@@ -258,7 +259,10 @@ public final class OriginalFlashAnimationAssets implements Disposable {
         boolean portraitTransferred = false;
         boolean battleTransferred = false;
         try {
-            JsonValue scene = new JsonReader().parse(readCompressedUtf8(SCENE_PATH));
+            JsonValue scene = loadSceneMetadata();
+            if (disposed) {
+                return;
+            }
             Map<String, FlashAnimationTimeline> loadedTimelines = loadTimelines(scene);
             Map<Integer, FlashAnimationTimeline> loadedNestedTimelines = new LinkedHashMap<>();
             Map<Integer, FlashAnimationTimeline> loadedCityTimelines =
@@ -546,6 +550,11 @@ public final class OriginalFlashAnimationAssets implements Disposable {
     private static boolean hasPackagedCenterUiArt(int assetId) {
         return hasPackagedShape(assetId)
                 || Gdx.files.internal(TEXT_PATH + assetId + ".svgz").exists();
+    }
+
+    /** One shared parse for concurrent loaders; derived timelines never mutate the JSON tree. */
+    static JsonValue loadSceneMetadata() {
+        return SCENE_METADATA.get(() -> new JsonReader().parse(readCompressedUtf8(SCENE_PATH)));
     }
 
     static Map<String, FlashAnimationTimeline> loadTimelines(JsonValue scene) {
