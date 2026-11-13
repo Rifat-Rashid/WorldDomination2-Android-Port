@@ -1186,9 +1186,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         drawSetupDirectionArrow(setupLayout.opponentArrow);
         drawSetupInsetFill(setupLayout.leaderDescription);
         for (int i = 0; i < setupLayout.leaderCards.length; i++) {
-            int leaderId = SetupScreenLayout.leaderIdAt(setupLeaderListStart, i,
-                    GameSetup.leaders().size());
-            drawSetupButtonGradient(setupLayout.leaderCards[i], selectedIds.contains(leaderId));
+            drawSetupButtonGradient(setupLayout.leaderCards[i], false);
         }
         drawSetupButtonGradient(setupLayout.leaderPrevious, false);
         drawSetupButtonGradient(setupLayout.leaderNext, false);
@@ -1243,13 +1241,24 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             int leaderId = SetupScreenLayout.leaderIdAt(setupLeaderListStart, i,
                     GameSetup.leaders().size());
             Rectangle card = setupLayout.leaderCards[i];
+            boolean selected = selectedIds.contains(leaderId);
+            if (selected) batch.setColor(1f, 1f, 1f, SetupScreenLayout.SELECTED_LEADER_ALPHA);
             drawSetupLeaderPortrait(leaderId, card.x + 3f, card.y + 3f,
                     card.width - 6f, card.height - 6f);
+            if (selected) batch.setColor(Color.WHITE);
         }
         for (int i = 0; i < selectedIds.size(); i++) {
             Rectangle slot = setupLayout.opponentSlots[i];
             drawSetupLeaderPortrait(selectedIds.get(i), slot.x + 3f, slot.y + 3f,
                     slot.width - 6f, slot.height - 6f);
+            if (flashAnimationAssets != null && flashAnimationAssets.areSetupPortraitsLoaded()) {
+                com.badlogic.gdx.graphics.g2d.TextureRegion removeIcon = flashAnimationAssets.getShape(
+                        OriginalFlashAnimationAssets.SETUP_REMOVE_LEADER_SHAPE_ID);
+                if (removeIcon != null) {
+                    Rectangle icon = setupLayout.opponentRemoveIcons[i];
+                    batch.draw(removeIcon, icon.x, icon.y, icon.width, icon.height);
+                }
+            }
         }
         font.setColor(showSetupMessage ? GOLD : TITLE_TEXT);
         drawCentered(showSetupMessage ? setupMessage : "",
@@ -1294,9 +1303,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         for (int i = 0; i < setupLayout.leaderCards.length; i++) {
             Rectangle card = setupLayout.leaderCards[i];
-            int leaderId = SetupScreenLayout.leaderIdAt(setupLeaderListStart, i,
-                    GameSetup.leaders().size());
-            drawSetupButtonEdges(card, setup.getSelectedOpponentIds().contains(leaderId));
+            drawSetupButtonEdges(card, false);
         }
         drawSetupButtonEdges(setupLayout.leaderPrevious, false);
         drawSetupButtonEdges(setupLayout.leaderNext, false);
@@ -1560,7 +1567,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         drawNavigationRows();
         drawEquipmentRows();
         drawPortraitCardEdges();
-        drawMapSelection();
     }
 
     private void drawPanelTexture(Rectangle rectangle) {
@@ -2148,49 +2154,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 ? null : EQUIPMENT_WEAPON_NAMES[rowIndex];
     }
 
-    private void drawMapSelection() {
-        int selected = game.getSelectedIsland();
-        boolean showShipStrikes = game.getSelectedAction() == GameState.Action.PREPARED_ATTACK
-                && isPreparedShipCarrier() && game.getSelectedShipStrikeCount() > 0;
-        if (selected < 0 && !showShipStrikes) {
-            return;
-        }
-        shapes.begin(ShapeRenderer.ShapeType.Line);
-        if (selected >= 0) {
-            float cx = mapBounds.x + mapBounds.width * ISLAND_CENTERS[selected][0] / MAP_WIDTH;
-            float cy = mapBounds.y + mapBounds.height
-                    * (MAP_HEIGHT - ISLAND_CENTERS[selected][1]) / MAP_HEIGHT;
-            shapes.setColor(GREEN);
-            shapes.circle(cx, cy, 17f, 24);
-            shapes.circle(cx, cy, 22f, 24);
-            int selectedCityOwner = game.getSelectedMapCityOwner();
-            int selectedCityIndex = game.getSelectedMapCityIndex();
-            if (selectedCityOwner >= 0 && selectedCityIndex >= 0) {
-                GameState.PlayerState owner = game.getPlayerState(selectedCityOwner);
-                CityState city = owner.getCity(selectedCityIndex);
-                if (owner.alive && city != null && city.populationMillions > 0) {
-                    float cityX = BattlefieldCityLayout.x(mapBounds,
-                            selectedCityOwner, selectedCityIndex);
-                    float cityY = BattlefieldCityLayout.y(mapBounds,
-                            selectedCityOwner, selectedCityIndex);
-                    shapes.circle(cityX, cityY,
-                            BattlefieldCityLayout.selectionRadius(mapBounds), 24);
-                }
-            }
-        }
-        if (showShipStrikes) {
-            shapes.setColor(MODAL_ORANGE);
-            float radius = BattlefieldCityLayout.selectionRadius(mapBounds) + 4f;
-            for (GameState.ShipStrike strike : game.getSelectedShipStrikes()) {
-                float cityX = BattlefieldCityLayout.x(mapBounds,
-                        strike.targetPlayerId, strike.cityIndex);
-                float cityY = BattlefieldCityLayout.y(mapBounds,
-                        strike.targetPlayerId, strike.cityIndex);
-                shapes.circle(cityX, cityY, radius, 24);
-            }
-        }
-        shapes.end();
-    }
+
 
     private void drawTextAndControls() {
         updateMessageHistoryLayout();
@@ -4178,7 +4142,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         if (!mapBounds.contains(x, y)) {
             return;
         }
-        int selectedCity = BattlefieldCityLayout.hitTest(x, y, mapBounds);
+        int selectedCity = cityRenderer == null ? -1
+                : cityRenderer.hitTest(x, y, mapBounds, game);
         if (selectedCity >= 0) {
             int owner = selectedCity / BattlefieldCityLayout.CITIES_PER_PLAYER;
             sourceActionInstruction.onCityAttempt(owner, game.getHuman().hasCeasefireWith(owner));
@@ -4263,7 +4228,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             return;
         }
         if (!pending && sourceActionMenu.isMapSelection() && mapBounds.contains(x, y)) {
-            int address = BattlefieldCityLayout.hitTest(x, y, mapBounds);
+            int address = cityRenderer == null ? -1
+                    : cityRenderer.hitTest(x, y, mapBounds, game);
             if (address >= 0) {
                 int owner = address / BattlefieldCityLayout.CITIES_PER_PLAYER;
                 boolean chosen = sourceActionMenu.chooseCity(game, owner,
@@ -4763,7 +4729,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         if (!targetAction || !mapBounds.contains(x, y)) {
             return false;
         }
-        int address = BattlefieldCityLayout.hitTest(x, y, mapBounds);
+        int address = cityRenderer == null ? -1
+                : cityRenderer.hitTest(x, y, mapBounds, game);
         if (address < 0) {
             return false;
         }

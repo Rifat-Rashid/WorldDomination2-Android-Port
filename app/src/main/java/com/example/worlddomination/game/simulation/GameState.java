@@ -690,6 +690,7 @@ public final class GameState {
     private boolean researchChoicesDirty = true;
     private final Random random;
     private Action selectedAction;
+    private boolean selectedActionTargetConfirmed;
     private boolean propagandaCitySelected;
     private String selectedProductionCategory = "soldier";
     private final Map<String, Integer> selectedProductionPercentages = new LinkedHashMap<>();
@@ -1151,6 +1152,11 @@ public final class GameState {
         return selectedMapCityIndex;
     }
 
+    /** True only after the current action explicitly configured a city target. */
+    public boolean hasSelectedActionCityTarget() {
+        return selectedActionTargetConfirmed;
+    }
+
     public void selectIsland(int island) {
         if (island < 0 || island >= 5) {
             throw new IllegalArgumentException("Island index must be between 0 and 4");
@@ -1162,6 +1168,7 @@ public final class GameState {
 
     /** Clears an unconfirmed city marker without selecting a different island. */
     public void clearBattlefieldCitySelection() {
+        selectedActionTargetConfirmed = false;
         selectedMapCityOwner = -1;
         selectedMapCityIndex = -1;
     }
@@ -1200,6 +1207,7 @@ public final class GameState {
         }
         if (isActionBioloaded(0, action)) {
             selectedAction = null;
+            selectedActionTargetConfirmed = false;
             addMessage(action.label + " is unavailable due to biological contamination.");
             return;
         }
@@ -1210,9 +1218,11 @@ public final class GameState {
         if (queuedActions.size() >= MAX_TURN_ACTIONS) {
             addMessage("Both action slots are full. Confirm the turn or clear them.");
             selectedAction = null;
+            selectedActionTargetConfirmed = false;
             return;
         }
         selectedAction = action;
+        selectedActionTargetConfirmed = false;
         propagandaCitySelected = false;
         selectedResearchTechnologies.clear();
         resetTargetFromMapSelection();
@@ -1680,6 +1690,7 @@ public final class GameState {
         selectedTargetPlayer = targetPlayerId;
         selectedTargetCity = cityIndex;
         selectedAttackWeapon = weaponName;
+        selectedActionTargetConfirmed = true;
         return true;
     }
 
@@ -1831,6 +1842,7 @@ public final class GameState {
         selectedPreparedPayload = payloadName;
         selectedTargetPlayer = targetPlayerId;
         selectedTargetCity = cityIndex;
+        selectedActionTargetConfirmed = true;
         return true;
     }
 
@@ -1887,6 +1899,16 @@ public final class GameState {
 
     public int getSelectedShipStrikeCount() {
         return selectedShipStrikes.size();
+    }
+
+    /** Read-only count for source city markers without allocating a list view. */
+    public int getSelectedShipCityUseCount(int playerId, int cityIndex) {
+        int count = 0;
+        for (int index = 0; index < selectedShipStrikes.size(); index++) {
+            ShipStrike strike = selectedShipStrikes.get(index);
+            if (strike.targetPlayerId == playerId && strike.cityIndex == cityIndex) count++;
+        }
+        return count;
     }
 
     /** Source userSelectedShipCityPlrNum, without allocating a list view while drawing. */
@@ -2267,6 +2289,7 @@ public final class GameState {
         getHuman().turnMoneyMillions -= reserved;
         addMessage(selectedAction.label + " queued.");
         selectedAction = null;
+        selectedActionTargetConfirmed = false;
         selectedResearchTechnologies.clear();
         resetTargetFromMapSelection();
         selectedAttackWeapon = firstAvailableAttackWeapon();
@@ -2281,6 +2304,7 @@ public final class GameState {
 
     public void cancelSelection() {
         selectedAction = null;
+        selectedActionTargetConfirmed = false;
         selectedResearchTechnologies.clear();
         resetTargetFromMapSelection();
         selectedAttackWeapon = firstAvailableAttackWeapon();
@@ -2352,6 +2376,44 @@ public final class GameState {
     public Action getQueuedAction(int slot) {
         ActionOrder order = queuedOrderAt(slot);
         return order == null ? null : order.action;
+    }
+
+    /** Read-only target data for source battlefield order markers. */
+    public int getQueuedTargetPlayer(int slot) {
+        ActionOrder order = queuedOrderAt(slot);
+        return order == null ? -1 : order.targetPlayerId;
+    }
+
+    public int getQueuedTargetCity(int slot) {
+        ActionOrder order = queuedOrderAt(slot);
+        return order == null ? -1 : order.targetCityIndex;
+    }
+
+    public String getQueuedWeaponName(int slot) {
+        ActionOrder order = queuedOrderAt(slot);
+        return order == null ? null : order.weaponName;
+    }
+
+    public boolean isQueuedCarrierPreparation(int slot) {
+        ActionOrder order = queuedOrderAt(slot);
+        return order != null && order.prepareCarrier;
+    }
+
+    public int getQueuedShipStrikeCount(int slot) {
+        ActionOrder order = queuedOrderAt(slot);
+        return order == null ? 0 : order.shipStrikes.size();
+    }
+
+    public int getQueuedShipStrikePlayer(int slot, int strikeIndex) {
+        ActionOrder order = queuedOrderAt(slot);
+        return order == null || strikeIndex < 0 || strikeIndex >= order.shipStrikes.size()
+                ? -1 : order.shipStrikes.get(strikeIndex).targetPlayerId;
+    }
+
+    public int getQueuedShipStrikeCity(int slot, int strikeIndex) {
+        ActionOrder order = queuedOrderAt(slot);
+        return order == null || strikeIndex < 0 || strikeIndex >= order.shipStrikes.size()
+                ? -1 : order.shipStrikes.get(strikeIndex).cityIndex;
     }
 
     public int getResourceIncomeMillions() {
@@ -3955,6 +4017,7 @@ public final class GameState {
         selectedTargetPlayer = targetPlayerId;
         selectedTargetCity = cityIndex;
         propagandaCitySelected = true;
+        selectedActionTargetConfirmed = true;
         return true;
     }
 

@@ -156,6 +156,8 @@ public final class SourceActionMenusInstrumentedTest {
         }
         GameState state = new GameState(setup, 17L);
         field("game").set(app, state); field("modalOpen").setBoolean(app, false);
+        // Match the production new-game path before dispatching touches to visible frames.
+        ((BattlefieldCityRenderer) field("cityRenderer").get(app)).reset(state);
         return state;
     }
     private static void stock(GameState game, String name, int count) {

@@ -87,15 +87,24 @@ jobs:
       max-parallel: 6
       matrix:
         include:
+          - id: source-city-order-markers
+            check: Source queued city target icons and selection precedence
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.BattlefieldCityOrderMarkersTest" --tests "com.example.worlddomination.game.assets.OriginalFlashAnimationAssetsTest.sourceCityOrderClipsAreOneFrameAndTheirShapesArePackaged"'
           - id: source-action-instructions
             check: Source action instruction timing warnings and selection transitions
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.SourceActionInstructionTest"'
           - id: source-stock-controls
             check: Source equipment eligibility switch states and stock reservations
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.SourceStockControlStateTest" --tests "com.example.worlddomination.game.assets.StockControlArtworkTest"'
+          - id: source-enemy-selection
+            check: Source enemy removal artwork and responsive selection layout
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.OriginalFlashAnimationAssetsTest.setupRemovalButtonRetainsEmptyAndVisibleSourceFramesAndEarlyArtwork" --tests "com.example.worlddomination.game.ui.SetupScreenLayoutTest.removalArtworkKeepsSourceAspectRatioInsideEveryOccupiedCard"'
           - id: battlefield-city-selection
             check: Source city targeting colors ceasefires and ship restrictions
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.BattlefieldCitySelectionTest"'
+          - id: source-city-hit-bounds
+            check: Source city frame hit bounds and island touch mapping
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.CitySpriteHitGeometryTest"'
           - id: battlefield-terrain-parity
             check: Original terrain styles unused islands and conquest retention
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.BattlefieldTerrainStateTest" --tests "com.example.worlddomination.game.assets.BattlefieldTerrainAssetsTest"'
@@ -156,6 +165,9 @@ jobs:
           - id: ai-resolved-source-session-tests
             check: AI forty-turn and terminal source-session traces
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.AiSourceResolvedTurnParityTest"'
+          - id: ai-concurrent-strike-defense-tests
+            check: Concurrent AI strikes and matching defense parity
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.ConcurrentAiStrikeDefenseParityTest"'
           - id: ai-propaganda-tie-order-tests
             check: AI propaganda target and city tie order
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.OpponentAITest.propagandaTiesFollowReverseSourcePlayerAndCityOrder"'
