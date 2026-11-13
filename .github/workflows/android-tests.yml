@@ -476,7 +476,7 @@ jobs:
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.ReferenceRandomTest.copiedRandomPreservesTheStreamWithoutAdvancingCanonicalState"'
           - id: match-outcome-tests
             check: Match outcome sequence tests
-            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.MatchOutcomeSequenceTest" --tests "com.example.worlddomination.game.ui.MatchOutcomePresentationTest"'
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.MatchOutcomeSequenceTest" --tests "com.example.worlddomination.game.ui.MatchOutcomePresentationTest" --tests "com.example.worlddomination.game.assets.OriginalEndgameAssetsTest" --tests "com.example.worlddomination.game.ui.EndgameScreenLayoutTest"'
           - id: personal-best-outcome-display-tests
             check: Personal best outcome display
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.MatchOutcomePresentationTest.personalBestUsesTheSamePeriodGroupedScoreFormat"'

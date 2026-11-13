@@ -58,6 +58,8 @@ import com.example.worlddomination.game.rendering.FlashCenterUiRenderer;
 import com.example.worlddomination.game.rendering.RenderLoopPolicy;
 import com.example.worlddomination.game.rendering.SourceCombatAnimationMapping;
 import com.example.worlddomination.game.rendering.TurnPlaybackSequence;
+import com.example.worlddomination.game.rendering.SourceEndgameRenderer;
+import com.example.worlddomination.game.assets.OriginalEndgameAssets;
 import com.example.worlddomination.game.simulation.GameSetup;
 import com.example.worlddomination.game.simulation.GameState;
 import com.example.worlddomination.game.simulation.CityState;
@@ -191,6 +193,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private final Rectangle splashBounds = new Rectangle();
     private PersonalBestStore personalBestStore;
     private String outcomePersonalBestText = "";
+    private OriginalEndgameAssets endgameAssets;
+    private SourceEndgameRenderer endgameRenderer;
+    private final Rectangle endgameContentBounds = new Rectangle();
     private final OriginalAudio audio = new OriginalAudio();
     private final List<BattleAnimationSequence> battleAnimations = new ArrayList<>();
     private final List<FlashActionBuildingAnimation> actionBuildingAnimations =
@@ -466,6 +471,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         float contentY = safeBottom + 4f;
         float contentWidth = Math.max(1f, worldWidth - safeLeft - safeRight - 8f);
         float contentHeight = Math.max(1f, worldHeight - safeTop - safeBottom - 8f);
+        endgameContentBounds.set(contentX, contentY, contentWidth, contentHeight);
+        if (endgameRenderer != null) {
+            endgameRenderer.layout().fit(contentX, contentY, contentWidth, contentHeight);
+        }
         float leftWidth = contentWidth * 0.215f;
         float rightWidth = contentWidth * 0.265f;
         leftPanel.set(contentX, contentY, leftWidth, contentHeight);
@@ -598,6 +607,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             preparedTerrainGame = game;
         }
         synchronizeOutcomeSequence();
+        if (endgameRenderer != null) endgameRenderer.update();
         boolean discardElapsedTime = skipNextFrameDelta || !continuousRenderingEnabled;
         skipNextFrameDelta = false;
         if (discardElapsedTime) {
@@ -645,6 +655,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private boolean hasActivePresentation() {
         if (game == null) {
             return false;
+        }
+        if (outcomeSequence.isEndgameVisible()) {
+            return outcomeSequence.isAnimating()
+                    || endgameRenderer == null || !endgameRenderer.isReady();
         }
         // The source flag cloth loops at 24 Hz even between player actions.
         if (flagRenderer != null) return true;
@@ -1032,6 +1046,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             if (outcomeSequence.getPhase() != MatchOutcomeSequence.Phase.INACTIVE) {
                 stopScoreCounterSound();
                 outcomeSequence.reset();
+                disposeEndgameResources();
             }
             outcomePersonalBestText = "";
             return;
@@ -1039,6 +1054,13 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
         if (outcomeSequence.getOutcome() != game.getMatchStatus()) {
             stopScoreCounterSound();
+            if (endgameAssets == null) {
+                endgameAssets = new OriginalEndgameAssets();
+                endgameRenderer = new SourceEndgameRenderer(endgameAssets);
+                endgameRenderer.layout().fit(endgameContentBounds.x, endgameContentBounds.y,
+                        endgameContentBounds.width, endgameContentBounds.height);
+                endgameRenderer.start();
+            }
             if (personalBestStore != null) {
                 personalBestStore.recordFinalScore(game.getFinalScore());
                 outcomePersonalBestText = MatchOutcomePresentation.personalBestLine(
@@ -3311,76 +3333,22 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     }
 
     private void drawEndgameOverlay() {
-        GameState.MatchStatus outcome = outcomeSequence.getOutcome();
-        boolean scoreStarted = outcomeSequence.isScoreStarted();
-        shapes.setProjectionMatrix(camera.combined);
-        shapes.begin(ShapeRenderer.ShapeType.Filled);
-        shapes.setColor(0f, 0f, 0f, 0.70f);
-        shapes.rect(0f, 0f, worldWidth, worldHeight);
-        drawPanelFill(modal);
-        shapes.setColor(MODAL_ORANGE);
-        shapes.rect(modal.x + 3f, modal.y + modal.height - 29f,
-                modal.width - 6f, 25f);
-        if (scoreStarted) {
-            shapes.rect(modal.x + 3f, modal.y + 3f,
-                    modal.width - 6f, 25f);
-        }
-        shapes.end();
-
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
-        drawPanelTexture(modal);
-        if (scoreStarted) {
-            drawOriginalButton(modalAccept);
-        }
+        endgameRenderer.draw(batch, endgameContentBounds, outcomeSequence,
+                outcomePersonalBestText, font);
         batch.end();
+    }
 
-        if (scoreStarted) {
-            shapes.begin(ShapeRenderer.ShapeType.Filled);
-            drawButtonGradient(modalAccept, true);
-            shapes.end();
+    private void disposeEndgameResources() {
+        if (endgameRenderer != null) {
+            endgameRenderer.dispose();
+            endgameRenderer = null;
         }
-
-        batch.begin();
-        font.setColor(Color.WHITE);
-        drawCentered(MatchOutcomePresentation.title(outcome),
-                modal.x + modal.width / 2f, modal.y + modal.height - 12f, 12f);
-        font.setColor(TITLE_TEXT);
-        if (scoreStarted) {
-            drawWrappedCentered(MatchOutcomePresentation.message(outcome),
-                    modal.x + 9f, modal.y + modal.height * 0.70f,
-                    modal.width - 18f, 8f);
-            drawCentered("FINAL SCORE", modal.x + modal.width / 2f,
-                    modal.y + modal.height * 0.48f, 8f);
-            if (outcomeSequence.isScoreVisible()) {
-                drawCentered(outcomeSequence.getScoreText(),
-                        modal.x + modal.width / 2f, modal.y + modal.height * 0.37f, 15f);
-            }
-            if (outcomeSequence.isComplete()) {
-                drawCentered(outcomePersonalBestText,
-                        modal.x + modal.width / 2f, modal.y + modal.height * 0.31f, 7f);
-            }
-            if (!outcomeSequence.getSatelliteBonusText().isEmpty()) {
-                drawCentered(outcomeSequence.getSatelliteBonusText(),
-                        modal.x + modal.width / 2f, modal.y + modal.height * 0.25f, 7f);
-            }
-            if (!outcomeSequence.getFlagBonusText().isEmpty()) {
-                drawCentered(outcomeSequence.getFlagBonusText(),
-                        modal.x + modal.width / 2f, modal.y + modal.height * 0.18f, 7f);
-            }
+        if (endgameAssets != null) {
+            endgameAssets.dispose();
+            endgameAssets = null;
         }
-        if (scoreStarted) {
-            drawCentered("NEW GAME", modalAccept.x + modalAccept.width / 2f,
-                    modalAccept.y + modalAccept.height / 2f + 3f, 8f);
-        }
-        batch.end();
-
-        shapes.begin(ShapeRenderer.ShapeType.Line);
-        drawPanelEdges(modal);
-        if (scoreStarted) {
-            drawButtonEdges(modalAccept);
-        }
-        shapes.end();
     }
 
     private void drawWrappedCentered(String text, float x, float baselineY,
@@ -3398,6 +3366,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         stopScoreCounterSound();
         audio.stopAmbient();
         outcomeSequence.reset();
+        disposeEndgameResources();
         outcomePersonalBestText = "";
         setup = nextSetup;
         setupLeaderListStart = 0;
@@ -3687,6 +3656,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     }
 
     private int pointArea(float x, float y) {
+        if (outcomeSequence.isEndgameVisible()) return GESTURE_NONE;
         if (modalOpen && game != null && !sourceActionMenu.isEconomyWarning(game)
                 && game.getSelectedAction() == GameState.Action.PRODUCTION) {
             for (int i = 0; i < productionSliderHitTargets.length; i++) {
@@ -4256,16 +4226,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             return;
         }
         if (MatchOutcomePresentation.isFinished(game.getMatchStatus())) {
-            if (muteButton.contains(x, y)) {
-                audio.toggleSound();
-                return;
-            }
-            if (settingsButton.contains(x, y)) {
-                audio.toggleMusic();
-                return;
-            }
             if (outcomeSequence.isEndgameVisible()) {
-                if (outcomeSequence.isScoreStarted() && modalAccept.contains(x, y)) {
+                if (outcomeSequence.isScoreStarted() && endgameRenderer != null
+                        && endgameRenderer.isReady()
+                        && endgameRenderer.layout().hitNewGame(x, y)) {
                     beginNewGameSetup();
                     audio.play(OriginalAudio.Cue.ACTION_CLOSE);
                 }
@@ -4542,6 +4506,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     }
 
     private boolean isTurnInputBlocked() {
+        if (outcomeSequence.isEndgameVisible()) return false;
         return confirmTurnAnimation.isPending() || turnPlaybackSequence.isBlockingInput();
     }
 
@@ -5092,6 +5057,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     @Override
     public void dispose() {
+        disposeEndgameResources();
         turnPlaybackSequence.reset();
         battleAnimations.clear();
         actionBuildingAnimations.clear();

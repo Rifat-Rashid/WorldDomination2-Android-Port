@@ -28,7 +28,7 @@ public final class MatchOutcomePresentation {
                     + "victorious in its quest for world domination.";
         }
         if (status == GameState.MatchStatus.DEFEAT) {
-            return "Your country was destroyed. You lost the war for World Domination.";
+            return "Your country was destroyed.\nYou lost the war for World Domination.";
         }
         return "";
     }

@@ -26,7 +26,7 @@ public final class MatchOutcomePresentationTest {
         assertEquals("After killing most of the world's population, your country stands "
                         + "victorious in its quest for world domination.",
                 MatchOutcomePresentation.message(GameState.MatchStatus.VICTORY));
-        assertEquals("Your country was destroyed. You lost the war for World Domination.",
+        assertEquals("Your country was destroyed.\nYou lost the war for World Domination.",
                 MatchOutcomePresentation.message(GameState.MatchStatus.DEFEAT));
     }
 
