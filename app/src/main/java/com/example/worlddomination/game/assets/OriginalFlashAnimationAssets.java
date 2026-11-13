@@ -112,7 +112,7 @@ public final class OriginalFlashAnimationAssets implements Disposable {
             Collections.emptyMap();
     private volatile FlashAnimationTimeline centerUiTimeline;
     private volatile Set<Integer> centerUiArtworkIds = Collections.emptySet();
-    private volatile Set<Integer> earlyCenterUiArtworkIds = Collections.emptySet();
+    private volatile Set<Integer> earlyPackedShapeIds = Collections.emptySet();
     private volatile Map<Integer, TextureRegion> shapeRegions = Collections.emptyMap();
     private volatile Map<Integer, TextureRegion> setupPortraitRegions = Collections.emptyMap();
     private volatile Map<Integer, ShapeOrigin> shapeOrigins = Collections.emptyMap();
@@ -171,7 +171,7 @@ public final class OriginalFlashAnimationAssets implements Disposable {
         Set<Integer> battleShapeIds = collectShapeIds(timelines, nestedTimelines);
         battleShapeIds.addAll(centerUiArtworkIds);
         battleShapeIds = excludeAlreadyPackedShapes(battleShapeIds,
-                collectSetupPortraitShapeIds(timelines), earlyCenterUiArtworkIds);
+                earlyPackedShapeIds, Collections.emptySet());
         for (int shapeId : battleShapeIds) {
             TextureRegion region = generatedAtlas.findRegion(regionName(shapeId));
             if (region == null) {
@@ -198,8 +198,13 @@ public final class OriginalFlashAnimationAssets implements Disposable {
         return loaded;
     }
 
-    /** True when the small setup-only portrait atlas is ready for rendering. */
+    /** True when the early atlas is ready for portraits, initial dialogs, and map art. */
     public boolean areSetupPortraitsLoaded() {
+        return setupPortraitsLoaded;
+    }
+
+    /** The source flag family and all its nested leaf shapes share the early atlas. */
+    public boolean areBattlefieldFlagsLoaded() {
         return setupPortraitsLoaded;
     }
 
@@ -268,6 +273,11 @@ public final class OriginalFlashAnimationAssets implements Disposable {
             int[] centerUiFrames = {researchFrame, massMediaFrame, propagandaFrame};
             Map<Integer, FlashAnimationTimeline> centerUiChildren = loadNestedTimelines(
                     scene, loadedCenterUi, centerUiFrames);
+            Map<Integer, FlashAnimationTimeline> flagChildren = loadNestedTimelines(scene,
+                    loadedTimelines.get("flag_pole"));
+            Map<Integer, FlashAnimationTimeline> earlyChildren =
+                    new LinkedHashMap<>(centerUiChildren);
+            earlyChildren.putAll(flagChildren);
             Set<Integer> loadedCenterUiArt = collectCenterUiArtworkIds(loadedCenterUi,
                     centerUiChildren, centerUiFrames,
                     OriginalFlashAnimationAssets::hasPackagedCenterUiArt);
@@ -281,14 +291,15 @@ public final class OriginalFlashAnimationAssets implements Disposable {
                     return;
                 }
                 timelines = Collections.unmodifiableMap(loadedTimelines);
-                nestedTimelines = Collections.unmodifiableMap(centerUiChildren);
+                nestedTimelines = Collections.unmodifiableMap(earlyChildren);
                 centerUiTimeline = loadedCenterUi;
                 centerUiArtworkIds = Collections.unmodifiableSet(loadedCenterUiArt);
-                earlyCenterUiArtworkIds = Collections.unmodifiableSet(loadedEarlyCenterUiArt);
             }
 
             Set<Integer> earlyShapeIds = collectSetupPortraitShapeIds(loadedTimelines);
             earlyShapeIds.addAll(loadedEarlyCenterUiArt);
+            earlyShapeIds.addAll(collectFlagFamilyShapeIds(loadedTimelines, flagChildren,
+                    OriginalFlashAnimationAssets::hasPackagedShape));
             Map<Integer, ShapeOrigin> loadedShapeOrigins = new LinkedHashMap<>();
             packShapes(portraitPacker, earlyShapeIds, loadedShapeOrigins);
             synchronized (loadLock) {
@@ -297,15 +308,15 @@ public final class OriginalFlashAnimationAssets implements Disposable {
                 }
                 shapeOrigins = Collections.unmodifiableMap(
                         new LinkedHashMap<>(loadedShapeOrigins));
+                earlyPackedShapeIds = Collections.unmodifiableSet(
+                        new LinkedHashSet<>(earlyShapeIds));
                 pendingSetupPortraitPacker = portraitPacker;
                 setupPortraitSourceReady = true;
                 portraitTransferred = true;
             }
             Gdx.graphics.requestRendering();
 
-            loadedNestedTimelines.putAll(centerUiChildren);
-            loadedNestedTimelines.putAll(loadNestedTimelines(scene,
-                    loadedTimelines.get("flag_pole")));
+            loadedNestedTimelines.putAll(earlyChildren);
             loadedNestedTimelines.putAll(loadNestedTimelines(scene,
                     loadedTimelines.get("buildings_antiAir")));
             loadedNestedTimelines.putAll(loadNestedTimelines(scene,
@@ -389,9 +400,7 @@ public final class OriginalFlashAnimationAssets implements Disposable {
         }
 
         Map<Integer, TextureRegion> generatedRegions = new LinkedHashMap<>();
-        Set<Integer> setupShapeIds = collectSetupPortraitShapeIds(timelines);
-        setupShapeIds.addAll(earlyCenterUiArtworkIds);
-        for (int shapeId : setupShapeIds) {
+        for (int shapeId : earlyPackedShapeIds) {
             TextureRegion region = generatedAtlas.findRegion(regionName(shapeId));
             if (region == null) {
                 generatedAtlas.dispose();
@@ -453,6 +462,18 @@ public final class OriginalFlashAnimationAssets implements Disposable {
             shapes.add(SETUP_REMOVE_LEADER_SHAPE_ID);
         }
         return shapes;
+    }
+
+    static Set<Integer> collectFlagFamilyShapeIds(
+            Map<String, FlashAnimationTimeline> timelines,
+            Map<Integer, FlashAnimationTimeline> flagChildren,
+            IntPredicate hasShapeAsset) {
+        FlashAnimationTimeline flagPole = timelines.get("flag_pole");
+        if (flagPole == null) {
+            throw new IllegalStateException("Missing original flag_pole timeline");
+        }
+        return collectShapeIds(Collections.singletonMap("flag_pole", flagPole),
+                flagChildren, false, hasShapeAsset);
     }
 
     private static Set<Integer> collectShapeIds(
@@ -941,6 +962,7 @@ public final class OriginalFlashAnimationAssets implements Disposable {
             }
             shapeRegions = Collections.emptyMap();
             setupPortraitRegions = Collections.emptyMap();
+            earlyPackedShapeIds = Collections.emptySet();
             shapeOrigins = Collections.emptyMap();
             nestedTimelines = Collections.emptyMap();
             cityTimelines = Collections.emptyMap();

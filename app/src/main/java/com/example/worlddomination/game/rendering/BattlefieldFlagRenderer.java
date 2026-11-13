@@ -41,7 +41,7 @@ public final class BattlefieldFlagRenderer implements Disposable {
                     BattlefieldFlagState.sourceX(island), island);
             float y = BattlefieldCityLayout.sourceY(mapBounds,
                     BattlefieldFlagState.sourceY(island));
-            if (!assets.isLoaded()) continue;
+            if (!assets.areBattlefieldFlagsLoaded()) continue;
             int color = BattlefieldFlagState.color(game, island);
             if (color == 0) continue;
             FlashAnimationTimeline timeline = assets.getTimeline("flag_pole");
