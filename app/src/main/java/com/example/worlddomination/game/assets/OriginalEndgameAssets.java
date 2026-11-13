@@ -7,7 +7,6 @@ import com.badlogic.gdx.graphics.g2d.PixmapPacker;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.utils.Disposable;
-import com.badlogic.gdx.utils.JsonReader;
 import com.badlogic.gdx.utils.JsonValue;
 import com.example.worlddomination.game.rendering.FlashAnimationTimeline;
 
@@ -20,7 +19,6 @@ import java.util.Set;
 /** Lazy original four-frame endgame art, independent of the setup and battle atlases. */
 public final class OriginalEndgameAssets implements Disposable {
     public static final int SYMBOL_ID = 5903;
-    private static final String SCENE_PATH = "original/runtime/scene.json.gz";
     private static final String SHAPE_PATH = "original/runtime/shapes/";
     private final Object lock = new Object();
     private volatile boolean disposed;
@@ -50,8 +48,8 @@ public final class OriginalEndgameAssets implements Disposable {
                 Pixmap.Format.RGBA8888, 2, true);
         boolean transferred = false;
         try {
-            JsonValue scene = new JsonReader().parse(
-                    OriginalFlashAnimationAssets.readCompressedUtf8(SCENE_PATH));
+            JsonValue scene = OriginalFlashAnimationAssets.loadSceneMetadata();
+            if (disposed) return;
             FlashAnimationTimeline root = OriginalFlashAnimationAssets.loadTimelineBySymbolId(
                     scene, SYMBOL_ID);
             Map<Integer, FlashAnimationTimeline> children =
