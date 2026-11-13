@@ -92,7 +92,7 @@ jobs:
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.PanelGestureVelocityTest"'
           - id: source-city-order-markers
             check: Source queued city target icons and selection precedence
-            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.BattlefieldCityOrderMarkersTest" --tests "com.example.worlddomination.game.assets.OriginalFlashAnimationAssetsTest.sourceCityOrderClipsAreOneFrameAndTheirShapesArePackaged"'
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.BattlefieldCityOrderMarkersTest" --tests "com.example.worlddomination.game.assets.OriginalFlashAnimationAssetsTest.sourceCityOrderClipsAreOneFrameAndTheirShapesArePackaged" --tests "com.example.worlddomination.game.assets.OriginalFlashAnimationAssetsTest.cityOrderMarkerShapesUseEarlyAtlasWithoutDuplicateBattlePacking"'
           - id: source-action-instructions
             check: Source action instruction timing warnings and selection transitions
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.SourceActionInstructionTest"'
