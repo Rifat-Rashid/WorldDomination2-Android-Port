@@ -79,6 +79,7 @@ import com.example.worlddomination.game.ui.NavigationPanelLayout;
 import com.example.worlddomination.game.ui.PreparedShipStrikeSelection;
 import com.example.worlddomination.game.ui.ProductionScreenLayout;
 import com.example.worlddomination.game.ui.ScrollPaneState;
+import com.example.worlddomination.game.ui.PanelGestureVelocity;
 import com.example.worlddomination.game.ui.SplashScreenLayout;
 import com.example.worlddomination.game.ui.SplashScreenState;
 import com.example.worlddomination.game.ui.SetupScreenLayout;
@@ -333,7 +334,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private float pointerStartX;
     private float pointerStartY;
     private float lastPointerY;
-    private float lastPointerTime;
+    private long lastPointerNanos;
     private float gestureVelocityY;
     private float productionGestureHandleOffsetX;
     private float messageLineHeight = 1f;
@@ -4877,10 +4878,12 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         pointerStartX = pointer.x;
         pointerStartY = pointer.y;
         lastPointerY = pointer.y;
-        lastPointerTime = System.nanoTime() / 1_000_000_000f;
+        lastPointerNanos = System.nanoTime();
         gestureVelocityY = 0f;
         dragging = false;
         gestureArea = pointArea(pointer.x, pointer.y);
+        if (gestureArea == GESTURE_NAV) navigationScroll.beginGesture();
+        else if (gestureArea == GESTURE_EQUIPMENT) equipmentScroll.beginGesture();
         if (gestureArea == GESTURE_MESSAGE) {
             messageDragStartScroll = messageHistoryScroll.getScroll();
         }
@@ -5018,6 +5021,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         if (!dragging && Math.abs(totalY) > TAP_SLOP && Math.abs(totalY) > Math.abs(totalX)) {
             dragging = true;
         }
+        long now = System.nanoTime();
         if (dragging) {
             float delta = pointer.y - lastPointerY;
             if (gestureArea == GESTURE_NAV) {
@@ -5025,13 +5029,11 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             } else {
                 equipmentScroll.dragBy(-delta);
             }
-            float now = System.nanoTime() / 1_000_000_000f;
-            float seconds = Math.max(0.001f, now - lastPointerTime);
-            gestureVelocityY = -delta / seconds;
-            lastPointerTime = now;
-            lastPointerY = pointer.y;
+            gestureVelocityY = PanelGestureVelocity.sample(-delta, lastPointerNanos, now);
             Gdx.graphics.requestRendering();
         }
+        lastPointerNanos = now;
+        lastPointerY = pointer.y;
         return true;
     }
 

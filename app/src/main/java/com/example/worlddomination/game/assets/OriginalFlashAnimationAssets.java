@@ -69,6 +69,11 @@ public final class OriginalFlashAnimationAssets implements Disposable {
     public static final String LEADER_PORTRAITS_TIMELINE = "leaderPortraits";
     /** Visible second frame of the source setup btnCancel movie clip (5826). */
     public static final int SETUP_REMOVE_LEADER_SHAPE_ID = 5825;
+    /** Small source city order icons are needed before the complete battle atlas finishes. */
+    private static final String[] EARLY_CITY_MARKER_LINKAGES = {
+            "map_icon_crosshair", "map_icon_soldier", "map_icon_rocket",
+            "map_icon_plane", "map_icon_propaganda", "map_icon_special"
+    };
     /** White source triangle used by each production investment slider. */
     public static final int PRODUCTION_SLIDER_HANDLE_SHAPE_ID = 3274;
 
@@ -435,6 +440,12 @@ public final class OriginalFlashAnimationAssets implements Disposable {
         Map<String, FlashAnimationTimeline> setupTimelines = new LinkedHashMap<>();
         if (faces != null) {
             setupTimelines.put(LEADER_PORTRAITS_TIMELINE, faces);
+        }
+        for (String linkage : EARLY_CITY_MARKER_LINKAGES) {
+            FlashAnimationTimeline marker = timelines.get(linkage);
+            if (marker != null) {
+                setupTimelines.put(linkage, marker);
+            }
         }
         Set<Integer> shapes = collectShapeIds(setupTimelines, Collections.emptyMap(), false,
                 hasShapeAsset);

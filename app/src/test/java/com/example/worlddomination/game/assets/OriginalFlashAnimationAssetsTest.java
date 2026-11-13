@@ -63,6 +63,22 @@ public final class OriginalFlashAnimationAssetsTest {
     }
 
     @Test
+    public void cityOrderMarkerShapesUseEarlyAtlasWithoutDuplicateBattlePacking()
+            throws IOException {
+        Map<String, FlashAnimationTimeline> timelines =
+                OriginalFlashAnimationAssets.loadTimelines(loadScene());
+        Set<Integer> early = OriginalFlashAnimationAssets.collectSetupPortraitShapeIds(
+                timelines, shape -> Files.isRegularFile(shapeAsset(shape)));
+        Set<Integer> markers = Set.of(2218, 2221, 2224, 2227, 2230, 2233);
+        assertTrue("All six source marker shapes must be cached early",
+                early.containsAll(markers));
+        Set<Integer> battleCandidates = new java.util.LinkedHashSet<>(markers);
+        battleCandidates.add(9999);
+        assertEquals(Set.of(9999), OriginalFlashAnimationAssets.excludeAlreadyPackedShapes(
+                battleCandidates, early, Collections.emptySet()));
+    }
+
+    @Test
     public void propagandaFrameAndEmbeddedFontKeepAlphaFormatAndDynamicGlyphs() throws IOException {
         Path ui = shapeAsset(3886).getParent().getParent().getParent().resolve("ui");
         byte[] frame = Files.readAllBytes(ui.resolve("propaganda-frame.png"));
