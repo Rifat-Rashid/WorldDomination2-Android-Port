@@ -25,6 +25,11 @@ public final class SourceActionMenuRenderer implements Disposable {
         void draw(int leaderId, float x, float y, float width, float height);
     }
     private static final String DIRECTORY = "original/ui/action-menus/";
+    // The source iPhone adapter copies religion text3 with TextFormat size 16
+    // and translates its authored clip down by seven source units. The SWF's
+    // unmodified field metadata still reports size 22.
+    private static final float MASS_MEDIA_VALUE_FONT_SIZE = 16f;
+    private static final float MASS_MEDIA_VALUE_OFFSET_Y = 7f;
     private final JsonValue menus = new JsonReader().parse(Gdx.files.internal(DIRECTORY + "menus.json"));
     private final LinkedHashMap<String, Texture> cache = new LinkedHashMap<>(4, .75f, true);
     private final Texture accept = texture("btnAccept"), cancel = texture("btnCancel");
@@ -134,6 +139,10 @@ public final class SourceActionMenuRenderer implements Disposable {
         JsonValue c = source.get("color");
         Color ink = new Color(c.getInt(0) / 255f, c.getInt(1) / 255f, c.getInt(2) / 255f, c.getInt(3) / 255f);
         String name = source.getString("name");
+        if (key.startsWith("religion-") && "text3".equals(name)) {
+            field.scale = MASS_MEDIA_VALUE_FONT_SIZE / 48f;
+            font.getData().setScale(field.scale);
+        }
         if ("diplomacy".equals(key) && state.hasOption()
                 && name.equals("text" + (game.getSelectedDiplomacyOption() + 1))) ink.set(Color.GREEN);
         int align = source.getInt("align"), alignment = align == 1 ? Align.right : align == 2 ? Align.center : Align.left;
@@ -214,7 +223,13 @@ public final class SourceActionMenuRenderer implements Disposable {
             if (b.getFloat(0) >= 365 || b.getFloat(1) >= 275) continue;
             if ("propaganda2".equals(key) && "text1".equals(field.source.getString("name"))) continue;
             font.getData().setScale(field.scale);
-            font.draw(batch, field.glyph, field.x, -b.getFloat(1) - 4);
+            boolean massMediaValue = key.startsWith("religion-")
+                    && "text3".equals(field.source.getString("name"));
+            // wd2/iphone_ui.py applies Matrix(ty=7) to the copied text3 clip.
+            float baseline = massMediaValue
+                    ? b.getFloat(1) + 4f + MASS_MEDIA_VALUE_OFFSET_Y
+                    : b.getFloat(1) + 4f;
+            font.draw(batch, field.glyph, field.x, -baseline);
         }
         if ("propaganda2".equals(key)) {
             propagandaFont.getData().setScale(.25f);
