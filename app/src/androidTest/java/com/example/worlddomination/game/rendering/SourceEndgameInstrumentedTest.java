@@ -9,6 +9,8 @@ import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.PixmapIO;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.graphics.glutils.FrameBuffer;
+import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.ScreenUtils;
@@ -118,6 +120,7 @@ public final class SourceEndgameInstrumentedTest {
                         assertStableRepeatedFrame(app);
                         capture(prefix + "-complete.png");
                         assertScoreBackgroundMatchesAuthoredLeaf(app, assets);
+                        assertPhoneScoreVisible(app);
                         assertScoreGlyphColor(app);
                     }
                     tapSource(app, 553f, 465f);
@@ -184,6 +187,78 @@ public final class SourceEndgameInstrumentedTest {
     }
 
     private static void assertScoreGlyphColor(WorldDominationGame app) throws Exception {
+        // At a small surface, glyph strokes are mostly fractional coverage.
+        // Render the production
+        // renderer at two pixels per source-stage point to test its exact color
+        // independently of the device's mipmap/antialiasing coverage.
+        FrameBuffer buffer = new FrameBuffer(Pixmap.Format.RGBA8888, 1600, 1200, false);
+        SpriteBatch isolated = new SpriteBatch();
+        Pixmap pixels = null;
+        boolean bufferStarted = false;
+        try {
+            buffer.begin();
+            bufferStarted = true;
+            Gdx.gl.glClearColor(0.006f, 0.016f, 0.022f, 1f);
+            Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+            isolated.setProjectionMatrix(new Matrix4().setToOrtho2D(0, 0, 800, 600));
+            isolated.begin();
+            SourceEndgameRenderer renderer = (SourceEndgameRenderer)
+                    field(WorldDominationGame.class, "endgameRenderer").get(app);
+            assertTrue(renderer.draw(isolated, new Rectangle(0, 0, 800, 600),
+                    (MatchOutcomeSequence) field(WorldDominationGame.class,
+                            "outcomeSequence").get(app),
+                    (String) field(WorldDominationGame.class, "outcomePersonalBestText").get(app),
+                    (com.badlogic.gdx.graphics.g2d.BitmapFont)
+                            field(WorldDominationGame.class, "font").get(app)));
+            isolated.end();
+            pixels = ScreenUtils.getFrameBufferPixmap(107, 358, 739, 106);
+            int green = 0;
+            int pureGreen = 0;
+            int highestGreen = 0;
+            int[] greenHistogram = new int[256];
+            for (int y = 0; y < pixels.getHeight(); y++)
+                for (int x = 0; x < pixels.getWidth(); x++) {
+                    int value = pixels.getPixel(x, y);
+                    int red = value >>> 24 & 255, channel = value >>> 16 & 255;
+                    int blue = value >>> 8 & 255;
+                    if (red < 8 && blue < 8 && channel > 0) {
+                        pureGreen++;
+                        highestGreen = Math.max(highestGreen, channel);
+                        greenHistogram[channel]++;
+                        if (channel >= 196 && channel <= 212) green++;
+                    }
+                }
+            StringBuilder dominant = new StringBuilder();
+            for (int rank = 0; rank < 5; rank++) {
+                int bestChannel = -1;
+                for (int channel = 0; channel < greenHistogram.length; channel++)
+                    if (greenHistogram[channel] > 0
+                            && (bestChannel < 0
+                            || greenHistogram[channel] > greenHistogram[bestChannel]))
+                        bestChannel = channel;
+                if (bestChannel < 0) break;
+                if (dominant.length() > 0) dominant.append(',');
+                dominant.append(bestChannel).append(':').append(greenHistogram[bestChannel]);
+                greenHistogram[bestChannel] = 0;
+            }
+            assertTrue("Score uses the authored #00CC00 glyph color: matching=" + green
+                    + ", pureGreen=" + pureGreen + ", topGreenChannels=" + dominant
+                    + ", bounds=107,358"
+                    + ", size=" + pixels.getWidth() + 'x' + pixels.getHeight()
+                    + ", framebuffer=1600x1200", green > 20);
+            assertTrue("Opaque score glyphs must have the source tint, not brighter green: "
+                    + highestGreen, highestGreen >= 196 && highestGreen <= 212);
+            assertEquals(GL20.GL_NO_ERROR, Gdx.gl.glGetError());
+        } finally {
+            if (pixels != null) pixels.dispose();
+            if (bufferStarted) buffer.end();
+            isolated.dispose();
+            buffer.dispose();
+            render(app); // Restore the phone viewport, layout, and font scale.
+        }
+    }
+
+    private static void assertPhoneScoreVisible(WorldDominationGame app) throws Exception {
         Rectangle content = (Rectangle) field(WorldDominationGame.class,
                 "endgameContentBounds").get(app);
         float scale = Math.min(content.width / 800f, content.height / 600f);
@@ -197,15 +272,15 @@ public final class SourceEndgameInstrumentedTest {
         Pixmap pixels = ScreenUtils.getFrameBufferPixmap(Math.round(low.x), Math.round(low.y),
                 Math.max(1, Math.round(high.x - low.x)), Math.max(1, Math.round(high.y - low.y)));
         try {
-            int green = 0;
+            int painted = 0;
             for (int y = 0; y < pixels.getHeight(); y++)
                 for (int x = 0; x < pixels.getWidth(); x++) {
-                    int value = pixels.getPixel(x, y);
-                    int red = value >>> 24 & 255, channel = value >>> 16 & 255;
-                    int blue = value >>> 8 & 255;
-                    if (red < 8 && blue < 8 && channel >= 196 && channel <= 212) green++;
+                    int color = pixels.getPixel(x, y);
+                    int red = color >>> 24 & 255, green = color >>> 16 & 255;
+                    int blue = color >>> 8 & 255;
+                    if (green > red + 20 && green > blue + 20) painted++;
                 }
-            assertTrue("Score uses the authored #00CC00 glyph color", green > 20);
+            assertTrue("Score glyphs must be visible on the actual phone surface", painted > 20);
         } finally { pixels.dispose(); }
     }
 
