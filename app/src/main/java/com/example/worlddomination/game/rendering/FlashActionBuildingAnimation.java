@@ -26,6 +26,8 @@ public final class FlashActionBuildingAnimation {
     private boolean factorySmokePlaying;
     private int selectionFrame;
     private boolean selectionPlaying;
+    private int flameCharacterId;
+    private int flameFrameOneBased;
 
     public FlashActionBuildingAnimation(GameState.ActionBuildingEvent event) {
         this(event, null);
@@ -101,13 +103,27 @@ public final class FlashActionBuildingAnimation {
         if (symbolId == FACTORY_SMOKE_SYMBOL_ID) {
             return Math.min(factorySmokeFrame, frameCount - 1);
         }
+        if (symbolId == flameCharacterId && flameFrameOneBased > 0) {
+            return Math.min(flameFrameOneBased - 1, frameCount - 1);
+        }
         return 0;
+    }
+
+    /** Updated by the shared source action-building timeline, never by rendering. */
+    void setFlameFrame(int characterId, int oneBasedFrame) {
+        flameCharacterId = characterId;
+        flameFrameOneBased = oneBasedFrame;
+    }
+
+    void clearFlameFrame() {
+        flameCharacterId = 0;
+        flameFrameOneBased = 0;
     }
 
     /** Autoplaying pump and research lights continue after their parent fade finishes. */
     public boolean isAnimating() {
         return !isFadeComplete() || "resources".equals(frameName) || "tech".equals(frameName)
-                || factorySmokePlaying || selectionPlaying;
+                || factorySmokePlaying || selectionPlaying || flameCharacterId != 0;
     }
 
     public boolean isFadeComplete() {

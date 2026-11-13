@@ -15,6 +15,17 @@ import static org.junit.Assert.assertTrue;
 
 public final class OriginalAudioTest {
     @Test
+    public void religionLabelUsesTheFourRecoveredMassMediaVariations() {
+        assertNull(OriginalAudio.massMediaRevealCue(0));
+        for (int variant = 1; variant <= 4; variant++) {
+            assertEquals("original/runtime/audio/" + (47 - variant)
+                            + "_Massmedia " + variant + ".wav.mp3",
+                    OriginalAudio.internalPath(OriginalAudio.massMediaRevealCue(variant)));
+        }
+        assertNull(OriginalAudio.massMediaRevealCue(5));
+    }
+
+    @Test
     public void sourceSoundAndMusicSwitchesStartEnabledAndToggleIndependently() {
         OriginalAudio audio = new OriginalAudio();
 
