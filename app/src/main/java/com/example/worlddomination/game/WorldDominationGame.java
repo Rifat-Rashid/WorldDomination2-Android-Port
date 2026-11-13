@@ -4841,10 +4841,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             audio.playAmbient(OriginalAudio.Cue.GAME_AMBIENT);
             return true;
         }
-        if (game.getQueuedActionCount() > 0) {
-            game.clearQueuedActions();
-            return true;
-        }
         if (showExitPromptSeconds > 0f) {
             Gdx.app.exit();
         } else {
