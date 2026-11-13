@@ -19,7 +19,7 @@ jobs:
         include:
           - id: carrier-route
             check: Carrier strike route parity
-            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.createsThreeSourceCarrierPlaneRoutesForEveryPlayerAndCity" --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.carrierPlaneRouteMarksInterceptionsAndRejectsInvalidInputs" --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.shipStrikeEmitsAnImpactForEachResolvedPayload"'
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.createsThreeSourceCarrierPlaneRoutesForEveryPlayerAndCity" --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.carrierPlaneRouteMarksInterceptionsAndRejectsInvalidInputs" --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.separateShipRecordsResetLiteralLaunchOffsetsIncludingInterceptions" --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.shipStrikeEmitsAnImpactForEachResolvedPayload" --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.eachShipSortieUsesItsOwnSourcePayloadOrderAndLaunchOffsets"'
           - id: carrier-playback
             check: Carrier aircraft playback parity
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashCarrierPlaneAnimationTest"'

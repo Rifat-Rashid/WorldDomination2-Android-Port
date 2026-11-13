@@ -561,6 +561,26 @@ public final class FlashBattleRoutes {
                 || "bhu".equals(religionCode);
     }
 
+    /** Uses the offset assigned inside this source ship record, including intercepted payloads. */
+    public static CarrierPlaneStrike createCarrierPlaneStrike(GameState.CombatEvent event) {
+        if (!supportsCarrierPlaneStrike(event)) {
+            throw new IllegalArgumentException("Expected a resolved ship payload event");
+        }
+        return createCarrierPlaneStrike(event.attackerPlayerId, event.defenderPlayerId,
+                event.cityIndex, event.shipPayloadIndex,
+                event.type == GameState.CombatEventType.STRIKE_INTERCEPTED);
+    }
+
+    /** All payload planes in one Flash ship battle record have the same startNum. */
+    public static int carrierPlaneDelayTicks(int nextRecordIndex, int shipPayloadIndex) {
+        if (nextRecordIndex < 0 || shipPayloadIndex < 0
+                || shipPayloadIndex >= SHIP_PLANE_START_OFFSETS.length
+                || (shipPayloadIndex > 0 && nextRecordIndex == 0)) {
+            throw new IllegalArgumentException("Invalid carrier sortie timing");
+        }
+        return (nextRecordIndex - (shipPayloadIndex == 0 ? 0 : 1)) * 36;
+    }
+
     /** Recreates Battle.createToSpawnUnitsArr's carrier, launch offsets, and source waypoints. */
     public static CarrierPlaneStrike createCarrierPlaneStrike(int attackerPlayerId,
                                                                int targetPlayerId,

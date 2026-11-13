@@ -40,6 +40,8 @@ public final class GameState {
         public final int actionBuildingSlot;
         /** Source action-building slot used by the defending anti-air turret (1 or 2). */
         public final int counterActionBuildingSlot;
+        /** Launch offset within this ship record, in the source's reverse payload iteration. */
+        public final int shipPayloadIndex;
 
         private CombatEvent(CombatEventType type, int attackerPlayerId,
                             int defenderPlayerId, int cityIndex, String weaponName,
@@ -70,6 +72,16 @@ public final class GameState {
                             String payloadName, int casualtiesMillions,
                             String counterWeaponName, int actionBuildingSlot,
                             int counterActionBuildingSlot) {
+            this(type, attackerPlayerId, defenderPlayerId, cityIndex, weaponName,
+                    payloadName, casualtiesMillions, counterWeaponName,
+                    actionBuildingSlot, counterActionBuildingSlot, -1);
+        }
+
+        private CombatEvent(CombatEventType type, int attackerPlayerId,
+                            int defenderPlayerId, int cityIndex, String weaponName,
+                            String payloadName, int casualtiesMillions,
+                            String counterWeaponName, int actionBuildingSlot,
+                            int counterActionBuildingSlot, int shipPayloadIndex) {
             this.type = type;
             this.attackerPlayerId = attackerPlayerId;
             this.defenderPlayerId = defenderPlayerId;
@@ -80,6 +92,7 @@ public final class GameState {
             this.counterWeaponName = counterWeaponName;
             this.actionBuildingSlot = actionBuildingSlot;
             this.counterActionBuildingSlot = counterActionBuildingSlot;
+            this.shipPayloadIndex = shipPayloadIndex;
         }
     }
 
@@ -597,13 +610,15 @@ public final class GameState {
         final String payloadName;
         final int rolledCasualties;
         final boolean intercepted;
+        final int sourcePlaneIndex;
 
         ShipStrikeResult(ShipStrike strike, String payloadName, int rolledCasualties,
-                         boolean intercepted) {
+                         boolean intercepted, int sourcePlaneIndex) {
             this.strike = strike;
             this.payloadName = payloadName;
             this.rolledCasualties = rolledCasualties;
             this.intercepted = intercepted;
+            this.sourcePlaneIndex = sourcePlaneIndex;
         }
     }
 
@@ -3595,7 +3610,8 @@ public final class GameState {
                 counterName);
         boolean hasMatchingDefense = counterDefense != null;
         List<ShipStrikeResult> results = new ArrayList<>(3);
-        for (ShipStrike strike : order.shipStrikes) {
+        for (int strikeIndex = 0; strikeIndex < order.shipStrikes.size(); strikeIndex++) {
+            ShipStrike strike = order.shipStrikes.get(strikeIndex);
             WeaponState payload = attacker.weapons.get(strike.payloadName);
             int rolledCasualties = sourceShipStrikeCasualties(
                     payload.definition.maxKillsMillions, random);
@@ -3608,7 +3624,8 @@ public final class GameState {
                         defender.getCity(strike.cityIndex), level));
             }
             results.add(new ShipStrikeResult(strike, payload.definition.name,
-                    rolledCasualties, intercepted));
+                    rolledCasualties, intercepted,
+                    order.shipStrikes.size() - 1 - strikeIndex));
         }
 
         // Sub_presenter.turnResults builds a second bioHazardDeactivateArray
@@ -3639,7 +3656,8 @@ public final class GameState {
                 lastTurnCombatEvents.add(new CombatEvent(
                         CombatEventType.STRIKE_INTERCEPTED, attacker.id, defender.id,
                         city.index, carrier.definition.name, result.payloadName, 0,
-                        counterName, -1, counterDefense.actionBuildingSlot));
+                        counterName, -1, counterDefense.actionBuildingSlot,
+                        result.sourcePlaneIndex));
                 addMessage(defender, "Nation " + defender.id + " intercepted one ship payload.");
             } else {
                 casualties = populationChanges.addBattleCasualties(city,
@@ -3648,7 +3666,8 @@ public final class GameState {
                         attacker.id, defender.id, city.index, carrier.definition.name,
                         result.payloadName, casualties,
                         hasMatchingDefense ? counterName : null, -1,
-                        hasMatchingDefense ? counterDefense.actionBuildingSlot : -1));
+                        hasMatchingDefense ? counterDefense.actionBuildingSlot : -1,
+                        result.sourcePlaneIndex));
                 totalCasualties += casualties;
                 recordLargestBattle(attacker, defender, casualties);
                 // The source checks the un-clamped ship result before applying

@@ -4,6 +4,7 @@ import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.JsonReader;
 import com.badlogic.gdx.utils.JsonValue;
 import com.example.worlddomination.game.simulation.ReferenceRandom;
+import com.example.worlddomination.game.simulation.GameState;
 import com.example.worlddomination.game.ui.BattlefieldCityLayout;
 
 import org.junit.Test;
@@ -14,6 +15,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.Constructor;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
@@ -92,6 +94,51 @@ public final class FlashBattleRoutesTest {
                 () -> FlashBattleRoutes.createCarrierPlaneStrike(0, 1, 5, 0, false));
         assertThrows(IllegalArgumentException.class,
                 () -> FlashBattleRoutes.createCarrierPlaneStrike(0, 1, 0, 3, false));
+    }
+
+    @Test
+    public void separateShipRecordsResetLiteralLaunchOffsetsIncludingInterceptions()
+            throws Exception {
+        GameState.CombatEvent firstPayload = shipEvent(0, 1, 0,
+                "warhead1", 0, false);
+        GameState.CombatEvent secondPayload = shipEvent(0, 1, 1,
+                "bioload1", 1, false);
+        GameState.CombatEvent nextShipsFirstPayload = shipEvent(2, 4, 3,
+                "warhead2", 0, true);
+
+        FlashBattleRoutes.CarrierPlaneStrike first =
+                FlashBattleRoutes.createCarrierPlaneStrike(firstPayload);
+        FlashBattleRoutes.CarrierPlaneStrike second =
+                FlashBattleRoutes.createCarrierPlaneStrike(secondPayload);
+        FlashBattleRoutes.CarrierPlaneStrike next =
+                FlashBattleRoutes.createCarrierPlaneStrike(nextShipsFirstPayload);
+
+        assertEquals(458.5f, first.start.x, 0.001f);
+        assertEquals(68.75f, first.start.y, 0.001f);
+        assertEquals(421.5f, second.start.x, 0.001f);
+        assertEquals(91.75f, second.start.y, 0.001f);
+        assertEquals(737.3f, next.start.x, 0.001f);
+        assertEquals(288.85f, next.start.y, 0.001f);
+        assertEquals(0, next.planeIndex);
+        assertEquals(3, next.targetCityIndex);
+        assertTrue(next.intercepted);
+    }
+
+    private static GameState.CombatEvent shipEvent(int attacker, int defender, int city,
+                                                   String payload, int planeIndex,
+                                                   boolean intercepted) throws Exception {
+        Constructor<GameState.CombatEvent> constructor =
+                GameState.CombatEvent.class.getDeclaredConstructor(
+                        GameState.CombatEventType.class, int.class, int.class, int.class,
+                        String.class, String.class, int.class, String.class,
+                        int.class, int.class, int.class);
+        constructor.setAccessible(true);
+        return constructor.newInstance(intercepted
+                        ? GameState.CombatEventType.STRIKE_INTERCEPTED
+                        : GameState.CombatEventType.STRIKE_IMPACT,
+                attacker, defender, city, "ship", payload, intercepted ? 0 : 5,
+                intercepted ? "antiAir" : null, -1, intercepted ? 1 : -1,
+                planeIndex);
     }
 
     @Test

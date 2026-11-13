@@ -4527,7 +4527,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         audio.play(OriginalAudio.Cue.ACTION_ACCEPT);
         int animationIndex = 0;
         int submarineSequenceIndex = 0;
-        int carrierPlaneIndex = 0;
         FlashAntiDefenseTrackingAnimation.TargetLock antiDefenseTargetLock =
                 new FlashAntiDefenseTrackingAnimation.TargetLock();
         ReferenceRandom presentationRandom = game.createPresentationRandomCopy();
@@ -4549,18 +4548,18 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             }
             if (FlashBattleRoutes.supportsCarrierPlaneStrike(event)) {
                 FlashBattleRoutes.CarrierPlaneStrike route =
-                        FlashBattleRoutes.createCarrierPlaneStrike(
-                                event.attackerPlayerId, event.defenderPlayerId,
-                                event.cityIndex, carrierPlaneIndex++ % 3,
-                                event.type == GameState.CombatEventType.STRIKE_INTERCEPTED);
+                        FlashBattleRoutes.createCarrierPlaneStrike(event);
                 FlashCarrierPlaneAnimation planeAnimation =
                         new FlashCarrierPlaneAnimation(route,
-                        animationIndex * 36,
+                        FlashBattleRoutes.carrierPlaneDelayTicks(animationIndex,
+                                event.shipPayloadIndex),
                         SourceCombatAnimationMapping.linkageFor(event), cue);
                 carrierPlaneAnimations.add(planeAnimation);
                 addAntiDefenseTrackingAnimation(event, planeAnimation,
                         antiDefenseTargetLock);
-                animationIndex++;
+                if (event.shipPayloadIndex == 0) {
+                    animationIndex++;
+                }
                 continue;
             }
             if (FlashBattleRoutes.supportsStandalonePlaneStrike(event)) {
