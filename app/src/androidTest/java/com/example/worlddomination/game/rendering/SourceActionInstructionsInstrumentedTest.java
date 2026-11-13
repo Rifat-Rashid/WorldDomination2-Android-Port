@@ -90,6 +90,13 @@ public final class SourceActionInstructionsInstrumentedTest {
                     assertTrue("Fixture accepts source cease-fire proposal",
                             state.submitDiplomacyProposal(1, 0, 0));
                     assertTrue(state.respondToDiplomacyProposal(true));
+                    assertFalse("Answer waits for the next source result phase",
+                            state.getHuman().hasCeasefireWith(1));
+                    state.selectAction(GameState.Action.RESOURCES);
+                    assertTrue(state.acceptSelectedAction());
+                    state.selectAction(GameState.Action.MASS_MEDIA);
+                    assertTrue(state.acceptSelectedAction());
+                    state.confirmTurn();
                     assertTrue(state.getHuman().hasCeasefireWith(1));
                     navigation(app, GameState.Action.PROPAGANDA);
                     assertPrompt(instruction, SourceActionInstruction.SELECT_CITY, 108);

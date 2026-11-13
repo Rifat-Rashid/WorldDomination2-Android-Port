@@ -2626,18 +2626,40 @@ public final class GameStateTest {
 
     @Test
     public void humanCanRespondToAiOfferAndDemandProposals() {
-        GameState offerState = new GameState(1, 6L);
+        GameState offerState = new GameState(1, 6L, false);
+        GameState offerControl = new GameState(1, 6L, false);
         assertTrue(offerState.submitDiplomacyProposal(1, 0, 0));
+        assertTrue(offerControl.submitDiplomacyProposal(1, 0, 0));
         assertEquals(55, offerState.getPlayerState(1).moneyMillions);
         assertTrue(offerState.respondToDiplomacyProposal(true));
-        assertEquals(75, offerState.getHuman().moneyMillions);
-        assertEquals(3, offerState.getHuman().getCeasefireTurnsWith(1));
+        assertEquals(65, offerState.getHuman().moneyMillions);
+        assertEquals(55, offerState.getPlayerState(1).moneyMillions);
+        assertEquals(null, offerState.getPendingHumanDiplomacyProposal());
+        assertFalse(offerState.getHuman().hasCeasefireWith(1));
+        completeTurnWithResourcesAndMedia(offerState);
+        completeTurnWithResourcesAndMedia(offerControl);
+        assertEquals(offerControl.getHuman().moneyMillions + 10,
+                offerState.getHuman().moneyMillions);
+        // Source applies the answer in updatePlayerVars_2 and ticks the new
+        // ceasefire once at the end of that same confirmed turn.
+        assertEquals(2, offerState.getHuman().getCeasefireTurnsWith(1));
 
-        GameState demandState = new GameState(1, 6L);
+        GameState demandState = new GameState(1, 6L, false);
+        GameState demandControl = new GameState(1, 6L, false);
         assertTrue(demandState.submitDiplomacyProposal(1, 0, 3));
+        assertTrue(demandControl.submitDiplomacyProposal(1, 0, 3));
+        int originalTurnMoney = demandState.getTurnMoneyMillions();
         assertTrue(demandState.respondToDiplomacyProposal(true));
-        assertEquals(55, demandState.getHuman().moneyMillions);
-        assertEquals(75, demandState.getPlayerState(1).moneyMillions);
+        assertEquals(65, demandState.getHuman().moneyMillions);
+        assertEquals(originalTurnMoney - 10, demandState.getTurnMoneyMillions());
+        assertEquals(65, demandState.getPlayerState(1).moneyMillions);
+        assertEquals(null, demandState.getPendingHumanDiplomacyProposal());
+        completeTurnWithResourcesAndMedia(demandState);
+        completeTurnWithResourcesAndMedia(demandControl);
+        assertEquals(demandControl.getHuman().moneyMillions - 10,
+                demandState.getHuman().moneyMillions);
+        assertEquals(demandControl.getPlayerState(1).moneyMillions + 10,
+                demandState.getPlayerState(1).moneyMillions);
         assertTrue(demandState.getPlayerState(1).hasCeasefireWith(0));
     }
 
