@@ -48,10 +48,17 @@ public final class BattlefieldFlagsInstrumentedTest {
                     init.setAccessible(true); init.invoke(app);
                     OriginalFlashAnimationAssets assets = (OriginalFlashAnimationAssets) field("flashAnimationAssets").get(app);
                     long timeout = System.nanoTime() + TimeUnit.SECONDS.toNanos(35);
-                    while (!assets.isLoaded() && System.nanoTime() < timeout) {
+                    while (!assets.areBattlefieldFlagsLoaded() && System.nanoTime() < timeout) {
                         assets.update(); Thread.sleep(10);
                     }
-                    assertTrue("Original flag leaves must be cached", assets.isLoaded());
+                    assertTrue("Original flag leaves must be cached early",
+                            assets.areBattlefieldFlagsLoaded());
+                    FlashAnimationTimeline flagPole = assets.getTimeline("flag_pole");
+                    assertNotNull("Missing original flag timeline", flagPole);
+                    Set<Integer> flagLeaves = new HashSet<>();
+                    assertFlagLeaves(assets, flagPole, new HashSet<>(), flagLeaves);
+                    assertEquals("All original flag leaves must be cached", 49,
+                            flagLeaves.size());
                     BattlefieldFlagRenderer flags = (BattlefieldFlagRenderer) field("flagRenderer").get(app);
                     OriginalUiAssets ui = (OriginalUiAssets) field("uiAssets").get(app);
                     buffer = new FrameBuffer(Pixmap.Format.RGBA8888, 986, 600, false);
@@ -122,6 +129,26 @@ public final class BattlefieldFlagsInstrumentedTest {
         batch.end();
         Pixmap image = ScreenUtils.getFrameBufferPixmap(0, 0, 986, 600);
         buffer.end(); return image;
+    }
+
+    private static void assertFlagLeaves(OriginalFlashAnimationAssets assets,
+                                         FlashAnimationTimeline timeline, Set<Integer> visited,
+                                         Set<Integer> leaves) {
+        if (!visited.add(timeline.symbolId)) return;
+        for (int index = 0; index < timeline.getFrameCount(); index++) {
+            FlashAnimationTimeline.Frame frame = timeline.getFrame(index);
+            if (frame == null) continue;
+            for (FlashAnimationTimeline.Layer layer : frame.layers) {
+                FlashAnimationTimeline nested = assets.getTimelineBySymbolId(layer.shapeId);
+                if (nested != null) {
+                    assertFlagLeaves(assets, nested, visited, leaves);
+                } else {
+                    assertNotNull("Missing original flag shape " + layer.shapeId,
+                            assets.getShape(layer.shapeId));
+                    leaves.add(layer.shapeId);
+                }
+            }
+        }
     }
 
     private static long signature(Pixmap image, Rectangle bounds, int island) {
