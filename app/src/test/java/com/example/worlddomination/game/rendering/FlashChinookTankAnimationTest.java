@@ -28,7 +28,7 @@ public final class FlashChinookTankAnimationTest {
 
         assertEquals(3, animation.getActorCount());
         assertEquals("chinook", animation.getActor(0).linkage);
-        assertEquals("tankBase", animation.getActor(1).linkage);
+        assertEquals("tank_noshade", animation.getActor(1).linkage);
         assertEquals("tankTop_blue", animation.getActor(2).linkage);
         for (int i = 0; i < 3; i++) {
             animation.tick();
@@ -54,7 +54,7 @@ public final class FlashChinookTankAnimationTest {
                             animation.getActor(1).visible && animation.getActor(2).visible);
                 }
             }
-            if (animation.getActor(1).visible) {
+            if (animation.isTankDeployed() && animation.getActor(1).visible) {
                 tankDeployed = true;
                 assertEquals(route.targetPlayerId, animation.getActor(1).islandPlayerId);
                 assertEquals(route.targetPlayerId, animation.getActor(2).islandPlayerId);
@@ -92,7 +92,7 @@ public final class FlashChinookTankAnimationTest {
                 4, 0, 0, 1, "green", loadAnchors());
         FlashChinookTankAnimation animation = new FlashChinookTankAnimation(route, 0);
         int ticks = 0;
-        while (!animation.getActor(1).visible && ticks < 200) {
+        while (!animation.isTankDeployed() && ticks < 200) {
             animation.tick();
             ticks++;
         }

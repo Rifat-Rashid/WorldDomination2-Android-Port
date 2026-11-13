@@ -471,6 +471,9 @@ jobs:
           - id: chinook-deployment-traces
             check: Source Chinook deployment and four-island movement traces
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashChinookSourceTraceTest"'
+          - id: chinook-deployment-art
+            check: Source deployment artwork, nested shadows, and frame seeks
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.ChinookShadowAssetsTest" --tests "com.example.worlddomination.game.rendering.FlashChinookDeploymentArtTest" --tests "com.example.worlddomination.game.rendering.FlashChinookShadowTraceTest"'
           - id: sprite-transform-tests
             check: Flash sprite transform tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashSpriteTransformTest"'
