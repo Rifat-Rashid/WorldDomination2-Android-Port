@@ -1,6 +1,6 @@
 package com.example.worlddomination.game.rendering;
 
-import androidx.test.core.app.ActivityScenario;
+import com.example.worlddomination.testing.GameActivityScenario;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -62,7 +62,7 @@ public final class ChinookDeploymentArtInstrumentedTest {
     private static void run(Check check) throws Exception {
         boolean stateTest = check == Check.STATE;
         boolean alphaTest = check == Check.OPACITY;
-        try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
+        try (GameActivityScenario scenario = GameActivityScenario.launch(MainActivity.class)) {
             CountDownLatch done = new CountDownLatch(1);
             AtomicReference<Throwable> failure = new AtomicReference<>();
             scenario.onActivity(activity -> Gdx.app.postRunnable(() -> {

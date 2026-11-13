@@ -1,6 +1,6 @@
 package com.example.worlddomination.game.ui;
 
-import androidx.test.core.app.ActivityScenario;
+import com.example.worlddomination.testing.GameActivityScenario;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.badlogic.gdx.Gdx;
@@ -33,7 +33,7 @@ import static org.junit.Assert.*;
 public final class PropagandaUiInstrumentedTest {
     @Test
     public void citySelectionConfirmationCancelAndTurnPlaybackUseTheOriginalPanel() throws Exception {
-        try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
+        try (GameActivityScenario scenario = GameActivityScenario.launch(MainActivity.class)) {
             onGl(scenario, view -> {
                 view.touchDown(Gdx.graphics.getWidth() / 2, Gdx.graphics.getHeight() / 2, 0, 0);
                 view.touchUp(Gdx.graphics.getWidth() / 2, Gdx.graphics.getHeight() / 2, 0, 0);
@@ -169,7 +169,7 @@ public final class PropagandaUiInstrumentedTest {
         view.touchUp(Math.round(point.x), screenY, 0, 0);
     }
 
-    private static void capture(ActivityScenario<MainActivity> scenario, String name) throws Exception {
+    private static void capture(GameActivityScenario scenario, String name) throws Exception {
         onGl(scenario, view -> {
             assertEquals(GL20.GL_NO_ERROR, Gdx.gl.glGetError());
             Pixmap pixels = ScreenUtils.getFrameBufferPixmap(0, 0,
@@ -200,7 +200,7 @@ public final class PropagandaUiInstrumentedTest {
 
     private interface GlAction { void run(WorldDominationGame view) throws Exception; }
 
-    private static void onGl(ActivityScenario<MainActivity> scenario, GlAction action) throws Exception {
+    private static void onGl(GameActivityScenario scenario, GlAction action) throws Exception {
         CountDownLatch done = new CountDownLatch(1);
         AtomicReference<Throwable> failure = new AtomicReference<>();
         scenario.onActivity(activity -> Gdx.app.postRunnable(() -> {

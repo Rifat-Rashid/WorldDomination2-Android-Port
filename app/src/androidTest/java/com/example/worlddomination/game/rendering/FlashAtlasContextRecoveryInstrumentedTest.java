@@ -6,7 +6,7 @@ import android.opengl.EGLDisplay;
 import android.opengl.GLSurfaceView;
 
 import androidx.lifecycle.Lifecycle;
-import androidx.test.core.app.ActivityScenario;
+import com.example.worlddomination.testing.GameActivityScenario;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.badlogic.gdx.Gdx;
@@ -45,7 +45,7 @@ public final class FlashAtlasContextRecoveryInstrumentedTest {
 
     @Test
     public void earlyFlashAtlasRestoresAfterEglContextLoss() throws Exception {
-        try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
+        try (GameActivityScenario scenario = GameActivityScenario.launch(MainActivity.class)) {
             boolean[] preserveContext = new boolean[1];
             scenario.onActivity(activity -> {
                 GLSurfaceView view = (GLSurfaceView) ((AndroidGraphics) activity.getGraphics()).getView();
@@ -134,7 +134,7 @@ public final class FlashAtlasContextRecoveryInstrumentedTest {
         }
     }
 
-    private static <T> T onGlThread(ActivityScenario<MainActivity> scenario,
+    private static <T> T onGlThread(GameActivityScenario scenario,
                                     Callable<T> work) throws Exception {
         CountDownLatch done = new CountDownLatch(1);
         AtomicReference<T> result = new AtomicReference<>();
