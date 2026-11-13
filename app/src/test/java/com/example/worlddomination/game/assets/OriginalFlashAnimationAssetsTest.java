@@ -40,6 +40,29 @@ public final class OriginalFlashAnimationAssetsTest {
     }
 
     @Test
+    public void sourceCityOrderClipsAreOneFrameAndTheirShapesArePackaged() throws IOException {
+        Map<String, FlashAnimationTimeline> timelines =
+                OriginalFlashAnimationAssets.loadTimelines(loadScene());
+        String[] linkages = {"map_icon_crosshair", "map_icon_rocket",
+                "map_icon_propaganda", "map_icon_plane", "map_icon_special",
+                "map_icon_soldier"};
+        int[] shapes = {2218, 2221, 2224, 2227, 2230, 2233};
+        for (int i = 0; i < linkages.length; i++) {
+            FlashAnimationTimeline timeline = timelines.get(linkages[i]);
+            assertNotNull(linkages[i], timeline);
+            assertEquals(linkages[i], 1, timeline.getFrameCount());
+            assertEquals(linkages[i], shapes[i], timeline.getFrame(0).shapeId);
+            assertEquals(1f, timeline.getFrame(0).a, 0f);
+            assertEquals(1f, timeline.getFrame(0).d, 0f);
+            assertEquals(0f, timeline.getFrame(0).b, 0f);
+            assertEquals(0f, timeline.getFrame(0).c, 0f);
+            assertEquals(0f, timeline.getFrame(0).tx, 0f);
+            assertEquals(0f, timeline.getFrame(0).ty, 0f);
+            assertTrue(linkages[i], Files.isRegularFile(shapeAsset(shapes[i])));
+        }
+    }
+
+    @Test
     public void propagandaFrameAndEmbeddedFontKeepAlphaFormatAndDynamicGlyphs() throws IOException {
         Path ui = shapeAsset(3886).getParent().getParent().getParent().resolve("ui");
         byte[] frame = Files.readAllBytes(ui.resolve("propaganda-frame.png"));

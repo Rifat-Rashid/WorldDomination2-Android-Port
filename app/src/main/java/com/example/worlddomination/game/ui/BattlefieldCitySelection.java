@@ -21,6 +21,9 @@ public final class BattlefieldCitySelection {
         if (owner.getPlayerColor() == 0) return Tint.DEFAULT;
         CityState city = owner.getCity(cityIndex);
         if (city == null) return Tint.DEFAULT;
+        // View.updateCities renders selected city clips before eligibility colors.
+        if (BattlefieldCityOrderMarkers.isMarked(game, ownerId, cityIndex))
+            return Tint.DEFAULT;
         WeaponCatalog.Definition weapon = selectedEquipment == null ? null
                 : WeaponCatalog.byName(selectedEquipment);
         boolean allEnemy = action == GameState.Action.ATTACK && weapon != null

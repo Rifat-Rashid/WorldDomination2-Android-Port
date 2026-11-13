@@ -54,6 +54,7 @@ public final class BattlefieldCityRenderer {
     private final OriginalCityAssets cityAssets;
     private final OriginalFlashAnimationAssets flashAssets;
     private final CityBioloadCloudRenderer bioloadCloudRenderer;
+    private final BattlefieldCityOrderMarkerRenderer orderMarkerRenderer;
     private final CityShrinkSequence[] citySequences = new CityShrinkSequence[CITY_COUNT];
     private final CityPropagandaBeamSequence[] propagandaSequences =
             new CityPropagandaBeamSequence[CITY_COUNT];
@@ -67,6 +68,7 @@ public final class BattlefieldCityRenderer {
         this.cityAssets = cityAssets;
         this.flashAssets = flashAssets;
         bioloadCloudRenderer = new CityBioloadCloudRenderer(flashAssets);
+        orderMarkerRenderer = new BattlefieldCityOrderMarkerRenderer(flashAssets);
         for (int address = 0; address < CITY_COUNT; address++) {
             citySequences[address] = new CityShrinkSequence();
             propagandaSequences[address] = new CityPropagandaBeamSequence();
@@ -177,7 +179,15 @@ public final class BattlefieldCityRenderer {
             return;
         }
         float scale = CitySpriteLayout.scale(mapBounds, cityAssets.getArtworkScale());
+        int markerIndex = 0;
         for (int address : CITY_RENDER_ORDER) {
+            int cityDepth = BattlefieldCityLayout.sourceDepth(address);
+            while (markerIndex < CITY_COUNT
+                    && BattlefieldCityLayout.sourceDepth(CITY_RENDER_ORDER[markerIndex])
+                    + 1500 < cityDepth) {
+                orderMarkerRenderer.drawCity(batch, mapBounds, game,
+                        CITY_RENDER_ORDER[markerIndex++]);
+            }
             int playerId = address / BattlefieldCityLayout.CITIES_PER_PLAYER;
             int cityIndex = address % BattlefieldCityLayout.CITIES_PER_PLAYER;
             GameState.PlayerState owner = game.getPlayerState(playerId);
@@ -231,6 +241,10 @@ public final class BattlefieldCityRenderer {
             drawPropagandaBeams(batch, mapBounds, owner, playerId, cityIndex,
                     cityAddress, sequence.getAlpha());
             bioloadCloudRenderer.drawCity(batch, mapBounds, playerId, cityIndex);
+        }
+        while (markerIndex < CITY_COUNT) {
+            orderMarkerRenderer.drawCity(batch, mapBounds, game,
+                    CITY_RENDER_ORDER[markerIndex++]);
         }
     }
 
