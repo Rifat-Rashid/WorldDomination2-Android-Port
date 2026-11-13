@@ -1052,6 +1052,12 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             return;
         }
 
+        // Flash checks victory or defeat from initInterface_1 after endBattle.
+        // Keep the turn's action labels, battle, and reset barrier visible first.
+        if (confirmTurnAnimation.isPending() || turnPlaybackSequence.isBlockingInput()) {
+            return;
+        }
+
         if (outcomeSequence.getOutcome() != game.getMatchStatus()) {
             stopScoreCounterSound();
             if (endgameAssets == null) {
