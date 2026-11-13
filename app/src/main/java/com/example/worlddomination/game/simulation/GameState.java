@@ -3161,8 +3161,6 @@ public final class GameState {
         int gain = getMassMediaGain(player.id);
         player.religion += gain;
         addToHighscore(player, 6, gain);
-        addMessage(player, "Nation " + player.id + " increased influence by "
-                + gain + ".");
     }
 
     private void resolveResearch(ActionOrder order) {

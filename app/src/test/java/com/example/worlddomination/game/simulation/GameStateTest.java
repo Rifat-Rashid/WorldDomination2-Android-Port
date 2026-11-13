@@ -467,6 +467,25 @@ public final class GameStateTest {
     }
 
     @Test
+    public void massMediaTurnKeepsSourceResourceSummaryWithoutInfluenceMessage() {
+        GameState state = new GameState(1, 42L, false);
+        int income = state.getResourceIncomeMillions();
+
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.MASS_MEDIA);
+        assertTrue(state.acceptSelectedAction());
+        state.confirmTurn();
+
+        assertTrue(state.getMessages().contains("You GAINED $ " + income
+                + ".000.000 from resources"));
+        assertFalse(state.getMessages().stream()
+                .anyMatch(message -> message.contains("increased influence by")));
+        assertTrue(state.getHuman().religion > 65);
+        assertTrue(state.getHuman().score > 0);
+    }
+
+    @Test
     public void resourcesAndMassMediaAddTheirSourceHighscoreWeights() {
         for (int difficulty = 0; difficulty <= 2; difficulty++) {
             GameState state = new GameState(difficulty, 72L + difficulty, false);
