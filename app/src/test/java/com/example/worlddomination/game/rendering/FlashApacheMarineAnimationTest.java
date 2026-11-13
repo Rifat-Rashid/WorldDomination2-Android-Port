@@ -5,6 +5,8 @@ import com.example.worlddomination.game.simulation.ReferenceRandom;
 
 import org.junit.Test;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -61,6 +63,42 @@ public final class FlashApacheMarineAnimationTest {
         }
         assertFalse(animation.getActor(0).visible);
         assertFalse(animation.takeAudioCue());
+    }
+
+    @Test
+    public void marineActivationUsesSourceSeededXFrameYRangeOrder() throws Exception {
+        Path asset = projectAsset("original/runtime/battle_anchors.json");
+        String json = new String(Files.readAllBytes(asset), StandardCharsets.UTF_8);
+        Map<String, FlashBattleRoutes.Point> anchors = FlashBattleRoutes.parseAnchors(json);
+        FlashBattleRoutes.ApacheMarineAttack route =
+                FlashBattleRoutes.createSoldierTwoAttack(0, 1, 1, 1, anchors,
+                        new ReferenceRandom(2026L));
+        ReferenceRandom activationRandom = new ReferenceRandom(42L);
+        FlashApacheMarineAnimation animation = new FlashApacheMarineAnimation(route,
+                activationRandom, OriginalAudio.Cue.SEAL_GUN, 0);
+
+        Field marinesField = FlashApacheMarineAnimation.class.getDeclaredField("marines");
+        marinesField.setAccessible(true);
+        Object marine = ((Object[]) marinesField.get(animation))[0];
+        Method start = marine.getClass().getDeclaredMethod("start", float.class,
+                float.class, ReferenceRandom.class);
+        start.setAccessible(true);
+        start.invoke(marine, 0f, 0f, activationRandom);
+
+        FlashApacheMarineAnimation.Actor actor = animation.getActor(1);
+        FlashBattleRoutes.Point spawn = route.marines[0].waypoints[0];
+        assertTrue(actor.visible);
+        // Source Unit.moveUnit draws X, frame offset, Y, then range.
+        // CPython Random(42): floor(random()*21)=13, *7=0, *16=4, *6+5=6.
+        assertEquals(spawn.x + 13f, actor.sourceX, 0f);
+        assertEquals(spawn.y + 4f, actor.sourceY, 0f);
+        Field frameOffsetField = marine.getClass().getDeclaredField("frameOffset");
+        frameOffsetField.setAccessible(true);
+        assertEquals(0, frameOffsetField.getInt(marine));
+        Field rangeField = marine.getClass().getDeclaredField("range");
+        rangeField.setAccessible(true);
+        assertEquals(6, rangeField.getInt(marine));
+        assertEquals(0.7364712141640124, activationRandom.nextDouble(), 0d);
     }
 
     private static FlashApacheMarineAnimation createAnimation(int delayTicks) throws Exception {

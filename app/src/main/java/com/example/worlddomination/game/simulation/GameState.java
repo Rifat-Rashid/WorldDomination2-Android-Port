@@ -741,6 +741,7 @@ public final class GameState {
     private final List<ActionOrder> queuedActions = new ArrayList<>(MAX_TURN_ACTIONS);
     private final List<CombatEvent> lastTurnCombatEvents = new ArrayList<>();
     private final List<BattlePresentationRecord> lastTurnBattleRecords = new ArrayList<>();
+    private ReferenceRandom lastTurnBattleRandom;
     private final List<WeaponState> battleStockUses = new ArrayList<>();
     private final int[] battleSatelliteLaunches = new int[5];
     private final List<SpyMissionEvent> lastTurnSpyMissions = new ArrayList<>();
@@ -2633,6 +2634,19 @@ public final class GameState {
         return ((ReferenceRandom) random).copy();
     }
 
+    /**
+     * Copies the source battle's pre-route random stream, after script timer and
+     * result draws but before later production/research updates. The live turn
+     * RNG and this retained snapshot are never advanced by presentation code.
+     * Available for resolved turns using the reference-compatible stream.
+     */
+    public ReferenceRandom createBattlePresentationRandomCopy() {
+        if (lastTurnBattleRandom == null) {
+            throw new IllegalStateException("No resolved reference-random battle presentation");
+        }
+        return lastTurnBattleRandom.copy();
+    }
+
     /** Resolves human and opponent actions using the source turn order. */
     public void confirmTurn() {
         if (queuedActions.size() != MAX_TURN_ACTIONS) {
@@ -2775,6 +2789,10 @@ public final class GameState {
                 }
             }
         }
+        // Playback's createToSpawnUnitsArr follows createBattleScriptVars on
+        // an isolated snapshot. Retain that boundary, before later turn draws.
+        lastTurnBattleRandom = random instanceof ReferenceRandom
+                ? ((ReferenceRandom) random).copy() : null;
         // The Flash applies battle and propaganda population changes before
         // Presenter.updatePlayerVars_2. If the human is eliminated, that
         // result phase is skipped, including research and production.
