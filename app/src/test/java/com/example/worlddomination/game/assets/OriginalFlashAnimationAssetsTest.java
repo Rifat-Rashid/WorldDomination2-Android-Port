@@ -21,6 +21,7 @@ import java.util.Set;
 import java.util.zip.GZIPInputStream;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -76,6 +77,41 @@ public final class OriginalFlashAnimationAssetsTest {
         battleCandidates.add(9999);
         assertEquals(Set.of(9999), OriginalFlashAnimationAssets.excludeAlreadyPackedShapes(
                 battleCandidates, early, Collections.emptySet()));
+    }
+
+    @Test
+    public void flagPoleFamilyUsesEarlyAtlasWithoutDuplicateBattlePacking()
+            throws IOException {
+        JsonValue scene = loadScene();
+        Map<String, FlashAnimationTimeline> timelines =
+                OriginalFlashAnimationAssets.loadTimelines(scene);
+        Map<Integer, FlashAnimationTimeline> flagChildren =
+                OriginalFlashAnimationAssets.loadNestedTimelines(scene,
+                        timelines.get("flag_pole"));
+        assertEquals("Source flag cloth and tint clips", Set.of(4888, 4925),
+                flagChildren.keySet());
+        Set<Integer> flagShapes = OriginalFlashAnimationAssets.collectFlagFamilyShapeIds(
+                timelines, flagChildren, shape -> Files.isRegularFile(shapeAsset(shape)));
+        assertEquals("All source flag frames must be available before battle loading",
+                49, flagShapes.size());
+        for (int shapeId : flagShapes) {
+            assertTrue("Missing original flag art " + shapeId,
+                    Files.isRegularFile(shapeAsset(shapeId)));
+        }
+
+        Set<Integer> early = OriginalFlashAnimationAssets.collectSetupPortraitShapeIds(
+                timelines, shape -> Files.isRegularFile(shapeAsset(shape)));
+        early.addAll(flagShapes);
+        Set<Integer> all = OriginalFlashAnimationAssets.collectShapeIds(
+                timelines, flagChildren, shape -> Files.isRegularFile(shapeAsset(shape)));
+        assertTrue(all.containsAll(flagShapes));
+        Set<Integer> late = OriginalFlashAnimationAssets.excludeAlreadyPackedShapes(
+                all, early, Collections.emptySet());
+        assertFalse("Unrelated battle art must remain in the late atlas", late.isEmpty());
+        for (int shapeId : flagShapes) {
+            assertFalse("Flag art must not be packed again: " + shapeId,
+                    late.contains(shapeId));
+        }
     }
 
     @Test
