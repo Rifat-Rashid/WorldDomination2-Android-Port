@@ -435,6 +435,9 @@ jobs:
           - id: source-action-flame-tests
             check: Source action flame timing and reveal audio
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.SourceBattleActionFramesTest" --tests "com.example.worlddomination.game.audio.OriginalAudioTest.religionLabelUsesTheFourRecoveredMassMediaVariations"'
+          - id: apache-shadow-source-art-tests
+            check: Apache source scale and retained shadow
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashApacheMarineAnimationTest.sourceThreeTurnTraceReplaysEveryFrameAgainstNativeActors" --tests "com.example.worlddomination.game.assets.OriginalFlashAnimationAssetsTest.apacheShadowResolvesItsBodyChildAndAuthoredColorTransform"'
           - id: combat-animation-mapping-tests
             check: Combat event animation mapping tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.SourceCombatAnimationMappingTest"'

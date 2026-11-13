@@ -4793,7 +4793,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                                 event.cityIndex, event.actionBuildingSlot,
                                 battleAnchors, presentationRandom);
                 FlashApacheMarineAnimation animation = new FlashApacheMarineAnimation(route,
-                        presentationRandom, cue, recordDelay);
+                        presentationRandom, cue, recordDelay, GameSetup.colorName(
+                                game.getPlayerState(event.attackerPlayerId).getPlayerColor()));
                 apacheMarineAnimations.add(animation);
                 sourceUnitPlayback.add(() -> advanceMarineUnit(animation));
                 continue;

@@ -24,8 +24,12 @@ public final class FlashApacheMarineAnimation {
         public float alpha = 1f;
         public int islandPlayerId;
         public boolean visible;
+        private Actor pairedClip;
 
-        @Override public void detach() { visible = false; }
+        @Override public void detach() {
+            visible = false;
+            if (pairedClip != null) pairedClip.visible = false;
+        }
     }
 
     private static final int MARINE_COUNT = 3;
@@ -41,7 +45,9 @@ public final class FlashApacheMarineAnimation {
     private final FlashBattleRoutes.ApacheMarineAttack route;
     private final ReferenceRandom presentationRandom;
     private final OriginalAudio.Cue audioCue;
+    private final String colorName;
     private final Actor[] actors = new Actor[1 + MARINE_COUNT];
+    private final Actor apacheShadow = new Actor();
     private final MarineTrack[] marines = new MarineTrack[MARINE_COUNT];
     private int delayTicks;
     private int liftOffTicks;
@@ -51,16 +57,31 @@ public final class FlashApacheMarineAnimation {
     private int pendingAudioCues;
     private boolean apacheQueued;
     private boolean waitingFramePresented;
+    private int apacheScaleSteps;
+    private float apacheShadowYOffset;
     private final boolean[] marineQueued = new boolean[MARINE_COUNT];
     private ApachePhase apachePhase = ApachePhase.HELIPAD;
 
     public FlashApacheMarineAnimation(FlashBattleRoutes.ApacheMarineAttack route,
                                       ReferenceRandom presentationRandom,
                                       OriginalAudio.Cue audioCue, int delayTicks) {
+        this(route, presentationRandom, audioCue, delayTicks, "green");
+    }
+
+    public FlashApacheMarineAnimation(FlashBattleRoutes.ApacheMarineAttack route,
+                                      ReferenceRandom presentationRandom,
+                                      OriginalAudio.Cue audioCue, int delayTicks,
+                                      String colorName) {
         if (route == null || presentationRandom == null || delayTicks < 0) {
             throw new IllegalArgumentException("Invalid soldier2 animation");
         }
+        if (!"blue".equals(colorName) && !"red".equals(colorName)
+                && !"orange".equals(colorName) && !"yellow".equals(colorName)
+                && !"green".equals(colorName)) {
+            throw new IllegalArgumentException("Unknown Apache player color");
+        }
         this.route = route;
+        this.colorName = colorName;
         this.presentationRandom = presentationRandom;
         this.audioCue = audioCue;
         this.delayTicks = delayTicks;
@@ -72,7 +93,12 @@ public final class FlashApacheMarineAnimation {
         // when the action building supplies heliStart on the next host tick.
         apache.visible = true;
         apache.islandPlayerId = route.attackerPlayerId;
+        apache.pairedClip = apacheShadow;
         actors[0] = apache;
+        apacheShadow.linkage = "apache_shadow";
+        apacheShadow.scale = 0.5f;
+        apacheShadow.visible = true;
+        apacheShadow.islandPlayerId = route.attackerPlayerId;
         for (int i = 0; i < MARINE_COUNT; i++) {
             Actor marine = new Actor();
             marine.linkage = "marine";
@@ -98,6 +124,7 @@ public final class FlashApacheMarineAnimation {
         }
 
         tickApache();
+        syncApacheShadow();
         for (MarineTrack marine : marines) {
             if (marine.started && !marine.finished) {
                 if (marine.tick()) pendingAudioCues++;
@@ -116,6 +143,7 @@ public final class FlashApacheMarineAnimation {
         apache.sourceY = route.apacheStart.y;
         apache.scale = 0.5f;
         apache.sourceFrame = 6; // Source frame 7 at heliStart.
+        syncApacheShadow();
         apachePhase = ApachePhase.LIFTOFF;
         liftOffTicks = 0;
     }
@@ -124,10 +152,15 @@ public final class FlashApacheMarineAnimation {
         return actors.length;
     }
 
+    public String getColorName() { return colorName; }
+
     /** Returns a stable actor view; no object is allocated during rendering. */
     public Actor getActor(int index) {
         return actors[index];
     }
+
+    /** Stable source shadow clip; its one-frame parent seeks its child to sourceFrame. */
+    public Actor getApacheShadow() { return apacheShadow; }
 
     public boolean takeAudioCue() {
         if (pendingAudioCues == 0) {
@@ -205,7 +238,8 @@ public final class FlashApacheMarineAnimation {
                     apacheXStep = 0f;
                     apacheYStep = verticalTick < LIFTOFF_TICKS - 8 ? -3f : -1f;
                     apache.sourceY += apacheYStep;
-                    apache.scale = Math.min(1f, apache.scale + 0.01f);
+                    growApache();
+                    apacheShadowYOffset -= apacheYStep;
                     apache.sourceFrame = (apacheFixedFrame - 1) * 2
                             + apacheFrameOffset;
                     advanceApacheFrameOffset();
@@ -237,6 +271,7 @@ public final class FlashApacheMarineAnimation {
             case UNLOAD:
                 if (apache.sourceY < apacheUnloadInitialY + 20f) {
                     apache.sourceY += 2f;
+                    apacheShadowYOffset -= 2f;
                 }
                 unloadTicks++;
                 if (unloadTicks >= UNLOAD_TICKS) {
@@ -317,6 +352,7 @@ public final class FlashApacheMarineAnimation {
         apachePreviousY = apache.sourceY;
         apache.sourceX += apacheXStep;
         apache.sourceY += apacheYStep;
+        growApache();
         setApacheFrame(apache, apache.sourceX - apachePreviousX,
                 apache.sourceY - apachePreviousY, apacheFrameOffset);
         advanceApacheFrameOffset();
@@ -325,6 +361,19 @@ public final class FlashApacheMarineAnimation {
 
     private void advanceApacheFrameOffset() {
         apacheFrameOffset = apacheFrameOffset < 2 ? apacheFrameOffset + 1 : 1;
+    }
+
+    private void growApache() {
+        if (apacheScaleSteps < 50) apacheScaleSteps++;
+        actors[0].scale = 0.5f + apacheScaleSteps / 100f;
+    }
+
+    private void syncApacheShadow() {
+        Actor body = actors[0];
+        apacheShadow.sourceX = body.sourceX;
+        apacheShadow.sourceY = body.sourceY + apacheShadowYOffset;
+        apacheShadow.sourceFrame = body.sourceFrame;
+        apacheShadow.visible = body.visible;
     }
 
     private float apacheXStep;
