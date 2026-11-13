@@ -804,7 +804,7 @@ public final class OriginalFlashAnimationAssets implements Disposable {
                 && name.startsWith("tech") && name.charAt(4) >= '1' && name.charAt(4) <= '7';
     }
 
-    private static Pixmap decodeShape(int shapeId, float[] origin) {
+    static Pixmap decodeShape(int shapeId, float[] origin) {
         String path = Gdx.files.internal(SHAPE_PATH + shapeId + ".svgz").exists()
                 ? SHAPE_PATH : TEXT_PATH;
         String svg = readCompressedUtf8(path + shapeId + ".svgz");
@@ -863,7 +863,7 @@ public final class OriginalFlashAnimationAssets implements Disposable {
         }
     }
 
-    private static Pixmap copyBitmapToPixmap(Bitmap bitmap) {
+    static Pixmap copyBitmapToPixmap(Bitmap bitmap) {
         int width = bitmap.getWidth();
         int height = bitmap.getHeight();
         Pixmap pixmap = new Pixmap(width, height, Pixmap.Format.RGBA8888);
@@ -880,7 +880,7 @@ public final class OriginalFlashAnimationAssets implements Disposable {
         return pixmap;
     }
 
-    private static String readCompressedUtf8(String path) {
+    static String readCompressedUtf8(String path) {
         String unpackedPath = path.substring(0, path.length() - 3);
         FileHandle unpackedAsset = Gdx.files.internal(unpackedPath);
         if (unpackedAsset.exists()) {
