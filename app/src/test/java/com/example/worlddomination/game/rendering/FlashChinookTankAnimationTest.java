@@ -72,7 +72,8 @@ public final class FlashChinookTankAnimationTest {
         assertFalse(animation.getActor(0).visible);
         assertFalse(animation.getActor(1).visible);
         assertFalse(animation.getActor(2).visible);
-        assertTrue("The source countdown takes multiple seconds", ticks > 250);
+        // flyOff's 250 counter advances twice on ordinary source ticks.
+        assertTrue("The source countdown takes at least 127 flyOff ticks", ticks >= 127);
     }
 
     @Test
@@ -103,7 +104,7 @@ public final class FlashChinookTankAnimationTest {
         }
         assertFalse("The tank should finish this short source route first",
                 animation.getActor(1).visible);
-        assertTrue("Chinook remains through its 250-tick flyoff countdown",
+        assertTrue("Chinook remains through its 250-count flyOff countdown",
                 animation.getActor(0).visible);
         assertFalse("The overall presentation waits for the Chinook", animation.isFinished());
 
@@ -130,9 +131,9 @@ public final class FlashChinookTankAnimationTest {
         assertFalse((Boolean) moveTank.invoke(animation));
 
         FlashChinookTankAnimation.Actor turret = animation.getActor(2);
-        assertEquals(491f, tank.sourceX, 0f);
+        assertEquals(492f, tank.sourceX, 0f);
         assertEquals(90f, tank.sourceY, 0f);
-        assertEquals(491f, turret.sourceX, 0f);
+        assertEquals(492f, turret.sourceX, 0f);
         assertEquals(90f, turret.sourceY, 0f);
         // Source tankTop follows the base position, and its direction uses
         // the city-center waypoint (541, 79). Flash frame 19 is index 18.

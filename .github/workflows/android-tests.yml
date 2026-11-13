@@ -468,6 +468,9 @@ jobs:
           - id: chinook-tank-playback-tests
             check: Chinook and tank source playback tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashChinookTankAnimationTest" --tests "com.example.worlddomination.game.rendering.FlashSpriteTransformTest" --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest.packagedStrikeAndInterceptionSymbolsMatchSourceTimelines" --tests "com.example.worlddomination.game.simulation.GameSetupTest.sourcePlayerColorIdsMapToTankTurretLibraryNames" --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.tankDirectAttackUsesItsSourceSlotAndChinookSound" --tests "com.example.worlddomination.game.audio.OriginalAudioTest.tankBattleCuesUseTheRecoveredOriginalSounds"'
+          - id: chinook-deployment-traces
+            check: Source Chinook deployment and four-island movement traces
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashChinookSourceTraceTest"'
           - id: sprite-transform-tests
             check: Flash sprite transform tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashSpriteTransformTest"'

@@ -244,6 +244,7 @@ public final class SourceBattleRecordClockInstrumentedTest {
                     TurnPlaybackSequence playback = (TurnPlaybackSequence)
                             field(WorldDominationGame.class, "turnPlaybackSequence").get(app);
                     boolean sawTank = false;
+                    boolean sawTankFire = false;
                     int ticks = 0;
                     while (playback.isBlockingInput() && ticks++ < 1200) {
                         advance(app);
@@ -251,11 +252,30 @@ public final class SourceBattleRecordClockInstrumentedTest {
                             assertTrue(tank.getActor(2).visible);
                             assertEquals(tank.getActor(1).sourceX, tank.getActor(2).sourceX, 0f);
                             assertEquals(tank.getActor(1).sourceY, tank.getActor(2).sourceY, 0f);
-                            if (!sawTank) capture(app, "source-tank-turret-follow.png");
+                            if (!sawTank) {
+                                // Real source seed-zero deployment after 20 drop frames.
+                                assertEquals(556.25f, tank.getActor(1).sourceX, 0f);
+                                assertEquals(157.75f, tank.getActor(1).sourceY, 0f);
+                                assertEquals(638.25f, tank.getActor(0).sourceX, 0f);
+                                assertEquals(-38.25f, tank.getActor(0).sourceY, 0f);
+                                assertEquals(4, tank.getActor(1).sourceFrame);
+                                assertEquals(26, tank.getActor(2).sourceFrame);
+                                capture(app, "source-tank-turret-follow.png");
+                            }
                             sawTank = true;
+                        }
+                        if (!sawTankFire && field(FlashChinookTankAnimation.class,
+                                "shotCount").getInt(tank) == 1) {
+                            assertEquals(540.25f, tank.getActor(1).sourceX, 0f);
+                            assertEquals(111.75f, tank.getActor(1).sourceY, 0f);
+                            assertEquals(1, field(FlashChinookTankAnimation.class,
+                                    "tankPreshotCount").getInt(tank));
+                            capture(app, "source-tank-drive-arrival.png");
+                            sawTankFire = true;
                         }
                     }
                     assertTrue("Actual native playback deploys the tank and turret", sawTank);
+                    assertTrue("Arrival counts the first turret firing frame", sawTankFire);
                     assertFalse(playback.isBlockingInput());
                     assertEquals(1, game.getTurn());
                 } catch (Throwable error) {
