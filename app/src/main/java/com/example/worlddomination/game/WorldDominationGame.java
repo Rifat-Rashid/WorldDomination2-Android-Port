@@ -60,6 +60,7 @@ import com.example.worlddomination.game.rendering.SourceCombatAnimationMapping;
 import com.example.worlddomination.game.rendering.TurnPlaybackSequence;
 import com.example.worlddomination.game.rendering.SourceBattleRecordClock;
 import com.example.worlddomination.game.rendering.SourceBattleInterfaceFrames;
+import com.example.worlddomination.game.rendering.SourceBattleActionFrames;
 import com.example.worlddomination.game.rendering.SourceStoppedClipQueue;
 import com.example.worlddomination.game.rendering.SourceBattleUnitPlayback;
 import com.example.worlddomination.game.rendering.SourceBattleTicker;
@@ -209,6 +210,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private final TurnPlaybackSequence turnPlaybackSequence = new TurnPlaybackSequence();
     private final SourceBattleRecordClock battleRecordClock = new SourceBattleRecordClock();
     private final SourceBattleInterfaceFrames battleInterfaceFrames = new SourceBattleInterfaceFrames();
+    private final SourceBattleActionFrames battleActionFrames = new SourceBattleActionFrames();
     private final SourceStoppedClipQueue sourceStoppedClips = new SourceStoppedClipQueue();
     private final SourceBattleUnitPlayback sourceUnitPlayback = new SourceBattleUnitPlayback();
     private ReferenceRandom battlePresentationRandom;
@@ -734,6 +736,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         // together while the native asynchronous atlas finishes loading.
         if (turnPlaybackSequence.isBlockingInput()
                 && (flashAnimationAssets == null || !flashAnimationAssets.isLoaded())) return;
+        // BattleMC's retained action-building children precede the center-screen
+        // and unit callbacks in the source display-list traversal, even at idle.
+        battleActionFrames.tick();
         if (turnPlaybackSequence.isBlockingInput() && battlePresentationRandom != null) {
             battleInterfaceFrames.tick(battlePresentationRandom);
         }
@@ -741,6 +746,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         GameState.Action revealedAction = turnPlaybackSequence.advance(seconds);
         if (revealedAction != null) {
             turnActionDisplay.reveal(revealedAction, game.getLastTurnActionBuildings());
+            int mediaVariant = battleActionFrames.onActionRevealed(
+                    revealedAction, audio.isSoundEnabled());
+            OriginalAudio.Cue mediaCue = OriginalAudio.massMediaRevealCue(mediaVariant);
+            if (mediaCue != null) audio.play(mediaCue);
         } else if (!turnPlaybackSequence.isWaitingForActionLabels()) {
             turnActionDisplay.hide();
         }
@@ -780,6 +789,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         for (int index = 0; index < satelliteBattleAnimations.size(); index++) {
             satelliteBattleAnimations.get(index).presentWaitingFrame();
+        }
+        for (int index = 0; index < apacheMarineAnimations.size(); index++) {
+            apacheMarineAnimations.get(index).presentWaitingFrame();
         }
         if (turnPlaybackSequence.isWaitingForActionLabels()) return;
         for (int i = battleAnimations.size() - 1; i >= 0; i--) {
@@ -959,14 +971,14 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     private boolean advanceMarineUnit(FlashApacheMarineAnimation animation) {
         if (animation.isFinished()) return false;
-        animation.tick();
+        boolean removedMarine = animation.tickSourceFrame();
+        animation.registerStoppedClips(sourceStoppedClips);
         while (animation.takeAudioCue()) {
             audio.play(animation.getAudioCue());
         }
-        if (animation.isFinished()) {
-            apacheMarineAnimations.remove(animation);
-        }
-        return false;
+        // The wrapper leaves the active source array before its clip is
+        // detached by allUnitsDone. A marine removal ends this unit frame.
+        return removedMarine;
     }
 
     private boolean advanceTankUnit(FlashChinookTankAnimation animation) {
@@ -1019,8 +1031,14 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 break;
             }
         }
-        return hasActiveInfantry || hasActiveSatellite || hasActiveTank
-                || !apacheMarineAnimations.isEmpty()
+        boolean hasActiveMarine = false;
+        for (int index = 0; index < apacheMarineAnimations.size(); index++) {
+            if (!apacheMarineAnimations.get(index).isFinished()) {
+                hasActiveMarine = true;
+                break;
+            }
+        }
+        return hasActiveInfantry || hasActiveSatellite || hasActiveTank || hasActiveMarine
                 || !suicideBomberAnimations.isEmpty()
                 || !rocketBattleAnimations.isEmpty()
                 || !submarineBattleAnimations.isEmpty()
@@ -3494,6 +3512,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         accumulator = 0f;
         game = null;
         battleRecordClock.reset();
+        battleActionFrames.reset();
         battleInterfaceFrames.reset();
         sourceStoppedClips.reset();
         battlePresentationRandom = null;
@@ -4003,6 +4022,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 battleAnimations.clear();
                 sourceUnitPlayback.reset();
                 actionBuildingAnimations.clear();
+                battleActionFrames.reset();
                 turnPlaybackSequence.reset();
                 battleRecordClock.reset();
                 battleInterfaceFrames.reset();
@@ -4816,6 +4836,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 audio.play(cue);
             }
         }
+        // Presenter initializes religion child clips after constructing routes.
+        // These callbacks share the private presentation stream with the units.
+        battleActionFrames.begin(actionBuildingAnimations,
+                game.getLastTurnActionBuildings(), presentationRandom);
         if (game.getPendingHumanDiplomacyProposal() != null) {
             audio.playAmbient(OriginalAudio.Cue.DIPLOMACY_AMBIENT);
         }
@@ -5200,6 +5224,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     @Override
     public void dispose() {
         disposeEndgameResources();
+        battleActionFrames.reset();
         turnPlaybackSequence.reset();
         battleRecordClock.reset();
         battleInterfaceFrames.reset();

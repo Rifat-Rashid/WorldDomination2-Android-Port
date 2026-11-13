@@ -58,6 +58,10 @@ public final class OriginalAudio {
         DIPLOMACY_AMBIENT("96_Ambience Diplomacy.wav.mp3.gz"),
         DEFENSE_AMBIENT("74_Defence.wav.mp3.gz"),
         MASS_MEDIA_AMBIENT("47_Massmedia ambient loop.wav.mp3.gz"),
+        MASS_MEDIA_REVEAL_1("46_Massmedia 1.wav.mp3.gz"),
+        MASS_MEDIA_REVEAL_2("45_Massmedia 2.wav.mp3.gz"),
+        MASS_MEDIA_REVEAL_3("44_Massmedia 3.wav.mp3.gz"),
+        MASS_MEDIA_REVEAL_4("43_Massmedia 4.wav.mp3.gz"),
         TECHNOLOGY_AMBIENT("28_Technology ambient loop.wav.mp3.gz");
 
         private final String compressedAsset;
@@ -127,6 +131,10 @@ public final class OriginalAudio {
         preload(Cue.DIPLOMACY_AMBIENT);
         preload(Cue.DEFENSE_AMBIENT);
         preload(Cue.MASS_MEDIA_AMBIENT);
+        preload(Cue.MASS_MEDIA_REVEAL_1);
+        preload(Cue.MASS_MEDIA_REVEAL_2);
+        preload(Cue.MASS_MEDIA_REVEAL_3);
+        preload(Cue.MASS_MEDIA_REVEAL_4);
         preload(Cue.TECHNOLOGY_AMBIENT);
         play(Cue.STARTUP);
         if (theme != null && musicEnabled) {
@@ -274,6 +282,17 @@ public final class OriginalAudio {
         ambientCue = null;
         ambientSoundId = -1L;
         initialized = false;
+    }
+
+    /** Presenter_interface.soundAction('religion') chooses one of four cues. */
+    public static Cue massMediaRevealCue(int variant) {
+        switch (variant) {
+            case 1: return Cue.MASS_MEDIA_REVEAL_1;
+            case 2: return Cue.MASS_MEDIA_REVEAL_2;
+            case 3: return Cue.MASS_MEDIA_REVEAL_3;
+            case 4: return Cue.MASS_MEDIA_REVEAL_4;
+            default: return null;
+        }
     }
 
     /** Maps the active source action panel to its original looping ambience. */

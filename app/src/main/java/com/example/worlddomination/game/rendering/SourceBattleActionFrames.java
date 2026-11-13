@@ -1,0 +1,146 @@
+package com.example.worlddomination.game.rendering;
+
+import com.example.worlddomination.game.simulation.GameState;
+import com.example.worlddomination.game.simulation.ReferenceRandom;
+
+import java.util.List;
+import java.util.Objects;
+
+/** Shared source RNG clock for action-building religion flames and their label sound. */
+public final class SourceBattleActionFrames {
+    private static final int SLOT_COUNT = 10;
+    // BattleMC (5766) placement depths 176,180,...,212 in scene.json.gz.
+    // Slot index is playerId * 2 + slot - 1.
+    private static final int[] DEPTH_ORDER = {7, 1, 4, 3, 9, 6, 0, 5, 2, 8};
+    private static final int[] FLAME_IDS = {4010, 4015, 4018, 4023, 4028};
+    private static final int[] FLAME_FRAMES = {146, 163, 161, 121, 130};
+    private static final String[] RELIGIONS = {"mus", "jew", "com", "chr", "bhu"};
+    private final Flame[] flames = new Flame[SLOT_COUNT];
+    private ReferenceRandom random;
+
+    /** Rebinds retained physical slots; new frame-1 callbacks run in Presenter order. */
+    public void begin(List<FlashActionBuildingAnimation> all,
+                      List<GameState.ActionBuildingEvent> shown,
+                      ReferenceRandom presentationRandom) {
+        Objects.requireNonNull(all, "all");
+        Objects.requireNonNull(shown, "shown");
+        random = Objects.requireNonNull(presentationRandom, "presentationRandom");
+        FlashActionBuildingAnimation[] current = new FlashActionBuildingAnimation[SLOT_COUNT];
+        GameState.ActionBuildingEvent[] lastShown =
+                new GameState.ActionBuildingEvent[SLOT_COUNT];
+        for (FlashActionBuildingAnimation animation : all) {
+            Objects.requireNonNull(animation, "animation");
+            int index = slotIndex(animation.playerId, animation.slot);
+            if (current[index] != null) throw new IllegalArgumentException("Duplicate action-building slot");
+            current[index] = animation;
+        }
+        for (GameState.ActionBuildingEvent event : shown) {
+            Objects.requireNonNull(event, "event");
+            int index = slotIndex(event.playerId, event.slot);
+            lastShown[index] = event;
+            int characterId = "religion".equals(event.frameName)
+                    ? flameId(event.religionCode) : 0;
+            if (characterId == 0) {
+                if (flames[index] != null) {
+                    if (flames[index].animation != null)
+                        flames[index].animation.clearFlameFrame();
+                    flames[index] = null;
+                }
+            } else if (flames[index] == null
+                    || flames[index].characterId != characterId) {
+                if (flames[index] != null && flames[index].animation != null)
+                    flames[index].animation.clearFlameFrame();
+                Flame flame = new Flame(null, characterId,
+                        flameFrameCount(characterId));
+                flames[index] = flame;
+                // DefineSprite frame 1 calls gotoAndPlay(randRange(2,110)).
+                flame.frameOneBased = 2 + random.nextInt(109);
+            }
+        }
+        for (int index = 0; index < SLOT_COUNT; index++) {
+            FlashActionBuildingAnimation animation = current[index];
+            GameState.ActionBuildingEvent event = lastShown[index];
+            if (event != null && (animation == null
+                    || animation.sequenceIndex != event.sequenceIndex
+                    || !animation.frameName.equals(event.frameName)
+                    || !animation.religionCode.equals(event.religionCode))) {
+                throw new IllegalArgumentException("Final shown action building is absent from all");
+            }
+            Flame flame = flames[index];
+            if (flame == null) continue;
+            if (animation == null || !"religion".equals(animation.frameName)
+                    || flame.characterId != flameId(animation.religionCode)) {
+                if (flame.animation != null) flame.animation.clearFlameFrame();
+                flames[index] = null;
+            } else {
+                if (flame.animation != null && flame.animation != animation)
+                    flame.animation.clearFlameFrame();
+                flame.animation = animation;
+                animation.setFlameFrame(flame.characterId, flame.frameOneBased);
+            }
+        }
+    }
+
+    /** Advances attached child timelines, including retained slots during idle. */
+    public void tick() {
+        for (int index : DEPTH_ORDER) {
+            Flame flame = flames[index];
+            if (flame == null) continue;
+            if (flame.frameOneBased == flame.frameCount) {
+                flame.frameOneBased = 2 + random.nextInt(109);
+            } else {
+                flame.frameOneBased++;
+            }
+            flame.animation.setFlameFrame(flame.characterId, flame.frameOneBased);
+        }
+    }
+
+    /** Source religion label chooses Massmedia 1..4 only while sound is enabled. */
+    public int onActionRevealed(GameState.Action action, boolean soundEnabled) {
+        return action == GameState.Action.MASS_MEDIA && soundEnabled
+                ? 1 + random.nextInt(4) : 0;
+    }
+
+    /** New-game reset drops old physical clip phases and random-stream ownership. */
+    public void reset() {
+        for (int index = 0; index < SLOT_COUNT; index++) {
+            if (flames[index] != null && flames[index].animation != null)
+                flames[index].animation.clearFlameFrame();
+            flames[index] = null;
+        }
+        random = null;
+    }
+
+    private static int slotIndex(int playerId, int slot) {
+        if (playerId < 0 || playerId > 4 || slot < 1 || slot > 2)
+            throw new IllegalArgumentException("Invalid source action-building slot");
+        return playerId * 2 + slot - 1;
+    }
+
+    private static int flameId(String religionCode) {
+        for (int index = 0; index < RELIGIONS.length; index++) {
+            if (RELIGIONS[index].equals(religionCode)) return FLAME_IDS[index];
+        }
+        return 0;
+    }
+
+    private static int flameFrameCount(int characterId) {
+        for (int index = 0; index < FLAME_IDS.length; index++) {
+            if (FLAME_IDS[index] == characterId) return FLAME_FRAMES[index];
+        }
+        throw new IllegalArgumentException("Unknown source flame");
+    }
+
+    private static final class Flame {
+        private FlashActionBuildingAnimation animation;
+        private final int characterId;
+        private final int frameCount;
+        private int frameOneBased;
+
+        Flame(FlashActionBuildingAnimation animation, int characterId, int frameCount) {
+            this.animation = animation;
+            this.characterId = characterId;
+            this.frameCount = frameCount;
+        }
+    }
+}
