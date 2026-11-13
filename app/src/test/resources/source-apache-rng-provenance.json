@@ -1,0 +1,45 @@
+{
+  "scenario": "seed0 normal, select leaders 1..N; turn1 research soldier2 + resources; turn2 production soldier 100% + resources; turn3 soldier2 attack player1 city0 + resources",
+  "tickDefinition": "tick0 post-btn46, tickN after N playback.step calls",
+  "rngOwner": "BattlePlayback.rt.rng; nextRandom is a nonconsuming copy-state peek",
+  "referenceSha256": {
+    "WorldDomination2.swf": "fe60c4d8793a23e7ddd59ddcb406b5471540e28d64f7552d17308fbb269e6fe1",
+    "reverse/export/scripts/__Packages/Unit.as": "7e765e9d5bf72eb0b24b3163f0faed627cc996c4e9bd4b7075ab962d6623d1ba",
+    "reverse/export/scripts/__Packages/View.as": "205221608f0bb54e326cceb12f0fc92920da714b4a8daf7dce933fcd6df25f40",
+    "reverse/export/scripts/__Packages/Presenter.as": "d656cb3b2603d87c41a7963db933e399721c4479af046c5e0974acd6fada6ba8",
+    "wd2/setup_menu.py": "5633326451e768a84a14bde04e452043ba7fac2617a4c71b7b36dcd0495f0c4a",
+    "wd2/battle_playback.py": "9aa8c82295b1977897cea2a60afbb6569e0d31e14bb9725267e422c7b9167901",
+    "wd2/runtime.py": "bf58b6cf0cddae89c5efd153713df03751eacf72d0e5c836413bc19a8752b30b"
+  },
+  "probeSha256": "f1c96cdde9bf7d807cb73d940a97b43ab55809c517da2028314821a16b50c93d",
+  "cases": [
+    {
+      "opponents": 2,
+      "doneTick": 525,
+      "rows": 526,
+      "firstNextRandom": "0.4740046511372964",
+      "lastNextRandom": "0.5848887019932744",
+      "rngCsv": "battle-rng-2opponents.csv",
+      "rngCsvSha256": "32fed95f39e2597a699f6e3d1bf7aedc2ebcefc97f8f31c3f7094f9a7fca073d",
+      "actorOracle": "actors-2opponents.csv",
+      "actorOracleSha256": "a720b0399247882b0d00af6abca65bccf5021f8a6c2be136c3cd362f514fe2df",
+      "actorRowsCompared": 8416,
+      "expectedActorRows": 8416,
+      "actorMismatchesFirst30": []
+    },
+    {
+      "opponents": 4,
+      "doneTick": 526,
+      "rows": 527,
+      "firstNextRandom": "0.2870883399952252",
+      "lastNextRandom": "0.7764198986996783",
+      "rngCsv": "battle-rng-4opponents.csv",
+      "rngCsvSha256": "1e192b182a9fad70d14be482e2403c05ff93c183b38e9879b7bd4ff344070fcc",
+      "actorOracle": "actors-4opponents.csv",
+      "actorOracleSha256": "f1b4871a90b12e1cdcecb683f5684850a0d2e284f53586fcfaf49d94805b4749",
+      "actorRowsCompared": 8432,
+      "expectedActorRows": 8432,
+      "actorMismatchesFirst30": []
+    }
+  ]
+}
