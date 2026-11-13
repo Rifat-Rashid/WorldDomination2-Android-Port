@@ -244,17 +244,17 @@ public final class ChinookDeploymentArtInstrumentedTest {
         if (animation.isTankShadowVisible()) {
             FlashAnimationTimeline.Layer placement = assets.getTimeline("tank_noshade").getFrame(0).layers[0];
             FlashAnimationTimeline.Layer leaf = assets.getTimelineBySymbolId(677).getFrame(0).layers[0];
-            leaf(batch, bounds, assets, base, leaf, placement.tx,
+            leaf(batch, bounds, assets, animation, base, leaf, placement.tx,
                     placement.ty + animation.getTankShadowOffsetY(), false, .69921875f);
         }
-        body(batch, bounds, assets, base);
-        body(batch, bounds, assets, animation.getActor(2));
-        body(batch, bounds, assets, animation.getActor(0));
+        body(batch, bounds, assets, animation, base);
+        body(batch, bounds, assets, animation, animation.getActor(2));
+        body(batch, bounds, assets, animation, animation.getActor(0));
         FlashChinookTankAnimation.Actor shadow = animation.getChinookShadow();
         if (shadow.visible) {
             FlashAnimationTimeline.Layer leaf = assets.getTimelineBySymbolId(2373)
                     .getFrame(shadow.sourceFrame).layers[0];
-            leaf(batch, bounds, assets, shadow, leaf, -.15f, .25f, true, .3984375f);
+            leaf(batch, bounds, assets, animation, shadow, leaf, -.15f, .25f, true, .3984375f);
         }
         batch.setTransformMatrix(new Matrix4());
         batch.setColor(1, 1, 1, 1);
@@ -262,18 +262,20 @@ public final class ChinookDeploymentArtInstrumentedTest {
 
     private static void body(SpriteBatch batch, Rectangle bounds,
                               OriginalFlashAnimationAssets assets,
+                              FlashChinookTankAnimation animation,
                               FlashChinookTankAnimation.Actor actor) {
         if (!actor.visible) return;
         for (FlashAnimationTimeline.Layer layer : assets.getTimeline(actor.linkage)
                 .getFrame(actor.sourceFrame).layers) {
             if (assets.getShape(layer.shapeId) != null) {
-                leaf(batch, bounds, assets, actor, layer, 0, 0, false, 1f);
+                leaf(batch, bounds, assets, animation, actor, layer, 0, 0, false, 1f);
             }
         }
     }
 
     private static void leaf(SpriteBatch batch, Rectangle bounds,
                               OriginalFlashAnimationAssets assets,
+                              FlashChinookTankAnimation animation,
                               FlashChinookTankAnimation.Actor actor,
                               FlashAnimationTimeline.Layer layer,
                               float parentX, float parentY, boolean black, float alpha) {
@@ -285,8 +287,15 @@ public final class ChinookDeploymentArtInstrumentedTest {
         matrix.val[Matrix4.M01] = -layer.c * scale;
         matrix.val[Matrix4.M10] = -layer.b * scale;
         matrix.val[Matrix4.M11] = layer.d * scale;
-        matrix.val[Matrix4.M03] = BattlefieldCityLayout.sourceX(bounds,
-                actor.sourceX + parentX + layer.tx, actor.islandPlayerId);
+        // Independent expected progress for the source 0->2 route used above.
+        // Start=(432.25,221.75), drop=(563,68), source arrival range=25.
+        FlashChinookTankAnimation.Actor carrier = animation.getActor(0);
+        float remaining = Math.max(Math.abs(carrier.sourceX - 563f),
+                Math.abs(carrier.sourceY - 68f));
+        float progress = animation.isTankShadowVisible() || animation.isTankDeployed()
+                ? 1f : Math.max(0f, Math.min(1f, (153.75f - remaining) / 128.75f));
+        matrix.val[Matrix4.M03] = BattlefieldCityLayout.sourceXBetween(bounds,
+                actor.sourceX + parentX + layer.tx, 0, 2, progress);
         matrix.val[Matrix4.M13] = BattlefieldCityLayout.sourceY(bounds,
                 actor.sourceY + parentY + layer.ty);
         batch.setTransformMatrix(matrix);

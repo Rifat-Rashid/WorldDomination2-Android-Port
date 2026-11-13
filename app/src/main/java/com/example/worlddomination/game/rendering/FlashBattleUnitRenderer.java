@@ -268,15 +268,31 @@ public final class FlashBattleUnitRenderer {
         if (timeline == null || timeline.getFrameCount() == 0) return;
         deploymentTransformScratch[0].setIdentity();
         deploymentColorScratch[0].identity();
+        float cropOffsetX = deploymentCropOffset(mapBounds, animation, actor);
         drawDeploymentFrame(batch, mapBounds, timeline.getFrame(
-                Math.min(actor.sourceFrame, timeline.getFrameCount() - 1)), animation, actor, 0);
+                Math.min(actor.sourceFrame, timeline.getFrameCount() - 1)), animation, actor,
+                cropOffsetX, 0);
+    }
+
+    static float deploymentCropOffset(Rectangle mapBounds,
+                                      FlashChinookTankAnimation animation,
+                                      FlashChinookTankAnimation.Actor actor) {
+        float progress = animation.isTankDeployed()
+                && actor != animation.getActor(0)
+                && actor != animation.getChinookShadow()
+                ? 1f : animation.getCropProgress();
+        return BattlefieldCityLayout.sourceXBetween(mapBounds, actor.sourceX,
+                animation.getAttackerPlayerId(), animation.getTargetPlayerId(), progress)
+                - BattlefieldCityLayout.sourceX(mapBounds, actor.sourceX,
+                actor.islandPlayerId);
     }
 
     /** Walk only the recovered deployment clips; do not change other unit render paths. */
     private void drawDeploymentFrame(SpriteBatch batch, Rectangle mapBounds,
                                       FlashAnimationTimeline.Frame frame,
                                       FlashChinookTankAnimation animation,
-                                      FlashChinookTankAnimation.Actor actor, int depth) {
+                                      FlashChinookTankAnimation.Actor actor,
+                                      float cropOffsetX, int depth) {
         if (frame == null || depth >= MAX_DEPLOYMENT_CLIP_DEPTH) return;
         FlashAffineTransform parent = deploymentTransformScratch[depth];
         FlashAffineTransform transform = deploymentTransformScratch[depth + 1];
@@ -295,6 +311,9 @@ public final class FlashBattleUnitRenderer {
                         actor.sourceX, actor.sourceY, actor.islandPlayerId,
                         assets.getShapeOriginX(layer.shapeId), assets.getShapeOriginY(layer.shapeId),
                         region.getRegionWidth(), region.getRegionHeight());
+                for (int vertex = 0; vertex < 20; vertex += 5) {
+                    deploymentVertices[vertex] += cropOffsetX;
+                }
                 float packed = batch.getPackedColor();
                 for (int vertex = 0; vertex < 20; vertex += 5) {
                     deploymentVertices[vertex + 2] = packed;
@@ -316,7 +335,8 @@ public final class FlashBattleUnitRenderer {
             // the tank's nested shadow is a one-frame clip.
             int childFrame = layer.shapeId == 2373 ? actor.sourceFrame : 0;
             drawDeploymentFrame(batch, mapBounds, nested.getFrame(
-                    Math.min(childFrame, nested.getFrameCount() - 1)), animation, actor, depth + 1);
+                    Math.min(childFrame, nested.getFrameCount() - 1)), animation, actor,
+                    cropOffsetX, depth + 1);
         }
     }
 

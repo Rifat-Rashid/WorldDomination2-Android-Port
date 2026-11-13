@@ -28,6 +28,7 @@ public final class FlashChinookTankAnimation {
     private static final int TANK_PRESHOT_THRESHOLD = 25;
     private static final int TANK_FLASH_RESET_THRESHOLD = 3;
     private static final float CHINOOK_STEP = 8f;
+    private static final float CHINOOK_ARRIVAL_RANGE = 25f;
     private static final float TANK_STEP = 2f;
     private static final float ARRIVAL_RANGE = 10f;
     private static final float[][] ISLAND_CENTERS = {
@@ -62,6 +63,7 @@ public final class FlashChinookTankAnimation {
     private float tankPreviousY;
     private float tankArrivalRange = ARRIVAL_RANGE;
     private float tankShadowOffsetY = 40f;
+    private float cropProgress;
     private OriginalAudio.Cue lastAudioCue;
     private Phase phase = Phase.CHINOOK_FLIGHT;
 
@@ -72,6 +74,7 @@ public final class FlashChinookTankAnimation {
         }
         this.route = route;
         this.delayTicks = delayTicks;
+        cropProgress = startDistance() <= CHINOOK_ARRIVAL_RANGE ? 1f : 0f;
         chinook.linkage = "chinook";
         chinook.sourceX = route.chinookStart.x;
         chinook.sourceY = route.chinookStart.y;
@@ -111,7 +114,12 @@ public final class FlashChinookTankAnimation {
                     turret.visible = true;
                     enqueueAudio(OriginalAudio.Cue.TANK_CHOPPER);
                 }
-                if (moveToward(chinook, route.chinookDrop, CHINOOK_STEP, true)) {
+                boolean arrived = moveToward(chinook, route.chinookDrop, CHINOOK_STEP, true);
+                updateCropProgress();
+                if (arrived) {
+                    // Arrival is tested before the source position advances. Keep
+                    // the target crop through descent even if that step overshoots.
+                    cropProgress = 1f;
                     phase = Phase.TANK_DROP;
                     dropTicks = 0;
                     enqueueAudio(OriginalAudio.Cue.TANK_CHOPPER);
@@ -196,6 +204,39 @@ public final class FlashChinookTankAnimation {
 
     public boolean isTankDeployed() {
         return phase == Phase.TANK_DRIVE || phase == Phase.TANK_FIRE || phase == Phase.FINISHED;
+    }
+
+    public int getAttackerPlayerId() {
+        return route.attackerPlayerId;
+    }
+
+    public int getTargetPlayerId() {
+        return route.targetPlayerId;
+    }
+
+    /** Monotone presentation progress; source movement and timing are unchanged. */
+    public float getCropProgress() {
+        return cropProgress;
+    }
+
+    private float startDistance() {
+        return Math.max(Math.abs(route.chinookStart.x - route.chinookDrop.x),
+                Math.abs(route.chinookStart.y - route.chinookDrop.y));
+    }
+
+    // Phone-only reflow: blend island crop shifts along the unchanged source
+    // route. Chebyshev distance matches the source's two-axis arrival rectangle.
+    private void updateCropProgress() {
+        float initial = startDistance();
+        if (initial <= CHINOOK_ARRIVAL_RANGE) {
+            cropProgress = 1f;
+            return;
+        }
+        float remaining = Math.max(Math.abs(chinook.sourceX - route.chinookDrop.x),
+                Math.abs(chinook.sourceY - route.chinookDrop.y));
+        float progress = Math.max(0f, Math.min(1f,
+                (initial - remaining) / (initial - CHINOOK_ARRIVAL_RANGE)));
+        cropProgress = Math.max(cropProgress, progress);
     }
 
     public boolean isTankShadowVisible() {
@@ -335,7 +376,7 @@ public final class FlashChinookTankAnimation {
         double targetXStep = sourceTargetStep(step, xDistance, oldYDistance, dx > 0f);
         double targetYStep = sourceTargetStep(step, yDistance, xDistance, dy > 0f);
         boolean arrived = insideRange(actor.sourceX, actor.sourceY, target,
-                animateChinook ? 25f : tankArrivalRange);
+                animateChinook ? CHINOOK_ARRIVAL_RANGE : tankArrivalRange);
         if (animateChinook) {
             chinookXStep = sourceAcceleration(chinookXStep, targetXStep, dx > 0f);
             chinookYStep = sourceAcceleration(chinookYStep, targetYStep, dy > 0f);
