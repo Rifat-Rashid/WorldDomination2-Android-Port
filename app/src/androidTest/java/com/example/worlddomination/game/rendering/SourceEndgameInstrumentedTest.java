@@ -18,6 +18,7 @@ import com.badlogic.gdx.utils.viewport.Viewport;
 import com.example.worlddomination.MainActivity;
 import com.example.worlddomination.game.WorldDominationGame;
 import com.example.worlddomination.game.assets.OriginalEndgameAssets;
+import com.example.worlddomination.game.assets.OriginalFlashAnimationAssets;
 import com.example.worlddomination.game.persistence.PersonalBestStore;
 import com.example.worlddomination.game.persistence.ScorePreferenceBackend;
 import com.example.worlddomination.game.simulation.CityState;
@@ -26,6 +27,7 @@ import com.example.worlddomination.game.simulation.GameState;
 import com.example.worlddomination.game.ui.MatchOutcomePresentation;
 import com.example.worlddomination.game.ui.MatchOutcomeSequence;
 import java.io.File;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -45,6 +47,124 @@ public final class SourceEndgameInstrumentedTest {
 
     @Test public void defeatDrawsOriginalIntroAndAllowsNewGameAtScoreStart() throws Exception {
         exercise(GameState.MatchStatus.DEFEAT);
+    }
+
+    @Test public void victoryWaitsForActualTurnPlaybackBeforeEndgameCountdown() throws Exception {
+        exercisePlaybackHandoff(GameState.MatchStatus.VICTORY);
+    }
+
+    @Test public void defeatWaitsForActualTurnPlaybackBeforeEndgameCountdown() throws Exception {
+        exercisePlaybackHandoff(GameState.MatchStatus.DEFEAT);
+    }
+
+    private static void exercisePlaybackHandoff(GameState.MatchStatus expected) throws Exception {
+        try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
+            CountDownLatch done = new CountDownLatch(1);
+            AtomicReference<Throwable> failure = new AtomicReference<>();
+            scenario.onActivity(activity -> Gdx.app.postRunnable(() -> {
+                WorldDominationGame app = null;
+                PersonalBestStore previousStore = null;
+                try {
+                    app = (WorldDominationGame) Gdx.app.getApplicationListener();
+                    invoke(app, "initializeGameplayAssets");
+                    Object splash = field(WorldDominationGame.class, "splashState").get(app);
+                    splash.getClass().getMethod("dismiss").invoke(splash);
+                    OriginalFlashAnimationAssets battleAssets = (OriginalFlashAnimationAssets)
+                            field(WorldDominationGame.class, "flashAnimationAssets").get(app);
+                    awaitFlashAssets(battleAssets);
+                    previousStore = (PersonalBestStore) field(WorldDominationGame.class,
+                            "personalBestStore").get(app);
+                    MemoryBackend backend = new MemoryBackend();
+                    field(WorldDominationGame.class, "personalBestStore")
+                            .set(app, new PersonalBestStore(backend));
+
+                    GameState state = expected == GameState.MatchStatus.VICTORY
+                            ? decisiveSoldierVictoryBeforeConfirmation()
+                            : terminalStateBeforeConfirmation(expected);
+                    field(WorldDominationGame.class, "game").set(app, state);
+                    field(WorldDominationGame.class, "modalOpen").setBoolean(app, false);
+                    ((BattlefieldCityRenderer) field(WorldDominationGame.class,
+                            "cityRenderer").get(app)).reset(state);
+                    invoke(app, "confirmTurnAndPreparePlayback");
+                    assertEquals(expected, state.getMatchStatus());
+                    MatchOutcomeSequence sequence = (MatchOutcomeSequence)
+                            field(WorldDominationGame.class, "outcomeSequence").get(app);
+                    TurnPlaybackSequence playback = (TurnPlaybackSequence)
+                            field(WorldDominationGame.class, "turnPlaybackSequence").get(app);
+                    assertEquals(TurnPlaybackSequence.Phase.ACTION_LABELS, playback.getPhase());
+
+                    for (int frame = 0; frame < MatchOutcomeSequence.TICKS_BEFORE_ENDGAME + 1;
+                            frame++) {
+                        fixedTick(app);
+                        assertTrue("Source action labels still block the handoff",
+                                playback.isBlockingInput());
+                        assertEquals(MatchOutcomeSequence.Phase.INACTIVE, sequence.getPhase());
+                    }
+                    assertNull("Endgame assets remain lazy during playback",
+                            field(WorldDominationGame.class, "endgameAssets").get(app));
+                    assertEquals("Personal best is recorded at handoff", 0L, backend.best);
+
+                    int playbackTicks = 0;
+                    boolean sawCombat = false;
+                    while (playback.isBlockingInput() && playbackTicks++ < 6200) {
+                        fixedTick(app);
+                        if (playback.getPhase() == TurnPlaybackSequence.Phase.BATTLE) {
+                            @SuppressWarnings("unchecked")
+                            java.util.List<FlashSoldierOneAnimation> soldiers =
+                                    (java.util.List<FlashSoldierOneAnimation>)
+                                    field(WorldDominationGame.class, "soldierBattleAnimations")
+                                            .get(app);
+                            if (!soldiers.isEmpty() && !sawCombat) {
+                                sawCombat = true;
+                                render(app);
+                                assertEquals(MatchOutcomeSequence.Phase.INACTIVE,
+                                        sequence.getPhase());
+                                capture("source-endgame-win-final-attack.png");
+                            }
+                        }
+                        if (playback.isBlockingInput()) {
+                            assertEquals(MatchOutcomeSequence.Phase.INACTIVE,
+                                    sequence.getPhase());
+                        }
+                    }
+                    if (expected == GameState.MatchStatus.VICTORY)
+                        assertTrue("The decisive Soldier1 attack plays before the endgame",
+                                sawCombat);
+                    assertEquals("Turn labels, battle, and reset barrier finish first",
+                            TurnPlaybackSequence.Phase.IDLE, playback.getPhase());
+                    assertEquals(MatchOutcomeSequence.Phase.BEFORE_ENDGAME,
+                            sequence.getPhase());
+                    OriginalEndgameAssets endgameAssets = (OriginalEndgameAssets)
+                            field(WorldDominationGame.class, "endgameAssets").get(app);
+                    assertNotNull(endgameAssets);
+                    awaitAssets(endgameAssets);
+                    assertEquals(state.getFinalScore(), backend.best);
+
+                    // The handoff tick has consumed one of the original 72 countdown ticks.
+                    for (int frame = 1; frame < MatchOutcomeSequence.TICKS_BEFORE_ENDGAME;
+                            frame++) fixedTick(app);
+                    assertEquals(MatchOutcomeSequence.Phase.INTRO, sequence.getPhase());
+                    render(app);
+                    capture("source-endgame-handoff-" + expected.name() + "-intro.png");
+                    for (int frame = 0; frame < MatchOutcomeSequence.TICKS_BEFORE_SCORE;
+                            frame++) fixedTick(app);
+                    assertTrue("The original 48-tick intro precedes score", sequence.isScoreStarted());
+                } catch (Throwable error) {
+                    failure.set(error);
+                } finally {
+                    try {
+                        if (app != null && previousStore != null)
+                            field(WorldDominationGame.class, "personalBestStore")
+                                    .set(app, previousStore);
+                    } catch (Throwable restoreError) {
+                        if (failure.get() == null) failure.set(restoreError);
+                    }
+                    done.countDown();
+                }
+            }));
+            assertTrue("Endgame handoff GL work timed out", done.await(150, TimeUnit.SECONDS));
+            if (failure.get() != null) throw new AssertionError("Source endgame handoff", failure.get());
+        }
     }
 
     private static void exercise(GameState.MatchStatus expected) throws Exception {
@@ -147,6 +267,15 @@ public final class SourceEndgameInstrumentedTest {
     }
 
     private static GameState terminalState(GameState.MatchStatus outcome) throws Exception {
+        GameState state = terminalStateBeforeConfirmation(outcome);
+        state.confirmTurn();
+        assertEquals(outcome, state.getMatchStatus());
+        assertNotNull(state.getFinalScoreBreakdown());
+        return state;
+    }
+
+    private static GameState terminalStateBeforeConfirmation(GameState.MatchStatus outcome)
+            throws Exception {
         GameSetup setup = new GameSetup(17L);
         setup.setDifficulty(1);
         assertTrue(setup.toggleOpponent(0));
@@ -164,10 +293,37 @@ public final class SourceEndgameInstrumentedTest {
         assertTrue(state.acceptSelectedAction());
         state.selectAction(GameState.Action.MASS_MEDIA);
         assertTrue(state.acceptSelectedAction());
-        state.confirmTurn();
-        assertEquals(outcome, state.getMatchStatus());
-        assertNotNull(state.getFinalScoreBreakdown());
         return state;
+    }
+
+    private static GameState decisiveSoldierVictoryBeforeConfirmation() throws Exception {
+        // The deterministic final-city attack from BattlefieldFlagStateTest.
+        Constructor<GameState> constructor = GameState.class.getDeclaredConstructor(
+                int.class, long.class, boolean.class);
+        constructor.setAccessible(true);
+        GameState state = constructor.newInstance(1, 214L, false);
+        for (GameState.PlayerState opponent : state.getPlayers()) {
+            if (opponent.human) continue;
+            for (CityState city : opponent.getCities()) city.populationMillions = 0;
+            opponent.populationMillions = 0;
+            if (opponent.id != 1) opponent.alive = false;
+        }
+        GameState.PlayerState finalRival = state.getPlayerState(1);
+        finalRival.getCity(0).populationMillions = 1;
+        finalRival.populationMillions = 1;
+        state.getHuman().getWeapons().get("soldier1").inStock = 1;
+        state.selectAction(GameState.Action.ATTACK);
+        assertTrue(state.configureAttack(1, 0, "soldier1"));
+        assertTrue(state.acceptSelectedAction());
+        state.selectAction(GameState.Action.RESOURCES);
+        assertTrue(state.acceptSelectedAction());
+        return state;
+    }
+
+    private static void awaitFlashAssets(OriginalFlashAnimationAssets assets) throws Exception {
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(45);
+        while (!assets.update() && System.nanoTime() < deadline) Thread.sleep(5);
+        assertTrue("Battle atlas loads before playback", assets.isLoaded());
     }
 
     private static void awaitAssets(OriginalEndgameAssets assets) throws Exception {
@@ -358,6 +514,12 @@ public final class SourceEndgameInstrumentedTest {
 
     private static void tick(WorldDominationGame app, int count) throws Exception {
         for (int i = 0; i < count; i++) invoke(app, "advanceOutcomeSequence");
+    }
+
+    private static void fixedTick(WorldDominationGame app) throws Exception {
+        Method method = WorldDominationGame.class.getDeclaredMethod("fixedUpdate", float.class);
+        method.setAccessible(true);
+        method.invoke(app, 1f / 24f);
     }
 
     private static void tapSource(WorldDominationGame app, float sourceX,
