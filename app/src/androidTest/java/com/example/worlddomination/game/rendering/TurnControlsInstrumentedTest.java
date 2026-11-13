@@ -12,6 +12,7 @@ import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.example.worlddomination.MainActivity;
 import com.example.worlddomination.game.WorldDominationGame;
+import com.example.worlddomination.game.assets.OriginalFlashAnimationAssets;
 import com.example.worlddomination.game.simulation.GameState;
 import com.example.worlddomination.game.ui.ConfirmTurnAnimation;
 import com.example.worlddomination.game.ui.TurnActionDisplay;
@@ -36,6 +37,12 @@ public final class TurnControlsInstrumentedTest {
                 try {
                     WorldDominationGame app = (WorldDominationGame) Gdx.app.getApplicationListener();
                     invoke(app, "initializeGameplayAssets");
+                    // Manual fixed ticks must start with the same ready artwork as playback.
+                    OriginalFlashAnimationAssets assets = (OriginalFlashAnimationAssets)
+                            field("flashAnimationAssets").get(app);
+                    long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(45);
+                    while (!assets.update() && System.nanoTime() < deadline) Thread.sleep(5);
+                    assertTrue("Source artwork is uploaded before timing the labels", assets.isLoaded());
                     GameState state = new GameState(1, 17L);
                     field("game").set(app, state);
                     Object splash = field("splashState").get(app);
