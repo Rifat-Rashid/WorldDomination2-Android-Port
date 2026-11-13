@@ -4595,7 +4595,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         int submarineSequenceIndex = 0;
         FlashAntiDefenseTrackingAnimation.TargetLock antiDefenseTargetLock =
                 new FlashAntiDefenseTrackingAnimation.TargetLock();
-        ReferenceRandom presentationRandom = game.createPresentationRandomCopy();
+        ReferenceRandom presentationRandom = game.createBattlePresentationRandomCopy();
         for (GameState.CombatEvent event
                 : game.getLastTurnCombatEventsInSourcePresentationOrder()) {
             int recordDelay = battleRecordClock.delayForRecord(event.battleStartNum);

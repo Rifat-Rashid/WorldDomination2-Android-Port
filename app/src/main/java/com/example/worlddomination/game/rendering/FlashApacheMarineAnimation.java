@@ -277,8 +277,8 @@ public final class FlashApacheMarineAnimation {
             previousX = apacheX;
             previousY = apacheY;
             actor.sourceX = spawn.x + random.nextInt(21);
-            actor.sourceY = spawn.y + random.nextInt(16);
             frameOffset = random.nextInt(7);
+            actor.sourceY = spawn.y + random.nextInt(16);
             range = 5 + random.nextInt(6);
         }
 

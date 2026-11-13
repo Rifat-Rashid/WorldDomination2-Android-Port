@@ -12,6 +12,8 @@ import com.example.worlddomination.MainActivity;
 import com.example.worlddomination.game.WorldDominationGame;
 import com.example.worlddomination.game.assets.OriginalFlashAnimationAssets;
 import com.example.worlddomination.game.simulation.GameState;
+import com.example.worlddomination.game.simulation.GameSetup;
+import com.example.worlddomination.game.simulation.ReferenceRandom;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -117,6 +119,68 @@ public final class SourceBattleRecordClockInstrumentedTest {
             assertTrue("Three-turn source clock integration timed out",
                     done.await(150, TimeUnit.SECONDS));
             if (failure.get() != null) throw new AssertionError("Source record clock", failure.get());
+        }
+    }
+
+    @Test public void resolvedTurnBuildsSoldierRoutesFromSourceBattleRandomBoundary() throws Exception {
+        try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
+            CountDownLatch done = new CountDownLatch(1);
+            AtomicReference<Throwable> failure = new AtomicReference<>();
+            scenario.onActivity(activity -> Gdx.app.postRunnable(() -> {
+                try {
+                    WorldDominationGame app = (WorldDominationGame) Gdx.app.getApplicationListener();
+                    invoke(app, "initializeGameplayAssets");
+                    Object splash = field(WorldDominationGame.class, "splashState").get(app);
+                    splash.getClass().getMethod("dismiss").invoke(splash);
+                    OriginalFlashAnimationAssets assets = (OriginalFlashAnimationAssets)
+                            field(WorldDominationGame.class, "flashAnimationAssets").get(app);
+                    long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(45);
+                    while (!assets.update() && System.nanoTime() < deadline) Thread.sleep(5);
+                    assertTrue("Authored battle assets ready", assets.isLoaded());
+                    GameSetup setup = new GameSetup(0L);
+                    assertTrue(setup.toggleOpponent(0));
+                    assertTrue(setup.toggleOpponent(1));
+                    GameState game = new GameState(setup);
+                    field(WorldDominationGame.class, "game").set(app, game);
+                    ((BattlefieldCityRenderer) field(WorldDominationGame.class,
+                            "cityRenderer").get(app)).reset(game);
+                    game.selectAction(GameState.Action.PROPAGANDA);
+                    assertTrue(game.configurePropaganda(1, 1));
+                    assertTrue(game.acceptSelectedAction());
+                    queueAttack(game);
+                    invoke(app, "confirmTurnAndPreparePlayback");
+                    assertEquals(1, boats(app).size());
+                    FlashSoldierOneAnimation boat = boats(app).get(0);
+                    FlashBattleRoutes.SoldierOneAttack route = (FlashBattleRoutes.SoldierOneAttack)
+                            field(FlashSoldierOneAnimation.class, "route").get(boat);
+                    // Executed source seed-0 turn: physical tailunit22,21,20 order.
+                    float[][] sourceFirePoints = {{-25f, 221f}, {-13f, 210f}, {55f, 223f}};
+                    for (int soldier = 0; soldier < sourceFirePoints.length; soldier++) {
+                        FlashBattleRoutes.Point[] path = route.soldiers[soldier].waypoints;
+                        assertEquals(160f, path[0].x, 0f);
+                        assertEquals(201f, path[0].y, 0f);
+                        assertEquals(sourceFirePoints[soldier][0], path[path.length - 2].x, 0f);
+                        assertEquals(sourceFirePoints[soldier][1], path[path.length - 2].y, 0f);
+                        assertEquals(29f, path[path.length - 1].x, 0f);
+                        assertEquals(242f, path[path.length - 1].y, 0f);
+                    }
+                    ReferenceRandom routeRandom = (ReferenceRandom)
+                            field(FlashSoldierOneAnimation.class, "presentationRandom").get(boat);
+                    assertEquals("Exactly six source route draws precede activation",
+                            0.47653099200938076, routeRandom.copy().nextDouble(), 0d);
+                    TurnPlaybackSequence playback = (TurnPlaybackSequence)
+                            field(WorldDominationGame.class, "turnPlaybackSequence").get(app);
+                    for (int tick = 0; tick < 240; tick++) advance(app);
+                    capture(app, "source-battle-random-soldiers.png");
+                    finishTurn(app, playback);
+                    assertEquals(1, game.getTurn());
+                    assertEquals(GameState.MatchStatus.ONGOING, game.getMatchStatus());
+                } catch (Throwable error) {
+                    failure.set(error);
+                } finally { done.countDown(); }
+            }));
+            assertTrue("Source battle RNG integration timed out", done.await(150, TimeUnit.SECONDS));
+            if (failure.get() != null) throw new AssertionError("Source battle random boundary", failure.get());
         }
     }
 
