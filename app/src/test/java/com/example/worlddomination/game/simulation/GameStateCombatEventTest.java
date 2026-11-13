@@ -428,6 +428,76 @@ public final class GameStateCombatEventTest {
     }
 
     @Test
+    public void eachShipSortieUsesItsOwnSourcePayloadOrderAndLaunchOffsets() {
+        GameState first = resolvedHumanShipSortie(2, 130L);
+        GameState second = resolvedHumanShipSortie(1, 131L);
+        GameState third = resolvedHumanShipSortie(3, 132L);
+
+        assertSourceShipSortie(first, 2);
+        assertSourceShipSortie(second, 1);
+        assertSourceShipSortie(third, 3);
+        List<GameState.CombatEvent> combined = new java.util.ArrayList<>();
+        combined.addAll(second.getLastTurnCombatEventsInSourcePresentationOrder());
+        combined.addAll(first.getLastTurnCombatEventsInSourcePresentationOrder());
+        assertEquals(3, combined.size());
+        assertEquals(0, combined.get(0).shipPayloadIndex);
+        assertEquals(0, combined.get(1).shipPayloadIndex);
+        assertEquals(1, combined.get(2).shipPayloadIndex);
+        assertEquals("bioload1", combined.get(1).payloadName);
+        assertEquals("warhead1", combined.get(2).payloadName);
+        // Every plane shares its sortie's start. Global record cadence is separate.
+        int firstSortie = FlashBattleRoutes.carrierPlaneDelayTicks(0, 0);
+        int secondSortie = FlashBattleRoutes.carrierPlaneDelayTicks(1, 0);
+        assertTrue(secondSortie > firstSortie);
+        assertEquals(secondSortie, FlashBattleRoutes.carrierPlaneDelayTicks(2, 1));
+        assertEquals(secondSortie, FlashBattleRoutes.carrierPlaneDelayTicks(2, 2));
+    }
+
+    private static GameState resolvedHumanShipSortie(int payloadCount, long seed) {
+        GameState state = new GameState(1, seed, false);
+        GameState.WeaponState ship = state.getHuman().getWeapons().get("ship");
+        GameState.WeaponState warhead = state.getHuman().getWeapons().get("warhead1");
+        GameState.WeaponState bioload = state.getHuman().getWeapons().get("bioload1");
+        ship.active = true;
+        ship.inStock = 1;
+        warhead.active = true;
+        warhead.inStock = 3;
+        bioload.active = true;
+        bioload.inStock = 1;
+
+        state.selectAction(GameState.Action.PREPARED_ATTACK);
+        assertTrue(state.configurePreparedCarrier("ship"));
+        assertTrue(state.acceptSelectedAction());
+        queueResources(state);
+        state.confirmTurn();
+
+        state.selectAction(GameState.Action.PREPARED_ATTACK);
+        for (int i = 0; i < payloadCount; i++) {
+            assertTrue(state.configurePreparedShipStrike(1, i,
+                    i == 1 ? "bioload1" : "warhead1"));
+        }
+        assertTrue(state.acceptSelectedAction());
+        queueResources(state);
+        state.confirmTurn();
+        return state;
+    }
+
+    private static void assertSourceShipSortie(GameState state, int payloadCount) {
+        List<GameState.CombatEvent> events =
+                state.getLastTurnCombatEventsInSourcePresentationOrder();
+        assertEquals(payloadCount, events.size());
+        for (int sourceIndex = 0; sourceIndex < payloadCount; sourceIndex++) {
+            GameState.CombatEvent event = events.get(sourceIndex);
+            assertEquals(payloadCount - 1 - sourceIndex, event.cityIndex);
+            assertEquals(sourceIndex == payloadCount - 2 ? "bioload1" : "warhead1",
+                    event.payloadName);
+            assertEquals(sourceIndex, event.shipPayloadIndex);
+            assertEquals(sourceIndex,
+                    FlashBattleRoutes.createCarrierPlaneStrike(event).planeIndex);
+        }
+    }
+
+    @Test
     public void attackThatBecomesUnavailableDoesNotEmitCombatEvent() {
         GameState state = new GameState(1, 123L, false);
         GameState.WeaponState soldier = state.getHuman().getWeapons().get("soldier1");
