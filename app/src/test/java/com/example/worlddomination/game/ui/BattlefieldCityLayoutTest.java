@@ -9,6 +9,20 @@ import static org.junit.Assert.assertTrue;
 
 public final class BattlefieldCityLayoutTest {
     @Test
+    public void sourceDepthsRetainZeroBasedCityIdsAcrossAllFiveIslands() {
+        // Recovered City.as image_depth values, indexed by Presenter cityID 0..24.
+        int[] expected = {21504, 15505, 13006, 16507, 22508,
+                13509, 13510, 9011, 4512, 4513,
+                4514, 9015, 11516, 14017, 4518,
+                30019, 25020, 22021, 21522, 30023,
+                29524, 25525, 22026, 20527, 29028};
+        for (int address = 0; address < expected.length; address++) {
+            assertEquals("Source cityID " + address, expected[address],
+                    BattlefieldCityLayout.sourceDepth(address));
+        }
+    }
+
+    @Test
     public void projectsReferenceAnchorsWithIslandOceanShifts() {
         Rectangle map = new Rectangle(0f, 0f, 523f, 318f);
 

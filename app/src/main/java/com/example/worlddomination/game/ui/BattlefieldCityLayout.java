@@ -152,7 +152,7 @@ public final class BattlefieldCityLayout {
         }
         int playerId = cityAddress / CITIES_PER_PLAYER;
         int cityIndex = cityAddress % CITIES_PER_PLAYER;
-        int sourceCityId = cityAddress + 1;
+        int sourceCityId = cityAddress;
         return (int) Math.floor((CITY_Y[playerId][cityIndex] + 15f) / 10f) * 500
                 + 4 + sourceCityId;
     }

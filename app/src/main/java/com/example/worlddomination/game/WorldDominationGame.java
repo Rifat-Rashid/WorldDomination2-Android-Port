@@ -30,6 +30,7 @@ import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.example.worlddomination.game.audio.OriginalAudio;
 import com.example.worlddomination.game.assets.OriginalCityAssets;
+import com.example.worlddomination.game.assets.OriginalBattleDisplayAssets;
 import com.example.worlddomination.game.assets.OriginalFlashAnimationAssets;
 import com.example.worlddomination.game.assets.OriginalSplashAssets;
 import com.example.worlddomination.game.assets.OriginalUiAssets;
@@ -38,6 +39,10 @@ import com.example.worlddomination.game.persistence.PersonalBestStore;
 import com.example.worlddomination.game.rendering.BattleAnimationSequence;
 import com.example.worlddomination.game.rendering.BattleExplosionRenderer;
 import com.example.worlddomination.game.rendering.BattlefieldCityRenderer;
+import com.example.worlddomination.game.rendering.BattlefieldDisplayState;
+import com.example.worlddomination.game.rendering.SourceDisplayList;
+import com.example.worlddomination.game.rendering.SourceApacheDisplayDepths;
+import com.example.worlddomination.game.rendering.SourceBattleUnitAllocation;
 import com.example.worlddomination.game.rendering.BattlefieldFlagRenderer;
 import com.example.worlddomination.game.rendering.BattlefieldTerrainRenderer;
 import com.example.worlddomination.game.rendering.FlashAntiDefenseTrackingAnimation;
@@ -333,6 +338,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private BattlefieldCityRenderer cityRenderer;
     private BattlefieldFlagRenderer flagRenderer;
     private BattlefieldTerrainRenderer terrainRenderer;
+    private final BattlefieldDisplayState battlefieldDisplay = new BattlefieldDisplayState();
+    private FlashAnimationTimeline.Frame authoredBattleFrame;
+    private GameState displayGame;
     private GameState preparedTerrainGame;
     private BattleExplosionRenderer explosionRenderer;
     private FlashBattleUnitRenderer battleUnitRenderer;
@@ -434,6 +442,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         Gdx.graphics.setContinuousRendering(false);
         continuousRenderingEnabled = false;
         Gdx.input.setCatchKey(Input.Keys.BACK, true);
+        authoredBattleFrame = OriginalBattleDisplayAssets.load();
         batch = new SpriteBatch();
         shapes = new ShapeRenderer();
         resourceMenuRenderer = new ResourceMenuRenderer();
@@ -736,9 +745,12 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         // together while the native asynchronous atlas finishes loading.
         if (turnPlaybackSequence.isBlockingInput()
                 && (flashAnimationAssets == null || !flashAnimationAssets.isLoaded())) return;
+        for (int index = 0; index < apacheMarineAnimations.size(); index++) {
+            apacheMarineAnimations.get(index).advanceAttachedTimelines();
+        }
         // BattleMC's retained action-building children precede the center-screen
         // and unit callbacks in the source display-list traversal, even at idle.
-        battleActionFrames.tick();
+        battleActionFrames.tick(battlefieldDisplay);
         if (turnPlaybackSequence.isBlockingInput() && battlePresentationRandom != null) {
             battleInterfaceFrames.tick(battlePresentationRandom);
         }
@@ -1068,6 +1080,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         satelliteFlightCuePlayed = false;
         pendingBattleAnimations.clear();
         battlePresentationRecords = Collections.emptyList();
+        resetBattlefieldDisplay(false);
     }
 
     private void clearCarrierPlaneAnimations() {
@@ -1160,6 +1173,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         turnActionDisplay.reset();
         turnPlaybackSequence.begin(resolvedActions);
+        battlefieldDisplay.bindActionBuildings(actionBuildingAnimations);
     }
 
     private void advanceOutcomeSequence() {
@@ -1619,6 +1633,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     }
 
     private void drawPanelsAndMap() {
+        if (displayGame != game) resetBattlefieldDisplay(false);
+        battlefieldDisplay.syncCityMarkers(game);
         shapes.setProjectionMatrix(camera.combined);
         shapes.begin(ShapeRenderer.ShapeType.Filled);
         drawPanelFill(leftPanel);
@@ -1656,12 +1672,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         batch.flush();
         setScissor(mapBounds);
         terrainRenderer.draw(batch, mapBounds);
-        flagRenderer.draw(batch, mapBounds, game);
-        cityRenderer.draw(batch, mapBounds, game, sourceActionMenu.getSelectedEquipment());
-        battleUnitRenderer.drawActionBuildings(batch, mapBounds, actionBuildingAnimations);
+        drawBattlefieldDisplay();
         battleUnitRenderer.drawSubmarines(batch, mapBounds, submarineBattleAnimations);
         battleUnitRenderer.draw(batch, mapBounds, soldierBattleAnimations);
-        battleUnitRenderer.drawApacheMarine(batch, mapBounds, apacheMarineAnimations);
         battleUnitRenderer.drawChinookTank(batch, mapBounds, chinookTankAnimations);
         battleUnitRenderer.drawSuicideBomber(batch, mapBounds, suicideBomberAnimations);
         battleUnitRenderer.drawRocket(batch, mapBounds, rocketBattleAnimations);
@@ -1730,6 +1743,59 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     private void drawPanelTexture(Rectangle rectangle) {
         drawPanelTexture(rectangle, 0.55f, 0.68f, 0.73f, 0.52f);
+    }
+
+    private void resetBattlefieldDisplay(boolean battle) {
+        if (game == null || authoredBattleFrame == null) return;
+        battlefieldDisplay.reset(authoredBattleFrame, game, battle);
+        battlefieldDisplay.bindActionBuildings(actionBuildingAnimations);
+        displayGame = game;
+    }
+
+    /** Direct peers share one occupied-depth list; city children remain grouped. */
+    private void drawBattlefieldDisplay() {
+        SourceDisplayList<BattlefieldDisplayState.Item> clips = battlefieldDisplay.clips();
+        for (int i = 0; i < clips.size(); i++) {
+            BattlefieldDisplayState.Item item = clips.entryAt(i).getValue();
+            switch (item.kind) {
+                case CITY:
+                    cityRenderer.drawCityBody(batch, mapBounds, game,
+                            sourceActionMenu.getSelectedEquipment(), item.index);
+                    break;
+                case CITY_MARKER:
+                    cityRenderer.drawCityMarker(batch, mapBounds, game, item.index);
+                    break;
+                case FLAG:
+                    flagRenderer.drawIsland(batch, mapBounds, game, item.index);
+                    break;
+                case ACTION_BUILDING:
+                    battleUnitRenderer.drawActionBuilding(batch, mapBounds,
+                            (FlashActionBuildingAnimation) item.owner);
+                    break;
+                case UNIT_BODY:
+                case UNIT_TINT:
+                case UNIT_SHADOW:
+                case UNIT_DOT:
+                    if (item.owner instanceof SourceApacheDisplayDepths.Binding) {
+                        SourceApacheDisplayDepths.Binding binding =
+                                (SourceApacheDisplayDepths.Binding) item.owner;
+                        if (item.kind == BattlefieldDisplayState.Kind.UNIT_DOT) {
+                            battleUnitRenderer.drawTargetDot(batch, mapBounds,
+                                    binding.animation.getColorName());
+                        } else if (item.kind == BattlefieldDisplayState.Kind.UNIT_SHADOW) {
+                            battleUnitRenderer.drawApacheShadow(batch, mapBounds,
+                                    binding.animation);
+                        } else {
+                            battleUnitRenderer.drawApacheActor(batch, mapBounds,
+                                    binding.animation, binding.actorIndex,
+                                    item.kind == BattlefieldDisplayState.Kind.UNIT_TINT);
+                        }
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
     }
 
     private void drawPanelTexture(Rectangle rectangle, float red, float green,
@@ -3513,6 +3579,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         showExitPromptSeconds = 0f;
         accumulator = 0f;
         game = null;
+        displayGame = null;
+        battlefieldDisplay.clear();
         battleRecordClock.reset();
         battleActionFrames.reset();
         battleInterfaceFrames.reset();
@@ -4674,6 +4742,15 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     private void confirmTurnAndPreparePlayback() {
         game.confirmTurn();
+        // Python BattlePlayback creates a fresh root for each resolved turn.
+        // Old canonical slots must not carry flame phases or stale buildings
+        // into the new parent (even when its final building frame is identical).
+        battleActionFrames.reset();
+        actionBuildingAnimations.clear();
+        // Its canonical snapshot has counter zero: Python replaces endBattle
+        // with finish, so the isolated playback never carries Flash's final 20.
+        battleRecordClock.reset();
+        resetBattlefieldDisplay(true);
         // original_gameplay.refresh -> View.update_flags recreates the child clips.
         flagRenderer.reset();
         queueActionBuildingAnimations();
@@ -4695,8 +4772,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         sourceUnitPlayback.reset();
         // Preserve source visitation across unit families. startNum gates
         // activation; sorting by it would change same-frame moves and breaks.
+        SourceBattleUnitAllocation unitAllocation = new SourceBattleUnitAllocation(battlefieldDisplay);
         for (GameState.CombatEvent event
                 : game.getLastTurnCombatEventsInSourcePresentationOrder()) {
+            int precedingUnitParameter = unitAllocation.reserveBeforeEvent(event);
             int recordDelay = battleRecordClock.delayForRecord(event.battleStartNum);
             OriginalAudio.Cue cue = OriginalAudio.cueForCombatEvent(event);
             if (FlashBattleRoutes.supportsSatelliteStrike(event)) {
@@ -4798,6 +4877,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                         presentationRandom, cue, recordDelay, GameSetup.colorName(
                                 game.getPlayerState(event.attackerPlayerId).getPlayerColor()));
                 apacheMarineAnimations.add(animation);
+                new SourceApacheDisplayDepths(battlefieldDisplay, animation,
+                        precedingUnitParameter);
                 sourceUnitPlayback.add(() -> advanceMarineUnit(animation));
                 continue;
             }
@@ -5228,6 +5309,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     @Override
     public void dispose() {
         disposeEndgameResources();
+        battlefieldDisplay.clear();
+        displayGame = null;
         battleActionFrames.reset();
         turnPlaybackSequence.reset();
         battleRecordClock.reset();
