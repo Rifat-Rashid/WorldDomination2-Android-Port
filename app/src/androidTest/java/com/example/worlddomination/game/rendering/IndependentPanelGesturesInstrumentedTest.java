@@ -57,11 +57,31 @@ public final class IndependentPanelGesturesInstrumentedTest {
                     float leftTravel = Math.min(70f, left.height * 0.35f);
                     float rightTravel = Math.min(70f, right.height * 0.35f);
 
+                    // Small movements refresh the sample but must not start scrolling.
+                    int[] sampleStart = screen(app, leftX, leftY);
+                    int[] sampleMove = screen(app, leftX, leftY + 1f);
+                    app.touchDown(sampleStart[0], sampleStart[1], 0, 0);
+                    float firstY = field("lastPointerY").getFloat(app);
+                    long firstNanos = field("lastPointerNanos").getLong(app);
+                    app.touchDragged(sampleMove[0], sampleMove[1], 0);
+                    assertTrue(field("lastPointerY").getFloat(app) > firstY);
+                    assertTrue(field("lastPointerNanos").getLong(app) - firstNanos > 0L);
+                    assertEquals(0f, navigation.getOffset(), 0f);
+                    app.touchCancelled(sampleMove[0], sampleMove[1], 0, 0);
+
                     // A vertical navigation swipe changes only the navigation offset.
-                    drag(app, leftX, leftY, leftX, leftY + leftTravel, leftX,
+                    drag(app, leftX, leftY, leftX, leftY + leftTravel / 2f, leftX,
                             leftY + leftTravel);
                     assertTrue(navigation.getOffset() > 0f);
+                    assertTrue(navigation.hasMotion());
                     assertEquals(0f, equipment.getOffset(), 0.01f);
+                    equipment.endGesture(-600f);
+                    int[] held = screen(app, leftX, leftY);
+                    app.touchDown(held[0], held[1], 0, 0);
+                    assertFalse("Touch stops only the originating panel's fling", navigation.hasMotion());
+                    assertTrue(equipment.hasMotion());
+                    app.touchCancelled(held[0], held[1], 0, 0);
+                    equipment.beginGesture();
                     assertIdle(game, app);
 
                     // Once vertical dragging starts, crossing into equipment keeps the origin.
