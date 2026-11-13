@@ -4698,7 +4698,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                         FlashBattleRoutes.createSoldierThreeAttack(
                                 event.attackerPlayerId, event.defenderPlayerId,
                                 event.cityIndex, event.actionBuildingSlot,
-                                colorName, battleAnchors);
+                                colorName, battleAnchors, presentationRandom);
                 chinookTankAnimations.add(new FlashChinookTankAnimation(route,
                         recordDelay));
                 continue;

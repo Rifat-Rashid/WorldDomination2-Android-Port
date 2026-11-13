@@ -718,6 +718,10 @@ public final class FlashBattleRoutesTest {
                         assertEquals(BattlefieldCityLayout.sourceCityY(target, city)
                                         + fireOffsetY(firePositions[target][city]),
                                 route.tankFirePoint.y, 0f);
+                        assertEquals(BattlefieldCityLayout.sourceCityX(target, city),
+                                route.turretAimPoint.x, 0f);
+                        assertEquals(BattlefieldCityLayout.sourceCityY(target, city),
+                                route.turretAimPoint.y, 0f);
                     }
                 }
             }
@@ -739,6 +743,34 @@ public final class FlashBattleRoutesTest {
                 FlashBattleRoutes.createSoldierThreeAttack(0, 1, 0, 1, "purple", anchors));
         assertThrows(IllegalArgumentException.class, () ->
                 FlashBattleRoutes.createSoldierThreeAttack(0, 1, 0, 1, "blue", null));
+    }
+
+    @Test
+    public void soldierThreeConsumesOneSourceTurretDrawWithoutMovingTheTankFirePoint()
+            throws Exception {
+        Map<String, FlashBattleRoutes.Point> anchors = loadAnchors();
+        ReferenceRandom presentationRandom = new ReferenceRandom(42L);
+        FlashBattleRoutes.ChinookTankAttack route =
+                FlashBattleRoutes.createSoldierThreeAttack(0, 2, 0, 1,
+                        "blue", anchors, presentationRandom);
+
+        // Battle.createToSpawnUnitsArr draws randRange(0, 2), then uses
+        // the city center waypoint for visible turret direction.
+        assertEquals(541f, route.turretAimPoint.x, 0f);
+        assertEquals(79f, route.turretAimPoint.y, 0f);
+        assertEquals(541f, route.tankFirePoint.x, 0f);
+        assertEquals(104f, route.tankFirePoint.y, 0f);
+        assertEquals(0.025010755222666936, presentationRandom.nextDouble(), 0d);
+
+        ReferenceRandom rejectedRandom = new ReferenceRandom(42L);
+        assertThrows(IllegalArgumentException.class, () ->
+                FlashBattleRoutes.createSoldierThreeAttack(0, 2, 0, 1,
+                        "blue", anchors, null));
+        assertThrows(IllegalArgumentException.class, () ->
+                FlashBattleRoutes.createSoldierThreeAttack(0, 2, 5, 1,
+                        "blue", anchors, rejectedRandom));
+        assertEquals(new ReferenceRandom(42L).nextDouble(),
+                rejectedRandom.nextDouble(), 0d);
     }
 
     private static float fireOffsetX(String position) {

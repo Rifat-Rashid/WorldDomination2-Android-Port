@@ -184,6 +184,89 @@ public final class SourceBattleRecordClockInstrumentedTest {
         }
     }
 
+    @Test public void pairedTankAndBoatUseSourceRandomOrderAndTurretCoordinates() throws Exception {
+        try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
+            CountDownLatch done = new CountDownLatch(1);
+            AtomicReference<Throwable> failure = new AtomicReference<>();
+            scenario.onActivity(activity -> Gdx.app.postRunnable(() -> {
+                try {
+                    WorldDominationGame app = (WorldDominationGame) Gdx.app.getApplicationListener();
+                    invoke(app, "initializeGameplayAssets");
+                    Object splash = field(WorldDominationGame.class, "splashState").get(app);
+                    splash.getClass().getMethod("dismiss").invoke(splash);
+                    OriginalFlashAnimationAssets assets = (OriginalFlashAnimationAssets)
+                            field(WorldDominationGame.class, "flashAnimationAssets").get(app);
+                    long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(45);
+                    while (!assets.update() && System.nanoTime() < deadline) Thread.sleep(5);
+                    assertTrue("Authored battle assets ready", assets.isLoaded());
+                    GameSetup setup = new GameSetup(0L);
+                    assertTrue(setup.toggleOpponent(0));
+                    assertTrue(setup.toggleOpponent(1));
+                    GameState game = new GameState(setup);
+                    // The source fixture enables/stocks only soldier3 before queuing.
+                    GameState.WeaponState tankStock = game.getHuman().getWeapons().get("soldier3");
+                    tankStock.active = true;
+                    tankStock.inStock = 1;
+                    field(WorldDominationGame.class, "game").set(app, game);
+                    ((BattlefieldCityRenderer) field(WorldDominationGame.class,
+                            "cityRenderer").get(app)).reset(game);
+                    queueAttack(game);
+                    game.selectAction(GameState.Action.ATTACK);
+                    assertTrue(game.configureAttack(2, 0, "soldier3"));
+                    assertTrue(game.acceptSelectedAction());
+                    invoke(app, "confirmTurnAndPreparePlayback");
+                    assertEquals(1, boats(app).size());
+                    List<?> tanks = (List<?>) field(WorldDominationGame.class,
+                            "chinookTankAnimations").get(app);
+                    assertEquals(1, tanks.size());
+                    FlashChinookTankAnimation tank = (FlashChinookTankAnimation) tanks.get(0);
+                    FlashBattleRoutes.ChinookTankAttack tankRoute =
+                            (FlashBattleRoutes.ChinookTankAttack)
+                            field(FlashChinookTankAnimation.class, "route").get(tank);
+                    assertEquals(541f, tankRoute.tankFirePoint.x, 0f);
+                    assertEquals(104f, tankRoute.tankFirePoint.y, 0f);
+                    assertEquals(541f, tankRoute.turretAimPoint.x, 0f);
+                    assertEquals(79f, tankRoute.turretAimPoint.y, 0f);
+                    FlashSoldierOneAnimation boat = boats(app).get(0);
+                    FlashBattleRoutes.SoldierOneAttack boatRoute =
+                            (FlashBattleRoutes.SoldierOneAttack)
+                            field(FlashSoldierOneAnimation.class, "route").get(boat);
+                    float[][] sourceFirePoints = {{-28f, 220f}, {-10f, 213f}, {54f, 219f}};
+                    for (int soldier = 0; soldier < sourceFirePoints.length; soldier++) {
+                        FlashBattleRoutes.Point[] path = boatRoute.soldiers[soldier].waypoints;
+                        assertEquals(sourceFirePoints[soldier][0], path[path.length - 2].x, 0f);
+                        assertEquals(sourceFirePoints[soldier][1], path[path.length - 2].y, 0f);
+                    }
+                    ReferenceRandom routeRandom = (ReferenceRandom)
+                            field(FlashSoldierOneAnimation.class, "presentationRandom").get(boat);
+                    assertEquals("Tank consumes one draw before six boat route draws",
+                            0.7576039219664368, routeRandom.copy().nextDouble(), 0d);
+                    TurnPlaybackSequence playback = (TurnPlaybackSequence)
+                            field(WorldDominationGame.class, "turnPlaybackSequence").get(app);
+                    boolean sawTank = false;
+                    int ticks = 0;
+                    while (playback.isBlockingInput() && ticks++ < 1200) {
+                        advance(app);
+                        if (tank.getActor(1).visible) {
+                            assertTrue(tank.getActor(2).visible);
+                            assertEquals(tank.getActor(1).sourceX, tank.getActor(2).sourceX, 0f);
+                            assertEquals(tank.getActor(1).sourceY, tank.getActor(2).sourceY, 0f);
+                            if (!sawTank) capture(app, "source-tank-turret-follow.png");
+                            sawTank = true;
+                        }
+                    }
+                    assertTrue("Actual native playback deploys the tank and turret", sawTank);
+                    assertFalse(playback.isBlockingInput());
+                    assertEquals(1, game.getTurn());
+                } catch (Throwable error) {
+                    failure.set(error);
+                } finally { done.countDown(); }
+            }));
+            assertTrue("Source tank/boat integration timed out", done.await(150, TimeUnit.SECONDS));
+            if (failure.get() != null) throw new AssertionError("Source tank/boat playback", failure.get());
+        }
+    }
+
     private static void openBattleGate(WorldDominationGame app, TurnPlaybackSequence playback,
                                        SourceBattleRecordClock clock) throws Exception {
         int ticks = 0;

@@ -120,6 +120,7 @@ public final class FlashBattleRoutes {
         public final Point tankStart;
         public final Point turretStart;
         public final Point tankFirePoint;
+        public final Point turretAimPoint;
         public final Point[] tankWaypoints;
         public final String turretLinkage;
 
@@ -127,7 +128,8 @@ public final class FlashBattleRoutes {
                                   int targetCityIndex, int actionBuildingSlot,
                                   Point actionBuilding, Point chinookStart,
                                   Point chinookDrop, Point tankStart, Point turretStart,
-                                  Point tankFirePoint, Point[] tankWaypoints,
+                                  Point tankFirePoint, Point turretAimPoint,
+                                  Point[] tankWaypoints,
                                   String turretLinkage) {
             this.attackerPlayerId = attackerPlayerId;
             this.targetPlayerId = targetPlayerId;
@@ -139,6 +141,7 @@ public final class FlashBattleRoutes {
             this.tankStart = tankStart;
             this.turretStart = turretStart;
             this.tankFirePoint = tankFirePoint;
+            this.turretAimPoint = turretAimPoint;
             this.tankWaypoints = tankWaypoints;
             this.turretLinkage = turretLinkage;
         }
@@ -720,8 +723,24 @@ public final class FlashBattleRoutes {
         Point turretStart = new Point(start[0] - 40f, start[1] - 40f);
         return new ChinookTankAttack(attackerPlayerId, targetPlayerId, targetCityIndex,
                 actionBuildingSlot, actionBuilding, chinookStart, chinookDrop,
-                tankStart, turretStart, tankFirePoint, tankPath.toArray(new Point[0]),
+                tankStart, turretStart, tankFirePoint, city,
+                tankPath.toArray(new Point[0]),
                 "tankTop_" + attackerColorName);
+    }
+
+    /** Source Battle.createToSpawnUnitsArr consumes one unused turret target draw. */
+    public static ChinookTankAttack createSoldierThreeAttack(
+            int attackerPlayerId, int targetPlayerId, int targetCityIndex,
+            int actionBuildingSlot, String attackerColorName,
+            Map<String, Point> anchors, ReferenceRandom presentationRandom) {
+        if (presentationRandom == null) {
+            throw new IllegalArgumentException("Missing soldier3 presentation random");
+        }
+        ChinookTankAttack route = createSoldierThreeAttack(attackerPlayerId,
+                targetPlayerId, targetCityIndex, actionBuildingSlot,
+                attackerColorName, anchors);
+        presentationRandom.nextInt(3);
+        return route;
     }
 
     /** Builds the source tank-waypoint path used by the soldier4 suicide unit. */
