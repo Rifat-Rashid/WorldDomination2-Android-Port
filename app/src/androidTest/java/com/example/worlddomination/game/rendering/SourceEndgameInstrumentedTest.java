@@ -140,9 +140,11 @@ public final class SourceEndgameInstrumentedTest {
                     awaitAssets(endgameAssets);
                     assertEquals(state.getFinalScore(), backend.best);
 
-                    // The handoff tick has consumed one of the original 72 countdown ticks.
+                    // Source creates the timer at handoff; it cannot consume that same tick.
                     for (int frame = 1; frame < MatchOutcomeSequence.TICKS_BEFORE_ENDGAME;
                             frame++) fixedTick(app);
+                    assertEquals(MatchOutcomeSequence.Phase.BEFORE_ENDGAME, sequence.getPhase());
+                    fixedTick(app);
                     assertEquals(MatchOutcomeSequence.Phase.INTRO, sequence.getPhase());
                     render(app);
                     capture("source-endgame-handoff-" + expected.name() + "-intro.png");

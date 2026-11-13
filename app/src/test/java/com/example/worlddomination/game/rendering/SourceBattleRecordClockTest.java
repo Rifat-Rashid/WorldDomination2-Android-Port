@@ -83,10 +83,22 @@ public final class SourceBattleRecordClockTest {
         expectIllegalState(() -> clock.begin(1, false));
         expectIllegalArgument(() -> clock.delayForRecord(0));
         expectIllegalArgument(() -> clock.delayForRecord(2));
-        expectIllegalState(clock::finishBattle);
         assertEquals(1, clock.tick());
         clock.finishBattle();
         expectIllegalState(clock::tick);
+    }
+
+    @Test
+    public void sourceCompletionCanDiscardSilentOrWatchdogAbortedRecordSlots() {
+        SourceBattleRecordClock clock = new SourceBattleRecordClock();
+        clock.begin(1, false); // Ship preparation has a record but no active wrapper.
+        assertTrue(clock.hasPendingRecords());
+        assertEquals(0, clock.getActivatedRecordCount());
+        clock.finishBattle();
+        assertFalse(clock.hasPendingRecords());
+        clock.begin(2, false);
+        assertEquals(20, clock.delayForRecord(1));
+        clock.reset();
     }
 
     private static SourceBattleRecordClock completedFirstBattle() {

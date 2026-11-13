@@ -1,0 +1,399 @@
+package com.example.worlddomination.game.rendering;
+
+import androidx.test.core.app.ActivityScenario;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.audio.Sound;
+import com.badlogic.gdx.graphics.Pixmap;
+import com.badlogic.gdx.graphics.PixmapIO;
+import com.badlogic.gdx.utils.ScreenUtils;
+import com.example.worlddomination.MainActivity;
+import com.example.worlddomination.game.WorldDominationGame;
+import com.example.worlddomination.game.assets.OriginalFlashAnimationAssets;
+import com.example.worlddomination.game.audio.OriginalAudio;
+import com.example.worlddomination.game.simulation.GameState;
+import java.io.File;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import static org.junit.Assert.*;
+
+/** Exercises the source empty check and watchdog through the real GL game loop. */
+@RunWith(AndroidJUnit4.class)
+public final class SourceBattleCleanupInstrumentedTest {
+    @Test public void emptyCheckWaitsOneFrameAndSilentShipRecordOverlapsLabels()
+            throws Exception {
+        runInGame(app -> {
+            GameState game = newGame();
+            installGame(app, game);
+            SourceBattleRecordClock clock = clock(app);
+            TurnPlaybackSequence playback = playback(app);
+
+            queue(game, GameState.Action.RESOURCES);
+            queue(game, GameState.Action.MASS_MEDIA);
+            invoke(app, "confirmTurnAndPreparePlayback");
+            openBattleGate(app, playback, clock);
+            OriginalFlashAnimationAssets assets = (OriginalFlashAnimationAssets)
+                    field(WorldDominationGame.class, "flashAnimationAssets").get(app);
+            @SuppressWarnings("unchecked")
+            List<BattleAnimationSequence> effects = (List<BattleAnimationSequence>)
+                    field(WorldDominationGame.class, "battleAnimations").get(app);
+            // Source deletion/effect clips are independent of the active-unit empty check.
+            BattleAnimationSequence effect = new BattleAnimationSequence(
+                    assets.getTimeline("explosion_warhead_4"), 1, 0, 10_000, null);
+            effects.add(effect);
+            advance(app);
+            assertEquals(1, clock.getElapsedTicks());
+            advance(app);
+            assertEquals("The second wrapper is removed after this frame's empty check",
+                    TurnPlaybackSequence.Phase.BATTLE, playback.getPhase());
+            capture(app, "source-cleanup-last-building-frame.png");
+            advance(app);
+            assertEquals(TurnPlaybackSequence.Phase.RESET_BARRIER, playback.getPhase());
+            assertTrue(playback.isBlockingInput());
+            assertTrue("Effects do not hold the source unit array open", effects.contains(effect));
+            assertTrue(app.keyDown(com.badlogic.gdx.Input.Keys.BACK));
+            assertEquals("Back stays blocked during cleanup", 0f,
+                    field(WorldDominationGame.class, "showExitPromptSeconds").getFloat(app), 0f);
+            for (int tick = 1; tick < 60; tick++) {
+                advance(app);
+                assertEquals("Cleanup frame " + tick,
+                        TurnPlaybackSequence.Phase.RESET_BARRIER, playback.getPhase());
+                assertTrue(playback.isBlockingInput());
+            }
+            advance(app);
+            assertEquals(TurnPlaybackSequence.Phase.CLEANUP_HANDOFF, playback.getPhase());
+            assertTrue(playback.isBlockingInput());
+            capture(app, "source-cleanup-handoff.png");
+            advance(app);
+            assertEquals(TurnPlaybackSequence.Phase.IDLE, playback.getPhase());
+            assertFalse(playback.isBlockingInput());
+            assertTrue("Handoff clears independent effect clips", effects.isEmpty());
+
+            GameState.WeaponState ship = game.getHuman().getWeapons().get("ship");
+            assertNotNull(ship);
+            ship.active = true;
+            ship.inStock = 1;
+            game.selectAction(GameState.Action.PREPARED_ATTACK);
+            assertTrue(game.configurePreparedCarrier("ship"));
+            assertTrue(game.acceptSelectedAction());
+            queue(game, GameState.Action.SKIP);
+            invoke(app, "confirmTurnAndPreparePlayback");
+            assertEquals(1, game.getLastTurnBattleRecords().size());
+            assertTrue(game.getLastTurnBattleRecords().get(0).prepareCarrier);
+            assertFalse(game.getLastTurnBattleRecords().get(0).pendingBuilding);
+            assertEquals(0, clock.getElapsedTicks());
+            advance(app); // No source unit or building wrapper exists, even while labels run.
+            assertEquals(TurnPlaybackSequence.Phase.RESET_BARRIER, playback.getPhase());
+            assertEquals(0, clock.getElapsedTicks());
+            assertTrue(playback.isWaitingForActionLabels());
+            boolean sawPreparedLabel = false;
+            for (int tick = 1; tick < 60; tick++) {
+                advance(app);
+                sawPreparedLabel |= playback.getCurrentAction()
+                        == GameState.Action.PREPARED_ATTACK;
+                assertEquals(TurnPlaybackSequence.Phase.RESET_BARRIER, playback.getPhase());
+                assertEquals("Silent record cannot consume a unit tick", 0,
+                        clock.getElapsedTicks());
+                assertTrue(playback.isBlockingInput());
+            }
+            assertTrue("The action label interval continues during cleanup", sawPreparedLabel);
+            capture(app, "source-cleanup-silent-record.png");
+            advance(app);
+            assertEquals(TurnPlaybackSequence.Phase.CLEANUP_HANDOFF, playback.getPhase());
+            assertTrue(playback.isBlockingInput());
+            advance(app);
+            assertEquals(TurnPlaybackSequence.Phase.IDLE, playback.getPhase());
+            assertFalse(playback.isBlockingInput());
+            assertFalse(clock.hasPendingRecords());
+        });
+    }
+
+    @Test public void watchdogStopsStalledCarrierAndItsLoopAtHandoff() throws Exception {
+        runInGame(app -> {
+            GameState game = newGame();
+            installGame(app, game);
+            TurnPlaybackSequence playback = playback(app);
+            SourceBattleTicker ticker = (SourceBattleTicker)
+                    field(WorldDominationGame.class, "battleTicker").get(app);
+            OriginalAudio audio = (OriginalAudio) field(WorldDominationGame.class,
+                    "audio").get(app);
+            @SuppressWarnings("unchecked")
+            Map<OriginalAudio.Cue, Sound> sounds = (Map<OriginalAudio.Cue, Sound>)
+                    field(OriginalAudio.class, "sounds").get(audio);
+            AtomicInteger loops = new AtomicInteger();
+            AtomicInteger stops = new AtomicInteger();
+            Sound probe = (Sound) Proxy.newProxyInstance(Sound.class.getClassLoader(),
+                    new Class<?>[] {Sound.class}, (proxy, method, args) -> {
+                        if (method.getName().equals("loop")) {
+                            loops.incrementAndGet();
+                            return 77L;
+                        }
+                        if (method.getName().equals("stop") && args != null
+                                && args.length == 1 && Long.valueOf(77L).equals(args[0])) {
+                            stops.incrementAndGet();
+                        }
+                        if (method.getReturnType() == long.class) return 0L;
+                        return null;
+                    });
+            Sound original = sounds.put(OriginalAudio.Cue.CARRIERJET_FLIGHT, probe);
+            boolean restoreMuted = !audio.isSoundEnabled();
+            if (restoreMuted) audio.toggleSound();
+            try {
+                GameState.PlayerState human = game.getHuman();
+                stock(human, "ship", 1);
+                stock(human, "warhead1", 1);
+                field(GameState.PlayerState.class, "preparedCarrierName").set(human, "ship");
+                game.selectAction(GameState.Action.PREPARED_ATTACK);
+                assertTrue(game.configurePreparedShipStrike(1, 0, "warhead1"));
+                assertTrue(game.acceptSelectedAction());
+                queue(game, GameState.Action.RESOURCES);
+                invoke(app, "confirmTurnAndPreparePlayback");
+                List<FlashCarrierPlaneAnimation> planes = planes(app);
+                assertEquals(1, planes.size());
+                FlashCarrierPlaneAnimation originalPlane = planes.get(0);
+                FlashBattleRoutes.CarrierPlaneStrike route = originalPlane.getRoute();
+                // Fixture only: extend a real actor's route beyond the source watchdog.
+                // Set it before construction so cached route length remains consistent.
+                route.waypoints[0] = new FlashBattleRoutes.Point(50_000f, route.waypoints[0].y);
+                FlashCarrierPlaneAnimation plane = new FlashCarrierPlaneAnimation(route,
+                        field(FlashCarrierPlaneAnimation.class, "delayTicks").getInt(originalPlane),
+                        originalPlane.getImpactLinkage(), originalPlane.getImpactCue());
+                planes.set(0, plane);
+                for (int tick = 1; tick <= 800; tick++) {
+                    advance(app);
+                    assertEquals("Source frame " + tick, tick, ticker.getFrameCount());
+                }
+                assertEquals(TurnPlaybackSequence.Phase.BATTLE, playback.getPhase());
+                assertTrue(plane.getActor().visible);
+                assertEquals(1, loops.get());
+                assertEquals(0, stops.get());
+                float frozenX = plane.getActor().sourceX;
+                float frozenY = plane.getActor().sourceY;
+                capture(app, "source-cleanup-watchdog-before.png");
+
+                advance(app);
+                assertEquals(801L, ticker.getFrameCount());
+                assertEquals(TurnPlaybackSequence.Phase.RESET_BARRIER, playback.getPhase());
+                assertFalse(ticker.isRunning());
+                assertEquals(frozenX, plane.getActor().sourceX, 0f);
+                assertEquals(frozenY, plane.getActor().sourceY, 0f);
+                for (int tick = 1; tick < 60; tick++) {
+                    advance(app);
+                    assertEquals(TurnPlaybackSequence.Phase.RESET_BARRIER,
+                            playback.getPhase());
+                    assertEquals(frozenX, plane.getActor().sourceX, 0f);
+                    assertEquals(frozenY, plane.getActor().sourceY, 0f);
+                    assertEquals(0, stops.get());
+                    assertEquals(1, planes(app).size());
+                }
+                advance(app);
+                assertEquals(TurnPlaybackSequence.Phase.CLEANUP_HANDOFF,
+                        playback.getPhase());
+                assertEquals(0, stops.get());
+                capture(app, "source-cleanup-watchdog-handoff.png");
+                advance(app);
+                assertEquals(TurnPlaybackSequence.Phase.IDLE, playback.getPhase());
+                assertTrue(planes(app).isEmpty());
+                assertEquals(1, stops.get());
+                assertFalse(playback.isBlockingInput());
+            } finally {
+                if (original == null) sounds.remove(OriginalAudio.Cue.CARRIERJET_FLIGHT);
+                else sounds.put(OriginalAudio.Cue.CARRIERJET_FLIGHT, original);
+                if (restoreMuted) audio.toggleSound();
+            }
+        });
+    }
+
+    @Test public void acceptedTurnWaitsForFullFlashAtlasBeforePresentationClock()
+            throws Exception {
+        runInGame(app -> {
+            GameState game = newGame();
+            installGame(app, game);
+            TurnPlaybackSequence playback = playback(app);
+            SourceBattleRecordClock recordClock = clock(app);
+            SourceBattleTicker ticker = (SourceBattleTicker)
+                    field(WorldDominationGame.class, "battleTicker").get(app);
+            OriginalFlashAnimationAssets assets = (OriginalFlashAnimationAssets)
+                    field(WorldDominationGame.class, "flashAnimationAssets").get(app);
+            Field loaded = field(OriginalFlashAnimationAssets.class, "loaded");
+            Method inputBlocked = WorldDominationGame.class
+                    .getDeclaredMethod("isTurnInputBlocked");
+            inputBlocked.setAccessible(true);
+            assertTrue(assets.isLoaded());
+            assertEquals(0, game.getTurn());
+            queue(game, GameState.Action.RESOURCES);
+            queue(game, GameState.Action.MASS_MEDIA);
+            loaded.setBoolean(assets, false);
+            try {
+                invoke(app, "confirmTurnAndPreparePlayback");
+                assertEquals(1, game.getTurn());
+                assertEquals(TurnPlaybackSequence.Phase.ACTION_LABELS,
+                        playback.getPhase());
+                for (int tick = 0; tick < 900; tick++) advance(app);
+                assertEquals(1, game.getTurn());
+                assertEquals(TurnPlaybackSequence.Phase.ACTION_LABELS,
+                        playback.getPhase());
+                assertNull(playback.getCurrentAction());
+                assertEquals(0L, ticker.getFrameCount());
+                assertEquals(0L, recordClock.getElapsedTicks());
+                assertTrue((Boolean) inputBlocked.invoke(app));
+            } finally {
+                loaded.setBoolean(assets, true);
+            }
+            advance(app);
+            assertEquals(1L, ticker.getFrameCount());
+            assertTrue(playback.isWaitingForActionLabels());
+            assertNull(playback.getCurrentAction());
+            boolean sawResetBarrier = false;
+            int resetTicks = 0;
+            int handoffTicks = 0;
+            int totalTicks = 0;
+            while (playback.getPhase() != TurnPlaybackSequence.Phase.IDLE
+                    && totalTicks++ < 6_200) {
+                TurnPlaybackSequence.Phase before = playback.getPhase();
+                advance(app);
+                if (before == TurnPlaybackSequence.Phase.RESET_BARRIER) {
+                    sawResetBarrier = true;
+                    resetTicks++;
+                }
+                if (before == TurnPlaybackSequence.Phase.CLEANUP_HANDOFF) {
+                    handoffTicks++;
+                }
+            }
+            assertTrue("Source cleanup barrier occurred", sawResetBarrier);
+            assertEquals("60 barrier ticks", 60, resetTicks);
+            assertEquals("One handoff tick", 1, handoffTicks);
+            assertEquals(TurnPlaybackSequence.Phase.IDLE, playback.getPhase());
+            assertFalse(playback.isBlockingInput());
+            assertEquals(1, game.getTurn());
+        });
+    }
+
+    private interface GameCheck { void run(WorldDominationGame app) throws Exception; }
+
+    private static void runInGame(GameCheck check) throws Exception {
+        try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
+            CountDownLatch done = new CountDownLatch(1);
+            AtomicReference<Throwable> failure = new AtomicReference<>();
+            scenario.onActivity(activity -> Gdx.app.postRunnable(() -> {
+                try {
+                    WorldDominationGame app = (WorldDominationGame) Gdx.app.getApplicationListener();
+                    invoke(app, "initializeGameplayAssets");
+                    Object splash = field(WorldDominationGame.class, "splashState").get(app);
+                    splash.getClass().getMethod("dismiss").invoke(splash);
+                    OriginalFlashAnimationAssets assets = (OriginalFlashAnimationAssets)
+                            field(WorldDominationGame.class, "flashAnimationAssets").get(app);
+                    long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(45);
+                    while (!assets.update() && System.nanoTime() < deadline) Thread.sleep(5);
+                    assertTrue("Authored battle assets ready", assets.isLoaded());
+                    check.run(app);
+                } catch (Throwable error) {
+                    failure.set(error);
+                } finally { done.countDown(); }
+            }));
+            assertTrue("Source battle cleanup timed out", done.await(150, TimeUnit.SECONDS));
+            if (failure.get() != null) throw new AssertionError("Source battle cleanup", failure.get());
+        }
+    }
+
+    private static GameState newGame() throws Exception {
+        Constructor<GameState> constructor = GameState.class.getDeclaredConstructor(
+                int.class, long.class, boolean.class);
+        constructor.setAccessible(true);
+        return constructor.newInstance(1, 120L, false);
+    }
+
+    private static void installGame(WorldDominationGame app, GameState game) throws Exception {
+        field(WorldDominationGame.class, "game").set(app, game);
+        ((BattlefieldCityRenderer) field(WorldDominationGame.class,
+                "cityRenderer").get(app)).reset(game);
+        clock(app).reset();
+    }
+
+    private static void stock(GameState.PlayerState player, String name, int amount) {
+        GameState.WeaponState weapon = player.getWeapons().get(name);
+        assertNotNull(name, weapon);
+        weapon.active = true;
+        weapon.inStock = amount;
+    }
+
+    private static void queue(GameState game, GameState.Action action) {
+        game.selectAction(action);
+        assertTrue(game.acceptSelectedAction());
+    }
+
+    private static void openBattleGate(WorldDominationGame app,
+                                       TurnPlaybackSequence playback,
+                                       SourceBattleRecordClock clock) throws Exception {
+        int ticks = 0;
+        while (playback.isWaitingForActionLabels() && ticks++ < 500) {
+            assertEquals(0, clock.getElapsedTicks());
+            advance(app);
+        }
+        assertEquals(TurnPlaybackSequence.Phase.BATTLE, playback.getPhase());
+        assertEquals(0, clock.getElapsedTicks());
+    }
+
+    private static SourceBattleRecordClock clock(WorldDominationGame app) throws Exception {
+        return (SourceBattleRecordClock) field(WorldDominationGame.class,
+                "battleRecordClock").get(app);
+    }
+
+    private static TurnPlaybackSequence playback(WorldDominationGame app) throws Exception {
+        return (TurnPlaybackSequence) field(WorldDominationGame.class,
+                "turnPlaybackSequence").get(app);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<FlashCarrierPlaneAnimation> planes(WorldDominationGame app)
+            throws Exception {
+        return (List<FlashCarrierPlaneAnimation>) field(WorldDominationGame.class,
+                "carrierPlaneAnimations").get(app);
+    }
+
+    private static void capture(WorldDominationGame app, String name) throws Exception {
+        field(WorldDominationGame.class, "skipNextFrameDelta").setBoolean(app, true);
+        app.render();
+        int width = Gdx.graphics.getBackBufferWidth();
+        int height = Gdx.graphics.getBackBufferHeight();
+        byte[] pixels = ScreenUtils.getFrameBufferPixels(0, 0, width, height, true);
+        Pixmap image = new Pixmap(width, height, Pixmap.Format.RGBA8888);
+        image.getPixels().put(pixels);
+        File directory = InstrumentationRegistry.getInstrumentation().getTargetContext()
+                .getExternalFilesDir("beta-ui-evidence");
+        assertNotNull("Android screenshot directory", directory);
+        try {
+            PixmapIO.writePNG(Gdx.files.absolute(new File(directory, name).getAbsolutePath()),
+                    image);
+        } finally { image.dispose(); }
+    }
+
+    private static void advance(WorldDominationGame app) throws Exception {
+        Method method = WorldDominationGame.class.getDeclaredMethod("fixedUpdate", float.class);
+        method.setAccessible(true);
+        method.invoke(app, 1f / 24f);
+    }
+
+    private static void invoke(WorldDominationGame app, String name) throws Exception {
+        Method method = WorldDominationGame.class.getDeclaredMethod(name);
+        method.setAccessible(true);
+        method.invoke(app);
+    }
+
+    private static Field field(Class<?> owner, String name) throws Exception {
+        Field result = owner.getDeclaredField(name);
+        result.setAccessible(true);
+        return result;
+    }
+}

@@ -63,7 +63,10 @@ public final class SourceBattleRecordClockInstrumentedTest {
                     assertEquals("First ordinary building record", 1, clock.getElapsedTicks());
                     assertEquals(TurnPlaybackSequence.Phase.BATTLE, playback.getPhase());
                     advance(app);
-                    assertEquals("All non-combat records must activate before reset",
+                    assertEquals("Last wrapper clears before the next source empty check",
+                            TurnPlaybackSequence.Phase.BATTLE, playback.getPhase());
+                    advance(app);
+                    assertEquals("Next frame detects that all source entries are gone",
                             TurnPlaybackSequence.Phase.RESET_BARRIER, playback.getPhase());
                     finishTurn(app, playback);
 
