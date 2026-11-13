@@ -11,6 +11,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.Objects;
 
 /** Plays the original Flash-exported MP3 assets through libGDX's Android audio backend. */
 public final class OriginalAudio {
@@ -30,6 +31,7 @@ public final class OriginalAudio {
         SATELLITE_MULTIPLIER("34_Satelite multiplier.Mp3.mp3.gz"),
         SATELLITE_FLIGHT("33_Satelite_flight.wav.mp3.gz"),
         SATELLITE_LASER("19_unit_Sattelite Lasershot.wav.mp3.gz"),
+        SATELLITE_ATTACK("32_Sattelite attack.wav.mp3.gz"),
         FLAG_BONUS("75_Country domination bonus.Mp3.mp3.gz"),
         SOLDIER_GUN("14_unit_Soldier gun.wav.mp3.gz"),
         SEAL_GUN("16_unit_seal gun.wav.mp3.gz"),
@@ -77,6 +79,7 @@ public final class OriginalAudio {
     private static final float EFFECT_VOLUME = 0.8f;
 
     private final Map<Cue, Sound> sounds = new EnumMap<>(Cue.class);
+    private final SatelliteAudioPlayback satellitePlayback;
     private Music theme;
     private Cue ambientCue;
     private long ambientSoundId = -1L;
@@ -84,6 +87,14 @@ public final class OriginalAudio {
     private boolean musicEnabled = true;
     private boolean resumeMusicAfterPause;
     private boolean initialized;
+
+    public OriginalAudio() {
+        satellitePlayback = new SatelliteAudioPlayback(this::loadMusic, EFFECT_VOLUME);
+    }
+
+    OriginalAudio(SatelliteAudioPlayback satellitePlayback) {
+        this.satellitePlayback = Objects.requireNonNull(satellitePlayback, "satellitePlayback");
+    }
 
     public void initialize() {
         if (initialized) {
@@ -102,7 +113,6 @@ public final class OriginalAudio {
         preload(Cue.SCORE_COUNTER);
         preload(Cue.SATELLITE_MULTIPLIER);
         preload(Cue.SATELLITE_FLIGHT);
-        preload(Cue.SATELLITE_LASER);
         preload(Cue.FLAG_BONUS);
         preload(Cue.SOLDIER_GUN);
         preload(Cue.SEAL_GUN);
@@ -147,6 +157,9 @@ public final class OriginalAudio {
     /** Toggles source sound effects without changing the independent music setting. */
     public boolean toggleSound() {
         soundEnabled = !soundEnabled;
+        // The phone reference mutes active channels without cancelling their
+        // completion callbacks. New laser starts remain gated by play().
+        satellitePlayback.setMuted(!soundEnabled);
         if (!soundEnabled) {
             for (Sound sound : sounds.values()) {
                 sound.stop();
@@ -217,6 +230,10 @@ public final class OriginalAudio {
         if (!soundEnabled || cue == Cue.THEME) {
             return;
         }
+        if (cue == Cue.SATELLITE_LASER) {
+            satellitePlayback.play();
+            return;
+        }
         Sound sound = sounds.get(cue);
         if (sound == null) {
             sound = loadSound(cue);
@@ -249,6 +266,7 @@ public final class OriginalAudio {
     }
 
     public void pause() {
+        satellitePlayback.pause();
         resumeMusicAfterPause = musicEnabled && theme != null && theme.isPlaying();
         if (resumeMusicAfterPause) {
             theme.pause();
@@ -259,6 +277,7 @@ public final class OriginalAudio {
     }
 
     public void resume() {
+        satellitePlayback.resume();
         if (resumeMusicAfterPause && musicEnabled && theme != null) {
             theme.play();
         }
@@ -271,6 +290,7 @@ public final class OriginalAudio {
     }
 
     public void dispose() {
+        satellitePlayback.dispose();
         if (theme != null) {
             theme.dispose();
             theme = null;
@@ -282,6 +302,17 @@ public final class OriginalAudio {
         ambientCue = null;
         ambientSoundId = -1L;
         initialized = false;
+    }
+
+    /** Warm each source satellite's independent completion-driven sound pair. */
+    public void prepareSatelliteAudio(int count) {
+        satellitePlayback.prepare(count);
+        satellitePlayback.setMuted(!soundEnabled);
+    }
+
+    /** Python BattlePlayback.finish closes remaining sounds at endBattle. */
+    public void finishSatelliteAudio() {
+        satellitePlayback.finish();
     }
 
     /** Presenter_interface.soundAction('religion') chooses one of four cues. */

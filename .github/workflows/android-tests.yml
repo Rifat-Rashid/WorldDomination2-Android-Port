@@ -468,6 +468,9 @@ jobs:
           - id: satellite-source-art-tests
             check: Nested satellite art and audio mapping
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.OriginalFlashAnimationAssetsTest" --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest.satelliteFlashLabelsSelectTheFiveOriginalReligionFrames" --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest.satelliteReligionClipsLoadTheirAnimatedBodyAndLaserAnchorFrames" --tests "com.example.worlddomination.game.rendering.FlashBattleUnitRendererTest" --tests "com.example.worlddomination.game.rendering.SourceCombatAnimationMappingTest.allWarheadAndBioloadLevelsUseTheirOriginalSymbols" --tests "com.example.worlddomination.game.audio.OriginalAudioTest.combatCuesPointToTheOriginalPackagedSounds"'
+          - id: satellite-audio-completion-tests
+            check: Satellite sound completion and lifecycle
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.audio.SatelliteAudioPlaybackTest" --tests "com.example.worlddomination.game.audio.OriginalAudioTest.satelliteCompletionUsesTheRecoveredAttackSound"'
           - id: submarine-source-art-tests
             check: Submarine source clips and atlas assets
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.OriginalFlashAnimationAssetsTest.loadsOriginalSubmarineHullAndTintTimelinesIntoBattleAtlas"'

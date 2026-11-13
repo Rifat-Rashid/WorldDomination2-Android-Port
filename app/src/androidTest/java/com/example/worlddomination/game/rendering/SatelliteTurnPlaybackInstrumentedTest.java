@@ -6,6 +6,8 @@ import com.badlogic.gdx.Gdx;
 import com.example.worlddomination.MainActivity;
 import com.example.worlddomination.game.WorldDominationGame;
 import com.example.worlddomination.game.assets.OriginalFlashAnimationAssets;
+import com.example.worlddomination.game.audio.OriginalAudio;
+import com.example.worlddomination.game.audio.SatelliteAudioPlayback;
 import com.example.worlddomination.game.simulation.GameSetup;
 import com.example.worlddomination.game.simulation.GameState;
 import com.example.worlddomination.testing.GameActivityScenario;
@@ -51,6 +53,24 @@ public final class SatelliteTurnPlaybackInstrumentedTest {
                     ((BattlefieldCityRenderer) field("cityRenderer").get(app)).reset(game);
                     ((SourceBattleRecordClock) field("battleRecordClock").get(app)).reset();
                     invoke(app, "confirmTurnAndPreparePlayback");
+                    OriginalAudio audio = (OriginalAudio) field("audio").get(app);
+                    SatelliteAudioPlayback soundPlayback = (SatelliteAudioPlayback)
+                            SourceBattleCleanupInstrumentedTest.field(OriginalAudio.class,
+                                    "satellitePlayback").get(audio);
+                    @SuppressWarnings("unchecked")
+                    List<Object> soundVoices = (List<Object>) SourceBattleCleanupInstrumentedTest
+                            .field(SatelliteAudioPlayback.class, "voices").get(soundPlayback);
+                    assertEquals("Prepare both original Music clips before the laser", 1,
+                            soundVoices.size());
+                    Object satelliteSound = soundVoices.get(0);
+                    Field soundUsed = SourceBattleCleanupInstrumentedTest.field(
+                            satelliteSound.getClass(), "used");
+                    Field soundClosed = SourceBattleCleanupInstrumentedTest.field(
+                            satelliteSound.getClass(), "closed");
+                    assertNotNull(SourceBattleCleanupInstrumentedTest.field(
+                            satelliteSound.getClass(), "laser").get(satelliteSound));
+                    assertNotNull(SourceBattleCleanupInstrumentedTest.field(
+                            satelliteSound.getClass(), "attack").get(satelliteSound));
                     assertEquals(28, game.getTurn());
                     assertEquals("source action records", 4,
                             game.getLastTurnBattleRecords().size());
@@ -89,6 +109,14 @@ public final class SatelliteTurnPlaybackInstrumentedTest {
                     for (int tick = 1; tick <= LAST_TICK; tick++) {
                         advance(app);
                         assertFrame(tick, source[tick], satellite, ticker, queue);
+                        assertEquals("Laser sound starts on the source firing visit " + tick,
+                                tick >= 397, soundUsed.getBoolean(satelliteSound));
+                        assertEquals("Sound remains owned until endBattle " + tick,
+                                tick == LAST_TICK, soundClosed.getBoolean(satelliteSound));
+                        if (tick < LAST_TICK) {
+                            assertEquals("One prepared voice; no per-frame sound allocation " + tick,
+                                    1, soundVoices.size());
+                        }
                         if (tick == 423 || tick == 424 || tick == 425
                                 || tick == 457 || tick == 458) {
                             FlashChinookTankAnimation.Actor chinook = chinookTank.getActor(0);
@@ -139,6 +167,7 @@ public final class SatelliteTurnPlaybackInstrumentedTest {
                     assertEquals(TurnPlaybackSequence.Phase.IDLE, sequence.getPhase());
                     assertFalse(sequence.isBlockingInput());
                     assertEquals("EndBattle releases deletion-list references", 0, queue.size());
+                    assertTrue("EndBattle releases completion-driven voices", soundVoices.isEmpty());
                 } catch (Throwable error) {
                     failure.set(error);
                 } finally { done.countDown(); }
