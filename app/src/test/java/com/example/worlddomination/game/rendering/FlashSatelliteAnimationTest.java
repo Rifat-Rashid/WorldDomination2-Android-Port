@@ -7,6 +7,75 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public final class FlashSatelliteAnimationTest {
+    @Test public void waitingClipPublishesItsPoseBeforeTheActivationGate() {
+        FlashSatelliteAnimation animation = new FlashSatelliteAnimation(
+                FlashBattleRoutes.createSatelliteStrike(0, 1, 0, 1, "chr"), 2);
+        assertTrue(animation.isClipVisible());
+        assertEquals(0f, animation.getDisplaySourceX(), 0f);
+        assertEquals(0f, animation.getDisplaySourceY(), 0f);
+        animation.presentWaitingFrame();
+        assertFalse(animation.isStarted());
+        assertEquals(-120f, animation.getDisplaySourceX(), 0f);
+        assertEquals(158f, animation.getDisplaySourceY(), 0f);
+        assertFalse(animation.tick());
+        assertFalse(animation.tick());
+        assertFalse(animation.isStarted());
+        animation.tick();
+        assertEquals(animation.getSourceX(), animation.getDisplaySourceX(), 0f);
+        assertEquals(animation.getSourceY(), animation.getDisplaySourceY(), 0f);
+    }
+
+    @Test public void nestedFrameSeekUsesThePreviousDisplayX() {
+        FlashSatelliteAnimation animation = new FlashSatelliteAnimation(
+                FlashBattleRoutes.createSatelliteStrike(0, 1, 0, 1, "chr"), 0);
+        while (animation.getSourceX() < 63f) animation.tick();
+        assertEquals(2, animation.getSourceClipFrameNumber());
+        animation.tick();
+        assertEquals(66f, animation.getSourceX(), 0f);
+        assertEquals("Source seeks with old x63 before publishing x66", 2,
+                animation.getSourceClipFrameNumber());
+        animation.tick();
+        assertEquals(3, animation.getSourceClipFrameNumber());
+    }
+
+    @Test public void stopEndsTheFrameThenRemovalRetainsTheBodyUntilCleanup() {
+        FlashSatelliteAnimation animation = new FlashSatelliteAnimation(
+                FlashBattleRoutes.createSatelliteStrike(0, 1, 0, 1, "chr"), 0);
+        SourceStoppedClipQueue queue = new SourceStoppedClipQueue();
+        int impacts = 0, lasers = 0, flights = 0, ticks = 0;
+        while (!animation.didStopSourceFrame() && ticks++ < 250) {
+            animation.tick();
+            animation.registerStoppedClip(queue);
+            if (animation.takeImpact()) impacts++;
+            if (animation.takeLaserCue()) lasers++;
+            if (animation.takeFlightCue()) flights++;
+        }
+        assertTrue(ticks < 250);
+        assertFalse("Stop still occupies the source active array", animation.isFinished());
+        assertFalse("View clears before breaking; alpha5 is not a drawn beam", animation.isFiring());
+        assertEquals(0.05f, animation.getLaserAlpha(), 0f);
+        assertTrue(animation.isClipVisible());
+        assertEquals(0, queue.size());
+        assertTrue(animation.tick());
+        animation.registerStoppedClip(queue);
+        assertTrue(animation.isFinished());
+        assertFalse(animation.didStopSourceFrame());
+        assertTrue(animation.isClipVisible());
+        assertFalse(animation.takeImpact());
+        for (int tick = 0; tick < 60; tick++) {
+            assertTrue(animation.tick());
+            animation.registerStoppedClip(queue);
+            assertTrue(animation.isClipVisible());
+            assertFalse(animation.isFiring());
+        }
+        assertEquals(1, queue.size());
+        assertEquals(1, queue.removeAtAllUnitsDone());
+        assertFalse(animation.isClipVisible());
+        assertEquals(1, impacts);
+        assertEquals(1, lasers);
+        assertEquals(1, flights);
+    }
+
     @Test
     public void selectsTheSourceNestedFlashFrameFromSatelliteXOnEveryIsland() {
         float[] orbitX = {368f, 268f, 466f, 121f, 667f};

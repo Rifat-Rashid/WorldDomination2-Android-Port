@@ -61,6 +61,7 @@ import com.example.worlddomination.game.rendering.TurnPlaybackSequence;
 import com.example.worlddomination.game.rendering.SourceBattleRecordClock;
 import com.example.worlddomination.game.rendering.SourceBattleInterfaceFrames;
 import com.example.worlddomination.game.rendering.SourceStoppedClipQueue;
+import com.example.worlddomination.game.rendering.SourceBattleUnitPlayback;
 import com.example.worlddomination.game.rendering.SourceBattleTicker;
 import com.example.worlddomination.game.rendering.SourceEndgameRenderer;
 import com.example.worlddomination.game.assets.OriginalEndgameAssets;
@@ -209,6 +210,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private final SourceBattleRecordClock battleRecordClock = new SourceBattleRecordClock();
     private final SourceBattleInterfaceFrames battleInterfaceFrames = new SourceBattleInterfaceFrames();
     private final SourceStoppedClipQueue sourceStoppedClips = new SourceStoppedClipQueue();
+    private final SourceBattleUnitPlayback sourceUnitPlayback = new SourceBattleUnitPlayback();
     private ReferenceRandom battlePresentationRandom;
     private final SourceBattleTicker battleTicker = new SourceBattleTicker();
     private List<GameState.BattlePresentationRecord> battlePresentationRecords = Collections.emptyList();
@@ -776,6 +778,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         for (int index = 0; index < soldierBattleAnimations.size(); index++) {
             soldierBattleAnimations.get(index).presentWaitingFrame();
         }
+        for (int index = 0; index < satelliteBattleAnimations.size(); index++) {
+            satelliteBattleAnimations.get(index).presentWaitingFrame();
+        }
         if (turnPlaybackSequence.isWaitingForActionLabels()) return;
         for (int i = battleAnimations.size() - 1; i >= 0; i--) {
             BattleAnimationSequence animation = battleAnimations.get(i);
@@ -805,168 +810,185 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 submarineBattleAnimations.remove(i);
             }
         }
-        for (int i = rocketBattleAnimations.size() - 1; i >= 0; i--) {
-            FlashRocketAnimation animation = rocketBattleAnimations.get(i);
-            boolean impact = animation.tick();
-            if (animation.takeLaunchSound()) {
-                audio.play(animation.getLaunchCue());
-            }
-            if (impact) {
-                FlashAnimationTimeline timeline = flashAnimationAssets.getTimeline(
-                        animation.getImpactLinkage());
-                if (timeline != null) {
-                    FlashBattleRoutes.RocketStrike route = animation.getRoute();
-                    battleAnimations.add(new BattleAnimationSequence(timeline,
-                            route.targetPlayerId, route.targetCityIndex, 0,
-                            animation.getImpactCue(), animation.getImpactSourceX(),
-                            animation.getImpactSourceY()));
-                } else if (animation.getImpactCue() != null) {
-                    audio.play(animation.getImpactCue());
-                }
-            }
-            if (animation.isFinished()) {
-                rocketBattleAnimations.remove(i);
+        sourceUnitPlayback.advanceFrame();
+    }
+
+    private boolean advanceRocketUnit(FlashRocketAnimation animation) {
+        if (animation.isFinished()) return false;
+        boolean impact = animation.tick();
+        if (animation.takeLaunchSound()) {
+            audio.play(animation.getLaunchCue());
+        }
+        if (impact) {
+            FlashAnimationTimeline timeline = flashAnimationAssets.getTimeline(
+                    animation.getImpactLinkage());
+            if (timeline != null) {
+                FlashBattleRoutes.RocketStrike route = animation.getRoute();
+                battleAnimations.add(new BattleAnimationSequence(timeline,
+                        route.targetPlayerId, route.targetCityIndex, 0,
+                        animation.getImpactCue(), animation.getImpactSourceX(),
+                        animation.getImpactSourceY()));
+            } else if (animation.getImpactCue() != null) {
+                audio.play(animation.getImpactCue());
             }
         }
-        for (int i = carrierPlaneAnimations.size() - 1; i >= 0; i--) {
-            FlashCarrierPlaneAnimation animation = carrierPlaneAnimations.get(i);
-            boolean impact = animation.tick();
-            if (animation.takeTakeoffCue()) {
-                audio.play(OriginalAudio.Cue.CARRIERJET_TAKEOFF);
-            }
-            if (animation.takeFlightCue()) {
-                animation.setFlightSoundId(audio.loop(OriginalAudio.Cue.CARRIERJET_FLIGHT));
-            }
-            if (impact) {
-                FlashAnimationTimeline timeline = flashAnimationAssets.getTimeline(
-                        animation.getImpactLinkage());
-                if (timeline != null) {
-                    FlashBattleRoutes.CarrierPlaneStrike route = animation.getRoute();
-                    FlashBattleRoutes.Point impactPoint =
-                            route.waypoints[route.waypoints.length - 1];
-                    battleAnimations.add(new BattleAnimationSequence(timeline,
-                            route.targetPlayerId, route.targetCityIndex, 0,
-                            animation.getImpactCue(), impactPoint.x, impactPoint.y));
-                } else if (animation.getImpactCue() != null) {
-                    audio.play(animation.getImpactCue());
-                }
-            }
-            if (animation.isFinished()) {
-                audio.stop(OriginalAudio.Cue.CARRIERJET_FLIGHT,
-                        animation.getFlightSoundId());
-                carrierPlaneAnimations.remove(i);
+        if (animation.isFinished()) {
+            rocketBattleAnimations.remove(animation);
+        }
+        return false;
+    }
+
+    private boolean advanceCarrierPlaneUnit(FlashCarrierPlaneAnimation animation) {
+        if (animation.isFinished()) return false;
+        boolean impact = animation.tick();
+        if (animation.takeTakeoffCue()) {
+            audio.play(OriginalAudio.Cue.CARRIERJET_TAKEOFF);
+        }
+        if (animation.takeFlightCue()) {
+            animation.setFlightSoundId(audio.loop(OriginalAudio.Cue.CARRIERJET_FLIGHT));
+        }
+        if (impact) {
+            FlashAnimationTimeline timeline = flashAnimationAssets.getTimeline(
+                    animation.getImpactLinkage());
+            if (timeline != null) {
+                FlashBattleRoutes.CarrierPlaneStrike route = animation.getRoute();
+                FlashBattleRoutes.Point impactPoint =
+                        route.waypoints[route.waypoints.length - 1];
+                battleAnimations.add(new BattleAnimationSequence(timeline,
+                        route.targetPlayerId, route.targetCityIndex, 0,
+                        animation.getImpactCue(), impactPoint.x, impactPoint.y));
+            } else if (animation.getImpactCue() != null) {
+                audio.play(animation.getImpactCue());
             }
         }
-        for (int i = standalonePlaneAnimations.size() - 1; i >= 0; i--) {
-            FlashStandalonePlaneAnimation animation = standalonePlaneAnimations.get(i);
-            boolean impact = animation.tick();
-            if (animation.takeTakeoffCue()) {
-                audio.play(animation.getTakeoffCue());
-            }
-            if (animation.takeFlightCue()) {
-                if (animation.loopsFlightCue()) {
-                    animation.setFlightSoundId(audio.loop(animation.getFlightCue()));
-                } else {
-                    audio.play(animation.getFlightCue());
-                }
-            }
-            if (impact) {
-                FlashAnimationTimeline timeline = flashAnimationAssets.getTimeline(
-                        animation.getImpactLinkage());
-                FlashBattleRoutes.StandalonePlaneStrike route = animation.getRoute();
-                if (timeline != null) {
-                    battleAnimations.add(new BattleAnimationSequence(timeline,
-                            route.targetPlayerId, route.targetCityIndex, 0,
-                            animation.getImpactCue(), route.target.x, route.target.y));
-                } else if (animation.getImpactCue() != null) {
-                    audio.play(animation.getImpactCue());
-                }
-            }
-            if (animation.isFinished()) {
-                audio.stop(OriginalAudio.Cue.CARRIERJET_FLIGHT,
-                        animation.getFlightSoundId());
-                standalonePlaneAnimations.remove(i);
+        if (animation.isFinished()) {
+            audio.stop(OriginalAudio.Cue.CARRIERJET_FLIGHT,
+                    animation.getFlightSoundId());
+            carrierPlaneAnimations.remove(animation);
+        }
+        return false;
+    }
+
+    private boolean advanceStandalonePlaneUnit(FlashStandalonePlaneAnimation animation) {
+        if (animation.isFinished()) return false;
+        boolean impact = animation.tick();
+        if (animation.takeTakeoffCue()) {
+            audio.play(animation.getTakeoffCue());
+        }
+        if (animation.takeFlightCue()) {
+            if (animation.loopsFlightCue()) {
+                animation.setFlightSoundId(audio.loop(animation.getFlightCue()));
+            } else {
+                audio.play(animation.getFlightCue());
             }
         }
-        for (int i = antiDefenseTrackingAnimations.size() - 1; i >= 0; i--) {
-            FlashAntiDefenseTrackingAnimation animation = antiDefenseTrackingAnimations.get(i);
-            animation.tick();
-            if (animation.takeRotationCue()) {
-                audio.play(OriginalAudio.Cue.ANTI_AIR_ROTATE,
-                        sourceAudioPan(animation.getBuildingPosition().x));
-            }
-            if (animation.takeGunCue()) {
-                audio.play(animation.getGunCue(),
-                        sourceAudioPan(animation.getBuildingPosition().x));
-            }
-            if (animation.isFinished()) {
-                antiDefenseTrackingAnimations.remove(i);
+        if (impact) {
+            FlashAnimationTimeline timeline = flashAnimationAssets.getTimeline(
+                    animation.getImpactLinkage());
+            FlashBattleRoutes.StandalonePlaneStrike route = animation.getRoute();
+            if (timeline != null) {
+                battleAnimations.add(new BattleAnimationSequence(timeline,
+                        route.targetPlayerId, route.targetCityIndex, 0,
+                        animation.getImpactCue(), route.target.x, route.target.y));
+            } else if (animation.getImpactCue() != null) {
+                audio.play(animation.getImpactCue());
             }
         }
-        for (int i = satelliteBattleAnimations.size() - 1; i >= 0; i--) {
-            FlashSatelliteAnimation animation = satelliteBattleAnimations.get(i);
-            animation.tick();
-            if (animation.takeFlightCue() && !satelliteFlightCuePlayed) {
-                audio.play(OriginalAudio.Cue.SATELLITE_FLIGHT);
-                satelliteFlightCuePlayed = true;
-            }
-            if (animation.takeImpact()) {
-                // Unit.satellite_explosion attaches explosion_warhead_4 in Flash.
-                FlashAnimationTimeline impact = flashAnimationAssets.getTimeline(
-                        "explosion_warhead_4");
-                if (impact != null) {
-                    FlashBattleRoutes.SatelliteStrike route = animation.getRoute();
-                    battleAnimations.add(new BattleAnimationSequence(impact,
-                            route.targetPlayerId, route.targetCityIndex, 0, null));
-                }
-            }
-            if (animation.takeLaserCue()) {
-                audio.play(OriginalAudio.Cue.SATELLITE_LASER);
-            }
-            if (animation.isFinished()) {
-                satelliteBattleAnimations.remove(i);
+        if (animation.isFinished()) {
+            audio.stop(OriginalAudio.Cue.CARRIERJET_FLIGHT,
+                    animation.getFlightSoundId());
+            standalonePlaneAnimations.remove(animation);
+        }
+        return false;
+    }
+
+    private boolean advanceAntiDefenseUnit(FlashAntiDefenseTrackingAnimation animation) {
+        if (animation.isFinished()) return false;
+        animation.tick();
+        if (animation.takeRotationCue()) {
+            audio.play(OriginalAudio.Cue.ANTI_AIR_ROTATE,
+                    sourceAudioPan(animation.getBuildingPosition().x));
+        }
+        if (animation.takeGunCue()) {
+            audio.play(animation.getGunCue(),
+                    sourceAudioPan(animation.getBuildingPosition().x));
+        }
+        if (animation.isFinished()) {
+            antiDefenseTrackingAnimations.remove(animation);
+        }
+        return false;
+    }
+
+    private boolean advanceSatelliteUnit(FlashSatelliteAnimation animation) {
+        if (animation.isFinished()) return false;
+        animation.tick();
+        animation.registerStoppedClip(sourceStoppedClips);
+        if (animation.takeFlightCue() && !satelliteFlightCuePlayed) {
+            audio.play(OriginalAudio.Cue.SATELLITE_FLIGHT);
+            satelliteFlightCuePlayed = true;
+        }
+        if (animation.takeImpact()) {
+            // Unit.satellite_explosion attaches explosion_warhead_4 in Flash.
+            FlashAnimationTimeline impact = flashAnimationAssets.getTimeline(
+                    "explosion_warhead_4");
+            if (impact != null) {
+                FlashBattleRoutes.SatelliteStrike route = animation.getRoute();
+                battleAnimations.add(new BattleAnimationSequence(impact,
+                        route.targetPlayerId, route.targetCityIndex, 0, null));
             }
         }
-        for (int i = soldierBattleAnimations.size() - 1; i >= 0; i--) {
-            FlashSoldierOneAnimation animation = soldierBattleAnimations.get(i);
-            boolean removedInfantry = animation.tickSourceFrame();
-            animation.registerStoppedClips(sourceStoppedClips);
-            while (animation.takeAudioCue()) {
-                audio.play(animation.getAudioCue());
-            }
-            // Removed wrappers keep their final clips until allUnitsDone.
-            if (removedInfantry) return;
+        if (animation.takeLaserCue()) {
+            audio.play(OriginalAudio.Cue.SATELLITE_LASER);
         }
-        for (int i = apacheMarineAnimations.size() - 1; i >= 0; i--) {
-            FlashApacheMarineAnimation animation = apacheMarineAnimations.get(i);
-            animation.tick();
-            while (animation.takeAudioCue()) {
-                audio.play(animation.getAudioCue());
-            }
-            if (animation.isFinished()) {
-                apacheMarineAnimations.remove(i);
-            }
+        // Stopped satellite clips remain until Presenter.allUnitsDone.
+        if (animation.didStopSourceFrame()) return true;
+        return false;
+    }
+
+    private boolean advanceInfantryUnit(FlashSoldierOneAnimation animation) {
+        if (animation.isFinished()) return false;
+        boolean removedInfantry = animation.tickSourceFrame();
+        animation.registerStoppedClips(sourceStoppedClips);
+        while (animation.takeAudioCue()) {
+            audio.play(animation.getAudioCue());
         }
-        for (int i = chinookTankAnimations.size() - 1; i >= 0; i--) {
-            FlashChinookTankAnimation animation = chinookTankAnimations.get(i);
-            animation.tick();
-            while (animation.takeAudioCue()) {
-                audio.play(animation.getAudioCue());
-            }
-            if (animation.isFinished()) {
-                chinookTankAnimations.remove(i);
-            }
+        // Removed wrappers keep their final clips until allUnitsDone.
+        if (removedInfantry) return true;
+        return false;
+    }
+
+    private boolean advanceMarineUnit(FlashApacheMarineAnimation animation) {
+        if (animation.isFinished()) return false;
+        animation.tick();
+        while (animation.takeAudioCue()) {
+            audio.play(animation.getAudioCue());
         }
-        for (int i = suicideBomberAnimations.size() - 1; i >= 0; i--) {
-            FlashSuicideBomberAnimation animation = suicideBomberAnimations.get(i);
-            animation.tick();
-            while (animation.takeAudioCue()) {
-                audio.play(animation.getAudioCue());
-            }
-            if (animation.isFinished()) {
-                suicideBomberAnimations.remove(i);
-            }
+        if (animation.isFinished()) {
+            apacheMarineAnimations.remove(animation);
         }
+        return false;
+    }
+
+    private boolean advanceTankUnit(FlashChinookTankAnimation animation) {
+        if (animation.isFinished()) return false;
+        animation.tick();
+        animation.registerStoppedClips(sourceStoppedClips);
+        while (animation.takeAudioCue()) {
+            audio.play(animation.getAudioCue());
+        }
+        return false;
+    }
+
+    private boolean advanceSuicideUnit(FlashSuicideBomberAnimation animation) {
+        if (animation.isFinished()) return false;
+        animation.tick();
+        while (animation.takeAudioCue()) {
+            audio.play(animation.getAudioCue());
+        }
+        if (animation.isFinished()) {
+            suicideBomberAnimations.remove(animation);
+        }
+        return false;
     }
 
     /** Only source unit/building wrappers and queued subs gate f_37 completion. */
@@ -983,15 +1005,27 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 break;
             }
         }
-        return hasActiveInfantry
+        boolean hasActiveSatellite = false;
+        for (int index = 0; index < satelliteBattleAnimations.size(); index++) {
+            if (!satelliteBattleAnimations.get(index).isFinished()) {
+                hasActiveSatellite = true;
+                break;
+            }
+        }
+        boolean hasActiveTank = false;
+        for (int index = 0; index < chinookTankAnimations.size(); index++) {
+            if (!chinookTankAnimations.get(index).isFinished()) {
+                hasActiveTank = true;
+                break;
+            }
+        }
+        return hasActiveInfantry || hasActiveSatellite || hasActiveTank
                 || !apacheMarineAnimations.isEmpty()
-                || !chinookTankAnimations.isEmpty()
                 || !suicideBomberAnimations.isEmpty()
                 || !rocketBattleAnimations.isEmpty()
                 || !submarineBattleAnimations.isEmpty()
                 || !carrierPlaneAnimations.isEmpty()
-                || !standalonePlaneAnimations.isEmpty()
-                || !satelliteBattleAnimations.isEmpty();
+                || !standalonePlaneAnimations.isEmpty();
     }
 
     /** The phone adapter releases playback at the endBattle handoff. */
@@ -1001,6 +1035,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         sourceStoppedClips.reset();
         battlePresentationRandom = null;
         battleAnimations.clear();
+        sourceUnitPlayback.reset();
         soldierBattleAnimations.clear();
         apacheMarineAnimations.clear();
         chinookTankAnimations.clear();
@@ -1054,9 +1089,11 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             return;
         }
         GameState.PlayerState defender = game.getPlayerState(event.defenderPlayerId);
-        antiDefenseTrackingAnimations.add(new FlashAntiDefenseTrackingAnimation(target,
+        FlashAntiDefenseTrackingAnimation animation = new FlashAntiDefenseTrackingAnimation(target,
                 event.defenderPlayerId, event.counterActionBuildingSlot,
-                defender.getReligionCode(), defenseType));
+                defender.getReligionCode(), defenseType);
+        antiDefenseTrackingAnimations.add(animation);
+        sourceUnitPlayback.add(() -> advanceAntiDefenseUnit(animation));
     }
 
     private static float sourceAudioPan(float sourceX) {
@@ -3464,6 +3501,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         battlePresentationRecords = Collections.emptyList();
         laidOutInstruction = null;
         battleAnimations.clear();
+        sourceUnitPlayback.reset();
         soldierBattleAnimations.clear();
         apacheMarineAnimations.clear();
         chinookTankAnimations.clear();
@@ -3963,6 +4001,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 cityRenderer.reset(game);
                 flagRenderer.reset();
                 battleAnimations.clear();
+                sourceUnitPlayback.reset();
                 actionBuildingAnimations.clear();
                 turnPlaybackSequence.reset();
                 battleRecordClock.reset();
@@ -4631,6 +4670,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         ReferenceRandom presentationRandom = battlePresentationRandom;
         battleInterfaceFrames.begin();
         sourceStoppedClips.reset();
+        sourceUnitPlayback.reset();
+        // Preserve source visitation across unit families. startNum gates
+        // activation; sorting by it would change same-frame moves and breaks.
         for (GameState.CombatEvent event
                 : game.getLastTurnCombatEventsInSourcePresentationOrder()) {
             int recordDelay = battleRecordClock.delayForRecord(event.battleStartNum);
@@ -4643,8 +4685,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                                 event.attackerPlayerId, event.defenderPlayerId,
                                 event.cityIndex, attacker.getPlayerColor(),
                                 attacker.getReligionCode());
-                satelliteBattleAnimations.add(new FlashSatelliteAnimation(route,
-                        recordDelay));
+                FlashSatelliteAnimation animation = new FlashSatelliteAnimation(route, recordDelay);
+                satelliteBattleAnimations.add(animation);
+                sourceUnitPlayback.add(() -> advanceSatelliteUnit(animation));
                 continue;
             }
             if (FlashBattleRoutes.supportsCarrierPlaneStrike(event)) {
@@ -4655,6 +4698,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                         recordDelay,
                         SourceCombatAnimationMapping.linkageFor(event), cue);
                 carrierPlaneAnimations.add(planeAnimation);
+                sourceUnitPlayback.add(() -> advanceCarrierPlaneUnit(planeAnimation));
                 addAntiDefenseTrackingAnimation(event, planeAnimation,
                         antiDefenseTargetLock);
                 continue;
@@ -4673,6 +4717,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                         route, playerColor, recordDelay,
                         SourceCombatAnimationMapping.linkageFor(event), cue);
                 standalonePlaneAnimations.add(planeAnimation);
+                sourceUnitPlayback.add(() -> advanceStandalonePlaneUnit(planeAnimation));
                 addAntiDefenseTrackingAnimation(event, planeAnimation,
                         antiDefenseTargetLock);
                 continue;
@@ -4686,6 +4731,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                         recordDelay,
                         SourceCombatAnimationMapping.linkageFor(event), cue);
                 rocketBattleAnimations.add(rocketAnimation);
+                sourceUnitPlayback.add(() -> advanceRocketUnit(rocketAnimation));
                 addAntiDefenseTrackingAnimation(event, rocketAnimation,
                         antiDefenseTargetLock);
                 continue;
@@ -4701,10 +4747,11 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 submarineBattleAnimations.add(new FlashSubmarineAnimation(route,
                         game.getPlayerState(event.attackerPlayerId).getPlayerColor(),
                         submarineDelay));
-                rocketBattleAnimations.add(new FlashRocketAnimation(route,
-                        submarineDelay
-                                + FlashRocketAnimation.SUBMARINE_LAUNCH_DELAY_TICKS,
-                        SourceCombatAnimationMapping.linkageFor(event), cue));
+                FlashRocketAnimation rocketAnimation = new FlashRocketAnimation(route,
+                        submarineDelay + FlashRocketAnimation.SUBMARINE_LAUNCH_DELAY_TICKS,
+                        SourceCombatAnimationMapping.linkageFor(event), cue);
+                rocketBattleAnimations.add(rocketAnimation);
+                sourceUnitPlayback.add(() -> advanceRocketUnit(rocketAnimation));
                 continue;
             }
             if (FlashBattleRoutes.supports(event)) {
@@ -4712,9 +4759,11 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                         FlashBattleRoutes.createSoldierOneAttack(
                                 event.attackerPlayerId, event.defenderPlayerId,
                                 event.cityIndex, battleAnchors, presentationRandom);
-                soldierBattleAnimations.add(new FlashSoldierOneAnimation(route,
+                FlashSoldierOneAnimation animation = new FlashSoldierOneAnimation(route,
                         presentationRandom, cue, recordDelay,
-                        game.getPlayerState(event.attackerPlayerId).getPlayerColor()));
+                        game.getPlayerState(event.attackerPlayerId).getPlayerColor());
+                soldierBattleAnimations.add(animation);
+                sourceUnitPlayback.add(() -> advanceInfantryUnit(animation));
                 continue;
             }
             if (FlashBattleRoutes.supportsApacheMarine(event)) {
@@ -4723,8 +4772,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                                 event.attackerPlayerId, event.defenderPlayerId,
                                 event.cityIndex, event.actionBuildingSlot,
                                 battleAnchors, presentationRandom);
-                apacheMarineAnimations.add(new FlashApacheMarineAnimation(route,
-                        presentationRandom, cue, recordDelay));
+                FlashApacheMarineAnimation animation = new FlashApacheMarineAnimation(route,
+                        presentationRandom, cue, recordDelay);
+                apacheMarineAnimations.add(animation);
+                sourceUnitPlayback.add(() -> advanceMarineUnit(animation));
                 continue;
             }
             if (FlashBattleRoutes.supportsChinookTank(event)) {
@@ -4735,8 +4786,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                                 event.attackerPlayerId, event.defenderPlayerId,
                                 event.cityIndex, event.actionBuildingSlot,
                                 colorName, battleAnchors, presentationRandom);
-                chinookTankAnimations.add(new FlashChinookTankAnimation(route,
-                        recordDelay));
+                FlashChinookTankAnimation animation = new FlashChinookTankAnimation(route, recordDelay);
+                chinookTankAnimations.add(animation);
+                sourceUnitPlayback.add(() -> advanceTankUnit(animation));
                 continue;
             }
             if (FlashBattleRoutes.supportsSuicideBomber(event)) {
@@ -4744,8 +4796,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                         FlashBattleRoutes.createSuicideBomberAttack(
                                 event.attackerPlayerId, event.defenderPlayerId,
                                 event.cityIndex, event.actionBuildingSlot, battleAnchors);
-                suicideBomberAnimations.add(new FlashSuicideBomberAnimation(route,
-                        cue, recordDelay));
+                FlashSuicideBomberAnimation animation = new FlashSuicideBomberAnimation(route,
+                        cue, recordDelay);
+                suicideBomberAnimations.add(animation);
+                sourceUnitPlayback.add(() -> advanceSuicideUnit(animation));
                 continue;
             }
             String linkage = SourceCombatAnimationMapping.linkageFor(event);
@@ -5154,6 +5208,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         battleTicker.reset();
         battlePresentationRecords = Collections.emptyList();
         battleAnimations.clear();
+        sourceUnitPlayback.reset();
         actionBuildingAnimations.clear();
         soldierBattleAnimations.clear();
         apacheMarineAnimations.clear();

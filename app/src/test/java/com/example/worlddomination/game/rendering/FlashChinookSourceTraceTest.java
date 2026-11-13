@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -97,12 +98,24 @@ public final class FlashChinookSourceTraceTest {
                 boolean allStopped = carrierStopped
                         && "stop".equals(value(header, row, "base_action"))
                         && "stop".equals(value(header, row, "top_action"));
-                assertEquals("Completion frame " + tick, allStopped, animation.isFinished());
+                assertEquals("Source stop frame " + tick, allStopped,
+                        animation.isChinookStopped() && animation.isTankStopped()
+                                && animation.isTurretStopped());
+                // The fixture ends at stop. View splices those wrappers on
+                // the following tick, while retaining their MovieClips.
+                assertFalse("Stop precedes wrapper removal frame " + tick,
+                        animation.isFinished());
                 if (allStopped) break;
             }
         }
         assertTrue("Complete source trajectory, including the tank after flyOff", frames > 170);
-        assertTrue("Source and native both reach stop", animation.isFinished());
+        assertTrue("Source and native both reach stop", animation.isChinookStopped()
+                && animation.isTankStopped() && animation.isTurretStopped());
+        animation.tick();
+        assertTrue("View removes stopped wrappers on the next tick", animation.isFinished());
+        assertTrue("Carrier clip survives until allUnitsDone", animation.getActor(0).visible);
+        assertTrue("Tank base clip survives until allUnitsDone", animation.getActor(1).visible);
+        assertTrue("Turret clip survives until allUnitsDone", animation.getActor(2).visible);
         assertEquals("Gun action callback ticks (not Sound.start suppression)", sourceGunTicks, nativeGunTicks);
         assertEquals("Two source firing callbacks", 2, sourceGunTicks.size());
     }
