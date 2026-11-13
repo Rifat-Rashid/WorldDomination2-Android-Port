@@ -13,6 +13,7 @@ import com.example.worlddomination.game.WorldDominationGame;
 import com.example.worlddomination.game.assets.OriginalFlashAnimationAssets;
 import com.example.worlddomination.game.audio.OriginalAudio;
 import com.example.worlddomination.game.simulation.GameState;
+import com.example.worlddomination.game.simulation.GameSetup;
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -31,6 +32,148 @@ import static org.junit.Assert.*;
 /** Exercises the source empty check and watchdog through the real GL game loop. */
 @RunWith(AndroidJUnit4.class)
 public final class SourceBattleCleanupInstrumentedTest {
+    @Test public void allUnitsDoneKeepsTheSourceTwentyOneWrapperLimit() throws Exception {
+        runInGame(app -> {
+            GameState game = newGame();
+            installGame(app, game);
+            queue(game, GameState.Action.RESOURCES);
+            queue(game, GameState.Action.MASS_MEDIA);
+            invoke(app, "confirmTurnAndPreparePlayback");
+            SourceStoppedClipQueue clips = (SourceStoppedClipQueue)
+                    field(WorldDominationGame.class, "sourceStoppedClips").get(app);
+            FlashSoldierOneAnimation.Actor[] stopped = new FlashSoldierOneAnimation.Actor[22];
+            for (int index = 0; index < stopped.length; index++) {
+                stopped[index] = new FlashSoldierOneAnimation.Actor();
+                stopped[index].visible = true;
+                clips.add(stopped[index]);
+            }
+            TurnPlaybackSequence sequence = playback(app);
+            int guard = 0;
+            while (sequence.getPhase() != TurnPlaybackSequence.Phase.CLEANUP_HANDOFF
+                    && guard++ < 1000) {
+                for (FlashSoldierOneAnimation.Actor actor : stopped) assertTrue(actor.visible);
+                advance(app);
+            }
+            assertTrue("Source cleanup must run", guard < 1000);
+            assertEquals(22, clips.size());
+            assertTrue("The oldest wrapper survives the source's 21-item limit", stopped[0].visible);
+            for (int index = 1; index < stopped.length; index++) assertFalse(stopped[index].visible);
+            advance(app);
+            assertEquals(TurnPlaybackSequence.Phase.IDLE, sequence.getPhase());
+            assertEquals("EndBattle releases deletion-list references", 0, clips.size());
+        });
+    }
+
+    @Test public void infantryMatchesSourcePosesAndDetachesAtAllUnitsDone() throws Exception {
+        runInGame(app -> {
+            GameSetup setup = new GameSetup(0L);
+            assertTrue(setup.toggleOpponent(0));
+            assertTrue(setup.toggleOpponent(1));
+            GameState game = new GameState(setup);
+            installGame(app, game);
+            game.selectAction(GameState.Action.ATTACK);
+            assertTrue(game.configureAttack(1, 0, "soldier1"));
+            assertTrue(game.acceptSelectedAction());
+            queue(game, GameState.Action.RESOURCES);
+            invoke(app, "confirmTurnAndPreparePlayback");
+            @SuppressWarnings("unchecked")
+            List<FlashSoldierOneAnimation> boats = (List<FlashSoldierOneAnimation>)
+                    field(WorldDominationGame.class, "soldierBattleAnimations").get(app);
+            assertEquals(1, boats.size());
+            FlashSoldierOneAnimation animation = boats.get(0);
+            TurnPlaybackSequence sequence = playback(app);
+            SourceBattleInterfaceFrames interfaceFrames = (SourceBattleInterfaceFrames)
+                    field(WorldDominationGame.class, "battleInterfaceFrames").get(app);
+            SourceBattleTicker ticker = (SourceBattleTicker)
+                    field(WorldDominationGame.class, "battleTicker").get(app);
+            double simulationNext = game.createPresentationRandomCopy().nextDouble();
+            for (int tick = 1; tick <= 442; tick++) {
+                advance(app);
+                if (tick == 93) assertEquals(0, interfaceFrames.getSelectedStartFrame(4010));
+                if (tick == 94) assertTrue(interfaceFrames.getSelectedStartFrame(4010) > 0);
+                if (tick == 98) assertTrue(interfaceFrames.getSelectedStartFrame(4028) > 0);
+                if (tick == 154) {
+                    assertEquals(TurnPlaybackSequence.Phase.BATTLE, sequence.getPhase());
+                    assertEquals(0L, clock(app).getElapsedTicks());
+                }
+                if (tick == 157) {
+                    assertEquals(410f, animation.getActor(0).sourceX, 0f);
+                    assertEquals(474f, animation.getActor(0).sourceY, 0f);
+                    assertEquals(6, animation.getActor(0).sourceFrame);
+                }
+                if (tick == 158) {
+                    assertEquals(408f, animation.getActor(0).sourceX, 0f);
+                    assertEquals(476f, animation.getActor(0).sourceY, 0f);
+                }
+                if (tick == 215) {
+                    assertTrue(animation.getActor(1).visible);
+                    assertEquals("soldier001", animation.getActor(1).linkage);
+                    assertEquals(165f, animation.getActor(1).sourceX, 0f);
+                    assertEquals(206f, animation.getActor(1).sourceY, 0f);
+                    assertEquals(162, animation.getActor(1).sourceFrame);
+                    capture(app, "source-infantry-first-passenger.png");
+                }
+                if (tick == 226) {
+                    assertTrue(animation.getActor(2).visible);
+                    assertEquals(162f, animation.getActor(2).sourceX, 0f);
+                    assertEquals(205f, animation.getActor(2).sourceY, 0f);
+                    assertEquals(169, animation.getActor(2).sourceFrame);
+                }
+                if (tick == 237) {
+                    assertTrue(animation.getActor(3).visible);
+                    assertEquals(165f, animation.getActor(3).sourceX, 0f);
+                    assertEquals(206f, animation.getActor(3).sourceY, 0f);
+                    assertEquals(160, animation.getActor(3).sourceFrame);
+                }
+                if (tick == 259 || tick == 260) {
+                    assertTrue(animation.getActor(0).visible);
+                    assertEquals("boat001_still", animation.getActor(0).linkage);
+                    assertEquals(1, animation.getActor(0).sourceFrame);
+                    assertEquals(176f, animation.getActor(0).sourceX, 0f);
+                    assertEquals(242f, animation.getActor(0).sourceY, 0f);
+                }
+                if (tick == 362 || tick == 363 || tick == 364) {
+                    assertTrue(animation.getActor(3).visible);
+                    assertEquals("soldier001_shoot", animation.getActor(3).linkage);
+                    assertEquals(2, animation.getActor(3).sourceFrame);
+                    assertEquals(51f, animation.getActor(3).sourceX, 0f);
+                    assertEquals(229f, animation.getActor(3).sourceY, 0f);
+                    assertFalse(animation.isFinished());
+                }
+                if (tick == 380) {
+                    assertTrue("Stopped clips remain in the draw list", boats.contains(animation));
+                    assertTrue(animation.isFinished());
+                    assertEquals(TurnPlaybackSequence.Phase.BATTLE, sequence.getPhase());
+                    capture(app, "source-infantry-stopped-poses.png");
+                }
+                if (tick == 381) {
+                    assertEquals(381L, ticker.getFrameCount());
+                    assertFalse(ticker.isRunning());
+                    assertEquals(TurnPlaybackSequence.Phase.RESET_BARRIER, sequence.getPhase());
+                }
+                if (tick >= 380 && tick <= 440) {
+                    for (int actor = 0; actor < 4; actor++) {
+                        assertTrue("Pose survives cleanup wait at " + tick,
+                                animation.getActor(actor).visible);
+                    }
+                    assertTrue(boats.contains(animation));
+                }
+                if (tick == 441) {
+                    assertEquals(TurnPlaybackSequence.Phase.CLEANUP_HANDOFF, sequence.getPhase());
+                    for (int actor = 0; actor < 4; actor++) {
+                        assertFalse("allUnitsDone detaches each stopped clip",
+                                animation.getActor(actor).visible);
+                    }
+                    capture(app, "source-infantry-detached-at-handoff.png");
+                }
+            }
+            assertEquals(TurnPlaybackSequence.Phase.IDLE, sequence.getPhase());
+            assertTrue(boats.isEmpty());
+            assertEquals(simulationNext, game.createPresentationRandomCopy().nextDouble(), 0d);
+            assertEquals(1, game.getTurn());
+        });
+    }
+
     @Test public void emptyCheckWaitsOneFrameAndSilentShipRecordOverlapsLabels()
             throws Exception {
         runInGame(app -> {
@@ -280,9 +423,9 @@ public final class SourceBattleCleanupInstrumentedTest {
         });
     }
 
-    private interface GameCheck { void run(WorldDominationGame app) throws Exception; }
+    interface GameCheck { void run(WorldDominationGame app) throws Exception; }
 
-    private static void runInGame(GameCheck check) throws Exception {
+    static void runInGame(GameCheck check) throws Exception {
         try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
             CountDownLatch done = new CountDownLatch(1);
             AtomicReference<Throwable> failure = new AtomicReference<>();
@@ -391,7 +534,7 @@ public final class SourceBattleCleanupInstrumentedTest {
         method.invoke(app);
     }
 
-    private static Field field(Class<?> owner, String name) throws Exception {
+    static Field field(Class<?> owner, String name) throws Exception {
         Field result = owner.getDeclaredField(name);
         result.setAccessible(true);
         return result;

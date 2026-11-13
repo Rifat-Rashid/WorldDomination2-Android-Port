@@ -5,13 +5,16 @@ import com.example.worlddomination.game.simulation.ReferenceRandom;
 
 /** Source-tick playback for the Flash soldier1 boat landing and three infantry units. */
 public final class FlashSoldierOneAnimation {
-    public static final class Actor {
+    public static final class Actor implements SourceStoppedClipQueue.Clip {
         public String linkage;
         public int sourceFrame;
         public float sourceX;
         public float sourceY;
         public int islandPlayerId;
         public boolean visible;
+        private boolean queuedForDeletion;
+
+        @Override public void detach() { visible = false; }
     }
 
     private static final int BOAT_ACTOR = 0;
@@ -22,28 +25,41 @@ public final class FlashSoldierOneAnimation {
     private static final int SOLDIER_SHOT_COUNT = 75;
     private static final int SOLDIER_WALK_FRAMES_PER_DIRECTION = 12;
     private static final int SOLDIER_SHOOT_FRAMES_PER_DIRECTION = 4;
+    private static final int SOLDIER_SHOOT_FRAME_COUNT = 73;
 
     private final FlashBattleRoutes.SoldierOneAttack route;
     private final ReferenceRandom presentationRandom;
     private final OriginalAudio.Cue audioCue;
+    private final FlashColorTransform tint;
     private final Actor[] actors = new Actor[1 + SOLDIER_COUNT];
     private final SoldierTrack[] soldiers = new SoldierTrack[SOLDIER_COUNT];
     private int delayTicks;
     private int unloadTicks;
     private int unloadNumber;
     private boolean unloading;
+    private boolean boatStarted;
+    private boolean boatStopped;
+    private int boatStoppedFrame;
     private boolean boatFinished;
     private int pendingAudioCues;
 
     public FlashSoldierOneAnimation(FlashBattleRoutes.SoldierOneAttack route,
                                     ReferenceRandom presentationRandom,
                                     OriginalAudio.Cue audioCue, int delayTicks) {
+        this(route, presentationRandom, audioCue, delayTicks, 1);
+    }
+
+    public FlashSoldierOneAnimation(FlashBattleRoutes.SoldierOneAttack route,
+                                    ReferenceRandom presentationRandom,
+                                    OriginalAudio.Cue audioCue, int delayTicks,
+                                    int playerColor) {
         if (route == null || presentationRandom == null || delayTicks < 0) {
             throw new IllegalArgumentException("Invalid soldier1 animation");
         }
         this.route = route;
         this.presentationRandom = presentationRandom;
         this.audioCue = audioCue;
+        this.tint = FlashColorTransform.forPlayerColor(playerColor);
         this.delayTicks = delayTicks;
         Actor boat = new Actor();
         boat.linkage = "boat001";
@@ -51,9 +67,10 @@ public final class FlashSoldierOneAnimation {
         boat.sourceX = route.boatStart.x;
         boat.sourceY = route.boatStart.y;
         boat.islandPlayerId = route.attackerPlayerId;
+        boat.visible = true;
         for (int i = 0; i < SOLDIER_COUNT; i++) {
             Actor actor = new Actor();
-            actor.linkage = "soldier";
+            actor.linkage = "soldier001";
             actor.islandPlayerId = route.targetPlayerId;
             actors[FIRST_SOLDIER_ACTOR + i] = actor;
             soldiers[i] = new SoldierTrack(route.soldiers[i], actor);
@@ -62,28 +79,71 @@ public final class FlashSoldierOneAnimation {
 
     /** Advances one original 24 Hz presentation tick. */
     public void tick() {
+        tickSourceFrame();
+    }
+
+    /** Returns true when Flash's stopped-infantry removal ends the source ticker frame. */
+    public boolean tickSourceFrame() {
         if (isFinished()) {
-            return;
+            return false;
         }
         if (delayTicks > 0) {
+            presentWaitingFrame();
             delayTicks--;
-            return;
+            return false;
         }
-        if (!boatFinished) {
-            tickBoat();
-        }
-        if (unloading) {
-            for (int i = 0; i < SOLDIER_COUNT; i++) {
-                if (!soldiers[i].started && unloadNumber == i) {
-                    soldiers[i].start(presentationRandom);
+        boatStarted = true;
+        // Flash for-in visits the active array in reverse: boat, then
+        // tail32, tail31, tail30 (our stable actor1..3 order).
+        if (!boatFinished) tickBoat();
+        for (int i = 0; i < SOLDIER_COUNT; i++) {
+            SoldierTrack soldier = soldiers[i];
+            if (!soldier.started && unloading && unloadNumber == i) {
+                soldier.start(presentationRandom);
+                continue; // Activation paints a pose but does not move yet.
+            }
+            if (soldier.started && !soldier.finished) {
+                if (soldier.stopped) {
+                    soldier.finished = true;
+                    return true; // View returns after moving infantry to deletion.
                 }
+                if (soldier.tick()) pendingAudioCues++;
             }
         }
+        return false;
+    }
+
+    /** View renders the waiting boat while action labels and earlier records run. */
+    public void presentWaitingFrame() {
+        if (!boatStarted) {
+            actors[BOAT_ACTOR].sourceFrame = directionFrame(route.boatStart.x,
+                    route.boatStart.y) - 1;
+        }
+    }
+
+    /** Collect wrappers in the order View.f_37 removes them, without new clip objects. */
+    public void registerStoppedClips(SourceStoppedClipQueue queue) {
+        if (boatFinished) registerStoppedClip(queue, actors[BOAT_ACTOR]);
         for (SoldierTrack soldier : soldiers) {
-            if (soldier.started && !soldier.finished) {
-                if (soldier.tick()) {
-                    pendingAudioCues++;
-                }
+            if (soldier.finished) registerStoppedClip(queue, soldier.actor);
+        }
+    }
+
+    private static void registerStoppedClip(SourceStoppedClipQueue queue, Actor actor) {
+        if (!actor.queuedForDeletion) {
+            queue.add(actor);
+            actor.queuedForDeletion = true;
+        }
+    }
+
+    /** Presenter.allUnitsDone removes clips after the source ticker has stopped. */
+    public void clearStoppedActors() {
+        if (boatFinished) {
+            actors[BOAT_ACTOR].visible = false;
+        }
+        for (SoldierTrack soldier : soldiers) {
+            if (soldier.finished) {
+                soldier.actor.visible = false;
             }
         }
     }
@@ -109,6 +169,10 @@ public final class FlashSoldierOneAnimation {
         return audioCue;
     }
 
+    public FlashColorTransform getTint() {
+        return tint;
+    }
+
     public boolean isFinished() {
         if (!boatFinished) {
             return false;
@@ -123,25 +187,38 @@ public final class FlashSoldierOneAnimation {
 
     private void tickBoat() {
         Actor boat = actors[BOAT_ACTOR];
+        if (boatStopped) {
+            // View requests frame 6, then its generic drawing path overwrites
+            // it with the direction of the boat's last moving frame.
+            boat.sourceFrame = boatStoppedFrame;
+            boatFinished = true;
+            return;
+        }
         if (unloading) {
             boat.visible = true;
-            boat.sourceFrame = Math.min(18, unloadNumber + 1);
-            unloadTicks++;
+            boat.linkage = "boat001_still";
+            if (unloadTicks == 0 && unloadNumber == 0) {
+                boat.sourceFrame = 0;
+            }
+            // Unit.as:999-1008 tests the old timer before incrementing it.
             if (unloadTicks >= BOAT_UNLOAD_TICKS) {
                 unloadTicks = 0;
                 unloadNumber++;
+                boat.sourceFrame = unloadNumber + 1;
                 if (unloadNumber >= BOAT_UNLOAD_COUNT) {
-                    boatFinished = true;
-                    boat.visible = false;
+                    boatStopped = true;
+                    boat.sourceFrame = boatStoppedFrame;
                 }
+            } else {
+                unloadTicks++;
             }
             return;
         }
 
         boat.visible = true;
         boat.islandPlayerId = route.boatIslandIds[boatWaypoint];
+        int previousFrame = boat.sourceFrame;
         if (!moveToward(boat, route.boatWaypoints, 7f, 2f, 2f, 15f, false)) {
-            boat.visible = false;
             boatFinished = true;
             return;
         }
@@ -152,6 +229,9 @@ public final class FlashSoldierOneAnimation {
                 unloading = true;
                 unloadNumber = 0;
                 unloadTicks = 0;
+                boatStoppedFrame = boat.sourceFrame;
+                // View skips its direction-frame update as soon as action=unload.
+                boat.sourceFrame = previousFrame;
             }
         }
     }
@@ -159,8 +239,8 @@ public final class FlashSoldierOneAnimation {
     private int boatWaypoint;
     private float boatXStep;
     private float boatYStep;
-    private float boatXDistance;
-    private float boatYDistance;
+    private double boatXDistance;
+    private double boatYDistance;
     private boolean boatTargetReached;
     private float boatPreviousX;
     private float boatPreviousY;
@@ -175,56 +255,49 @@ public final class FlashSoldierOneAnimation {
         float dx = target.x - actor.sourceX;
         if (target.x > actor.sourceX) {
             boatXDistance = target.x - actor.sourceX;
-            float denominator = boatXDistance + boatYDistance;
-            float targetStep = denominator == 0f ? 0f
-                    : (float) Math.floor(step * boatXDistance / denominator);
+            double targetStep = sourceTargetStep(step, boatXDistance, boatYDistance);
             if (targetStep > boatXStep && !instantTurn) {
                 boatXStep += xMultiplier;
             } else if (instantTurn) {
-                boatXStep = targetStep;
+                boatXStep = (float) targetStep;
             }
         } else {
             boatXDistance = actor.sourceX - target.x;
-            float denominator = boatXDistance + boatYDistance;
-            float targetStep = denominator == 0f ? 0f
-                    : -(float) Math.floor(step * boatXDistance / denominator);
+            double targetStep = -sourceTargetStep(step, boatXDistance, boatYDistance);
             if (targetStep < boatXStep && !instantTurn) {
                 boatXStep -= xMultiplier;
             } else if (instantTurn) {
-                boatXStep = targetStep;
+                boatXStep = (float) targetStep;
             }
         }
         if (target.y > actor.sourceY) {
             boatYDistance = target.y - actor.sourceY;
-            float denominator = boatXDistance + boatYDistance;
-            float targetStep = denominator == 0f ? 0f
-                    : (float) Math.floor(step * boatYDistance / denominator);
+            double targetStep = sourceTargetStep(step, boatYDistance, boatXDistance);
             if (targetStep > boatYStep && !instantTurn) {
                 boatYStep += yMultiplier;
             } else if (instantTurn) {
-                boatYStep = targetStep;
+                boatYStep = (float) targetStep;
             }
         } else {
             boatYDistance = actor.sourceY - target.y;
-            float denominator = boatXDistance + boatYDistance;
-            float targetStep = denominator == 0f ? 0f
-                    : -(float) Math.floor(step * boatYDistance / denominator);
+            double targetStep = -sourceTargetStep(step, boatYDistance, boatXDistance);
             if (targetStep < boatYStep && !instantTurn) {
                 boatYStep -= yMultiplier;
             } else if (instantTurn) {
-                boatYStep = targetStep;
+                boatYStep = (float) targetStep;
             }
         }
+        // Unit.setStep evaluates range before View applies xStep/yStep.
+        boatTargetReached = actor.sourceX < target.x + range
+                && actor.sourceX > target.x - range
+                && actor.sourceY < target.y + range
+                && actor.sourceY > target.y - range;
         boatPreviousX = actor.sourceX;
         boatPreviousY = actor.sourceY;
         actor.sourceX += boatXStep;
         actor.sourceY += boatYStep;
         actor.sourceFrame = directionFrame(actor.sourceX - boatPreviousX,
                 actor.sourceY - boatPreviousY) - 1;
-        boatTargetReached = actor.sourceX < target.x + range
-                && actor.sourceX > target.x - range
-                && actor.sourceY < target.y + range
-                && actor.sourceY > target.y - range;
         return true;
     }
 
@@ -238,12 +311,14 @@ public final class FlashSoldierOneAnimation {
         private int direction = 1;
         private float xStep;
         private float yStep;
-        private float xDistance;
-        private float yDistance;
+        private double xDistance;
+        private double yDistance;
         private float previousX;
         private float previousY;
         private boolean started;
         private boolean shooting;
+        private boolean invalidStep;
+        private boolean stopped;
         private boolean finished;
 
         SoldierTrack(FlashBattleRoutes.SoldierPath path, Actor actor) {
@@ -259,21 +334,35 @@ public final class FlashSoldierOneAnimation {
             actor.sourceY = spawn.y + random.nextInt(6);
             frameOffset = random.nextInt(7);
             range = 5 + random.nextInt(4);
+            previousX = actors[BOAT_ACTOR].sourceX;
+            previousY = actors[BOAT_ACTOR].sourceY;
+            direction = directionFrame(actor.sourceX - previousX, actor.sourceY - previousY);
+            actor.sourceFrame = (direction - 1) * SOLDIER_WALK_FRAMES_PER_DIRECTION + frameOffset;
+            frameOffset = frameOffset < SOLDIER_WALK_FRAMES_PER_DIRECTION ? frameOffset + 1 : 1;
         }
 
         boolean tick() {
             if (shooting) {
-                actor.linkage = "soldier001_shoot";
-                actor.sourceFrame = (direction - 1) * SOLDIER_SHOOT_FRAMES_PER_DIRECTION
-                        + (Math.max(1, frameOffset) - 1) % SOLDIER_SHOOT_FRAMES_PER_DIRECTION;
-                frameOffset = frameOffset < SOLDIER_SHOOT_FRAMES_PER_DIRECTION
-                        ? frameOffset + 1 : 1;
-                shotCount++;
-                if (shotCount >= SOLDIER_SHOT_COUNT) {
-                    finished = true;
-                    actor.visible = false;
+                if (shotCount < SOLDIER_SHOT_COUNT) {
+                    if (shotCount == 0 && invalidStep) {
+                        direction = directionFrame(actor.sourceX - previousX, actor.sourceY - previousY);
+                        invalidStep = false;
+                    }
+                    actor.linkage = "soldier001_shoot";
+                    // Unit.as:748-776 fires; View.as:1516-1528 then sets the
+                    // clip frame from the carried walking frameOffset.
+                    actor.sourceFrame = Math.min(SOLDIER_SHOOT_FRAME_COUNT - 1,
+                            (direction - 1) * SOLDIER_SHOOT_FRAMES_PER_DIRECTION + frameOffset);
+                    frameOffset = frameOffset < SOLDIER_SHOOT_FRAMES_PER_DIRECTION
+                            ? frameOffset + 1 : 1;
+                    shotCount++;
+                    return shotCount == 1;
                 }
-                return shotCount == 1;
+                // The 75th shot remains visible. The next source tick stops;
+                // View removes this stopped wrapper on the following tick.
+                shooting = false;
+                stopped = true;
+                return false;
             }
             if (waypointIndex >= path.waypoints.length) {
                 finished = true;
@@ -282,19 +371,19 @@ public final class FlashSoldierOneAnimation {
             }
 
             FlashBattleRoutes.Point target = path.waypoints[waypointIndex];
+            boolean reachedTarget = insideRange(target, range);
             moveSoldierStep(target);
             float dx = actor.sourceX - previousX;
             float dy = actor.sourceY - previousY;
-            direction = directionFrame(dx, dy);
-            actor.linkage = "soldier";
-            int animationFrameOffset = Math.min(SOLDIER_WALK_FRAMES_PER_DIRECTION,
-                    Math.max(1, frameOffset));
-            actor.sourceFrame = (direction - 1) * SOLDIER_WALK_FRAMES_PER_DIRECTION
-                    + animationFrameOffset - 1;
+            actor.linkage = "soldier001";
+            if (!invalidStep) {
+                direction = directionFrame(dx, dy);
+                actor.sourceFrame = (direction - 1) * SOLDIER_WALK_FRAMES_PER_DIRECTION + frameOffset;
+            }
             frameOffset = frameOffset < SOLDIER_WALK_FRAMES_PER_DIRECTION
                     ? frameOffset + 1 : 1;
 
-            if (insideRange(target, range)) {
+            if (reachedTarget) {
                 if (waypointIndex < path.waypoints.length - 2) {
                     waypointIndex++;
                 } else if (waypointIndex == path.waypoints.length - 2) {
@@ -302,10 +391,11 @@ public final class FlashSoldierOneAnimation {
                     waypointIndex++;
                 } else {
                     shooting = true;
-                    actor.linkage = "soldier001_shoot";
-                    actor.sourceFrame = 4;
-                    frameOffset = 1;
-                    shotCount = 0;
+                    if (!invalidStep) {
+                        actor.sourceFrame = (direction - 1) * SOLDIER_WALK_FRAMES_PER_DIRECTION + frameOffset;
+                    }
+                    frameOffset = frameOffset < SOLDIER_WALK_FRAMES_PER_DIRECTION
+                            ? frameOffset + 1 : 1;
                 }
             }
             return false;
@@ -315,30 +405,25 @@ public final class FlashSoldierOneAnimation {
             float dx = target.x - actor.sourceX;
             if (target.x > actor.sourceX) {
                 xDistance = target.x - actor.sourceX;
-                float denominator = xDistance + yDistance;
-                xStep = denominator == 0f ? 0f
-                        : (float) Math.floor(4f * xDistance / denominator);
+                xStep = (float) sourceTargetStep(4f, xDistance, yDistance);
             } else {
                 xDistance = actor.sourceX - target.x;
-                float denominator = xDistance + yDistance;
-                xStep = denominator == 0f ? 0f
-                        : -(float) Math.floor(4f * xDistance / denominator);
+                xStep = (float) -sourceTargetStep(4f, xDistance, yDistance);
             }
             if (target.y > actor.sourceY) {
                 yDistance = target.y - actor.sourceY;
-                float denominator = xDistance + yDistance;
-                yStep = denominator == 0f ? 0f
-                        : (float) Math.floor(4f * yDistance / denominator);
+                yStep = (float) sourceTargetStep(4f, yDistance, xDistance);
             } else {
                 yDistance = actor.sourceY - target.y;
-                float denominator = xDistance + yDistance;
-                yStep = denominator == 0f ? 0f
-                        : -(float) Math.floor(4f * yDistance / denominator);
+                yStep = (float) -sourceTargetStep(4f, yDistance, xDistance);
             }
             previousX = actor.sourceX;
             previousY = actor.sourceY;
-            actor.sourceX += xStep;
-            actor.sourceY += yStep;
+            invalidStep = !Float.isFinite(xStep) || !Float.isFinite(yStep);
+            // The source ClipObject ignores NaN display coordinates and seeks.
+            // Unit.setStep restores curX/Y from that retained display pose next tick.
+            if (Float.isFinite(xStep)) actor.sourceX += xStep;
+            if (Float.isFinite(yStep)) actor.sourceY += yStep;
         }
 
         private boolean insideRange(FlashBattleRoutes.Point target, int targetRange) {
@@ -349,8 +434,14 @@ public final class FlashSoldierOneAnimation {
         }
     }
 
+    private static double sourceTargetStep(float step, double distance, double otherDistance) {
+        // Preserve Unit.setStep's double arithmetic and multiplication grouping.
+        // For example step4, distance97, other0 floors to3, not4.
+        return Math.floor((step / 100d) * ((100d / (distance + otherDistance)) * distance));
+    }
+
     private static int directionFrame(float dx, float dy) {
-        int angle = Math.round((float) Math.toDegrees(Math.atan2(-dy, dx)));
+        int angle = Math.round((float) Math.toDegrees(Math.atan2(dy == 0f ? 0f : -dy, dx)));
         angle += 181;
         int frame = Math.round(angle / 360f * 18f);
         return Math.max(1, Math.min(18, frame));

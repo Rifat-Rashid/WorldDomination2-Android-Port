@@ -70,15 +70,72 @@ public final class FlashBattleUnitRenderer {
 
     public void draw(SpriteBatch batch, Rectangle mapBounds,
                      List<FlashSoldierOneAnimation> animations) {
-        if (!assets.isLoaded()) {
-            return;
+        if (!assets.isLoaded()) return;
+        boolean visible = false;
+        for (int animationIndex = 0; animationIndex < animations.size(); animationIndex++) {
+            FlashSoldierOneAnimation animation = animations.get(animationIndex);
+            for (int actor = 0; actor < animation.getActorCount(); actor++) {
+                visible |= animation.getActor(actor).visible;
+            }
         }
-        for (FlashSoldierOneAnimation animation : animations) {
-            for (int index = 0; index < animation.getActorCount(); index++) {
-                FlashSoldierOneAnimation.Actor actor = animation.getActor(index);
-                drawActor(batch, mapBounds, actor.linkage, actor.sourceFrame,
-                        actor.sourceX, actor.sourceY, actor.islandPlayerId,
-                        1f, 1f, actor.visible);
+        if (!visible) return;
+        ShaderProgram previousShader = batch.getShader();
+        float previousColor = batch.getPackedColor();
+        try {
+            for (int animationIndex = 0; animationIndex < animations.size(); animationIndex++) {
+                FlashSoldierOneAnimation animation = animations.get(animationIndex);
+                for (int index = 0; index < animation.getActorCount(); index++) {
+                    FlashSoldierOneAnimation.Actor actor = animation.getActor(index);
+                    if (!actor.visible) continue;
+                    drawInfantryClip(batch, mapBounds, actor, actor.linkage, null);
+                    String tintLinkage = index == 0
+                            ? ("boat001_still".equals(actor.linkage)
+                            ? "boat001_still_tint" : "boat001_tint")
+                            : ("soldier001_shoot".equals(actor.linkage)
+                            ? "soldier001_shoot_tint" : "soldier001_tint");
+                    drawInfantryClip(batch, mapBounds, actor, tintLinkage, animation.getTint());
+                }
+            }
+        } finally {
+            batch.setShader(previousShader);
+            batch.setPackedColor(previousColor);
+        }
+    }
+
+    private void drawInfantryClip(SpriteBatch batch, Rectangle bounds,
+                                   FlashSoldierOneAnimation.Actor actor, String linkage,
+                                   FlashColorTransform tint) {
+        FlashAnimationTimeline timeline = assets.getTimeline(linkage);
+        if (timeline == null || timeline.getFrameCount() == 0) return;
+        deploymentTransformScratch[0].setIdentity();
+        deploymentColorScratch[0].identity();
+        if (tint != null) {
+            deploymentColorScratch[0].setProduct(deploymentColorScratch[0], tint);
+        }
+        drawInfantryFrame(batch, bounds, timeline.getFrame(
+                Math.min(actor.sourceFrame, timeline.getFrameCount() - 1)), actor, 0);
+    }
+
+    private void drawInfantryFrame(SpriteBatch batch, Rectangle bounds,
+                                    FlashAnimationTimeline.Frame frame,
+                                    FlashSoldierOneAnimation.Actor actor, int depth) {
+        if (frame == null || depth >= MAX_DEPLOYMENT_CLIP_DEPTH) return;
+        FlashAffineTransform parent = deploymentTransformScratch[depth];
+        FlashAffineTransform transform = deploymentTransformScratch[depth + 1];
+        FlashColorTransform.Composition parentColor = deploymentColorScratch[depth];
+        FlashColorTransform.Composition color = deploymentColorScratch[depth + 1];
+        for (FlashAnimationTimeline.Layer layer : frame.layers) {
+            transform.setProduct(parent, layer.a, layer.b, layer.c, layer.d, layer.tx, layer.ty);
+            color.setProduct(parentColor, layer.colorTransform);
+            TextureRegion region = assets.getShape(layer.shapeId);
+            if (region != null) {
+                drawTransformedLeaf(batch, bounds, region, layer.shapeId, transform, color,
+                        actor.sourceX, actor.sourceY, actor.islandPlayerId, 0f);
+            } else {
+                FlashAnimationTimeline child = assets.getTimelineBySymbolId(layer.shapeId);
+                if (child != null && child.getFrameCount() > 0) {
+                    drawInfantryFrame(batch, bounds, child.getFrame(0), actor, depth + 1);
+                }
             }
         }
     }
@@ -306,27 +363,8 @@ public final class FlashBattleUnitRenderer {
             color.setProduct(parentColor, layer.colorTransform);
             TextureRegion region = assets.getShape(layer.shapeId);
             if (region != null) {
-                if (!setDeploymentColor(batch, color)) continue;
-                FlashSpriteQuad.positions(deploymentVertices, transform, mapBounds,
-                        actor.sourceX, actor.sourceY, actor.islandPlayerId,
-                        assets.getShapeOriginX(layer.shapeId), assets.getShapeOriginY(layer.shapeId),
-                        region.getRegionWidth(), region.getRegionHeight());
-                for (int vertex = 0; vertex < 20; vertex += 5) {
-                    deploymentVertices[vertex] += cropOffsetX;
-                }
-                float packed = batch.getPackedColor();
-                for (int vertex = 0; vertex < 20; vertex += 5) {
-                    deploymentVertices[vertex + 2] = packed;
-                }
-                deploymentVertices[3] = region.getU();
-                deploymentVertices[4] = region.getV2();
-                deploymentVertices[8] = region.getU();
-                deploymentVertices[9] = region.getV();
-                deploymentVertices[13] = region.getU2();
-                deploymentVertices[14] = region.getV();
-                deploymentVertices[18] = region.getU2();
-                deploymentVertices[19] = region.getV2();
-                batch.draw(region.getTexture(), deploymentVertices, 0, 20);
+                drawTransformedLeaf(batch, mapBounds, region, layer.shapeId, transform, color,
+                        actor.sourceX, actor.sourceY, actor.islandPlayerId, cropOffsetX);
                 continue;
             }
             FlashAnimationTimeline nested = assets.getTimelineBySymbolId(layer.shapeId);
@@ -338,6 +376,35 @@ public final class FlashBattleUnitRenderer {
                     Math.min(childFrame, nested.getFrameCount() - 1)), animation, actor,
                     cropOffsetX, depth + 1);
         }
+    }
+
+    private void drawTransformedLeaf(SpriteBatch batch, Rectangle mapBounds,
+                                      TextureRegion region, int shapeId,
+                                      FlashAffineTransform transform,
+                                      FlashColorTransform.Composition color,
+                                      float sourceX, float sourceY, int islandPlayerId,
+                                      float cropOffsetX) {
+        if (!setDeploymentColor(batch, color)) return;
+        FlashSpriteQuad.positions(deploymentVertices, transform, mapBounds,
+                sourceX, sourceY, islandPlayerId,
+                assets.getShapeOriginX(shapeId), assets.getShapeOriginY(shapeId),
+                region.getRegionWidth(), region.getRegionHeight());
+        for (int vertex = 0; vertex < 20; vertex += 5) {
+            deploymentVertices[vertex] += cropOffsetX;
+        }
+        float packed = batch.getPackedColor();
+        for (int vertex = 0; vertex < 20; vertex += 5) {
+            deploymentVertices[vertex + 2] = packed;
+        }
+        deploymentVertices[3] = region.getU();
+        deploymentVertices[4] = region.getV2();
+        deploymentVertices[8] = region.getU();
+        deploymentVertices[9] = region.getV();
+        deploymentVertices[13] = region.getU2();
+        deploymentVertices[14] = region.getV();
+        deploymentVertices[18] = region.getU2();
+        deploymentVertices[19] = region.getV2();
+        batch.draw(region.getTexture(), deploymentVertices, 0, 20);
     }
 
     private boolean setDeploymentColor(SpriteBatch batch, FlashColorTransform.Composition color) {
