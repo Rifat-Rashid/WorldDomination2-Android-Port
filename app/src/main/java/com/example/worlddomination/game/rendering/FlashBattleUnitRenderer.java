@@ -226,7 +226,7 @@ public final class FlashBattleUnitRenderer {
 
     public void drawChinookTank(SpriteBatch batch, Rectangle mapBounds,
                                 List<FlashChinookTankAnimation> animations) {
-        if (!assets.isLoaded()) {
+        if (!assets.isLoaded() || !hasVisibleDeploymentActor(animations)) {
             return;
         }
         ShaderProgram previousShader = batch.getShader();
@@ -245,6 +245,19 @@ public final class FlashBattleUnitRenderer {
             batch.setShader(previousShader);
             batch.setPackedColor(previousColor);
         }
+    }
+
+    private static boolean hasVisibleDeploymentActor(List<FlashChinookTankAnimation> animations) {
+        for (int index = 0; index < animations.size(); index++) {
+            FlashChinookTankAnimation animation = animations.get(index);
+            if (animation.getChinookShadow().visible) return true;
+            for (int actor = 0; actor < animation.getActorCount(); actor++) {
+                if (animation.getActor(actor).visible) return true;
+            }
+        }
+        // getShader returns the owned default even when customShader is null.
+        // Restoring that object through setShader would flush an untouched batch.
+        return false;
     }
 
     private void drawDeploymentActor(SpriteBatch batch, Rectangle mapBounds,

@@ -37,7 +37,15 @@ import static org.junit.Assert.*;
 /** GLES pixels versus explicit exported-leaf composition, not a screenshot of Flash execution. */
 @RunWith(AndroidJUnit4.class)
 public final class ChinookDeploymentArtInstrumentedTest {
-    private enum Check { LEAVES, STATE, OPACITY }
+    private enum Check { LEAVES, STATE, OPACITY, EMPTY_BATCH, WAITING_BATCH }
+
+    @Test public void emptyDeploymentKeepsQueuedSpritesBatched() throws Exception {
+        run(Check.EMPTY_BATCH);
+    }
+
+    @Test public void waitingDeploymentKeepsQueuedSpritesBatched() throws Exception {
+        run(Check.WAITING_BATCH);
+    }
 
     @Test public void originalDeploymentLeavesMatchAtTwoLandscapeWidths() throws Exception {
         run(Check.LEAVES);
@@ -83,6 +91,34 @@ public final class ChinookDeploymentArtInstrumentedTest {
                             0, 2, 0, 2, "green", anchors);
                     batch = new SpriteBatch();
                     renderer = new FlashBattleUnitRenderer(assets);
+                    if (check == Check.EMPTY_BATCH || check == Check.WAITING_BATCH) {
+                        batch.setColor(.25f, .5f, .75f, .6f);
+                        batch.begin();
+                        TextureRegion region = assets.getShape(676);
+                        batch.draw(region, 10, 10);
+                        ShaderProgram shader = batch.getShader();
+                        float packed = batch.getPackedColor();
+                        Matrix4 transform = new Matrix4(batch.getTransformMatrix());
+                        assertEquals("First sprite remains queued", 0, batch.renderCalls);
+                        FlashChinookTankAnimation waiting = new FlashChinookTankAnimation(route, 100);
+                        for (int index = 0; index < waiting.getActorCount(); index++) {
+                            assertFalse(waiting.getActor(index).visible);
+                        }
+                        assertFalse(waiting.getChinookShadow().visible);
+                        renderer.drawChinookTank(batch, new Rectangle(0, 0, 800, 600),
+                                check == Check.EMPTY_BATCH ? Collections.emptyList()
+                                        : Collections.singletonList(waiting));
+                        assertEquals("No visible deployment must not flush queued sprites", 0, batch.renderCalls);
+                        assertTrue(batch.isDrawing());
+                        assertSame(shader, batch.getShader());
+                        assertEquals(packed, batch.getPackedColor(), 0f);
+                        assertArrayEquals(transform.val, batch.getTransformMatrix().val, 0f);
+                        batch.draw(region, 20, 20);
+                        batch.end();
+                        assertEquals("Both sprites share one draw call", 1, batch.renderCalls);
+                        assertEquals(GL20.GL_NO_ERROR, Gdx.gl.glGetError());
+                        return;
+                    }
                     for (int width : stateTest || alphaTest ? new int[]{800} : new int[]{800, 1194}) {
                         int height = 600;
                         buffer = new FrameBuffer(Pixmap.Format.RGBA8888, width, height, false);
