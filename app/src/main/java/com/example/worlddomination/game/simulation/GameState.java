@@ -42,6 +42,8 @@ public final class GameState {
         public final int counterActionBuildingSlot;
         /** Launch offset within this ship record, in the source's reverse payload iteration. */
         public final int shipPayloadIndex;
+        /** One-based source battle record start number; zero means no matching record. */
+        public final int battleStartNum;
 
         private CombatEvent(CombatEventType type, int attackerPlayerId,
                             int defenderPlayerId, int cityIndex, String weaponName,
@@ -82,6 +84,17 @@ public final class GameState {
                             String payloadName, int casualtiesMillions,
                             String counterWeaponName, int actionBuildingSlot,
                             int counterActionBuildingSlot, int shipPayloadIndex) {
+            this(type, attackerPlayerId, defenderPlayerId, cityIndex, weaponName,
+                    payloadName, casualtiesMillions, counterWeaponName, actionBuildingSlot,
+                    counterActionBuildingSlot, shipPayloadIndex, 0);
+        }
+
+        private CombatEvent(CombatEventType type, int attackerPlayerId,
+                            int defenderPlayerId, int cityIndex, String weaponName,
+                            String payloadName, int casualtiesMillions,
+                            String counterWeaponName, int actionBuildingSlot,
+                            int counterActionBuildingSlot, int shipPayloadIndex,
+                            int battleStartNum) {
             this.type = type;
             this.attackerPlayerId = attackerPlayerId;
             this.defenderPlayerId = defenderPlayerId;
@@ -93,6 +106,7 @@ public final class GameState {
             this.actionBuildingSlot = actionBuildingSlot;
             this.counterActionBuildingSlot = counterActionBuildingSlot;
             this.shipPayloadIndex = shipPayloadIndex;
+            this.battleStartNum = battleStartNum;
         }
     }
 
@@ -143,16 +157,45 @@ public final class GameState {
         public final String frameName;
         public final String religionCode;
         public final int sequenceIndex;
+        /** One-based source battle record start number, or zero outside the battle script. */
+        public final int battleStartNum;
 
         private ActionBuildingEvent(int playerId, Action action, int slot,
                                     String frameName, String religionCode,
                                     int sequenceIndex) {
+            this(playerId, action, slot, frameName, religionCode, sequenceIndex, 0);
+        }
+
+        private ActionBuildingEvent(int playerId, Action action, int slot,
+                                    String frameName, String religionCode,
+                                    int sequenceIndex, int battleStartNum) {
             this.playerId = playerId;
             this.action = action;
             this.slot = slot;
             this.frameName = frameName;
             this.religionCode = religionCode;
             this.sequenceIndex = sequenceIndex;
+            this.battleStartNum = battleStartNum;
+        }
+    }
+
+    /** Immutable source battle-script record, including records without a visual result. */
+    public static final class BattlePresentationRecord {
+        public final int startNum;
+        public final int playerId;
+        public final Action action;
+        public final String weaponName;
+        public final boolean prepareCarrier;
+        public final boolean pendingBuilding;
+
+        private BattlePresentationRecord(int startNum, ActionOrder order,
+                                         boolean pendingBuilding) {
+            this.startNum = startNum;
+            this.playerId = order.playerId;
+            this.action = order.action;
+            this.weaponName = order.weaponName;
+            this.prepareCarrier = order.prepareCarrier;
+            this.pendingBuilding = pendingBuilding;
         }
     }
 
@@ -505,6 +548,7 @@ public final class GameState {
         int actionBuildingSlot = -1;
         String actionBuildingFrameName;
         boolean actionBuildingResolved;
+        int battleStartNum;
 
         ActionOrder(int playerId, Action action,
                     Map<String, Integer> productionBudgets, List<String> technologies,
@@ -696,6 +740,7 @@ public final class GameState {
     private final PlayerState[] players = new PlayerState[5];
     private final List<ActionOrder> queuedActions = new ArrayList<>(MAX_TURN_ACTIONS);
     private final List<CombatEvent> lastTurnCombatEvents = new ArrayList<>();
+    private final List<BattlePresentationRecord> lastTurnBattleRecords = new ArrayList<>();
     private final List<WeaponState> battleStockUses = new ArrayList<>();
     private final int[] battleSatelliteLaunches = new int[5];
     private final List<SpyMissionEvent> lastTurnSpyMissions = new ArrayList<>();
@@ -2549,11 +2594,15 @@ public final class GameState {
         return Collections.unmodifiableList(lastTurnCombatEvents);
     }
 
+    /** Returns canonical source action-group/player/slot battle records for the last turn. */
+    public List<BattlePresentationRecord> getLastTurnBattleRecords() {
+        return Collections.unmodifiableList(new ArrayList<>(lastTurnBattleRecords));
+    }
+
     /**
-     * Returns battle outcomes in the order the Flash battle timeline presents them.
-     * The source stores turn-result records in reverse resolution order, then
-     * iterates those records backward to apply simulation side effects. Playback
-     * consumes the original record order, so it is the reverse of this resolved list.
+     * Returns the physical reverse-spawn order of combat outcomes. The source
+     * activates records by their separate start numbers, not this list position.
+     * Reversing a ship's resolved payloads preserves its source plane offsets.
      */
     public List<CombatEvent> getLastTurnCombatEventsInSourcePresentationOrder() {
         List<CombatEvent> presentationOrder = new ArrayList<>(lastTurnCombatEvents);
@@ -2597,6 +2646,7 @@ public final class GameState {
             player.turnResourcesGained = 0;
         }
         lastTurnCombatEvents.clear();
+        lastTurnBattleRecords.clear();
         battleStockUses.clear();
         Arrays.fill(battleSatelliteLaunches, 0);
         lastTurnSpyMissions.clear();
@@ -2627,6 +2677,7 @@ public final class GameState {
             }
         }
         assignActionBuildingSlots(turnOrders);
+        collectBattlePresentationRecords(turnOrders);
         // Model.doTurn plans every AI action before Sub_presenter.turnResults
         // advances readiness, relations, religion, and offer cooldowns.
         updateTurnUpkeep();
@@ -3262,7 +3313,8 @@ public final class GameState {
                     rolledCasualties);
             lastTurnCombatEvents.add(new CombatEvent(CombatEventType.DIRECT_ATTACK,
                     attacker.id, defender.id, city.index, weapon.definition.name, null,
-                    casualties, null, order.actionBuildingSlot));
+                    casualties, null, order.actionBuildingSlot, -1, -1,
+                    order.battleStartNum));
             recordLargestBattle(attacker, defender, casualties);
             applyTurnResultBattleHostilityEffects(attacker, defender, casualties);
             // Source scores a successful casualty roll before treating a city
@@ -3385,6 +3437,62 @@ public final class GameState {
         return weapon != null && "spy".equals(weapon.definition.type);
     }
 
+    /** Battle.createBattleScriptVars groups eligible records, then retains player/slot order. */
+    private void collectBattlePresentationRecords(List<ActionOrder> turnOrders) {
+        List<ActionOrder> eligible = new ArrayList<>();
+        for (ActionOrder order : turnOrders) {
+            if (playerById(order.playerId).alive && battleRecordPriority(order) >= 0) {
+                eligible.add(order);
+            }
+        }
+        // Java's stable sort keeps each player's original action-slot order.
+        Collections.sort(eligible, (left, right) -> {
+            int group = Integer.compare(battleRecordPriority(left),
+                    battleRecordPriority(right));
+            return group != 0 ? group : Integer.compare(left.playerId, right.playerId);
+        });
+        for (ActionOrder order : eligible) {
+            order.battleStartNum = lastTurnBattleRecords.size() + 1;
+            lastTurnBattleRecords.add(new BattlePresentationRecord(order.battleStartNum,
+                    order, battleRecordSpawnsBuilding(order)));
+        }
+    }
+
+    private int battleRecordPriority(ActionOrder order) {
+        switch (order.action) {
+            case RESOURCES:
+                return 0;
+            case MASS_MEDIA:
+                return 1;
+            case ATTACK:
+                return 2;
+            case PREPARED_ATTACK:
+                if (!order.prepareCarrier) return 2;
+                WeaponState carrier = playerById(order.playerId).weapons.get(order.weaponName);
+                return carrier != null && ("sub".equals(carrier.definition.type)
+                        || "ship".equals(carrier.definition.type)) ? 2 : -1;
+            case PROPAGANDA:
+                return 3;
+            case DIPLOMACY:
+                return 4;
+            default:
+                return -1;
+        }
+    }
+
+    private boolean battleRecordSpawnsBuilding(ActionOrder order) {
+        if (order.action == Action.RESOURCES || order.action == Action.MASS_MEDIA
+                || order.action == Action.PROPAGANDA || order.action == Action.DIPLOMACY) {
+            return true;
+        }
+        if (order.action == Action.ATTACK) return isSpyWeapon(order);
+        if (order.action == Action.PREPARED_ATTACK) {
+            WeaponState carrier = playerById(order.playerId).weapons.get(order.weaponName);
+            return carrier != null && "sub".equals(carrier.definition.type);
+        }
+        return false;
+    }
+
     private void collectActionBuildingEvents(List<ActionOrder> turnOrders) {
         Set<String> seen = new LinkedHashSet<>();
         for (ActionOrder order : sourceActionBuildingOrder(turnOrders)) {
@@ -3404,7 +3512,7 @@ public final class GameState {
                     order.action, order.actionBuildingSlot,
                     order.actionBuildingFrameName,
                     playerById(order.playerId).getReligionCode(),
-                    lastTurnActionBuildings.size()));
+                    lastTurnActionBuildings.size(), order.battleStartNum));
         }
     }
 
@@ -3551,7 +3659,7 @@ public final class GameState {
             lastTurnCombatEvents.add(new CombatEvent(CombatEventType.STRIKE_INTERCEPTED,
                     attacker.id, defender.id, city.index, carrier.definition.name,
                     payload.definition.name, 0, counterName, order.actionBuildingSlot,
-                    counterDefense.actionBuildingSlot));
+                    counterDefense.actionBuildingSlot, -1, order.battleStartNum));
             addMessage(defender, "Nation " + defender.id + " intercepted the prepared strike.");
             return;
         }
@@ -3565,7 +3673,8 @@ public final class GameState {
                 attacker.id, defender.id, city.index, carrier.definition.name,
                 payload.definition.name, casualties,
                 counterDefense == null ? null : counterName, order.actionBuildingSlot,
-                counterDefense == null ? -1 : counterDefense.actionBuildingSlot));
+                counterDefense == null ? -1 : counterDefense.actionBuildingSlot,
+                -1, order.battleStartNum));
         recordLargestBattle(attacker, defender, casualties);
         applyTurnResultBattleHostilityEffects(attacker, defender, casualties);
         if (rolledCasualties > 0) {
@@ -3657,7 +3766,7 @@ public final class GameState {
                         CombatEventType.STRIKE_INTERCEPTED, attacker.id, defender.id,
                         city.index, carrier.definition.name, result.payloadName, 0,
                         counterName, -1, counterDefense.actionBuildingSlot,
-                        result.sourcePlaneIndex));
+                        result.sourcePlaneIndex, order.battleStartNum));
                 addMessage(defender, "Nation " + defender.id + " intercepted one ship payload.");
             } else {
                 casualties = populationChanges.addBattleCasualties(city,
@@ -3667,7 +3776,7 @@ public final class GameState {
                         result.payloadName, casualties,
                         hasMatchingDefense ? counterName : null, -1,
                         hasMatchingDefense ? counterDefense.actionBuildingSlot : -1,
-                        result.sourcePlaneIndex));
+                        result.sourcePlaneIndex, order.battleStartNum));
                 totalCasualties += casualties;
                 recordLargestBattle(attacker, defender, casualties);
                 // The source checks the un-clamped ship result before applying

@@ -445,12 +445,12 @@ public final class GameStateCombatEventTest {
         assertEquals(1, combined.get(2).shipPayloadIndex);
         assertEquals("bioload1", combined.get(1).payloadName);
         assertEquals("warhead1", combined.get(2).payloadName);
-        // Every plane shares its sortie's start. Global record cadence is separate.
-        int firstSortie = FlashBattleRoutes.carrierPlaneDelayTicks(0, 0);
-        int secondSortie = FlashBattleRoutes.carrierPlaneDelayTicks(1, 0);
-        assertTrue(secondSortie > firstSortie);
-        assertEquals(secondSortie, FlashBattleRoutes.carrierPlaneDelayTicks(2, 1));
-        assertEquals(secondSortie, FlashBattleRoutes.carrierPlaneDelayTicks(2, 2));
+        // Each resolved sortie retains one source record even though it has multiple planes.
+        int record = first.getLastTurnCombatEventsInSourcePresentationOrder().get(0).battleStartNum;
+        assertTrue(record > 0);
+        for (GameState.CombatEvent event : first.getLastTurnCombatEvents()) {
+            assertEquals(record, event.battleStartNum);
+        }
     }
 
     private static GameState resolvedHumanShipSortie(int payloadCount, long seed) {
