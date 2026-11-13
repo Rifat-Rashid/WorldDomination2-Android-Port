@@ -242,7 +242,7 @@ jobs:
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.persistence.PersonalBestStoreTest"'
           - id: resources-economy-tests
             check: Resources and mass media economy tests
-            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.normalResourcesAndMassMediaResolveOneTurn" --tests "com.example.worlddomination.game.simulation.GameStateTest.resourcesAndMassMediaAddTheirSourceHighscoreWeights" --tests "com.example.worlddomination.game.simulation.GameStateTest.resourceYieldUsesDifficultyDividerAndSourceRounding" --tests "com.example.worlddomination.game.simulation.GameStateTest.zeroHighscoreMultiplierDefaultsToOneLikeTheSource"'
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.normalResourcesAndMassMediaResolveOneTurn" --tests "com.example.worlddomination.game.simulation.GameStateTest.massMediaTurnKeepsSourceResourceSummaryWithoutInfluenceMessage" --tests "com.example.worlddomination.game.simulation.GameStateTest.resourcesAndMassMediaAddTheirSourceHighscoreWeights" --tests "com.example.worlddomination.game.simulation.GameStateTest.resourceYieldUsesDifficultyDividerAndSourceRounding" --tests "com.example.worlddomination.game.simulation.GameStateTest.zeroHighscoreMultiplierDefaultsToOneLikeTheSource"'
           - id: research-live-funds-score
             check: Source research score and RNG after lost live funds
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.ResearchScoreParityTest"'
