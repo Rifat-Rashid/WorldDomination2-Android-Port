@@ -27,6 +27,11 @@ public final class ScrollPaneState {
         }
     }
 
+    /** Source phone presses stop inertia without moving this panel. */
+    public void beginGesture() {
+        velocity = 0f;
+    }
+
     public void dragBy(float fingerDeltaY) {
         offset = clamp(offset - fingerDeltaY, 0f, limit);
         velocity = 0f;
