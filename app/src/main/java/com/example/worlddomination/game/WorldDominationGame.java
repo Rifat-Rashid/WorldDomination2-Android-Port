@@ -4232,6 +4232,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                     : cityRenderer.hitTest(x, y, mapBounds, game);
             if (address >= 0) {
                 int owner = address / BattlefieldCityLayout.CITIES_PER_PLAYER;
+                audio.play(OriginalAudio.Cue.UNIT_SELECT);
                 boolean chosen = sourceActionMenu.chooseCity(game, owner,
                         address % BattlefieldCityLayout.CITIES_PER_PLAYER);
                 if (chosen) {
@@ -4240,7 +4241,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                     modalOpen = !sourceActionMenu.isMapSelection();
                     String selected = sourceActionMenu.getSelectedEquipment();
                     selectedEquipment = selected == null ? "" : selected;
-                    audio.play(OriginalAudio.Cue.UNIT_SELECT);
                     if (modalOpen) audio.play(OriginalAudio.Cue.ACTION_OPEN);
                 }
                 sourceActionInstruction.onCityAttempt(owner,
