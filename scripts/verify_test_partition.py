@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Verify named Gradle filters against this run's complete executed JUnit suite."""
 import argparse
+import hashlib
 import json
 import re
 import shlex
@@ -30,6 +31,10 @@ def verify(directory, task, sha, run_id):
     reports = list(directory.rglob('TEST-*.xml'))
     if not reports:
         raise ValueError('No JUnit XML reports')
+    inventory = {report.relative_to(directory).as_posix():
+                 hashlib.sha256(report.read_bytes()).hexdigest() for report in reports}
+    if provenance.get('reports') != inventory:
+        raise ValueError('JUnit report inventory or content differs from the producer manifest')
     for report in reports:
         root = ET.parse(report).getroot()
         if root.tag not in ('testsuite', 'testsuites'):
@@ -41,6 +46,10 @@ def verify(directory, task, sha, run_id):
         report_cases = list(root.iter('testcase'))
         if not report_cases:
             raise ValueError(f'No actual test cases in {report}')
+        for suite in root.iter():
+            if suite.tag in ('testsuite', 'testsuites') and 'tests' in suite.attrib:
+                if int(suite.get('tests')) != len(list(suite.iter('testcase'))):
+                    raise ValueError('JUnit test count differs from actual test cases')
         for case in report_cases:
             if not case.get('classname') or not case.get('name'):
                 raise ValueError('Unnamed test case')
