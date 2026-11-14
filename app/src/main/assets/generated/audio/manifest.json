@@ -1,0 +1,65 @@
+{
+  "sourceSwfSha256": "fe60c4d8793a23e7ddd59ddcb406b5471540e28d64f7552d17308fbb269e6fe1",
+  "decoder": {
+    "pygameCe": "2.5.8",
+    "sdl": "2.32.10",
+    "mixer": [
+      22050,
+      -16,
+      1
+    ]
+  },
+  "format": {
+    "sampleRate": 22050,
+    "channels": 1,
+    "bitsPerSample": 16
+  },
+  "sounds": [
+    {
+      "sourceId": 90,
+      "originalAsset": "90_building_Anti rocket fire 4.wav.mp3.gz",
+      "originalCompressedSha256": "b9264c12c6c2f34258016ea009b5d35ce02a61d14acb5416a90a5c2864285726",
+      "mp3Sha256": "1e6cf34c59bb264a823751cdc7008ade0a576cc04dae154145d47edb8ac4b53c",
+      "decodedSamples": 31680,
+      "seekSamples": 1672,
+      "sourceSampleCount": 28938,
+      "repeatCount": 1,
+      "outputSamples": 28938,
+      "periodPcmSha256": "c3346b63f6d8dbcbb11718559880b1690ffcf034bf9dda5755b196c2d36aeb64",
+      "wavFile": "anti-rocket-fire.wav",
+      "wavBytes": 57920,
+      "wavSha256": "b8a72d9c1a20020081a5efc857cf2a4578069ffa3910536a2bfd8269d577fb91"
+    },
+    {
+      "sourceId": 91,
+      "originalAsset": "91_building_Anti air rotate.wav.mp3.gz",
+      "originalCompressedSha256": "fde9132d0d911cfa389ff0f0a14dd9e2222709b2e3d0723f08cc6ac4c4144aa6",
+      "mp3Sha256": "6720ea165043edff08086eff2583cf2e871a82e9beb2eb482d26857be9e681bc",
+      "decodedSamples": 46656,
+      "seekSamples": 1672,
+      "sourceSampleCount": 44119,
+      "repeatCount": 1,
+      "outputSamples": 44119,
+      "periodPcmSha256": "721221e3cc77a98254e87aaa98b2bbdf9ef3882f45ee5a3254a652c0e472ded6",
+      "wavFile": "anti-air-rotate.wav",
+      "wavBytes": 88282,
+      "wavSha256": "af2f59726158ef90bd325fe35e8cd53dc60bbfb8d9916074495955ce6d13cc05"
+    },
+    {
+      "sourceId": 94,
+      "originalAsset": "94_building_Anti air gun.wav.mp3.gz",
+      "originalCompressedSha256": "3bbf99b2f5834aa8a243425a1b728d9d31b5b38895bfde17f9f8b37fc4a60f8a",
+      "mp3Sha256": "907c14a00e834f034365bacc9cab52ad9fccbf6bacdec8259526269c8734b01c",
+      "decodedSamples": 3456,
+      "seekSamples": 1672,
+      "sourceSampleCount": 1643,
+      "repeatCount": 8,
+      "outputSamples": 13144,
+      "periodPcmSha256": "72fc294128c7ea07214fabffa893d94048d9b4a10e6e7a7ee067a9241ce6e8db",
+      "wavFile": "anti-air-gun-eight.wav",
+      "wavBytes": 26332,
+      "wavSha256": "37612101549338606cf0dc68bf2a1e53e83447d5568e67fee78d799072abf8c4"
+    }
+  ],
+  "limitation": "SDL PCM sample values are not proven bit-identical to Flash decoding."
+}

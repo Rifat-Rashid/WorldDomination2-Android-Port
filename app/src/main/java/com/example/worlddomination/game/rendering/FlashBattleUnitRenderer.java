@@ -1155,7 +1155,9 @@ public final class FlashBattleUnitRenderer {
         }
         float mapScale = BattlefieldCityLayout.sourceScale(mapBounds);
         for (FlashAntiDefenseTrackingAnimation animation : animations) {
-            if (!animation.isVisible()) {
+            // Source-driven carrier turrets are painted inside the physical
+            // action building; drawing this legacy overlay would duplicate it.
+            if (animation.isSourceDriven() || !animation.isVisible()) {
                 continue;
             }
             FlashBattleRoutes.Point position = animation.getBuildingPosition();

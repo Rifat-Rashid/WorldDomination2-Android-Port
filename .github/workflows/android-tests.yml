@@ -87,6 +87,12 @@ jobs:
       max-parallel: 6
       matrix:
         include:
+          - id: source-anti-defense-callbacks
+            check: Source defense callback cadence and host autoplay
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.SourceAntiDefensePlaybackTest"'
+          - id: source-anti-defense-audio
+            check: Source defense finite sound groups and lifecycle
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.audio.AntiDefenseAudioPlaybackTest"'
           - id: source-carrier-display-roles
             check: Source carrier body, tint, shadow, and retained poses
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.SourceCarrierRolePlaybackTest"'

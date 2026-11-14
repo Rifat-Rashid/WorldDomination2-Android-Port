@@ -30,6 +30,7 @@ import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.example.worlddomination.game.audio.OriginalAudio;
 import com.example.worlddomination.game.audio.AircraftAudioPlayback;
+import com.example.worlddomination.game.audio.AntiDefenseAudioPlayback;
 import com.example.worlddomination.game.assets.OriginalCityAssets;
 import com.example.worlddomination.game.assets.OriginalBattleDisplayAssets;
 import com.example.worlddomination.game.assets.OriginalFlashAnimationAssets;
@@ -49,6 +50,7 @@ import com.example.worlddomination.game.rendering.SourceSuicideDisplayDepths;
 import com.example.worlddomination.game.rendering.SourceRocketDisplayDepths;
 import com.example.worlddomination.game.rendering.SourceInterceptedAircraftDisplayDepths;
 import com.example.worlddomination.game.rendering.SourceCarrierPlaneDisplayDepths;
+import com.example.worlddomination.game.rendering.SourceCarrierAntiDefenseController;
 import com.example.worlddomination.game.rendering.SourceAircraftTrail;
 import com.example.worlddomination.game.rendering.SourceAircraftTrailDisplay;
 import com.example.worlddomination.game.rendering.SourceActionLabelMapping;
@@ -245,10 +247,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private final List<FlashCarrierPlaneAnimation> carrierPlaneAnimations = new ArrayList<>();
     private final List<SourceCarrierPlaneDisplayDepths> sourceCarrierPlaneBindings =
             new ArrayList<>();
-    private static final class DeferredCarrierDefense {
-        boolean attempted;
-        FlashAntiDefenseTrackingAnimation animation;
-    }
+    private final List<SourceCarrierAntiDefenseController> sourceCarrierAntiDefenseControllers =
+            new ArrayList<>();
     private final List<FlashStandalonePlaneAnimation> standalonePlaneAnimations = new ArrayList<>();
     private final java.util.Map<Object, AircraftAudioPlayback.Owner> aircraftAudioOwners =
             new java.util.IdentityHashMap<>();
@@ -772,6 +772,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         if (frameRandom != null && sourceFrameReady && frameRandom == battlePresentationRandom) {
             battleActionFrames.tickCapturedFrame();
             if (battleInterfaceFrames.isRunning()) battleInterfaceFrames.tick(frameRandom);
+            // MovieClipHost advances this shared child only after every Unit,
+            // city and action-building callback on the global source frame.
+            for (SourceCarrierAntiDefenseController defense : sourceCarrierAntiDefenseControllers)
+                defense.advanceHostFrame();
         }
         advanceOutcomeSequence();
     }
@@ -1230,6 +1234,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private void finishBattlePresentation() {
         audio.finishSatelliteAudio();
         audio.finishAircraftAudio();
+        audio.finishAntiDefenseAudio();
         battleRecordClock.finishBattle();
         battleInterfaceFrames.reset();
         sourceStoppedClips.reset();
@@ -1248,6 +1253,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         clearCarrierPlaneAnimations();
         clearStandalonePlaneAnimations();
         antiDefenseTrackingAnimations.clear();
+        clearSourceCarrierAntiDefenses();
         satelliteBattleAnimations.clear();
         satelliteFlightCuePlayed = false;
         pendingBattleAnimations.clear();
@@ -1311,6 +1317,38 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 defender.getReligionCode(), defenseType);
         antiDefenseTrackingAnimations.add(animation);
         return animation;
+    }
+
+    /** One source turret belongs to the defender's actual anti-air building. */
+    private SourceCarrierAntiDefenseController carrierDefenseFor(GameState.CombatEvent event,
+            FlashAntiDefenseTrackingAnimation.TargetLock sharedTargetLock) {
+        if (!"antiAir".equals(event.counterWeaponName)) return null;
+        for (SourceCarrierAntiDefenseController controller : sourceCarrierAntiDefenseControllers) {
+            if (controller.getDefenderPlayerId() != event.defenderPlayerId) continue;
+            if (controller.getActionBuildingSlot() != event.counterActionBuildingSlot)
+                throw new IllegalStateException("Source defender has two anti-air locations");
+            return controller;
+        }
+        FlashActionBuildingAnimation building = null;
+        for (FlashActionBuildingAnimation candidate : actionBuildingAnimations) {
+            if (candidate.playerId == event.defenderPlayerId
+                    && candidate.slot == event.counterActionBuildingSlot) {
+                building = candidate;
+                break;
+            }
+        }
+        SourceCarrierAntiDefenseController controller = new SourceCarrierAntiDefenseController(
+                event.defenderPlayerId, event.counterActionBuildingSlot,
+                game.getPlayerState(event.defenderPlayerId).getReligionCode(), building,
+                sharedTargetLock);
+        sourceCarrierAntiDefenseControllers.add(controller);
+        return controller;
+    }
+
+    private void clearSourceCarrierAntiDefenses() {
+        for (SourceCarrierAntiDefenseController controller : sourceCarrierAntiDefenseControllers)
+            controller.clear();
+        sourceCarrierAntiDefenseControllers.clear();
     }
 
     private static float sourceAudioPan(float sourceX) {
@@ -3800,6 +3838,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private void beginNewGameSetup() {
         audio.finishSatelliteAudio();
         audio.finishAircraftAudio();
+        audio.finishAntiDefenseAudio();
         GameSetup nextSetup = setup == null
                 ? new GameSetup(System.nanoTime()) : setup.createNextSetup();
         stopScoreCounterSound();
@@ -3839,6 +3878,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         clearCarrierPlaneAnimations();
         clearStandalonePlaneAnimations();
         antiDefenseTrackingAnimations.clear();
+        clearSourceCarrierAntiDefenses();
         satelliteBattleAnimations.clear();
         satelliteFlightCuePlayed = false;
         pendingBattleAnimations.clear();
@@ -4351,6 +4391,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 clearCarrierPlaneAnimations();
                 clearStandalonePlaneAnimations();
                 antiDefenseTrackingAnimations.clear();
+                clearSourceCarrierAntiDefenses();
+                audio.finishAntiDefenseAudio();
                 satelliteBattleAnimations.clear();
                 satelliteFlightCuePlayed = false;
                 pendingBattleAnimations.clear();
@@ -4984,6 +5026,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     private void confirmTurnAndPreparePlayback() {
         game.confirmTurn();
+        // A fresh isolated battle root has a fresh anti-defense child timeline.
+        audio.finishAntiDefenseAudio();
+        clearSourceCarrierAntiDefenses();
         // Canonical refresh seeks resolved city frames immediately. The fresh
         // battle root instead starts from the pre-casualty presentation snapshot.
         cityRenderer.beginBattle(game);
@@ -5094,30 +5139,25 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                         new SourceAircraftTrailDisplay(battlefieldDisplay,
                                 planeAnimation.getSourceTrail(), event.attackerPlayerId,
                                 precedingUnitParameter));
-                DeferredCarrierDefense defense = new DeferredCarrierDefense();
+                SourceCarrierAntiDefenseController defense = carrierDefenseFor(
+                        event, antiDefenseTargetLock);
+                SourceCarrierAntiDefenseController.UnitVisit defenseUnit = defense == null
+                        ? null : defense.register(planeAnimation,
+                            audio.createAntiDefenseOwner(AntiDefenseAudioPlayback.Type.AIR));
                 SourceCarrierPlaneDisplayDepths carrierDepths =
                         new SourceCarrierPlaneDisplayDepths(battlefieldDisplay,
                                 planeAnimation, precedingUnitParameter, sourceStoppedClips);
                 sourceCarrierPlaneBindings.add(carrierDepths);
                 sourceUnitPlayback.addConstructed(() -> {
+                    if (planeAnimation.isFinished()) return false;
+                    boolean bodyWasAttached = planeAnimation.getSourcePlayback().isBodyAttached();
                     boolean stop = advanceCarrierPlaneUnit(planeAnimation, event, carrierDepths);
-                    if (!stop) {
-                        // View elects the first active target in reverse Unit
-                        // visit order, including a carrier still waiting to lift off.
-                        if (!defense.attempted && planeAnimation.isVisible()) {
-                            defense.attempted = true;
-                            defense.animation = addAntiDefenseTrackingAnimation(
-                                    event, planeAnimation, antiDefenseTargetLock);
-                        }
-                        if (defense.animation != null) {
-                            advanceAntiDefenseUnit(defense.animation);
-                            if (planeAnimation.getSourcePlayback() != null) {
-                                FlashBattleRoutes.Point origin =
-                                        defense.animation.getBuildingPosition();
-                                planeAnimation.getSourcePlayback().applySourceAntiDirection(
-                                        origin.x, origin.y);
-                            }
-                        }
+                    if (!stop && defenseUnit != null) {
+                        defense.afterUnitVisit(defenseUnit,
+                                bodyWasAttached && !planeAnimation.getSourcePlayback()
+                                        .isBodyAttached());
+                        FlashAntiDefenseTrackingAnimation target = defense.takeNewTracker();
+                        if (target != null) antiDefenseTrackingAnimations.add(target);
                     }
                     return stop;
                 });
@@ -5699,6 +5739,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         clearCarrierPlaneAnimations();
         clearStandalonePlaneAnimations();
         antiDefenseTrackingAnimations.clear();
+        clearSourceCarrierAntiDefenses();
         satelliteBattleAnimations.clear();
         pendingBattleAnimations.clear();
         audio.dispose();

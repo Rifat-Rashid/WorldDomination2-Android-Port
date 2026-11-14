@@ -28,6 +28,8 @@ public final class FlashActionBuildingAnimation {
     private boolean selectionPlaying;
     private int flameCharacterId;
     private int flameFrameOneBased;
+    private int sourceAntiCharacterId;
+    private int sourceAntiFrameOneBased;
 
     public FlashActionBuildingAnimation(GameState.ActionBuildingEvent event) {
         this(event, null);
@@ -103,6 +105,9 @@ public final class FlashActionBuildingAnimation {
         if (symbolId == FACTORY_SMOKE_SYMBOL_ID) {
             return Math.min(factorySmokeFrame, frameCount - 1);
         }
+        if (symbolId == sourceAntiCharacterId && sourceAntiFrameOneBased > 0) {
+            return Math.min(sourceAntiFrameOneBased - 1, frameCount - 1);
+        }
         if (symbolId == flameCharacterId && flameFrameOneBased > 0) {
             return Math.min(flameFrameOneBased - 1, frameCount - 1);
         }
@@ -120,10 +125,24 @@ public final class FlashActionBuildingAnimation {
         flameFrameOneBased = 0;
     }
 
+    /** The carrier source turret is a child of this persistent building. */
+    void setSourceAntiFrame(int characterId, int oneBasedFrame) {
+        if (characterId <= 0 || oneBasedFrame <= 0)
+            throw new IllegalArgumentException("Invalid source anti frame");
+        sourceAntiCharacterId = characterId;
+        sourceAntiFrameOneBased = oneBasedFrame;
+    }
+
+    void clearSourceAntiFrame() {
+        sourceAntiCharacterId = 0;
+        sourceAntiFrameOneBased = 0;
+    }
+
     /** Autoplaying pump and research lights continue after their parent fade finishes. */
     public boolean isAnimating() {
         return !isFadeComplete() || "resources".equals(frameName) || "tech".equals(frameName)
-                || factorySmokePlaying || selectionPlaying || flameCharacterId != 0;
+                || factorySmokePlaying || selectionPlaying || flameCharacterId != 0
+                || sourceAntiCharacterId != 0;
     }
 
     public boolean isFadeComplete() {

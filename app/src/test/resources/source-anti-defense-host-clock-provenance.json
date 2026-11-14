@@ -1,0 +1,62 @@
+{
+  "scenario": "seed0 normal two rivals; legal 21-turn ship bioload intercept player1",
+  "sourceTraceSha256": "1359eedba0b1102e9f677e24f8265e697628b4638d6bec45376e236569023223",
+  "compactSha256": "4e2cb2b41cb71f8bd760248cbf82ed89fb0c07fc7fb2855e0854f753f5f8235e",
+  "sourceSha256": {
+    "wd2/generated/View.py": "2de8afd493f28e36c3a94afa96b80795d685b8b023b12dc9d9ed634692c3accf",
+    "wd2/generated/Unit.py": "bc54c0e6c46f4e33bbb20e786c755f93aaba5d3d7224b0120eeeccc81eef8539",
+    "wd2/movieclip_host.py": "a489c5f3b33a1fdac4448afd07f4ca63aa32d676440dc573805ab11fb4002765",
+    "wd2/presentation_clock.py": "5f2564ca11a6b568f55478fe861bac7402e31c3cae2888e230b9ca86ef57ff08",
+    "wd2/battle_playback.py": "9aa8c82295b1977897cea2a60afbb6569e0d31e14bb9725267e422c7b9167901",
+    "wd2/setup_menu.py": "5633326451e768a84a14bde04e452043ba7fac2617a4c71b7b36dcd0495f0c4a"
+  },
+  "callbackCount": 155,
+  "stepCount": 483,
+  "turretSymbol": 5553,
+  "authoredNestedTimelines": {
+    "mus": {
+      "symbol": 5407,
+      "frames": 55,
+      "actionFrames": [
+        1
+      ]
+    },
+    "jew": {
+      "symbol": 4422,
+      "frames": 50,
+      "actionFrames": [
+        1
+      ]
+    },
+    "com": {
+      "symbol": 5480,
+      "frames": 50,
+      "actionFrames": [
+        1
+      ]
+    },
+    "chr": {
+      "symbol": 5553,
+      "frames": 50,
+      "actionFrames": [
+        1
+      ]
+    },
+    "bhu": {
+      "symbol": 5624,
+      "frames": 50,
+      "actionFrames": [
+        1
+      ]
+    }
+  },
+  "authoredMetadataSha256": "7213f06fac4e887050ad89e0d3c9a67f47789096d559af8e08333991f7616629",
+  "frameOneStopScriptSha256": {
+    "mus": "3271a793e3f9600314c6b0facc05023c4f3ed09c116d452966200a5d04735655",
+    "jew": "3271a793e3f9600314c6b0facc05023c4f3ed09c116d452966200a5d04735655",
+    "com": "3271a793e3f9600314c6b0facc05023c4f3ed09c116d452966200a5d04735655",
+    "chr": "3271a793e3f9600314c6b0facc05023c4f3ed09c116d452966200a5d04735655",
+    "bhu": "3271a793e3f9600314c6b0facc05023c4f3ed09c116d452966200a5d04735655"
+  },
+  "note": "Observer-safe natural updateAnti calls; raw fields only, no computed getters"
+}
