@@ -280,6 +280,14 @@ public final class SourceCarrierPlanePlayback {
      */
     public void applySourceAntiDirection(double antiX, double antiY) {
         if (!activeAndMoving || removed) return;
+        applySourceAntiDirectionAfterViewVisit(antiX, antiY);
+    }
+
+    /** The visit which splices this Unit still executes View's generic air block.
+     * Only the controller holding that actual visit may update a removed Unit.
+     */
+    void applySourceAntiDirectionAfterViewVisit(double antiX, double antiY) {
+        if (!activeAndMoving) return;
         // ship_plane has anti_type "air". View also has a ship-specific
         // updateAnti call under 400 pixels, but its generic air callback runs
         // at any distance. Both assign the same stored raw bearing.

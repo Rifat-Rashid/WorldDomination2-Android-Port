@@ -51,6 +51,9 @@ public final class FlashAntiDefenseTrackingAnimation {
     private final DefenseType defenseType;
     private final int gunSoundCooldownDurationTicks;
     private final FlashBattleRoutes.Point buildingPosition;
+    private final boolean sourceDriven;
+    private final SourceAntiDefensePlayback sourcePlayback;
+    private final SourceAntiDefensePlayback.UnitState sourceUnitState;
     private int countdownTicks = INITIAL_COUNTDOWN_TICKS;
     private int direction = 1;
     private int antiOffset;
@@ -70,9 +73,29 @@ public final class FlashAntiDefenseTrackingAnimation {
     public FlashAntiDefenseTrackingAnimation(Target target, int defenderPlayerId,
                                              int actionBuildingSlot, String religionCode,
                                              DefenseType defenseType) {
+        this(target, defenderPlayerId, actionBuildingSlot, religionCode,
+                defenseType, false, null, null);
+    }
+
+    /** The source clock paints through its action building; retain this target handle. */
+    static FlashAntiDefenseTrackingAnimation sourceDrivenCarrier(
+            Target target, int defenderPlayerId, int actionBuildingSlot,
+            String religionCode, SourceAntiDefensePlayback playback,
+            SourceAntiDefensePlayback.UnitState unitState) {
+        return new FlashAntiDefenseTrackingAnimation(target, defenderPlayerId,
+                actionBuildingSlot, religionCode, DefenseType.AIR, true,
+                playback, unitState);
+    }
+
+    private FlashAntiDefenseTrackingAnimation(Target target, int defenderPlayerId,
+                                              int actionBuildingSlot, String religionCode,
+                                              DefenseType defenseType, boolean sourceDriven,
+                                              SourceAntiDefensePlayback playback,
+                                              SourceAntiDefensePlayback.UnitState unitState) {
         if (target == null || target.targetPlayerId() != defenderPlayerId
                 || actionBuildingSlot < 1 || actionBuildingSlot > 2
-                || !hasReligionFrame(religionCode) || defenseType == null) {
+                || !hasReligionFrame(religionCode) || defenseType == null
+                || sourceDriven && (playback == null || unitState == null)) {
             throw new IllegalArgumentException("Invalid anti-defense tracking target");
         }
         validatePlayer(defenderPlayerId);
@@ -81,6 +104,9 @@ public final class FlashAntiDefenseTrackingAnimation {
         this.actionBuildingSlot = actionBuildingSlot;
         this.religionCode = religionCode;
         this.defenseType = defenseType;
+        this.sourceDriven = sourceDriven;
+        sourcePlayback = playback;
+        sourceUnitState = unitState;
         gunSoundCooldownDurationTicks = defenseType == DefenseType.ROCKET
                 ? ROCKET_GUN_SOUND_COOLDOWN_TICKS : AIR_GUN_SOUND_COOLDOWN_TICKS;
         buildingPosition = FlashBattleRoutes.actionBuildingPosition(
@@ -89,6 +115,7 @@ public final class FlashAntiDefenseTrackingAnimation {
 
     /** Advances one 24 Hz source update, preserving the original range and fade cadence. */
     public void tick() {
+        if (sourceDriven) return;
         rotationCuePending = false;
         gunCuePending = false;
         rotationSoundCooldownTicks = Math.max(0, rotationSoundCooldownTicks - 1);
@@ -212,29 +239,35 @@ public final class FlashAntiDefenseTrackingAnimation {
     }
 
     public int getCountdownTicks() {
-        return countdownTicks;
+        return sourceDriven ? sourceUnitState.getCountdown() : countdownTicks;
     }
 
     public int getDirection() {
-        return direction;
+        if (!sourceDriven) return direction;
+        int degrees = sourceUnitState.getRawBearingDegrees();
+        return (int) Math.round(((degrees / 360d * 100d) / 100d) * ROTATION_DIRECTIONS);
     }
 
     /** Zero-based child timeline frame; source alternates between the direction's two frames. */
     public int getFrameIndex() {
-        return frameIndex;
+        return sourceDriven ? sourcePlayback.getTurretFrame() - 1 : frameIndex;
     }
 
     public float getAlpha() {
-        return alphaPercent / 100f;
+        return sourceDriven ? (float) (sourcePlayback.getTurretAlphaPercent() / 100d)
+                : alphaPercent / 100f;
     }
 
     public boolean isVisible() {
-        return !finished && target.isVisible() && alphaPercent > 0f;
+        return sourceDriven ? sourcePlayback.getTurretAlphaPercent() > 0d
+                : !finished && target.isVisible() && alphaPercent > 0f;
     }
 
     public boolean isFinished() {
         return finished;
     }
+
+    public boolean isSourceDriven() { return sourceDriven; }
 
     public boolean takeRotationCue() {
         boolean pending = rotationCuePending;

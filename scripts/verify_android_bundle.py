@@ -9,6 +9,24 @@ from zipfile import ZipFile, BadZipFile
 
 ANDROID = "{http://schemas.android.com/apk/res/android}"
 ABIS = ("arm64-v8a", "armeabi-v7a", "x86", "x86_64")
+GENERATED_AUDIO_FILES = (
+    "anti-air-gun-eight.wav", "anti-air-rotate.wav",
+    "anti-rocket-fire.wav", "manifest.json",
+)
+REQUIRED_UI = ("terrain/manifest.json", "terrain/ocean.png", "battle-terrain.png", "neutral-button.png", "resource-menu-hd.png", "message-well.png",
+               "action-tubes.png", "technology-hd/technology-0.png",
+               "confirm-turn.png", "turn-announcements.png", "turn-announcements.json",
+               "action-menus/menus.json", "action-menus/diplomacy.png",
+               "action-menus/propaganda2.png", "action-menus/defense-antiAir.png",
+               "action-menus/attack2-soldier1.png", "action-menus/preAttack-rocket1.png",
+               "action-menus/preAttack3-warhead.png", "action-menus/diplomacyOffer.png",
+               "action-menus/religion-chr.png", "action-menus/media-opinion.png",
+               "action-menus/skip_action.png", "action-menus/production_error.png",
+               "action-menus/research_error-chr.png", "action-menus/research_error-mus.png",
+               "action-menus/research_error-bhu.png", "action-menus/research_error-com.png",
+               "action-menus/research_error-jew.png",
+               "stock-controls/counter.png", "stock-controls/unavailable.png",
+               "stock-controls/eligible.png", "stock-controls/selected.png")
 
 
 def verify_elf64(data):
@@ -69,21 +87,17 @@ def verify_bundle(path, audio_directory, require_upload=False):
             name = f"base/assets/original/runtime/audio/{source.name[:-3]}"
             if name not in entries:
                 raise ValueError(f"Missing original audio: {name}")
-        required_ui = ("terrain/manifest.json", "terrain/ocean.png", "battle-terrain.png", "neutral-button.png", "resource-menu-hd.png", "message-well.png",
-                       "action-tubes.png", "technology-hd/technology-0.png",
-                       "confirm-turn.png", "turn-announcements.png", "turn-announcements.json",
-                       "action-menus/menus.json", "action-menus/diplomacy.png",
-                       "action-menus/propaganda2.png", "action-menus/defense-antiAir.png",
-                       "action-menus/attack2-soldier1.png", "action-menus/preAttack-rocket1.png",
-                       "action-menus/preAttack3-warhead.png", "action-menus/diplomacyOffer.png",
-                       "action-menus/religion-chr.png", "action-menus/media-opinion.png",
-                       "action-menus/skip_action.png", "action-menus/production_error.png",
-                       "action-menus/research_error-chr.png", "action-menus/research_error-mus.png",
-                       "action-menus/research_error-bhu.png", "action-menus/research_error-com.png",
-                       "action-menus/research_error-jew.png",
-                       "stock-controls/counter.png", "stock-controls/unavailable.png",
-                       "stock-controls/eligible.png", "stock-controls/selected.png")
-        for image in required_ui:
+        generated_directory = audio_directory.parents[2] / "generated/audio"
+        for filename in GENERATED_AUDIO_FILES:
+            source = generated_directory / filename
+            if not source.is_file():
+                raise ValueError(f"Missing generated audio source: {source}")
+            name = f"base/assets/generated/audio/{filename}"
+            if name not in entries:
+                raise ValueError(f"Missing generated audio from bundle: {name}")
+            if bundle.read(name) != source.read_bytes():
+                raise ValueError(f"Generated audio differs from source: {name}")
+        for image in REQUIRED_UI:
             name = "base/assets/original/ui/" + image
             if name not in entries:
                 raise ValueError(f"Latest UI artwork missing from beta: {image}")
@@ -116,7 +130,7 @@ def main():
     except (ValueError, OSError, BadZipFile, ET.ParseError, struct.error) as error:
         print(f"Release validation failed: {error}", file=sys.stderr)
         return 1
-    print("Verified release manifest, latest UI, original audio, four ABIs, and 16 KB ELF alignment")
+    print("Verified release manifest, latest UI, original and generated audio, four ABIs, and 16 KB ELF alignment")
     return 0
 
 

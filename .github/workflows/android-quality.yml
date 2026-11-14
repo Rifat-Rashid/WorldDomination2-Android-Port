@@ -10,6 +10,17 @@ permissions:
   contents: read
 
 jobs:
+  anti-defense-audio-assets:
+    name: Source defense sample bounds and finite WAV integrity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+      - name: Verify original MP3 hashes and repeated PCM samples
+        run: python3 -B -m unittest scripts.tests.test_prepare_anti_defense_audio -v
+
   lint:
     name: Android lint
     runs-on: ubuntu-latest

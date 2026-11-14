@@ -82,6 +82,8 @@ public final class OriginalAudio {
     private final Map<Cue, Sound> sounds = new EnumMap<>(Cue.class);
     private final SatelliteAudioPlayback satellitePlayback;
     private final AircraftAudioPlayback aircraftPlayback;
+    private final AntiDefenseAudioPlayback antiDefensePlayback = new AntiDefenseAudioPlayback(
+            this::loadAntiDefenseMusic, EFFECT_VOLUME, OriginalAudio::dispatchAircraftResume);
     private Music theme;
     private Cue ambientCue;
     private long ambientSoundId = -1L;
@@ -180,6 +182,7 @@ public final class OriginalAudio {
         // completion callbacks. New laser starts remain gated by play().
         satellitePlayback.setMuted(!soundEnabled);
         aircraftPlayback.setMuted(!soundEnabled);
+        antiDefensePlayback.setMuted(!soundEnabled);
         if (!soundEnabled) {
             for (Sound sound : sounds.values()) {
                 sound.stop();
@@ -292,6 +295,7 @@ public final class OriginalAudio {
     public void pause() {
         satellitePlayback.pause();
         aircraftPlayback.pause();
+        antiDefensePlayback.pause();
         resumeMusicAfterPause = musicEnabled && theme != null && theme.isPlaying();
         if (resumeMusicAfterPause) {
             theme.pause();
@@ -304,6 +308,7 @@ public final class OriginalAudio {
     public void resume() {
         satellitePlayback.resume();
         aircraftPlayback.resume();
+        antiDefensePlayback.resume();
         if (resumeMusicAfterPause && musicEnabled && theme != null) {
             theme.play();
         }
@@ -318,6 +323,7 @@ public final class OriginalAudio {
     public void dispose() {
         satellitePlayback.dispose();
         aircraftPlayback.dispose();
+        antiDefensePlayback.dispose();
         if (theme != null) {
             theme.dispose();
             theme = null;
@@ -350,6 +356,25 @@ public final class OriginalAudio {
 
     /** BattlePlayback.finish closes every surviving Unit's sound and pending callback. */
     public void finishAircraftAudio() { aircraftPlayback.finish(); }
+
+    /** Each source Unit owns separate rotation and finite firing sound groups. */
+    public AntiDefenseAudioPlayback.Owner createAntiDefenseOwner(AntiDefenseAudioPlayback.Type type) {
+        antiDefensePlayback.setMuted(!soundEnabled);
+        return antiDefensePlayback.createOwner(type);
+    }
+
+    public void finishAntiDefenseAudio() { antiDefensePlayback.finish(); }
+
+    /** SWF sample bounds and finite repeat counts are baked before packaging. */
+    public static String antiDefenseMusicPath(Cue cue, int repeats) {
+        if (cue == Cue.ANTI_AIR_GUN && repeats == 8)
+            return "generated/audio/anti-air-gun-eight.wav";
+        if (cue == Cue.ANTI_AIR_ROTATE && repeats == 1)
+            return "generated/audio/anti-air-rotate.wav";
+        if (cue == Cue.ANTI_ROCKET_FIRE && repeats == 1)
+            return "generated/audio/anti-rocket-fire.wav";
+        throw new IllegalArgumentException("Unsupported source anti-defense sound group");
+    }
 
     /** Presenter_interface.soundAction('religion') chooses one of four cues. */
     public static Cue massMediaRevealCue(int variant) {
@@ -492,6 +517,17 @@ public final class OriginalAudio {
             Sound sound = Gdx.audio.newSound(file);
             sounds.put(cue, sound);
             return sound;
+        } catch (RuntimeException exception) {
+            logFailure(cue, exception);
+            return null;
+        }
+    }
+
+    private Music loadAntiDefenseMusic(Cue cue, int repeats) {
+        String path = antiDefenseMusicPath(cue, repeats);
+        if (Gdx.audio == null || Gdx.files == null) return null;
+        try {
+            return Gdx.audio.newMusic(Gdx.files.internal(path));
         } catch (RuntimeException exception) {
             logFailure(cue, exception);
             return null;

@@ -15,6 +15,26 @@ import static org.junit.Assert.assertTrue;
 
 public final class OriginalAudioTest {
     @Test
+    public void sourceAntiDefenseGroupsUsePretrimmedFiniteWavs() {
+        assertEquals("generated/audio/anti-air-gun-eight.wav",
+                OriginalAudio.antiDefenseMusicPath(OriginalAudio.Cue.ANTI_AIR_GUN, 8));
+        assertEquals("generated/audio/anti-air-rotate.wav",
+                OriginalAudio.antiDefenseMusicPath(OriginalAudio.Cue.ANTI_AIR_ROTATE, 1));
+        assertEquals("generated/audio/anti-rocket-fire.wav",
+                OriginalAudio.antiDefenseMusicPath(OriginalAudio.Cue.ANTI_ROCKET_FIRE, 1));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void sourceAntiDefenseRejectsAnUntrimmedSingleAirGunRequest() {
+        OriginalAudio.antiDefenseMusicPath(OriginalAudio.Cue.ANTI_AIR_GUN, 1);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void sourceAntiDefenseRejectsUnrelatedSoundGroups() {
+        OriginalAudio.antiDefenseMusicPath(OriginalAudio.Cue.FIGHTER_FLIGHT, 1);
+    }
+
+    @Test
     public void satelliteCompletionUsesTheRecoveredAttackSound() {
         assertEquals("original/runtime/audio/32_Sattelite attack.wav.mp3",
                 OriginalAudio.internalPath(OriginalAudio.Cue.SATELLITE_ATTACK));
