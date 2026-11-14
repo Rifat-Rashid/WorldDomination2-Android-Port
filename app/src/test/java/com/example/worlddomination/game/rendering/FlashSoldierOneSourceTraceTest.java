@@ -281,10 +281,19 @@ public final class FlashSoldierOneSourceTraceTest {
                         row.linkage, actual.linkage);
             }
             if (row.hasPosition) {
+                // The compact captures record Unit.curX/Y. The new depth
+                // oracle separately records MC._x/y: at construction only,
+                // the boat's logical route start and painted origin differ.
                 assertEquals("x actor " + actor + " tick " + tick,
-                        row.x, actual.sourceX, 0.0001f);
+                        row.x, actor == 0 ? animation.getBoatUnitSourceX() : actual.sourceX,
+                        0.0001f);
                 assertEquals("y actor " + actor + " tick " + tick,
-                        row.y, actual.sourceY, 0.0001f);
+                        row.y, actor == 0 ? animation.getBoatUnitSourceY() : actual.sourceY,
+                        0.0001f);
+                if (actor == 0 && tick == 0) {
+                    assertEquals("initial painted boat X", 0f, actual.sourceX, 0f);
+                    assertEquals("initial painted boat Y", 0f, actual.sourceY, 0f);
+                }
             }
         }
     }

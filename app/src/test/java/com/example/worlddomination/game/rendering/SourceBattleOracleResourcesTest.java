@@ -12,6 +12,32 @@ import static org.junit.Assert.*;
 
 /** Reference captures must survive checkout unchanged, independently of replay code. */
 public final class SourceBattleOracleResourcesTest {
+    @Test public void infantryCaptureRetainsItsRecordedSourceHash() throws Exception {
+        JsonValue source = json("source-infantry-depths-provenance.json");
+        assertEquals(json("source-apache-depths-provenance.json").getString("sourceSwfSha256"),
+                source.getString("sourceSwfSha256"));
+        assertEquals(442, source.getInt("lastSourceTick"));
+        assertEquals(5316, source.getInt("actorRoleRows"));
+        assertEquals(122, source.getInt("authoredBattleChildren"));
+        assertEquals(137, source.getInt("preUnitBattleChildren"));
+        assertEquals(0, source.getInt("sourcePoseComparisonMismatches"));
+        assertEquals(1772, source.getInt("sourcePoseComparisonRows"));
+        assertEquals(source.getString("csvSha256"),
+                sha256(bytes("source-infantry-depths-2.csv")));
+    }
+
+    @Test public void fourOpponentInfantryCaptureRetainsItsRecordedSourceHash() throws Exception {
+        JsonValue source = json("source-infantry-depths-4-provenance.json");
+        assertEquals(json("source-infantry-depths-provenance.json").getString("sourceSwfSha256"),
+                source.getString("sourceSwfSha256"));
+        assertEquals(648, source.getInt("lastSourceTick"));
+        assertEquals(7788, source.getInt("actorRoleRows"));
+        assertEquals(122, source.getInt("authoredBattleChildren"));
+        assertEquals(147, source.getInt("preUnitBattleChildren"));
+        assertEquals(source.getString("csvSha256"),
+                sha256(bytes("source-infantry-depths-4.csv")));
+    }
+
     @Test public void depthCapturesRetainTheirRecordedSourceHashes() throws Exception {
         JsonValue source = json("source-apache-depths-provenance.json");
         for (String opponents : new String[]{"2", "4"}) {

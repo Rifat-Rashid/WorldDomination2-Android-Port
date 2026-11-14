@@ -26,6 +26,9 @@ public final class SourceBattleUnitAllocationTest {
         BattlefieldDisplayState state = state(2);
         SourceBattleUnitAllocation allocation = new SourceBattleUnitAllocation(state);
         assertEquals(0, allocation.reserveBeforeEvent(direct("soldier1", -1)));
+        assertEquals("physical clips are installed after route construction", 22509,
+                state.nextDepth());
+        new SourceInfantryDisplayDepths(state, infantryAnimation(), 0);
         for (int unit = 1; unit <= 4; unit++) {
             int first = 22509 + (unit - 1) * 3;
             occupied(state, first, "unit" + unit);
@@ -164,6 +167,7 @@ public final class SourceBattleUnitAllocationTest {
         occupied(second, 800026, "unit5");
         occupied(second, 800029, "targetDotunit5");
         assertEquals(25, after.reserveBeforeEvent(direct("soldier1", -1)));
+        new SourceInfantryDisplayDepths(second, infantryAnimation(), 25);
         occupied(second, 800030, "unit6");
         occupied(second, 800041, "targetDotunit9");
         assertEquals(800042, second.nextDepth());
@@ -251,6 +255,15 @@ public final class SourceBattleUnitAllocationTest {
         FlashBattleRoutes.ApacheMarineAttack route = FlashBattleRoutes.createSoldierTwoAttack(
                 0, 1, 0, 1, points, new ReferenceRandom(2026L));
         return new FlashApacheMarineAnimation(route, new ReferenceRandom(42L), null, 0);
+    }
+
+    private static FlashSoldierOneAnimation infantryAnimation() throws Exception {
+        String anchors = new String(Files.readAllBytes(projectAsset(
+                "original/runtime/battle_anchors.json")), StandardCharsets.UTF_8);
+        Map<String, FlashBattleRoutes.Point> points = FlashBattleRoutes.parseAnchors(anchors);
+        FlashBattleRoutes.SoldierOneAttack route = FlashBattleRoutes.createSoldierOneAttack(
+                0, 1, 0, points, new ReferenceRandom(2026L));
+        return new FlashSoldierOneAnimation(route, new ReferenceRandom(42L), null, 0);
     }
 
     private static FlashAnimationTimeline.Frame battleFrame() throws Exception {

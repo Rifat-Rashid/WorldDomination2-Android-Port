@@ -19,7 +19,8 @@ public final class SourceBattleUnitAllocation {
             // after route construction, before the next source record is visited.
             parameter += 20;
         } else if (FlashBattleRoutes.supports(event)) {
-            for (int i = 0; i < 4; i++) reserve(false, true, false, 0, false);
+            // Body/tint/dot handles are installed by SourceInfantryDisplayDepths.
+            parameter += 20;
         } else if (FlashBattleRoutes.supportsChinookTank(event)) {
             reserve(false, false, true, 0, false); // tankTop at param_depth.
             // Native playback resolves the source tank_noShade typo to the

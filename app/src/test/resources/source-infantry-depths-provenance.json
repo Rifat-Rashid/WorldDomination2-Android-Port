@@ -1,0 +1,16 @@
+{
+  "scenario": "seed0 normal two selected opponents; soldier1 attack player1 city0 + resources",
+  "tickDefinition": "tick0 post-btn46; tickN after N BattlePlayback.step calls",
+  "lastSourceTick": 442,
+  "sourceSwfSha256": "fe60c4d8793a23e7ddd59ddcb406b5471540e28d64f7552d17308fbb269e6fe1",
+  "sourceUnitAsSha256": "7e765e9d5bf72eb0b24b3163f0faed627cc996c4e9bd4b7075ab962d6623d1ba",
+  "sourceViewAsSha256": "205221608f0bb54e326cceb12f0fc92920da714b4a8daf7dce933fcd6df25f40",
+  "sourceBattleAsSha256": "1ca2031c0519d606889403f72b713eb657bde3ace742ae46fd9e73651a0bd3c5",
+  "sourceGeneratorSha256": "96239076523db676d212831dea77237adf8806f68d8186415f8aaac6d78d171c",
+  "csvSha256": "dd345fc47adf613fc9cd8d9bbe22df2ff2e9e32060de9addcd71a31d5b60a22e",
+  "actorRoleRows": 5316,
+  "authoredBattleChildren": 122,
+  "preUnitBattleChildren": 137,
+  "sourcePoseComparisonRows": 1772,
+  "sourcePoseComparisonMismatches": 0
+}
