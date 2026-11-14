@@ -27,6 +27,7 @@ public final class FlashStandalonePlaneAnimation
         public float scale;
         public float routeProgress;
         public int sourceFrame;
+        public int sourceTintFrame;
         public boolean visible;
     }
 
@@ -124,15 +125,14 @@ public final class FlashStandalonePlaneAnimation
                                          String impactLinkage, OriginalAudio.Cue impactCue,
                                          ReferenceRandom presentationRandom) {
         this(route, playerColor, delayTicks, impactLinkage, impactCue);
-        if (!pairedTrail) {
-            sourceTrail = new SourceAircraftTrail(
-                    SourceAircraftTrail.Origin.PREVIOUS_UNIT_POSITION, presentationRandom);
-            sourcePlayback = new SourceAircraftPlayback(route, sourceTrail);
-            actor.sourceX = 0f;
-            actor.sourceY = 0f;
-            actor.alpha = 0f;
-            actor.visible = true;
-        }
+        sourceTrail = new SourceAircraftTrail(pairedTrail
+                ? SourceAircraftTrail.Origin.PAIRED_PLANE
+                : SourceAircraftTrail.Origin.PREVIOUS_UNIT_POSITION, presentationRandom);
+        sourcePlayback = new SourceAircraftPlayback(route, sourceTrail);
+        actor.sourceX = 0f;
+        actor.sourceY = 0f;
+        actor.alpha = 0f;
+        actor.visible = true;
     }
 
     public SourceAircraftTrail getSourceTrail() { return sourceTrail; }
@@ -152,6 +152,7 @@ public final class FlashStandalonePlaneAnimation
         actor.scale = (float) (sourcePlayback.getScalePercent() / 100d);
         actor.shadowYOffset = (float) sourcePlayback.getShadowYOffset();
         actor.sourceFrame = Math.max(0, sourcePlayback.getFrame() - 1);
+        actor.sourceTintFrame = Math.max(0, sourcePlayback.getTintFrame() - 1);
         actor.visible = sourcePlayback.isBodyAttached();
         distanceTravelled += distance(priorRenderX, priorRenderY,
                 actor.sourceX, actor.sourceY);
@@ -505,7 +506,8 @@ public final class FlashStandalonePlaneAnimation
 
     @Override
     public boolean isVisible() {
-        return actor.visible;
+        // An attached waiting clip cannot acquire a defense target lock yet.
+        return actor.visible && (sourcePlayback == null || sourcePlayback.isStarted());
     }
 
     public FlashColorTransform getTint() {

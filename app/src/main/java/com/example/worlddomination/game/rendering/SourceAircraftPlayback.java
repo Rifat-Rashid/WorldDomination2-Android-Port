@@ -1,6 +1,6 @@
 package com.example.worlddomination.game.rendering;
 
-/** Source Unit/View visit order for a standalone plane001 strike. */
+/** Source Unit/View visit order shared by standalone plane001/plane002 strikes. */
 public final class SourceAircraftPlayback {
     private static final double STEP = 12d;
     private static final double RANGE = 40d;
@@ -28,7 +28,9 @@ public final class SourceAircraftPlayback {
     private double targetY;
     private double adjacentSide;
     private double oppositeSide;
-    private double angle;
+    // View's waiting direction calculation is undefined until the first move.
+    // Paired smoke is born before that first move's direction publication.
+    private double angle = Double.NaN;
     private double alpha;
     private double scale = 50d;
     private double scaleMatrix = .5d;
@@ -38,6 +40,7 @@ public final class SourceAircraftPlayback {
     private double circularCenterX;
     private double circularCenterY;
     private int frame = 1;
+    private int tintFrame = 1;
     private int currentWaypoint;
     private int activeFrames;
     private int freeFlightCount;
@@ -64,7 +67,8 @@ public final class SourceAircraftPlayback {
     /** The caller gates visits with the source battle record clock. */
     public SourceAircraftPlayback(FlashBattleRoutes.StandalonePlaneStrike route,
                                   SourceAircraftTrail trail) {
-        if (route == null || !"plane001".equals(route.linkage))
+        if (route == null || !("plane001".equals(route.linkage)
+                || "plane002".equals(route.linkage)))
             throw new IllegalArgumentException("A plane001 route is required");
         this.route = route;
         this.trail = trail;
@@ -81,7 +85,11 @@ public final class SourceAircraftPlayback {
 
     /** MovieClipHost autoplays the invisible body while View has not visited it. */
     public void presentWaitingFrame() {
-        if (!started && !removed) frame = frame % 24 + 1;
+        if (!started && !removed) {
+            // The tint's callback copies the body before the latter autoplays.
+            tintFrame = frame;
+            frame = frame % 24 + 1;
+        }
     }
 
     /** One eligible View visit, including Unit.moveUnit and subsequent display publication. */
@@ -90,7 +98,8 @@ public final class SourceAircraftPlayback {
         if (!started) started = true;
         if ("stop".equals(action)) {
             removed = true;
-            return;
+            // View splices the wrapper, then still visits this retained Unit
+            // once. Its final movement and MovieClip publication are observable.
         }
         // View.f_37 splices a dead plane before this visit's moveUnit, then
         // continues through generic display publication for one final step.
@@ -174,6 +183,8 @@ public final class SourceAircraftPlayback {
         if ("plane_circular_flight".equals(action)) circularFrames++;
         if (!"plane_circular_flight".equals(action) || circularFrames > 3)
             updateDirectionFrame();
+        // View publishes the chosen direction to tintMC after an eligible visit.
+        tintFrame = frame;
     }
 
     private void setStep() {
@@ -272,6 +283,12 @@ public final class SourceAircraftPlayback {
     public double getScalePercent() { return scale; }
     public double getShadowYOffset() { return shadowYOffset; }
     public int getFrame() { return frame; }
+    public int getTintFrame() { return tintFrame; }
+    /** View.updateAnti mutates Unit.angle after body/tint publication, not their frames. */
+    public void applySourceAntiDirection(double antiX, double antiY) {
+        if (!started) return;
+        angle = Math.round(Math.atan2(antiY - y, x - antiX) / Math.PI * 180d) + 181d;
+    }
     public int getSourceFrame() { return frame; }
     public int getActiveFrames() { return activeFrames; }
     public int getCurrentWaypoint() { return currentWaypoint; }

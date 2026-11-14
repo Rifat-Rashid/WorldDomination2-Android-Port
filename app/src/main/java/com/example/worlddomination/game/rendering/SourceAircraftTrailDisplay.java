@@ -20,15 +20,24 @@ public final class SourceAircraftTrailDisplay {
     }
 
     public void afterUnitFrame() {
-        for (int slot = 0; slot < trail.getSlotCount(); slot++) {
-            if (trail.isCreated(slot) && entries[slot] == null) {
-                int depth = display.nextDepth();
-                trail.setDepth(slot, depth);
-                entries[slot] = display.attach(BattlefieldDisplayState.Kind.EFFECT,
-                        slot, unitName + "trail" + slot, this, depth);
+        int groupSize = trail.isPaired() ? 2 : 1;
+        for (int slot = 0; slot < trail.getSlotCount(); slot += groupSize) {
+            // Paired children both attach before either can expire. Otherwise
+            // the right child could wrongly reuse an immediately removed left depth.
+            for (int member = slot; member < slot + groupSize; member++) attachBorn(member);
+            for (int member = slot; member < slot + groupSize; member++) {
+                if (!trail.isAttached(member) && entries[member] != null)
+                    display.remove(entries[member]);
             }
-            if (!trail.isAttached(slot) && entries[slot] != null)
-                display.remove(entries[slot]);
+        }
+    }
+
+    private void attachBorn(int slot) {
+        if (trail.isCreated(slot) && entries[slot] == null) {
+            int depth = display.nextDepth();
+            trail.setDepth(slot, depth);
+            entries[slot] = display.attach(BattlefieldDisplayState.Kind.EFFECT,
+                    slot, unitName + trail.getClipNameSuffix(slot), this, depth);
         }
     }
 }
