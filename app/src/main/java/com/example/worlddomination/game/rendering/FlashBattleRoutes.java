@@ -784,13 +784,14 @@ public final class FlashBattleRoutes {
         Point actionBuilding = actionBuildingPosition(attackerPlayerId, actionBuildingSlot);
         // View.showActionBuildingFromObj stores heliStart at (buildingX - 15, buildingY + 25).
         // The suicide unit starts at heliStart + (25, -50) and fades toward (heliStartX,
-        // heliStartY - 70) before it disappears and reappears at its home island.
+        // heliStartY - 70) before it disappears and reappears at the target island.
         Point initialPosition = new Point(actionBuilding.x + 10f, actionBuilding.y - 25f);
         Point disappearPosition = new Point(actionBuilding.x - 15f, actionBuilding.y - 45f);
         return new SuicideBomberAttack(attackerPlayerId, targetPlayerId, targetCityIndex,
                 actionBuildingSlot, actionBuilding, initialPosition, disappearPosition,
-                new Point(SUICIDE_SPAWNS[attackerPlayerId][0],
-                        SUICIDE_SPAWNS[attackerPlayerId][1]), route.toArray(new Point[0]));
+                // Battle.as uses tr._b (the defending player), not tr._player.
+                new Point(SUICIDE_SPAWNS[targetPlayerId][0],
+                        SUICIDE_SPAWNS[targetPlayerId][1]), route.toArray(new Point[0]));
     }
 
     /** Returns the source Flash placement for a nation's first or second action building. */

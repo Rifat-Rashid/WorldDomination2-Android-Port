@@ -438,17 +438,59 @@ public final class FlashBattleUnitRenderer {
         }
     }
 
-    public void drawSuicideBomber(SpriteBatch batch, Rectangle mapBounds,
-                                  List<FlashSuicideBomberAnimation> animations) {
-        if (!assets.isLoaded()) {
-            return;
+    /** Draws a suicide body, tint, or retained explosion at its own parent depth. */
+    public void drawSuicideActor(SpriteBatch batch, Rectangle bounds,
+                                  FlashSuicideBomberAnimation.Actor actor,
+                                  String colorName) {
+        if (!assets.isLoaded() || !actor.visible || actor.alpha <= 0f) return;
+        FlashAnimationTimeline timeline = assets.getTimeline(actor.linkage);
+        if (timeline == null || timeline.getFrameCount() == 0) return;
+        ShaderProgram previousShader = batch.getShader();
+        float previousColor = batch.getPackedColor();
+        try {
+            deploymentTransformScratch[0].setIdentity();
+            setSuicideColor(deploymentColorScratch[0], actor.linkage, colorName, actor.alpha);
+            drawSuicideFrame(batch, bounds, timeline.getFrame(Math.min(actor.sourceFrame,
+                    timeline.getFrameCount() - 1)), actor, 0);
+        } finally {
+            batch.setShader(previousShader);
+            batch.setPackedColor(previousColor);
         }
-        for (FlashSuicideBomberAnimation animation : animations) {
-            for (int index = 0; index < animation.getActorCount(); index++) {
-                FlashSuicideBomberAnimation.Actor actor = animation.getActor(index);
-                drawActor(batch, mapBounds, actor.linkage, actor.sourceFrame,
-                        actor.sourceX, actor.sourceY, actor.islandPlayerId,
-                        1f, actor.alpha, actor.visible);
+    }
+
+    static void setSuicideColor(FlashColorTransform.Composition color, String linkage,
+                                 String colorName, float movieClipAlpha) {
+        color.identity();
+        if ("suicide_bomber_tint".equals(linkage)) {
+            color.setProduct(color, apacheTint(colorName));
+        }
+        // Actor alpha is MovieClip._alpha, including its initial palette
+        // alpha. View's fade writes replace that channel, not multiply it.
+        color.alphaMultiplier = movieClipAlpha;
+        color.alphaAdd = 0f;
+    }
+
+    private void drawSuicideFrame(SpriteBatch batch, Rectangle bounds,
+                                   FlashAnimationTimeline.Frame frame,
+                                   FlashSuicideBomberAnimation.Actor actor, int depth) {
+        if (frame == null || depth >= MAX_DEPLOYMENT_CLIP_DEPTH) return;
+        FlashAffineTransform parent = deploymentTransformScratch[depth];
+        FlashAffineTransform transform = deploymentTransformScratch[depth + 1];
+        FlashColorTransform.Composition parentColor = deploymentColorScratch[depth];
+        FlashColorTransform.Composition color = deploymentColorScratch[depth + 1];
+        for (FlashAnimationTimeline.Layer layer : frame.layers) {
+            transform.setProduct(parent, layer.a, layer.b, layer.c, layer.d, layer.tx, layer.ty);
+            color.setProduct(parentColor, layer.colorTransform);
+            TextureRegion region = assets.getShape(layer.shapeId);
+            if (region != null) {
+                drawTransformedLeaf(batch, bounds, region, layer.shapeId, transform, color,
+                        actor.renderX, actor.renderY, actor.islandPlayerId, 0f);
+            } else {
+                FlashAnimationTimeline nested = assets.getTimelineBySymbolId(layer.shapeId);
+                if (nested != null && nested.getFrameCount() > 0) {
+                    drawSuicideFrame(batch, bounds, nested.getFrame(Math.min(actor.sourceFrame,
+                            nested.getFrameCount() - 1)), actor, depth + 1);
+                }
             }
         }
     }

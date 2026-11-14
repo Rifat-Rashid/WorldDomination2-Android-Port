@@ -80,6 +80,9 @@ public final class SourceBattleUnitAllocationTest {
         BattlefieldDisplayState suicideState = state(2);
         SourceBattleUnitAllocation suicide = new SourceBattleUnitAllocation(suicideState);
         assertEquals(0, suicide.reserveBeforeEvent(direct("soldier4", -1)));
+        assertEquals("route reservation leaves physical attachment to the binding",
+                22509, suicideState.nextDepth());
+        new SourceSuicideDisplayDepths(suicideState, suicideAnimation(), 0);
         assertNull("first suicide swap leaves original body depth empty",
                 suicideState.clips().atDepth(22509));
         assertNull("second constructor swap leaves intermediate depth empty",
@@ -275,6 +278,15 @@ public final class SourceBattleUnitAllocationTest {
         FlashBattleRoutes.ChinookTankAttack route = FlashBattleRoutes.createSoldierThreeAttack(
                 0, 1, 0, 1, "green", points, new ReferenceRandom(2026L));
         return new FlashChinookTankAnimation(route, 0);
+    }
+
+    private static FlashSuicideBomberAnimation suicideAnimation() throws Exception {
+        String anchors = new String(Files.readAllBytes(projectAsset(
+                "original/runtime/battle_anchors.json")), StandardCharsets.UTF_8);
+        Map<String, FlashBattleRoutes.Point> points = FlashBattleRoutes.parseAnchors(anchors);
+        return new FlashSuicideBomberAnimation(FlashBattleRoutes.createSuicideBomberAttack(
+                0, 1, 0, 1, points),
+                com.example.worlddomination.game.audio.OriginalAudio.Cue.SUICIDE_SCREAM, 0);
     }
 
     private static FlashAnimationTimeline.Frame battleFrame() throws Exception {

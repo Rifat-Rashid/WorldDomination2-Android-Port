@@ -12,6 +12,34 @@ import static org.junit.Assert.*;
 
 /** Reference captures must survive checkout unchanged, independently of replay code. */
 public final class SourceBattleOracleResourcesTest {
+    @Test public void suicideBattleCaptureRetainsLegalSourceHashesAndImpactBoundary()
+            throws Exception {
+        assertEquals("e69dce0e6645f466167b05cdabb3ac288c19efa0dacd55717b4e215fb11c5469",
+                sha256(bytes("source-suicide-unit.csv")));
+        assertEquals("baf13f14a3d0bfc812a2554db54490b4086445310fae80c9ab7b2f2a6a211193",
+                sha256(bytes("source-suicide-city.csv")));
+        assertEquals("a4eb22a38fd9c7bc2e84667d97f591e1544c9262c48f512ecd909e52d66e2e87",
+                sha256(bytes("source-suicide-rng.csv")));
+        assertEquals("acfa199a07f51007017f8559a821a87fde26c2540a5e3b5806ea1fb009a556fb",
+                sha256(bytes("source-suicide-operations.csv")));
+        String[] city = new String(bytes("source-suicide-city.csv"),
+                StandardCharsets.UTF_8).split("\\R");
+        String[] rng = new String(bytes("source-suicide-rng.csv"),
+                StandardCharsets.UTF_8).split("\\R");
+        String[] unit = new String(bytes("source-suicide-unit.csv"),
+                StandardCharsets.UTF_8).split("\\R");
+        assertEquals("364 city ticks plus header", 365, city.length);
+        assertEquals("364 RNG ticks plus header", 365, rng.length);
+        assertEquals("four roles per tick plus header", 1457, unit.length);
+        assertTrue("city callback starts on tick 300",
+                city[301].startsWith("300,47,47,18,2,,4,85.0,2,1,98982,1,1,"));
+        assertTrue("source explosion attaches at pre-move body pose",
+                unit[300 * 4 + 4].startsWith("300,explosion,dying,dead,5,0,-1,"));
+        assertTrue("retained explosion detached at handoff",
+                unit[362 * 4 + 4].contains(",1,0,,-1,22513,explosion001,1,21,100,"
+                        + "206.0,162.20000000000002"));
+    }
+
     @Test public void chinookCityImpactCaptureRetainsSourceHashAndBoundaryFrames()
             throws Exception {
         JsonValue source = json("source-chinook-depths-provenance.json");

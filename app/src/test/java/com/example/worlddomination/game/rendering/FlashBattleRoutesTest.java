@@ -591,8 +591,9 @@ public final class FlashBattleRoutesTest {
                     assertEquals(attacker, route.attackerPlayerId);
                     assertEquals(target, route.targetPlayerId);
                     assertEquals(city, route.targetCityIndex);
-                    assertEquals(spawnPositions[attacker][0], route.spawn.x, 0f);
-                    assertEquals(spawnPositions[attacker][1], route.spawn.y, 0f);
+                    assertEquals("Battle uses the defending player's spawn",
+                            spawnPositions[target][0], route.spawn.x, 0f);
+                    assertEquals(spawnPositions[target][1], route.spawn.y, 0f);
 
                     int[] sourceWaypoints = tankWaypoints[target][city];
                     int routeIndex = 0;

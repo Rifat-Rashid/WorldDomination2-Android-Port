@@ -164,6 +164,8 @@ public final class OriginalAudioTest {
                 OriginalAudio.internalPath(OriginalAudio.Cue.WARROCKET));
         assertEquals("original/runtime/audio/7_unit_Suicide scream.wav.mp3",
                 OriginalAudio.internalPath(OriginalAudio.Cue.SUICIDE_SCREAM));
+        assertEquals("original/runtime/audio/9_unit_Suicide explode.wav.mp3",
+                OriginalAudio.internalPath(OriginalAudio.Cue.SUICIDE_EXPLODE));
         assertEquals("original/runtime/audio/98_Explode small3.wav.mp3",
                 OriginalAudio.internalPath(OriginalAudio.Cue.EXPLOSION_SMALL3));
         assertEquals("original/runtime/audio/71_Explode medium 3.wav.mp3",

@@ -26,32 +26,30 @@ public final class SourceBattleUnitAllocation {
             // route construction, including the recovered native tank alias.
             parameter += 15;
         } else if (FlashBattleRoutes.supportsSuicideBomber(event)) {
-            reserve(false, true, false, 0, true);
+            // SourceSuicideDisplayDepths installs the real body/tint/dot and
+            // both constructor swaps before the following Unit is constructed.
+            parameter += 5;
         } else if (FlashBattleRoutes.supportsCarrierPlaneStrike(event)) {
-            reserve(true, true, false, event.shipPayloadIndex, false);
+            reserve(true, true, event.shipPayloadIndex);
         } else if (FlashBattleRoutes.supportsStandalonePlaneStrike(event)) {
-            reserve(true, true, false, 0, false);
+            reserve(true, true, 0);
         } else if (FlashBattleRoutes.supportsRocketStrike(event)
                 || FlashBattleRoutes.supportsSubmarineRocketStrike(event)
                 || FlashBattleRoutes.supportsSatelliteStrike(event)) {
-            reserve(false, false, false, 0, false);
+            reserve(false, false, 0);
         }
         return preceding;
     }
 
-    private void reserve(boolean shadow, boolean tint, boolean tankTop,
-                           int formationNumber, boolean suicide) {
+    private void reserve(boolean shadow, boolean tint, int formationNumber) {
         parameter += 5;
         String name = "unit" + parameter / 5;
-        int depth = tankTop ? parameter : formationNumber > 0
+        int depth = formationNumber > 0
                 ? 800000 + parameter + formationNumber : state.nextDepth();
-        SourceDisplayList.Entry<BattlefieldDisplayState.Item> body = occupant(name, depth);
-        if (suicide) state.clips().swapDepths(body, state.nextDepth());
+        occupant(name, depth);
         if (shadow) occupant("shadow_" + name, state.nextDepth());
         if (tint) occupant("tint" + name, state.nextDepth());
         occupant("targetDot" + name, state.nextDepth());
-        // Unit's constructor raises suicide_bomber again after tint/dot setup.
-        if (suicide) state.clips().swapDepths(body, state.nextDepth());
     }
 
     private SourceDisplayList.Entry<BattlefieldDisplayState.Item> occupant(String name,
