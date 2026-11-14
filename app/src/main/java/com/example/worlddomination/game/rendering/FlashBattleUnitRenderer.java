@@ -62,6 +62,8 @@ public final class FlashBattleUnitRenderer {
                     + "}\n";
     private final OriginalFlashAnimationAssets assets;
     private final FlashApacheMarineAnimation.Actor targetDotActor = createTargetDotActor();
+    private final FlashApacheMarineAnimation.Actor sourceAircraftRoleActor =
+            new FlashApacheMarineAnimation.Actor();
     private final FlashStencilMasks actionBuildingMasks = new FlashStencilMasks();
     private final float[] actionBuildingVertices = new float[20];
     private final float[] sourceRocketVertices = new float[20];
@@ -978,6 +980,8 @@ public final class FlashBattleUnitRenderer {
         for (FlashStandalonePlaneAnimation animation : animations) {
             FlashStandalonePlaneAnimation.Actor actor = animation.getActor();
             FlashBattleRoutes.StandalonePlaneStrike route = animation.getRoute();
+            // The intercepted source path paints these peers at occupied root depths.
+            if (animation.getSourcePlayback() != null && route.intercepted) continue;
             if (smokeRegion != null) {
                 for (int index = 0; index < animation.getTrailSlotCount(); index++) {
                     float alpha = animation.getTrailAlpha(index);
@@ -1015,6 +1019,66 @@ public final class FlashBattleUnitRenderer {
                     actor.sourceFrame, 1f, 0, planeTransformScratch[0].setIdentity());
             batch.setColor(com.badlogic.gdx.graphics.Color.WHITE);
             batch.setShader(null);
+        }
+    }
+
+    /** One intercepted plane's direct root peer, including its retained self explosion. */
+    public void drawInterceptedAircraftRole(SpriteBatch batch, Rectangle mapBounds,
+            SourceInterceptedAircraftDisplayDepths binding, BattlefieldDisplayState.Kind kind) {
+        if (!assets.isLoaded()) return;
+        FlashStandalonePlaneAnimation animation = binding.animation;
+        FlashStandalonePlaneAnimation.Actor actor = animation.getActor();
+        FlashBattleRoutes.StandalonePlaneStrike route = animation.getRoute();
+        if (kind == BattlefieldDisplayState.Kind.EFFECT) {
+            if (binding.explosion() != null && binding.explosion().isAttached()) {
+                ShaderProgram shader = batch.getShader();
+                float color = batch.getPackedColor();
+                try {
+                    sourceAircraftRoleActor.sourceX = (float) binding.getExplosionX();
+                    sourceAircraftRoleActor.sourceY = (float) binding.getExplosionY();
+                    sourceAircraftRoleActor.sourceFrame = binding.getExplosionFrameIndex();
+                    sourceAircraftRoleActor.islandPlayerId = route.targetPlayerId;
+                    sourceAircraftRoleActor.scale = 1f;
+                    sourceAircraftRoleActor.alpha = 1f;
+                    // This walker preserves each exported SVG's registration origin.
+                    drawApacheClip(batch, mapBounds, sourceAircraftRoleActor,
+                            "explosion003", null);
+                } finally {
+                    batch.setShader(shader);
+                    batch.setPackedColor(color);
+                }
+            }
+            return;
+        }
+        if (kind == BattlefieldDisplayState.Kind.UNIT_DOT) {
+            drawTargetDot(batch, mapBounds, animation.getTint());
+            return;
+        }
+        if (!actor.visible) return;
+        boolean shadow = kind == BattlefieldDisplayState.Kind.UNIT_SHADOW;
+        boolean tint = kind == BattlefieldDisplayState.Kind.UNIT_TINT;
+        String linkage = shadow ? "plane001_shadow" : tint ? "plane001_tint" : "plane001";
+        float previousColor = batch.getPackedColor();
+        ShaderProgram previousShader = batch.getShader();
+        try {
+            float crop = BattlefieldCityLayout.sourceXBetween(mapBounds, actor.sourceX,
+                    route.attackerPlayerId, route.targetPlayerId, actor.routeProgress)
+                    - BattlefieldCityLayout.sourceX(mapBounds, actor.sourceX, route.targetPlayerId);
+            sourceAircraftRoleActor.sourceX = actor.sourceX
+                    + crop / BattlefieldCityLayout.sourceScale(mapBounds);
+            sourceAircraftRoleActor.sourceY = actor.sourceY
+                    + (shadow ? actor.shadowYOffset : 0f);
+            sourceAircraftRoleActor.sourceFrame = shadow ? 0 : actor.sourceFrame;
+            sourceAircraftRoleActor.islandPlayerId = route.targetPlayerId;
+            sourceAircraftRoleActor.scale = actor.scale;
+            // Color.setTransform owns the tint alpha (75% for green/red/yellow).
+            // MC._alpha reports that same channel; do not multiply it a second time.
+            sourceAircraftRoleActor.alpha = shadow || tint ? 1f : actor.alpha;
+            drawApacheClip(batch, mapBounds, sourceAircraftRoleActor,
+                    linkage, tint ? animation.getTint() : null);
+        } finally {
+            batch.setPackedColor(previousColor);
+            batch.setShader(previousShader);
         }
     }
 

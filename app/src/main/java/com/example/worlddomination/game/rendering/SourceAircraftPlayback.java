@@ -50,15 +50,22 @@ public final class SourceAircraftPlayback {
     private boolean started;
     private boolean removed;
     private boolean impactPending;
+    private boolean deathPending;
     private boolean takeoffCuePending;
+    private boolean bodyAttached = true;
+    private String unitStatus = "alive";
+    private double deathEffectX = Double.NaN;
+    private double deathEffectY = Double.NaN;
+    private double deathSoundX = Double.NaN;
 
     /** The caller gates visits with the source battle record clock. */
     public SourceAircraftPlayback(FlashBattleRoutes.StandalonePlaneStrike route,
                                   SourceAircraftTrail trail) {
-        if (route == null || !"plane001".equals(route.linkage) || route.intercepted)
-            throw new IllegalArgumentException("A successful plane001 route is required");
+        if (route == null || !"plane001".equals(route.linkage))
+            throw new IllegalArgumentException("A plane001 route is required");
         this.route = route;
         this.trail = trail;
+        if (route.intercepted) waypointAction[2] = "speedup_die";
         circularRadius = route.orbitRadius;
         circularAngle = route.orbitStartAngle;
         waypointX[0] = route.liftOff.x;
@@ -82,12 +89,27 @@ public final class SourceAircraftPlayback {
             removed = true;
             return;
         }
+        // View.f_37 splices a dead plane before this visit's moveUnit, then
+        // continues through generic display publication for one final step.
+        if ("dead".equals(unitStatus)) removed = true;
         // Unit.moveUnit handles the action before movement. The first eight
         // active visits issue takeoff soundAction; the original Sound bridge
         // decides whether that restarts a channel.
         if ("bomb".equals(action)) {
             impactPending = true;
             action = "flyOff";
+            if (trail != null) trail.removeTrail();
+        } else if ("speedup_die".equals(action)) {
+            // Unit.killUnit("rocket_self") captures the explosion at curX/Y,
+            // sounds at the old MC X, detaches body/trail, and still moves
+            // during this same View visit.
+            deathEffectX = x;
+            deathEffectY = y;
+            deathSoundX = renderX;
+            deathPending = true;
+            bodyAttached = false;
+            unitStatus = "dead";
+            action = "dying";
             if (trail != null) trail.removeTrail();
         } else if ("flyOff".equals(action)) {
             if (flyOffCount > 0 && flyOffCount < 250) flyOffCount++;
@@ -200,10 +222,13 @@ public final class SourceAircraftPlayback {
         adjacentSide = x - previousX;
         oppositeSide = -(y - previousY);
         angle = Math.round(Math.atan2(oppositeSide, adjacentSide) / Math.PI * 180d) + 181d;
-        frame = (int) Math.round(angle / 360d * 100d / 100d * 24d);
+        // MovieClip.gotoAndStop(0) clamps to the first authored frame.
+        frame = Math.max(1, (int) Math.round(angle / 360d * 100d / 100d * 24d));
     }
 
     public boolean takeImpact() { boolean pulse = impactPending; impactPending = false; return pulse; }
+    /** One intercepted hit callback, emitted before the body's final two moves. */
+    public boolean takeDeath() { boolean pulse = deathPending; deathPending = false; return pulse; }
     public boolean takeTakeoffCue() {
         boolean pulse = takeoffCuePending; takeoffCuePending = false; return pulse;
     }
@@ -213,7 +238,13 @@ public final class SourceAircraftPlayback {
     public String getAction() { return action; }
     public boolean isRemoved() { return removed; }
     public boolean isStarted() { return started; }
-    public boolean isActiveAndMoving() { return started && !removed; }
+    /** Unit retains this flag after View removes its wrapper. */
+    public boolean isActiveAndMoving() { return started; }
+    public boolean isBodyAttached() { return bodyAttached; }
+    public String getUnitStatus() { return unitStatus; }
+    public double getDeathEffectX() { return deathEffectX; }
+    public double getDeathEffectY() { return deathEffectY; }
+    public double getDeathSoundX() { return deathSoundX; }
     public double getX() { return x; }
     public double getY() { return y; }
     public double getRenderX() { return renderX; }

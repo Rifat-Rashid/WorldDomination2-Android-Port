@@ -1,0 +1,12 @@
+tick,event,linkage,loops,volume,pan
+192,stop,Resources ambient loop.wav,,,
+192,stop,Resources ambient loop.wav,,,
+192,stop,Massmedia ambient loop.wav,,,
+199,start,unit_Fightertakeoff.wav,1,100,0
+208,start,unit_Suicide scream.wav,1,100,0
+301,start,unit_Suicide explode.wav,1,100,41.625
+301,stop,unit_Suicide scream.wav,,,
+314,start,Explode small3.wav,1,100,-87.93181211582746
+314,stop,unit_Fightertakeoff.wav,,,
+377,stop,unit_Suicide explode.wav,,,
+377,stop,Explode small3.wav,,,

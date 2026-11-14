@@ -8,3 +8,4 @@ app/src/test/resources/source-phase-*.csv -text whitespace=blank-at-eol,blank-at
 app/src/test/resources/source-bio-*.csv -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 app/src/test/resources/source-bio-*.json -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 app/src/test/resources/source-aircraft-trail-*.json -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+app/src/test/resources/source-intercepted-plane001-* -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
