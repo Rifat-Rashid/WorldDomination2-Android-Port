@@ -39,7 +39,7 @@ public final class CityShrinkSequence {
         switch (phase) {
             case FADE_OUT:
                 if (alpha > 0) {
-                    alpha = Math.max(0, alpha - ALPHA_STEP);
+                    alpha -= ALPHA_STEP;
                 } else {
                     phase = Phase.SWITCH_FRAME;
                 }
@@ -50,7 +50,7 @@ public final class CityShrinkSequence {
                 break;
             case FADE_IN:
                 if (alpha < FULL_ALPHA) {
-                    alpha = Math.min(FULL_ALPHA, alpha + ALPHA_STEP);
+                    alpha += ALPHA_STEP;
                 } else {
                     phase = Phase.IDLE;
                 }
@@ -70,8 +70,11 @@ public final class CityShrinkSequence {
     }
 
     public int getAlpha() {
-        return alpha;
+        return Math.max(0, Math.min(FULL_ALPHA, alpha));
     }
+
+    /** Script alpha can overshoot; clamp only when painting, as Flash does. */
+    public int getSourceAlpha() { return alpha; }
 
     public Phase getPhase() {
         return phase;

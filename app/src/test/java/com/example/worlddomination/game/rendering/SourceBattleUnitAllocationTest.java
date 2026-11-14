@@ -64,6 +64,8 @@ public final class SourceBattleUnitAllocationTest {
                         "synthetic-occupied-depth", null, 5);
         SourceBattleUnitAllocation tanks = new SourceBattleUnitAllocation(tankState);
         assertEquals(0, tanks.reserveBeforeEvent(direct("soldier3", 1)));
+        assertTrue("allocation alone must not replace a live clip", authored.isAttached());
+        new SourceChinookDisplayDepths(tankState, chinookAnimation(), 0);
         assertFalse("tankTop replaces authored child at param_depth", authored.isAttached());
         occupied(tankState, 5, "unit1");
         occupied(tankState, 22509, "targetDotunit1");
@@ -264,6 +266,15 @@ public final class SourceBattleUnitAllocationTest {
         FlashBattleRoutes.SoldierOneAttack route = FlashBattleRoutes.createSoldierOneAttack(
                 0, 1, 0, points, new ReferenceRandom(2026L));
         return new FlashSoldierOneAnimation(route, new ReferenceRandom(42L), null, 0);
+    }
+
+    private static FlashChinookTankAnimation chinookAnimation() throws Exception {
+        String anchors = new String(Files.readAllBytes(projectAsset(
+                "original/runtime/battle_anchors.json")), StandardCharsets.UTF_8);
+        Map<String, FlashBattleRoutes.Point> points = FlashBattleRoutes.parseAnchors(anchors);
+        FlashBattleRoutes.ChinookTankAttack route = FlashBattleRoutes.createSoldierThreeAttack(
+                0, 1, 0, 1, "green", points, new ReferenceRandom(2026L));
+        return new FlashChinookTankAnimation(route, 0);
     }
 
     private static FlashAnimationTimeline.Frame battleFrame() throws Exception {

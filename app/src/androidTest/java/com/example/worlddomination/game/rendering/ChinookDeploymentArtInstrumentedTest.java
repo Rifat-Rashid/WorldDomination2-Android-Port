@@ -37,14 +37,14 @@ import static org.junit.Assert.*;
 /** GLES pixels versus explicit exported-leaf composition, not a screenshot of Flash execution. */
 @RunWith(AndroidJUnit4.class)
 public final class ChinookDeploymentArtInstrumentedTest {
-    private enum Check { LEAVES, STATE, OPACITY, EMPTY_BATCH, WAITING_BATCH }
+    private enum Check { LEAVES, STATE, OPACITY, EMPTY_BATCH, HIDDEN_BATCH }
 
     @Test public void emptyDeploymentKeepsQueuedSpritesBatched() throws Exception {
         run(Check.EMPTY_BATCH);
     }
 
-    @Test public void waitingDeploymentKeepsQueuedSpritesBatched() throws Exception {
-        run(Check.WAITING_BATCH);
+    @Test public void hiddenDeploymentKeepsQueuedSpritesBatched() throws Exception {
+        run(Check.HIDDEN_BATCH);
     }
 
     @Test public void originalDeploymentLeavesMatchAtTwoLandscapeWidths() throws Exception {
@@ -91,7 +91,7 @@ public final class ChinookDeploymentArtInstrumentedTest {
                             0, 2, 0, 2, "green", anchors);
                     batch = new SpriteBatch();
                     renderer = new FlashBattleUnitRenderer(assets);
-                    if (check == Check.EMPTY_BATCH || check == Check.WAITING_BATCH) {
+                    if (check == Check.EMPTY_BATCH || check == Check.HIDDEN_BATCH) {
                         batch.setColor(.25f, .5f, .75f, .6f);
                         batch.begin();
                         TextureRegion region = assets.getShape(676);
@@ -101,9 +101,14 @@ public final class ChinookDeploymentArtInstrumentedTest {
                         Matrix4 transform = new Matrix4(batch.getTransformMatrix());
                         assertEquals("First sprite remains queued", 0, batch.renderCalls);
                         FlashChinookTankAnimation waiting = new FlashChinookTankAnimation(route, 100);
+                        // Source bodies are visible at the parent origin even
+                        // before their first visit. Hide this synthetic cohort
+                        // explicitly to test the no-painted-clips batch path.
                         for (int index = 0; index < waiting.getActorCount(); index++) {
+                            waiting.getActor(index).visible = false;
                             assertFalse(waiting.getActor(index).visible);
                         }
+                        waiting.getChinookShadow().visible = false;
                         assertFalse(waiting.getChinookShadow().visible);
                         renderer.drawChinookTank(batch, new Rectangle(0, 0, 800, 600),
                                 check == Check.EMPTY_BATCH ? Collections.emptyList()
@@ -295,9 +300,9 @@ public final class ChinookDeploymentArtInstrumentedTest {
         float progress = animation.isTankShadowVisible() || animation.isTankDeployed()
                 ? 1f : Math.max(0f, Math.min(1f, (153.75f - remaining) / 128.75f));
         matrix.val[Matrix4.M03] = BattlefieldCityLayout.sourceXBetween(bounds,
-                actor.sourceX + parentX + layer.tx, 0, 2, progress);
+                actor.renderX + parentX + layer.tx, 0, 2, progress);
         matrix.val[Matrix4.M13] = BattlefieldCityLayout.sourceY(bounds,
-                actor.sourceY + parentY + layer.ty);
+                actor.renderY + parentY + layer.ty);
         batch.setTransformMatrix(matrix);
         batch.setColor(black ? 0 : 1, black ? 0 : 1, black ? 0 : 1, alpha);
         batch.draw(region, assets.getShapeOriginX(layer.shapeId),

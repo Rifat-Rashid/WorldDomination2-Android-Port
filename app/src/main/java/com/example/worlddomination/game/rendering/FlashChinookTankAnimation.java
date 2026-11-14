@@ -17,14 +17,26 @@ public final class FlashChinookTankAnimation {
         public int sourceFrame;
         public float sourceX;
         public float sourceY;
+        /** Attached MovieClip pose; constructor MC may differ from Unit.curX/Y. */
+        public float renderX;
+        public float renderY;
         public int islandPlayerId;
         public boolean visible;
         private Actor pairedShadow;
+        private SourceStoppedClipQueue.Clip boundClip;
+
+        void bindClip(SourceStoppedClipQueue.Clip clip) { boundClip = clip; }
 
         @Override public void detach() {
             visible = false;
             if (pairedShadow != null) pairedShadow.visible = false;
+            if (boundClip != null) boundClip.detach();
         }
+    }
+
+    /** Invoked in View's physical Chinook, tank-base, turret visit order. */
+    public interface ActorFrameListener {
+        void onActorFrame(int nativeActorIndex, double sourceY, boolean bodyChanged);
     }
 
     private static final int CHINOOK_FRAME_COUNT = 37;
@@ -63,10 +75,15 @@ public final class FlashChinookTankAnimation {
     private boolean tankRemoved;
     private boolean turretStopped;
     private boolean turretRemoved;
+    private boolean pendingCityImpact;
     private boolean chinookQueued;
     private boolean tankQueued;
     private boolean turretQueued;
-    // View has already presented the waiting liftOff frame before activation.
+    private boolean activationCuePlayed;
+    private boolean waitingFramePresented;
+    private boolean directActivePrimed;
+    // Standalone route playback begins after one source waiting seek. A real
+    // battle's first waiting visit below restores Unit's zero offset.
     private int frameOffset = 1;
     private float chinookXStep;
     private float chinookYStep;
@@ -80,7 +97,12 @@ public final class FlashChinookTankAnimation {
     private float tankShadowOffsetY = 40f;
     private float cropProgress;
     private OriginalAudio.Cue lastAudioCue;
+    private ActorFrameListener actorFrameListener;
     private Phase phase = Phase.CHINOOK_FLIGHT;
+
+    public void setActorFrameListener(ActorFrameListener listener) {
+        actorFrameListener = listener;
+    }
 
     public FlashChinookTankAnimation(FlashBattleRoutes.ChinookTankAttack route,
                                      int delayTicks) {
@@ -94,8 +116,8 @@ public final class FlashChinookTankAnimation {
         chinook.sourceX = route.chinookStart.x;
         chinook.sourceY = route.chinookStart.y;
         chinook.islandPlayerId = route.attackerPlayerId;
-        // Flash's export lookup is case-insensitive; symbol 714 is exported
-        // as tank_noshade while Unit uses tank_noShade.
+        // Explicit native repair: Unit requests tank_noShade, absent from the
+        // case-sensitive SWF export; symbol 714 is tank_noshade.
         tank.linkage = "tank_noshade";
         tank.sourceX = route.tankStart.x;
         tank.sourceY = route.tankStart.y;
@@ -106,10 +128,52 @@ public final class FlashChinookTankAnimation {
         turret.islandPlayerId = route.targetPlayerId;
         chinookShadow.linkage = "chinook_shadow";
         chinook.pairedShadow = chinookShadow;
+        // The attached bodies begin at the parent origin before View's first
+        // f_37 visit, though Unit.curX/Y already hold their route positions.
+        chinook.visible = true;
+        tank.visible = true;
+        turret.visible = true;
+        // Existing direct route playback starts from the post-waiting logical
+        // tail pose. The real View waiting visit below replays its spawn seek.
         followChinook();
-        // The waiting tail has no movement; View holds Flash direction frame 9.
-        tank.sourceFrame = 8;
+        // The attached MC itself remains on authored frame 1 at construction.
+        // Direct standalone tick callers are primed privately before movement.
+        tank.sourceFrame = 0;
         updateChinookShadow();
+        // Battle.as:204 spawns the carrier at chinookStartPositions; :222
+        // spawns the tank at those same coordinates minus 210 on each axis.
+        // Unit.as:612–615 places the separate carrier shadow at spawn XY.
+        chinookShadow.renderX = route.tankStart.x + 210f;
+        chinookShadow.renderY = route.tankStart.y + 210f;
+    }
+
+    /** View visits inactive wrappers while action labels and records wait. */
+    public void presentWaitingFrame() {
+        if (phase != Phase.CHINOOK_FLIGHT || chinookFlyOffTicks != 0) return;
+        if (!waitingFramePresented) {
+            waitingFramePresented = true;
+            frameOffset = 0;
+            tank.sourceX = route.tankStart.x;
+            tank.sourceY = route.tankStart.y;
+        }
+        // waitForHeliStart seeks the carrier from its authored spawn to the
+        // action building; the tank and top then follow on their own visits.
+        chinook.renderX = chinook.sourceX;
+        chinook.renderY = chinook.sourceY;
+        // View.as:1530–1541: fixedFrame 4, offsetFrames 2. The first visit
+        // seeks authored frame 7; then 8,9,8,9... while inactive.
+        chinook.sourceFrame = 6 + frameOffset;
+        frameOffset = frameOffset < 2 ? frameOffset + 1 : 1;
+        followChinook();
+        tank.renderX = tank.sourceX;
+        tank.renderY = tank.sourceY;
+        aimTurret();
+        turret.renderX = turret.sourceX;
+        turret.renderY = turret.sourceY;
+        updateChinookShadow();
+        chinookShadow.renderX = chinookShadow.sourceX;
+        chinookShadow.renderY = chinookShadow.sourceY;
+        notifyActorFrames(false);
     }
 
     /** Advances one original 24 Hz presentation tick. */
@@ -118,16 +182,24 @@ public final class FlashChinookTankAnimation {
             return;
         }
         if (delayTicks > 0) {
+            presentWaitingFrame();
             delayTicks--;
             return;
         }
+        if (!waitingFramePresented && !directActivePrimed) {
+            directActivePrimed = true;
+            tank.sourceFrame = 8;
+        }
+
+        String previousTankLinkage = tank.linkage;
+        boolean visitChinook = !chinookRemoved;
+        boolean visitTank = !tankRemoved;
+        boolean visitTurret = !turretRemoved;
 
         switch (phase) {
             case CHINOOK_FLIGHT:
-                if (!chinook.visible) {
-                    chinook.visible = true;
-                    tank.visible = true;
-                    turret.visible = true;
+                if (!activationCuePlayed) {
+                    activationCuePlayed = true;
                     enqueueAudio(OriginalAudio.Cue.TANK_CHOPPER);
                 }
                 boolean arrived = moveToward(chinook, route.chinookDrop, CHINOOK_STEP, true);
@@ -176,6 +248,29 @@ public final class FlashChinookTankAnimation {
                 throw new IllegalStateException("Unknown Chinook/tank phase");
         }
         updateChinookShadow();
+        chinook.renderX = chinook.sourceX;
+        chinook.renderY = chinook.sourceY;
+        tank.renderX = tank.sourceX;
+        tank.renderY = tank.sourceY;
+        turret.renderX = turret.sourceX;
+        turret.renderY = turret.sourceY;
+        chinookShadow.renderX = chinookShadow.sourceX;
+        chinookShadow.renderY = chinookShadow.sourceY;
+        notifyActorFrames(!previousTankLinkage.equals(tank.linkage),
+                visitChinook, visitTank, visitTurret);
+    }
+
+    private void notifyActorFrames(boolean tankBodyChanged) {
+        notifyActorFrames(tankBodyChanged, true, true, true);
+    }
+
+    private void notifyActorFrames(boolean tankBodyChanged, boolean visitChinook,
+                                   boolean visitTank, boolean visitTurret) {
+        if (actorFrameListener == null) return;
+        if (visitChinook) actorFrameListener.onActorFrame(0, chinook.sourceY, false);
+        if (visitTank)
+            actorFrameListener.onActorFrame(1, tank.sourceY, tankBodyChanged);
+        if (visitTurret) actorFrameListener.onActorFrame(2, turret.sourceY, false);
     }
 
     private void tickTankFire() {
@@ -205,6 +300,10 @@ public final class FlashChinookTankAnimation {
             } else {
                 // Unit.tank_top_shoot sets the base and turret actions to stop
                 // together on the post-60-shot tick; View removes them next tick.
+                // Unit first calls Presenter.updateSingleCity_byID for the
+                // target. The World consumes this one-shot presentation event
+                // in source visit order; the animation itself uses no RNG.
+                pendingCityImpact = true;
                 tankStopped = true;
                 turretStopped = true;
             }
@@ -281,6 +380,13 @@ public final class FlashChinookTankAnimation {
     public boolean isTurretStopped() { return turretStopped; }
     public boolean isTankRemoved() { return tankRemoved; }
     public boolean isTurretRemoved() { return turretRemoved; }
+
+    /** Takes Unit.tank_top_shoot's city update on the post-shot stop visit. */
+    public boolean takeCityImpact() {
+        if (!pendingCityImpact) return false;
+        pendingCityImpact = false;
+        return true;
+    }
 
     /** Physical View.for-in removal order is Chinook, tank base, then turret. */
     public void registerStoppedClips(SourceStoppedClipQueue queue) {

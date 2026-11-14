@@ -43,6 +43,7 @@ import com.example.worlddomination.game.rendering.BattlefieldDisplayState;
 import com.example.worlddomination.game.rendering.SourceDisplayList;
 import com.example.worlddomination.game.rendering.SourceApacheDisplayDepths;
 import com.example.worlddomination.game.rendering.SourceInfantryDisplayDepths;
+import com.example.worlddomination.game.rendering.SourceChinookDisplayDepths;
 import com.example.worlddomination.game.rendering.SourceBattleUnitAllocation;
 import com.example.worlddomination.game.rendering.BattlefieldFlagRenderer;
 import com.example.worlddomination.game.rendering.BattlefieldTerrainRenderer;
@@ -738,6 +739,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             actionSlotAnimation.tick();
             turnActionDisplay.tick();
         }
+        if (cityRenderer != null) cityRenderer.tickSourceCities();
         advanceOutcomeSequence();
     }
 
@@ -805,6 +807,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 || previousPhase == TurnPlaybackSequence.Phase.ACTION_LABELS)) {
             for (int index = 0; index < soldierBattleAnimations.size(); index++) {
                 soldierBattleAnimations.get(index).presentWaitingFrame();
+            }
+            for (int index = 0; index < chinookTankAnimations.size(); index++) {
+                chinookTankAnimations.get(index).presentWaitingFrame();
             }
         }
         for (int index = 0; index < satelliteBattleAnimations.size(); index++) {
@@ -1001,9 +1006,16 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         return removedMarine;
     }
 
-    private boolean advanceTankUnit(FlashChinookTankAnimation animation) {
+    private boolean advanceTankUnit(FlashChinookTankAnimation animation,
+                                    GameState.CombatEvent event) {
         if (animation.isFinished()) return false;
         animation.tick();
+        if (animation.takeCityImpact()) {
+            int address = event.defenderPlayerId * BattlefieldCityLayout.CITIES_PER_PLAYER
+                    + event.cityIndex;
+            cityRenderer.applySourceTankImpact(address, event.casualtiesMillions,
+                    battlePresentationRandom);
+        }
         animation.registerStoppedClips(sourceStoppedClips);
         while (animation.takeAudioCue()) {
             audio.play(animation.getAudioCue());
@@ -1088,6 +1100,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         satelliteFlightCuePlayed = false;
         pendingBattleAnimations.clear();
         battlePresentationRecords = Collections.emptyList();
+        cityRenderer.finishSourceCityImpacts(game);
         resetBattlefieldDisplay(false);
     }
 
@@ -1682,7 +1695,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         terrainRenderer.draw(batch, mapBounds);
         drawBattlefieldDisplay();
         battleUnitRenderer.drawSubmarines(batch, mapBounds, submarineBattleAnimations);
-        battleUnitRenderer.drawChinookTank(batch, mapBounds, chinookTankAnimations);
         battleUnitRenderer.drawSuicideBomber(batch, mapBounds, suicideBomberAnimations);
         battleUnitRenderer.drawRocket(batch, mapBounds, rocketBattleAnimations);
         battleUnitRenderer.drawCarrierPlanes(batch, mapBounds, carrierPlaneAnimations);
@@ -1807,6 +1819,19 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                             battleUnitRenderer.drawInfantryActor(batch, mapBounds,
                                     binding.animation, binding.actorIndex,
                                     item.kind == BattlefieldDisplayState.Kind.UNIT_TINT);
+                        }
+                    } else if (item.owner instanceof SourceChinookDisplayDepths.Binding) {
+                        SourceChinookDisplayDepths.Binding binding =
+                                (SourceChinookDisplayDepths.Binding) item.owner;
+                        if (item.kind == BattlefieldDisplayState.Kind.UNIT_DOT) {
+                            battleUnitRenderer.drawTargetDot(batch, mapBounds,
+                                    GameSetup.colorName(game.getPlayerState(
+                                            binding.animation.getAttackerPlayerId())
+                                            .getPlayerColor()));
+                        } else {
+                            battleUnitRenderer.drawChinookActor(batch, mapBounds,
+                                    binding.animation, binding.actorIndex,
+                                    item.kind == BattlefieldDisplayState.Kind.UNIT_SHADOW);
                         }
                     }
                     break;
@@ -4912,7 +4937,12 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                                 colorName, battleAnchors, presentationRandom);
                 FlashChinookTankAnimation animation = new FlashChinookTankAnimation(route, recordDelay);
                 chinookTankAnimations.add(animation);
-                sourceUnitPlayback.add(() -> advanceTankUnit(animation));
+                cityRenderer.beginSourceTankCity(game,
+                        event.defenderPlayerId * BattlefieldCityLayout.CITIES_PER_PLAYER
+                                + event.cityIndex);
+                new SourceChinookDisplayDepths(battlefieldDisplay, animation,
+                        precedingUnitParameter);
+                sourceUnitPlayback.add(() -> advanceTankUnit(animation, event));
                 continue;
             }
             if (FlashBattleRoutes.supportsSuicideBomber(event)) {

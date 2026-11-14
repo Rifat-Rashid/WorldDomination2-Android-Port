@@ -489,6 +489,24 @@ public final class FlashBattleUnitRenderer {
         return false;
     }
 
+    /** Draws one direct Chinook/tank clip at its occupied battle-parent depth. */
+    public void drawChinookActor(SpriteBatch batch, Rectangle mapBounds,
+                                 FlashChinookTankAnimation animation, int actorIndex,
+                                 boolean shadow) {
+        if (!assets.isLoaded()) return;
+        FlashChinookTankAnimation.Actor actor = shadow
+                ? animation.getChinookShadow() : animation.getActor(actorIndex);
+        if (!actor.visible) return;
+        ShaderProgram previousShader = batch.getShader();
+        float previousColor = batch.getPackedColor();
+        try {
+            drawDeploymentActor(batch, mapBounds, animation, actor);
+        } finally {
+            batch.setShader(previousShader);
+            batch.setPackedColor(previousColor);
+        }
+    }
+
     private void drawDeploymentActor(SpriteBatch batch, Rectangle mapBounds,
                                       FlashChinookTankAnimation animation,
                                       FlashChinookTankAnimation.Actor actor) {
@@ -510,9 +528,9 @@ public final class FlashBattleUnitRenderer {
                 && actor != animation.getActor(0)
                 && actor != animation.getChinookShadow()
                 ? 1f : animation.getCropProgress();
-        return BattlefieldCityLayout.sourceXBetween(mapBounds, actor.sourceX,
+        return BattlefieldCityLayout.sourceXBetween(mapBounds, actor.renderX,
                 animation.getAttackerPlayerId(), animation.getTargetPlayerId(), progress)
-                - BattlefieldCityLayout.sourceX(mapBounds, actor.sourceX,
+                - BattlefieldCityLayout.sourceX(mapBounds, actor.renderX,
                 actor.islandPlayerId);
     }
 
@@ -536,7 +554,7 @@ public final class FlashBattleUnitRenderer {
             TextureRegion region = assets.getShape(layer.shapeId);
             if (region != null) {
                 drawTransformedLeaf(batch, mapBounds, region, layer.shapeId, transform, color,
-                        actor.sourceX, actor.sourceY, actor.islandPlayerId, cropOffsetX);
+                        actor.renderX, actor.renderY, actor.islandPlayerId, cropOffsetX);
                 continue;
             }
             FlashAnimationTimeline nested = assets.getTimelineBySymbolId(layer.shapeId);

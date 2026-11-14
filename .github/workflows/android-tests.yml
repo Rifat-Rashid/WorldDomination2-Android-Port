@@ -438,6 +438,12 @@ jobs:
           - id: source-infantry-display-depths
             check: Source boat and infantry occupied depth playback
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.SourceInfantryDisplayDepthsTest" --tests "com.example.worlddomination.game.rendering.FlashSoldierOneSourceTraceTest" --tests "com.example.worlddomination.game.rendering.SourceBattleOracleResourcesTest.infantryCaptureRetainsItsRecordedSourceHash" --tests "com.example.worlddomination.game.rendering.SourceBattleOracleResourcesTest.fourOpponentInfantryCaptureRetainsItsRecordedSourceHash"'
+          - id: source-chinook-display-depths
+            check: Source Chinook tank and turret occupied depth playback
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.SourceChinookDisplayDepthsTest" --tests "com.example.worlddomination.game.rendering.FlashChinookSourceTraceTest" --tests "com.example.worlddomination.game.rendering.SourceBattleOracleResourcesTest.chinookLiteralAndAliasCapturesKeepDistinctSourceProvenance" --tests "com.example.worlddomination.game.rendering.SourceBattleOracleResourcesTest.chinookAliasPresentationRngCaptureRetainsRecordedSourceHash"'
+          - id: source-city-impact-playback
+            check: Source tank impact city fade dust and random timing
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.SourceCityImpactStateTest" --tests "com.example.worlddomination.game.rendering.CityShrinkSequenceTest" --tests "com.example.worlddomination.game.simulation.BattlePresentationCitySnapshotTest" --tests "com.example.worlddomination.game.rendering.SourceBattleOracleResourcesTest.chinookCityImpactCaptureRetainsSourceHashAndBoundaryFrames"'
           - id: source-action-flame-tests
             check: Source action flame timing and reveal audio
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.SourceBattleActionFramesTest" --tests "com.example.worlddomination.game.audio.OriginalAudioTest.religionLabelUsesTheFourRecoveredMassMediaVariations"'

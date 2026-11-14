@@ -12,6 +12,70 @@ import static org.junit.Assert.*;
 
 /** Reference captures must survive checkout unchanged, independently of replay code. */
 public final class SourceBattleOracleResourcesTest {
+    @Test public void chinookCityImpactCaptureRetainsSourceHashAndBoundaryFrames()
+            throws Exception {
+        JsonValue source = json("source-chinook-depths-provenance.json");
+        assertEquals(479, source.getInt("cityImpactRows"));
+        assertEquals("c02766d36111df366892ed494baf817ba6e89f80a11355322844da1869b83537",
+                source.getString("cityImpactSourceCityAsSha256"));
+        assertEquals(source.getString("cityImpactCsvSha256"),
+                sha256(bytes("source-chinook-city-impact.csv")));
+        String[] rows = new String(bytes("source-chinook-city-impact.csv"),
+                StandardCharsets.UTF_8).split("\\R");
+        assertEquals("header plus source ticks 0 through 478", 480, rows.length);
+        assertEquals("tick,cityFrame,rawAlpha,dustAttached,dustFrameZeroBased,"
+                + "randString,targetFrame", rows[0]);
+        assertEquals("379,4,85.0,1,0,65848,3", rows[380]);
+        assertEquals("387,3,-4.999999999999993,0,-1,65848,3", rows[388]);
+        assertEquals("478,3,100.0,0,-1,65848,3", rows[479]);
+    }
+
+    @Test public void chinookAliasPresentationRngCaptureRetainsRecordedSourceHash()
+            throws Exception {
+        JsonValue source = json("source-chinook-depths-provenance.json");
+        assertEquals(479, source.getInt("lastSourceTick"));
+        assertEquals(480, source.getInt("aliasRngRows"));
+        assertTrue(source.getBoolean("presentationRngEqualAtAll480Ticks"));
+        assertEquals(source.getString("aliasRngCsvSha256"),
+                sha256(bytes("source-chinook-rng-alias.csv")));
+        String rng = new String(bytes("source-chinook-rng-alias.csv"),
+                StandardCharsets.UTF_8);
+        String[] firstRows = rng.split("\\R", 3);
+        assertEquals("source RNG schema", "mode,tick,stateSha256,nextRandom", firstRows[0]);
+        assertEquals("post-construction source stream at tick zero",
+                "alias,0,6363095b515288e75ba0d0814f7cefd536c6d98ea97b5e72c72705bd68ef07fb,"
+                        + "0.5379287837318205", firstRows[1]);
+    }
+
+    @Test public void chinookLiteralAndAliasCapturesKeepDistinctSourceProvenance()
+            throws Exception {
+        JsonValue source = json("source-chinook-depths-provenance.json");
+        assertEquals(json("source-apache-depths-provenance.json").getString("sourceSwfSha256"),
+                source.getString("sourceSwfSha256"));
+        assertEquals(479, source.getInt("lastSourceTick"));
+        assertEquals(7200, source.getInt("actorRoleRowsPerMode"));
+        assertTrue("literal source lacks tank_noShade body",
+                source.getBoolean("literalTankBodyMissing"));
+        assertEquals("tank_noShade", source.getString("literalMissingLinkage"));
+        assertEquals(0, source.getInt("aliasAdditionalMissingLinkages"));
+        assertTrue(source.getBoolean("simulationEventsAndRngEqualBetweenModes"));
+        assertTrue(source.getBoolean("presentationRngEqualAtAll480Ticks"));
+        assertEquals(source.getString("aliasCsvSha256"),
+                sha256(bytes("source-chinook-depths-alias.csv")));
+        assertEquals(source.getString("literalCsvSha256"),
+                sha256(bytes("source-chinook-depths-literal.csv")));
+        assertFalse("literal and alias captures remain distinguishable",
+                source.getString("aliasCsvSha256").equals(source.getString("literalCsvSha256")));
+        String literal = new String(bytes("source-chinook-depths-literal.csv"),
+                StandardCharsets.UTF_8);
+        String alias = new String(bytes("source-chinook-depths-alias.csv"),
+                StandardCharsets.UTF_8);
+        assertTrue("literal tick-zero tank body is absent",
+                literal.contains("literal,0,1,unit2,tank_noShade,tail,body,False,False,"));
+        assertTrue("alias tick-zero tank body occupies the source parent",
+                alias.contains("alias,0,1,unit2,tank_noShade,tail,body,True,True,battleMC,22510"));
+    }
+
     @Test public void infantryCaptureRetainsItsRecordedSourceHash() throws Exception {
         JsonValue source = json("source-infantry-depths-provenance.json");
         assertEquals(json("source-apache-depths-provenance.json").getString("sourceSwfSha256"),
