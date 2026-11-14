@@ -87,6 +87,12 @@ jobs:
       max-parallel: 6
       matrix:
         include:
+          - id: source-airfield-defense-host
+            check: Source fighter and bomber defense callbacks and host clocks
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.SourceAirfieldDefensePlaybackTest"'
+          - id: source-air-defense-lock-ownership
+            check: Source air defense visit order and owner release
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.SourceAirDefenseControllerTest"'
           - id: source-anti-defense-callbacks
             check: Source defense callback cadence and host autoplay
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.SourceAntiDefensePlaybackTest"'

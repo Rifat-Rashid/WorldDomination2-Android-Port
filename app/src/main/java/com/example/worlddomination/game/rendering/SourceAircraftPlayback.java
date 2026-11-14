@@ -28,9 +28,9 @@ public final class SourceAircraftPlayback {
     private double targetY;
     private double adjacentSide;
     private double oppositeSide;
-    // View's waiting direction calculation is undefined until the first move.
-    // Paired smoke is born before that first move's direction publication.
-    private double angle = Double.NaN;
+    // Unit starts at zero; the first inactive View direction calculation
+    // changes it to undefined before the first paired-smoke birth.
+    private double angle;
     private double alpha;
     private double scale = 50d;
     private double scaleMatrix = .5d;
@@ -86,6 +86,7 @@ public final class SourceAircraftPlayback {
     /** MovieClipHost autoplays the invisible body while View has not visited it. */
     public void presentWaitingFrame() {
         if (!started && !removed) {
+            angle = Double.NaN;
             // The tint's callback copies the body before the latter autoplays.
             tintFrame = frame;
             frame = frame % 24 + 1;
@@ -287,9 +288,10 @@ public final class SourceAircraftPlayback {
     /** View.updateAnti mutates Unit.angle after body/tint publication, not their frames. */
     public void applySourceAntiDirection(double antiX, double antiY) {
         if (!started) return;
-        angle = Math.round(Math.atan2(antiY - y, x - antiX) / Math.PI * 180d) + 181d;
+        angle = Math.round(Math.atan2(-1d * (y - antiY), x - antiX) / Math.PI * 180d) + 181d;
     }
     public int getSourceFrame() { return frame; }
+    public double getAngle() { return angle; }
     public int getActiveFrames() { return activeFrames; }
     public int getCurrentWaypoint() { return currentWaypoint; }
     public double getXStep() { return xStep; }

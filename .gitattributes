@@ -18,3 +18,5 @@ app/src/test/resources/source-carrier-roles-*.json -text whitespace=cr-at-eol
 # Empty final TSV fields are meaningful source-capture columns.
 app/src/test/resources/source-anti-defense-*.tsv -text whitespace=-blank-at-eol,cr-at-eol
 app/src/test/resources/source-anti-defense-*.json -text whitespace=cr-at-eol
+app/src/test/resources/source-airfield-defense-*.tsv -text whitespace=-blank-at-eol,cr-at-eol
+app/src/test/resources/source-airfield-defense-*.json -text whitespace=cr-at-eol

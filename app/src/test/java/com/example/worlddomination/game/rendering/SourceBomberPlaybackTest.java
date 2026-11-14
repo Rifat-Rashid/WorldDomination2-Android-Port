@@ -13,6 +13,29 @@ import static org.junit.Assert.*;
 
 /** Every legal plane002 Unit/View pose, independent of its battle-root owner. */
 public final class SourceBomberPlaybackTest {
+    @Test public void waitingViewPublishesUndefinedAngleAfterConstructorZero() {
+        SourceAircraftPlayback core = new SourceAircraftPlayback(
+                FlashBattleRoutes.createStandalonePlaneStrike(0, 1, 2, 1, "plane2", true), null);
+        assertEquals("legal source host tick0", 0d, core.getAngle(), 0d);
+        core.presentWaitingFrame();
+        assertTrue("inactive direction getter reads unset movement", Double.isNaN(core.getAngle()));
+        core.tickSourceFrame();
+        assertEquals("first physical movement publishes direction", 154d, core.getAngle(), 0d);
+    }
+
+    @Test public void exactWestAntiBearingPreservesSourceNegativeZero() {
+        SourceAircraftPlayback core = new SourceAircraftPlayback(
+                FlashBattleRoutes.createStandalonePlaneStrike(0, 1, 2, 1, "plane2", true), null);
+        core.tickSourceFrame();
+        int bodyFrame = core.getSourceFrame();
+        // Shared Unit.anti_direction source boundary: -1 * (curY - antiY)
+        // preserves -0 at exact west and yields raw angle1, rather than361.
+        core.applySourceAntiDirection(core.getX() + 400d, core.getY());
+        assertEquals(1d, core.getAngle(), 0d);
+        assertEquals("anti callback leaves the body seek unchanged", bodyFrame,
+                core.getSourceFrame());
+    }
+
     @Test public void waitingAircraftDoesNotAdvanceDefenseOrPlayRotation() {
         FlashStandalonePlaneAnimation plane = new FlashStandalonePlaneAnimation(
                 FlashBattleRoutes.createStandalonePlaneStrike(0, 1, 2, 1, "plane2", true),
