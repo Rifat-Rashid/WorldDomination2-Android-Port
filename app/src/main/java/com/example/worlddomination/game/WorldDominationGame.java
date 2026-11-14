@@ -42,6 +42,7 @@ import com.example.worlddomination.game.rendering.BattlefieldCityRenderer;
 import com.example.worlddomination.game.rendering.BattlefieldDisplayState;
 import com.example.worlddomination.game.rendering.SourceDisplayList;
 import com.example.worlddomination.game.rendering.SourceApacheDisplayDepths;
+import com.example.worlddomination.game.rendering.SourceInfantryDisplayDepths;
 import com.example.worlddomination.game.rendering.SourceBattleUnitAllocation;
 import com.example.worlddomination.game.rendering.BattlefieldFlagRenderer;
 import com.example.worlddomination.game.rendering.BattlefieldTerrainRenderer;
@@ -796,8 +797,15 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             animation.tick();
             animation.revealAction(revealedAction);
         }
-        for (int index = 0; index < soldierBattleAnimations.size(); index++) {
-            soldierBattleAnimations.get(index).presentWaitingFrame();
+        // Before labels finish, View still seeks waiting boats. Once unit
+        // visitation opens, each cohort owns its single depth callback; an
+        // extra pre-movement swap could displace an earlier unit's occupant.
+        if (battleTicker.isRunning()
+                && (turnPlaybackSequence.isWaitingForActionLabels()
+                || previousPhase == TurnPlaybackSequence.Phase.ACTION_LABELS)) {
+            for (int index = 0; index < soldierBattleAnimations.size(); index++) {
+                soldierBattleAnimations.get(index).presentWaitingFrame();
+            }
         }
         for (int index = 0; index < satelliteBattleAnimations.size(); index++) {
             satelliteBattleAnimations.get(index).presentWaitingFrame();
@@ -1674,7 +1682,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         terrainRenderer.draw(batch, mapBounds);
         drawBattlefieldDisplay();
         battleUnitRenderer.drawSubmarines(batch, mapBounds, submarineBattleAnimations);
-        battleUnitRenderer.draw(batch, mapBounds, soldierBattleAnimations);
         battleUnitRenderer.drawChinookTank(batch, mapBounds, chinookTankAnimations);
         battleUnitRenderer.drawSuicideBomber(batch, mapBounds, suicideBomberAnimations);
         battleUnitRenderer.drawRocket(batch, mapBounds, rocketBattleAnimations);
@@ -1787,6 +1794,17 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                                     binding.animation);
                         } else {
                             battleUnitRenderer.drawApacheActor(batch, mapBounds,
+                                    binding.animation, binding.actorIndex,
+                                    item.kind == BattlefieldDisplayState.Kind.UNIT_TINT);
+                        }
+                    } else if (item.owner instanceof SourceInfantryDisplayDepths.Binding) {
+                        SourceInfantryDisplayDepths.Binding binding =
+                                (SourceInfantryDisplayDepths.Binding) item.owner;
+                        if (item.kind == BattlefieldDisplayState.Kind.UNIT_DOT) {
+                            battleUnitRenderer.drawTargetDot(batch, mapBounds,
+                                    binding.animation.getTint());
+                        } else {
+                            battleUnitRenderer.drawInfantryActor(batch, mapBounds,
                                     binding.animation, binding.actorIndex,
                                     item.kind == BattlefieldDisplayState.Kind.UNIT_TINT);
                         }
@@ -4864,6 +4882,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                         presentationRandom, cue, recordDelay,
                         game.getPlayerState(event.attackerPlayerId).getPlayerColor());
                 soldierBattleAnimations.add(animation);
+                new SourceInfantryDisplayDepths(battlefieldDisplay, animation,
+                        precedingUnitParameter);
                 sourceUnitPlayback.add(() -> advanceInfantryUnit(animation));
                 continue;
             }

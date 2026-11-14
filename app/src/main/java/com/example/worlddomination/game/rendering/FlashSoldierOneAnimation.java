@@ -13,8 +13,19 @@ public final class FlashSoldierOneAnimation {
         public int islandPlayerId;
         public boolean visible;
         private boolean queuedForDeletion;
+        private SourceStoppedClipQueue.Clip boundClip;
 
-        @Override public void detach() { visible = false; }
+        void bindClip(SourceStoppedClipQueue.Clip clip) { boundClip = clip; }
+
+        @Override public void detach() {
+            visible = false;
+            if (boundClip != null) boundClip.detach();
+        }
+    }
+
+    /** Called after each source-visited boat or started soldier wrapper. */
+    public interface ActorFrameListener {
+        void onActorFrame(int nativeActorIndex, double sourceY, boolean bodyChanged);
     }
 
     private static final int BOAT_ACTOR = 0;
@@ -42,6 +53,11 @@ public final class FlashSoldierOneAnimation {
     private int boatStoppedFrame;
     private boolean boatFinished;
     private int pendingAudioCues;
+    private ActorFrameListener actorFrameListener;
+
+    public void setActorFrameListener(ActorFrameListener listener) {
+        actorFrameListener = listener;
+    }
 
     public FlashSoldierOneAnimation(FlashBattleRoutes.SoldierOneAttack route,
                                     ReferenceRandom presentationRandom,
@@ -64,8 +80,10 @@ public final class FlashSoldierOneAnimation {
         Actor boat = new Actor();
         boat.linkage = "boat001";
         actors[BOAT_ACTOR] = boat;
-        boat.sourceX = route.boatStart.x;
-        boat.sourceY = route.boatStart.y;
+        // Source Unit.curX/Y starts at the route point, but the attached MC
+        // remains at the battle-parent origin until its first View.f_37 visit.
+        boat.sourceX = 0f;
+        boat.sourceY = 0f;
         boat.islandPlayerId = route.attackerPlayerId;
         boat.visible = true;
         for (int i = 0; i < SOLDIER_COUNT; i++) {
@@ -92,14 +110,21 @@ public final class FlashSoldierOneAnimation {
             delayTicks--;
             return false;
         }
+        if (!boatStarted) setWaitingBoatPose();
         boatStarted = true;
         // Flash for-in visits the active array in reverse: boat, then
         // tail32, tail31, tail30 (our stable actor1..3 order).
-        if (!boatFinished) tickBoat();
+        if (!boatFinished) {
+            String previousLinkage = actors[BOAT_ACTOR].linkage;
+            tickBoat();
+            notifyActorFrame(BOAT_ACTOR, actors[BOAT_ACTOR].sourceY,
+                    !previousLinkage.equals(actors[BOAT_ACTOR].linkage));
+        }
         for (int i = 0; i < SOLDIER_COUNT; i++) {
             SoldierTrack soldier = soldiers[i];
             if (!soldier.started && unloading && unloadNumber == i) {
                 soldier.start(presentationRandom);
+                notifyActorFrame(FIRST_SOLDIER_ACTOR + i, soldier.actor.sourceY, false);
                 continue; // Activation paints a pose but does not move yet.
             }
             if (soldier.started && !soldier.finished) {
@@ -107,7 +132,10 @@ public final class FlashSoldierOneAnimation {
                     soldier.finished = true;
                     return true; // View returns after moving infantry to deletion.
                 }
+                String previousLinkage = soldier.actor.linkage;
                 if (soldier.tick()) pendingAudioCues++;
+                notifyActorFrame(FIRST_SOLDIER_ACTOR + i, soldier.actor.sourceY,
+                        !previousLinkage.equals(soldier.actor.linkage));
             }
         }
         return false;
@@ -116,8 +144,21 @@ public final class FlashSoldierOneAnimation {
     /** View renders the waiting boat while action labels and earlier records run. */
     public void presentWaitingFrame() {
         if (!boatStarted) {
-            actors[BOAT_ACTOR].sourceFrame = directionFrame(route.boatStart.x,
-                    route.boatStart.y) - 1;
+            setWaitingBoatPose();
+            notifyActorFrame(BOAT_ACTOR, route.boatStart.y, false);
+        }
+    }
+
+    private void setWaitingBoatPose() {
+        actors[BOAT_ACTOR].sourceX = route.boatStart.x;
+        actors[BOAT_ACTOR].sourceY = route.boatStart.y;
+        actors[BOAT_ACTOR].sourceFrame = directionFrame(route.boatStart.x,
+                route.boatStart.y) - 1;
+    }
+
+    private void notifyActorFrame(int actorIndex, double sourceY, boolean bodyChanged) {
+        if (actorFrameListener != null) {
+            actorFrameListener.onActorFrame(actorIndex, sourceY, bodyChanged);
         }
     }
 
@@ -139,11 +180,11 @@ public final class FlashSoldierOneAnimation {
     /** Presenter.allUnitsDone removes clips after the source ticker has stopped. */
     public void clearStoppedActors() {
         if (boatFinished) {
-            actors[BOAT_ACTOR].visible = false;
+            actors[BOAT_ACTOR].detach();
         }
         for (SoldierTrack soldier : soldiers) {
             if (soldier.finished) {
-                soldier.actor.visible = false;
+                soldier.actor.detach();
             }
         }
     }
@@ -155,6 +196,16 @@ public final class FlashSoldierOneAnimation {
     /** Returns a stable actor view; no object is allocated during rendering. */
     public Actor getActor(int index) {
         return actors[index];
+    }
+
+    /** Unit.curX precedes the first View seek of the boat's attached MC. */
+    public float getBoatUnitSourceX() {
+        return !boatStarted ? route.boatStart.x : actors[BOAT_ACTOR].sourceX;
+    }
+
+    /** Unit.curY and the attached MC's render position differ at construction. */
+    public float getBoatUnitSourceY() {
+        return !boatStarted ? route.boatStart.y : actors[BOAT_ACTOR].sourceY;
     }
 
     public boolean takeAudioCue() {

@@ -83,11 +83,15 @@ public final class FlashBattleUnitRenderer {
 
     /** Unit attaches a separate tinted dot at the battle parent's origin. */
     public void drawTargetDot(SpriteBatch batch, Rectangle bounds, String colorName) {
+        drawTargetDot(batch, bounds, apacheTint(colorName));
+    }
+
+    public void drawTargetDot(SpriteBatch batch, Rectangle bounds, FlashColorTransform tint) {
         if (!assets.isLoaded()) return;
         ShaderProgram previousShader = batch.getShader();
         float previousColor = batch.getPackedColor();
         try {
-            drawApacheClip(batch, bounds, targetDotActor, "redDot", apacheTint(colorName));
+            drawApacheClip(batch, bounds, targetDotActor, "redDot", tint);
         } finally {
             batch.setShader(previousShader);
             batch.setPackedColor(previousColor);
@@ -140,6 +144,30 @@ public final class FlashBattleUnitRenderer {
         }
         drawInfantryFrame(batch, bounds, timeline.getFrame(
                 Math.min(actor.sourceFrame, timeline.getFrameCount() - 1)), actor, 0);
+    }
+
+    /** Draws one body or tint at its independently occupied source parent depth. */
+    public void drawInfantryActor(SpriteBatch batch, Rectangle bounds,
+                                  FlashSoldierOneAnimation animation, int actorIndex,
+                                  boolean tint) {
+        FlashSoldierOneAnimation.Actor actor = animation.getActor(actorIndex);
+        if (!assets.isLoaded() || !actor.visible) return;
+        String linkage = actor.linkage;
+        if (tint) {
+            linkage = actorIndex == 0
+                    ? ("boat001_still".equals(actor.linkage)
+                    ? "boat001_still_tint" : "boat001_tint")
+                    : ("soldier001_shoot".equals(actor.linkage)
+                    ? "soldier001_shoot_tint" : "soldier001_tint");
+        }
+        ShaderProgram previousShader = batch.getShader();
+        float previousColor = batch.getPackedColor();
+        try {
+            drawInfantryClip(batch, bounds, actor, linkage, tint ? animation.getTint() : null);
+        } finally {
+            batch.setShader(previousShader);
+            batch.setPackedColor(previousColor);
+        }
     }
 
     private void drawInfantryFrame(SpriteBatch batch, Rectangle bounds,

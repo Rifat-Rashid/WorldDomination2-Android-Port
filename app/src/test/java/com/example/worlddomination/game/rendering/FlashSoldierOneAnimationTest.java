@@ -16,22 +16,39 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public final class FlashSoldierOneAnimationTest {
+    @Test public void firstActiveBoatVisitEmitsOnlyItsPostMovementDepthCallback() throws Exception {
+        FlashSoldierOneAnimation animation = createAnimation(0);
+        int[] callbacks = {0};
+        animation.setActorFrameListener((actor, y, changed) -> {
+            assertEquals(0, actor);
+            callbacks[0]++;
+        });
+        animation.tickSourceFrame();
+        assertEquals("initial pose setup must not swap before movement", 1, callbacks[0]);
+        assertEquals(408f, animation.getActor(0).sourceX, 0f);
+        assertEquals(476f, animation.getActor(0).sourceY, 0f);
+        animation.presentWaitingFrame();
+        assertEquals("an already active boat has no waiting visit", 1, callbacks[0]);
+        animation.tickSourceFrame();
+        assertEquals(2, callbacks[0]);
+    }
+
     @Test
-    public void waitingBoatStaysVisibleWithoutMovingBeforeItsRecord() throws Exception {
+    public void waitingBoatSeeksSourceStartOnFirstViewFrameBeforeItsRecord() throws Exception {
         FlashSoldierOneAnimation animation = createAnimation(2);
         FlashSoldierOneAnimation.Actor boat = animation.getActor(0);
 
         assertTrue(boat.visible);
-        float startX = boat.sourceX;
-        float startY = boat.sourceY;
+        assertEquals("attached source MC starts at parent origin", 0f, boat.sourceX, 0f);
+        assertEquals(0f, boat.sourceY, 0f);
         animation.tick();
         assertTrue(boat.visible);
-        assertEquals(startX, boat.sourceX, 0f);
-        assertEquals(startY, boat.sourceY, 0f);
+        assertEquals("View paints curX even before record activation", 410f, boat.sourceX, 0f);
+        assertEquals(474f, boat.sourceY, 0f);
         animation.tick();
         assertTrue(boat.visible);
-        assertEquals(startX, boat.sourceX, 0f);
-        assertEquals(startY, boat.sourceY, 0f);
+        assertEquals(410f, boat.sourceX, 0f);
+        assertEquals(474f, boat.sourceY, 0f);
         animation.tick();
         assertTrue(boat.visible);
         assertEquals("boat001", boat.linkage);
