@@ -444,6 +444,9 @@ jobs:
           - id: source-city-impact-playback
             check: Source tank impact city fade dust and random timing
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.SourceCityImpactStateTest" --tests "com.example.worlddomination.game.rendering.CityShrinkSequenceTest" --tests "com.example.worlddomination.game.simulation.BattlePresentationCitySnapshotTest" --tests "com.example.worlddomination.game.rendering.SourceBattleOracleResourcesTest.chinookCityImpactCaptureRetainsSourceHashAndBoundaryFrames"'
+          - id: source-suicide-display-depths
+            check: Source suicide depths, sound and retained explosion lifecycle
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.SourceSuicideDisplayDepthsTest" --tests "com.example.worlddomination.game.rendering.SourceBattleOracleResourcesTest.suicideBattleCaptureRetainsLegalSourceHashesAndImpactBoundary" --tests "com.example.worlddomination.game.rendering.FlashBattleUnitRendererTest" --tests "com.example.worlddomination.game.audio.OriginalAudioTest.combatCuesPointToTheOriginalPackagedSounds"'
           - id: source-action-flame-tests
             check: Source action flame timing and reveal audio
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.SourceBattleActionFramesTest" --tests "com.example.worlddomination.game.audio.OriginalAudioTest.religionLabelUsesTheFourRecoveredMassMediaVariations"'

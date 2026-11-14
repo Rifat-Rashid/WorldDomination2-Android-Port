@@ -44,6 +44,7 @@ import com.example.worlddomination.game.rendering.SourceDisplayList;
 import com.example.worlddomination.game.rendering.SourceApacheDisplayDepths;
 import com.example.worlddomination.game.rendering.SourceInfantryDisplayDepths;
 import com.example.worlddomination.game.rendering.SourceChinookDisplayDepths;
+import com.example.worlddomination.game.rendering.SourceSuicideDisplayDepths;
 import com.example.worlddomination.game.rendering.SourceBattleUnitAllocation;
 import com.example.worlddomination.game.rendering.BattlefieldFlagRenderer;
 import com.example.worlddomination.game.rendering.BattlefieldTerrainRenderer;
@@ -751,6 +752,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         for (int index = 0; index < apacheMarineAnimations.size(); index++) {
             apacheMarineAnimations.get(index).advanceAttachedTimelines();
         }
+        for (int index = 0; index < suicideBomberAnimations.size(); index++) {
+            suicideBomberAnimations.get(index).advanceAttachedTimelines();
+        }
         // BattleMC's retained action-building children precede the center-screen
         // and unit callbacks in the source display-list traversal, even at idle.
         battleActionFrames.tick(battlefieldDisplay);
@@ -810,6 +814,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             }
             for (int index = 0; index < chinookTankAnimations.size(); index++) {
                 chinookTankAnimations.get(index).presentWaitingFrame();
+            }
+            for (int index = 0; index < suicideBomberAnimations.size(); index++) {
+                suicideBomberAnimations.get(index).presentWaitingFrame();
             }
         }
         for (int index = 0; index < satelliteBattleAnimations.size(); index++) {
@@ -1023,15 +1030,27 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         return false;
     }
 
-    private boolean advanceSuicideUnit(FlashSuicideBomberAnimation animation) {
+    private boolean advanceSuicideUnit(FlashSuicideBomberAnimation animation,
+                                       GameState.CombatEvent event) {
         if (animation.isFinished()) return false;
-        animation.tick();
+        animation.tickSourceFrame();
+        if (animation.takeCityImpact()) {
+            int address = event.defenderPlayerId * BattlefieldCityLayout.CITIES_PER_PLAYER
+                    + event.cityIndex;
+            cityRenderer.applySourceTankImpact(address, event.casualtiesMillions,
+                    battlePresentationRandom);
+        }
+        animation.registerStoppedClips(sourceStoppedClips);
         while (animation.takeAudioCue()) {
-            audio.play(animation.getAudioCue());
+            OriginalAudio.Cue cue = animation.getAudioCue();
+            if (cue == OriginalAudio.Cue.SUICIDE_EXPLODE) {
+                audio.play(cue, sourceAudioPan(animation.getActor(2).renderX));
+            } else {
+                audio.play(cue);
+            }
         }
-        if (animation.isFinished()) {
-            suicideBomberAnimations.remove(animation);
-        }
+        // View continues to later wrappers after suicide removal. Its early
+        // return applies only to marines and ordinary soldiers.
         return false;
     }
 
@@ -1070,8 +1089,15 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 break;
             }
         }
+        boolean hasActiveSuicide = false;
+        for (int index = 0; index < suicideBomberAnimations.size(); index++) {
+            if (!suicideBomberAnimations.get(index).isFinished()) {
+                hasActiveSuicide = true;
+                break;
+            }
+        }
         return hasActiveInfantry || hasActiveSatellite || hasActiveTank || hasActiveMarine
-                || !suicideBomberAnimations.isEmpty()
+                || hasActiveSuicide
                 || !rocketBattleAnimations.isEmpty()
                 || !submarineBattleAnimations.isEmpty()
                 || !carrierPlaneAnimations.isEmpty()
@@ -1695,7 +1721,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         terrainRenderer.draw(batch, mapBounds);
         drawBattlefieldDisplay();
         battleUnitRenderer.drawSubmarines(batch, mapBounds, submarineBattleAnimations);
-        battleUnitRenderer.drawSuicideBomber(batch, mapBounds, suicideBomberAnimations);
         battleUnitRenderer.drawRocket(batch, mapBounds, rocketBattleAnimations);
         battleUnitRenderer.drawCarrierPlanes(batch, mapBounds, carrierPlaneAnimations);
         battleUnitRenderer.drawStandalonePlanes(batch, mapBounds, standalonePlaneAnimations);
@@ -1832,6 +1857,17 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                             battleUnitRenderer.drawChinookActor(batch, mapBounds,
                                     binding.animation, binding.actorIndex,
                                     item.kind == BattlefieldDisplayState.Kind.UNIT_SHADOW);
+                        }
+                    } else if (item.owner instanceof SourceSuicideDisplayDepths.Binding) {
+                        SourceSuicideDisplayDepths.Binding binding =
+                                (SourceSuicideDisplayDepths.Binding) item.owner;
+                        String colorName = GameSetup.colorName(game.getPlayerState(
+                                binding.animation.getAttackerPlayerId()).getPlayerColor());
+                        if (item.kind == BattlefieldDisplayState.Kind.UNIT_DOT) {
+                            battleUnitRenderer.drawTargetDot(batch, mapBounds, colorName);
+                        } else {
+                            battleUnitRenderer.drawSuicideActor(batch, mapBounds,
+                                    binding.animation.getActor(item.index), colorName);
                         }
                     }
                     break;
@@ -4951,9 +4987,15 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                                 event.attackerPlayerId, event.defenderPlayerId,
                                 event.cityIndex, event.actionBuildingSlot, battleAnchors);
                 FlashSuicideBomberAnimation animation = new FlashSuicideBomberAnimation(route,
-                        cue, recordDelay);
+                        cue, recordDelay,
+                        game.getPlayerState(event.attackerPlayerId).getPlayerColor());
                 suicideBomberAnimations.add(animation);
-                sourceUnitPlayback.add(() -> advanceSuicideUnit(animation));
+                cityRenderer.beginSourceTankCity(game,
+                        event.defenderPlayerId * BattlefieldCityLayout.CITIES_PER_PLAYER
+                                + event.cityIndex);
+                new SourceSuicideDisplayDepths(battlefieldDisplay, animation,
+                        precedingUnitParameter);
+                sourceUnitPlayback.add(() -> advanceSuicideUnit(animation, event));
                 continue;
             }
             String linkage = SourceCombatAnimationMapping.linkageFor(event);

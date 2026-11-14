@@ -31,4 +31,32 @@ public final class FlashBattleUnitRendererTest {
         assertThrows(IllegalArgumentException.class,
                 () -> FlashBattleUnitRenderer.sourceSatelliteLaserColor(5, 8));
     }
+
+    @Test public void suicidePaletteAlphaIsNotMultipliedTwiceAtConstruction() {
+        FlashColorTransform.Composition color = new FlashColorTransform.Composition();
+        FlashBattleUnitRenderer.setSuicideColor(color, "suicide_bomber_tint", "green", .75f);
+        assertEquals(.75f, color.alphaMultiplier, 0f);
+        assertEquals(0f, color.redMultiplier, 0f);
+        assertEquals(.5f, color.greenMultiplier, 0f);
+        assertEquals(1f, color.greenAdd, 0f);
+        assertEquals(0f, color.blueMultiplier, 0f);
+    }
+
+    @Test public void sourceFadeReplacesTintAlphaAndRetainsPlayerRgbTransform() {
+        FlashColorTransform.Composition color = new FlashColorTransform.Composition();
+        FlashBattleUnitRenderer.setSuicideColor(color, "suicide_bomber_tint", "red", .98f);
+        assertEquals(.98f, color.alphaMultiplier, 0f);
+        assertEquals(.5f, color.redMultiplier, 0f);
+        assertEquals(1f, color.redAdd, 0f);
+        assertEquals(0f, color.greenMultiplier, 0f);
+    }
+
+    @Test public void bodyAndExplosionDoNotInheritTheTintPeerColor() {
+        FlashColorTransform.Composition color = new FlashColorTransform.Composition();
+        FlashBattleUnitRenderer.setSuicideColor(color, "suicide_bomber_tint", "red", .98f);
+        for (String linkage : new String[]{"suicide_bomber", "explosion001"}) {
+            FlashBattleUnitRenderer.setSuicideColor(color, linkage, "red", 1f);
+            org.junit.Assert.assertTrue(color.isIdentity());
+        }
+    }
 }
