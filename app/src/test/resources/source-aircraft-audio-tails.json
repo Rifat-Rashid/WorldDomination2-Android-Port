@@ -1,0 +1,2928 @@
+{
+  "schema": "source-aircraft-audio-tails-v1",
+  "seed": 0,
+  "difficulty": "normal",
+  "selectedLeaders": [
+    0,
+    1
+  ],
+  "syntheticBoundaryNotice": "Exactly one synthetic takeoff completion occurs at each first sound tick. Source Unit visits then run naturally to battle end; no further completion or outcome mutation occurs.",
+  "cases": [
+    {
+      "family": "plane1",
+      "legalSchedule": [
+        {
+          "turn": 1,
+          "action": "production",
+          "options": {
+            "category": "planes",
+            "percent": 100
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 2,
+          "action": "preAttack",
+          "options": {
+            "weapon": "plane1"
+          },
+          "second": "resources"
+        }
+      ],
+      "humanBattleEvents": [
+        {
+          "attacker": 0,
+          "defender": 1,
+          "weaponId": 20,
+          "payloadId": 8,
+          "cityAddress": 7,
+          "result": true,
+          "shipAttacks": null,
+          "shipResults": null
+        }
+      ],
+      "route": {
+        "sourceStartNum": 3.0,
+        "sourceUnitName": "unit1",
+        "sourceUnitResult": true,
+        "sourceWildcardNumber": null,
+        "waypoints": [
+          {
+            "x": 327,
+            "y": 246,
+            "action": "default"
+          },
+          {
+            "x": 173,
+            "y": 298,
+            "action": "plane_circular_flight"
+          },
+          {
+            "x": 212.8,
+            "y": 66.75,
+            "action": "bomb"
+          }
+        ]
+      },
+      "firstVisitedTick": 234,
+      "firstTakeoffRequestTick": 234,
+      "syntheticTakeoffCompletionTick": 234,
+      "syntheticTakeoffCompletionEvents": [
+        {
+          "event": "complete",
+          "linkage": "unit_Fightertakeoff.wav"
+        },
+        {
+          "event": "start",
+          "linkage": "unit_fighterflight.wav",
+          "loops": 1,
+          "volume": 100,
+          "pan": -100
+        }
+      ],
+      "firstFlyOffTick": 343,
+      "firstFadeTick": 344,
+      "zeroVolumeTick": 393,
+      "ownedSoundStopTick": 470,
+      "wrapperRemovedTick": 471,
+      "battleLastTick": 533,
+      "sampledChangedRows": [
+        {
+          "tick": 234,
+          "action": "liftOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 100,
+          "soundPan": -100,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 279,
+          "action": "default",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 100,
+          "soundPan": -28,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 296,
+          "action": "plane_circular_flight",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 100,
+          "soundPan": -47,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 326,
+          "action": "default",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 100,
+          "soundPan": -12,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 342,
+          "action": "bomb",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 100,
+          "soundPan": -37,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 343,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 100,
+          "soundPan": -38,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 344,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 98,
+          "soundPan": -40,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 345,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 96,
+          "soundPan": -41,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 346,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 94,
+          "soundPan": -43,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 347,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 92,
+          "soundPan": -44,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 348,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 90,
+          "soundPan": -46,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 349,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 88,
+          "soundPan": -47,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 350,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 86,
+          "soundPan": -49,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 351,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 84,
+          "soundPan": -50,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 352,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 82,
+          "soundPan": -52,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 353,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 80,
+          "soundPan": -53,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 354,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 78,
+          "soundPan": -55,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 355,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 76,
+          "soundPan": -56,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 356,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 74,
+          "soundPan": -58,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 357,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 72,
+          "soundPan": -59,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 358,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 70,
+          "soundPan": -61,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 359,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 68,
+          "soundPan": -62,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 360,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 66,
+          "soundPan": -64,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 361,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 64,
+          "soundPan": -65,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 362,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 62,
+          "soundPan": -67,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 363,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 60,
+          "soundPan": -68,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 364,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 58,
+          "soundPan": -70,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 365,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 56,
+          "soundPan": -71,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 366,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 54,
+          "soundPan": -73,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 367,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 52,
+          "soundPan": -74,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 368,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 50,
+          "soundPan": -76,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 369,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 48,
+          "soundPan": -77,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 370,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 46,
+          "soundPan": -79,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 371,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 44,
+          "soundPan": -80,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 372,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 42,
+          "soundPan": -82,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 373,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 40,
+          "soundPan": -83,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 374,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 38,
+          "soundPan": -85,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 375,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 36,
+          "soundPan": -86,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 376,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 34,
+          "soundPan": -88,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 377,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 32,
+          "soundPan": -89,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 378,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 30,
+          "soundPan": -91,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 379,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 28,
+          "soundPan": -92,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 380,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 26,
+          "soundPan": -94,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 381,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 24,
+          "soundPan": -95,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 382,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 22,
+          "soundPan": -97,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 383,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 20,
+          "soundPan": -98,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 384,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 18,
+          "soundPan": -100,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 385,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 16,
+          "soundPan": -100,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 386,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 14,
+          "soundPan": -100,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 387,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 12,
+          "soundPan": -100,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 388,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 10,
+          "soundPan": -100,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 389,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 8,
+          "soundPan": -100,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 390,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 6,
+          "soundPan": -100,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 391,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 4,
+          "soundPan": -100,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 392,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 2,
+          "soundPan": -100,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 393,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 0,
+          "soundPan": -100,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 470,
+          "action": "stop",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": false,
+          "soundVolume": 0,
+          "soundPan": -100,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": false,
+          "mcAttached": true
+        },
+        {
+          "tick": 471,
+          "action": "stop",
+          "status": "alive",
+          "active": false,
+          "soundPlaying": false,
+          "soundVolume": 0,
+          "soundPan": -100,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": false,
+          "mcAttached": true
+        }
+      ]
+    },
+    {
+      "family": "plane2",
+      "legalSchedule": [
+        {
+          "turn": 1,
+          "action": "research",
+          "options": {
+            "tech": "rocket2"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 2,
+          "action": "research",
+          "options": {
+            "tech": "rocket3"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 3,
+          "action": "research",
+          "options": {
+            "tech": "rocket4"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 4,
+          "action": "research",
+          "options": {
+            "tech": "warhead2"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 5,
+          "action": "research",
+          "options": {
+            "tech": "warhead3"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 6,
+          "action": "research",
+          "options": {
+            "tech": "warhead4"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 7,
+          "action": "research",
+          "options": {
+            "tech": "bioload2"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 8,
+          "action": "research",
+          "options": {
+            "tech": "bioload3"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 9,
+          "action": "research",
+          "options": {
+            "tech": "bioload4"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 10,
+          "action": "research",
+          "options": {
+            "tech": "soldier2"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 11,
+          "action": "research",
+          "options": {
+            "tech": "soldier3"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 12,
+          "action": "research",
+          "options": {
+            "tech": "soldier4"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 13,
+          "action": "research",
+          "options": {
+            "tech": "plane2"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 14,
+          "action": "production",
+          "options": {
+            "category": "planes",
+            "percent": 100
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 15,
+          "action": "production",
+          "options": {
+            "category": "warhead",
+            "percent": 100
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 16,
+          "action": "preAttack",
+          "options": {
+            "weapon": "plane2"
+          },
+          "second": "resources"
+        }
+      ],
+      "humanBattleEvents": [
+        {
+          "attacker": 0,
+          "defender": 1,
+          "weaponId": 21,
+          "payloadId": 4,
+          "cityAddress": 7,
+          "result": true,
+          "shipAttacks": null,
+          "shipResults": null
+        }
+      ],
+      "route": {
+        "sourceStartNum": 3.0,
+        "sourceUnitName": "unit1",
+        "sourceUnitResult": true,
+        "sourceWildcardNumber": null,
+        "waypoints": [
+          {
+            "x": 327,
+            "y": 246,
+            "action": "default"
+          },
+          {
+            "x": 173,
+            "y": 298,
+            "action": "plane_circular_flight"
+          },
+          {
+            "x": 212.8,
+            "y": 66.75,
+            "action": "bomb"
+          }
+        ]
+      },
+      "firstVisitedTick": 272,
+      "firstTakeoffRequestTick": 272,
+      "syntheticTakeoffCompletionTick": 272,
+      "syntheticTakeoffCompletionEvents": [
+        {
+          "event": "complete",
+          "linkage": "unit_Carrierjet take off.wav"
+        },
+        {
+          "event": "start",
+          "linkage": "unit_Carrierjet flight.wav",
+          "loops": 999,
+          "volume": 100,
+          "pan": -100
+        }
+      ],
+      "firstFlyOffTick": 381,
+      "firstFadeTick": 382,
+      "zeroVolumeTick": 431,
+      "ownedSoundStopTick": 508,
+      "wrapperRemovedTick": 509,
+      "battleLastTick": 571,
+      "sampledChangedRows": [
+        {
+          "tick": 272,
+          "action": "liftOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 100,
+          "soundPan": -100,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 317,
+          "action": "default",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 100,
+          "soundPan": -28,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 334,
+          "action": "plane_circular_flight",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 100,
+          "soundPan": -47,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 364,
+          "action": "default",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 100,
+          "soundPan": -12,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 380,
+          "action": "bomb",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 100,
+          "soundPan": -37,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 381,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 100,
+          "soundPan": -38,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 382,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 98,
+          "soundPan": -40,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 383,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 96,
+          "soundPan": -41,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 384,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 94,
+          "soundPan": -43,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 385,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 92,
+          "soundPan": -44,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 386,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 90,
+          "soundPan": -46,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 387,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 88,
+          "soundPan": -47,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 388,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 86,
+          "soundPan": -49,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 389,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 84,
+          "soundPan": -50,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 390,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 82,
+          "soundPan": -52,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 391,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 80,
+          "soundPan": -53,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 392,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 78,
+          "soundPan": -55,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 393,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 76,
+          "soundPan": -56,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 394,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 74,
+          "soundPan": -58,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 395,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 72,
+          "soundPan": -59,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 396,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 70,
+          "soundPan": -61,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 397,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 68,
+          "soundPan": -62,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 398,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 66,
+          "soundPan": -64,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 399,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 64,
+          "soundPan": -65,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 400,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 62,
+          "soundPan": -67,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 401,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 60,
+          "soundPan": -68,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 402,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 58,
+          "soundPan": -70,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 403,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 56,
+          "soundPan": -71,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 404,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 54,
+          "soundPan": -73,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 405,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 52,
+          "soundPan": -74,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 406,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 50,
+          "soundPan": -76,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 407,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 48,
+          "soundPan": -77,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 408,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 46,
+          "soundPan": -79,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 409,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 44,
+          "soundPan": -80,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 410,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 42,
+          "soundPan": -82,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 411,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 40,
+          "soundPan": -83,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 412,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 38,
+          "soundPan": -85,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 413,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 36,
+          "soundPan": -86,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 414,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 34,
+          "soundPan": -88,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 415,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 32,
+          "soundPan": -89,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 416,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 30,
+          "soundPan": -91,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 417,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 28,
+          "soundPan": -92,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 418,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 26,
+          "soundPan": -94,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 419,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 24,
+          "soundPan": -95,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 420,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 22,
+          "soundPan": -97,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 421,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 20,
+          "soundPan": -98,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 422,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 18,
+          "soundPan": -100,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 423,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 16,
+          "soundPan": -100,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 424,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 14,
+          "soundPan": -100,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 425,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 12,
+          "soundPan": -100,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 426,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 10,
+          "soundPan": -100,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 427,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 8,
+          "soundPan": -100,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 428,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 6,
+          "soundPan": -100,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 429,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 4,
+          "soundPan": -100,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 430,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 2,
+          "soundPan": -100,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 431,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 0,
+          "soundPan": -100,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 508,
+          "action": "stop",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": false,
+          "soundVolume": 0,
+          "soundPan": -100,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": false,
+          "mcAttached": true
+        },
+        {
+          "tick": 509,
+          "action": "stop",
+          "status": "alive",
+          "active": false,
+          "soundPlaying": false,
+          "soundVolume": 0,
+          "soundPan": -100,
+          "soundLinkage": "unit_Carrierjet flight.wav",
+          "unitSoundSameObject": false,
+          "mcAttached": true
+        }
+      ]
+    },
+    {
+      "family": "ship",
+      "legalSchedule": [
+        {
+          "turn": 1,
+          "action": "research",
+          "options": {
+            "tech": "rocket2"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 2,
+          "action": "research",
+          "options": {
+            "tech": "rocket3"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 3,
+          "action": "research",
+          "options": {
+            "tech": "rocket4"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 4,
+          "action": "research",
+          "options": {
+            "tech": "warhead2"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 5,
+          "action": "research",
+          "options": {
+            "tech": "warhead3"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 6,
+          "action": "research",
+          "options": {
+            "tech": "warhead4"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 7,
+          "action": "research",
+          "options": {
+            "tech": "bioload2"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 8,
+          "action": "research",
+          "options": {
+            "tech": "bioload3"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 9,
+          "action": "research",
+          "options": {
+            "tech": "bioload4"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 10,
+          "action": "research",
+          "options": {
+            "tech": "soldier2"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 11,
+          "action": "research",
+          "options": {
+            "tech": "soldier3"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 12,
+          "action": "research",
+          "options": {
+            "tech": "soldier4"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 13,
+          "action": "research",
+          "options": {
+            "tech": "sub"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 14,
+          "action": "research",
+          "options": {
+            "tech": "ship"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 15,
+          "action": "production",
+          "options": {
+            "category": "special",
+            "percent": 100
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 16,
+          "action": "production",
+          "options": {
+            "category": "bioload",
+            "percent": 100
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 17,
+          "action": "production",
+          "options": {
+            "category": "bioload",
+            "percent": 100
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 18,
+          "action": "production",
+          "options": {
+            "category": "bioload",
+            "percent": 100
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 19,
+          "action": "production",
+          "options": {
+            "category": "bioload",
+            "percent": 100
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 20,
+          "action": "preAttack",
+          "options": {
+            "weapon": "ship"
+          },
+          "second": "resources"
+        }
+      ],
+      "humanBattleEvents": [
+        {
+          "attacker": 0,
+          "defender": 1,
+          "weaponId": 23,
+          "payloadId": null,
+          "cityAddress": null,
+          "result": true,
+          "shipAttacks": [
+            {
+              "city": 5,
+              "wpn": 10,
+              "_bioload": true
+            },
+            {
+              "city": 6,
+              "wpn": 10,
+              "_bioload": true
+            },
+            {
+              "city": 7,
+              "wpn": 10,
+              "_bioload": true
+            }
+          ],
+          "shipResults": [
+            {
+              "_num": 0,
+              "_result": false,
+              "_casualties": 0
+            },
+            {
+              "_num": 1,
+              "_result": false,
+              "_casualties": 0
+            },
+            {
+              "_num": 2,
+              "_result": false,
+              "_casualties": 0
+            }
+          ]
+        }
+      ],
+      "route": {
+        "sourceStartNum": 3.0,
+        "sourceUnitName": "unit1",
+        "sourceUnitResult": true,
+        "sourceWildcardNumber": 0.0,
+        "waypoints": [
+          {
+            "x": 318.5,
+            "y": 148.75,
+            "action": "default"
+          },
+          {
+            "x": 29.0,
+            "y": 162.0,
+            "action": "explode"
+          }
+        ]
+      },
+      "firstVisitedTick": 196,
+      "firstTakeoffRequestTick": 196,
+      "syntheticTakeoffCompletionTick": 196,
+      "syntheticTakeoffCompletionEvents": [
+        {
+          "event": "complete",
+          "linkage": "unit_Fightertakeoff.wav"
+        },
+        {
+          "event": "start",
+          "linkage": "unit_fighterflight.wav",
+          "loops": 1,
+          "volume": 100,
+          "pan": -2
+        }
+      ],
+      "firstFlyOffTick": null,
+      "firstFadeTick": null,
+      "zeroVolumeTick": null,
+      "ownedSoundStopTick": 238,
+      "wrapperRemovedTick": 239,
+      "battleLastTick": 482,
+      "sampledChangedRows": [
+        {
+          "tick": 196,
+          "action": "liftOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 100,
+          "soundPan": -2,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 205,
+          "action": "default",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 100,
+          "soundPan": -12,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 237,
+          "action": "explode",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 100,
+          "soundPan": -83,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 238,
+          "action": "dying",
+          "status": "dead",
+          "active": true,
+          "soundPlaying": false,
+          "soundVolume": 100,
+          "soundPan": -85,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": false
+        },
+        {
+          "tick": 239,
+          "action": "dying",
+          "status": "dead",
+          "active": false,
+          "soundPlaying": false,
+          "soundVolume": 100,
+          "soundPan": -88,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": false
+        }
+      ]
+    },
+    {
+      "family": "ship_success",
+      "legalSchedule": [
+        {
+          "turn": 1,
+          "action": "research",
+          "options": {
+            "tech": "rocket2"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 2,
+          "action": "research",
+          "options": {
+            "tech": "rocket3"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 3,
+          "action": "research",
+          "options": {
+            "tech": "rocket4"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 4,
+          "action": "research",
+          "options": {
+            "tech": "warhead2"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 5,
+          "action": "research",
+          "options": {
+            "tech": "warhead3"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 6,
+          "action": "research",
+          "options": {
+            "tech": "warhead4"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 7,
+          "action": "research",
+          "options": {
+            "tech": "bioload2"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 8,
+          "action": "research",
+          "options": {
+            "tech": "bioload3"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 9,
+          "action": "research",
+          "options": {
+            "tech": "bioload4"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 10,
+          "action": "research",
+          "options": {
+            "tech": "soldier2"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 11,
+          "action": "research",
+          "options": {
+            "tech": "soldier3"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 12,
+          "action": "research",
+          "options": {
+            "tech": "soldier4"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 13,
+          "action": "research",
+          "options": {
+            "tech": "sub"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 14,
+          "action": "research",
+          "options": {
+            "tech": "ship"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 15,
+          "action": "production",
+          "options": {
+            "category": "special",
+            "percent": 100
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 16,
+          "action": "production",
+          "options": {
+            "category": "bioload",
+            "percent": 100
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 17,
+          "action": "production",
+          "options": {
+            "category": "bioload",
+            "percent": 100
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 18,
+          "action": "production",
+          "options": {
+            "category": "bioload",
+            "percent": 100
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 19,
+          "action": "production",
+          "options": {
+            "category": "bioload",
+            "percent": 100
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 20,
+          "action": "preAttack",
+          "options": {
+            "weapon": "ship"
+          },
+          "second": "resources"
+        }
+      ],
+      "humanBattleEvents": [
+        {
+          "attacker": 0,
+          "defender": 2,
+          "weaponId": 23,
+          "payloadId": null,
+          "cityAddress": null,
+          "result": true,
+          "shipAttacks": [
+            {
+              "city": 10,
+              "wpn": 10,
+              "_bioload": true
+            },
+            {
+              "city": 11,
+              "wpn": 10,
+              "_bioload": true
+            },
+            {
+              "city": 12,
+              "wpn": 10,
+              "_bioload": true
+            }
+          ],
+          "shipResults": [
+            {
+              "_num": 0,
+              "_result": true,
+              "_casualties": 50
+            },
+            {
+              "_num": 1,
+              "_result": true,
+              "_casualties": 58
+            },
+            {
+              "_num": 2,
+              "_result": true,
+              "_casualties": 34
+            }
+          ]
+        }
+      ],
+      "route": {
+        "sourceStartNum": 3.0,
+        "sourceUnitName": "unit1",
+        "sourceUnitResult": true,
+        "sourceWildcardNumber": 0.0,
+        "waypoints": [
+          {
+            "x": 318.5,
+            "y": 148.75,
+            "action": "default"
+          },
+          {
+            "x": 318.5,
+            "y": -71.0,
+            "action": "default"
+          },
+          {
+            "x": 541.0,
+            "y": -21.0,
+            "action": "ship_plane_bomb"
+          }
+        ]
+      },
+      "firstVisitedTick": 235,
+      "firstTakeoffRequestTick": 235,
+      "syntheticTakeoffCompletionTick": 235,
+      "syntheticTakeoffCompletionEvents": [
+        {
+          "event": "complete",
+          "linkage": "unit_Fightertakeoff.wav"
+        },
+        {
+          "event": "start",
+          "linkage": "unit_fighterflight.wav",
+          "loops": 1,
+          "volume": 100,
+          "pan": -2
+        }
+      ],
+      "firstFlyOffTick": 296,
+      "firstFadeTick": 297,
+      "zeroVolumeTick": 346,
+      "ownedSoundStopTick": 423,
+      "wrapperRemovedTick": 424,
+      "battleLastTick": 565,
+      "sampledChangedRows": [
+        {
+          "tick": 235,
+          "action": "liftOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 100,
+          "soundPan": -2,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 244,
+          "action": "default",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 100,
+          "soundPan": -12,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 295,
+          "action": "ship_plane_bomb",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 100,
+          "soundPan": 26,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 296,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 100,
+          "soundPan": 29,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 297,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 98,
+          "soundPan": 31,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 298,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 96,
+          "soundPan": 33,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 299,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 94,
+          "soundPan": 35,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 300,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 92,
+          "soundPan": 38,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 301,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 90,
+          "soundPan": 40,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 302,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 88,
+          "soundPan": 42,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 303,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 86,
+          "soundPan": 44,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 304,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 84,
+          "soundPan": 47,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 305,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 82,
+          "soundPan": 49,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 306,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 80,
+          "soundPan": 51,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 307,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 78,
+          "soundPan": 53,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 308,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 76,
+          "soundPan": 56,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 309,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 74,
+          "soundPan": 58,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 310,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 72,
+          "soundPan": 60,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 311,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 70,
+          "soundPan": 62,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 312,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 68,
+          "soundPan": 65,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 313,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 66,
+          "soundPan": 67,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 314,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 64,
+          "soundPan": 69,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 315,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 62,
+          "soundPan": 71,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 316,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 60,
+          "soundPan": 74,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 317,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 58,
+          "soundPan": 76,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 318,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 56,
+          "soundPan": 78,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 319,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 54,
+          "soundPan": 80,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 320,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 52,
+          "soundPan": 83,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 321,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 50,
+          "soundPan": 85,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 322,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 48,
+          "soundPan": 87,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 323,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 46,
+          "soundPan": 89,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 324,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 44,
+          "soundPan": 92,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 325,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 42,
+          "soundPan": 94,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 326,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 40,
+          "soundPan": 96,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 327,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 38,
+          "soundPan": 98,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 328,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 36,
+          "soundPan": 100,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 329,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 34,
+          "soundPan": 100,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 330,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 32,
+          "soundPan": 100,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 331,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 30,
+          "soundPan": 100,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 332,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 28,
+          "soundPan": 100,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 333,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 26,
+          "soundPan": 100,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 334,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 24,
+          "soundPan": 100,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 335,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 22,
+          "soundPan": 100,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 336,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 20,
+          "soundPan": 100,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 337,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 18,
+          "soundPan": 100,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 338,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 16,
+          "soundPan": 100,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 339,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 14,
+          "soundPan": 100,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 340,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 12,
+          "soundPan": 100,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 341,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 10,
+          "soundPan": 100,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 342,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 8,
+          "soundPan": 100,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 343,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 6,
+          "soundPan": 100,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 344,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 4,
+          "soundPan": 100,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 345,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 2,
+          "soundPan": 100,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 346,
+          "action": "flyOff",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": true,
+          "soundVolume": 0,
+          "soundPan": 100,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": true,
+          "mcAttached": true
+        },
+        {
+          "tick": 423,
+          "action": "stop",
+          "status": "alive",
+          "active": true,
+          "soundPlaying": false,
+          "soundVolume": 0,
+          "soundPan": 100,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": false,
+          "mcAttached": true
+        },
+        {
+          "tick": 424,
+          "action": "stop",
+          "status": "alive",
+          "active": false,
+          "soundPlaying": false,
+          "soundVolume": 0,
+          "soundPan": 100,
+          "soundLinkage": "unit_fighterflight.wav",
+          "unitSoundSameObject": false,
+          "mcAttached": true
+        }
+      ]
+    }
+  ]
+}

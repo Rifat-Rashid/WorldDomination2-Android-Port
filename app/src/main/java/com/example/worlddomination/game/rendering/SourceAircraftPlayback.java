@@ -52,6 +52,9 @@ public final class SourceAircraftPlayback {
     private boolean impactPending;
     private boolean deathPending;
     private boolean takeoffCuePending;
+    private boolean soundStopPending;
+    private int sourceSoundVolumePercent = 100;
+    private int sourceSoundPanPercent;
     private boolean bodyAttached = true;
     private String unitStatus = "alive";
     private double deathEffectX = Double.NaN;
@@ -109,12 +112,18 @@ public final class SourceAircraftPlayback {
             deathPending = true;
             bodyAttached = false;
             unitStatus = "dead";
+            soundStopPending = true;
             action = "dying";
             if (trail != null) trail.removeTrail();
         } else if ("flyOff".equals(action)) {
             if (flyOffCount > 0 && flyOffCount < 250) flyOffCount++;
-            else if (flyOffCount >= 250) action = "stop";
+            else if (flyOffCount >= 250) {
+                action = "stop";
+                soundStopPending = true;
+            }
             flyOffCount++;
+            if (!"stop".equals(action) && sourceSoundVolumePercent > 0)
+                sourceSoundVolumePercent -= 2;
         } else if ("plane_circular_flight".equals(action)) {
             if (circularAirTime > 70) action = "default";
             circularAirTime++;
@@ -168,6 +177,9 @@ public final class SourceAircraftPlayback {
     }
 
     private void setStep() {
+        // Unit.updatePan reads the old MovieClip pose before View publishes movement.
+        sourceSoundPanPercent = (int) Math.max(-100,
+                Math.min(100, Math.round((renderX / 8d - 50d) * 2d)));
         if (Double.isNaN(x)) x = renderX;
         if (Double.isNaN(y)) y = renderY;
         if (currentWaypoint >= waypointX.length) return;
@@ -227,6 +239,11 @@ public final class SourceAircraftPlayback {
     }
 
     public boolean takeImpact() { boolean pulse = impactPending; impactPending = false; return pulse; }
+    public int getSourceSoundVolumePercent() { return sourceSoundVolumePercent; }
+    public int getSourceSoundPanPercent() { return sourceSoundPanPercent; }
+    public boolean takeSoundStop() {
+        boolean pulse = soundStopPending; soundStopPending = false; return pulse;
+    }
     /** One intercepted hit callback, emitted before the body's final two moves. */
     public boolean takeDeath() { boolean pulse = deathPending; deathPending = false; return pulse; }
     public boolean takeTakeoffCue() {

@@ -1,0 +1,780 @@
+{
+  "schema": "source-aircraft-audio-callbacks-v1",
+  "seed": 0,
+  "difficulty": "normal",
+  "selectedLeaders": [
+    0,
+    1
+  ],
+  "cueIdsAndExtractedBytes": {
+    "unit_Fightertakeoff.wav": {
+      "swfSoundId": 66,
+      "assetBytes": 9993
+    },
+    "unit_fighterflight.wav": {
+      "swfSoundId": 20,
+      "assetBytes": 7849
+    },
+    "unit_Carrierjet take off.wav": {
+      "swfSoundId": 76,
+      "assetBytes": 6055
+    },
+    "unit_Carrierjet flight.wav": {
+      "swfSoundId": 21,
+      "assetBytes": 6073
+    }
+  },
+  "forcedCompletionNotice": "The first, second, and muted third completions are synthetic calls to MenuAudio.complete at a legal playing Unit sound; physical cue durations were not measured.",
+  "cases": [
+    {
+      "family": "plane1",
+      "sourceCallback": "f_12",
+      "legalSchedule": [
+        {
+          "turn": 1,
+          "action": "production",
+          "options": {
+            "category": "planes",
+            "percent": 100
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 2,
+          "action": "preAttack",
+          "options": {
+            "weapon": "plane1"
+          },
+          "second": "resources"
+        }
+      ],
+      "humanBattleEvents": [
+        {
+          "attacker": 0,
+          "defender": 1,
+          "weaponId": 20,
+          "payloadId": 8,
+          "cityAddress": 7,
+          "result": true,
+          "shipAttacks": null,
+          "shipResults": null
+        }
+      ],
+      "firstVisitedTick": 234,
+      "firstTakeoffRequestTick": 234,
+      "route": {
+        "sourceStartNum": 3.0,
+        "sourceUnitName": "unit1",
+        "sourceUnitResult": true,
+        "sourceWildcardNumber": null,
+        "waypoints": [
+          {
+            "x": 327,
+            "y": 246,
+            "action": "default"
+          },
+          {
+            "x": 173,
+            "y": 298,
+            "action": "plane_circular_flight"
+          },
+          {
+            "x": 212.8,
+            "y": 66.75,
+            "action": "bomb"
+          }
+        ]
+      },
+      "soundOwnerIsUnitMC": true,
+      "stages": [
+        {
+          "name": "takeoff_start",
+          "linkage": "unit_Fightertakeoff.wav",
+          "playing": true,
+          "loops": 1,
+          "callbackRetained": true,
+          "sameUnitSoundObject": true,
+          "optionPlaySound": true,
+          "events": []
+        },
+        {
+          "name": "first_completion",
+          "linkage": "unit_fighterflight.wav",
+          "playing": true,
+          "loops": 1,
+          "callbackRetained": true,
+          "sameUnitSoundObject": true,
+          "optionPlaySound": true,
+          "events": [
+            {
+              "event": "complete",
+              "linkage": "unit_Fightertakeoff.wav"
+            },
+            {
+              "event": "start",
+              "linkage": "unit_fighterflight.wav",
+              "loops": 1,
+              "volume": 100,
+              "pan": -100
+            }
+          ]
+        },
+        {
+          "name": "second_completion",
+          "linkage": "unit_fighterflight.wav",
+          "playing": true,
+          "loops": 1,
+          "callbackRetained": true,
+          "sameUnitSoundObject": true,
+          "optionPlaySound": true,
+          "events": [
+            {
+              "event": "complete",
+              "linkage": "unit_fighterflight.wav"
+            },
+            {
+              "event": "start",
+              "linkage": "unit_fighterflight.wav",
+              "loops": 1,
+              "volume": 100,
+              "pan": -100
+            }
+          ]
+        },
+        {
+          "name": "third_completion_option_muted",
+          "linkage": "unit_fighterflight.wav",
+          "playing": true,
+          "loops": 1,
+          "callbackRetained": true,
+          "sameUnitSoundObject": true,
+          "optionPlaySound": false,
+          "events": [
+            {
+              "event": "complete",
+              "linkage": "unit_fighterflight.wav"
+            },
+            {
+              "event": "start",
+              "linkage": "unit_fighterflight.wav",
+              "loops": 1,
+              "volume": 100,
+              "pan": -100
+            }
+          ]
+        },
+        {
+          "name": "stop_then_complete",
+          "linkage": "unit_fighterflight.wav",
+          "playing": false,
+          "loops": 1,
+          "callbackRetained": true,
+          "sameUnitSoundObject": true,
+          "optionPlaySound": false,
+          "events": [
+            {
+              "event": "stop",
+              "linkage": "unit_fighterflight.wav"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "family": "plane2",
+      "sourceCallback": "f_13",
+      "legalSchedule": [
+        {
+          "turn": 1,
+          "action": "research",
+          "options": {
+            "tech": "rocket2"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 2,
+          "action": "research",
+          "options": {
+            "tech": "rocket3"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 3,
+          "action": "research",
+          "options": {
+            "tech": "rocket4"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 4,
+          "action": "research",
+          "options": {
+            "tech": "warhead2"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 5,
+          "action": "research",
+          "options": {
+            "tech": "warhead3"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 6,
+          "action": "research",
+          "options": {
+            "tech": "warhead4"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 7,
+          "action": "research",
+          "options": {
+            "tech": "bioload2"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 8,
+          "action": "research",
+          "options": {
+            "tech": "bioload3"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 9,
+          "action": "research",
+          "options": {
+            "tech": "bioload4"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 10,
+          "action": "research",
+          "options": {
+            "tech": "soldier2"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 11,
+          "action": "research",
+          "options": {
+            "tech": "soldier3"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 12,
+          "action": "research",
+          "options": {
+            "tech": "soldier4"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 13,
+          "action": "research",
+          "options": {
+            "tech": "plane2"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 14,
+          "action": "production",
+          "options": {
+            "category": "planes",
+            "percent": 100
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 15,
+          "action": "production",
+          "options": {
+            "category": "warhead",
+            "percent": 100
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 16,
+          "action": "preAttack",
+          "options": {
+            "weapon": "plane2"
+          },
+          "second": "resources"
+        }
+      ],
+      "humanBattleEvents": [
+        {
+          "attacker": 0,
+          "defender": 1,
+          "weaponId": 21,
+          "payloadId": 4,
+          "cityAddress": 7,
+          "result": true,
+          "shipAttacks": null,
+          "shipResults": null
+        }
+      ],
+      "firstVisitedTick": 272,
+      "firstTakeoffRequestTick": 272,
+      "route": {
+        "sourceStartNum": 3.0,
+        "sourceUnitName": "unit1",
+        "sourceUnitResult": true,
+        "sourceWildcardNumber": null,
+        "waypoints": [
+          {
+            "x": 327,
+            "y": 246,
+            "action": "default"
+          },
+          {
+            "x": 173,
+            "y": 298,
+            "action": "plane_circular_flight"
+          },
+          {
+            "x": 212.8,
+            "y": 66.75,
+            "action": "bomb"
+          }
+        ]
+      },
+      "soundOwnerIsUnitMC": true,
+      "stages": [
+        {
+          "name": "takeoff_start",
+          "linkage": "unit_Carrierjet take off.wav",
+          "playing": true,
+          "loops": 1,
+          "callbackRetained": true,
+          "sameUnitSoundObject": true,
+          "optionPlaySound": true,
+          "events": []
+        },
+        {
+          "name": "first_completion",
+          "linkage": "unit_Carrierjet flight.wav",
+          "playing": true,
+          "loops": 999,
+          "callbackRetained": true,
+          "sameUnitSoundObject": true,
+          "optionPlaySound": true,
+          "events": [
+            {
+              "event": "complete",
+              "linkage": "unit_Carrierjet take off.wav"
+            },
+            {
+              "event": "start",
+              "linkage": "unit_Carrierjet flight.wav",
+              "loops": 999,
+              "volume": 100,
+              "pan": -100
+            }
+          ]
+        },
+        {
+          "name": "second_completion",
+          "linkage": "unit_Carrierjet flight.wav",
+          "playing": true,
+          "loops": 999,
+          "callbackRetained": true,
+          "sameUnitSoundObject": true,
+          "optionPlaySound": true,
+          "events": [
+            {
+              "event": "complete",
+              "linkage": "unit_Carrierjet flight.wav"
+            },
+            {
+              "event": "start",
+              "linkage": "unit_Carrierjet flight.wav",
+              "loops": 999,
+              "volume": 100,
+              "pan": -100
+            }
+          ]
+        },
+        {
+          "name": "third_completion_option_muted",
+          "linkage": "unit_Carrierjet flight.wav",
+          "playing": true,
+          "loops": 999,
+          "callbackRetained": true,
+          "sameUnitSoundObject": true,
+          "optionPlaySound": false,
+          "events": [
+            {
+              "event": "complete",
+              "linkage": "unit_Carrierjet flight.wav"
+            },
+            {
+              "event": "start",
+              "linkage": "unit_Carrierjet flight.wav",
+              "loops": 999,
+              "volume": 100,
+              "pan": -100
+            }
+          ]
+        },
+        {
+          "name": "stop_then_complete",
+          "linkage": "unit_Carrierjet flight.wav",
+          "playing": false,
+          "loops": 999,
+          "callbackRetained": true,
+          "sameUnitSoundObject": true,
+          "optionPlaySound": false,
+          "events": [
+            {
+              "event": "stop",
+              "linkage": "unit_Carrierjet flight.wav"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "family": "ship",
+      "sourceCallback": "f_14",
+      "legalSchedule": [
+        {
+          "turn": 1,
+          "action": "research",
+          "options": {
+            "tech": "rocket2"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 2,
+          "action": "research",
+          "options": {
+            "tech": "rocket3"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 3,
+          "action": "research",
+          "options": {
+            "tech": "rocket4"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 4,
+          "action": "research",
+          "options": {
+            "tech": "warhead2"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 5,
+          "action": "research",
+          "options": {
+            "tech": "warhead3"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 6,
+          "action": "research",
+          "options": {
+            "tech": "warhead4"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 7,
+          "action": "research",
+          "options": {
+            "tech": "bioload2"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 8,
+          "action": "research",
+          "options": {
+            "tech": "bioload3"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 9,
+          "action": "research",
+          "options": {
+            "tech": "bioload4"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 10,
+          "action": "research",
+          "options": {
+            "tech": "soldier2"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 11,
+          "action": "research",
+          "options": {
+            "tech": "soldier3"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 12,
+          "action": "research",
+          "options": {
+            "tech": "soldier4"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 13,
+          "action": "research",
+          "options": {
+            "tech": "sub"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 14,
+          "action": "research",
+          "options": {
+            "tech": "ship"
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 15,
+          "action": "production",
+          "options": {
+            "category": "special",
+            "percent": 100
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 16,
+          "action": "production",
+          "options": {
+            "category": "bioload",
+            "percent": 100
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 17,
+          "action": "production",
+          "options": {
+            "category": "bioload",
+            "percent": 100
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 18,
+          "action": "production",
+          "options": {
+            "category": "bioload",
+            "percent": 100
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 19,
+          "action": "production",
+          "options": {
+            "category": "bioload",
+            "percent": 100
+          },
+          "second": "resources"
+        },
+        {
+          "turn": 20,
+          "action": "preAttack",
+          "options": {
+            "weapon": "ship"
+          },
+          "second": "resources"
+        }
+      ],
+      "humanBattleEvents": [
+        {
+          "attacker": 0,
+          "defender": 1,
+          "weaponId": 23,
+          "payloadId": null,
+          "cityAddress": null,
+          "result": true,
+          "shipAttacks": [
+            {
+              "city": 5,
+              "wpn": 10,
+              "_bioload": true
+            },
+            {
+              "city": 6,
+              "wpn": 10,
+              "_bioload": true
+            },
+            {
+              "city": 7,
+              "wpn": 10,
+              "_bioload": true
+            }
+          ],
+          "shipResults": [
+            {
+              "_num": 0,
+              "_result": false,
+              "_casualties": 0
+            },
+            {
+              "_num": 1,
+              "_result": false,
+              "_casualties": 0
+            },
+            {
+              "_num": 2,
+              "_result": false,
+              "_casualties": 0
+            }
+          ]
+        }
+      ],
+      "firstVisitedTick": 196,
+      "firstTakeoffRequestTick": 196,
+      "route": {
+        "sourceStartNum": 3.0,
+        "sourceUnitName": "unit1",
+        "sourceUnitResult": true,
+        "sourceWildcardNumber": 0.0,
+        "waypoints": [
+          {
+            "x": 318.5,
+            "y": 148.75,
+            "action": "default"
+          },
+          {
+            "x": 29.0,
+            "y": 162.0,
+            "action": "explode"
+          }
+        ]
+      },
+      "soundOwnerIsUnitMC": true,
+      "stages": [
+        {
+          "name": "takeoff_start",
+          "linkage": "unit_Fightertakeoff.wav",
+          "playing": true,
+          "loops": 1,
+          "callbackRetained": true,
+          "sameUnitSoundObject": true,
+          "optionPlaySound": true,
+          "events": []
+        },
+        {
+          "name": "first_completion",
+          "linkage": "unit_fighterflight.wav",
+          "playing": true,
+          "loops": 1,
+          "callbackRetained": true,
+          "sameUnitSoundObject": true,
+          "optionPlaySound": true,
+          "events": [
+            {
+              "event": "complete",
+              "linkage": "unit_Fightertakeoff.wav"
+            },
+            {
+              "event": "start",
+              "linkage": "unit_fighterflight.wav",
+              "loops": 1,
+              "volume": 100,
+              "pan": -2
+            }
+          ]
+        },
+        {
+          "name": "second_completion",
+          "linkage": "unit_fighterflight.wav",
+          "playing": true,
+          "loops": 1,
+          "callbackRetained": true,
+          "sameUnitSoundObject": true,
+          "optionPlaySound": true,
+          "events": [
+            {
+              "event": "complete",
+              "linkage": "unit_fighterflight.wav"
+            },
+            {
+              "event": "start",
+              "linkage": "unit_fighterflight.wav",
+              "loops": 1,
+              "volume": 100,
+              "pan": -2
+            }
+          ]
+        },
+        {
+          "name": "third_completion_option_muted",
+          "linkage": "unit_fighterflight.wav",
+          "playing": true,
+          "loops": 1,
+          "callbackRetained": true,
+          "sameUnitSoundObject": true,
+          "optionPlaySound": false,
+          "events": [
+            {
+              "event": "complete",
+              "linkage": "unit_fighterflight.wav"
+            },
+            {
+              "event": "start",
+              "linkage": "unit_fighterflight.wav",
+              "loops": 1,
+              "volume": 100,
+              "pan": -2
+            }
+          ]
+        },
+        {
+          "name": "stop_then_complete",
+          "linkage": "unit_fighterflight.wav",
+          "playing": false,
+          "loops": 1,
+          "callbackRetained": true,
+          "sameUnitSoundObject": true,
+          "optionPlaySound": false,
+          "events": [
+            {
+              "event": "stop",
+              "linkage": "unit_fighterflight.wav"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -39,7 +39,6 @@ public final class FlashCarrierPlaneAnimation
     private float xStep;
     private float yStep;
     private float completedRouteLength;
-    private long flightSoundId = -1L;
     private boolean takeoffCuePending;
     private boolean flightCuePending;
     private boolean impactPending;
@@ -92,6 +91,9 @@ public final class FlashCarrierPlaneAnimation
     public boolean tickSourceFrame(boolean recordActivated) {
         if (sourcePlayback == null) throw new IllegalStateException("No source carrier aircraft");
         boolean impact = sourcePlayback.tickSourceFrame(recordActivated);
+        // Unit.soundAction is retried for its first eight active movement visits.
+        takeoffCuePending = recordActivated && sourceTrail.getFramesActive() > 0
+                && sourceTrail.getFramesActive() <= 8;
         actor.sourceX = (float) sourcePlayback.getRenderX();
         actor.sourceY = (float) sourcePlayback.getRenderY();
         actor.sourceFrame = Math.max(0, sourcePlayback.getSourceFrame() - 1);
@@ -265,11 +267,4 @@ public final class FlashCarrierPlaneAnimation
         return pending;
     }
 
-    public long getFlightSoundId() {
-        return flightSoundId;
-    }
-
-    public void setFlightSoundId(long flightSoundId) {
-        this.flightSoundId = flightSoundId;
-    }
 }

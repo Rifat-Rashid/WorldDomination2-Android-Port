@@ -87,6 +87,9 @@ jobs:
       max-parallel: 6
       matrix:
         include:
+          - id: source-aircraft-audio
+            check: Source aircraft audio callbacks and owned sound clocks
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.audio.AircraftAudioPlaybackTest" --tests "com.example.worlddomination.game.audio.SourceAircraftAudioFixtureIntegrityTest" --tests "com.example.worlddomination.game.rendering.SourceAircraftAudioClockTest"'
           - id: source-panel-fling
             check: Source panel fling timing and uptime precision
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.PanelGestureVelocityTest"'

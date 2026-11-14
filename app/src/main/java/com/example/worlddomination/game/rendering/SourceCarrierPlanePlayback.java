@@ -6,6 +6,9 @@ import java.util.Objects;
 
 /** One ship_plane Unit and its View.f_37 callback state. */
 public final class SourceCarrierPlanePlayback {
+    private boolean soundStopPending;
+    private int sourceSoundVolumePercent = 100;
+    private int sourceSoundPanPercent;
     private final FlashBattleRoutes.CarrierPlaneStrike route;
     private final SourceAircraftTrail trail;
     private final double[] waypointX;
@@ -96,6 +99,7 @@ public final class SourceCarrierPlanePlayback {
         if ("dying".equals(action) || "stop".equals(action)) removed = true;
         if ("explode".equals(action)) {
             impact = true;
+            soundStopPending = true;
             action = "dying";
             bodyAttached = false;
             trail.removeTrail();
@@ -106,9 +110,14 @@ public final class SourceCarrierPlanePlayback {
         } else if ("flyOff".equals(action)) {
             if (stopCount > 0) {
                 if (stopCount < 250) stopCount++;
-                else action = "stop";
+                else {
+                    action = "stop";
+                    soundStopPending = true;
+                }
             }
             stopCount++;
+            if (!"stop".equals(action) && sourceSoundVolumePercent > 0)
+                sourceSoundVolumePercent -= 2;
         }
 
         // Unit.moveUnit performs setStep even after killUnit/stop. Its x
@@ -132,6 +141,8 @@ public final class SourceCarrierPlanePlayback {
     }
 
     private boolean setStep() {
+        sourceSoundPanPercent = (int) Math.max(-100,
+                Math.min(100, Math.round((renderX / 8d - 50d) * 2d)));
         if (waypointIndex >= waypointX.length) return false;
         double targetX = waypointX[waypointIndex];
         double targetY = waypointY[waypointIndex];
@@ -174,6 +185,11 @@ public final class SourceCarrierPlanePlayback {
     }
 
     public FlashBattleRoutes.CarrierPlaneStrike getRoute() { return route; }
+    public int getSourceSoundVolumePercent() { return sourceSoundVolumePercent; }
+    public int getSourceSoundPanPercent() { return sourceSoundPanPercent; }
+    public boolean takeSoundStop() {
+        boolean pulse = soundStopPending; soundStopPending = false; return pulse;
+    }
     public SourceAircraftTrail getTrail() { return trail; }
     public String getAction() { return action; }
     public double getX() { return x; }

@@ -1,0 +1,55 @@
+{
+  "source": "C:/Users/Seize/Downloads/RealTest read only, Python -B from D:/WorldDomination-aircraft-audio",
+  "sourceSha256": {
+    "wd2/generated/Unit.py": "bc54c0e6c46f4e33bbb20e786c755f93aaba5d3d7224b0120eeeccc81eef8539",
+    "wd2/menu_audio.py": "dd103543e0f5abb5dfca5b93749e81b896175090a3b1c4c4d38c016a433bd36b",
+    "wd2/original_gameplay.py": "e1162e40e608101c2427679cb5d1d86aa9c724ad9c36ea342a766b565139a59c",
+    "wd2/setup_menu.py": "5633326451e768a84a14bde04e452043ba7fac2617a4c71b7b36dcd0495f0c4a",
+    "WorldDomination2.swf": "fe60c4d8793a23e7ddd59ddcb406b5471540e28d64f7552d17308fbb269e6fe1",
+    "wd2/generated/View.py": "2de8afd493f28e36c3a94afa96b80795d685b8b023b12dc9d9ed634692c3accf"
+  },
+  "cueIdsAndExtractedBytes": {
+    "unit_Fightertakeoff.wav": {
+      "swfSoundId": 66,
+      "assetBytes": 9993
+    },
+    "unit_fighterflight.wav": {
+      "swfSoundId": 20,
+      "assetBytes": 7849
+    },
+    "unit_Carrierjet take off.wav": {
+      "swfSoundId": 76,
+      "assetBytes": 6055
+    },
+    "unit_Carrierjet flight.wav": {
+      "swfSoundId": 21,
+      "assetBytes": 6073
+    }
+  },
+  "rawCaptureSha256": {
+    "plane1-callback.json": "1a75fe41f47f9f47abae0ffa8904e1936c619b7a157be283c67709644f3f2457",
+    "plane2-callback.json": "3652019ac43fef9b52426433669e8d29223fd9ff2030cc3e7ec5806d6de98959",
+    "ship-callback.json": "805a1d9d12c68ec551dcf057106e0fa353cc561e80407b4eae89ac626f98de1a",
+    "plane1-tail.json": "501e7d1f89c2fbd8c1d2b4abf4c52fedb6698eaeace3f83cea8c2b75e39a2eaa",
+    "plane2-tail.json": "f1e37eb6eab1cd1c0353f0b75f4386b3def4a512c9d1137c1d120cd679d541a4",
+    "ship-tail.json": "74b6b490ad0f41053f93eb648287aff46ca07dd817b33ea0cfa2cb63fb4068b2",
+    "ship_success-tail.json": "1405cf7263e374ce1d45f49fd372ce201e77c9e75b8e87a491a02ead09991ae5"
+  },
+  "packagerSha256": "50cba689a56e9e1f9801665b1aafcaf9d8beabd0ecd33dcd218e15aac610728a",
+  "fixtureSha256": {
+    "source-aircraft-audio-callbacks.json": "08639bbd036f6251b381cdac09bbbdf5a1f06fd3e1e5505205189ec5a5c2bba7",
+    "source-aircraft-audio-tails.json": "76dc631189b5d85aa8755405938e9539a1c49e3c62ef8e28285a01bbb8d3995e"
+  },
+  "caseCounts": {
+    "callbacks": 3,
+    "tails": 4
+  },
+  "changedRowCounts": {
+    "plane1": 58,
+    "plane2": 58,
+    "ship": 5,
+    "ship_success": 56
+  },
+  "semantics": "Retained f12/f14 fighter callback repeats a single flight play; retained f13 carrier callback repeats a 999-play flight group. A completed sound restarts even after Option.playSound is set false; an explicit stop prevents a later completion. Successful flyOff fades by two volume points per source visit while positive and stops the owned sound before wrapper removal.",
+  "limits": "Forced completion events are synthetic; no physical cue duration or backend audio was measured. Source battle schedules are legal and resolved outcomes/stock were not altered."
+}

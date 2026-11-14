@@ -4,7 +4,7 @@ import com.example.worlddomination.testing.GameActivityScenario;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.audio.Sound;
+import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.PixmapIO;
 import com.badlogic.gdx.utils.ScreenUtils;
@@ -12,6 +12,8 @@ import com.example.worlddomination.MainActivity;
 import com.example.worlddomination.game.WorldDominationGame;
 import com.example.worlddomination.game.assets.OriginalFlashAnimationAssets;
 import com.example.worlddomination.game.audio.OriginalAudio;
+import com.example.worlddomination.game.audio.AircraftAudioPlayback;
+import com.example.worlddomination.game.audio.SatelliteAudioPlayback;
 import com.example.worlddomination.game.simulation.GameState;
 import com.example.worlddomination.game.simulation.GameSetup;
 import java.io.File;
@@ -19,11 +21,13 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.lang.reflect.InvocationHandler;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -269,29 +273,18 @@ public final class SourceBattleCleanupInstrumentedTest {
             TurnPlaybackSequence playback = playback(app);
             SourceBattleTicker ticker = (SourceBattleTicker)
                     field(WorldDominationGame.class, "battleTicker").get(app);
-            OriginalAudio audio = (OriginalAudio) field(WorldDominationGame.class,
-                    "audio").get(app);
-            @SuppressWarnings("unchecked")
-            Map<OriginalAudio.Cue, Sound> sounds = (Map<OriginalAudio.Cue, Sound>)
-                    field(OriginalAudio.class, "sounds").get(audio);
-            AtomicInteger loops = new AtomicInteger();
-            AtomicInteger stops = new AtomicInteger();
-            Sound probe = (Sound) Proxy.newProxyInstance(Sound.class.getClassLoader(),
-                    new Class<?>[] {Sound.class}, (proxy, method, args) -> {
-                        if (method.getName().equals("loop")) {
-                            loops.incrementAndGet();
-                            return 77L;
-                        }
-                        if (method.getName().equals("stop") && args != null
-                                && args.length == 1 && Long.valueOf(77L).equals(args[0])) {
-                            stops.incrementAndGet();
-                        }
-                        if (method.getReturnType() == long.class) return 0L;
-                        return null;
-                    });
-            Sound original = sounds.put(OriginalAudio.Cue.CARRIERJET_FLIGHT, probe);
-            boolean restoreMuted = !audio.isSoundEnabled();
-            if (restoreMuted) audio.toggleSound();
+            Field audioField = field(WorldDominationGame.class, "audio");
+            OriginalAudio originalAudio = (OriginalAudio) audioField.get(app);
+            MusicProbe music = new MusicProbe();
+            AircraftAudioPlayback aircraft = new AircraftAudioPlayback(music::create,
+                    .8f, Runnable::run);
+            Constructor<OriginalAudio> audioConstructor = OriginalAudio.class
+                    .getDeclaredConstructor(SatelliteAudioPlayback.class,
+                            AircraftAudioPlayback.class);
+            audioConstructor.setAccessible(true);
+            OriginalAudio audio = audioConstructor.newInstance(
+                    new SatelliteAudioPlayback(cue -> null, .8f), aircraft);
+            audioField.set(app, audio);
             try {
                 GameState.PlayerState human = game.getHuman();
                 stock(human, "ship", 1);
@@ -322,6 +315,15 @@ public final class SourceBattleCleanupInstrumentedTest {
                         field(FlashCarrierPlaneAnimation.class, "delayTicks").getInt(originalPlane),
                         originalPlane.getImpactLinkage(), originalPlane.getImpactCue());
                 planes.set(0, plane);
+                @SuppressWarnings("unchecked")
+                Map<Object, AircraftAudioPlayback.Owner> owners =
+                        (Map<Object, AircraftAudioPlayback.Owner>)
+                                field(WorldDominationGame.class,
+                                        "aircraftAudioOwners").get(app);
+                AircraftAudioPlayback.Owner replaced = owners.remove(originalPlane);
+                assertNotNull("original factory owner", replaced);
+                replaced.stop();
+                owners.put(plane, audio.createAircraftAudio(AircraftAudioPlayback.Kind.FIGHTER));
                 // This synthetic stalled actor replaces the real factory
                 // actor in both its render list and source update registry.
                 SourceBattleUnitPlayback sourceUnits = (SourceBattleUnitPlayback)
@@ -346,8 +348,14 @@ public final class SourceBattleCleanupInstrumentedTest {
                 }
                 assertEquals(TurnPlaybackSequence.Phase.BATTLE, playback.getPhase());
                 assertTrue(plane.getActor().visible);
-                assertEquals(1, loops.get());
-                assertEquals(0, stops.get());
+                MusicProbe.Voice takeoff = music.one(OriginalAudio.Cue.FIGHTER_TAKEOFF);
+                MusicProbe.Voice flight = music.one(OriginalAudio.Cue.FIGHTER_FLIGHT);
+                assertEquals("one source takeoff request", 1, takeoff.plays);
+                assertEquals(0, flight.plays);
+                takeoff.complete(); // Explicit completion for the synthetic stalled actor.
+                assertEquals("retained fighter flight begins", 1, flight.plays);
+                assertEquals(0, takeoff.stops);
+                assertEquals(0, flight.stops);
                 float frozenX = plane.getActor().sourceX;
                 float frozenY = plane.getActor().sourceY;
                 capture(app, "source-cleanup-watchdog-before.png");
@@ -364,23 +372,26 @@ public final class SourceBattleCleanupInstrumentedTest {
                             playback.getPhase());
                     assertEquals(frozenX, plane.getActor().sourceX, 0f);
                     assertEquals(frozenY, plane.getActor().sourceY, 0f);
-                    assertEquals(0, stops.get());
+                    assertEquals(0, flight.stops);
                     assertEquals(1, planes(app).size());
                 }
                 advance(app);
                 assertEquals(TurnPlaybackSequence.Phase.CLEANUP_HANDOFF,
                         playback.getPhase());
-                assertEquals(0, stops.get());
+                assertEquals(0, flight.stops);
                 capture(app, "source-cleanup-watchdog-handoff.png");
                 advance(app);
                 assertEquals(TurnPlaybackSequence.Phase.IDLE, playback.getPhase());
                 assertTrue(planes(app).isEmpty());
-                assertEquals(1, stops.get());
+                assertEquals("only this owner is stopped", 1, takeoff.stops);
+                assertEquals("flight stops at handoff", 1, flight.stops);
+                assertEquals("takeoff media disposed", 1, takeoff.disposals);
+                assertEquals("flight media disposed", 1, flight.disposals);
+                assertTrue("discarded battle has no aircraft owners", owners.isEmpty());
                 assertFalse(playback.isBlockingInput());
             } finally {
-                if (original == null) sounds.remove(OriginalAudio.Cue.CARRIERJET_FLIGHT);
-                else sounds.put(OriginalAudio.Cue.CARRIERJET_FLIGHT, original);
-                if (restoreMuted) audio.toggleSound();
+                audioField.set(app, originalAudio);
+                audio.dispose();
             }
         });
     }
@@ -565,5 +576,48 @@ public final class SourceBattleCleanupInstrumentedTest {
         Field result = owner.getDeclaredField(name);
         result.setAccessible(true);
         return result;
+    }
+
+    private static final class MusicProbe {
+        final Map<OriginalAudio.Cue, List<Voice>> byCue = new HashMap<>();
+        Music create(OriginalAudio.Cue cue) {
+            Voice voice = new Voice();
+            byCue.computeIfAbsent(cue, ignored -> new ArrayList<>()).add(voice);
+            return voice.music;
+        }
+        Voice one(OriginalAudio.Cue cue) {
+            List<Voice> voices = byCue.get(cue);
+            assertNotNull("source cue " + cue, voices);
+            assertEquals("one live aircraft media pair", 1, voices.size());
+            return voices.get(0);
+        }
+        static final class Voice implements InvocationHandler {
+            final Music music = (Music) Proxy.newProxyInstance(Music.class.getClassLoader(),
+                    new Class<?>[]{Music.class}, this);
+            Music.OnCompletionListener listener;
+            int plays, stops, disposals;
+            boolean playing;
+            void complete() {
+                playing = false;
+                if (listener != null) listener.onCompletion(music);
+            }
+            @Override public Object invoke(Object proxy, Method method, Object[] args) {
+                switch (method.getName()) {
+                    case "play": plays++; playing = true; return null;
+                    case "stop": stops++; playing = false; return null;
+                    case "dispose": disposals++; return null;
+                    case "pause": playing = false; return null;
+                    case "isPlaying": return playing;
+                    case "setOnCompletionListener":
+                        listener = (Music.OnCompletionListener) args[0]; return null;
+                    case "setPan": case "setVolume": case "setLooping":
+                    case "setPosition": return null;
+                    case "getVolume": case "getPosition": return 0f;
+                    case "isLooping": return false;
+                    default: throw new AssertionError("Unexpected Music method "
+                            + method.getName());
+                }
+            }
+        }
     }
 }
