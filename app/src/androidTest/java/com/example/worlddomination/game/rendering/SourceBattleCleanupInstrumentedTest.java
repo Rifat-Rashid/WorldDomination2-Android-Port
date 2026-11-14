@@ -332,12 +332,13 @@ public final class SourceBattleCleanupInstrumentedTest {
                 sourceUnits.reset();
                 Method advanceCarrier = WorldDominationGame.class.getDeclaredMethod(
                         "advanceCarrierPlaneUnit", FlashCarrierPlaneAnimation.class,
-                        GameState.CombatEvent.class);
+                        GameState.CombatEvent.class, SourceCarrierPlaneDisplayDepths.class);
                 advanceCarrier.setAccessible(true);
                 GameState.CombatEvent stalledCarrierEvent = carrierEvent;
                 sourceUnits.add(() -> {
                     try {
-                        return (Boolean) advanceCarrier.invoke(app, plane, stalledCarrierEvent);
+                        // This deliberately legacy actor has no source core or root binding.
+                        return (Boolean) advanceCarrier.invoke(app, plane, stalledCarrierEvent, null);
                     } catch (ReflectiveOperationException error) {
                         throw new AssertionError("Stalled carrier source update", error);
                     }
