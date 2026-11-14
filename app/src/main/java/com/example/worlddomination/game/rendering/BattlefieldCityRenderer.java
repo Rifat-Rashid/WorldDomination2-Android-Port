@@ -68,9 +68,15 @@ public final class BattlefieldCityRenderer {
     private SourceCityImpactState[] sourceImpacts = canonicalState.sourceImpacts;
     private List<List<CityDust>> sourceDust = canonicalState.sourceDust;
     private int[] sourceDustNames = canonicalState.sourceDustNames;
+    private int[] nextChildDepth = canonicalState.nextChildDepth;
     private final Rectangle[] hitBounds = new Rectangle[CITY_COUNT];
     private final boolean[] hitVisible = new boolean[CITY_COUNT];
     private final Rectangle drawBounds = new Rectangle();
+    @SuppressWarnings("unchecked")
+    private final SourceDisplayList.Entry<BattlefieldDisplayState.Item>[] capturedCityEntries =
+            new SourceDisplayList.Entry[CITY_COUNT];
+    private int capturedCityCount;
+    private boolean cityFrameCaptured;
     private final FlashAffineTransform[] beamTransforms = createBeamTransforms();
     private ShaderProgram propagandaTintShader;
     private boolean propagandaTintShaderChecked;
@@ -94,9 +100,11 @@ public final class BattlefieldCityRenderer {
         final SourceCityImpactState[] sourceImpacts = new SourceCityImpactState[CITY_COUNT];
         final List<List<CityDust>> sourceDust = new ArrayList<>(CITY_COUNT);
         final int[] sourceDustNames = new int[CITY_COUNT];
+        final int[] nextChildDepth = new int[CITY_COUNT];
 
         PresentationState() {
             Arrays.fill(sourceDustNames, -1);
+            Arrays.fill(nextChildDepth, Integer.MIN_VALUE);
             for (int address = 0; address < CITY_COUNT; address++) {
                 citySequences[address] = new CityShrinkSequence();
                 propagandaSequences[address] = new CityPropagandaBeamSequence();
@@ -114,6 +122,7 @@ public final class BattlefieldCityRenderer {
         sourceImpacts = state.sourceImpacts;
         sourceDust = state.sourceDust;
         sourceDustNames = state.sourceDustNames;
+        nextChildDepth = state.nextChildDepth;
     }
 
     private void resetActive(GameState game, boolean snapshotFrames) {
@@ -143,6 +152,7 @@ public final class BattlefieldCityRenderer {
 
     /** Discards battle-only transitions without advancing the canonical presentation. */
     public void endBattle() {
+        clearCapturedCityFrame();
         activate(battleState);
         clearSourceImpacts();
         for (CityPropagandaBeamSequence sequence : propagandaSequences) sequence.reset();
@@ -151,6 +161,62 @@ public final class BattlefieldCityRenderer {
     }
 
     public boolean isBattleActive() { return activeState == battleState; }
+
+    /** View.updateCities creates only snapshot clouds before constructing battle units. */
+    public void beginSourceBiologicalPlayback(GameState game, ReferenceRandom random) {
+        if (!isBattleActive()) throw new IllegalStateException("No isolated battle city state");
+        for (int address = 0; address < CITY_COUNT; address++) {
+            bioloadCloudRenderer.useSourceCity(address);
+            GameState.BattleCitySnapshot city = game.getBattlePresentationCity(
+                    address / BattlefieldCityLayout.CITIES_PER_PLAYER,
+                    address % BattlefieldCityLayout.CITIES_PER_PLAYER);
+            if (city.bioloaded) createSourceBiologicalCloud(game, address, random, false);
+        }
+    }
+
+    /** Unit rocket/bomb callbacks update the city before creating biological children. */
+    public void applySourceProjectileImpact(GameState game, int address, double casualties,
+                                            boolean biologicalPayload,
+                                            ReferenceRandom random) {
+        applySourceTankImpact(address, casualties, random);
+        GameState.BattleCitySnapshot city = game.getBattlePresentationCity(
+                address / BattlefieldCityLayout.CITIES_PER_PLAYER,
+                address % BattlefieldCityLayout.CITIES_PER_PLAYER);
+        if (biologicalPayload && city.bioloadInBattle)
+            createSourceBiologicalCloud(game, address, random, true);
+    }
+
+    private void createSourceBiologicalCloud(GameState game, int address, ReferenceRandom random,
+                                             boolean duringUnitVisit) {
+        int depth = bioloadCloudRenderer.isSourceAttached(address)
+                ? bioloadCloudRenderer.getSourceDepth(address) : allocateChildDepth(game, address);
+        bioloadCloudRenderer.createSourceCloud(address, depth, random, duringUnitVisit);
+    }
+
+    private int allocateChildDepth(GameState game, int address) {
+        initializeChildDepth(game, address);
+        if (nextChildDepth[address] == Integer.MIN_VALUE)
+            throw new IllegalStateException("Source city artwork is not loaded");
+        return nextChildDepth[address]++;
+    }
+
+    private void initializeChildDepth(GameState game, int address) {
+        if (nextChildDepth[address] == Integer.MIN_VALUE) {
+            int next = 0;
+            if (flashAssets != null && game != null) {
+                FlashAnimationTimeline timeline = flashAssets.getCityTimeline(
+                        game.getPlayerState(address / BattlefieldCityLayout.CITIES_PER_PLAYER)
+                                .getReligionCode());
+                if (timeline == null) return;
+                FlashAnimationTimeline.Frame frame = timeline == null ? null
+                        : timeline.getFrame(citySequences[address].getFrameNumber() - 1);
+                if (frame != null)
+                    for (FlashAnimationTimeline.Layer layer : frame.layers)
+                        next = Math.max(next, layer.depth + 1);
+            }
+            nextChildDepth[address] = next;
+        }
+    }
 
     /** Hits current presentation frames using the phone reference's island and depth dispatch. */
     public int hitTest(float x, float y, Rectangle mapBounds, GameState game) {
@@ -263,6 +329,7 @@ public final class BattlefieldCityRenderer {
         sourceImpacts[address] = new SourceCityImpactState(city.populationMillions, frame);
         citySequences[address].reset(frame);
         trackedTargets[address] = frame;
+        initializeChildDepth(game, address);
     }
 
     /** Unit.tank_top_shoot calls the city presenter before setting stop. */
@@ -277,21 +344,62 @@ public final class BattlefieldCityRenderer {
         sourceDust.get(address).add(new CityDust());
     }
 
+    /** The host snapshots physical city traversal before any Unit swaps depths. */
+    public void captureSourceCityFrame(BattlefieldDisplayState display) {
+        clearCapturedCityFrame();
+        SourceDisplayList<BattlefieldDisplayState.Item> clips = display.clips();
+        for (int index = 0; index < clips.size(); index++) {
+            SourceDisplayList.Entry<BattlefieldDisplayState.Item> entry = clips.entryAt(index);
+            if (entry.getValue().kind == BattlefieldDisplayState.Kind.CITY)
+                capturedCityEntries[capturedCityCount++] = entry;
+        }
+        cityFrameCaptured = true;
+    }
+
+    private void clearCapturedCityFrame() {
+        Arrays.fill(capturedCityEntries, null);
+        capturedCityCount = 0;
+        cityFrameCaptured = false;
+    }
+
     /** City callbacks follow the source unit visit in this source frame. */
     public void tickSourceCities() {
-        for (int address = 0; address < CITY_COUNT; address++) {
-            if (sourceImpacts[address] == null) continue;
+        tickSourceCities(null);
+    }
+
+    public void tickSourceCities(GameState game) {
+        if (cityFrameCaptured) {
+            for (int index = 0; index < capturedCityCount; index++) {
+                SourceDisplayList.Entry<BattlefieldDisplayState.Item> entry =
+                        capturedCityEntries[index];
+                if (entry.isAttached()) tickSourceCity(game, entry.getValue().index);
+            }
+            clearCapturedCityFrame();
+        } else {
+            for (int address : CITY_RENDER_ORDER) tickSourceCity(game, address);
+        }
+    }
+
+    private void tickSourceCity(GameState game, int address) {
+        if (sourceImpacts[address] != null) {
             CityShrinkSequence sequence = citySequences[address];
             int previousFrame = sequence.getFrameNumber();
-            sequence.tick();
             List<CityDust> dust = sourceDust.get(address);
+            for (int index = 0; index < dust.size(); index++) {
+                CityDust child = dust.get(index);
+                if (child.depth < 0) child.depth = allocateChildDepth(game, address);
+            }
+            sequence.tick();
             if (sequence.getFrameNumber() != previousFrame) {
-                // Seeking the new authored city frame drops its dynamic dust.
+                // Seeking a city frame detaches its dust and cloud containers.
                 dust.clear();
+                bioloadCloudRenderer.detachSourceCloud(address);
+                nextChildDepth[address] = Integer.MIN_VALUE;
             } else {
                 for (int index = 0; index < dust.size(); index++) dust.get(index).frame++;
             }
         }
+        bioloadCloudRenderer.tickSourceCity(address);
     }
 
     public void finishSourceCityImpacts(GameState game) {
@@ -306,10 +414,12 @@ public final class BattlefieldCityRenderer {
     }
 
     private void clearSourceImpacts() {
+        clearCapturedCityFrame();
         for (int address = 0; address < CITY_COUNT; address++) {
             sourceImpacts[address] = null;
             sourceDust.get(address).clear();
             sourceDustNames[address] = -1;
+            nextChildDepth[address] = Integer.MIN_VALUE;
         }
     }
 
@@ -321,7 +431,23 @@ public final class BattlefieldCityRenderer {
         return dust.isEmpty() ? -1 : dust.get(dust.size() - 1).frame;
     }
 
-    private static final class CityDust { int frame = -1; }
+    public boolean isSourceCityBioloaded(int address) {
+        return bioloadCloudRenderer.isSourceBioloaded(address);
+    }
+    public boolean isSourceCloudAttached(int address) {
+        return bioloadCloudRenderer.isSourceAttached(address);
+    }
+    public int getSourceCloudDepth(int address) { return bioloadCloudRenderer.getSourceDepth(address); }
+    public int getSourceCloudCount(int address) { return bioloadCloudRenderer.getSourceCloudCount(address); }
+    public BioloadCloudAnimation getSourceCloudCohort(int address, int cohort) {
+        return bioloadCloudRenderer.getSourceCohort(address, cohort);
+    }
+    public int getCityDustDepth(int address) {
+        List<CityDust> dust = sourceDust.get(address);
+        return dust.isEmpty() ? -1 : dust.get(dust.size() - 1).depth;
+    }
+
+    private static final class CityDust { int frame = -1; int depth = -1; }
 
     public boolean isAnimating() {
         if (bioloadCloudRenderer.isAnimating()) {
@@ -413,13 +539,19 @@ public final class BattlefieldCityRenderer {
         }
         drawPropagandaBeams(batch, mapBounds, owner, playerId, cityIndex,
                 cityAddress, sequence.getAlpha());
-        bioloadCloudRenderer.drawCity(batch, mapBounds, playerId, cityIndex);
+        int cloudDepth = bioloadCloudRenderer.isSourceAttached(cityAddress)
+                ? bioloadCloudRenderer.getSourceDepth(cityAddress) : Integer.MIN_VALUE;
         drawSourceCityDust(batch, mapBounds, playerId, cityIndex, cityAddress,
-                sequence.getAlpha() / 100f);
+                sequence.getAlpha() / 100f, Integer.MIN_VALUE, cloudDepth);
+        bioloadCloudRenderer.drawCity(batch, mapBounds, playerId, cityIndex,
+                sequence.getSourceAlpha() / 100f, cityAssets.getArtworkScale());
+        drawSourceCityDust(batch, mapBounds, playerId, cityIndex, cityAddress,
+                sequence.getAlpha() / 100f, cloudDepth, Integer.MAX_VALUE);
     }
 
     private void drawSourceCityDust(SpriteBatch batch, Rectangle bounds,
-                                    int playerId, int cityIndex, int address, float alpha) {
+                                    int playerId, int cityIndex, int address, float alpha,
+                                    int minimumDepth, int maximumDepth) {
         List<CityDust> dust = sourceDust.get(address);
         if (dust.isEmpty() || alpha <= 0 || flashAssets == null || !flashAssets.isLoaded()) return;
         FlashAnimationTimeline timeline = flashAssets.getTimeline("explosion_dust");
@@ -429,7 +561,9 @@ public final class BattlefieldCityRenderer {
         try {
             batch.setShader(null);
             for (int index = 0; index < dust.size(); index++) {
-                int frame = dust.get(index).frame;
+                CityDust child = dust.get(index);
+                if (child.depth < minimumDepth || child.depth >= maximumDepth) continue;
+                int frame = child.frame;
                 if (frame < 0 || frame >= timeline.getFrameCount()) continue;
                 beamTransforms[0].setIdentity();
                 beamTransforms[1].setProduct(beamTransforms[0], 1.3f, 0, 0, 1.3f, -10, -3);

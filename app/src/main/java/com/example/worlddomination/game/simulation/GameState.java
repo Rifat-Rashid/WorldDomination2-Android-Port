@@ -34,6 +34,8 @@ public final class GameState {
         public final int cityIndex;
         public final String weaponName;
         public final String payloadName;
+        /** Source result _bioload, distinct from canonical city cloud visibility. */
+        public final boolean bioload;
         public final String counterWeaponName;
         public final int casualtiesMillions;
         /** Source action-building slot used to launch a soldier2 Apache attack (1 or 2). */
@@ -95,12 +97,24 @@ public final class GameState {
                             String counterWeaponName, int actionBuildingSlot,
                             int counterActionBuildingSlot, int shipPayloadIndex,
                             int battleStartNum) {
+            this(type, attackerPlayerId, defenderPlayerId, cityIndex, weaponName,
+                    payloadName, casualtiesMillions, counterWeaponName, actionBuildingSlot,
+                    counterActionBuildingSlot, shipPayloadIndex, battleStartNum, false);
+        }
+
+        private CombatEvent(CombatEventType type, int attackerPlayerId,
+                            int defenderPlayerId, int cityIndex, String weaponName,
+                            String payloadName, int casualtiesMillions,
+                            String counterWeaponName, int actionBuildingSlot,
+                            int counterActionBuildingSlot, int shipPayloadIndex,
+                            int battleStartNum, boolean bioload) {
             this.type = type;
             this.attackerPlayerId = attackerPlayerId;
             this.defenderPlayerId = defenderPlayerId;
             this.cityIndex = cityIndex;
             this.weaponName = weaponName;
             this.payloadName = payloadName;
+            this.bioload = bioload;
             this.casualtiesMillions = casualtiesMillions;
             this.counterWeaponName = counterWeaponName;
             this.actionBuildingSlot = actionBuildingSlot;
@@ -271,10 +285,15 @@ public final class GameState {
     public static final class BattleCitySnapshot {
         public final int populationMillions;
         public final int artworkFrame;
+        public final boolean bioloaded;
+        public final boolean bioloadInBattle;
 
-        private BattleCitySnapshot(int populationMillions, int artworkFrame) {
+        private BattleCitySnapshot(int populationMillions, int artworkFrame,
+                                   boolean bioloaded, boolean bioloadInBattle) {
             this.populationMillions = populationMillions;
             this.artworkFrame = artworkFrame;
+            this.bioloaded = bioloaded;
+            this.bioloadInBattle = bioloadInBattle;
         }
     }
 
@@ -2634,14 +2653,25 @@ public final class GameState {
     }
 
     /**
-     * Returns the physical reverse-spawn order of combat outcomes. The source
-     * activates records by their separate start numbers, not this list position.
-     * Reversing a ship's resolved payloads preserves its source plane offsets.
+     * Reverse-resolution outcome view retained for compatibility.
+     * This is not the source's physical Unit construction order.
      */
+    @Deprecated
     public List<CombatEvent> getLastTurnCombatEventsInSourcePresentationOrder() {
         List<CombatEvent> presentationOrder = new ArrayList<>(lastTurnCombatEvents);
         Collections.reverse(presentationOrder);
         return Collections.unmodifiableList(presentationOrder);
+    }
+
+    /**
+     * Battle groups turn-result records before building its reverse spawn array;
+     * Presenter reverses that array again. Keep each record's resolved payload
+     * order while following its source action-group/player/slot start number.
+     */
+    public List<CombatEvent> getLastTurnCombatEventsInUnitConstructionOrder() {
+        List<CombatEvent> events = new ArrayList<>(lastTurnCombatEvents);
+        events.sort((left, right) -> Integer.compare(left.battleStartNum, right.battleStartNum));
+        return Collections.unmodifiableList(events);
     }
 
     /** Returns resolved spy missions from the latest turn in source order. */
@@ -2841,7 +2871,8 @@ public final class GameState {
             for (int cityIndex = 0; cityIndex < 5; cityIndex++) {
                 CityState city = players[playerId].getCity(cityIndex);
                 lastTurnBattleCities[playerId * 5 + cityIndex] =
-                        new BattleCitySnapshot(city.populationMillions, city.getArtworkFrame());
+                        new BattleCitySnapshot(city.populationMillions, city.getArtworkFrame(),
+                                city.bioloaded, city.bioloadInBattle);
             }
         }
         hasLastTurnBattleCities = true;
@@ -3751,7 +3782,7 @@ public final class GameState {
                 payload.definition.name, casualties,
                 counterDefense == null ? null : counterName, order.actionBuildingSlot,
                 counterDefense == null ? -1 : counterDefense.actionBuildingSlot,
-                -1, order.battleStartNum));
+                -1, order.battleStartNum, order.payloadName.startsWith("bioload")));
         recordLargestBattle(attacker, defender, casualties);
         applyTurnResultBattleHostilityEffects(attacker, defender, casualties);
         if (rolledCasualties > 0) {
@@ -3843,7 +3874,8 @@ public final class GameState {
                         CombatEventType.STRIKE_INTERCEPTED, attacker.id, defender.id,
                         city.index, carrier.definition.name, result.payloadName, 0,
                         counterName, -1, counterDefense.actionBuildingSlot,
-                        result.sourcePlaneIndex, order.battleStartNum));
+                        result.sourcePlaneIndex, order.battleStartNum,
+                        result.payloadName.startsWith("bioload")));
                 addMessage(defender, "Nation " + defender.id + " intercepted one ship payload.");
             } else {
                 casualties = populationChanges.addBattleCasualties(city,
@@ -3853,7 +3885,8 @@ public final class GameState {
                         result.payloadName, casualties,
                         hasMatchingDefense ? counterName : null, -1,
                         hasMatchingDefense ? counterDefense.actionBuildingSlot : -1,
-                        result.sourcePlaneIndex, order.battleStartNum));
+                        result.sourcePlaneIndex, order.battleStartNum,
+                        result.payloadName.startsWith("bioload")));
                 totalCasualties += casualties;
                 recordLargestBattle(attacker, defender, casualties);
                 // The source checks the un-clamped ship result before applying
@@ -3919,6 +3952,8 @@ public final class GameState {
             level = 1;
         }
         BiologicalEffect effect = new BiologicalEffect(target.id, city.index);
+        // Sub_presenter marks the resolved city before BattlePlayback copies it.
+        city.bioloadInBattle = true;
         for (int i = 0; i < level; i++) {
             effect.disabledActions.add(BIO_DISABLED_ACTIONS[random.nextInt(
                     BIO_DISABLED_ACTIONS.length)]);
@@ -3945,7 +3980,6 @@ public final class GameState {
     private void applyBiologicalEffects(List<BiologicalEffect> effects) {
         for (BiologicalEffect effect : effects) {
             PlayerState target = playerById(effect.targetPlayerId);
-            CityState city = target.getCity(effect.cityIndex);
             target.bioloaded = true;
             target.bioloadedActions.addAll(effect.disabledActions);
             for (String weaponName : effect.disabledWeapons) {
@@ -3954,9 +3988,6 @@ public final class GameState {
                     weapon.active = false;
                     weapon.bioloaded = true;
                 }
-            }
-            if (city != null) {
-                city.bioloaded = true;
             }
             addMessage(target, "Biological agents contaminated nation " + target.id
                     + " after a bioload strike.");

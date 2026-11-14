@@ -112,8 +112,24 @@ public final class SourceBattleUnitAllocationTest {
                 22509, "unit1", "targetDotunit1");
         assertSingle("rocket4", GameState.CombatEventType.STRIKE_INTERCEPTED, null, 2,
                 22509, "unit1", "targetDotunit1");
-        assertSingle("sub", GameState.CombatEventType.STRIKE_IMPACT, "warhead1", -1,
-                22509, "unit1", "targetDotunit1");
+        BattlefieldDisplayState submarineState = state(2);
+        SourceBattleUnitAllocation submarineAllocation = new SourceBattleUnitAllocation(submarineState);
+        assertEquals(0, submarineAllocation.reserveBeforeEvent(
+                strike("sub", "warhead1", -1, -1)));
+        assertEquals("Actual source roles allocate once, without phantom placeholders",
+                22509, submarineState.nextDepth());
+        FlashRocketAnimation submarine = FlashRocketAnimation.forSourceSubmarine(
+                FlashBattleRoutes.createSubmarineRocketStrike(0, 1, 2, false),
+                "explosion_warhead_1", null, new ReferenceRandom(0));
+        SourceRocketDisplayDepths depth = new SourceRocketDisplayDepths(submarineState,
+                submarine, 0, () -> null, new SourceStoppedClipQueue());
+        occupied(submarineState, 22509, "unit1");
+        occupied(submarineState, 22510, "targetDotunit1");
+        assertSame(depth.binding(), depth.binding().body().getValue().owner);
+        assertSame(depth.binding(), depth.binding().dot().getValue().owner);
+        assertEquals(5, submarineAllocation.reserveBeforeEvent(strike("rocket1", null, 1, -1)));
+        occupied(submarineState, 22511, "unit2");
+        occupied(submarineState, 22512, "targetDotunit2");
         assertSingle("space", GameState.CombatEventType.STRIKE_IMPACT, "specialLoad", -1,
                 22509, "unit1", "targetDotunit1");
         for (String plane : new String[]{"plane1", "plane2"}) {

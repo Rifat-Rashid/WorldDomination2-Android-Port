@@ -13,6 +13,11 @@ public final class SourceBattleUnitAllocation {
 
     /** Returns the parameter preceding this source record's reverse Unit expansion. */
     public int reserveBeforeEvent(GameState.CombatEvent event) {
+        return reserveBeforeEvent(event, event.shipPayloadIndex);
+    }
+
+    /** A ship's physical wildcard number follows construction, not resolved outcome order. */
+    public int reserveBeforeEvent(GameState.CombatEvent event, int carrierFormationNumber) {
         int preceding = parameter;
         if (FlashBattleRoutes.supportsApacheMarine(event)) {
             // Actual handles are installed by SourceApacheDisplayDepths immediately
@@ -30,9 +35,13 @@ public final class SourceBattleUnitAllocation {
             // both constructor swaps before the following Unit is constructed.
             parameter += 5;
         } else if (FlashBattleRoutes.supportsCarrierPlaneStrike(event)) {
-            reserve(true, true, event.shipPayloadIndex);
+            reserve(true, true, carrierFormationNumber);
         } else if (FlashBattleRoutes.supportsStandalonePlaneStrike(event)) {
             reserve(true, true, 0);
+        } else if (FlashBattleRoutes.supportsSubmarineRocketStrike(event)) {
+            // SourceRocketDisplayDepths installs the actual body and nested-tint
+            // rocket roles before the next event is constructed.
+            parameter += 5;
         } else if (FlashBattleRoutes.supportsRocketStrike(event)
                 || FlashBattleRoutes.supportsSubmarineRocketStrike(event)
                 || FlashBattleRoutes.supportsSatelliteStrike(event)) {

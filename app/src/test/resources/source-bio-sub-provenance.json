@@ -1,0 +1,482 @@
+{
+  "source": "RealTest; read-only Python -B; seed 0 normal two rivals",
+  "schedule": [
+    [
+      1,
+      "research",
+      {
+        "tech": "rocket2"
+      },
+      "resources",
+      {}
+    ],
+    [
+      2,
+      "research",
+      {
+        "tech": "rocket3"
+      },
+      "resources",
+      {}
+    ],
+    [
+      3,
+      "research",
+      {
+        "tech": "rocket4"
+      },
+      "resources",
+      {}
+    ],
+    [
+      4,
+      "research",
+      {
+        "tech": "warhead2"
+      },
+      "resources",
+      {}
+    ],
+    [
+      5,
+      "research",
+      {
+        "tech": "warhead3"
+      },
+      "resources",
+      {}
+    ],
+    [
+      6,
+      "research",
+      {
+        "tech": "warhead4"
+      },
+      "resources",
+      {}
+    ],
+    [
+      7,
+      "research",
+      {
+        "tech": "bioload2"
+      },
+      "resources",
+      {}
+    ],
+    [
+      8,
+      "research",
+      {
+        "tech": "bioload3"
+      },
+      "resources",
+      {}
+    ],
+    [
+      9,
+      "research",
+      {
+        "tech": "bioload4"
+      },
+      "resources",
+      {}
+    ],
+    [
+      10,
+      "research",
+      {
+        "tech": "soldier2"
+      },
+      "resources",
+      {}
+    ],
+    [
+      11,
+      "research",
+      {
+        "tech": "soldier3"
+      },
+      "resources",
+      {}
+    ],
+    [
+      12,
+      "research",
+      {
+        "tech": "soldier4"
+      },
+      "resources",
+      {}
+    ],
+    [
+      13,
+      "research",
+      {
+        "tech": "sub"
+      },
+      "resources",
+      {}
+    ],
+    [
+      14,
+      "production",
+      {
+        "category": "special",
+        "percent": 100
+      },
+      "resources",
+      {}
+    ],
+    [
+      15,
+      "production",
+      {
+        "category": "bioload",
+        "percent": 100
+      },
+      "resources",
+      {}
+    ],
+    [
+      16,
+      "preAttack",
+      {
+        "weapon": "sub"
+      },
+      "resources",
+      {}
+    ],
+    [
+      17,
+      "preAttack",
+      {
+        "weapon": "sub",
+        "payload": "bioload3",
+        "target": 1,
+        "city": 2
+      },
+      "resources",
+      {}
+    ]
+  ],
+  "dialogues": [
+    {
+      "afterTurn": 12,
+      "leader": 1,
+      "option": 5,
+      "answer": "reject"
+    },
+    {
+      "afterTurn": 17,
+      "leader": 1,
+      "option": 4,
+      "answer": "reject"
+    }
+  ],
+  "targetCityId": 7,
+  "payloadName": "bioload3",
+  "strikeEvents": [
+    {
+      "_player": 2,
+      "_item": "produce2",
+      "_value": "spy",
+      "_amount": 20,
+      "_group": 5,
+      "_money": 17
+    },
+    {
+      "_player": 2,
+      "_item": "produce2",
+      "_value": "soldier",
+      "_amount": 40,
+      "_group": 4,
+      "_money": 34
+    },
+    {
+      "_player": 2,
+      "_item": "produce2",
+      "_value": "bioload",
+      "_amount": 20,
+      "_group": 3,
+      "_money": 17
+    },
+    {
+      "_player": 2,
+      "_item": "production_building"
+    },
+    {
+      "_player": 2,
+      "_item": "resources",
+      "_value": 47,
+      "_plusmin": "plus"
+    },
+    {
+      "_player": 1,
+      "_item": "diplomacy",
+      "_value": "call",
+      "_leader": 0,
+      "_option": 4
+    },
+    {
+      "_player": 1,
+      "_item": "regard",
+      "_value": "diplomacy",
+      "_a": 1,
+      "_b": 0,
+      "_diplomacy": true
+    },
+    {
+      "_player": 1,
+      "_item": "religion",
+      "_value": 35,
+      "_plusmin": "plus"
+    },
+    {
+      "_player": 0,
+      "_item": "resources",
+      "_value": 36,
+      "_plusmin": "plus"
+    },
+    {
+      "_player": 0,
+      "_item": "battle",
+      "_value": "preAttack",
+      "_a": 0,
+      "_b": 1,
+      "_weapon": 22,
+      "_carrier": 22,
+      "_payload": 10,
+      "_city": 7,
+      "_blocked": false,
+      "_casualties": 43,
+      "_frame": null,
+      "_result": true,
+      "_isShip": false,
+      "_attack_arr": null,
+      "_result_arr": null,
+      "_action": 2,
+      "_bioload": true
+    },
+    {
+      "_player": 0,
+      "_item": "setPreAttack",
+      "_value": "inactive"
+    },
+    {
+      "_player": 0,
+      "_item": "regard",
+      "_a": 0,
+      "_b": 1
+    },
+    {
+      "_player": 0,
+      "_item": "regard",
+      "_value": "preAttack",
+      "_a": 0,
+      "_b": 1,
+      "_wpnLevel": 3
+    },
+    {
+      "_item": "bioload",
+      "_value": "deactivate",
+      "_plr": 1,
+      "_arr": [
+        {
+          "_action": "diplomacy"
+        },
+        {
+          "_action": "religion"
+        },
+        {
+          "_action": "resources"
+        },
+        {
+          "_stock": 15,
+          "_weaponName": "soldier4"
+        },
+        {
+          "_stock": 16,
+          "_weaponName": "spy1"
+        },
+        {
+          "_stock": 0,
+          "_weaponName": "rocket1"
+        },
+        {
+          "_stock": 1,
+          "_weaponName": "rocket2"
+        },
+        {
+          "_stock": 16,
+          "_weaponName": "spy1"
+        },
+        {
+          "_stock": 11,
+          "_weaponName": "bioload4"
+        },
+        {
+          "_stock": 6,
+          "_weaponName": "warhead3"
+        },
+        {
+          "_stock": 11,
+          "_weaponName": "bioload4"
+        },
+        {
+          "_stock": 4,
+          "_weaponName": "warhead1"
+        },
+        {
+          "_stock": 8,
+          "_weaponName": "bioload1"
+        },
+        {
+          "_stock": 12,
+          "_weaponName": "soldier1"
+        },
+        {
+          "_stock": 14,
+          "_weaponName": "soldier3"
+        },
+        {
+          "_stock": 14,
+          "_weaponName": "soldier3"
+        }
+      ]
+    }
+  ],
+  "preconfirm": {
+    "bioloaded": false,
+    "bioload_in_battle": null,
+    "targetPlayerBioloaded": false,
+    "cloudCount": 0,
+    "container": null,
+    "modelImageFrame": 4,
+    "modelImageOnEnterFrame": false,
+    "sceneImage": {
+      "depth": 9011,
+      "attached": true,
+      "rootAttached": true,
+      "parent": "battleMC",
+      "frame": 4,
+      "alpha": 100.0,
+      "x": 212.8,
+      "y": 166.75,
+      "callback": false
+    },
+    "sceneCloudContainer": null,
+    "rngNext": 0.5549468300580123
+  },
+  "afterconfirm": {
+    "bioloaded": false,
+    "bioload_in_battle": true,
+    "targetPlayerBioloaded": true,
+    "cloudCount": 0,
+    "container": null,
+    "modelImageFrame": 1,
+    "modelImageOnEnterFrame": false,
+    "sceneImage": {
+      "depth": 9011,
+      "attached": true,
+      "rootAttached": true,
+      "parent": "battleMC",
+      "frame": 1,
+      "alpha": 100.0,
+      "x": 212.8,
+      "y": 166.75,
+      "callback": false
+    },
+    "sceneCloudContainer": null,
+    "rngNext": 0.9551472373193942
+  },
+  "handoff": {
+    "bioloaded": false,
+    "bioload_in_battle": true,
+    "targetPlayerBioloaded": true,
+    "cloudCount": 0,
+    "container": null,
+    "modelImageFrame": 1,
+    "modelImageOnEnterFrame": false,
+    "sceneImage": {
+      "depth": 9011,
+      "attached": true,
+      "rootAttached": true,
+      "parent": "battleMC",
+      "frame": 1,
+      "alpha": 100.0,
+      "x": 212.8,
+      "y": 166.75,
+      "callback": false
+    },
+    "sceneCloudContainer": null,
+    "rngNext": 0.9551472373193942
+  },
+  "nextConfirm": {
+    "canonical": {
+      "bioloaded": false,
+      "bioload_in_battle": true,
+      "targetPlayerBioloaded": false,
+      "cloudCount": 0,
+      "container": null,
+      "modelImageFrame": 1,
+      "modelImageOnEnterFrame": false,
+      "sceneImage": {
+        "depth": 9011,
+        "attached": true,
+        "rootAttached": true,
+        "parent": "battleMC",
+        "frame": 1,
+        "alpha": 100.0,
+        "x": 212.8,
+        "y": 166.75,
+        "callback": false
+      },
+      "sceneCloudContainer": null,
+      "rngNext": 0.013467678145623552
+    },
+    "nextBattleBioloaded": false,
+    "nextBattleFlag": true,
+    "nextBattleCloudCount": 0,
+    "nextBattleContainer": null,
+    "nextBattleImage": {
+      "depth": 9011,
+      "attached": true,
+      "rootAttached": true,
+      "parent": "battleMC",
+      "frame": 1,
+      "alpha": 100.0,
+      "x": 212.8,
+      "y": 166.75,
+      "callback": false
+    }
+  },
+  "firstCloudTick": 577,
+  "firstDetachedTick": 585,
+  "sourceSha256": {
+    "wd2/setup_menu.py": "5633326451e768a84a14bde04e452043ba7fac2617a4c71b7b36dcd0495f0c4a",
+    "wd2/battle_playback.py": "9aa8c82295b1977897cea2a60afbb6569e0d31e14bb9725267e422c7b9167901",
+    "wd2/movieclip_host.py": "a489c5f3b33a1fdac4448afd07f4ca63aa32d676440dc573805ab11fb4002765",
+    "wd2/generated/BioCloud.py": "2a9c4456e3cc62d1c9e5dd35e939474abbab5adea1ab5d83e83a93e301453fe6",
+    "reverse/export/scripts/__Packages/Unit.as": "7e765e9d5bf72eb0b24b3163f0faed627cc996c4e9bd4b7075ab962d6623d1ba",
+    "reverse/export/scripts/__Packages/View.as": "205221608f0bb54e326cceb12f0fc92920da714b4a8daf7dce933fcd6df25f40"
+  },
+  "fixtureSha256": {
+    "source-bio-sub-ticks.csv": "dc04754405d12e80e5294ec39dd6a993b37024284272456ae5c0bb3e65e7c81b",
+    "source-bio-sub-units.csv": "6adfcf5ed7433847e98a0dce73b850f561dd331356d783042fb73f7afe97a24e",
+    "source-bio-sub-clouds.csv": "0c2ee714bf8a6a58686330abd99430ad0ab5f572faea831c42baa4b05db8fa59",
+    "source-bio-sub-city-children.csv": "a072231a3a79f6c00c5b79bc11b7b6f9061e2136871fb4f5adc6760340253474",
+    "source-bio-sub-smoke.csv": "b9c1fccf977bdb84a4774a836ca171840d41280def568d309f197bf7d0c4f33b",
+    "source-bio-sub-root-roles.csv": "199ed79fe18af4ae929204bba893fc1ed4908945fe933b63699018bdcb1ac97f",
+    "source-bio-sub-rng-t234.json": "8fe49bbbccb476b44d4c8ab09499a7f571940ab1dd8004d512014a513f12d32d",
+    "source-bio-sub-rng-t464.json": "1606ec3fcd6b5f817dd31012b8161f8da201967fab26b68e1625a6e7b9b3accc"
+  },
+  "rows": {
+    "ticks": 642,
+    "units": 1748,
+    "clouds": 1088,
+    "cityChildren": 57,
+    "smoke": 53,
+    "rootRoles": 37
+  }
+}

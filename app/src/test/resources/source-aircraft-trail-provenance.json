@@ -1,0 +1,43 @@
+{
+  "reference": "RealTest, read-only, Python -B",
+  "generators": [
+    "analysis/bio-source-audit/trace_plane_rng.py",
+    "analysis/bio-source-audit/trace_ship_rng.py"
+  ],
+  "cases": {
+    "plane1": {
+      "seed": 0,
+      "turn": 3,
+      "payload": "bioload1",
+      "firstTrailTick": 238
+    },
+    "plane1-warhead1": {
+      "seed": 0,
+      "turn": 3,
+      "payload": "warhead1",
+      "firstTrailTick": 238
+    },
+    "ship-intercept": {
+      "seed": 0,
+      "turn": 21,
+      "targetPlayer": 1,
+      "firstTrailTick": 200
+    },
+    "ship-success": {
+      "seed": 0,
+      "turn": 21,
+      "targetPlayer": 2,
+      "firstTrailTick": 239
+    }
+  },
+  "sha256": {
+    "source-aircraft-trail-plane1-rng-pretrail.json": "fccae3d574cada4d0403d2d7e018ed9051c8ead8094c1db2d901fc96faaf1a10",
+    "source-aircraft-trail-plane1-trail-samples.json": "b8823c9bc8a1c40f115c35dd27e17da58afe6e493601b78efa0d21eea414ac02",
+    "source-aircraft-trail-plane1-warhead1-rng-pretrail.json": "73bc29ba2b0173a635270761fcb8eb7db9f91fbc1e00ce18b491c7869f8cc8f5",
+    "source-aircraft-trail-plane1-warhead1-trail-samples.json": "98f900c737022b8cb624ea0c481018ba9ef995fea46d15ded023036710319a2a",
+    "source-aircraft-trail-ship-intercept-rng-pretrail.json": "cb1f237495e6dfeff13c2d126664911475e2688ba3aab291ce295efe32b47082",
+    "source-aircraft-trail-ship-intercept-trail-samples.json": "a3473eaf93526f7b6c67e36ec9099181aaa69ea791d1bc62d3344c5ea5ab0662",
+    "source-aircraft-trail-ship-success-rng-pretrail.json": "61b900e97917d6386790c9a7cbd1191a06bd3a02f7a2714072442f57e213ad8b",
+    "source-aircraft-trail-ship-success-trail-samples.json": "68a8ed9a85314b87f67a166ec50632c81a938c63b3ce9679d816662cb5ea9b67"
+  }
+}

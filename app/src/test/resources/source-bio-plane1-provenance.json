@@ -1,0 +1,171 @@
+{
+  "source": "RealTest, Python -B; seed0 normal 2 rivals",
+  "schedule": [
+    [
+      1,
+      "production",
+      {
+        "category": "planes",
+        "percent": 100
+      },
+      "resources"
+    ],
+    [
+      2,
+      "preAttack",
+      {
+        "weapon": "plane1"
+      },
+      "resources"
+    ],
+    [
+      3,
+      "preAttack",
+      {
+        "weapon": "plane1",
+        "payload": "bioload1",
+        "target": 1,
+        "city": 2
+      },
+      "resources"
+    ]
+  ],
+  "events": [
+    {
+      "_player": 2,
+      "_item": "religion",
+      "_value": 35,
+      "_plusmin": "plus"
+    },
+    {
+      "_player": 2,
+      "_item": "research",
+      "_value": 13,
+      "amount": 1
+    },
+    {
+      "_player": 2,
+      "_item": "research",
+      "_value": 17,
+      "amount": 1
+    },
+    {
+      "_player": 2,
+      "_item": "research",
+      "_value": 9,
+      "amount": 1
+    },
+    {
+      "_player": 2,
+      "_item": "research",
+      "_value": 21,
+      "amount": 1
+    },
+    {
+      "_player": 2,
+      "_item": "research_building"
+    },
+    {
+      "_player": 1,
+      "_item": "produce2",
+      "_value": "soldier",
+      "_amount": 60,
+      "_group": 4,
+      "_money": 75
+    },
+    {
+      "_player": 1,
+      "_item": "production_building"
+    },
+    {
+      "_player": 1,
+      "_item": "research",
+      "_value": 13,
+      "amount": 1
+    },
+    {
+      "_player": 1,
+      "_item": "research_building"
+    },
+    {
+      "_player": 0,
+      "_item": "resources",
+      "_value": 41,
+      "_plusmin": "plus"
+    },
+    {
+      "_player": 0,
+      "_item": "battle",
+      "_value": "preAttack",
+      "_a": 0,
+      "_b": 1,
+      "_weapon": 20,
+      "_carrier": 20,
+      "_payload": 8,
+      "_city": 7,
+      "_blocked": false,
+      "_casualties": 9,
+      "_frame": "airfield",
+      "_result": true,
+      "_isShip": false,
+      "_attack_arr": null,
+      "_result_arr": null,
+      "_action": null,
+      "_bioload": true
+    },
+    {
+      "_player": 0,
+      "_item": "setPreAttack",
+      "_value": "inactive"
+    },
+    {
+      "_player": 0,
+      "_item": "regard",
+      "_a": 0,
+      "_b": 1
+    },
+    {
+      "_player": 0,
+      "_item": "regard",
+      "_value": "preAttack",
+      "_a": 0,
+      "_b": 1,
+      "_wpnLevel": 1
+    },
+    {
+      "_item": "bioload",
+      "_value": "deactivate",
+      "_plr": 1,
+      "_arr": [
+        {
+          "_action": "propaganda"
+        },
+        {
+          "_stock": 16,
+          "_weaponName": "spy1"
+        }
+      ]
+    }
+  ],
+  "targetCityId": 7,
+  "firstCloudTick": 343,
+  "rowCounts": {
+    "ticks": 534,
+    "units": 936,
+    "clouds": 3247,
+    "cityChildren": 41
+  },
+  "fixtureSha256": {
+    "source-bio-plane1-ticks.csv": "19a0c97f4f53fa4344f7009232d303dc344c5089c44afe2dbe9bcde0d2b05224",
+    "source-bio-plane1-units.csv": "177fd410dd5011f23938365cb41ecfd0e2efa17f99288b2cef5f4e69f40dd0ac",
+    "source-bio-plane1-clouds.csv": "8dd16e5b6d7bc3cf2e03101b03f080c1d32dc7e7c629fe03ef8070ffb75f743d",
+    "source-bio-plane1-city-children.csv": "9e91a61affe04c4cb2213b5ed072f297367e07850ff93c5349928bfe8c88b577"
+  },
+  "sourceSha256": {
+    "wd2/setup_menu.py": "5633326451e768a84a14bde04e452043ba7fac2617a4c71b7b36dcd0495f0c4a",
+    "wd2/battle_playback.py": "9aa8c82295b1977897cea2a60afbb6569e0d31e14bb9725267e422c7b9167901",
+    "wd2/movieclip_host.py": "a489c5f3b33a1fdac4448afd07f4ca63aa32d676440dc573805ab11fb4002765",
+    "reverse/export/scripts/__Packages/Unit.as": "7e765e9d5bf72eb0b24b3163f0faed627cc996c4e9bd4b7075ab962d6623d1ba",
+    "reverse/export/scripts/__Packages/View.as": "205221608f0bb54e326cceb12f0fc92920da714b4a8daf7dce933fcd6df25f40"
+  }
+}

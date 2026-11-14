@@ -10,8 +10,10 @@ public final class CityState {
     public final int index;
     public int populationMillions;
     private int deathFrame = -1;
-    /** True while a successful biological strike's contamination is shown. */
+    /** Set only by the isolated battle city's cloud callback, not turn resolution. */
     public boolean bioloaded;
+    /** Source City.bioload_in_battle: retained after a resolved payload hit. */
+    public boolean bioloadInBattle;
 
     CityState(int id, int ownerId, int index, int populationMillions) {
         this.id = id;

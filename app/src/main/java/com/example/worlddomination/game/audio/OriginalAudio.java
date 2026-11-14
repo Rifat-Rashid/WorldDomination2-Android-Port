@@ -229,20 +229,24 @@ public final class OriginalAudio {
 
     /** Plays an original effect at the source Flash stage's normalized horizontal position. */
     public void play(Cue cue, float pan) {
+        playInstance(cue, pan);
+    }
+
+    /** Returns a battle-owned voice id so a source Unit can stop only its own sound. */
+    public long playInstance(Cue cue, float pan) {
         if (!soundEnabled || cue == Cue.THEME) {
-            return;
+            return -1L;
         }
         if (cue == Cue.SATELLITE_LASER) {
             satellitePlayback.play();
-            return;
+            return -1L;
         }
         Sound sound = sounds.get(cue);
         if (sound == null) {
             sound = loadSound(cue);
         }
-        if (sound != null) {
-            sound.play(EFFECT_VOLUME, 1f, Math.max(-1f, Math.min(1f, pan)));
-        }
+        return sound == null ? -1L
+                : sound.play(EFFECT_VOLUME, 1f, Math.max(-1f, Math.min(1f, pan)));
     }
 
     /** Starts a looping original cue and returns its libGDX sound instance id. */
