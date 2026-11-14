@@ -23,15 +23,30 @@ public final class FlashAntiDefenseTrackingAnimation {
 
     /** Keeps the source's single tracked-unit lock for each defending player. */
     public static final class TargetLock {
-        private final boolean[] lockedPlayers = new boolean[5];
+        private static final Object LEGACY_OWNER = new Object();
+        private final Object[] owners = new Object[5];
 
         public boolean tryLock(int defenderPlayerId) {
+            return tryLock(defenderPlayerId, LEGACY_OWNER);
+        }
+
+        public boolean tryLock(int defenderPlayerId, Object owner) {
             validatePlayer(defenderPlayerId);
-            if (lockedPlayers[defenderPlayerId]) {
-                return false;
-            }
-            lockedPlayers[defenderPlayerId] = true;
+            if (owner == null) throw new IllegalArgumentException("Missing target owner");
+            if (owners[defenderPlayerId] != null) return false;
+            owners[defenderPlayerId] = owner;
             return true;
+        }
+
+        public boolean isLockedTo(int defenderPlayerId, Object owner) {
+            validatePlayer(defenderPlayerId);
+            return owner != null && owners[defenderPlayerId] == owner;
+        }
+
+        /** Unit.speedup_die clears the defender field without checking its owner. */
+        public void clear(int defenderPlayerId) {
+            validatePlayer(defenderPlayerId);
+            owners[defenderPlayerId] = null;
         }
     }
 
@@ -78,7 +93,7 @@ public final class FlashAntiDefenseTrackingAnimation {
     }
 
     /** The source clock paints through its action building; retain this target handle. */
-    static FlashAntiDefenseTrackingAnimation sourceDrivenCarrier(
+    static FlashAntiDefenseTrackingAnimation sourceDrivenAir(
             Target target, int defenderPlayerId, int actionBuildingSlot,
             String religionCode, SourceAntiDefensePlayback playback,
             SourceAntiDefensePlayback.UnitState unitState) {

@@ -44,18 +44,18 @@ public final class SourceCarrierDefenseClockInstrumentedTest {
             assertEquals("antiAir_fire", turret.frameName);
             assertEquals("chr", turret.religionCode);
             @SuppressWarnings("unchecked")
-            List<SourceCarrierAntiDefenseController> controllers =
-                    (List<SourceCarrierAntiDefenseController>) field(WorldDominationGame.class,
-                            "sourceCarrierAntiDefenseControllers").get(app);
+            List<SourceAirDefenseController> controllers =
+                    (List<SourceAirDefenseController>) field(WorldDominationGame.class,
+                            "sourceAirDefenseControllers").get(app);
             assertEquals("one physical shared turret", 1, controllers.size());
             @SuppressWarnings("unchecked")
-            List<SourceCarrierAntiDefenseController.UnitVisit> visits =
-                    (List<SourceCarrierAntiDefenseController.UnitVisit>) field(
-                            SourceCarrierAntiDefenseController.class, "units").get(controllers.get(0));
+            List<SourceAirDefenseController.UnitVisit> visits =
+                    (List<SourceAirDefenseController.UnitVisit>) field(
+                            SourceAirDefenseController.class, "units").get(controllers.get(0));
             assertEquals(3, visits.size());
-            SourceCarrierAntiDefenseController.UnitVisit[] units =
-                    new SourceCarrierAntiDefenseController.UnitVisit[3];
-            for (SourceCarrierAntiDefenseController.UnitVisit visit : visits)
+            SourceAirDefenseController.UnitVisit[] units =
+                    new SourceAirDefenseController.UnitVisit[3];
+            for (SourceAirDefenseController.UnitVisit visit : visits)
                 units[visit.animation.getRoute().planeIndex] = visit;
             Method step = WorldDominationGame.class.getDeclaredMethod("fixedUpdate", float.class);
             step.setAccessible(true);

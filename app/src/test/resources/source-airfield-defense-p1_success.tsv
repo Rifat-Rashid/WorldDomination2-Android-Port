@@ -1,0 +1,535 @@
+kind	phase	callIndex	captureOrder	tick	unitName	mcID	active	action	status	activeAndMoving	antiActive	antiInitiated	antiOffset	antiCountdown	antiType	antiNum	antiPos	defenderAntiPos	lock	lockOwnerName	lockOwnerMcID	curX	curY	storedAngle	storedFrame	mcX	mcY	mcFrame	bodyAttached	rngNext	playbackDone	turretName	turretExists	turretFrame	turretAlpha	turretPlaying	turretStopped	turretAttached
+H	afterHost			0	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none					0		0	0	1	True	0.07086288409434749	False		False					
+H	afterHost			1	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	2	True	0.07086288409434749	False		False					
+H	afterHost			2	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	3	True	0.07086288409434749	False		False					
+H	afterHost			3	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	4	True	0.07086288409434749	False		False					
+H	afterHost			4	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	5	True	0.07086288409434749	False		False					
+H	afterHost			5	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	6	True	0.07086288409434749	False		False					
+H	afterHost			6	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	7	True	0.07086288409434749	False		False					
+H	afterHost			7	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	8	True	0.07086288409434749	False		False					
+H	afterHost			8	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	9	True	0.07086288409434749	False		False					
+H	afterHost			9	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	10	True	0.07086288409434749	False		False					
+H	afterHost			10	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	11	True	0.07086288409434749	False		False					
+H	afterHost			11	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	12	True	0.07086288409434749	False		False					
+H	afterHost			12	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	13	True	0.07086288409434749	False		False					
+H	afterHost			13	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	14	True	0.07086288409434749	False		False					
+H	afterHost			14	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	15	True	0.07086288409434749	False		False					
+H	afterHost			15	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	16	True	0.07086288409434749	False		False					
+H	afterHost			16	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	17	True	0.07086288409434749	False		False					
+H	afterHost			17	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	18	True	0.07086288409434749	False		False					
+H	afterHost			18	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	19	True	0.07086288409434749	False		False					
+H	afterHost			19	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	20	True	0.07086288409434749	False		False					
+H	afterHost			20	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	21	True	0.07086288409434749	False		False					
+H	afterHost			21	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	22	True	0.07086288409434749	False		False					
+H	afterHost			22	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	23	True	0.07086288409434749	False		False					
+H	afterHost			23	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	24	True	0.07086288409434749	False		False					
+H	afterHost			24	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	1	True	0.07086288409434749	False		False					
+H	afterHost			25	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	2	True	0.07086288409434749	False		False					
+H	afterHost			26	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	3	True	0.07086288409434749	False		False					
+H	afterHost			27	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	4	True	0.07086288409434749	False		False					
+H	afterHost			28	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	5	True	0.07086288409434749	False		False					
+H	afterHost			29	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	6	True	0.07086288409434749	False		False					
+H	afterHost			30	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	7	True	0.07086288409434749	False		False					
+H	afterHost			31	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	8	True	0.07086288409434749	False		False					
+H	afterHost			32	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	9	True	0.07086288409434749	False		False					
+H	afterHost			33	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	10	True	0.07086288409434749	False		False					
+H	afterHost			34	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	11	True	0.07086288409434749	False		False					
+H	afterHost			35	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	12	True	0.07086288409434749	False		False					
+H	afterHost			36	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	13	True	0.07086288409434749	False		False					
+H	afterHost			37	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	14	True	0.07086288409434749	False		False					
+H	afterHost			38	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	15	True	0.07086288409434749	False		False					
+H	afterHost			39	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	16	True	0.07086288409434749	False		False					
+H	afterHost			40	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	17	True	0.07086288409434749	False		False					
+H	afterHost			41	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	18	True	0.07086288409434749	False		False					
+H	afterHost			42	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	19	True	0.07086288409434749	False		False					
+H	afterHost			43	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	20	True	0.07086288409434749	False		False					
+H	afterHost			44	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	21	True	0.07086288409434749	False		False					
+H	afterHost			45	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	22	True	0.07086288409434749	False		False					
+H	afterHost			46	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	23	True	0.07086288409434749	False		False					
+H	afterHost			47	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	24	True	0.07086288409434749	False		False					
+H	afterHost			48	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	1	True	0.07086288409434749	False		False					
+H	afterHost			49	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	2	True	0.07086288409434749	False		False					
+H	afterHost			50	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	3	True	0.07086288409434749	False		False					
+H	afterHost			51	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	4	True	0.07086288409434749	False		False					
+H	afterHost			52	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	5	True	0.07086288409434749	False		False					
+H	afterHost			53	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	6	True	0.07086288409434749	False		False					
+H	afterHost			54	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	7	True	0.07086288409434749	False		False					
+H	afterHost			55	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	8	True	0.07086288409434749	False		False					
+H	afterHost			56	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	9	True	0.07086288409434749	False		False					
+H	afterHost			57	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	10	True	0.07086288409434749	False		False					
+H	afterHost			58	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	11	True	0.07086288409434749	False		False					
+H	afterHost			59	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	12	True	0.07086288409434749	False		False					
+H	afterHost			60	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	13	True	0.07086288409434749	False		False					
+H	afterHost			61	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	14	True	0.07086288409434749	False		False					
+H	afterHost			62	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	15	True	0.07086288409434749	False		False					
+H	afterHost			63	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	16	True	0.07086288409434749	False		False					
+H	afterHost			64	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	17	True	0.07086288409434749	False		False					
+H	afterHost			65	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	18	True	0.07086288409434749	False		False					
+H	afterHost			66	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	19	True	0.07086288409434749	False		False					
+H	afterHost			67	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	20	True	0.07086288409434749	False		False					
+H	afterHost			68	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	21	True	0.07086288409434749	False		False					
+H	afterHost			69	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	22	True	0.07086288409434749	False		False					
+H	afterHost			70	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	23	True	0.07086288409434749	False		False					
+H	afterHost			71	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	24	True	0.07086288409434749	False		False					
+H	afterHost			72	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	1	True	0.07086288409434749	False		False					
+H	afterHost			73	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	2	True	0.07086288409434749	False		False					
+H	afterHost			74	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	3	True	0.07086288409434749	False		False					
+H	afterHost			75	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	4	True	0.07086288409434749	False		False					
+H	afterHost			76	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	5	True	0.07086288409434749	False		False					
+H	afterHost			77	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	6	True	0.07086288409434749	False		False					
+H	afterHost			78	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	7	True	0.07086288409434749	False		False					
+H	afterHost			79	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	8	True	0.07086288409434749	False		False					
+H	afterHost			80	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	9	True	0.07086288409434749	False		False					
+H	afterHost			81	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	10	True	0.07086288409434749	False		False					
+H	afterHost			82	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	11	True	0.07086288409434749	False		False					
+H	afterHost			83	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	12	True	0.07086288409434749	False		False					
+H	afterHost			84	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	13	True	0.07086288409434749	False		False					
+H	afterHost			85	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	14	True	0.07086288409434749	False		False					
+H	afterHost			86	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	15	True	0.07086288409434749	False		False					
+H	afterHost			87	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	16	True	0.07086288409434749	False		False					
+H	afterHost			88	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	17	True	0.4031691464450935	False		False					
+H	afterHost			89	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	18	True	0.4031691464450935	False		False					
+H	afterHost			90	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	19	True	0.4031691464450935	False		False					
+H	afterHost			91	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	20	True	0.4031691464450935	False		False					
+H	afterHost			92	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	21	True	0.4031691464450935	False		False					
+H	afterHost			93	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	22	True	0.4031691464450935	False		False					
+H	afterHost			94	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	23	True	0.3285207100154869	False		False					
+H	afterHost			95	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	24	True	0.4147216089714424	False		False					
+H	afterHost			96	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	1	True	0.09940033823870109	False		False					
+H	afterHost			97	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	2	True	0.9086575543967805	False		False					
+H	afterHost			98	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	3	True	0.4740046511372964	False		False					
+H	afterHost			99	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	4	True	0.4740046511372964	False		False					
+H	afterHost			100	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	5	True	0.4740046511372964	False		False					
+H	afterHost			101	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	6	True	0.4740046511372964	False		False					
+H	afterHost			102	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	7	True	0.4740046511372964	False		False					
+H	afterHost			103	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	8	True	0.4740046511372964	False		False					
+H	afterHost			104	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	9	True	0.4740046511372964	False		False					
+H	afterHost			105	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	10	True	0.4740046511372964	False		False					
+H	afterHost			106	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	11	True	0.4740046511372964	False		False					
+H	afterHost			107	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	12	True	0.4740046511372964	False		False					
+H	afterHost			108	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	13	True	0.4740046511372964	False		False					
+H	afterHost			109	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	14	True	0.4740046511372964	False		False					
+H	afterHost			110	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	15	True	0.4740046511372964	False		False					
+H	afterHost			111	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	16	True	0.4740046511372964	False		False					
+H	afterHost			112	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	17	True	0.4740046511372964	False		False					
+H	afterHost			113	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	18	True	0.4740046511372964	False		False					
+H	afterHost			114	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	19	True	0.4740046511372964	False		False					
+H	afterHost			115	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	20	True	0.4740046511372964	False		False					
+H	afterHost			116	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	21	True	0.4740046511372964	False		False					
+H	afterHost			117	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	22	True	0.4740046511372964	False		False					
+H	afterHost			118	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	23	True	0.4740046511372964	False		False					
+H	afterHost			119	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	24	True	0.4740046511372964	False		False					
+H	afterHost			120	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	1	True	0.4740046511372964	False		False					
+H	afterHost			121	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	2	True	0.4740046511372964	False		False					
+H	afterHost			122	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	3	True	0.4740046511372964	False		False					
+H	afterHost			123	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	4	True	0.4740046511372964	False		False					
+H	afterHost			124	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	5	True	0.4740046511372964	False		False					
+H	afterHost			125	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	6	True	0.4740046511372964	False		False					
+H	afterHost			126	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	7	True	0.4740046511372964	False		False					
+H	afterHost			127	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	8	True	0.4740046511372964	False		False					
+H	afterHost			128	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	9	True	0.4740046511372964	False		False					
+H	afterHost			129	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	10	True	0.4740046511372964	False		False					
+H	afterHost			130	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	11	True	0.4740046511372964	False		False					
+H	afterHost			131	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	12	True	0.4740046511372964	False		False					
+H	afterHost			132	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	13	True	0.4740046511372964	False		False					
+H	afterHost			133	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	14	True	0.4740046511372964	False		False					
+H	afterHost			134	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	15	True	0.4740046511372964	False		False					
+H	afterHost			135	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	16	True	0.4740046511372964	False		False					
+H	afterHost			136	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	17	True	0.4740046511372964	False		False					
+H	afterHost			137	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	18	True	0.4740046511372964	False		False					
+H	afterHost			138	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	19	True	0.4740046511372964	False		False					
+H	afterHost			139	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	20	True	0.4740046511372964	False		False					
+H	afterHost			140	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	21	True	0.4740046511372964	False		False					
+H	afterHost			141	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	22	True	0.4740046511372964	False		False					
+H	afterHost			142	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	23	True	0.4740046511372964	False		False					
+H	afterHost			143	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	24	True	0.4740046511372964	False		False					
+H	afterHost			144	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	1	True	0.4740046511372964	False		False					
+H	afterHost			145	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	2	True	0.4740046511372964	False		False					
+H	afterHost			146	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	3	True	0.4740046511372964	False		False					
+H	afterHost			147	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	4	True	0.4740046511372964	False		False					
+H	afterHost			148	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	5	True	0.4740046511372964	False		False					
+H	afterHost			149	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	6	True	0.4740046511372964	False		False					
+H	afterHost			150	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	7	True	0.4740046511372964	False		False					
+H	afterHost			151	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	8	True	0.4740046511372964	False		False					
+H	afterHost			152	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	9	True	0.4740046511372964	False		False					
+H	afterHost			153	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	10	True	0.4740046511372964	False		False					
+H	afterHost			154	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	11	True	0.8408483326276716	False		False					
+H	afterHost			155	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	12	True	0.8408483326276716	False		False					
+H	afterHost			156	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	13	True	0.8408483326276716	False		False					
+H	afterHost			157	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	14	True	0.8408483326276716	False		False					
+H	afterHost			158	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	15	True	0.8408483326276716	False		False					
+H	afterHost			159	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	16	True	0.8408483326276716	False		False					
+H	afterHost			160	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	17	True	0.8408483326276716	False		False					
+H	afterHost			161	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	18	True	0.8408483326276716	False		False					
+H	afterHost			162	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	19	True	0.8408483326276716	False		False					
+H	afterHost			163	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	20	True	0.8408483326276716	False		False					
+H	afterHost			164	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	21	True	0.8408483326276716	False		False					
+H	afterHost			165	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	22	True	0.8408483326276716	False		False					
+H	afterHost			166	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	23	True	0.8408483326276716	False		False					
+H	afterHost			167	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	24	True	0.8408483326276716	False		False					
+H	afterHost			168	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	1	True	0.8408483326276716	False		False					
+H	afterHost			169	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	2	True	0.8408483326276716	False		False					
+H	afterHost			170	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	3	True	0.8408483326276716	False		False					
+H	afterHost			171	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	4	True	0.8408483326276716	False		False					
+H	afterHost			172	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	5	True	0.8408483326276716	False		False					
+H	afterHost			173	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	6	True	0.8408483326276716	False		False					
+H	afterHost			174	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	7	True	0.8408483326276716	False		False					
+H	afterHost			175	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	8	True	0.8408483326276716	False		False					
+H	afterHost			176	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	9	True	0.8408483326276716	False		False					
+H	afterHost			177	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	10	True	0.8408483326276716	False		False					
+H	afterHost			178	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	11	True	0.8408483326276716	False		False					
+H	afterHost			179	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	12	True	0.8408483326276716	False		False					
+H	afterHost			180	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	13	True	0.8408483326276716	False		False					
+H	afterHost			181	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	14	True	0.8408483326276716	False		False					
+H	afterHost			182	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	15	True	0.8408483326276716	False		False					
+H	afterHost			183	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	16	True	0.8408483326276716	False		False					
+H	afterHost			184	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	17	True	0.8408483326276716	False		False					
+H	afterHost			185	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	18	True	0.8408483326276716	False		False					
+H	afterHost			186	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	19	True	0.8408483326276716	False		False					
+H	afterHost			187	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	20	True	0.8408483326276716	False		False					
+H	afterHost			188	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	21	True	0.8408483326276716	False		False					
+H	afterHost			189	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	22	True	0.8408483326276716	False		False					
+H	afterHost			190	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	23	True	0.8408483326276716	False		False					
+H	afterHost			191	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	24	True	0.8408483326276716	False		False					
+H	afterHost			192	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	1	True	0.8408483326276716	False		False					
+H	afterHost			193	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	2	True	0.8408483326276716	False		False					
+H	afterHost			194	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	3	True	0.8408483326276716	False		False					
+H	afterHost			195	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	4	True	0.8408483326276716	False		False					
+H	afterHost			196	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	5	True	0.8408483326276716	False		False					
+H	afterHost			197	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	6	True	0.8408483326276716	False		False					
+H	afterHost			198	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	7	True	0.8408483326276716	False		False					
+H	afterHost			199	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	8	True	0.8408483326276716	False		False					
+H	afterHost			200	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	9	True	0.8408483326276716	False		False					
+H	afterHost			201	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	10	True	0.8408483326276716	False		False					
+H	afterHost			202	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	11	True	0.8408483326276716	False		False					
+H	afterHost			203	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	12	True	0.8408483326276716	False		False					
+H	afterHost			204	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	13	True	0.8408483326276716	False		False					
+H	afterHost			205	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	14	True	0.8408483326276716	False		False					
+H	afterHost			206	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	15	True	0.8408483326276716	False		False					
+H	afterHost			207	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	16	True	0.8408483326276716	False		False					
+H	afterHost			208	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	17	True	0.8408483326276716	False		False					
+H	afterHost			209	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	18	True	0.8408483326276716	False		False					
+H	afterHost			210	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	19	True	0.8408483326276716	False		False					
+H	afterHost			211	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	20	True	0.8408483326276716	False		False					
+H	afterHost			212	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	21	True	0.8408483326276716	False		False					
+H	afterHost			213	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	22	True	0.8408483326276716	False		False					
+H	afterHost			214	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	23	True	0.8408483326276716	False		False					
+H	afterHost			215	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	24	True	0.8408483326276716	False		False					
+H	afterHost			216	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	1	True	0.8408483326276716	False		False					
+H	afterHost			217	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	2	True	0.8408483326276716	False		False					
+H	afterHost			218	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	3	True	0.8408483326276716	False		False					
+H	afterHost			219	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	4	True	0.8408483326276716	False		False					
+H	afterHost			220	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	5	True	0.8408483326276716	False		False					
+H	afterHost			221	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	6	True	0.8408483326276716	False		False					
+H	afterHost			222	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	7	True	0.8408483326276716	False		False					
+H	afterHost			223	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	8	True	0.8408483326276716	False		False					
+H	afterHost			224	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	9	True	0.8408483326276716	False		False					
+H	afterHost			225	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	10	True	0.8408483326276716	False		False					
+H	afterHost			226	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	11	True	0.976229457649057	False		False					
+H	afterHost			227	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	12	True	0.976229457649057	False		False					
+H	afterHost			228	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	13	True	0.976229457649057	False		False					
+H	afterHost			229	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	14	True	0.976229457649057	False		False					
+H	afterHost			230	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	15	True	0.976229457649057	False		False					
+H	afterHost			231	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	16	True	0.976229457649057	False		False					
+H	afterHost			232	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	17	True	0.976229457649057	False		False					
+H	afterHost			233	unit1	plane001	True	liftOff	alive	False	False	False	0	50	air		[0,0]	[]	none							0	0	18	True	0.976229457649057	False		False					
+H	afterHost			234	unit1	plane001	True	liftOff	alive	True	False	False	0	50	air		[0,0]	[]	none			2	1	154	10	2	1	10	True	0.976229457649057	False		False					
+H	afterHost			235	unit1	plane001	True	liftOff	alive	True	False	False	0	50	air		[0,0]	[]	none			6	3	154	10	6	3	10	True	0.976229457649057	False		False					
+H	afterHost			236	unit1	plane001	True	liftOff	alive	True	False	False	0	50	air		[0,0]	[]	none			12	6	154	10	12	6	10	True	0.976229457649057	False		False					
+H	afterHost			237	unit1	plane001	True	liftOff	alive	True	False	False	0	50	air		[0,0]	[]	none			18	10	147	10	18	10	10	True	0.976229457649057	False		False					
+H	afterHost			238	unit1	plane001	True	liftOff	alive	True	False	False	0	50	air		[0,0]	[]	none			24	15	141	9	24	15	9	True	0.749869571783086	False		False					
+H	afterHost			239	unit1	plane001	True	liftOff	alive	True	False	False	0	50	air		[0,0]	[]	none			30	20	141	9	30	20	9	True	0.35852038200953895	False		False					
+H	afterHost			240	unit1	plane001	True	liftOff	alive	True	False	False	0	50	air		[0,0]	[]	none			36	25	141	9	36	25	9	True	0.37803196431429753	False		False					
+H	afterHost			241	unit1	plane001	True	liftOff	alive	True	False	False	0	50	air		[0,0]	[]	none			42	30	141	9	42	30	9	True	0.2019913087994536	False		False					
+H	afterHost			242	unit1	plane001	True	liftOff	alive	True	False	False	0	50	air		[0,0]	[]	none			48	35	141	9	48	35	9	True	0.06635913103778524	False		False					
+H	afterHost			243	unit1	plane001	True	liftOff	alive	True	False	False	0	50	air		[0,0]	[]	none			54	40	141	9	54	40	9	True	0.5024285989524275	False		False					
+H	afterHost			244	unit1	plane001	True	liftOff	alive	True	False	False	0	50	air		[0,0]	[]	none			60	45	141	9	60	45	9	True	0.5863884555814496	False		False					
+H	afterHost			245	unit1	plane001	True	liftOff	alive	True	False	False	0	50	air		[0,0]	[]	none			66	50	141	9	66	50	9	True	0.6409848625624502	False		False					
+H	afterHost			246	unit1	plane001	True	liftOff	alive	True	False	False	0	50	air		[0,0]	[]	none			72	55	141	9	72	55	9	True	0.38668300553323576	False		False					
+H	afterHost			247	unit1	plane001	True	liftOff	alive	True	False	False	0	50	air		[0,0]	[]	none			78	60	141	9	78	60	9	True	0.4671884150380703	False		False					
+H	afterHost			248	unit1	plane001	True	liftOff	alive	True	False	False	0	50	air		[0,0]	[]	none			84	65	141	9	84	65	9	True	0.7854891493606652	False		False					
+H	afterHost			249	unit1	plane001	True	liftOff	alive	True	False	False	0	50	air		[0,0]	[]	none			90	70	141	9	90	70	9	True	0.21597938410680917	False		False					
+H	afterHost			250	unit1	plane001	True	liftOff	alive	True	False	False	0	50	air		[0,0]	[]	none			96	75	141	9	96	75	9	True	0.7738187324714434	False		False					
+H	afterHost			251	unit1	plane001	True	liftOff	alive	True	False	False	0	50	air		[0,0]	[]	none			102	80	141	9	102	80	9	True	0.9743235128409679	False		False					
+H	afterHost			252	unit1	plane001	True	liftOff	alive	True	False	False	0	50	air		[0,0]	[]	none			108	85	141	9	108	85	9	True	0.11239103583018406	False		False					
+H	afterHost			253	unit1	plane001	True	liftOff	alive	True	False	False	0	50	air		[0,0]	[]	none			114	90	141	9	114	90	9	True	0.15640306008300875	False		False					
+H	afterHost			254	unit1	plane001	True	liftOff	alive	True	False	False	0	50	air		[0,0]	[]	none			120	95	141	9	120	95	9	True	0.13223381043380655	False		False					
+H	afterHost			255	unit1	plane001	True	liftOff	alive	True	False	False	0	50	air		[0,0]	[]	none			126	100	141	9	126	100	9	True	0.13223381043380655	False		False					
+H	afterHost			256	unit1	plane001	True	liftOff	alive	True	False	False	0	50	air		[0,0]	[]	none			132	105	141	9	132	105	9	True	0.13223381043380655	False		False					
+H	afterHost			257	unit1	plane001	True	liftOff	alive	True	False	False	0	50	air		[0,0]	[]	none			138	110	141	9	138	110	9	True	0.13223381043380655	False		False					
+H	afterHost			258	unit1	plane001	True	liftOff	alive	True	False	False	0	50	air		[0,0]	[]	none			144	115	141	9	144	115	9	True	0.13223381043380655	False		False					
+H	afterHost			259	unit1	plane001	True	liftOff	alive	True	False	False	0	50	air		[0,0]	[]	none			150	120	141	9	150	120	9	True	0.13223381043380655	False		False					
+H	afterHost			260	unit1	plane001	True	liftOff	alive	True	False	False	0	50	air		[0,0]	[]	none			156	125	141	9	156	125	9	True	0.13223381043380655	False		False					
+H	afterHost			261	unit1	plane001	True	liftOff	alive	True	False	False	0	50	air		[0,0]	[]	none			162	130	141	9	162	130	9	True	0.13223381043380655	False		False					
+H	afterHost			262	unit1	plane001	True	liftOff	alive	True	False	False	0	50	air		[0,0]	[]	none			168	135	141	9	168	135	9	True	0.13223381043380655	False		False					
+H	afterHost			263	unit1	plane001	True	liftOff	alive	True	False	False	0	50	air		[0,0]	[]	none			174	140	141	9	174	140	9	True	0.13223381043380655	False		False					
+H	afterHost			264	unit1	plane001	True	liftOff	alive	True	False	False	0	50	air		[0,0]	[]	none			180	145	141	9	180	145	9	True	0.13223381043380655	False		False					
+H	afterHost			265	unit1	plane001	True	liftOff	alive	True	False	False	0	50	air		[0,0]	[]	none			186	150	141	9	186	150	9	True	0.13223381043380655	False		False					
+H	afterHost			266	unit1	plane001	True	liftOff	alive	True	False	False	0	50	air		[0,0]	[]	none			192	155	141	9	192	155	9	True	0.13223381043380655	False		False					
+H	afterHost			267	unit1	plane001	True	liftOff	alive	True	False	False	0	50	air		[0,0]	[]	none			200	160	149	10	200	160	10	True	0.13223381043380655	False		False					
+H	afterHost			268	unit1	plane001	True	liftOff	alive	True	False	False	0	50	air		[0,0]	[]	none			208	165	149	10	208	165	10	True	0.13223381043380655	False		False					
+H	afterHost			269	unit1	plane001	True	liftOff	alive	True	False	False	0	50	air		[0,0]	[]	none			216	170	149	10	216	170	10	True	0.13223381043380655	False		False					
+H	afterHost			270	unit1	plane001	True	liftOff	alive	True	False	False	0	50	air		[0,0]	[]	none			224	175	149	10	224	175	10	True	0.13223381043380655	False		False					
+H	afterHost			271	unit1	plane001	True	liftOff	alive	True	False	False	0	50	air		[0,0]	[]	none			232	180	149	10	232	180	10	True	0.13223381043380655	False		False					
+H	afterHost			272	unit1	plane001	True	liftOff	alive	True	False	False	0	50	air		[0,0]	[]	none			240	185	149	10	240	185	10	True	0.13223381043380655	False		False					
+H	afterHost			273	unit1	plane001	True	liftOff	alive	True	False	False	0	50	air		[0,0]	[]	none			248	190	149	10	248	190	10	True	0.13223381043380655	False		False					
+H	afterHost			274	unit1	plane001	True	liftOff	alive	True	False	False	0	50	air		[0,0]	[]	none			256	195	149	10	256	195	10	True	0.13223381043380655	False		False					
+H	afterHost			275	unit1	plane001	True	liftOff	alive	True	False	False	0	50	air		[0,0]	[]	none			264	200	149	10	264	200	10	True	0.13223381043380655	False		False					
+H	afterHost			276	unit1	plane001	True	liftOff	alive	True	False	False	0	50	air		[0,0]	[]	none			272	205	149	10	272	205	10	True	0.13223381043380655	False		False					
+H	afterHost			277	unit1	plane001	True	liftOff	alive	True	False	False	0	50	air		[0,0]	[]	none			280	210	149	10	280	210	10	True	0.13223381043380655	False		False					
+H	afterHost			278	unit1	plane001	True	liftOff	alive	True	False	False	0	50	air		[0,0]	[]	none			288	215	149	10	288	215	10	True	0.13223381043380655	False		False					
+H	afterHost			279	unit1	plane001	True	default	alive	True	False	False	0	50	air		[0,0]	[]	none			296	220	149	10	296	220	10	True	0.13223381043380655	False		False					
+H	afterHost			280	unit1	plane001	True	default	alive	True	False	False	0	50	air		[0,0]	[]	none			302	225	141	9	302	225	9	True	0.020549620641776678	False		False					
+H	afterHost			281	unit1	plane001	True	default	alive	True	False	False	0	50	air		[0,0]	[]	none			306	230	130	9	306	230	9	True	0.020549620641776678	False		False					
+H	afterHost			282	unit1	plane001	True	default	alive	True	False	False	0	50	air		[0,0]	[]	none			308	235	113	8	308	235	8	True	0.020549620641776678	False		False					
+H	afterHost			283	unit1	plane001	True	default	alive	True	False	False	0	50	air		[0,0]	[]	none			308	240	91	6	308	240	6	True	0.020549620641776678	False		False					
+H	afterHost			284	unit1	plane001	True	default	alive	True	False	False	0	50	air		[0,0]	[]	none			306	245	69	5	306	245	5	True	0.020549620641776678	False		False					
+H	afterHost			285	unit1	plane001	True	default	alive	True	False	False	0	50	air		[0,0]	[]	none			302	250	52	3	302	250	3	True	0.020549620641776678	False		False					
+H	afterHost			286	unit1	plane001	True	default	alive	True	False	False	0	50	air		[0,0]	[]	none			296	255	41	3	296	255	3	True	0.020549620641776678	False		False					
+H	afterHost			287	unit1	plane001	True	default	alive	True	False	False	0	50	air		[0,0]	[]	none			288	260	33	2	288	260	2	True	0.020549620641776678	False		False					
+H	afterHost			288	unit1	plane001	True	default	alive	True	False	False	0	50	air		[0,0]	[]	none			280	265	33	2	280	265	2	True	0.020549620641776678	False		False					
+H	afterHost			289	unit1	plane001	True	default	alive	True	False	False	0	50	air		[0,0]	[]	none			272	270	33	2	272	270	2	True	0.020549620641776678	False		False					
+H	afterHost			290	unit1	plane001	True	default	alive	True	False	False	0	50	air		[0,0]	[]	none			262	275	28	2	262	275	2	True	0.020549620641776678	False		False					
+H	afterHost			291	unit1	plane001	True	default	alive	True	False	False	0	50	air		[0,0]	[]	none			252	280	28	2	252	280	2	True	0.020549620641776678	False		False					
+H	afterHost			292	unit1	plane001	True	default	alive	True	False	False	0	50	air		[0,0]	[]	none			242	285	28	2	242	285	2	True	0.020549620641776678	False		False					
+H	afterHost			293	unit1	plane001	True	default	alive	True	False	False	0	50	air		[0,0]	[]	none			232	290	28	2	232	290	2	True	0.020549620641776678	False		False					
+H	afterHost			294	unit1	plane001	True	default	alive	True	False	False	0	50	air		[0,0]	[]	none			222	295	28	2	222	295	2	True	0.020549620641776678	False		False					
+H	afterHost			295	unit1	plane001	True	default	alive	True	False	False	0	50	air		[0,0]	[]	none			212	300	28	2	212	300	2	True	0.020549620641776678	False		False					
+H	afterHost			296	unit1	plane001	True	plane_circular_flight	alive	True	False	False	0	50	air		[0,0]	[]	none			200.0	304.0	28	2	200.0	304.0	2	True	0.020549620641776678	False		False					
+H	afterHost			297	unit1	plane001	True	plane_circular_flight	alive	True	False	False	0	50	air		[0,0]	[]	none			201.46832716021376	317.84772354552655	28	2	201.46832716021376	317.84772354552655	2	True	0.020549620641776678	False		False					
+H	afterHost			298	unit1	plane001	True	plane_circular_flight	alive	True	False	False	0	50	air		[0,0]	[]	none			204.83509210210644	331.28809822588295	28	2	204.83509210210644	331.28809822588295	2	True	0.020549620641776678	False		False					
+H	afterHost			299	unit1	plane001	True	plane_circular_flight	alive	True	False	False	0	50	air		[0,0]	[]	none			210.01577242220384	344.06355934296636	113	8	210.01577242220384	344.06355934296636	8	True	0.020549620641776678	False		False					
+H	afterHost			300	unit1	plane001	True	plane_circular_flight	alive	True	False	False	0	50	air		[0,0]	[]	none			216.89128657667027	355.9320878948541	121	8	216.89128657667027	355.9320878948541	8	True	0.020549620641776678	False		False					
+H	afterHost			301	unit1	plane001	True	plane_circular_flight	alive	True	False	False	0	50	air		[0,0]	[]	none			225.31066679589964	366.6717919444376	129	9	225.31066679589964	366.6717919444376	9	True	0.020549620641776678	False		False					
+H	afterHost			302	unit1	plane001	True	plane_circular_flight	alive	True	False	False	0	50	air		[0,0]	[]	none			235.09433118319075	376.08504807130726	137	9	235.09433118319075	376.08504807130726	9	True	0.020549620641776678	False		False					
+H	afterHost			303	unit1	plane001	True	plane_circular_flight	alive	True	False	False	0	50	air		[0,0]	[]	none			246.03788481507294	384.0021257515615	145	10	246.03788481507294	384.0021257515615	10	True	0.020549620641776678	False		False					
+H	afterHost			304	unit1	plane001	True	plane_circular_flight	alive	True	False	False	0	50	air		[0,0]	[]	none			257.91636990824856	390.28422844472004	153	10	257.91636990824856	390.28422844472004	10	True	0.020549620641776678	False		False					
+H	afterHost			305	unit1	plane001	True	plane_circular_flight	alive	True	False	False	0	50	air		[0,0]	[]	none			270.48887703719254	394.8258973061872	161	11	270.48887703719254	394.8258973061872	11	True	0.020549620641776678	False		False					
+H	afterHost			306	unit1	plane001	True	plane_circular_flight	alive	True	False	False	0	50	air		[0,0]	[]	none			283.5034231216416	397.55673653615975	169	11	283.5034231216416	397.55673653615975	11	True	0.020549620641776678	False		False					
+H	afterHost			307	unit1	plane001	True	plane_circular_flight	alive	True	False	False	0	50	air		[0,0]	[]	none			296.70199756161367	398.44243315330453	177	12	296.70199756161367	398.44243315330453	12	True	0.020549620641776678	False		False					
+H	afterHost			308	unit1	plane001	True	plane_circular_flight	alive	True	False	False	0	50	air		[0,0]	[]	none			309.82567554715945	397.48505816461767	185	12	309.82567554715945	397.48505816461767	12	True	0.020549620641776678	False		False					
+H	afterHost			309	unit1	plane001	True	plane_circular_flight	alive	True	False	False	0	50	air		[0,0]	[]	none			322.61969723856896	394.72265040680566	193	13	322.61969723856896	394.72265040680566	13	True	0.020549620641776678	False		False					
+H	afterHost			310	unit1	plane001	True	plane_circular_flight	alive	True	False	False	0	50	air		[0,0]	[]	none			334.8384131876798	390.22809847471126	201	13	334.8384131876798	390.22809847471126	13	True	0.020549620641776678	False		False					
+H	afterHost			311	unit1	plane001	True	plane_circular_flight	alive	True	False	False	0	50	air		[0,0]	[]	none			346.25	384.1073498500606	209	14	346.25	384.1073498500606	14	True	0.020549620641776678	False		False					
+H	afterHost			312	unit1	plane001	True	plane_circular_flight	alive	True	False	False	0	50	air		[0,0]	[]	none			356.64085572996055	376.49698933181844	217	14	356.64085572996055	376.49698933181844	14	True	0.020549620641776678	False		False					
+H	afterHost			313	unit1	plane001	True	plane_circular_flight	alive	True	False	False	0	50	air		[0,0]	[]	none			365.8195917309866	367.56124089699824	225	15	365.8195917309866	367.56124089699824	15	True	0.020549620641776678	False		False					
+H	afterHost			314	unit1	plane001	True	plane_circular_flight	alive	True	False	False	0	50	air		[0,0]	[]	none			373.6205464881202	357.4884579586151	233	16	373.6205464881202	357.4884579586151	16	True	0.020549620641776678	False		False					
+H	afterHost			315	unit1	plane001	True	plane_circular_flight	alive	True	False	False	0	50	air		[0,0]	[]	none			379.9067571537329	346.48717643212314	241	16	379.9067571537329	346.48717643212314	16	True	0.020549620641776678	False		False					
+H	afterHost			316	unit1	plane001	True	plane_circular_flight	alive	True	False	False	0	50	air		[0,0]	[]	none			384.57233587073176	334.7818128993102	249	17	384.57233587073176	334.7818128993102	17	True	0.020549620641776678	False		False					
+H	afterHost			317	unit1	plane001	True	plane_circular_flight	alive	True	False	False	0	50	air		[0,0]	[]	none			387.5442102656756	322.60809632818945	257	17	387.5442102656756	322.60809632818945	17	True	0.020549620641776678	False		False					
+H	afterHost			318	unit1	plane001	True	plane_circular_flight	alive	True	False	False	0	50	air		[0,0]	[]	none			388.78320047312434	310.2083261632271	265	18	388.78320047312434	310.2083261632271	18	True	0.020549620641776678	False		False					
+H	afterHost			319	unit1	plane001	True	plane_circular_flight	alive	True	False	False	0	50	air		[0,0]	[]	none			388.2844184479944	297.8265520736449	273	18	388.2844184479944	297.8265520736449	18	True	0.020549620641776678	False		False					
+H	afterHost			320	unit1	plane001	True	plane_circular_flight	alive	True	False	False	0	50	air		[0,0]	[]	none			386.0769888645749	285.7037712080372	281	19	386.0769888645749	285.7037712080372	19	True	0.020549620641776678	False		False					
+H	afterHost			321	unit1	plane001	True	plane_circular_flight	alive	True	False	False	0	50	air		[0,0]	[]	none			382.223104318767	274.07323745900396	289	19	382.223104318767	274.07323745900396	19	True	0.020549620641776678	False		False					
+H	afterHost			322	unit1	plane001	True	plane_circular_flight	alive	True	False	False	0	50	air		[0,0]	[]	none			376.81644057872666	263.1559740376275	297	20	376.81644057872666	263.1559740376275	20	True	0.020549620641776678	False		False					
+H	afterHost			323	unit1	plane001	True	plane_circular_flight	alive	True	False	False	0	50	air		[0,0]	[]	none			369.979970013433	253.15657567670107	305	20	369.979970013433	253.15657567670107	20	True	0.020549620641776678	False		False					
+H	afterHost			324	unit1	plane001	True	plane_circular_flight	alive	True	False	False	0	50	air		[0,0]	[]	none			361.863222829124	244.25938014052622	313	21	361.863222829124	244.25938014052622	21	True	0.020549620641776678	False		False					
+H	afterHost			325	unit1	plane001	True	plane_circular_flight	alive	True	False	False	0	50	air		[0,0]	[]	none			352.63905614034377	236.6250805666253	321	21	352.63905614034377	236.6250805666253	21	True	0.020549620641776678	False		False					
+H	afterHost			326	unit1	plane001	True	default	alive	True	False	False	0	50	air		[0,0]	[]	none			342.5	230.38784067832273	329	22	342.5	230.38784067832273	22	True	0.020549620641776678	False		False					
+H	afterHost			327	unit1	plane001	True	default	alive	True	False	False	0	50	air		[0,0]	[]	none			336.5	221.38784067832273	305	20	336.5	221.38784067832273	20	True	0.020549620641776678	False		False					
+H	afterHost			328	unit1	plane001	True	default	alive	True	False	False	0	50	air		[0,0]	[]	none			330.5	212.38784067832273	305	20	330.5	212.38784067832273	20	True	0.020549620641776678	False		False					
+H	afterHost			329	unit1	plane001	True	default	alive	True	False	False	0	50	air		[0,0]	[]	none			324.5	203.38784067832273	305	20	324.5	203.38784067832273	20	True	0.020549620641776678	False		False					
+H	afterHost			330	unit1	plane001	True	default	alive	True	False	False	0	50	air		[0,0]	[]	none			318.5	194.38784067832273	305	20	318.5	194.38784067832273	20	True	0.020549620641776678	False		False					
+H	afterHost			331	unit1	plane001	True	default	alive	True	False	False	0	50	air		[0,0]	[]	none			312.5	185.38784067832273	305	20	312.5	185.38784067832273	20	True	0.020549620641776678	False		False					
+H	afterHost			332	unit1	plane001	True	default	alive	True	False	False	0	50	air		[0,0]	[]	none			306.5	176.38784067832273	305	20	306.5	176.38784067832273	20	True	0.020549620641776678	False		False					
+H	afterHost			333	unit1	plane001	True	default	alive	True	False	False	0	50	air		[0,0]	[]	none			300.5	167.38784067832273	305	20	300.5	167.38784067832273	20	True	0.020549620641776678	False		False					
+H	afterHost			334	unit1	plane001	True	default	alive	True	False	False	0	50	air		[0,0]	[]	none			294.5	158.38784067832273	305	20	294.5	158.38784067832273	20	True	0.020549620641776678	False		False					
+H	afterHost			335	unit1	plane001	True	default	alive	True	False	False	0	50	air		[0,0]	[]	none			288.5	149.38784067832273	305	20	288.5	149.38784067832273	20	True	0.020549620641776678	False		False					
+H	afterHost			336	unit1	plane001	True	default	alive	True	False	False	0	50	air		[0,0]	[]	none			282.5	140.38784067832273	305	20	282.5	140.38784067832273	20	True	0.020549620641776678	False		False					
+H	afterHost			337	unit1	plane001	True	default	alive	True	False	False	0	50	air		[0,0]	[]	none			276.5	131.38784067832273	305	20	276.5	131.38784067832273	20	True	0.020549620641776678	False		False					
+H	afterHost			338	unit1	plane001	True	default	alive	True	False	False	0	50	air		[0,0]	[]	none			270.5	122.38784067832273	305	20	270.5	122.38784067832273	20	True	0.020549620641776678	False		False					
+H	afterHost			339	unit1	plane001	True	default	alive	True	False	False	0	50	air		[0,0]	[]	none			264.5	113.38784067832273	305	20	264.5	113.38784067832273	20	True	0.020549620641776678	False		False					
+H	afterHost			340	unit1	plane001	True	default	alive	True	False	False	0	50	air		[0,0]	[]	none			258.5	104.38784067832273	305	20	258.5	104.38784067832273	20	True	0.020549620641776678	False		False					
+H	afterHost			341	unit1	plane001	True	default	alive	True	False	False	0	50	air		[0,0]	[]	none			252.5	95.38784067832273	305	20	252.5	95.38784067832273	20	True	0.020549620641776678	False		False					
+H	afterHost			342	unit1	plane001	True	bomb	alive	True	False	False	0	50	air		[0,0]	[]	none			246.5	86.38784067832273	305	20	246.5	86.38784067832273	20	True	0.020549620641776678	False		False					
+H	afterHost			343	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			240.5	77.38784067832273	305	20	240.5	77.38784067832273	20	True	0.041177862257898545	False		False					
+H	afterHost			344	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			234.5	68.38784067832273	305	20	234.5	68.38784067832273	20	True	0.041177862257898545	False		False					
+H	afterHost			345	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			228.5	59.38784067832273	305	20	228.5	59.38784067832273	20	True	0.041177862257898545	False		False					
+H	afterHost			346	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			222.5	50.38784067832273	305	20	222.5	50.38784067832273	20	True	0.041177862257898545	False		False					
+H	afterHost			347	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			216.5	41.38784067832273	305	20	216.5	41.38784067832273	20	True	0.041177862257898545	False		False					
+H	afterHost			348	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			210.5	32.38784067832273	305	20	210.5	32.38784067832273	20	True	0.041177862257898545	False		False					
+H	afterHost			349	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			204.5	23.387840678322732	305	20	204.5	23.387840678322732	20	True	0.041177862257898545	False		False					
+H	afterHost			350	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			198.5	14.387840678322732	305	20	198.5	14.387840678322732	20	True	0.041177862257898545	False		False					
+H	afterHost			351	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			192.5	5.387840678322732	305	20	192.5	5.387840678322732	20	True	0.041177862257898545	False		False					
+H	afterHost			352	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			186.5	-3.612159321677268	305	20	186.5	-3.612159321677268	20	True	0.041177862257898545	False		False					
+H	afterHost			353	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			180.5	-12.612159321677268	305	20	180.5	-12.612159321677268	20	True	0.041177862257898545	False		False					
+H	afterHost			354	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			174.5	-21.612159321677268	305	20	174.5	-21.612159321677268	20	True	0.041177862257898545	False		False					
+H	afterHost			355	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			168.5	-30.612159321677268	305	20	168.5	-30.612159321677268	20	True	0.041177862257898545	False		False					
+H	afterHost			356	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			162.5	-39.61215932167727	305	20	162.5	-39.61215932167727	20	True	0.041177862257898545	False		False					
+H	afterHost			357	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			156.5	-48.61215932167727	305	20	156.5	-48.61215932167727	20	True	0.041177862257898545	False		False					
+H	afterHost			358	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			150.5	-57.61215932167727	305	20	150.5	-57.61215932167727	20	True	0.041177862257898545	False		False					
+H	afterHost			359	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			144.5	-66.61215932167727	305	20	144.5	-66.61215932167727	20	True	0.041177862257898545	False		False					
+H	afterHost			360	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			138.5	-75.61215932167727	305	20	138.5	-75.61215932167727	20	True	0.041177862257898545	False		False					
+H	afterHost			361	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			132.5	-84.61215932167727	305	20	132.5	-84.61215932167727	20	True	0.041177862257898545	False		False					
+H	afterHost			362	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			126.5	-93.61215932167727	305	20	126.5	-93.61215932167727	20	True	0.041177862257898545	False		False					
+H	afterHost			363	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			120.5	-102.61215932167727	305	20	120.5	-102.61215932167727	20	True	0.041177862257898545	False		False					
+H	afterHost			364	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			114.5	-111.61215932167727	305	20	114.5	-111.61215932167727	20	True	0.041177862257898545	False		False					
+H	afterHost			365	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			108.5	-120.61215932167727	305	20	108.5	-120.61215932167727	20	True	0.041177862257898545	False		False					
+H	afterHost			366	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			102.5	-129.61215932167727	305	20	102.5	-129.61215932167727	20	True	0.041177862257898545	False		False					
+H	afterHost			367	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			96.5	-138.61215932167727	305	20	96.5	-138.61215932167727	20	True	0.041177862257898545	False		False					
+H	afterHost			368	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			90.5	-147.61215932167727	305	20	90.5	-147.61215932167727	20	True	0.041177862257898545	False		False					
+H	afterHost			369	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			84.5	-156.61215932167727	305	20	84.5	-156.61215932167727	20	True	0.041177862257898545	False		False					
+H	afterHost			370	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			78.5	-165.61215932167727	305	20	78.5	-165.61215932167727	20	True	0.041177862257898545	False		False					
+H	afterHost			371	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			72.5	-174.61215932167727	305	20	72.5	-174.61215932167727	20	True	0.041177862257898545	False		False					
+H	afterHost			372	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			66.5	-183.61215932167727	305	20	66.5	-183.61215932167727	20	True	0.041177862257898545	False		False					
+H	afterHost			373	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			60.5	-192.61215932167727	305	20	60.5	-192.61215932167727	20	True	0.041177862257898545	False		False					
+H	afterHost			374	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			54.5	-201.61215932167727	305	20	54.5	-201.61215932167727	20	True	0.041177862257898545	False		False					
+H	afterHost			375	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			48.5	-210.61215932167727	305	20	48.5	-210.61215932167727	20	True	0.041177862257898545	False		False					
+H	afterHost			376	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			42.5	-219.61215932167727	305	20	42.5	-219.61215932167727	20	True	0.041177862257898545	False		False					
+H	afterHost			377	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			36.5	-228.61215932167727	305	20	36.5	-228.61215932167727	20	True	0.041177862257898545	False		False					
+H	afterHost			378	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			30.5	-237.61215932167727	305	20	30.5	-237.61215932167727	20	True	0.041177862257898545	False		False					
+H	afterHost			379	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			24.5	-246.61215932167727	305	20	24.5	-246.61215932167727	20	True	0.041177862257898545	False		False					
+H	afterHost			380	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			18.5	-255.61215932167727	305	20	18.5	-255.61215932167727	20	True	0.041177862257898545	False		False					
+H	afterHost			381	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			12.5	-264.61215932167727	305	20	12.5	-264.61215932167727	20	True	0.041177862257898545	False		False					
+H	afterHost			382	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			6.5	-273.61215932167727	305	20	6.5	-273.61215932167727	20	True	0.041177862257898545	False		False					
+H	afterHost			383	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			0.5	-282.61215932167727	305	20	0.5	-282.61215932167727	20	True	0.041177862257898545	False		False					
+H	afterHost			384	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-5.5	-291.61215932167727	305	20	-5.5	-291.61215932167727	20	True	0.041177862257898545	False		False					
+H	afterHost			385	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-11.5	-300.61215932167727	305	20	-11.5	-300.61215932167727	20	True	0.041177862257898545	False		False					
+H	afterHost			386	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-17.5	-309.61215932167727	305	20	-17.5	-309.61215932167727	20	True	0.041177862257898545	False		False					
+H	afterHost			387	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-23.5	-318.61215932167727	305	20	-23.5	-318.61215932167727	20	True	0.041177862257898545	False		False					
+H	afterHost			388	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-29.5	-327.61215932167727	305	20	-29.5	-327.61215932167727	20	True	0.041177862257898545	False		False					
+H	afterHost			389	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-35.5	-336.61215932167727	305	20	-35.5	-336.61215932167727	20	True	0.041177862257898545	False		False					
+H	afterHost			390	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-41.5	-345.61215932167727	305	20	-41.5	-345.61215932167727	20	True	0.041177862257898545	False		False					
+H	afterHost			391	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-47.5	-354.61215932167727	305	20	-47.5	-354.61215932167727	20	True	0.041177862257898545	False		False					
+H	afterHost			392	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-53.5	-363.61215932167727	305	20	-53.5	-363.61215932167727	20	True	0.041177862257898545	False		False					
+H	afterHost			393	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-59.5	-372.61215932167727	305	20	-59.5	-372.61215932167727	20	True	0.041177862257898545	False		False					
+H	afterHost			394	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-65.5	-381.61215932167727	305	20	-65.5	-381.61215932167727	20	True	0.041177862257898545	False		False					
+H	afterHost			395	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-71.5	-390.61215932167727	305	20	-71.5	-390.61215932167727	20	True	0.041177862257898545	False		False					
+H	afterHost			396	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-77.5	-399.61215932167727	305	20	-77.5	-399.61215932167727	20	True	0.041177862257898545	False		False					
+H	afterHost			397	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-83.5	-408.61215932167727	305	20	-83.5	-408.61215932167727	20	True	0.041177862257898545	False		False					
+H	afterHost			398	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-89.5	-417.61215932167727	305	20	-89.5	-417.61215932167727	20	True	0.041177862257898545	False		False					
+H	afterHost			399	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-95.5	-426.61215932167727	305	20	-95.5	-426.61215932167727	20	True	0.041177862257898545	False		False					
+H	afterHost			400	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-101.5	-435.61215932167727	305	20	-101.5	-435.61215932167727	20	True	0.041177862257898545	False		False					
+H	afterHost			401	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-107.5	-444.61215932167727	305	20	-107.5	-444.61215932167727	20	True	0.041177862257898545	False		False					
+H	afterHost			402	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-113.5	-453.61215932167727	305	20	-113.5	-453.61215932167727	20	True	0.041177862257898545	False		False					
+H	afterHost			403	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-119.5	-462.61215932167727	305	20	-119.5	-462.61215932167727	20	True	0.041177862257898545	False		False					
+H	afterHost			404	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-125.5	-471.61215932167727	305	20	-125.5	-471.61215932167727	20	True	0.041177862257898545	False		False					
+H	afterHost			405	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-131.5	-480.61215932167727	305	20	-131.5	-480.61215932167727	20	True	0.041177862257898545	False		False					
+H	afterHost			406	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-137.5	-489.61215932167727	305	20	-137.5	-489.61215932167727	20	True	0.041177862257898545	False		False					
+H	afterHost			407	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-143.5	-498.61215932167727	305	20	-143.5	-498.61215932167727	20	True	0.041177862257898545	False		False					
+H	afterHost			408	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-149.5	-507.61215932167727	305	20	-149.5	-507.61215932167727	20	True	0.041177862257898545	False		False					
+H	afterHost			409	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-155.5	-516.6121593216773	305	20	-155.5	-516.6121593216773	20	True	0.041177862257898545	False		False					
+H	afterHost			410	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-161.5	-525.6121593216773	305	20	-161.5	-525.6121593216773	20	True	0.041177862257898545	False		False					
+H	afterHost			411	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-167.5	-534.6121593216773	305	20	-167.5	-534.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			412	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-173.5	-543.6121593216773	305	20	-173.5	-543.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			413	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-179.5	-552.6121593216773	305	20	-179.5	-552.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			414	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-185.5	-561.6121593216773	305	20	-185.5	-561.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			415	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-191.5	-570.6121593216773	305	20	-191.5	-570.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			416	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-197.5	-579.6121593216773	305	20	-197.5	-579.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			417	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-203.5	-588.6121593216773	305	20	-203.5	-588.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			418	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-209.5	-597.6121593216773	305	20	-209.5	-597.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			419	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-215.5	-606.6121593216773	305	20	-215.5	-606.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			420	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-221.5	-615.6121593216773	305	20	-221.5	-615.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			421	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-227.5	-624.6121593216773	305	20	-227.5	-624.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			422	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-233.5	-633.6121593216773	305	20	-233.5	-633.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			423	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-239.5	-642.6121593216773	305	20	-239.5	-642.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			424	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-245.5	-651.6121593216773	305	20	-245.5	-651.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			425	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-251.5	-660.6121593216773	305	20	-251.5	-660.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			426	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-257.5	-669.6121593216773	305	20	-257.5	-669.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			427	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-263.5	-678.6121593216773	305	20	-263.5	-678.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			428	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-269.5	-687.6121593216773	305	20	-269.5	-687.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			429	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-275.5	-696.6121593216773	305	20	-275.5	-696.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			430	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-281.5	-705.6121593216773	305	20	-281.5	-705.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			431	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-287.5	-714.6121593216773	305	20	-287.5	-714.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			432	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-293.5	-723.6121593216773	305	20	-293.5	-723.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			433	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-299.5	-732.6121593216773	305	20	-299.5	-732.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			434	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-305.5	-741.6121593216773	305	20	-305.5	-741.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			435	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-311.5	-750.6121593216773	305	20	-311.5	-750.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			436	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-317.5	-759.6121593216773	305	20	-317.5	-759.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			437	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-323.5	-768.6121593216773	305	20	-323.5	-768.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			438	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-329.5	-777.6121593216773	305	20	-329.5	-777.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			439	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-335.5	-786.6121593216773	305	20	-335.5	-786.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			440	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-341.5	-795.6121593216773	305	20	-341.5	-795.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			441	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-347.5	-804.6121593216773	305	20	-347.5	-804.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			442	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-353.5	-813.6121593216773	305	20	-353.5	-813.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			443	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-359.5	-822.6121593216773	305	20	-359.5	-822.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			444	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-365.5	-831.6121593216773	305	20	-365.5	-831.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			445	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-371.5	-840.6121593216773	305	20	-371.5	-840.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			446	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-377.5	-849.6121593216773	305	20	-377.5	-849.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			447	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-383.5	-858.6121593216773	305	20	-383.5	-858.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			448	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-389.5	-867.6121593216773	305	20	-389.5	-867.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			449	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-395.5	-876.6121593216773	305	20	-395.5	-876.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			450	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-401.5	-885.6121593216773	305	20	-401.5	-885.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			451	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-407.5	-894.6121593216773	305	20	-407.5	-894.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			452	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-413.5	-903.6121593216773	305	20	-413.5	-903.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			453	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-419.5	-912.6121593216773	305	20	-419.5	-912.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			454	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-425.5	-921.6121593216773	305	20	-425.5	-921.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			455	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-431.5	-930.6121593216773	305	20	-431.5	-930.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			456	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-437.5	-939.6121593216773	305	20	-437.5	-939.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			457	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-443.5	-948.6121593216773	305	20	-443.5	-948.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			458	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-449.5	-957.6121593216773	305	20	-449.5	-957.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			459	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-455.5	-966.6121593216773	305	20	-455.5	-966.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			460	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-461.5	-975.6121593216773	305	20	-461.5	-975.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			461	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-467.5	-984.6121593216773	305	20	-467.5	-984.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			462	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-473.5	-993.6121593216773	305	20	-473.5	-993.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			463	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-479.5	-1002.6121593216773	305	20	-479.5	-1002.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			464	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-485.5	-1011.6121593216773	305	20	-485.5	-1011.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			465	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-491.5	-1020.6121593216773	305	20	-491.5	-1020.6121593216773	20	True	0.6208768040220466	False		False					
+H	afterHost			466	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-497.5	-1029.6121593216772	305	20	-497.5	-1029.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			467	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-503.5	-1038.6121593216772	305	20	-503.5	-1038.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			468	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-509.5	-1047.6121593216772	305	20	-509.5	-1047.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			469	unit1	plane001	True	flyOff	alive	True	False	False	0	50	air		[0,0]	[]	none			-515.5	-1056.6121593216772	305	20	-515.5	-1056.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			470	unit1	plane001	True	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-521.5	-1065.6121593216772	305	20	-521.5	-1065.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			471	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			472	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			473	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			474	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			475	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			476	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			477	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			478	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			479	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			480	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			481	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			482	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			483	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			484	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			485	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			486	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			487	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			488	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			489	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			490	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			491	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			492	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			493	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			494	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			495	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			496	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			497	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			498	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			499	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			500	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			501	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			502	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			503	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			504	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			505	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			506	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			507	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			508	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			509	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			510	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			511	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			512	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			513	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			514	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			515	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			516	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			517	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			518	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			519	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			520	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			521	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			522	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			523	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			524	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			525	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			526	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			527	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			528	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			529	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			530	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			531	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	True	0.6208768040220466	False		False					
+H	afterHost			532	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	False	0.6208768040220466	False		False					
+H	afterHost			533	unit1	plane001	False	stop	alive	True	False	False	0	50	air		[0,0]	[]	none			-527.5	-1074.6121593216772	305	20	-527.5	-1074.6121593216772	20	False	0.6208768040220466	True		False					

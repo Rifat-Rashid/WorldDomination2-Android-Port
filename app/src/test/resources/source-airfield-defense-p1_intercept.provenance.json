@@ -1,0 +1,240 @@
+{
+  "scenario": "p1_intercept",
+  "legalMatchParity": true,
+  "seed": 0,
+  "difficulty": "normal",
+  "leaders": [
+    0,
+    1
+  ],
+  "schedule": [
+    {
+      "turn": 1,
+      "action": "research",
+      "options": {
+        "tech": "rocket2"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 2,
+      "action": "research",
+      "options": {
+        "tech": "rocket3"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 3,
+      "action": "research",
+      "options": {
+        "tech": "rocket4"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 4,
+      "action": "research",
+      "options": {
+        "tech": "warhead2"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 5,
+      "action": "research",
+      "options": {
+        "tech": "warhead3"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 6,
+      "action": "research",
+      "options": {
+        "tech": "warhead4"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 7,
+      "action": "research",
+      "options": {
+        "tech": "bioload2"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 8,
+      "action": "research",
+      "options": {
+        "tech": "bioload3"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 9,
+      "action": "research",
+      "options": {
+        "tech": "bioload4"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 10,
+      "action": "research",
+      "options": {
+        "tech": "soldier2"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 11,
+      "action": "research",
+      "options": {
+        "tech": "soldier3"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 12,
+      "action": "research",
+      "options": {
+        "tech": "soldier4"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 13,
+      "action": "research",
+      "options": {
+        "tech": "sub"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 14,
+      "action": "research",
+      "options": {
+        "tech": "ship"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 15,
+      "action": "production",
+      "options": {
+        "category": "special",
+        "percent": 100
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 16,
+      "action": "production",
+      "options": {
+        "category": "bioload",
+        "percent": 100
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 17,
+      "action": "production",
+      "options": {
+        "category": "bioload",
+        "percent": 100
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 18,
+      "action": "production",
+      "options": {
+        "category": "bioload",
+        "percent": 100
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 19,
+      "action": "production",
+      "options": {
+        "category": "bioload",
+        "percent": 100
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 20,
+      "action": "production",
+      "options": {
+        "category": "planes",
+        "percent": 100
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 21,
+      "action": "preAttack",
+      "options": {
+        "weapon": "plane1"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 22,
+      "action": "preAttack",
+      "options": {
+        "weapon": "plane1",
+        "payload": "bioload1",
+        "target": 1,
+        "city": 0
+      },
+      "second": "resources",
+      "confirm": "btn46"
+    }
+  ],
+  "resolvedEvent": {
+    "_player": 0,
+    "_item": "battle",
+    "_value": "preAttack",
+    "_a": 0,
+    "_b": 1,
+    "_weapon": 20,
+    "_carrier": 20,
+    "_payload": 8,
+    "_city": 5,
+    "_blocked": false,
+    "_casualties": 0,
+    "_frame": "airfield",
+    "_result": false,
+    "_isShip": false,
+    "_attack_arr": null,
+    "_result_arr": null,
+    "_action": null
+  },
+  "unitName": "unit1",
+  "unitMcID": "plane001",
+  "turretName": "ab1_2",
+  "aliasRepair": null,
+  "observerPolicy": "stored fields and physical clips only; no unitDirection or anti_direction getters",
+  "captureSemantics": "C before/after each natural View.updateAnti; H after complete host frame and autoplay",
+  "hostRows": 378,
+  "callbackRows": 238,
+  "callbackPairs": 119,
+  "firstCallbackTick": 196,
+  "lastCallbackTick": 314,
+  "lastHostTick": 377,
+  "fixtureSha256": "0f00a6473f196158ea78d440e0b06a18dfebbe22aad8c70ca6b26ca8c6bdf320",
+  "scriptSha256": "54991ddf5b2587f1b29b9b179eb09d02a4006ab983900e837927d23f6bd03ded",
+  "sourceSha256": {
+    "wd2/generated/Unit.py": "bc54c0e6c46f4e33bbb20e786c755f93aaba5d3d7224b0120eeeccc81eef8539",
+    "wd2/generated/View.py": "2de8afd493f28e36c3a94afa96b80795d685b8b023b12dc9d9ed634692c3accf",
+    "wd2/generated/Battle.py": "c6e9c790d6a624b0425344260b4de904db5197ea756fdf3a2de912eb8cd73c10",
+    "wd2/generated/Presenter.py": "eb8aad7305c870b157a3199b7d8213edb22f4fd35d169395cee3db95b12c08b9",
+    "wd2/setup_menu.py": "5633326451e768a84a14bde04e452043ba7fac2617a4c71b7b36dcd0495f0c4a",
+    "wd2/movieclip_host.py": "a489c5f3b33a1fdac4448afd07f4ca63aa32d676440dc573805ab11fb4002765",
+    "WorldDomination2.swf": "fe60c4d8793a23e7ddd59ddcb406b5471540e28d64f7552d17308fbb269e6fe1"
+  }
+}
