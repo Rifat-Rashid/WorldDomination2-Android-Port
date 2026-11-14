@@ -1,6 +1,7 @@
 package com.example.worlddomination.game.rendering;
 
 import com.example.worlddomination.game.audio.OriginalAudio;
+import com.example.worlddomination.game.simulation.ReferenceRandom;
 
 /** Source-tick playback for the original silo launched rocket and its Flash smoke trail. */
 public final class FlashRocketAnimation implements FlashAntiDefenseTrackingAnimation.Target {
@@ -17,6 +18,8 @@ public final class FlashRocketAnimation implements FlashAntiDefenseTrackingAnima
         public int islandPlayerId;
         /** Whether the rocket sprite is currently visible. */
         public boolean visible;
+        /** One-based source movie frame; submarine launch switches from 1 to 3. */
+        public int sourceFrame = 1;
     }
 
     /** Unit.wait_for_sub_launch releases the rocket after 35 source ticks. */
@@ -34,6 +37,12 @@ public final class FlashRocketAnimation implements FlashAntiDefenseTrackingAnima
     private final OriginalAudio.Cue impactCue;
     /** Reused rocket sprite state. */
     private final Actor rocket = new Actor();
+    private SourceRocketPlayback sourcePlayback;
+    private long sourceLaunchSoundId = -1L;
+
+    public long getSourceLaunchSoundId() { return sourceLaunchSoundId; }
+    public void setSourceLaunchSoundId(long soundId) { sourceLaunchSoundId = soundId; }
+    private FlashColorTransform sourceTint;
     /** Reused source x coordinates for fading original smoke puffs. */
     private final float[] trailX = new float[TRAIL_CAPACITY];
     /** Reused source y coordinates for fading original smoke puffs. */
@@ -89,8 +98,51 @@ public final class FlashRocketAnimation implements FlashAntiDefenseTrackingAnima
         rocket.scaleY = route.submarineLaunch ? 0.5f : 1f;
     }
 
+    /** Source Unit/View path sharing the battle's isolated Python MT stream. */
+    public static FlashRocketAnimation forSourceSubmarine(
+            FlashBattleRoutes.RocketStrike route, String impactLinkage,
+            OriginalAudio.Cue impactCue, ReferenceRandom sharedBattleRandom) {
+        return forSourceSubmarine(route, impactLinkage, impactCue, sharedBattleRandom, 5);
+    }
+
+    public static FlashRocketAnimation forSourceSubmarine(
+            FlashBattleRoutes.RocketStrike route, String impactLinkage,
+            OriginalAudio.Cue impactCue, ReferenceRandom sharedBattleRandom,
+            int attackerPlayerColor) {
+        FlashRocketAnimation animation = new FlashRocketAnimation(
+                route, 0, impactLinkage, impactCue);
+        animation.sourcePlayback = new SourceRocketPlayback(route, sharedBattleRandom);
+        animation.sourceTint = FlashColorTransform.forPlayerColor(attackerPlayerColor);
+        animation.rocket.sourceX = 50f;
+        animation.rocket.sourceY = 0f;
+        animation.rocket.visible = true;
+        return animation;
+    }
+
+    /** Visits an eligible source frame; readiness comes from the prior hull frame. */
+    public boolean tickSourceFrame(boolean submarineLaunchReady) {
+        if (sourcePlayback == null) {
+            throw new IllegalStateException("Not a source rocket animation");
+        }
+        boolean impact = sourcePlayback.tick(submarineLaunchReady);
+        rocket.sourceX = (float) sourcePlayback.getRenderX();
+        rocket.sourceY = (float) sourcePlayback.getRenderY();
+        rocket.rotationDegrees = (float) sourcePlayback.getRotation();
+        rocket.sourceFrame = sourcePlayback.getSourceFrame();
+        rocket.visible = sourcePlayback.isBodyAttached();
+        launchSoundPending = sourcePlayback.takeLaunchSound();
+        impactPending = impact;
+        return takeImpact();
+    }
+
+    public SourceRocketPlayback getSourcePlayback() { return sourcePlayback; }
+    public FlashColorTransform getSourceTint() { return sourceTint; }
+
     /** Advances one original 24 Hz source tick and reports the exact impact tick once. */
     public boolean tick() {
+        if (sourcePlayback != null) {
+            throw new IllegalStateException("Use tickSourceFrame with submarine readiness");
+        }
         if (finished) {
             return false;
         }
@@ -165,17 +217,18 @@ public final class FlashRocketAnimation implements FlashAntiDefenseTrackingAnima
     /** Returns whether the rocket flight and every smoke puff have finished. */
     @Override
     public boolean isFinished() {
-        return finished;
+        return sourcePlayback == null ? finished : sourcePlayback.isRemoved();
     }
 
     /** Returns whether the half ellipse is complete and the source drop has begun. */
     public boolean isDropping() {
-        return arcProgress >= 180f && !flightFinished;
+        return sourcePlayback == null ? arcProgress >= 180f && !flightFinished
+                : sourcePlayback.isDropping();
     }
 
     /** Returns whether the rocket has hit its source drop threshold. */
     public boolean isFlightFinished() {
-        return flightFinished;
+        return sourcePlayback == null ? flightFinished : !sourcePlayback.isBodyAttached();
     }
 
     /** Returns the reused rocket sprite state. */
@@ -206,47 +259,66 @@ public final class FlashRocketAnimation implements FlashAntiDefenseTrackingAnima
     /** Keep the defense clip alive through the source rocket's post-impact trail cleanup. */
     @Override
     public boolean isVisible() {
-        return launched && !finished;
+        return sourcePlayback == null ? launched && !finished
+                : sourcePlayback.isBodyAttached();
     }
 
     /** Returns the Flash explosion linkage for this event, when one is mapped. */
     public String getImpactLinkage() {
-        return impactLinkage;
+        return sourcePlayback != null && sourcePlayback.isSelfImpact()
+                ? "explosion003" : impactLinkage;
     }
 
     /** Returns the original explosion cue for this event. */
     public OriginalAudio.Cue getImpactCue() {
-        return impactCue;
+        return sourcePlayback != null && sourcePlayback.isSelfImpact()
+                ? OriginalAudio.Cue.EXPLOSION_SMALL3 : impactCue;
     }
 
     /** Returns the source x coordinate where the rocket reached its drop threshold. */
     public float getImpactSourceX() {
-        return rocket.sourceX;
+        return sourcePlayback == null ? rocket.sourceX
+                : (float) sourcePlayback.getImpactEffectX();
     }
 
     /** Returns the source y coordinate where the rocket reached its drop threshold. */
     public float getImpactSourceY() {
-        return rocket.sourceY;
+        return sourcePlayback == null ? rocket.sourceY
+                : (float) sourcePlayback.getImpactEffectY();
     }
 
     /** Returns the number of currently visible source smoke puffs. */
     public int getTrailCount() {
-        return trailCount;
+        return sourcePlayback == null ? trailCount : sourcePlayback.getAttachedTrailCount();
     }
 
     /** Returns a trail puff's source x coordinate. */
     public float getTrailX(int index) {
-        return trailX[index];
+        return sourcePlayback == null ? trailX[index]
+                : (float) sourcePlayback.getTrailX(sourceTrailSlot(index));
     }
 
     /** Returns a trail puff's source y coordinate. */
     public float getTrailY(int index) {
-        return trailY[index];
+        return sourcePlayback == null ? trailY[index]
+                : (float) sourcePlayback.getTrailY(sourceTrailSlot(index));
     }
 
     /** Returns a trail puff's remaining alpha from 0 through 1. */
     public float getTrailAlpha(int index) {
-        return Math.max(0f, 1f - trailAge[index] / (float) TRAIL_LIFETIME_TICKS);
+        return sourcePlayback == null
+                ? Math.max(0f, 1f - trailAge[index] / (float) TRAIL_LIFETIME_TICKS)
+                : (float) Math.max(0d, sourcePlayback.getTrailAlpha(sourceTrailSlot(index)) / 100d);
+    }
+
+    private int sourceTrailSlot(int visibleIndex) {
+        if (visibleIndex < 0 || visibleIndex >= sourcePlayback.getAttachedTrailCount()) {
+            throw new IndexOutOfBoundsException("Visible source smoke index");
+        }
+        for (int slot = 0; slot < sourcePlayback.getTrailSlotCount(); slot++) {
+            if (sourcePlayback.isTrailAttached(slot) && visibleIndex-- == 0) return slot;
+        }
+        throw new IllegalStateException("Source smoke count changed during draw");
     }
 
     private void setArcPosition(float currentAngle) {

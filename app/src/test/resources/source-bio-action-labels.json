@@ -1,0 +1,36 @@
+{
+  "source": "reverse/export/scripts/__Packages/Sub_model.as:34,172-181; Presenter.as:174-178; View.as:1650-1664",
+  "sourceSha256": "5e7fe88bcac90cf3432ff706546fd8638f413fdf8193272c93ec9304a906c74a",
+  "note": "The source maps visible building frame names to action names; fired defense frames have no action label.",
+  "mappedFrames": [
+    {"frame":"resources","action":"RESOURCES"},
+    {"frame":"factory","action":"PRODUCTION"},
+    {"frame":"tech","action":"RESEARCH"},
+    {"frame":"technology","action":"RESEARCH"},
+    {"frame":"religion","action":"MASS_MEDIA"},
+    {"frame":"sub","action":"PREPARED_ATTACK"},
+    {"frame":"space","action":"PREPARED_ATTACK"},
+    {"frame":"ship","action":"PREPARED_ATTACK"},
+    {"frame":"base","action":"ATTACK"},
+    {"frame":"helipad","action":"ATTACK"},
+    {"frame":"____","action":"ATTACK"},
+    {"frame":"hatch","action":"ATTACK"},
+    {"frame":"propaganda","action":"PROPAGANDA"},
+    {"frame":"diplomacy","action":"DIPLOMACY"},
+    {"frame":"antiAir_still","action":"DEFENSE"},
+    {"frame":"antiRocket_still","action":"DEFENSE"},
+    {"frame":"silo","action":"PREPARED_ATTACK"},
+    {"frame":"airfield","action":"PREPARED_ATTACK"}
+  ],
+  "excludedFrames": ["antiAir_fire", "antiRocket_fire", "spyCenter", "propaganda_2", "unknown"],
+  "interceptedShipFrames": ["ship", "helipad", "antiAir_fire", "factory", "resources", "resources"],
+  "successfulShipFrames": ["ship", "helipad", "antiAir_still", "factory", "resources", "resources"],
+  "legalShipDefenseCases": [
+    {"target":1,"defender":1,"frame":"antiAir_fire","distinctLabels":4,"gateOpenTick":192},
+    {"target":2,"defender":1,"frame":"antiAir_still","distinctLabels":5,"gateOpenTick":231}
+  ],
+  "interceptedDistinctLabels": 4,
+  "successfulDistinctLabels": 5,
+  "interceptedGateOpenTick": 192,
+  "successfulGateOpenTick": 231
+}

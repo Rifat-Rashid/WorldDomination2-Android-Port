@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public final class SourceBattleActionFramesTest {
@@ -268,6 +269,67 @@ public final class SourceBattleActionFramesTest {
         assertEquals(1 + expected.nextInt(109), firstClip.getNestedFrameIndex(4010, 146));
         assertEquals("detached parent never advances", detachedFrame,
                 secondClip.getNestedFrameIndex(4010, 146));
+        assertEquals(expected.nextDouble(), random.copy().nextDouble(), 0d);
+    }
+
+    @Test
+    public void frameStartCaptureSurvivesUnitSwapAndSkipsReplacedEntry() throws Exception {
+        GameState.ActionBuildingEvent highEvent = event(0, 1, "mus", "religion", 0);
+        GameState.ActionBuildingEvent lowEvent = event(3, 2, "mus", "religion", 1);
+        FlashActionBuildingAnimation highClip = new FlashActionBuildingAnimation(highEvent);
+        FlashActionBuildingAnimation lowClip = new FlashActionBuildingAnimation(lowEvent);
+        BattlefieldDisplayState display = new BattlefieldDisplayState();
+        SourceDisplayList.Entry<BattlefieldDisplayState.Item> high = display.attach(
+                BattlefieldDisplayState.Kind.ACTION_BUILDING, 0, "ab0_1", highClip, 200);
+        SourceDisplayList.Entry<BattlefieldDisplayState.Item> low = display.attach(
+                BattlefieldDisplayState.Kind.ACTION_BUILDING, 7, "ab3_2", lowClip, 176);
+        ReferenceRandom random = new ReferenceRandom(31L);
+        SourceBattleActionFrames owner = new SourceBattleActionFrames();
+        owner.begin(Arrays.asList(highClip, lowClip),
+                Arrays.asList(highEvent, lowEvent), random);
+        setFlameFrame(owner, 0, 146);
+        setFlameFrame(owner, 7, 146);
+
+        // MovieClipHost takes a physical walk snapshot before Unit callbacks.
+        owner.captureFrameOrder(display); // low, high
+        display.clips().swapDepths(high, low); // Unit moves high ahead of low.
+        ReferenceRandom expected = random.copy();
+        owner.tickCapturedFrame();
+        assertEquals("old low entry consumes the first wrap draw",
+                1 + expected.nextInt(109), lowClip.getNestedFrameIndex(4010, 146));
+        assertEquals("old high entry consumes the second wrap draw",
+                1 + expected.nextInt(109), highClip.getNestedFrameIndex(4010, 146));
+        assertEquals(expected.nextDouble(), random.copy().nextDouble(), 0d);
+
+        setFlameFrame(owner, 0, 146);
+        setFlameFrame(owner, 7, 146);
+        owner.captureFrameOrder(display); // now high, low
+        int unchangedHighFrame = highClip.getNestedFrameIndex(4010, 146);
+        // A Unit replaces the captured clip; a newly attached peer cannot
+        // inherit this frame's already captured callback.
+        display.attach(BattlefieldDisplayState.Kind.EFFECT, 99,
+                "unitReplacement", new Object(), high.getDepth());
+        assertFalse(high.isAttached());
+        SourceDisplayList.Entry<BattlefieldDisplayState.Item> newHigh = display.attach(
+                BattlefieldDisplayState.Kind.ACTION_BUILDING, 0, "ab0_1", highClip, 150);
+        expected = random.copy();
+        owner.tickCapturedFrame();
+        assertEquals("replacement skips the detached old callback",
+                unchangedHighFrame, highClip.getNestedFrameIndex(4010, 146));
+        assertEquals("still attached low clip advances once",
+                1 + expected.nextInt(109), lowClip.getNestedFrameIndex(4010, 146));
+        assertEquals(expected.nextDouble(), random.copy().nextDouble(), 0d);
+
+        setFlameFrame(owner, 0, 146);
+        setFlameFrame(owner, 7, 146);
+        owner.captureFrameOrder(display); // new high at 150, low at 200
+        assertTrue(newHigh.isAttached());
+        expected = random.copy();
+        owner.tickCapturedFrame();
+        assertEquals("new physical frame starts with newly attached low-depth peer",
+                1 + expected.nextInt(109), highClip.getNestedFrameIndex(4010, 146));
+        assertEquals("second peer follows new physical order",
+                1 + expected.nextInt(109), lowClip.getNestedFrameIndex(4010, 146));
         assertEquals(expected.nextDouble(), random.copy().nextDouble(), 0d);
     }
 

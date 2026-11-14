@@ -1,6 +1,7 @@
 package com.example.worlddomination.game.rendering;
 
 import com.example.worlddomination.game.audio.OriginalAudio;
+import com.example.worlddomination.game.simulation.ReferenceRandom;
 
 /** Source-tick playback for one original ship-launched payload aircraft. */
 public final class FlashCarrierPlaneAnimation
@@ -12,6 +13,8 @@ public final class FlashCarrierPlaneAnimation
         public float routeProgress;
         public boolean flippedHorizontally;
         public boolean visible;
+        public float alpha = 1f;
+        public float scale = 1f;
     }
 
     private static final float SOURCE_STEP = 10f;
@@ -25,6 +28,10 @@ public final class FlashCarrierPlaneAnimation
     private final String impactLinkage;
     private final OriginalAudio.Cue impactCue;
     private final Actor actor = new Actor();
+    private SourceAircraftTrail sourceTrail;
+    private SourceCarrierPlanePlayback sourcePlayback;
+    private double sourceRouteLength;
+    private double sourceDistanceTravelled;
     private final float totalRouteLength;
     private int delayTicks;
     private int activeTicks;
@@ -54,7 +61,56 @@ public final class FlashCarrierPlaneAnimation
     }
 
     /** Advances one 24 Hz source tick and reports the payload impact exactly once. */
+    public FlashCarrierPlaneAnimation(FlashBattleRoutes.CarrierPlaneStrike route,
+                                      int delayTicks, String impactLinkage,
+                                      OriginalAudio.Cue impactCue,
+                                      ReferenceRandom presentationRandom) {
+        this(route, delayTicks, impactLinkage, impactCue, presentationRandom, 3);
+    }
+
+    public FlashCarrierPlaneAnimation(FlashBattleRoutes.CarrierPlaneStrike route,
+                                      int delayTicks, String impactLinkage,
+                                      OriginalAudio.Cue impactCue,
+                                      ReferenceRandom presentationRandom, int payloadCount) {
+        this(route, delayTicks, impactLinkage, impactCue);
+        sourcePlayback = new SourceCarrierPlanePlayback(route, presentationRandom, payloadCount);
+        sourceTrail = sourcePlayback.getTrail();
+        double previousX = sourcePlayback.getX();
+        double previousY = sourcePlayback.getY();
+        for (FlashBattleRoutes.Point waypoint : route.waypoints) {
+            sourceRouteLength += Math.hypot(waypoint.x - previousX, waypoint.y - previousY);
+            previousX = waypoint.x;
+            previousY = waypoint.y;
+        }
+        actor.sourceX = 0f;
+        actor.sourceY = 0f;
+    }
+
+    public SourceAircraftTrail getSourceTrail() { return sourceTrail; }
+    public SourceCarrierPlanePlayback getSourcePlayback() { return sourcePlayback; }
+
+    public boolean tickSourceFrame(boolean recordActivated) {
+        if (sourcePlayback == null) throw new IllegalStateException("No source carrier aircraft");
+        boolean impact = sourcePlayback.tickSourceFrame(recordActivated);
+        actor.sourceX = (float) sourcePlayback.getRenderX();
+        actor.sourceY = (float) sourcePlayback.getRenderY();
+        actor.sourceFrame = Math.max(0, sourcePlayback.getSourceFrame() - 1);
+        actor.alpha = (float) (sourcePlayback.getAlpha() / 100d);
+        actor.scale = (float) (sourcePlayback.getScale() / 100d);
+        actor.visible = sourcePlayback.isBodyAttached() && !sourcePlayback.isRemoved();
+        finished = sourcePlayback.isRemoved();
+        if (recordActivated && sourceTrail.getFramesActive() > 0)
+            sourceDistanceTravelled += Math.hypot(
+                    sourcePlayback.getX() - sourcePlayback.getPreviousX(),
+                    sourcePlayback.getY() - sourcePlayback.getPreviousY());
+        actor.routeProgress = sourceRouteLength == 0d ? 1f
+                : (float) Math.min(1d, sourceDistanceTravelled / sourceRouteLength);
+        return impact;
+    }
+
     public boolean tick() {
+        if (sourcePlayback != null)
+            throw new IllegalStateException("Use the source record clock for carrier playback");
         if (finished) {
             return false;
         }

@@ -1,0 +1,23 @@
+tick,event,linkage,loops,volume,pan
+39,start,building_Resource.wav,1,100,0
+77,start,building_factory.wav,1,100,0
+116,start,Massmedia 1.wav,1,100,0
+154,start,sub_ping.wav,1,100,0
+192,start,Diplomacy humans.wav,1,100,0
+231,stop,Ambience Diplomacy.wav,,,
+231,stop,Resources ambient loop.wav,,,
+231,stop,Resources ambient loop.wav,,,
+231,stop,Massmedia ambient loop.wav,,,
+423,start,unit_Submarine water splash.wav,1,100,-100
+461,start,unit_Warrocket.wav,1,100,0
+517,stop,unit_Warrocket.wav,,,
+517,start,Explode small3.wav,1,100,-74.82303262992423
+518,start,Explode small3.wav,1,100,-74.72702118536168
+580,stop,building_Resource.wav,,,
+580,stop,building_factory.wav,,,
+580,stop,Massmedia 1.wav,,,
+580,stop,sub_ping.wav,,,
+580,stop,Diplomacy humans.wav,,,
+580,stop,unit_Submarine water splash.wav,,,
+580,stop,Explode small3.wav,,,
+580,stop,Explode small3.wav,,,

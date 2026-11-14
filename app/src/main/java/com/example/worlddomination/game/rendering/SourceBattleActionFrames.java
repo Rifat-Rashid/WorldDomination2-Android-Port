@@ -16,6 +16,12 @@ public final class SourceBattleActionFrames {
     private static final int[] FLAME_FRAMES = {146, 163, 161, 121, 130};
     private static final String[] RELIGIONS = {"mus", "jew", "com", "chr", "bhu"};
     private final Flame[] flames = new Flame[SLOT_COUNT];
+    private final Flame[] capturedFlames = new Flame[SLOT_COUNT];
+    @SuppressWarnings("unchecked")
+    private final SourceDisplayList.Entry<BattlefieldDisplayState.Item>[] capturedEntries =
+            new SourceDisplayList.Entry[SLOT_COUNT];
+    private final int[] capturedSlots = new int[SLOT_COUNT];
+    private int capturedCount;
     private ReferenceRandom random;
 
     /** Rebinds retained physical slots; new frame-1 callbacks run in Presenter order. */
@@ -97,14 +103,45 @@ public final class SourceBattleActionFrames {
 
     /** Battle depth swaps change the host's callback order as well as its drawing. */
     public void tick(BattlefieldDisplayState display) {
+        captureFrameOrder(display);
+        tickCapturedFrame();
+    }
+
+    /** MovieClipHost fixes traversal order before any Unit can swap peer depths. */
+    public void captureFrameOrder(BattlefieldDisplayState display) {
+        clearCapturedFrame();
         SourceDisplayList<BattlefieldDisplayState.Item> clips =
                 Objects.requireNonNull(display, "display").clips();
         for (int index = 0; index < clips.size(); index++) {
-            BattlefieldDisplayState.Item item = clips.entryAt(index).getValue();
+            SourceDisplayList.Entry<BattlefieldDisplayState.Item> entry = clips.entryAt(index);
+            BattlefieldDisplayState.Item item = entry.getValue();
             if (item.kind != BattlefieldDisplayState.Kind.ACTION_BUILDING) continue;
             Flame flame = flames[item.index];
-            if (flame != null && flame.animation == item.owner) advance(flame);
+            if (flame != null && flame.animation == item.owner) {
+                capturedEntries[capturedCount] = entry;
+                capturedFlames[capturedCount] = flame;
+                capturedSlots[capturedCount++] = item.index;
+            }
         }
+    }
+
+    /** Frame actions follow the complete onEnterFrame pass, including cloud callbacks. */
+    public void tickCapturedFrame() {
+        for (int index = 0; index < capturedCount; index++) {
+            Flame flame = capturedFlames[index];
+            SourceDisplayList.Entry<BattlefieldDisplayState.Item> entry = capturedEntries[index];
+            if (entry.isAttached() && entry.getValue().owner == flame.animation
+                    && flames[capturedSlots[index]] == flame) advance(flame);
+        }
+        clearCapturedFrame();
+    }
+
+    private void clearCapturedFrame() {
+        for (int index = 0; index < capturedCount; index++) {
+            capturedEntries[index] = null;
+            capturedFlames[index] = null;
+        }
+        capturedCount = 0;
     }
 
     private void advance(Flame flame) {
@@ -125,6 +162,7 @@ public final class SourceBattleActionFrames {
 
     /** A new parent drops old physical clip phases and random-stream ownership. */
     public void reset() {
+        clearCapturedFrame();
         for (int index = 0; index < SLOT_COUNT; index++) {
             if (flames[index] != null && flames[index].animation != null)
                 flames[index].animation.clearFlameFrame();

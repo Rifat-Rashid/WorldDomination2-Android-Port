@@ -1,0 +1,120 @@
+{
+  "source": "Read-only RealTest Python -B legal seed0 ship target1 and target2 battle root, immediately after Presenter.initBattle",
+  "sourceUnitAsSha256": "7e765e9d5bf72eb0b24b3163f0faed627cc996c4e9bd4b7075ab962d6623d1ba",
+  "cases": [
+    "ship-intercept",
+    "ship-success"
+  ],
+  "literalTankNoShadeMissing": true,
+  "maxDepth": 800025,
+  "roles": [
+    {
+      "depth": 20,
+      "name": "unit4",
+      "characterId": 485,
+      "linkage": "tankTop_red"
+    },
+    {
+      "depth": 22509,
+      "name": "unit1",
+      "characterId": 396,
+      "linkage": "ship_plane"
+    },
+    {
+      "depth": 22510,
+      "name": "shadow_unit1",
+      "characterId": 400,
+      "linkage": "plane001_shadow"
+    },
+    {
+      "depth": 22511,
+      "name": "tintunit1",
+      "characterId": 897,
+      "linkage": "plane001_tint"
+    },
+    {
+      "depth": 22512,
+      "name": "targetDotunit1",
+      "characterId": 398,
+      "linkage": "redDot"
+    },
+    {
+      "depth": 800011,
+      "name": "unit2",
+      "characterId": 396,
+      "linkage": "ship_plane"
+    },
+    {
+      "depth": 800012,
+      "name": "shadow_unit2",
+      "characterId": 400,
+      "linkage": "plane001_shadow"
+    },
+    {
+      "depth": 800013,
+      "name": "tintunit2",
+      "characterId": 897,
+      "linkage": "plane001_tint"
+    },
+    {
+      "depth": 800014,
+      "name": "targetDotunit2",
+      "characterId": 398,
+      "linkage": "redDot"
+    },
+    {
+      "depth": 800017,
+      "name": "unit3",
+      "characterId": 396,
+      "linkage": "ship_plane"
+    },
+    {
+      "depth": 800018,
+      "name": "shadow_unit3",
+      "characterId": 400,
+      "linkage": "plane001_shadow"
+    },
+    {
+      "depth": 800019,
+      "name": "tintunit3",
+      "characterId": 897,
+      "linkage": "plane001_tint"
+    },
+    {
+      "depth": 800020,
+      "name": "targetDotunit3",
+      "characterId": 398,
+      "linkage": "redDot"
+    },
+    {
+      "depth": 800021,
+      "name": "targetDotunit4",
+      "characterId": 398,
+      "linkage": "redDot"
+    },
+    {
+      "depth": 800022,
+      "name": "targetDotunit5",
+      "characterId": 398,
+      "linkage": "redDot"
+    },
+    {
+      "depth": 800023,
+      "name": "unit6",
+      "characterId": 675,
+      "linkage": "chinook"
+    },
+    {
+      "depth": 800024,
+      "name": "shadow_unit6",
+      "characterId": 2374,
+      "linkage": "chinook_shadow"
+    },
+    {
+      "depth": 800025,
+      "name": "targetDotunit6",
+      "characterId": 398,
+      "linkage": "redDot"
+    }
+  ]
+}

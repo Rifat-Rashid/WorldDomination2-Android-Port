@@ -1,0 +1,285 @@
+{
+  "source": "RealTest read-only Python -B; legal seed0 ship target1/2",
+  "repair": "Only battleMC ClipObject.attach(linkage=tank_noShade) resolves tank_noshade in memory; SWF/AS unchanged",
+  "sourceSha256": {
+    "reverse/export/scripts/__Packages/Unit.as": "7e765e9d5bf72eb0b24b3163f0faed627cc996c4e9bd4b7075ab962d6623d1ba",
+    "wd2/movieclip_host.py": "a489c5f3b33a1fdac4448afd07f4ca63aa32d676440dc573805ab11fb4002765"
+  },
+  "privateRngEqualLiteralAliasEveryTick": true,
+  "simulationEventsEqualLiteralAlias": true,
+  "cases": [
+    {
+      "targetPlayer": 1,
+      "tickCount": 483,
+      "rngSequenceSha256": "78edd2894c85232b9f219a82717a07ab65a2ad1bd68688c7c4d4b51c68845b19",
+      "literal": {
+        "maxInitialDepth": 800025,
+        "firstSmoke": {
+          "tick": 200,
+          "depth": 800026
+        }
+      },
+      "alias": {
+        "maxInitialDepth": 800026,
+        "firstSmoke": {
+          "tick": 200,
+          "depth": 800027
+        },
+        "roles": [
+          {
+            "depth": 20,
+            "name": "unit4",
+            "characterId": 485,
+            "linkage": "tankTop_red"
+          },
+          {
+            "depth": 22509,
+            "name": "unit1",
+            "characterId": 396,
+            "linkage": "ship_plane"
+          },
+          {
+            "depth": 22510,
+            "name": "shadow_unit1",
+            "characterId": 400,
+            "linkage": "plane001_shadow"
+          },
+          {
+            "depth": 22511,
+            "name": "tintunit1",
+            "characterId": 897,
+            "linkage": "plane001_tint"
+          },
+          {
+            "depth": 22512,
+            "name": "targetDotunit1",
+            "characterId": 398,
+            "linkage": "redDot"
+          },
+          {
+            "depth": 800011,
+            "name": "unit2",
+            "characterId": 396,
+            "linkage": "ship_plane"
+          },
+          {
+            "depth": 800012,
+            "name": "shadow_unit2",
+            "characterId": 400,
+            "linkage": "plane001_shadow"
+          },
+          {
+            "depth": 800013,
+            "name": "tintunit2",
+            "characterId": 897,
+            "linkage": "plane001_tint"
+          },
+          {
+            "depth": 800014,
+            "name": "targetDotunit2",
+            "characterId": 398,
+            "linkage": "redDot"
+          },
+          {
+            "depth": 800017,
+            "name": "unit3",
+            "characterId": 396,
+            "linkage": "ship_plane"
+          },
+          {
+            "depth": 800018,
+            "name": "shadow_unit3",
+            "characterId": 400,
+            "linkage": "plane001_shadow"
+          },
+          {
+            "depth": 800019,
+            "name": "tintunit3",
+            "characterId": 897,
+            "linkage": "plane001_tint"
+          },
+          {
+            "depth": 800020,
+            "name": "targetDotunit3",
+            "characterId": 398,
+            "linkage": "redDot"
+          },
+          {
+            "depth": 800021,
+            "name": "targetDotunit4",
+            "characterId": 398,
+            "linkage": "redDot"
+          },
+          {
+            "depth": 800022,
+            "name": "unit5",
+            "characterId": 714,
+            "linkage": "tank_noshade"
+          },
+          {
+            "depth": 800023,
+            "name": "targetDotunit5",
+            "characterId": 398,
+            "linkage": "redDot"
+          },
+          {
+            "depth": 800024,
+            "name": "unit6",
+            "characterId": 675,
+            "linkage": "chinook"
+          },
+          {
+            "depth": 800025,
+            "name": "shadow_unit6",
+            "characterId": 2374,
+            "linkage": "chinook_shadow"
+          },
+          {
+            "depth": 800026,
+            "name": "targetDotunit6",
+            "characterId": 398,
+            "linkage": "redDot"
+          }
+        ]
+      },
+      "sharedStateSequenceSha256": "6a7d78e488cb0110d3b43839a9616591cce9d2ca8883fb764ce8568574e6c842"
+    },
+    {
+      "targetPlayer": 2,
+      "tickCount": 566,
+      "rngSequenceSha256": "7d079f88f9c19ea21750dbfbf237a82436ed0f186754d30a9d248f9584a07a5c",
+      "literal": {
+        "maxInitialDepth": 800025,
+        "firstSmoke": {
+          "tick": 239,
+          "depth": 800026
+        }
+      },
+      "alias": {
+        "maxInitialDepth": 800026,
+        "firstSmoke": {
+          "tick": 239,
+          "depth": 800027
+        },
+        "roles": [
+          {
+            "depth": 20,
+            "name": "unit4",
+            "characterId": 485,
+            "linkage": "tankTop_red"
+          },
+          {
+            "depth": 22509,
+            "name": "unit1",
+            "characterId": 396,
+            "linkage": "ship_plane"
+          },
+          {
+            "depth": 22510,
+            "name": "shadow_unit1",
+            "characterId": 400,
+            "linkage": "plane001_shadow"
+          },
+          {
+            "depth": 22511,
+            "name": "tintunit1",
+            "characterId": 897,
+            "linkage": "plane001_tint"
+          },
+          {
+            "depth": 22512,
+            "name": "targetDotunit1",
+            "characterId": 398,
+            "linkage": "redDot"
+          },
+          {
+            "depth": 800011,
+            "name": "unit2",
+            "characterId": 396,
+            "linkage": "ship_plane"
+          },
+          {
+            "depth": 800012,
+            "name": "shadow_unit2",
+            "characterId": 400,
+            "linkage": "plane001_shadow"
+          },
+          {
+            "depth": 800013,
+            "name": "tintunit2",
+            "characterId": 897,
+            "linkage": "plane001_tint"
+          },
+          {
+            "depth": 800014,
+            "name": "targetDotunit2",
+            "characterId": 398,
+            "linkage": "redDot"
+          },
+          {
+            "depth": 800017,
+            "name": "unit3",
+            "characterId": 396,
+            "linkage": "ship_plane"
+          },
+          {
+            "depth": 800018,
+            "name": "shadow_unit3",
+            "characterId": 400,
+            "linkage": "plane001_shadow"
+          },
+          {
+            "depth": 800019,
+            "name": "tintunit3",
+            "characterId": 897,
+            "linkage": "plane001_tint"
+          },
+          {
+            "depth": 800020,
+            "name": "targetDotunit3",
+            "characterId": 398,
+            "linkage": "redDot"
+          },
+          {
+            "depth": 800021,
+            "name": "targetDotunit4",
+            "characterId": 398,
+            "linkage": "redDot"
+          },
+          {
+            "depth": 800022,
+            "name": "unit5",
+            "characterId": 714,
+            "linkage": "tank_noshade"
+          },
+          {
+            "depth": 800023,
+            "name": "targetDotunit5",
+            "characterId": 398,
+            "linkage": "redDot"
+          },
+          {
+            "depth": 800024,
+            "name": "unit6",
+            "characterId": 675,
+            "linkage": "chinook"
+          },
+          {
+            "depth": 800025,
+            "name": "shadow_unit6",
+            "characterId": 2374,
+            "linkage": "chinook_shadow"
+          },
+          {
+            "depth": 800026,
+            "name": "targetDotunit6",
+            "characterId": 398,
+            "linkage": "redDot"
+          }
+        ]
+      },
+      "sharedStateSequenceSha256": "c3a46640d52180344b8a04aa81b68b8fc4c2c4c20b6d8ee84b2dca20930907b9"
+    }
+  ],
+  "sharedUnitAndCityStateEqualLiteralAliasEveryTick": true
+}

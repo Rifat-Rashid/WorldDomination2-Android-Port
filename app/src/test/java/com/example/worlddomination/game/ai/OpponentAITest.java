@@ -1767,11 +1767,23 @@ public final class OpponentAITest {
 
         GameState.PlayerState human = state.getHuman();
         assertTrue(human.isBioloaded());
-        boolean contaminatedCityFound = false;
+        int bioTargetCity = -1;
         for (int cityIndex = 0; cityIndex < 5; cityIndex++) {
-            contaminatedCityFound |= human.getCity(cityIndex).bioloaded;
+            assertFalse("Resolved canonical cities have no cloud callback",
+                    human.getCity(cityIndex).bioloaded);
         }
-        assertTrue(contaminatedCityFound);
+        for (GameState.CombatEvent event : state.getLastTurnCombatEvents()) {
+            if (event.defenderPlayerId == 0 && event.bioload
+                    && event.type == GameState.CombatEventType.STRIKE_IMPACT) {
+                bioTargetCity = event.cityIndex;
+                assertTrue(human.getCity(bioTargetCity).bioloadInBattle);
+                GameState.BattleCitySnapshot city = state.getBattlePresentationCity(
+                        0, bioTargetCity);
+                assertFalse(city.bioloaded);
+                assertTrue(city.bioloadInBattle);
+            }
+        }
+        assertTrue("The source marks a target for the isolated impact callback", bioTargetCity >= 0);
         assertFalse(human.getBioloadedActions().isEmpty());
         GameState.Action blocked = human.getBioloadedActions().iterator().next();
         assertTrue(state.isActionBioloaded(0, blocked));
@@ -1797,6 +1809,8 @@ public final class OpponentAITest {
         state.confirmTurn();
 
         assertFalse(human.isBioloaded());
+        assertTrue("The source retains city battle flags after clearing player penalties",
+                human.getCity(bioTargetCity).bioloadInBattle);
         assertTrue(human.getBioloadedActions().isEmpty());
         for (int cityIndex = 0; cityIndex < 5; cityIndex++) {
             assertFalse(human.getCity(cityIndex).bioloaded);

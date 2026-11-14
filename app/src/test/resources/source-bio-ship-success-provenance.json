@@ -1,0 +1,723 @@
+{
+  "schedule": [
+    [
+      1,
+      "research",
+      {
+        "tech": "rocket2"
+      }
+    ],
+    [
+      2,
+      "research",
+      {
+        "tech": "rocket3"
+      }
+    ],
+    [
+      3,
+      "research",
+      {
+        "tech": "rocket4"
+      }
+    ],
+    [
+      4,
+      "research",
+      {
+        "tech": "warhead2"
+      }
+    ],
+    [
+      5,
+      "research",
+      {
+        "tech": "warhead3"
+      }
+    ],
+    [
+      6,
+      "research",
+      {
+        "tech": "warhead4"
+      }
+    ],
+    [
+      7,
+      "research",
+      {
+        "tech": "bioload2"
+      }
+    ],
+    [
+      8,
+      "research",
+      {
+        "tech": "bioload3"
+      }
+    ],
+    [
+      9,
+      "research",
+      {
+        "tech": "bioload4"
+      }
+    ],
+    [
+      10,
+      "research",
+      {
+        "tech": "soldier2"
+      }
+    ],
+    [
+      11,
+      "research",
+      {
+        "tech": "soldier3"
+      }
+    ],
+    [
+      12,
+      "research",
+      {
+        "tech": "soldier4"
+      }
+    ],
+    [
+      13,
+      "research",
+      {
+        "tech": "sub"
+      }
+    ],
+    [
+      14,
+      "research",
+      {
+        "tech": "ship"
+      }
+    ],
+    [
+      15,
+      "production",
+      {
+        "category": "special",
+        "percent": 100
+      }
+    ],
+    [
+      16,
+      "production",
+      {
+        "category": "bioload",
+        "percent": 100
+      }
+    ],
+    [
+      17,
+      "production",
+      {
+        "category": "bioload",
+        "percent": 100
+      }
+    ],
+    [
+      18,
+      "production",
+      {
+        "category": "bioload",
+        "percent": 100
+      }
+    ],
+    [
+      19,
+      "production",
+      {
+        "category": "bioload",
+        "percent": 100
+      }
+    ],
+    [
+      20,
+      "preAttack",
+      {
+        "weapon": "ship"
+      }
+    ]
+  ],
+  "seed": 0,
+  "target": 2,
+  "cityIndices": [
+    0,
+    1,
+    2
+  ],
+  "population": [
+    102,
+    109,
+    65,
+    96,
+    93
+  ],
+  "events": [
+    {
+      "_player": 2,
+      "_item": "produce2",
+      "_value": "bioload",
+      "_amount": 20,
+      "_group": 3,
+      "_money": 12
+    },
+    {
+      "_player": 2,
+      "_item": "produce2",
+      "_value": "special",
+      "_amount": 60,
+      "_group": 7,
+      "_money": 37
+    },
+    {
+      "_player": 2,
+      "_item": "production_building"
+    },
+    {
+      "_player": 2,
+      "_item": "resources",
+      "_value": 47,
+      "_plusmin": "plus"
+    },
+    {
+      "_player": 1,
+      "_item": "defense",
+      "_value": 25,
+      "_result": false,
+      "_frame": "antiAir"
+    },
+    {
+      "_player": 1,
+      "_item": "battle",
+      "_value": "attack",
+      "_a": 1,
+      "_b": 0,
+      "_weapon": 14,
+      "_city": 1,
+      "_casualties": 19,
+      "_result": true,
+      "_spyArr": null,
+      "_spyBuilding": "spyCenter"
+    },
+    {
+      "_player": 1,
+      "_item": "regard",
+      "_value": "attack",
+      "_a": 1,
+      "_b": 0,
+      "_wpnLevel": 3
+    },
+    {
+      "_player": 0,
+      "_item": "resources",
+      "_value": 33,
+      "_plusmin": "plus"
+    },
+    {
+      "_player": 0,
+      "_item": "battle",
+      "_value": "preAttack",
+      "_a": 0,
+      "_b": 2,
+      "_weapon": 23,
+      "_carrier": 23,
+      "_payload": null,
+      "_city": null,
+      "_blocked": false,
+      "_casualties": 0,
+      "_frame": null,
+      "_result": true,
+      "_isShip": true,
+      "_attack_arr": [
+        {
+          "city": 10,
+          "wpn": 10,
+          "_bioload": true
+        },
+        {
+          "city": 11,
+          "wpn": 10,
+          "_bioload": true
+        },
+        {
+          "city": 12,
+          "wpn": 10,
+          "_bioload": true
+        }
+      ],
+      "_result_arr": [
+        {
+          "_num": 0,
+          "_result": true,
+          "_casualties": 50
+        },
+        {
+          "_num": 1,
+          "_result": true,
+          "_casualties": 58
+        },
+        {
+          "_num": 2,
+          "_result": true,
+          "_casualties": 34
+        }
+      ],
+      "_action": 2
+    },
+    {
+      "_player": 0,
+      "_item": "setPreAttack",
+      "_value": "inactive"
+    },
+    {
+      "_player": 0,
+      "_item": "regard",
+      "_a": 0,
+      "_b": 2
+    },
+    {
+      "_player": 0,
+      "_item": "regard",
+      "_value": "preAttack",
+      "_a": 0,
+      "_b": 2,
+      "_wpnLevel": null
+    },
+    {
+      "_item": "bioload",
+      "_value": "deactivate",
+      "_plr": 2,
+      "_arr": [
+        {
+          "_action": "religion"
+        },
+        {
+          "_action": "religion"
+        },
+        {
+          "_action": "production"
+        },
+        {
+          "_stock": 13,
+          "_weaponName": "soldier2"
+        },
+        {
+          "_stock": 3,
+          "_weaponName": "rocket4"
+        },
+        {
+          "_stock": 2,
+          "_weaponName": "rocket3"
+        },
+        {
+          "_stock": 23,
+          "_weaponName": "ship"
+        },
+        {
+          "_stock": 3,
+          "_weaponName": "rocket4"
+        },
+        {
+          "_stock": 23,
+          "_weaponName": "ship"
+        },
+        {
+          "_stock": 12,
+          "_weaponName": "soldier1"
+        },
+        {
+          "_stock": 11,
+          "_weaponName": "bioload4"
+        },
+        {
+          "_stock": 8,
+          "_weaponName": "bioload1"
+        },
+        {
+          "_stock": 10,
+          "_weaponName": "bioload3"
+        },
+        {
+          "_stock": 9,
+          "_weaponName": "bioload2"
+        },
+        {
+          "_stock": 14,
+          "_weaponName": "soldier3"
+        },
+        {
+          "_stock": 8,
+          "_weaponName": "bioload1"
+        },
+        {
+          "_stock": 6,
+          "_weaponName": "warhead3"
+        },
+        {
+          "_stock": 6,
+          "_weaponName": "warhead3"
+        },
+        {
+          "_stock": 12,
+          "_weaponName": "soldier1"
+        }
+      ]
+    },
+    {
+      "_item": "bioload",
+      "_value": "deactivate",
+      "_plr": 2,
+      "_arr": [
+        {
+          "_action": "propaganda"
+        },
+        {
+          "_action": "resources"
+        },
+        {
+          "_action": "technology"
+        },
+        {
+          "_stock": 11,
+          "_weaponName": "bioload4"
+        },
+        {
+          "_stock": 11,
+          "_weaponName": "bioload4"
+        },
+        {
+          "_stock": 6,
+          "_weaponName": "warhead3"
+        },
+        {
+          "_stock": 12,
+          "_weaponName": "soldier1"
+        },
+        {
+          "_stock": 5,
+          "_weaponName": "warhead2"
+        },
+        {
+          "_stock": 7,
+          "_weaponName": "warhead4"
+        },
+        {
+          "_stock": 16,
+          "_weaponName": "spy1"
+        },
+        {
+          "_stock": 15,
+          "_weaponName": "soldier4"
+        },
+        {
+          "_stock": 13,
+          "_weaponName": "soldier2"
+        },
+        {
+          "_stock": 2,
+          "_weaponName": "rocket3"
+        },
+        {
+          "_stock": 7,
+          "_weaponName": "warhead4"
+        },
+        {
+          "_stock": 13,
+          "_weaponName": "soldier2"
+        }
+      ]
+    },
+    {
+      "_item": "bioload",
+      "_value": "deactivate",
+      "_plr": 2,
+      "_arr": [
+        {
+          "_action": "diplomacy"
+        },
+        {
+          "_action": "propaganda"
+        },
+        {
+          "_action": "propaganda"
+        },
+        {
+          "_stock": 12,
+          "_weaponName": "soldier1"
+        },
+        {
+          "_stock": 10,
+          "_weaponName": "bioload3"
+        },
+        {
+          "_stock": 4,
+          "_weaponName": "warhead1"
+        },
+        {
+          "_stock": 10,
+          "_weaponName": "bioload3"
+        },
+        {
+          "_stock": 20,
+          "_weaponName": "plane1"
+        },
+        {
+          "_stock": 20,
+          "_weaponName": "plane1"
+        },
+        {
+          "_stock": 23,
+          "_weaponName": "ship"
+        },
+        {
+          "_stock": 13,
+          "_weaponName": "soldier2"
+        },
+        {
+          "_stock": 4,
+          "_weaponName": "warhead1"
+        },
+        {
+          "_stock": 15,
+          "_weaponName": "soldier4"
+        },
+        {
+          "_stock": 11,
+          "_weaponName": "bioload4"
+        }
+      ]
+    },
+    {
+      "_item": "bioload",
+      "_value": "deactivate",
+      "_plr": 2,
+      "_arr": [
+        {
+          "_action": "religion"
+        },
+        {
+          "_action": "religion"
+        },
+        {
+          "_action": "diplomacy"
+        },
+        {
+          "_stock": 14,
+          "_weaponName": "soldier3"
+        },
+        {
+          "_stock": 5,
+          "_weaponName": "warhead2"
+        },
+        {
+          "_stock": 11,
+          "_weaponName": "bioload4"
+        },
+        {
+          "_stock": 6,
+          "_weaponName": "warhead3"
+        },
+        {
+          "_stock": 23,
+          "_weaponName": "ship"
+        },
+        {
+          "_stock": 14,
+          "_weaponName": "soldier3"
+        },
+        {
+          "_stock": 5,
+          "_weaponName": "warhead2"
+        },
+        {
+          "_stock": 1,
+          "_weaponName": "rocket2"
+        },
+        {
+          "_stock": 3,
+          "_weaponName": "rocket4"
+        },
+        {
+          "_stock": 11,
+          "_weaponName": "bioload4"
+        },
+        {
+          "_stock": 5,
+          "_weaponName": "warhead2"
+        },
+        {
+          "_stock": 22,
+          "_weaponName": "sub"
+        },
+        {
+          "_stock": 11,
+          "_weaponName": "bioload4"
+        }
+      ]
+    },
+    {
+      "_item": "bioload",
+      "_value": "deactivate",
+      "_plr": 2,
+      "_arr": [
+        {
+          "_action": "religion"
+        },
+        {
+          "_action": "diplomacy"
+        },
+        {
+          "_action": "diplomacy"
+        },
+        {
+          "_stock": 8,
+          "_weaponName": "bioload1"
+        },
+        {
+          "_stock": 4,
+          "_weaponName": "warhead1"
+        },
+        {
+          "_stock": 14,
+          "_weaponName": "soldier3"
+        },
+        {
+          "_stock": 9,
+          "_weaponName": "bioload2"
+        },
+        {
+          "_stock": 11,
+          "_weaponName": "bioload4"
+        },
+        {
+          "_stock": 11,
+          "_weaponName": "bioload4"
+        },
+        {
+          "_stock": 12,
+          "_weaponName": "soldier1"
+        },
+        {
+          "_stock": 3,
+          "_weaponName": "rocket4"
+        },
+        {
+          "_stock": 10,
+          "_weaponName": "bioload3"
+        },
+        {
+          "_stock": 12,
+          "_weaponName": "soldier1"
+        },
+        {
+          "_stock": 14,
+          "_weaponName": "soldier3"
+        }
+      ]
+    },
+    {
+      "_item": "bioload",
+      "_value": "deactivate",
+      "_plr": 2,
+      "_arr": [
+        {
+          "_action": "diplomacy"
+        },
+        {
+          "_action": "propaganda"
+        },
+        {
+          "_action": "resources"
+        },
+        {
+          "_stock": 5,
+          "_weaponName": "warhead2"
+        },
+        {
+          "_stock": 22,
+          "_weaponName": "sub"
+        },
+        {
+          "_stock": 15,
+          "_weaponName": "soldier4"
+        },
+        {
+          "_stock": 22,
+          "_weaponName": "sub"
+        },
+        {
+          "_stock": 10,
+          "_weaponName": "bioload3"
+        },
+        {
+          "_stock": 5,
+          "_weaponName": "warhead2"
+        },
+        {
+          "_stock": 0,
+          "_weaponName": "rocket1"
+        },
+        {
+          "_stock": 3,
+          "_weaponName": "rocket4"
+        },
+        {
+          "_stock": 16,
+          "_weaponName": "spy1"
+        },
+        {
+          "_stock": 12,
+          "_weaponName": "soldier1"
+        },
+        {
+          "_stock": 9,
+          "_weaponName": "bioload2"
+        },
+        {
+          "_stock": 13,
+          "_weaponName": "soldier2"
+        },
+        {
+          "_stock": 2,
+          "_weaponName": "rocket3"
+        },
+        {
+          "_stock": 12,
+          "_weaponName": "soldier1"
+        },
+        {
+          "_stock": 0,
+          "_weaponName": "rocket1"
+        }
+      ]
+    }
+  ],
+  "firstCloudTick": 296,
+  "lastTick": 565,
+  "fixtureSha256": {
+    "source-bio-ship-success-ticks.csv": "7fe5139ca49151743fdbcbef69a39410a6795966a3a349af87a5afad493a628b",
+    "source-bio-ship-success-units.csv": "482ac1f7ae56629da52c48f92ddb38496ca48bb658f4bb5bf345a9d99c8c4fb3",
+    "source-bio-ship-success-cities.csv": "b5405dbbd7c276fdba14514893362c2695a967e76838d4ad963be2b59199cc31",
+    "source-bio-ship-success-clouds.csv": "a0060207809af292495b729270d6ab3b162d77a3929b9281d692503226d58023"
+  },
+  "rowCounts": {
+    "ticks": 566,
+    "units": 3220,
+    "cities": 1698,
+    "clouds": 11696
+  },
+  "sourceSha256": {
+    "wd2/setup_menu.py": "5633326451e768a84a14bde04e452043ba7fac2617a4c71b7b36dcd0495f0c4a",
+    "wd2/battle_playback.py": "9aa8c82295b1977897cea2a60afbb6569e0d31e14bb9725267e422c7b9167901",
+    "reverse/export/scripts/__Packages/Battle.as": "1ca2031c0519d606889403f72b713eb657bde3ace742ae46fd9e73651a0bd3c5",
+    "reverse/export/scripts/__Packages/Unit.as": "7e765e9d5bf72eb0b24b3163f0faed627cc996c4e9bd4b7075ab962d6623d1ba"
+  }
+}

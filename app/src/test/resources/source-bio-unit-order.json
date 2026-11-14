@@ -1,0 +1,360 @@
+{
+  "source": "RealTest read-only Python -B legal UI schedules; see ignored analysis/bio-source-audit/source-unit-order-probe.py",
+  "sourceSha256": {
+    "reverse/export/scripts/__Packages/Battle.as": "1ca2031c0519d606889403f72b713eb657bde3ace742ae46fd9e73651a0bd3c5",
+    "reverse/export/scripts/__Packages/Presenter.as": "d656cb3b2603d87c41a7963db933e399721c4479af046c5e0974acd6fada6ba8",
+    "wd2/runtime.py": "bf58b6cf0cddae89c5efd153713df03751eacf72d0e5c836413bc19a8752b30b"
+  },
+  "cases": [
+    {
+      "case": "plane-biological",
+      "turnResultsBattle": [
+        {
+          "player": 0,
+          "weaponId": 20
+        }
+      ],
+      "tmpBattle": [
+        {
+          "player": 0,
+          "weaponId": 20
+        }
+      ],
+      "randOrder": [
+        {
+          "player": 0,
+          "weaponId": 20
+        }
+      ],
+      "spawnStored": [
+        {
+          "unitId": "unitunit2",
+          "forceMc": "plane1",
+          "player": 0
+        }
+      ],
+      "activePhysical": [
+        {
+          "unitName": "unit1",
+          "mcId": "plane001",
+          "wildNumber": null,
+          "wildCity": null
+        }
+      ]
+    },
+    {
+      "case": "plane-warhead",
+      "turnResultsBattle": [
+        {
+          "player": 0,
+          "weaponId": 20
+        }
+      ],
+      "tmpBattle": [
+        {
+          "player": 0,
+          "weaponId": 20
+        }
+      ],
+      "randOrder": [
+        {
+          "player": 0,
+          "weaponId": 20
+        }
+      ],
+      "spawnStored": [
+        {
+          "unitId": "unitunit2",
+          "forceMc": "plane1",
+          "player": 0
+        }
+      ],
+      "activePhysical": [
+        {
+          "unitName": "unit1",
+          "mcId": "plane001",
+          "wildNumber": null,
+          "wildCity": null
+        }
+      ]
+    },
+    {
+      "case": "ship-intercept",
+      "turnResultsBattle": [
+        {
+          "player": 1,
+          "weaponId": 14
+        },
+        {
+          "player": 0,
+          "weaponId": 23
+        }
+      ],
+      "tmpBattle": [
+        {
+          "player": 0,
+          "weaponId": 23
+        },
+        {
+          "player": 1,
+          "weaponId": 14
+        }
+      ],
+      "randOrder": [
+        {
+          "player": 0,
+          "weaponId": 23
+        },
+        {
+          "player": 1,
+          "weaponId": 14
+        }
+      ],
+      "spawnStored": [
+        {
+          "unitId": "unit3",
+          "forceMc": "chinook",
+          "player": 1
+        },
+        {
+          "unitId": "tailunit3",
+          "forceMc": "tank_noShade",
+          "player": 1
+        },
+        {
+          "unitId": "tailunit3tail",
+          "forceMc": "tankTop",
+          "player": 1
+        },
+        {
+          "unitId": "unit_ship2",
+          "forceMc": "ship_plane",
+          "player": 0
+        },
+        {
+          "unitId": "unit_ship1",
+          "forceMc": "ship_plane",
+          "player": 0
+        },
+        {
+          "unitId": "unit_ship0",
+          "forceMc": "ship_plane",
+          "player": 0
+        }
+      ],
+      "activePhysical": [
+        {
+          "unitName": "unit1",
+          "mcId": "ship_plane",
+          "wildNumber": 0.0,
+          "wildCity": 5
+        },
+        {
+          "unitName": "unit2",
+          "mcId": "ship_plane",
+          "wildNumber": 1.0,
+          "wildCity": 6
+        },
+        {
+          "unitName": "unit3",
+          "mcId": "ship_plane",
+          "wildNumber": 2.0,
+          "wildCity": 7
+        },
+        {
+          "unitName": "unit4",
+          "mcId": "tankTop",
+          "wildNumber": null,
+          "wildCity": null
+        },
+        {
+          "unitName": "unit5",
+          "mcId": "tank_noShade",
+          "wildNumber": null,
+          "wildCity": null
+        },
+        {
+          "unitName": "unit6",
+          "mcId": "chinook",
+          "wildNumber": null,
+          "wildCity": null
+        }
+      ]
+    },
+    {
+      "case": "ship-success",
+      "turnResultsBattle": [
+        {
+          "player": 1,
+          "weaponId": 14
+        },
+        {
+          "player": 0,
+          "weaponId": 23
+        }
+      ],
+      "tmpBattle": [
+        {
+          "player": 0,
+          "weaponId": 23
+        },
+        {
+          "player": 1,
+          "weaponId": 14
+        }
+      ],
+      "randOrder": [
+        {
+          "player": 0,
+          "weaponId": 23
+        },
+        {
+          "player": 1,
+          "weaponId": 14
+        }
+      ],
+      "spawnStored": [
+        {
+          "unitId": "unit3",
+          "forceMc": "chinook",
+          "player": 1
+        },
+        {
+          "unitId": "tailunit3",
+          "forceMc": "tank_noShade",
+          "player": 1
+        },
+        {
+          "unitId": "tailunit3tail",
+          "forceMc": "tankTop",
+          "player": 1
+        },
+        {
+          "unitId": "unit_ship2",
+          "forceMc": "ship_plane",
+          "player": 0
+        },
+        {
+          "unitId": "unit_ship1",
+          "forceMc": "ship_plane",
+          "player": 0
+        },
+        {
+          "unitId": "unit_ship0",
+          "forceMc": "ship_plane",
+          "player": 0
+        }
+      ],
+      "activePhysical": [
+        {
+          "unitName": "unit1",
+          "mcId": "ship_plane",
+          "wildNumber": 0.0,
+          "wildCity": 10
+        },
+        {
+          "unitName": "unit2",
+          "mcId": "ship_plane",
+          "wildNumber": 1.0,
+          "wildCity": 11
+        },
+        {
+          "unitName": "unit3",
+          "mcId": "ship_plane",
+          "wildNumber": 2.0,
+          "wildCity": 12
+        },
+        {
+          "unitName": "unit4",
+          "mcId": "tankTop",
+          "wildNumber": null,
+          "wildCity": null
+        },
+        {
+          "unitName": "unit5",
+          "mcId": "tank_noShade",
+          "wildNumber": null,
+          "wildCity": null
+        },
+        {
+          "unitName": "unit6",
+          "mcId": "chinook",
+          "wildNumber": null,
+          "wildCity": null
+        }
+      ]
+    },
+    {
+      "case": "sub-biological",
+      "turnResultsBattle": [
+        {
+          "player": 0,
+          "weaponId": 22
+        }
+      ],
+      "tmpBattle": [
+        {
+          "player": 0,
+          "weaponId": 22
+        }
+      ],
+      "randOrder": [
+        {
+          "player": 0,
+          "weaponId": 22
+        }
+      ],
+      "spawnStored": [
+        {
+          "unitId": "unitunit3",
+          "forceMc": "sub_rocket",
+          "player": 0
+        }
+      ],
+      "activePhysical": [
+        {
+          "unitName": "unit1",
+          "mcId": "sub_rocket",
+          "wildNumber": null,
+          "wildCity": null
+        }
+      ]
+    },
+    {
+      "case": "rocket-biological",
+      "turnResultsBattle": [
+        {
+          "player": 0,
+          "weaponId": 0
+        }
+      ],
+      "tmpBattle": [
+        {
+          "player": 0,
+          "weaponId": 0
+        }
+      ],
+      "randOrder": [
+        {
+          "player": 0,
+          "weaponId": 0
+        }
+      ],
+      "spawnStored": [
+        {
+          "unitId": "unitunit3",
+          "forceMc": "rocket",
+          "player": 0
+        }
+      ],
+      "activePhysical": [
+        {
+          "unitName": "unit1",
+          "mcId": "rocket",
+          "wildNumber": null,
+          "wildCity": null
+        }
+      ]
+    }
+  ]
+}

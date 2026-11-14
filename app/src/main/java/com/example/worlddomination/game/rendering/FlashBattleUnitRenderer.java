@@ -64,6 +64,10 @@ public final class FlashBattleUnitRenderer {
     private final FlashApacheMarineAnimation.Actor targetDotActor = createTargetDotActor();
     private final FlashStencilMasks actionBuildingMasks = new FlashStencilMasks();
     private final float[] actionBuildingVertices = new float[20];
+    private final float[] sourceRocketVertices = new float[20];
+    private final FlashAffineTransform[] sourceRocketTransforms = {
+            new FlashAffineTransform(), new FlashAffineTransform()
+    };
     private final int[][] actionBuildingMaskEnds =
             new int[MAX_ACTION_BUILDING_CLIP_DEPTH][FlashStencilMasks.MAX_MASKS];
     private final float[] satelliteLaserOriginScratch = new float[4];
@@ -679,6 +683,10 @@ public final class FlashBattleUnitRenderer {
         }
         float mapScale = BattlefieldCityLayout.sourceScale(mapBounds);
         for (FlashRocketAnimation animation : animations) {
+            if (animation.getSourcePlayback() != null) {
+                // Source roles are visited by the root display-depth dispatcher.
+                continue;
+            }
             FlashBattleRoutes.RocketStrike route = animation.getRoute();
             for (int trail = 0; trail < animation.getTrailCount(); trail++) {
                 float trailX = animation.getTrailX(trail);
@@ -696,6 +704,178 @@ public final class FlashBattleUnitRenderer {
             }
         }
         batch.setColor(com.badlogic.gdx.graphics.Color.WHITE);
+    }
+
+    /** Paint one physical root role; the dispatcher supplies ascending depth order. */
+    public void drawSourceRocketRole(SpriteBatch batch, Rectangle mapBounds,
+                                     SourceRocketDisplayDepths.Binding binding,
+                                     BattlefieldDisplayState.Kind kind, int index) {
+        if (!assets.isLoaded()) return;
+        if (kind == BattlefieldDisplayState.Kind.UNIT_BODY) {
+            if (binding.body() != null && binding.body().isAttached()) {
+                drawSourceRocketBody(batch, mapBounds, binding.animation);
+            }
+        } else if (kind == BattlefieldDisplayState.Kind.UNIT_DOT) {
+            if (binding.dot() != null && binding.dot().isAttached()) {
+                drawTargetDot(batch, mapBounds, binding.animation.getSourceTint());
+            }
+        } else if (kind == BattlefieldDisplayState.Kind.EFFECT) {
+              if (index <= SourceRocketDisplayDepths.EXPLOSION_ROLE_INDEX) {
+                  int effectIndex = SourceRocketDisplayDepths.EXPLOSION_ROLE_INDEX - index;
+                  if (effectIndex >= binding.getExplosionCount()
+                          || binding.explosion(effectIndex) == null
+                          || !binding.explosion(effectIndex).isAttached()) return;
+                FlashBattleRoutes.RocketStrike route = binding.animation.getRoute();
+                FlashAnimationTimeline timeline = assets.getTimeline(
+                        binding.animation.getImpactLinkage());
+                if (timeline != null) {
+                    drawTimelineFrame(batch, mapBounds,
+                              timeline.getFrame(binding.getExplosionFrameIndex(effectIndex)),
+                              (float) binding.getExplosionX(effectIndex),
+                              (float) binding.getExplosionY(effectIndex),
+                            route.targetPlayerId, 1f, 1f);
+                }
+            } else if (index >= 0 && index < binding.getSmokeSlotCount()) {
+                if (binding.smoke(index) != null && binding.smoke(index).isAttached()) {
+                    drawSourceRocketSmokeSlot(batch, mapBounds, binding.animation, index);
+                }
+            }
+        }
+    }
+
+    /** Paints the authored rocket movie frame, source mask and player tint. */
+    private void drawSourceRocketBody(SpriteBatch batch, Rectangle mapBounds,
+                                      FlashRocketAnimation animation) {
+        SourceRocketPlayback rocket = animation.getSourcePlayback();
+        FlashBattleRoutes.RocketStrike route = animation.getRoute();
+        ShaderProgram previousShader = batch.getShader();
+        float previousColor = batch.getPackedColor();
+        try {
+            if (rocket.isBodyAttached()) {
+                double radians = Math.toRadians(rocket.getRotation());
+                float cosine = (float) Math.cos(radians);
+                float sine = (float) Math.sin(radians);
+                FlashAffineTransform parent = sourceRocketTransforms[0].setIdentity();
+                parent.setProduct(sourceRocketTransforms[1].setIdentity(),
+                        cosine, sine, -sine * 0.5f, cosine * 0.5f, 0f, 0f);
+                float sourceX = (float) rocket.getRenderX();
+                float sourceY = (float) rocket.getRenderY();
+                int maskShape = rocket.getSourceFrame() == 1 ? 789 : 797;
+                TextureRegion mask = assets.getShape(maskShape);
+                TextureRegion body = assets.getShape(792);
+                if (mask != null && body != null) {
+                    actionBuildingMasks.beginCoverage(batch);
+                    FlashAffineTransform child = sourceRocketTransforms[1];
+                    if (rocket.getSourceFrame() == 1) {
+                        child.setProduct(parent, 0.6921234130859375f, 0f, 0f,
+                                0.6921234130859375f,
+                                -133.2f + (float) rocket.getMaskOffsetX(), -27.45f);
+                    } else {
+                        child.setProduct(parent, 1f, 0f, 0f, 1f, 0f, 0f);
+                    }
+                    drawSourceRocketShape(batch, mapBounds, route, maskShape, mask,
+                            child, sourceX, sourceY, 1f);
+                    actionBuildingMasks.endCoverage(batch);
+                    drawSourceRocketShape(batch, mapBounds, route, 792, body,
+                            parent, sourceX, sourceY, 1f);
+                    if (rocket.getSourceFrame() == 1) {
+                        TextureRegion tint = assets.getShape(794);
+                        if (tint != null) {
+                            child.setProduct(parent, 1f, 0f, 0f, 1f, -22.05f, -5.55f);
+                            beginSubmarineTint(batch, animation.getSourceTint());
+                            drawSourceRocketShape(batch, mapBounds, route, 794, tint,
+                                    child, sourceX, sourceY, 1f);
+                            batch.setShader(previousShader);
+                        }
+                    }
+                    actionBuildingMasks.pop(batch);
+                }
+            }
+        } finally {
+            batch.setShader(previousShader);
+            batch.setPackedColor(previousColor);
+        }
+    }
+
+    private void drawSourceRocketSmokeSlot(SpriteBatch batch, Rectangle mapBounds,
+                                           FlashRocketAnimation animation, int slot) {
+        TextureRegion smoke = assets.getShape(
+                OriginalFlashAnimationAssets.ROCKET_TRAIL_SHAPE_ID);
+        if (smoke == null) return;
+        SourceRocketPlayback rocket = animation.getSourcePlayback();
+        FlashAffineTransform transform = sourceRocketTransforms[0]
+                .setProduct(sourceRocketTransforms[1].setIdentity(),
+                        1f, 0f, 0f, 1f, -5f, -5f);
+        drawSourceRocketShape(batch, mapBounds, animation.getRoute(),
+                OriginalFlashAnimationAssets.ROCKET_TRAIL_SHAPE_ID,
+                smoke, transform, (float) rocket.getTrailX(slot),
+                (float) rocket.getTrailY(slot),
+                (float) (rocket.getTrailAlpha(slot) / 100d));
+        batch.setColor(com.badlogic.gdx.graphics.Color.WHITE);
+    }
+
+    /** A source trail clip keeps its authored scale; nominal width is an AS2 property. */
+    public void drawSourceAircraftSmoke(SpriteBatch batch, Rectangle mapBounds,
+                                         SourceAircraftTrail trail, int slot,
+                                         int attackerPlayerId) {
+        if (!assets.isLoaded() || !trail.isAttached(slot)) return;
+        int shape = OriginalFlashAnimationAssets.ROCKET_TRAIL_SHAPE_ID;
+        TextureRegion smoke = assets.getShape(shape);
+        if (smoke == null) return;
+        float previousColor = batch.getPackedColor();
+        FlashAffineTransform transform = sourceRocketTransforms[0]
+                .setProduct(sourceRocketTransforms[1].setIdentity(),
+                        1f, 0f, 0f, 1f, -5f, -5f);
+        FlashSpriteQuad.positions(sourceRocketVertices, transform, mapBounds,
+                (float) trail.getX(slot), (float) trail.getY(slot), attackerPlayerId,
+                assets.getShapeOriginX(shape), assets.getShapeOriginY(shape),
+                smoke.getRegionWidth(), smoke.getRegionHeight());
+        batch.setColor(1f, 1f, 1f, (float) Math.max(0d, Math.min(1d,
+                trail.getAlpha(slot) / 100d)));
+        float packed = batch.getPackedColor();
+        for (int vertex = 0; vertex < 20; vertex += 5)
+            sourceRocketVertices[vertex + 2] = packed;
+        sourceRocketVertices[3] = smoke.getU();
+        sourceRocketVertices[4] = smoke.getV2();
+        sourceRocketVertices[8] = smoke.getU();
+        sourceRocketVertices[9] = smoke.getV();
+        sourceRocketVertices[13] = smoke.getU2();
+        sourceRocketVertices[14] = smoke.getV();
+        sourceRocketVertices[18] = smoke.getU2();
+        sourceRocketVertices[19] = smoke.getV2();
+        batch.draw(smoke.getTexture(), sourceRocketVertices, 0, 20);
+        batch.setPackedColor(previousColor);
+    }
+
+    private void drawSourceRocketShape(SpriteBatch batch, Rectangle mapBounds,
+                                       FlashBattleRoutes.RocketStrike route,
+                                       int shapeId, TextureRegion region,
+                                       FlashAffineTransform transform,
+                                       float sourceX, float sourceY, float alpha) {
+        FlashSpriteQuad.positions(sourceRocketVertices, transform, mapBounds,
+                sourceX, sourceY, route.attackerPlayerId,
+                assets.getShapeOriginX(shapeId), assets.getShapeOriginY(shapeId),
+                region.getRegionWidth(), region.getRegionHeight());
+        float progress = rocketProgress(route, sourceX);
+        float cropOffset = BattlefieldCityLayout.sourceXBetween(mapBounds, sourceX,
+                route.attackerPlayerId, route.targetPlayerId, progress)
+                - BattlefieldCityLayout.sourceX(mapBounds, sourceX,
+                route.attackerPlayerId);
+        batch.setColor(1f, 1f, 1f, alpha);
+        float packed = batch.getPackedColor();
+        for (int vertex = 0; vertex < 20; vertex += 5) {
+            sourceRocketVertices[vertex] += cropOffset;
+            sourceRocketVertices[vertex + 2] = packed;
+        }
+        sourceRocketVertices[3] = region.getU();
+        sourceRocketVertices[4] = region.getV2();
+        sourceRocketVertices[8] = region.getU();
+        sourceRocketVertices[9] = region.getV();
+        sourceRocketVertices[13] = region.getU2();
+        sourceRocketVertices[14] = region.getV();
+        sourceRocketVertices[18] = region.getU2();
+        sourceRocketVertices[19] = region.getV2();
+        batch.draw(region.getTexture(), sourceRocketVertices, 0, 20);
     }
 
     /** Draws the original hull and source-colored tint clips during submarine launches. */
@@ -755,6 +935,14 @@ public final class FlashBattleUnitRenderer {
                 continue;
             }
             FlashBattleRoutes.CarrierPlaneStrike route = animation.getRoute();
+            if (animation.getSourcePlayback() != null) {
+                drawPlaneLinkage(batch, mapBounds, timeline, actor.sourceFrame,
+                        actor.sourceX, actor.sourceY, route.attackerPlayerId,
+                        route.targetPlayerId, actor.routeProgress, actor.alpha,
+                        actor.scale * mapScale, null, false, false,
+                        actor.sourceFrame, 1f, 0, planeTransformScratch[0].setIdentity());
+                continue;
+            }
             batch.setColor(com.badlogic.gdx.graphics.Color.WHITE);
             for (FlashAnimationTimeline.Layer layer : frame.layers) {
                 TextureRegion region = assets.getShape(layer.shapeId);

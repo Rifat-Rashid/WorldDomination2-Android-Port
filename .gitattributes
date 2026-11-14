@@ -5,3 +5,6 @@ app/src/test/resources/source-infantry-*.csv -text whitespace=blank-at-eol,blank
 app/src/test/resources/source-chinook-*.csv -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 app/src/test/resources/source-suicide-*.csv -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 app/src/test/resources/source-phase-*.csv -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+app/src/test/resources/source-bio-*.csv -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+app/src/test/resources/source-bio-*.json -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+app/src/test/resources/source-aircraft-trail-*.json -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

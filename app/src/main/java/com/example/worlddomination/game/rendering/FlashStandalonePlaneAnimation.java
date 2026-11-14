@@ -1,6 +1,7 @@
 package com.example.worlddomination.game.rendering;
 
 import com.example.worlddomination.game.audio.OriginalAudio;
+import com.example.worlddomination.game.simulation.ReferenceRandom;
 
 import java.util.Random;
 
@@ -49,6 +50,8 @@ public final class FlashStandalonePlaneAnimation
     private final OriginalAudio.Cue takeoffCue;
     private final OriginalAudio.Cue flightCue;
     private final Random trailRandom;
+    private SourceAircraftTrail sourceTrail;
+    private SourceAircraftPlayback sourcePlayback;
     private final float[] trailX = new float[MAX_TRAIL_PUFFS];
     private final float[] trailY = new float[MAX_TRAIL_PUFFS];
     private final float[] trailProgress = new float[MAX_TRAIL_PUFFS];
@@ -117,7 +120,61 @@ public final class FlashStandalonePlaneAnimation
     }
 
     /** Advances one source tick (24 Hz), returning true once for the payload result. */
+    public FlashStandalonePlaneAnimation(FlashBattleRoutes.StandalonePlaneStrike route,
+                                         int playerColor, int delayTicks,
+                                         String impactLinkage, OriginalAudio.Cue impactCue,
+                                         ReferenceRandom presentationRandom) {
+        this(route, playerColor, delayTicks, impactLinkage, impactCue);
+        if (!pairedTrail && !route.intercepted) {
+            sourceTrail = new SourceAircraftTrail(
+                    SourceAircraftTrail.Origin.PREVIOUS_UNIT_POSITION, presentationRandom);
+            sourcePlayback = new SourceAircraftPlayback(route, sourceTrail);
+            actor.sourceX = 0f;
+            actor.sourceY = 0f;
+            actor.alpha = 0f;
+            actor.visible = true;
+        }
+    }
+
+    public SourceAircraftTrail getSourceTrail() { return sourceTrail; }
+    public SourceAircraftPlayback getSourcePlayback() { return sourcePlayback; }
+
+    public boolean tickSourceFrame(boolean recordActivated) {
+        if (sourcePlayback == null) throw new IllegalStateException("No source aircraft");
+        float priorRenderX = actor.sourceX;
+        float priorRenderY = actor.sourceY;
+        if (recordActivated) sourcePlayback.tickSourceFrame();
+        else sourcePlayback.presentWaitingFrame();
+        actor.previousX = (float) sourcePlayback.getPreviousX();
+        actor.previousY = (float) sourcePlayback.getPreviousY();
+        actor.sourceX = (float) sourcePlayback.getRenderX();
+        actor.sourceY = (float) sourcePlayback.getRenderY();
+        actor.alpha = (float) (sourcePlayback.getAlpha() / 100d);
+        actor.scale = (float) (sourcePlayback.getScalePercent() / 100d);
+        actor.shadowYOffset = (float) sourcePlayback.getShadowYOffset();
+        actor.sourceFrame = Math.max(0, sourcePlayback.getFrame() - 1);
+        actor.visible = !sourcePlayback.isRemoved();
+        distanceTravelled += distance(priorRenderX, priorRenderY,
+                actor.sourceX, actor.sourceY);
+        switch (sourcePlayback.getAction()) {
+            case "plane_circular_flight": phase = Phase.ORBIT; break;
+            case "bomb": phase = Phase.APPROACH; break;
+            case "flyOff": phase = Phase.FLY_OFF; break;
+            case "stop": phase = Phase.FINISHED; break;
+            default:
+                phase = sourcePlayback.getCurrentWaypoint() >= 2
+                        ? Phase.APPROACH : Phase.TAKEOFF;
+        }
+        updateRouteProgress();
+        takeoffCuePending = sourcePlayback.takeTakeoffCue();
+        flightCuePending = sourcePlayback.takeFlightCue();
+        finished = sourcePlayback.isRemoved();
+        return sourcePlayback.takeImpact();
+    }
+
     public boolean tick() {
+        if (sourcePlayback != null)
+            throw new IllegalStateException("Use the source record clock for aircraft playback");
         if (finished) {
             return false;
         }

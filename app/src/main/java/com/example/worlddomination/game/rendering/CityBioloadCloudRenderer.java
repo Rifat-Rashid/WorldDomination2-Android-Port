@@ -7,6 +7,7 @@ import com.badlogic.gdx.math.Rectangle;
 import com.example.worlddomination.game.assets.OriginalFlashAnimationAssets;
 import com.example.worlddomination.game.simulation.CityState;
 import com.example.worlddomination.game.simulation.GameState;
+import com.example.worlddomination.game.simulation.ReferenceRandom;
 import com.example.worlddomination.game.ui.BattlefieldCityLayout;
 
 import java.util.ArrayList;
@@ -92,6 +93,16 @@ final class CityBioloadCloudRenderer {
     private static final class CloudState {
         final BioloadCloudAnimation[] cityClouds = new BioloadCloudAnimation[CITY_COUNT];
         final int[] activationCounts = new int[CITY_COUNT];
+        final boolean[] sourceControlled = new boolean[CITY_COUNT];
+        final boolean[] sourceBioloaded = new boolean[CITY_COUNT];
+        final boolean[] sourceAttached = new boolean[CITY_COUNT];
+        final boolean[] sourceCreatedThisFrame = new boolean[CITY_COUNT];
+        final int[] sourceDepth = new int[CITY_COUNT];
+        final List<List<BioloadCloudAnimation>> retainedClouds = new ArrayList<>(CITY_COUNT);
+
+        CloudState() {
+            for (int city = 0; city < CITY_COUNT; city++) retainedClouds.add(new ArrayList<>());
+        }
     }
 
     void beginBattle(GameState game) {
@@ -131,7 +142,67 @@ final class CityBioloadCloudRenderer {
         for (int address = 0; address < CITY_COUNT; address++) {
             state.cityClouds[address] = null;
             state.activationCounts[address] = 0;
+            state.sourceControlled[address] = false;
+            state.sourceBioloaded[address] = false;
+            state.sourceAttached[address] = false;
+            state.sourceCreatedThisFrame[address] = false;
+            state.sourceDepth[address] = -1;
+            state.retainedClouds.get(address).clear();
         }
+    }
+
+    /** Source clouds are attached by unit callbacks, never by resolved model polling. */
+    void useSourceCity(int address) {
+        activeState.sourceControlled[address] = true;
+        cityClouds[address] = null;
+        activeState.sourceBioloaded[address] = false;
+        activeState.sourceAttached[address] = false;
+        activeState.sourceCreatedThisFrame[address] = false;
+        activeState.sourceDepth[address] = -1;
+        activeState.retainedClouds.get(address).clear();
+    }
+
+    void createSourceCloud(int address, int containerDepth, ReferenceRandom random,
+                           boolean duringUnitVisit) {
+        activeState.sourceBioloaded[address] = true;
+        if (activeState.sourceAttached[address]) return;
+        List<BioloadCloudAnimation> retained = activeState.retainedClouds.get(address);
+        BioloadCloudAnimation attached = BioloadCloudAnimation.fromSource(random);
+        // A frame seek drops the old container but does not clear city.bioCloud_arr.
+        // View's reverse for-in spawns the new cohort, then every retained orphan.
+        for (int index = retained.size() - 1; index >= 0; index--)
+            retained.get(index).respawnSource();
+        retained.add(attached);
+        cityClouds[address] = attached;
+        activeState.sourceAttached[address] = true;
+        activeState.sourceCreatedThisFrame[address] = duringUnitVisit;
+        activeState.sourceDepth[address] = containerDepth;
+    }
+
+    void detachSourceCloud(int address) {
+        activeState.sourceAttached[address] = false;
+        // The retained AS2 container reference keeps its old depth after removal.
+    }
+
+    void tickSourceCity(int address) {
+        if (!activeState.sourceControlled[address] || !activeState.sourceAttached[address]) return;
+        // MovieClipHost snapshots its callback traversal before a unit can
+        // attach new children. Their first callback is on the next host frame.
+        if (activeState.sourceCreatedThisFrame[address]) {
+            activeState.sourceCreatedThisFrame[address] = false;
+            return;
+        }
+        cityClouds[address].tick();
+    }
+
+    boolean isSourceAttached(int address) { return activeState.sourceAttached[address]; }
+    boolean isSourceBioloaded(int address) { return activeState.sourceBioloaded[address]; }
+    int getSourceDepth(int address) { return activeState.sourceDepth[address]; }
+    int getSourceCloudCount(int address) {
+        return activeState.retainedClouds.get(address).size() * BioloadCloudAnimation.CLOUD_COUNT;
+    }
+    BioloadCloudAnimation getSourceCohort(int address, int cohort) {
+        return activeState.retainedClouds.get(address).get(cohort);
     }
 
     void reset(GameState game) {
@@ -144,6 +215,7 @@ final class CityBioloadCloudRenderer {
             return;
         }
         for (int address = 0; address < CITY_COUNT; address++) {
+            if (activeState.sourceControlled[address]) continue;
             int playerId = address / BattlefieldCityLayout.CITIES_PER_PLAYER;
             int cityIndex = address % BattlefieldCityLayout.CITIES_PER_PLAYER;
             GameState.PlayerState player = game.getPlayerState(playerId);
@@ -159,7 +231,9 @@ final class CityBioloadCloudRenderer {
     }
 
     void tick() {
-        for (BioloadCloudAnimation cloudField : cityClouds) {
+        for (int address = 0; address < CITY_COUNT; address++) {
+            if (activeState.sourceControlled[address]) continue;
+            BioloadCloudAnimation cloudField = cityClouds[address];
             if (cloudField != null) {
                 cloudField.tick();
             }
@@ -167,7 +241,9 @@ final class CityBioloadCloudRenderer {
     }
 
     boolean isAnimating() {
-        for (BioloadCloudAnimation cloudField : cityClouds) {
+        for (int address = 0; address < CITY_COUNT; address++) {
+            if (activeState.sourceControlled[address] && !activeState.sourceAttached[address]) continue;
+            BioloadCloudAnimation cloudField = cityClouds[address];
             if (cloudField != null) {
                 return true;
             }
@@ -176,16 +252,24 @@ final class CityBioloadCloudRenderer {
     }
 
     void drawCity(SpriteBatch batch, Rectangle mapBounds, int playerId, int cityIndex) {
+        drawCity(batch, mapBounds, playerId, cityIndex, 1f, 1f);
+    }
+
+    void drawCity(SpriteBatch batch, Rectangle mapBounds, int playerId, int cityIndex,
+                  float sourceParentAlpha, float sourceCityScale) {
         int address = playerId * BattlefieldCityLayout.CITIES_PER_PLAYER + cityIndex;
         if (address < 0 || address >= cityClouds.length) {
             return;
         }
         BioloadCloudAnimation cloudField = cityClouds[address];
+        if (activeState.sourceControlled[address] && !activeState.sourceAttached[address]) return;
         if (cloudField == null || !prepareArtwork()) {
             return;
         }
 
-        float mapScale = BattlefieldCityLayout.sourceScale(mapBounds);
+        boolean source = activeState.sourceControlled[address];
+        float stageScale = BattlefieldCityLayout.sourceScale(mapBounds);
+        float mapScale = stageScale * (source ? sourceCityScale : 1f);
         float cityX = BattlefieldCityLayout.x(mapBounds, playerId, cityIndex);
         float cityY = BattlefieldCityLayout.y(mapBounds, playerId, cityIndex);
         Color previous = batch.getColor();
@@ -212,7 +296,27 @@ final class CityBioloadCloudRenderer {
                 float sourceY = cloudField.getY(cloudIndex) + artwork.ty * cloudScale;
                 float x = cityX + sourceX * mapScale;
                 float top = cityY - sourceY * mapScale;
+                if (source) {
+                    // Compose city-local coordinates before projecting the Flash
+                    // stage; subtracting projected offsets changes edge pixels.
+                    sourceX = cloudField.getX(cloudIndex) + cloudScale * (artwork.tx
+                            + artwork.a * assets.getShapeOriginX(artwork.shapeId)
+                            + artwork.c * assets.getShapeOriginY(artwork.shapeId));
+                    sourceY = cloudField.getY(cloudIndex) + cloudScale * (artwork.ty
+                            + artwork.b * assets.getShapeOriginX(artwork.shapeId)
+                            + artwork.d * assets.getShapeOriginY(artwork.shapeId));
+                    x = BattlefieldCityLayout.sourceX(mapBounds,
+                            BattlefieldCityLayout.sourceCityX(playerId, cityIndex)
+                                    + sourceX * sourceCityScale, playerId);
+                    top = BattlefieldCityLayout.sourceY(mapBounds,
+                            BattlefieldCityLayout.sourceCityY(playerId, cityIndex)
+                                    + sourceY * sourceCityScale);
+                    width = region.getRegionWidth() * sourceCityScale * stageScale;
+                    height = region.getRegionHeight() * sourceCityScale * stageScale;
+                }
                 float layerAlpha = alpha * artwork.alpha;
+                if (activeState.sourceControlled[address]) layerAlpha *= sourceParentAlpha;
+                layerAlpha = Math.max(0f, Math.min(1f, layerAlpha));
                 batch.setColor(1f, 1f, 1f, layerAlpha);
                 FlashSpriteTransform transform = cloudTransforms[layerIndex];
                 batch.draw(region, x, top - height, 0f, height, width, height,
