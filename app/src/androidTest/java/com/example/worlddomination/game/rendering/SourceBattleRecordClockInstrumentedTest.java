@@ -79,14 +79,20 @@ public final class SourceBattleRecordClockInstrumentedTest {
                     List<FlashSoldierOneAnimation> boats = boats(app);
                     assertEquals(2, boats.size());
                     openBattleGate(app, playback, clock);
-                    assertWaitingBoat(boats.get(1));
                     assertWaitingBoat(boats.get(0));
+                    assertWaitingBoat(boats.get(1));
+                    // Unit construction now follows source record order: first
+                    // boat belongs to startNum 1, then the startNum 2 boat.
+                    assertEquals(0, field(FlashSoldierOneAnimation.class,
+                            "delayTicks").getInt(boats.get(0)));
+                    assertEquals(1, field(FlashSoldierOneAnimation.class,
+                            "delayTicks").getInt(boats.get(1)));
                     advance(app);
-                    assertMovingBoat(boats.get(1)); // Fresh Python snapshot: eligible tick 1.
-                    assertWaitingBoat(boats.get(0)); // Slot two waits one more source tick.
+                    assertMovingBoat(boats.get(0)); // Start number 1: eligible tick 1.
+                    assertWaitingBoat(boats.get(1)); // Start number 2 waits one more source tick.
                     capture(app, "source-record-clock-first-boat.png");
                     advance(app);
-                    assertMovingBoat(boats.get(0));
+                    assertMovingBoat(boats.get(1));
                     capture(app, "source-record-clock-second-boat.png");
                     finishTurn(app, playback);
 

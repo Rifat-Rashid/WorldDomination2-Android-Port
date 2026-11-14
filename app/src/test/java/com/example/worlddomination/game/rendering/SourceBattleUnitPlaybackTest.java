@@ -7,6 +7,19 @@ import java.util.List;
 import static org.junit.Assert.*;
 
 public final class SourceBattleUnitPlaybackTest {
+    @Test public void constructedSatelliteThenChinookVisitsChinookBeforeLaserStop() {
+        // Legal seed-zero turn 28: source construction puts satellite before
+        // the Chinook cohort, but View.f_37 enumerates active keys in reverse.
+        // At global tick 424 the Chinook moves to (1087.75,833.75) before the
+        // satellite enters stop and ends this unit frame.
+        SourceBattleUnitPlayback playback = new SourceBattleUnitPlayback();
+        List<String> visited = new ArrayList<>();
+        playback.addConstructed(() -> { visited.add("satellite-stop"); return true; });
+        playback.addConstructed(() -> { visited.add("chinook"); return false; });
+        assertTrue(playback.advanceFrame());
+        assertEquals(Arrays.asList("chinook", "satellite-stop"), visited);
+    }
+
     @Test public void sourceStopBreakKeepsAlreadyVisitedUnitsAndSkipsLaterOnes() {
         SourceBattleUnitPlayback playback = new SourceBattleUnitPlayback();
         List<String> visited = new ArrayList<>();

@@ -305,6 +305,15 @@ public final class SourceBattleCleanupInstrumentedTest {
                 List<FlashCarrierPlaneAnimation> planes = planes(app);
                 assertEquals(1, planes.size());
                 FlashCarrierPlaneAnimation originalPlane = planes.get(0);
+                GameState.CombatEvent carrierEvent = null;
+                for (GameState.CombatEvent event
+                        : game.getLastTurnCombatEventsInUnitConstructionOrder()) {
+                    if (FlashBattleRoutes.supportsCarrierPlaneStrike(event)) {
+                        assertTrue("Watchdog fixture has one carrier event", carrierEvent == null);
+                        carrierEvent = event;
+                    }
+                }
+                assertNotNull("Watchdog carrier retains its resolved source event", carrierEvent);
                 FlashBattleRoutes.CarrierPlaneStrike route = originalPlane.getRoute();
                 // Fixture only: extend a real actor's route beyond the source watchdog.
                 // Set it before construction so cached route length remains consistent.
@@ -320,11 +329,13 @@ public final class SourceBattleCleanupInstrumentedTest {
                 assertEquals("Fixture has one registered carrier", 1, sourceUnits.size());
                 sourceUnits.reset();
                 Method advanceCarrier = WorldDominationGame.class.getDeclaredMethod(
-                        "advanceCarrierPlaneUnit", FlashCarrierPlaneAnimation.class);
+                        "advanceCarrierPlaneUnit", FlashCarrierPlaneAnimation.class,
+                        GameState.CombatEvent.class);
                 advanceCarrier.setAccessible(true);
+                GameState.CombatEvent stalledCarrierEvent = carrierEvent;
                 sourceUnits.add(() -> {
                     try {
-                        return (Boolean) advanceCarrier.invoke(app, plane);
+                        return (Boolean) advanceCarrier.invoke(app, plane, stalledCarrierEvent);
                     } catch (ReflectiveOperationException error) {
                         throw new AssertionError("Stalled carrier source update", error);
                     }

@@ -12,9 +12,14 @@ public final class SourceBattleUnitPlayback {
 
     private final ArrayList<FrameAction> entries = new ArrayList<>(32);
 
-    /** Register once when the source-ordered battle factory constructs the group. */
+    /** Register an action already arranged in source View visitation order. */
     public void add(FrameAction action) {
         entries.add(Objects.requireNonNull(action, "action"));
+    }
+
+    /** Register in Unit construction order; View visits the active array in reverse. */
+    public void addConstructed(FrameAction action) {
+        entries.add(0, Objects.requireNonNull(action, "action"));
     }
 
     public boolean advanceFrame() {

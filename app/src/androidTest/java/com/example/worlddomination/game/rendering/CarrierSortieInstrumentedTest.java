@@ -39,7 +39,7 @@ public final class CarrierSortieInstrumentedTest {
                     invoke(app, "confirmTurnAndPreparePlayback");
 
                     List<GameState.CombatEvent> events =
-                            state.getLastTurnCombatEventsInSourcePresentationOrder();
+                            state.getLastTurnCombatEventsInUnitConstructionOrder();
                     @SuppressWarnings("unchecked")
                     List<FlashCarrierPlaneAnimation> animations =
                             (List<FlashCarrierPlaneAnimation>) field(WorldDominationGame.class,
@@ -47,37 +47,50 @@ public final class CarrierSortieInstrumentedTest {
                     assertEquals("Two ship records must produce five actual payload outcomes", 5,
                             events.size());
                     assertEquals(5, animations.size());
-                    // Physical source spawn construction is reversed; activation uses record ordinals.
-                    int[] attackers = {1, 1, 1, 0, 0};
-                    int[] payloadIndices = {0, 1, 2, 0, 1};
-                    float[] expectedX = {353.95f, 316.95f, 287.95f, 458.5f, 421.5f};
-                    float[] expectedY = {68f, 91f, 105f, 68.75f, 91.75f};
+                    // Presenter reverses Battle's spawn array: the earlier human record
+                    // constructs first, and each record reverses its payload offsets.
+                    int[] attackers = {0, 0, 1, 1, 1};
+                    // Battle's reversed payload enumeration records source sh indices;
+                    // Presenter reverses the spawn array again for physical Units.
+                    int[] resolvedPayloadIndices = {1, 0, 2, 1, 0};
+                    int[] physicalPlaneIndices = {0, 1, 0, 1, 2};
+                    float[] expectedX = {458.5f, 421.5f, 353.95f, 316.95f, 287.95f};
+                    float[] expectedY = {68.75f, 91.75f, 68f, 91f, 105f};
+                    float[] sourcePhysicalX = {421.5f, 458.5f, 287.95f, 316.95f, 353.95f};
+                    float[] sourcePhysicalY = {91.75f, 68.75f, 105f, 91f, 68f};
                     int[] delays = new int[5];
                     for (int i = 0; i < events.size(); i++) {
                         GameState.CombatEvent event = events.get(i);
                         assertEquals("Record owner at payload " + i,
                                 attackers[i], event.attackerPlayerId);
                         assertEquals("Source-local plane index at payload " + i,
-                                payloadIndices[i], event.shipPayloadIndex);
+                                resolvedPayloadIndices[i], event.shipPayloadIndex);
                         assertTrue(FlashBattleRoutes.supportsCarrierPlaneStrike(event));
                         FlashCarrierPlaneAnimation animation = animations.get(i);
                         FlashBattleRoutes.CarrierPlaneStrike route =
                                 (FlashBattleRoutes.CarrierPlaneStrike) field(
                                         FlashCarrierPlaneAnimation.class, "route").get(animation);
-                        assertEquals(payloadIndices[i], route.planeIndex);
+                        assertEquals("Physical source plane index at payload " + i,
+                                physicalPlaneIndices[i], route.planeIndex);
                         assertEquals(expectedX[i], route.start.x, 0.001f);
                         assertEquals(expectedY[i], route.start.y, 0.001f);
+                        SourceCarrierPlanePlayback source = animation.getSourcePlayback();
+                        assertNotNull("source physical aircraft " + i, source);
+                        assertEquals("source physical X " + i,
+                                sourcePhysicalX[i], source.getX(), 0.001d);
+                        assertEquals("source physical Y " + i,
+                                sourcePhysicalY[i], source.getY(), 0.001d);
                         delays[i] = field(FlashCarrierPlaneAnimation.class,
                                 "delayTicks").getInt(animation);
                     }
                     assertEquals(delays[0], delays[1]);
-                    assertEquals(delays[0], delays[2]);
-                    assertEquals(delays[3], delays[4]);
-                    assertEquals("Human resource record precedes its battle record", 2, delays[3]);
+                    assertEquals(delays[2], delays[3]);
+                    assertEquals(delays[2], delays[4]);
+                    assertEquals("Human resource record precedes its battle record", 2, delays[0]);
                     assertEquals("AI battle follows the human record on the next source tick", 3,
-                            delays[0]);
-                    assertTrue("Human activates before AI despite reverse construction order",
-                            delays[3] < delays[2]);
+                            delays[2]);
+                    assertTrue("Human activates before AI",
+                            delays[1] < delays[2]);
                 } catch (Throwable error) {
                     failure.set(error);
                 } finally {
