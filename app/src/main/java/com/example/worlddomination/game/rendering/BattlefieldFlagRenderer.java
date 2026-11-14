@@ -20,6 +20,8 @@ public final class BattlefieldFlagRenderer implements Disposable {
     private final FlashColorTransform[] playerColors = new FlashColorTransform[6];
     private ShaderProgram shader;
     private int sourceTicks;
+    private int canonicalTicks;
+    private boolean battleActive;
 
     public BattlefieldFlagRenderer(OriginalFlashAnimationAssets assets) {
         this.assets = assets;
@@ -30,8 +32,31 @@ public final class BattlefieldFlagRenderer implements Disposable {
         for (int i = 1; i <= 5; i++) playerColors[i] = FlashColorTransform.forPlayerColor(i);
     }
 
-    public void reset() { sourceTicks = 0; }
-    public void tick() { sourceTicks = BattlefieldFlagState.animationFrame(sourceTicks + 1L); }
+    public void reset() {
+        sourceTicks = 0;
+        canonicalTicks = 0;
+        battleActive = false;
+    }
+
+    /** Source refresh seeks canonical flags, then BattlePlayback creates fresh clips. */
+    public void beginBattle() {
+        reset();
+        battleActive = true;
+    }
+
+    /** The discarded battle root must not advance the canonical flag cloth. */
+    public void endBattle() {
+        sourceTicks = canonicalTicks;
+        battleActive = false;
+    }
+
+    public void tick() {
+        sourceTicks = BattlefieldFlagState.animationFrame(sourceTicks + 1L);
+        if (!battleActive) canonicalTicks = sourceTicks;
+    }
+
+    int getFrameIndex() { return sourceTicks; }
+    int getCanonicalFrameIndex() { return canonicalTicks; }
 
     public void draw(SpriteBatch batch, Rectangle mapBounds, GameState game) {
         batch.setColor(1, 1, 1, 1);

@@ -22,9 +22,11 @@ final class CityBioloadCloudRenderer {
             * BattlefieldCityLayout.CITIES_PER_PLAYER;
 
     private final OriginalFlashAnimationAssets assets;
-    private final BioloadCloudAnimation[] cityClouds =
-            new BioloadCloudAnimation[CITY_COUNT];
-    private final int[] activationCounts = new int[CITY_COUNT];
+    private final CloudState canonicalState = new CloudState();
+    private final CloudState battleState = new CloudState();
+    private CloudState activeState = canonicalState;
+    private BioloadCloudAnimation[] cityClouds = canonicalState.cityClouds;
+    private int[] activationCounts = canonicalState.activationCounts;
     private ResolvedArtwork[] cloudArtwork;
     private TextureRegion[] cloudRegions;
     private FlashSpriteTransform[] cloudTransforms;
@@ -87,11 +89,53 @@ final class CityBioloadCloudRenderer {
         this.assets = assets;
     }
 
-    void reset(GameState game) {
+    private static final class CloudState {
+        final BioloadCloudAnimation[] cityClouds = new BioloadCloudAnimation[CITY_COUNT];
+        final int[] activationCounts = new int[CITY_COUNT];
+    }
+
+    void beginBattle(GameState game) {
+        // Freeze existing canonical clouds. Do not eagerly create clouds from
+        // resolved effects: the legacy updateTargets path runs on the next tick.
+        // Source projectile-owned biological callbacks are ported separately.
+        activate(battleState);
+        clear(battleState);
+        if (game == null) return;
         for (int address = 0; address < CITY_COUNT; address++) {
-            cityClouds[address] = null;
-            activationCounts[address] = 0;
+            if (canonicalState.cityClouds[address] != null) {
+                activationCounts[address] = 1;
+                cityClouds[address] = new BioloadCloudAnimation(
+                        sourceIndependentSeed(game.getTurn(), address, 1));
+            }
         }
+    }
+
+    void endBattle() {
+        clear(battleState);
+        activate(canonicalState);
+    }
+
+    void resetBoth(GameState game) {
+        clear(battleState);
+        activate(canonicalState);
+        reset(game);
+    }
+
+    private void activate(CloudState state) {
+        activeState = state;
+        cityClouds = state.cityClouds;
+        activationCounts = state.activationCounts;
+    }
+
+    private static void clear(CloudState state) {
+        for (int address = 0; address < CITY_COUNT; address++) {
+            state.cityClouds[address] = null;
+            state.activationCounts[address] = 0;
+        }
+    }
+
+    void reset(GameState game) {
+        clear(activeState);
         updateTargets(game);
     }
 
