@@ -32,6 +32,7 @@ public final class SourceCarrierPlanePlayback {
     private int liftOffCount;
     private int stopCount;
     private boolean paintedWaitingPose;
+    private boolean activeAndMoving;
     private boolean bodyAttached = true;
     private boolean removed;
     private String action = "waitForLiftOff";
@@ -87,6 +88,10 @@ public final class SourceCarrierPlanePlayback {
         if (removed) return false;
         presentWaitingFrame();
         if (!recordActivated) return false;
+        // Unit.activeAndMoving becomes true on the first activated record
+        // visit, including the remaining waitForLiftOff visits. View's anti
+        // target selection uses this flag before the aircraft starts moving.
+        activeAndMoving = true;
         if ("waitForLiftOff".equals(action)) {
             liftOffCount++;
             if (liftOffCount >= route.planeIndex * 20) action = "liftOff";
@@ -180,6 +185,19 @@ public final class SourceCarrierPlanePlayback {
                 (int) Math.round(((angle / 360d * 100d) / 100d) * 24d));
     }
 
+    /** View.updateAnti reads Unit.anti_direction after the Unit's own visit.
+     *  The resulting bearing is retained for the following trail birth; the
+     *  body frame remains the ordinary unitDirection seek for this visit.
+     */
+    public void applySourceAntiDirection(double antiX, double antiY) {
+        if (!activeAndMoving || removed) return;
+        // ship_plane has anti_type "air". View also has a ship-specific
+        // updateAnti call under 400 pixels, but its generic air callback runs
+        // at any distance. Both assign the same stored raw bearing.
+        double radians = Math.atan2(-(y - antiY), x - antiX);
+        angle = Math.round((radians / Math.PI) * 180d) + 181d;
+    }
+
     private static double sourceDouble(float value) {
         return Double.parseDouble(Float.toString(value));
     }
@@ -208,5 +226,6 @@ public final class SourceCarrierPlanePlayback {
     public int getLiftOffCount() { return liftOffCount; }
     public int getStopCount() { return stopCount; }
     public boolean isBodyAttached() { return bodyAttached; }
+    public boolean isActiveAndMoving() { return activeAndMoving; }
     public boolean isRemoved() { return removed; }
 }

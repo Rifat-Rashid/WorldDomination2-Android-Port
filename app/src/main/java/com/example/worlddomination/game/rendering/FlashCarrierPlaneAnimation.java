@@ -240,7 +240,7 @@ public final class FlashCarrierPlaneAnimation
 
     @Override
     public boolean isVisible() {
-        return actor.visible;
+        return actor.visible && (sourcePlayback == null || sourcePlayback.isActiveAndMoving());
     }
 
     public String getImpactLinkage() {
