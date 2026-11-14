@@ -29,6 +29,7 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.example.worlddomination.game.audio.OriginalAudio;
+import com.example.worlddomination.game.audio.AircraftAudioPlayback;
 import com.example.worlddomination.game.assets.OriginalCityAssets;
 import com.example.worlddomination.game.assets.OriginalBattleDisplayAssets;
 import com.example.worlddomination.game.assets.OriginalFlashAnimationAssets;
@@ -242,6 +243,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private final List<FlashSubmarineAnimation> submarineBattleAnimations = new ArrayList<>();
     private final List<FlashCarrierPlaneAnimation> carrierPlaneAnimations = new ArrayList<>();
     private final List<FlashStandalonePlaneAnimation> standalonePlaneAnimations = new ArrayList<>();
+    private final java.util.Map<Object, AircraftAudioPlayback.Owner> aircraftAudioOwners =
+            new java.util.IdentityHashMap<>();
     private final List<FlashAntiDefenseTrackingAnimation> antiDefenseTrackingAnimations =
             new ArrayList<>();
     private final List<FlashSatelliteAnimation> satelliteBattleAnimations = new ArrayList<>();
@@ -948,11 +951,16 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 : animation.tickSourceFrame(turnPlaybackSequence.isReadyForBattle()
                     && event.battleStartNum <= battleRecordClock.getActivatedRecordCount());
         updateAircraftTrailDisplay(animation.getSourceTrail());
-        if (animation.takeTakeoffCue()) {
-            audio.play(OriginalAudio.Cue.CARRIERJET_TAKEOFF);
-        }
-        if (animation.takeFlightCue()) {
-            animation.setFlightSoundId(audio.loop(OriginalAudio.Cue.CARRIERJET_FLIGHT));
+        AircraftAudioPlayback.Owner voice = aircraftAudioOwners.get(animation);
+        if (voice != null) {
+            if (animation.takeTakeoffCue()) voice.requestTakeoff();
+            if (animation.getSourcePlayback() != null) {
+                voice.setSourceVolumePercent(animation.getSourcePlayback()
+                        .getSourceSoundVolumePercent());
+                voice.setSourcePanPercent(animation.getSourcePlayback()
+                        .getSourceSoundPanPercent());
+                if (animation.getSourcePlayback().takeSoundStop()) voice.stop();
+            }
         }
         if (impact) {
             applyProjectileCityImpact(event);
@@ -970,8 +978,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             }
         }
         if (animation.isFinished()) {
-            audio.stop(OriginalAudio.Cue.CARRIERJET_FLIGHT,
-                    animation.getFlightSoundId());
+            stopAircraftAudio(animation);
             carrierPlaneAnimations.remove(animation);
         }
         return false;
@@ -986,19 +993,15 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                     && event.battleStartNum <= battleRecordClock.getActivatedRecordCount());
         updateAircraftTrailDisplay(animation.getSourceTrail());
         if (depths != null) depths.afterUnitFrame();
-        if (animation.takeTakeoffCue()) {
-            if (depths != null) {
-                // The source bridge coalesces the first eight soundAction requests.
-                if (!animation.hasSourceTakeoffRequested() && audio.isSoundEnabled())
-                    animation.setSourceTakeoffSoundId(
-                            audio.playInstance(animation.getTakeoffCue(), 0f));
-            } else audio.play(animation.getTakeoffCue());
-        }
-        if (animation.takeFlightCue()) {
-            if (animation.loopsFlightCue()) {
-                animation.setFlightSoundId(audio.loop(animation.getFlightCue()));
-            } else {
-                audio.play(animation.getFlightCue());
+        AircraftAudioPlayback.Owner voice = aircraftAudioOwners.get(animation);
+        if (voice != null) {
+            if (animation.takeTakeoffCue()) voice.requestTakeoff();
+            if (animation.getSourcePlayback() != null) {
+                voice.setSourceVolumePercent(animation.getSourcePlayback()
+                        .getSourceSoundVolumePercent());
+                voice.setSourcePanPercent(animation.getSourcePlayback()
+                        .getSourceSoundPanPercent());
+                if (animation.getSourcePlayback().takeSoundStop()) voice.stop();
             }
         }
         if (animation.getSourcePlayback() != null
@@ -1008,7 +1011,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             applyProjectileCityImpact(event, false);
             audio.play(OriginalAudio.Cue.EXPLOSION_SMALL3,
                     sourceAudioPan((float) animation.getSourcePlayback().getDeathSoundX()));
-            animation.stopSourceTakeoff(audio);
         }
         if (impact) {
             applyProjectileCityImpact(event);
@@ -1024,8 +1026,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             }
         }
         if (animation.isFinished()) {
-            audio.stop(OriginalAudio.Cue.CARRIERJET_FLIGHT,
-                    animation.getFlightSoundId());
+            stopAircraftAudio(animation);
             standalonePlaneAnimations.remove(animation);
         }
         return false;
@@ -1210,6 +1211,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     /** The phone adapter releases playback at the endBattle handoff. */
     private void finishBattlePresentation() {
         audio.finishSatelliteAudio();
+        audio.finishAircraftAudio();
         battleRecordClock.finishBattle();
         battleInterfaceFrames.reset();
         sourceStoppedClips.reset();
@@ -1247,20 +1249,21 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     private void clearCarrierPlaneAnimations() {
         for (FlashCarrierPlaneAnimation animation : carrierPlaneAnimations) {
-            audio.stop(OriginalAudio.Cue.CARRIERJET_FLIGHT, animation.getFlightSoundId());
+            stopAircraftAudio(animation);
         }
         carrierPlaneAnimations.clear();
     }
 
     private void clearStandalonePlaneAnimations() {
         for (FlashStandalonePlaneAnimation animation : standalonePlaneAnimations) {
-            animation.stopSourceTakeoff(audio);
-            if (animation.loopsFlightCue()) {
-                audio.stop(OriginalAudio.Cue.CARRIERJET_FLIGHT,
-                        animation.getFlightSoundId());
-            }
+            stopAircraftAudio(animation);
         }
         standalonePlaneAnimations.clear();
+    }
+
+    private void stopAircraftAudio(Object animation) {
+        AircraftAudioPlayback.Owner voice = aircraftAudioOwners.remove(animation);
+        if (voice != null) voice.stop();
     }
 
     private FlashAntiDefenseTrackingAnimation addAntiDefenseTrackingAnimation(GameState.CombatEvent event,
@@ -3771,6 +3774,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     private void beginNewGameSetup() {
         audio.finishSatelliteAudio();
+        audio.finishAircraftAudio();
         GameSetup nextSetup = setup == null
                 ? new GameSetup(System.nanoTime()) : setup.createNextSetup();
         stopScoreCounterSound();
@@ -5058,6 +5062,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                         SourceCombatAnimationMapping.linkageFor(event), cue, presentationRandom,
                         carrierPayloadCounts.get(event.battleStartNum));
                 carrierPlaneAnimations.add(planeAnimation);
+                aircraftAudioOwners.put(planeAnimation,
+                        audio.createAircraftAudio(AircraftAudioPlayback.Kind.FIGHTER));
                 sourceAircraftTrails.put(planeAnimation.getSourceTrail(),
                         new SourceAircraftTrailDisplay(battlefieldDisplay,
                                 planeAnimation.getSourceTrail(), event.attackerPlayerId,
@@ -5085,6 +5091,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                         route, playerColor, recordDelay,
                         SourceCombatAnimationMapping.linkageFor(event), cue, presentationRandom);
                 standalonePlaneAnimations.add(planeAnimation);
+                aircraftAudioOwners.put(planeAnimation, audio.createAircraftAudio(
+                        "plane002".equals(route.linkage) ? AircraftAudioPlayback.Kind.CARRIER
+                                : AircraftAudioPlayback.Kind.FIGHTER));
                 if (planeAnimation.getSourceTrail() != null)
                     sourceAircraftTrails.put(planeAnimation.getSourceTrail(),
                             new SourceAircraftTrailDisplay(battlefieldDisplay,

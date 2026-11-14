@@ -78,9 +78,6 @@ public final class FlashStandalonePlaneAnimation
     private float orbitCenterX;
     private float orbitCenterY;
     private float distanceTravelled;
-    private long flightSoundId = -1L;
-    private long sourceTakeoffSoundId = -1L;
-    private boolean sourceTakeoffRequested;
     private boolean takeoffCuePending;
     private boolean flightCuePending;
     private boolean impactPending;
@@ -186,7 +183,7 @@ public final class FlashStandalonePlaneAnimation
         }
 
         activeTicks++;
-        if (activeTicks == 1) {
+        if (activeTicks <= PLANE_COUNT_TO_FREE_FLIGHT) {
             takeoffCuePending = true;
         }
         int takeoffTicks = "plane001".equals(route.linkage)
@@ -589,24 +586,4 @@ public final class FlashStandalonePlaneAnimation
         return route.linkage.equals("plane002");
     }
 
-    public long getFlightSoundId() {
-        return flightSoundId;
-    }
-
-    public boolean hasSourceTakeoffRequested() { return sourceTakeoffRequested; }
-    public long getSourceTakeoffSoundId() { return sourceTakeoffSoundId; }
-    public void setSourceTakeoffSoundId(long id) {
-        sourceTakeoffSoundId = id;
-        sourceTakeoffRequested = true;
-    }
-
-    /** Stops only this Unit's owned voice; muting or another Unit may share the cue. */
-    public void stopSourceTakeoff(OriginalAudio audio) {
-        audio.stop(takeoffCue, sourceTakeoffSoundId);
-        sourceTakeoffSoundId = -1L;
-    }
-
-    public void setFlightSoundId(long soundId) {
-        flightSoundId = soundId;
-    }
 }

@@ -3,6 +3,7 @@ package com.example.worlddomination.game.rendering;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 import com.badlogic.gdx.audio.Sound;
+import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Pixmap;
@@ -19,6 +20,8 @@ import com.badlogic.gdx.utils.JsonReader;
 import com.badlogic.gdx.utils.JsonValue;
 import com.example.worlddomination.game.WorldDominationGame;
 import com.example.worlddomination.game.audio.OriginalAudio;
+import com.example.worlddomination.game.audio.AircraftAudioPlayback;
+import com.example.worlddomination.game.audio.SatelliteAudioPlayback;
 import com.example.worlddomination.game.simulation.GameSetup;
 import com.example.worlddomination.game.simulation.GameState;
 import com.example.worlddomination.game.simulation.ReferenceRandom;
@@ -28,12 +31,15 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.IdentityHashMap;
 import static org.junit.Assert.*;
 
 /** An unmodified legal turn22 fighter interception, with its concurrent AI suicide Unit. */
@@ -55,15 +61,23 @@ public final class SourceInterceptedAircraftInstrumentedTest {
         List<Map<String,String>> city = csv("city.csv");
         assertEquals(378, source.size());
         SourceBattleCleanupInstrumentedTest.runInGame(app -> {
-            OriginalAudio audio = (OriginalAudio) field(app, "audio");
+            OriginalAudio originalAudio = (OriginalAudio) field(app, "audio");
+            int[] tick = {0};
+            MusicFactory music = new MusicFactory(tick);
+            AircraftAudioPlayback aircraft = new AircraftAudioPlayback(music::create,
+                    .8f, Runnable::run);
+            Constructor<OriginalAudio> audioConstructor = OriginalAudio.class
+                    .getDeclaredConstructor(SatelliteAudioPlayback.class,
+                            AircraftAudioPlayback.class);
+            audioConstructor.setAccessible(true);
+            OriginalAudio audio = audioConstructor.newInstance(
+                    new SatelliteAudioPlayback(cue -> null, .8f), aircraft);
+            set(app, "audio", audio);
             @SuppressWarnings("unchecked") Map<OriginalAudio.Cue,Sound> sounds =
                     (Map<OriginalAudio.Cue,Sound>) field(audio, "sounds");
-            int[] tick = {0};
-            Voice takeoff = new Voice(tick, 901), hit = new Voice(tick, 902);
-            Sound oldTakeoff = sounds.put(OriginalAudio.Cue.FIGHTER_TAKEOFF, takeoff.spy());
+            Voice hit = new Voice(tick, 902);
             Sound oldHit = sounds.put(OriginalAudio.Cue.EXPLOSION_SMALL3, hit.spy());
-            boolean muted = !audio.isSoundEnabled();
-            if (audio.isSoundEnabled() == (muteThroughTick > 0)) audio.toggleSound();
+            if (muteThroughTick > 0) audio.toggleSound();
             try {
                 GameState game = ready();
                 set(app, "game", game);
@@ -95,10 +109,30 @@ public final class SourceInterceptedAircraftInstrumentedTest {
                 Method update = WorldDominationGame.class.getDeclaredMethod("fixedUpdate", float.class);
                 update.setAccessible(true);
                 int roleCursor = 0;
+                MusicVoice takeoff = null, flight = null;
+                int soundStartTick = muteThroughTick > 0 ? muteThroughTick + 1 : 196;
                 for (int frame = 0; frame <= 377; frame++) {
                     tick[0] = frame;
                     if (muteThroughTick > 0 && frame == muteThroughTick + 1) audio.toggleSound();
                     if (frame > 0) update.invoke(app, 1f / 24f);
+                    if (frame == soundStartTick) {
+                        @SuppressWarnings("unchecked")
+                        IdentityHashMap<Object, AircraftAudioPlayback.Owner> owners =
+                                (IdentityHashMap<Object, AircraftAudioPlayback.Owner>)
+                                        field(app, "aircraftAudioOwners");
+                        AircraftAudioPlayback.Owner owner = owners.get(plane);
+                        assertNotNull("source aircraft has its own music", owner);
+                        takeoff = music.get(OriginalAudio.Cue.FIGHTER_TAKEOFF);
+                        flight = music.get(OriginalAudio.Cue.FIGHTER_FLIGHT);
+                        assertNotNull(takeoff); assertNotNull(flight);
+                        assertEquals("one takeoff request", 1, takeoff.plays);
+                        assertEquals("flight awaits completion", 0, flight.plays);
+                        double privateBefore = random.copy().nextDouble();
+                        takeoff.complete(); // Explicit synthetic completion; source clock remains real.
+                        assertEquals("completion starts retained flight", 1, flight.plays);
+                        assertEquals("music callback does not draw battle RNG", privateBefore,
+                                random.copy().nextDouble(), 0d);
+                    }
                     Map<String,String> row = source.get(frame);
                     assertEquals("source tick", frame, integer(row,"tick"));
                     assertEquals("action t"+frame, row.get("action"), core.getAction());
@@ -151,22 +185,27 @@ public final class SourceInterceptedAircraftInstrumentedTest {
                         }
                     }
                     assertEquals("one coalesced takeoff t"+frame,
-                            frame < Math.max(196,muteThroughTick+1) ? 0 : 1,takeoff.plays);
-                    assertEquals("owned takeoff stop t"+frame,frame < 314 ? 0 : 1,takeoff.stops);
+                            frame < soundStartTick ? 0 : 1,
+                            takeoff == null ? 0 : takeoff.plays);
+                    assertEquals("owned takeoff stop t"+frame,frame < 314 ? 0 : 1,
+                            takeoff == null ? 0 : takeoff.stops);
+                    assertEquals("owned flight stop t"+frame,frame < 314 ? 0 : 1,
+                            flight == null ? 0 : flight.stops);
                     assertEquals("one death cue t"+frame,frame < 314 ? 0 : 1,hit.plays);
                     if (frame == 313 && muteThroughTick == 0)
                         SourceInterceptedAircraftTintPixels.verify(app,binding);
                     if (frame == 314 && muteThroughTick == 0) verifyExplosionPixels(app,binding);
                 }
                 assertEquals(roles.size(),roleCursor);
-                assertEquals(901L,takeoff.stoppedId);
+                assertNotNull(takeoff); assertNotNull(flight);
                 assertEquals(314,takeoff.stopTick);
+                assertEquals(314,flight.stopTick);
                 assertEquals(314,hit.playTick);
                 assertEquals(-.8793181211582746f,hit.pan,.000001f);
             } finally {
-                restore(sounds,OriginalAudio.Cue.FIGHTER_TAKEOFF,oldTakeoff);
                 restore(sounds,OriginalAudio.Cue.EXPLOSION_SMALL3,oldHit);
-                if (audio.isSoundEnabled() == muted) audio.toggleSound();
+                set(app, "audio", originalAudio);
+                audio.dispose();
             }
         });
     }
@@ -287,6 +326,49 @@ public final class SourceInterceptedAircraftInstrumentedTest {
     private static void set(Object owner,String name,Object value) throws Exception { Field f=owner.getClass().getDeclaredField(name);f.setAccessible(true);f.set(owner,value); }
     private static void invoke(Object owner,String name) throws Exception { Method m=owner.getClass().getDeclaredMethod(name);m.setAccessible(true);m.invoke(owner); }
     private static void restore(Map<OriginalAudio.Cue,Sound> sounds,OriginalAudio.Cue cue,Sound value) { if(value==null)sounds.remove(cue);else sounds.put(cue,value); }
+    private static final class MusicFactory {
+        final int[] tick;
+        final Map<OriginalAudio.Cue, MusicVoice> voices = new HashMap<>();
+        MusicFactory(int[] tick) { this.tick = tick; }
+        Music create(OriginalAudio.Cue cue) {
+            MusicVoice voice = new MusicVoice(cue, tick);
+            assertNull("one pair for the intercepted Unit", voices.put(cue, voice));
+            return voice.music;
+        }
+        MusicVoice get(OriginalAudio.Cue cue) { return voices.get(cue); }
+    }
+    private static final class MusicVoice implements InvocationHandler {
+        final OriginalAudio.Cue cue;
+        final int[] tick;
+        final Music music;
+        Music.OnCompletionListener listener;
+        int plays, stops, stopTick = -1;
+        boolean playing;
+        MusicVoice(OriginalAudio.Cue cue, int[] tick) {
+            this.cue = cue;
+            this.tick = tick;
+            music = (Music) Proxy.newProxyInstance(Music.class.getClassLoader(),
+                    new Class<?>[]{Music.class}, this);
+        }
+        void complete() {
+            playing = false;
+            if (listener != null) listener.onCompletion(music);
+        }
+        @Override public Object invoke(Object proxy, Method method, Object[] args) {
+            switch (method.getName()) {
+                case "play": plays++; playing = true; return null;
+                case "stop": stops++; playing = false; stopTick = tick[0]; return null;
+                case "pause": playing = false; return null;
+                case "isPlaying": return playing;
+                case "setOnCompletionListener": listener = (Music.OnCompletionListener) args[0]; return null;
+                case "setPan": case "setVolume": case "setLooping": case "dispose":
+                case "setPosition": return null;
+                case "getVolume": case "getPosition": return 0f;
+                case "isLooping": return false;
+                default: throw new AssertionError("Unexpected Music method " + method.getName());
+            }
+        }
+    }
     private static final class Voice {
         final int[] tick; final long id; int plays,stops,playTick=-1,stopTick=-1; long stoppedId=-1; float pan;
         Voice(int[] tick,long id){this.tick=tick;this.id=id;}

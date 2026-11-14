@@ -81,6 +81,7 @@ public final class OriginalAudio {
 
     private final Map<Cue, Sound> sounds = new EnumMap<>(Cue.class);
     private final SatelliteAudioPlayback satellitePlayback;
+    private final AircraftAudioPlayback aircraftPlayback;
     private Music theme;
     private Cue ambientCue;
     private long ambientSoundId = -1L;
@@ -91,10 +92,26 @@ public final class OriginalAudio {
 
     public OriginalAudio() {
         satellitePlayback = new SatelliteAudioPlayback(this::loadMusic, EFFECT_VOLUME);
+        aircraftPlayback = new AircraftAudioPlayback(this::loadMusic, EFFECT_VOLUME,
+                OriginalAudio::dispatchAircraftResume);
     }
 
     OriginalAudio(SatelliteAudioPlayback satellitePlayback) {
         this.satellitePlayback = Objects.requireNonNull(satellitePlayback, "satellitePlayback");
+        aircraftPlayback = new AircraftAudioPlayback(this::loadMusic, EFFECT_VOLUME,
+                OriginalAudio::dispatchAircraftResume);
+    }
+
+    OriginalAudio(SatelliteAudioPlayback satellitePlayback, AircraftAudioPlayback aircraftPlayback) {
+        this.satellitePlayback = Objects.requireNonNull(satellitePlayback, "satellitePlayback");
+        this.aircraftPlayback = Objects.requireNonNull(aircraftPlayback, "aircraftPlayback");
+    }
+
+    private static void dispatchAircraftResume(Runnable resume) {
+        // AndroidMusic completion callbacks already in the GL queue must run
+        // before an aircraft decides whether to resume takeoff or its next cue.
+        if (Gdx.app == null) resume.run();
+        else Gdx.app.postRunnable(resume);
     }
 
     public void initialize() {
@@ -162,6 +179,7 @@ public final class OriginalAudio {
         // The phone reference mutes active channels without cancelling their
         // completion callbacks. New laser starts remain gated by play().
         satellitePlayback.setMuted(!soundEnabled);
+        aircraftPlayback.setMuted(!soundEnabled);
         if (!soundEnabled) {
             for (Sound sound : sounds.values()) {
                 sound.stop();
@@ -273,6 +291,7 @@ public final class OriginalAudio {
 
     public void pause() {
         satellitePlayback.pause();
+        aircraftPlayback.pause();
         resumeMusicAfterPause = musicEnabled && theme != null && theme.isPlaying();
         if (resumeMusicAfterPause) {
             theme.pause();
@@ -284,6 +303,7 @@ public final class OriginalAudio {
 
     public void resume() {
         satellitePlayback.resume();
+        aircraftPlayback.resume();
         if (resumeMusicAfterPause && musicEnabled && theme != null) {
             theme.play();
         }
@@ -297,6 +317,7 @@ public final class OriginalAudio {
 
     public void dispose() {
         satellitePlayback.dispose();
+        aircraftPlayback.dispose();
         if (theme != null) {
             theme.dispose();
             theme = null;
@@ -320,6 +341,15 @@ public final class OriginalAudio {
     public void finishSatelliteAudio() {
         satellitePlayback.finish();
     }
+
+    /** One source Unit owns both cues; actual completion advances its linkage. */
+    public AircraftAudioPlayback.Owner createAircraftAudio(AircraftAudioPlayback.Kind kind) {
+        aircraftPlayback.setMuted(!soundEnabled);
+        return aircraftPlayback.createOwner(kind);
+    }
+
+    /** BattlePlayback.finish closes every surviving Unit's sound and pending callback. */
+    public void finishAircraftAudio() { aircraftPlayback.finish(); }
 
     /** Presenter_interface.soundAction('religion') chooses one of four cues. */
     public static Cue massMediaRevealCue(int variant) {
