@@ -87,6 +87,9 @@ jobs:
       max-parallel: 6
       matrix:
         include:
+          - id: source-bomber-playback
+            check: Source bomber flight, paired smoke, and frame clocks
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.SourceBomberPlaybackTest" --tests "com.example.worlddomination.game.rendering.SourcePairedAircraftTrailTest" --tests "com.example.worlddomination.game.rendering.SourcePlane002FixtureIntegrityTest" --tests "com.example.worlddomination.game.rendering.SourceAircraftTrailDisplayTest"'
           - id: source-aircraft-audio
             check: Source aircraft audio callbacks and owned sound clocks
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.audio.AircraftAudioPlaybackTest" --tests "com.example.worlddomination.game.audio.SourceAircraftAudioFixtureIntegrityTest" --tests "com.example.worlddomination.game.rendering.SourceAircraftAudioClockTest"'

@@ -22,6 +22,39 @@ import static org.junit.Assert.*;
 
 /** Source smoke attaches after all legal Unit constructors, at the root's next depth. */
 public final class SourceAircraftTrailDisplayTest {
+    @Test public void expiredPairStillOccupiesTwoConsecutiveBirthDepths() {
+        BattlefieldDisplayState display = new BattlefieldDisplayState();
+        SourceAircraftTrail trail = new SourceAircraftTrail(
+                SourceAircraftTrail.Origin.PAIRED_PLANE, new ReferenceRandom(22L));
+        SourceAircraftTrailDisplay owner = new SourceAircraftTrailDisplay(display, trail, 0, 0);
+        int firstDepth = display.nextDepth();
+        trail.tick(0d, 0d, 20d, 30d, 0d);
+        assertEquals(0, trail.getAttachedCount());
+        owner.afterUnitFrame();
+        assertEquals(firstDepth, trail.getDepth(0));
+        assertEquals("right attaches before left expires", firstDepth + 1, trail.getDepth(1));
+        assertEquals("both removed depths are reusable", firstDepth, display.nextDepth());
+    }
+
+    @Test public void pairedNamesAndStaleRemovalPreserveAReusedRootDepth() {
+        BattlefieldDisplayState display = new BattlefieldDisplayState();
+        display.attach(BattlefieldDisplayState.Kind.EFFECT, 0, "anchor", this, 100);
+        SourceAircraftTrail trail = new SourceAircraftTrail(
+                SourceAircraftTrail.Origin.PAIRED_PLANE, new ReferenceRandom(0L));
+        SourceAircraftTrailDisplay owner = new SourceAircraftTrailDisplay(display, trail, 0, 0);
+        trail.tick(0d, 0d, 20d, 30d, 0d);
+        owner.afterUnitFrame();
+        assertEquals("unit1trailLeft0", display.clips().atDepth(101).getValue().name);
+        assertEquals("unit1trailRight0", display.clips().atDepth(102).getValue().name);
+        trail.removeTrail();
+        owner.afterUnitFrame();
+        SourceDisplayList.Entry<BattlefieldDisplayState.Item> replacement = display.attach(
+                BattlefieldDisplayState.Kind.EFFECT, 0, "laterEffect", this, display.nextDepth());
+        owner.afterUnitFrame();
+        assertTrue(replacement.isAttached());
+        assertSame(replacement, display.clips().atDepth(101));
+    }
+
     @Test
     public void legalPlaneAndShipRecordsSetPhysicalTrailNamesAndDepths() throws Exception {
         verifyFirstBirth("plane1", gameReadyForPlane(true), 22513, 1, 0);

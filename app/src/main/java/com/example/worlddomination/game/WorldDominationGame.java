@@ -5100,7 +5100,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                                     planeAnimation.getSourceTrail(), event.attackerPlayerId,
                                     precedingUnitParameter));
                 SourceInterceptedAircraftDisplayDepths aircraftDepths = null;
-                if (planeAnimation.getSourcePlayback() != null && route.intercepted) {
+                if (planeAnimation.getSourcePlayback() != null && (route.intercepted
+                        || "plane002".equals(route.linkage))) {
                     aircraftDepths = new SourceInterceptedAircraftDisplayDepths(
                             battlefieldDisplay, planeAnimation, precedingUnitParameter,
                             sourceStoppedClips);
@@ -5111,7 +5112,17 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                         antiDefenseTargetLock);
                 sourceUnitPlayback.addConstructed(() -> {
                     boolean stop = advanceStandalonePlaneUnit(planeAnimation, event, sourceAircraftDepths);
-                    if (!stop && anti != null) advanceAntiDefenseUnit(anti);
+                    if (!stop && anti != null) {
+                        advanceAntiDefenseUnit(anti);
+                        if (planeAnimation.getSourcePlayback() != null
+                                && planeAnimation.getSourceTrail().isPaired()) {
+                            FlashBattleRoutes.Point origin = anti.getBuildingPosition();
+                            // The source retains this raw bearing for the NEXT
+                            // smoke visit; 18-way turret frames lose precision.
+                            planeAnimation.getSourcePlayback().applySourceAntiDirection(
+                                    origin.x, origin.y);
+                        }
+                    }
                     return stop;
                 });
                 continue;

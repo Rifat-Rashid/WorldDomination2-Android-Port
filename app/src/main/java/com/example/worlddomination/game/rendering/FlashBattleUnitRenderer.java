@@ -981,7 +981,8 @@ public final class FlashBattleUnitRenderer {
             FlashStandalonePlaneAnimation.Actor actor = animation.getActor();
             FlashBattleRoutes.StandalonePlaneStrike route = animation.getRoute();
             // The intercepted source path paints these peers at occupied root depths.
-            if (animation.getSourcePlayback() != null && route.intercepted) continue;
+            if (animation.getSourcePlayback() != null && (route.intercepted
+                    || "plane002".equals(route.linkage))) continue;
             if (smokeRegion != null) {
                 for (int index = 0; index < animation.getTrailSlotCount(); index++) {
                     float alpha = animation.getTrailAlpha(index);
@@ -1057,7 +1058,7 @@ public final class FlashBattleUnitRenderer {
         if (!actor.visible) return;
         boolean shadow = kind == BattlefieldDisplayState.Kind.UNIT_SHADOW;
         boolean tint = kind == BattlefieldDisplayState.Kind.UNIT_TINT;
-        String linkage = shadow ? "plane001_shadow" : tint ? "plane001_tint" : "plane001";
+        String linkage = route.linkage + (shadow ? "_shadow" : tint ? "_tint" : "");
         float previousColor = batch.getPackedColor();
         ShaderProgram previousShader = batch.getShader();
         try {
@@ -1068,7 +1069,10 @@ public final class FlashBattleUnitRenderer {
                     + crop / BattlefieldCityLayout.sourceScale(mapBounds);
             sourceAircraftRoleActor.sourceY = actor.sourceY
                     + (shadow ? actor.shadowYOffset : 0f);
-            sourceAircraftRoleActor.sourceFrame = shadow ? 0 : actor.sourceFrame;
+            // The shadow wrapper has one frame, but its nested mc follows the
+            // same captured direction as tintMC (View.f_37).
+            sourceAircraftRoleActor.sourceFrame = shadow || tint
+                    ? actor.sourceTintFrame : actor.sourceFrame;
             sourceAircraftRoleActor.islandPlayerId = route.targetPlayerId;
             sourceAircraftRoleActor.scale = actor.scale;
             // Color.setTransform owns the tint alpha (75% for green/red/yellow).

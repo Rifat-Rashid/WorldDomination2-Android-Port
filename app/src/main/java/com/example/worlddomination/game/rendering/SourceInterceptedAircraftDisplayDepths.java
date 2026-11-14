@@ -2,7 +2,7 @@ package com.example.worlddomination.game.rendering;
 
 import java.util.Objects;
 
-/** Physical plane001 roles and its retained rocket_self effect in the battle root. */
+/** Physical source aircraft roles and a retained rocket_self effect in the battle root. */
 public final class SourceInterceptedAircraftDisplayDepths implements SourceStoppedClipQueue.Clip {
     public final FlashStandalonePlaneAnimation animation;
     private final BattlefieldDisplayState display;
@@ -24,8 +24,9 @@ public final class SourceInterceptedAircraftDisplayDepths implements SourceStopp
         this.display = Objects.requireNonNull(display, "display");
         this.animation = Objects.requireNonNull(animation, "animation");
         this.stoppedClips = Objects.requireNonNull(stoppedClips, "stoppedClips");
-        if (animation.getSourcePlayback() == null || !animation.getRoute().intercepted)
-            throw new IllegalArgumentException("An intercepted source plane001 is required");
+        if (animation.getSourcePlayback() == null || !(animation.getRoute().intercepted
+                || "plane002".equals(animation.getRoute().linkage)))
+            throw new IllegalArgumentException("A source interception or bomber is required");
         if (precedingUnitParameter < 0 || precedingUnitParameter % 5 != 0)
             throw new IllegalArgumentException("Invalid source Unit parameter");
         unitName = "unit" + (precedingUnitParameter + 5) / 5;
@@ -74,8 +75,14 @@ public final class SourceInterceptedAircraftDisplayDepths implements SourceStopp
         }
     }
 
-    /** Presenter.allUnitsDone removes the stopped effect; the target dot remains. */
-    @Override public void detach() { display.remove(explosion); }
+    /** Presenter.allUnitsDone removes retained peers; the target dot remains. */
+    @Override public void detach() {
+        display.remove(body);
+        display.remove(shadow);
+        display.remove(tint);
+        display.remove(explosion);
+        animation.getActor().visible = false;
+    }
     public SourceDisplayList.Entry<BattlefieldDisplayState.Item> body() { return body; }
     public SourceDisplayList.Entry<BattlefieldDisplayState.Item> shadow() { return shadow; }
     public SourceDisplayList.Entry<BattlefieldDisplayState.Item> tint() { return tint; }

@@ -1,0 +1,100 @@
+{
+  "schema": "source-plane002-provenance-v1",
+  "capturePolicy": "legal GameState actions; no outcome or stock overrides",
+  "observerPolicy": "Read stored Unit.frame; never call mutating Unit.unitDirection getter while sampling. ClipObject getters and copied RNG peek are read-only.",
+  "normalization": "Every nonfinite source JSON number becomes JSON null. In particular source trail widths/heights are undefined NaN; no finite dimensions are inferred.",
+  "cases": {
+    "success": {
+      "rawPath": "analysis/plane002-source-audit/plane002-city2.json",
+      "rawSha256": "4e636a9ec87ab794e59f359ac760793c6e49f9008776ed82fc8964b564606033",
+      "cleanRawPath": "analysis/plane002-source-audit/clean-oracle/plane002-city2-alias.json",
+      "cleanRawSha256": "04c8f2f5fa3037bc5dab1fcacbaf1418842605c373bf3776e0f5fc3300c37680",
+      "observerContaminatedShadowRawSha256": "32f4d928a94959178141628f0119c89d9bd5f132a0809bafd8712211a4ca547f",
+      "literalShadowRawSha256": "b6d967bfec423132089bffc10274e12692ee4be29a41dbc06c3371194a7197dc",
+      "captureScript": "analysis/plane002-source-audit/capture.py",
+      "captureScriptSha256": "e6db601932ea8c0e838de04e095609e4ebb63c66fb933ec8dabf3fb9a0bb482a",
+      "cleanCaptureScript": "analysis/plane002-source-audit/clean-oracle/success_alias.py",
+      "cleanCaptureScriptSha256": "15465f18ad660efb5abe1933eb8a6164bbde51b9cdc58ea7860de972f9627d45",
+      "observerEffectComparisonSha256": "2123fdda84d768b0da9061eb604c84200d1c02d749da23e927a663351f50a5d3",
+      "sourceSha256": {
+        "wd2/generated/Unit.py": "bc54c0e6c46f4e33bbb20e786c755f93aaba5d3d7224b0120eeeccc81eef8539",
+        "wd2/generated/View.py": "2de8afd493f28e36c3a94afa96b80795d685b8b023b12dc9d9ed634692c3accf",
+        "wd2/generated/Battle.py": "c6e9c790d6a624b0425344260b4de904db5197ea756fdf3a2de912eb8cd73c10",
+        "wd2/generated/Presenter.py": "eb8aad7305c870b157a3199b7d8213edb22f4fd35d169395cee3db95b12c08b9",
+        "wd2/setup_menu.py": "5633326451e768a84a14bde04e452043ba7fac2617a4c71b7b36dcd0495f0c4a",
+        "wd2/movieclip_host.py": "a489c5f3b33a1fdac4448afd07f4ca63aa32d676440dc573805ab11fb4002765",
+        "WorldDomination2.swf": "fe60c4d8793a23e7ddd59ddcb406b5471540e28d64f7552d17308fbb269e6fe1"
+      },
+      "fixture": "source-plane002-success.json",
+      "fixtureSha256": "4fea37caf1730ad0e87bc56acf3c8caf3270c3b989280d418d4d03f4a334a5f5",
+      "rows": 572,
+      "trailEvents": 88,
+      "nonfiniteReplacedByPath": {
+        "rows.unit[]": 1468,
+        "rows.trails[][]": 1460
+      },
+      "undefinedTrailDimensions": {
+        "_width": 730,
+        "_height": 730
+      },
+      "milestones": {
+        "firstActiveMovement": 272,
+        "firstAttachedTrail": 272,
+        "firstCircularFlight": 334,
+        "firstFlyOff": 381,
+        "firstDeath": null,
+        "firstBodyDetached": 570,
+        "firstWrapperInactive": 509,
+        "firstExplosionAttached": null,
+        "firstExplosionDetached": null,
+        "battleDone": 571
+      }
+    },
+    "intercept": {
+      "rawPath": "analysis/plane002-source-audit/intercept-search/intercepted-plane002-seed0-city2-extra8.json",
+      "rawSha256": "f9d68a469e22ca8653c9775966ce73c04720626f0fc77a007cad765c8c8ed8d0",
+      "cleanRawPath": "analysis/plane002-source-audit/clean-oracle/intercepted-plane002-seed0-city2-extra8.json",
+      "cleanRawSha256": "8f168361a49fe5b0524191d703c5361a7bcc482309c9535ac79124d9b52cf2b7",
+      "observerContaminatedShadowRawSha256": "0757674bbff3ae1c0213f36f7dc65988cf46dcfe333a7a96b413f0ae37fe9ca0",
+      "literalShadowRawSha256": null,
+      "captureScript": "analysis/plane002-source-audit/intercept-search/search.py",
+      "captureScriptSha256": "0c19ab6f4a0f1e2be99bd8d7b05cca96ec3c0f435c8efd69d5195986a0d68cd6",
+      "cleanCaptureScript": "analysis/plane002-source-audit/clean-oracle/intercept.py",
+      "cleanCaptureScriptSha256": "5887ae1a96f3dede99af676b69b7c013d128ae2514fae3e7e0399f14a1f52722",
+      "observerEffectComparisonSha256": "2123fdda84d768b0da9061eb604c84200d1c02d749da23e927a663351f50a5d3",
+      "sourceSha256": {
+        "wd2/generated/Unit.py": "bc54c0e6c46f4e33bbb20e786c755f93aaba5d3d7224b0120eeeccc81eef8539",
+        "wd2/generated/View.py": "2de8afd493f28e36c3a94afa96b80795d685b8b023b12dc9d9ed634692c3accf",
+        "wd2/generated/Battle.py": "c6e9c790d6a624b0425344260b4de904db5197ea756fdf3a2de912eb8cd73c10",
+        "wd2/generated/Presenter.py": "eb8aad7305c870b157a3199b7d8213edb22f4fd35d169395cee3db95b12c08b9",
+        "wd2/setup_menu.py": "5633326451e768a84a14bde04e452043ba7fac2617a4c71b7b36dcd0495f0c4a",
+        "wd2/movieclip_host.py": "a489c5f3b33a1fdac4448afd07f4ca63aa32d676440dc573805ab11fb4002765",
+        "WorldDomination2.swf": "fe60c4d8793a23e7ddd59ddcb406b5471540e28d64f7552d17308fbb269e6fe1"
+      },
+      "fixture": "source-plane002-intercept.json",
+      "fixtureSha256": "1d9f1755eb38850eed7fffdde736bb2b411b70a86269c4be95643e23c7ccca5d",
+      "rows": 364,
+      "trailEvents": 88,
+      "nonfiniteReplacedByPath": {
+        "rows.unit[]": 908,
+        "rows.trails[][]": 1296
+      },
+      "undefinedTrailDimensions": {
+        "_width": 648,
+        "_height": 648
+      },
+      "milestones": {
+        "firstActiveMovement": 195,
+        "firstAttachedTrail": 195,
+        "firstCircularFlight": 257,
+        "firstFlyOff": null,
+        "firstDeath": 299,
+        "firstBodyDetached": 299,
+        "firstWrapperInactive": 300,
+        "firstExplosionAttached": 299,
+        "firstExplosionDetached": 362,
+        "battleDone": 363
+      }
+    }
+  }
+}
