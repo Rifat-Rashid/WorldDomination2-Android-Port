@@ -31,19 +31,20 @@ public final class SourceCarrierPlaneDisplayDepths implements SourceStoppedClipQ
             throw new IllegalArgumentException("A source ship plane and Unit parameter are required");
         unitName = "unit" + (precedingUnitParameter + 5) / 5;
         // SourceBattleUnitAllocation already installed these physical handles.
-        // Keep their depths and legacy carrier paint path; only effects gain a
-        // new root child when Unit attaches them.
-        body = find(unitName);
-        shadow = find("shadow_" + unitName);
-        tint = find("tint" + unitName);
-        dot = find("targetDot" + unitName);
+        // Rebind each role at its occupied depth rather than allocating peers.
+        body = bind(unitName, BattlefieldDisplayState.Kind.UNIT_BODY);
+        shadow = bind("shadow_" + unitName, BattlefieldDisplayState.Kind.UNIT_SHADOW);
+        tint = bind("tint" + unitName, BattlefieldDisplayState.Kind.UNIT_TINT);
+        dot = bind("targetDot" + unitName, BattlefieldDisplayState.Kind.UNIT_DOT);
     }
 
-    private SourceDisplayList.Entry<BattlefieldDisplayState.Item> find(String name) {
+    private SourceDisplayList.Entry<BattlefieldDisplayState.Item> bind(
+            String name, BattlefieldDisplayState.Kind kind) {
         SourceDisplayList<BattlefieldDisplayState.Item> clips = display.clips();
         for (int index = 0; index < clips.size(); index++) {
             SourceDisplayList.Entry<BattlefieldDisplayState.Item> entry = clips.entryAt(index);
-            if (name.equals(entry.getValue().name)) return entry;
+            if (name.equals(entry.getValue().name))
+                return display.attach(kind, 0, name, this, entry.getDepth());
         }
         throw new IllegalStateException("Missing constructed ship role " + name);
     }
@@ -97,6 +98,7 @@ public final class SourceCarrierPlaneDisplayDepths implements SourceStoppedClipQ
 
     /** Presenter.allUnitsDone detaches the retained body and effect; dot remains. */
     @Override public void detach() {
+        animation.getSourcePlayback().clearStoppedRoles();
         display.remove(body);
         display.remove(shadow);
         display.remove(tint);

@@ -1,0 +1,22 @@
+{
+  "sourceProbeSHA256": "0cc2147075dfc9d5301e07ccac8e62d1abdf9bdd7887ead649b7603c0e4ba536",
+  "reducerSHA256": "46d70227bb568290c533a177d18cde31518143800d91819f713b7af1dd1aeed8",
+  "records": {
+    "intercept": {
+      "sourceCapture": "carrier-role-followup/carrier-roles-target1.csv",
+      "sourceSHA256": "bce07f3b5ef76621814df4935409523b2eed5ecb401d30bed9d0548c22d30f42",
+      "fixturePath": "source-carrier-roles-intercept.csv",
+      "fixtureSHA256": "ad7fd0932a0cb10e4af27ce67a62dc5a32f9dfdb632012eae3c630eeb8feb000",
+      "rows": 5796,
+      "lastTick": 482
+    },
+    "success": {
+      "sourceCapture": "carrier-role-followup/carrier-roles-target2.csv",
+      "sourceSHA256": "080aab40ae74f74b780e82282ac7f82aad7531e15579bb74225aa6dcc3319aa4",
+      "fixturePath": "source-carrier-roles-success.csv",
+      "fixtureSHA256": "24cf95fb8351b91993597c17fbc59913065eac95e7e6e8e7e2ace2869251776c",
+      "rows": 6792,
+      "lastTick": 565
+    }
+  }
+}
