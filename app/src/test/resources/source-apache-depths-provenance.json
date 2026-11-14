@@ -1,0 +1,16 @@
+{
+  "scenario": "research soldier2+resources; produce soldier100%+resources; soldier2 attack player1 city0+resources",
+  "seed": 0,
+  "sourceSwfSha256": "fe60c4d8793a23e7ddd59ddcb406b5471540e28d64f7552d17308fbb269e6fe1",
+  "sourceUnitAsSha256": "7e765e9d5bf72eb0b24b3163f0faed627cc996c4e9bd4b7075ab962d6623d1ba",
+  "sourceViewAsSha256": "205221608f0bb54e326cceb12f0fc92920da714b4a8daf7dce933fcd6df25f40",
+  "csvSha256": {
+    "2": "a720b0399247882b0d00af6abca65bccf5021f8a6c2be136c3cd362f514fe2df",
+    "4": "f1b4871a90b12e1cdcecb683f5684850a0d2e284f53586fcfaf49d94805b4749"
+  },
+  "lastSourceTick": {
+    "2": 525,
+    "4": 526
+  },
+  "generatorSha256": "bf10b6ef934e8813042d92f5a55a1875076581427627df3b84373ef3a48f1355"
+}

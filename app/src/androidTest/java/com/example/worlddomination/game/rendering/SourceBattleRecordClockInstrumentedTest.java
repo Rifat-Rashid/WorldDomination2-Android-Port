@@ -28,7 +28,7 @@ import static org.junit.Assert.*;
 /** Exercises the source record clock through three actual native turns. */
 @RunWith(AndroidJUnit4.class)
 public final class SourceBattleRecordClockInstrumentedTest {
-    @Test public void labelsRecordSlotsAndCarriedCounterGateRealBoatPlayback() throws Exception {
+    @Test public void labelsAndFreshSnapshotsGateRealBoatPlayback() throws Exception {
         try (GameActivityScenario scenario = GameActivityScenario.launch(MainActivity.class)) {
             CountDownLatch done = new CountDownLatch(1);
             AtomicReference<Throwable> failure = new AtomicReference<>();
@@ -79,11 +79,10 @@ public final class SourceBattleRecordClockInstrumentedTest {
                     List<FlashSoldierOneAnimation> boats = boats(app);
                     assertEquals(2, boats.size());
                     openBattleGate(app, playback, clock);
-                    for (int tick = 0; tick < 20; tick++) advance(app);
                     assertWaitingBoat(boats.get(1));
                     assertWaitingBoat(boats.get(0));
                     advance(app);
-                    assertMovingBoat(boats.get(1)); // Slot one activates on eligible tick 21.
+                    assertMovingBoat(boats.get(1)); // Fresh Python snapshot: eligible tick 1.
                     assertWaitingBoat(boats.get(0)); // Slot two waits one more source tick.
                     capture(app, "source-record-clock-first-boat.png");
                     advance(app);
@@ -98,12 +97,10 @@ public final class SourceBattleRecordClockInstrumentedTest {
                     boats = boats(app);
                     assertEquals(1, boats.size());
                     openBattleGate(app, playback, clock);
-                    advance(app); // Pending building zeroes the carried20.
-                    assertWaitingBoat(boats.get(0));
-                    advance(app); // Resources startNum1 activates.
+                    advance(app); // Fresh snapshot: Resources startNum1 activates.
                     assertWaitingBoat(boats.get(0));
                     advance(app); // Soldier startNum2 activates.
-                    assertMovingBoat(boats.get(0)); // Pending building resets carry: tick 3.
+                    assertMovingBoat(boats.get(0)); // Soldier startNum2: eligible tick 2.
                     capture(app, "source-record-clock-building-reset.png");
                     finishTurn(app, playback);
                     assertEquals(3, game.getTurn());

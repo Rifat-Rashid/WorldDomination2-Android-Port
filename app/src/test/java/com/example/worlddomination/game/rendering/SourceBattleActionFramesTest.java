@@ -37,6 +37,7 @@ public final class SourceBattleActionFramesTest {
         owner.begin(Arrays.asList(secondClip, firstClip), Arrays.asList(first, second), random);
 
         assertEquals(1 + expected.nextInt(109), firstClip.getNestedFrameIndex(4010, 146));
+        expected.nextInt(109); // New religion parent first enters default mus.
         assertEquals(1 + expected.nextInt(109), secondClip.getNestedFrameIndex(4015, 163));
         assertEquals(expected.nextDouble(), random.nextDouble(), 0d);
     }
@@ -77,6 +78,7 @@ public final class SourceBattleActionFramesTest {
         owner.begin(clips, events, random);
         int[] frames = new int[5];
         for (int index = 0; index < 5; index++) {
+            if (index != 0) expected.nextInt(109); // Discarded default-mus child.
             frames[index] = 2 + expected.nextInt(109);
             assertEquals(frames[index] - 1,
                     clips.get(index).getNestedFrameIndex(IDS[index], LENGTHS[index]));
@@ -207,6 +209,66 @@ public final class SourceBattleActionFramesTest {
         assertEquals("source before first marine activation", 0.8943997782145745,
                 random.copy().nextDouble(), 0d);
         assertEquals("source unit3 x at tick 291", 178, 160 + random.nextInt(21));
+    }
+
+    @Test
+    public void newNonDefaultReligionRunsBothSourceFrameOneCallbacks() throws Exception {
+        GameState.ActionBuildingEvent event = event(4, 1, "bhu", "religion", 0);
+        FlashActionBuildingAnimation clip = new FlashActionBuildingAnimation(event);
+        ReferenceRandom random = new ReferenceRandom(0L);
+        ReferenceRandom expected = random.copy();
+        expected.nextInt(109); // Symbol4085 frame1 -> flame4010.
+        int expectedFrame = 1 + expected.nextInt(109); // frame5 -> flame4028.
+        SourceBattleActionFrames owner = new SourceBattleActionFrames();
+        owner.begin(Arrays.asList(clip), Arrays.asList(event), random);
+        assertEquals(expectedFrame, clip.getNestedFrameIndex(4028, 130));
+        assertEquals(expected.nextDouble(), random.copy().nextDouble(), 0d);
+        ReferenceRandom retained = random.copy();
+        owner.begin(Arrays.asList(clip), Arrays.asList(event), random);
+        assertEquals("same physical child does not reenter frame1", retained.nextDouble(),
+                random.copy().nextDouble(), 0d);
+        owner.reset();
+        expected = random.copy();
+        expected.nextInt(109);
+        expectedFrame = 1 + expected.nextInt(109);
+        owner.begin(Arrays.asList(clip), Arrays.asList(event), random);
+        assertEquals("fresh parent recreates both children", expectedFrame,
+                clip.getNestedFrameIndex(4028, 130));
+        assertEquals(expected.nextDouble(), random.copy().nextDouble(), 0d);
+    }
+
+    @Test
+    public void occupiedDepthSwapsChangeSimultaneousFlameCallbackOrder() throws Exception {
+        GameState.ActionBuildingEvent first = event(0, 1, "mus", "religion", 0);
+        GameState.ActionBuildingEvent second = event(3, 2, "mus", "religion", 1);
+        FlashActionBuildingAnimation firstClip = new FlashActionBuildingAnimation(first);
+        FlashActionBuildingAnimation secondClip = new FlashActionBuildingAnimation(second);
+        BattlefieldDisplayState display = new BattlefieldDisplayState();
+        SourceDisplayList.Entry<BattlefieldDisplayState.Item> high = display.attach(
+                BattlefieldDisplayState.Kind.ACTION_BUILDING, 0, "ab0_1", firstClip, 200);
+        SourceDisplayList.Entry<BattlefieldDisplayState.Item> low = display.attach(
+                BattlefieldDisplayState.Kind.ACTION_BUILDING, 7, "ab3_2", secondClip, 176);
+        ReferenceRandom random = new ReferenceRandom(17L);
+        SourceBattleActionFrames owner = new SourceBattleActionFrames();
+        owner.begin(Arrays.asList(firstClip, secondClip), Arrays.asList(first, second), random);
+        setFlameFrame(owner, 0, 146);
+        setFlameFrame(owner, 7, 146);
+        display.clips().swapDepths(high, low);
+        ReferenceRandom expected = random.copy();
+        owner.tick(display);
+        assertEquals(1 + expected.nextInt(109), firstClip.getNestedFrameIndex(4010, 146));
+        assertEquals(1 + expected.nextInt(109), secondClip.getNestedFrameIndex(4010, 146));
+        assertEquals(expected.nextDouble(), random.copy().nextDouble(), 0d);
+        display.remove(low);
+        setFlameFrame(owner, 0, 146);
+        setFlameFrame(owner, 7, 146);
+        int detachedFrame = secondClip.getNestedFrameIndex(4010, 146);
+        expected = random.copy();
+        owner.tick(display);
+        assertEquals(1 + expected.nextInt(109), firstClip.getNestedFrameIndex(4010, 146));
+        assertEquals("detached parent never advances", detachedFrame,
+                secondClip.getNestedFrameIndex(4010, 146));
+        assertEquals(expected.nextDouble(), random.copy().nextDouble(), 0d);
     }
 
     private static void queueResources(GameState game) {

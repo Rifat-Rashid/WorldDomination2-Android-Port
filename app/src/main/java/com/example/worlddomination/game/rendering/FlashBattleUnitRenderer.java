@@ -61,6 +61,7 @@ public final class FlashBattleUnitRenderer {
                     + "  gl_FragColor = transformed * v_color;\n"
                     + "}\n";
     private final OriginalFlashAnimationAssets assets;
+    private final FlashApacheMarineAnimation.Actor targetDotActor = createTargetDotActor();
     private final FlashStencilMasks actionBuildingMasks = new FlashStencilMasks();
     private final float[] actionBuildingVertices = new float[20];
     private final int[][] actionBuildingMaskEnds =
@@ -71,6 +72,26 @@ public final class FlashBattleUnitRenderer {
 
     public FlashBattleUnitRenderer(OriginalFlashAnimationAssets assets) {
         this.assets = assets;
+    }
+
+    private static FlashApacheMarineAnimation.Actor createTargetDotActor() {
+        FlashApacheMarineAnimation.Actor actor = new FlashApacheMarineAnimation.Actor();
+        actor.linkage = "redDot";
+        actor.visible = true;
+        return actor;
+    }
+
+    /** Unit attaches a separate tinted dot at the battle parent's origin. */
+    public void drawTargetDot(SpriteBatch batch, Rectangle bounds, String colorName) {
+        if (!assets.isLoaded()) return;
+        ShaderProgram previousShader = batch.getShader();
+        float previousColor = batch.getPackedColor();
+        try {
+            drawApacheClip(batch, bounds, targetDotActor, "redDot", apacheTint(colorName));
+        } finally {
+            batch.setShader(previousShader);
+            batch.setPackedColor(previousColor);
+        }
     }
 
     public void draw(SpriteBatch batch, Rectangle mapBounds,
@@ -148,30 +169,31 @@ public final class FlashBattleUnitRenderer {
     /** Draws source action-building clips at their two persistent island positions. */
     public void drawActionBuildings(SpriteBatch batch, Rectangle mapBounds,
                                     List<FlashActionBuildingAnimation> animations) {
-        if (!assets.isLoaded()) {
-            return;
+        for (FlashActionBuildingAnimation animation : animations) {
+            drawActionBuilding(batch, mapBounds, animation);
         }
+        batch.setColor(com.badlogic.gdx.graphics.Color.WHITE);
+    }
+
+    /** Draws one persistent parent clip at its current source display depth. */
+    public void drawActionBuilding(SpriteBatch batch, Rectangle mapBounds,
+                                   FlashActionBuildingAnimation animation) {
+        if (!assets.isLoaded() || animation == null || animation.getAlpha() <= 0f) return;
         FlashAnimationTimeline timeline = assets.getTimeline(
                 OriginalFlashAnimationAssets.ACTION_BUILDINGS_TIMELINE);
-        if (timeline == null) {
-            return;
-        }
-        for (FlashActionBuildingAnimation animation : animations) {
-            if (animation.getAlpha() <= 0f) {
-                continue;
-            }
-            FlashAnimationTimeline.Frame frame = timeline.getFrameByLabel(
-                    animation.frameName);
-            if (frame == null) {
-                frame = timeline.getFrame(0);
-            }
+        if (timeline == null) return;
+        FlashAnimationTimeline.Frame frame = timeline.getFrameByLabel(animation.frameName);
+        if (frame == null) frame = timeline.getFrame(0);
+        float previousColor = batch.getPackedColor();
+        try {
             FlashBattleRoutes.Point position = FlashBattleRoutes.actionBuildingPosition(
                     animation.playerId, animation.slot);
             actionBuildingTransformScratch[0].setIdentity();
             drawActionBuildingFrame(batch, mapBounds, frame, position.x, position.y,
                     animation, animation.getAlpha(), 0);
+        } finally {
+            batch.setPackedColor(previousColor);
         }
-        batch.setColor(com.badlogic.gdx.graphics.Color.WHITE);
     }
 
     private void drawActionBuildingFrame(SpriteBatch batch, Rectangle mapBounds,
@@ -296,6 +318,42 @@ public final class FlashBattleUnitRenderer {
             }
         }
         return false;
+    }
+
+    /** Draws a separate body or tint peer, without grouping it with other actors. */
+    public void drawApacheActor(SpriteBatch batch, Rectangle bounds,
+                                 FlashApacheMarineAnimation animation, int actorIndex,
+                                 boolean tint) {
+        FlashApacheMarineAnimation.Actor actor = animation.getActor(actorIndex);
+        if (!assets.isLoaded() || !actor.visible) return;
+        String linkage = actor.linkage;
+        if (tint) {
+            linkage = actorIndex == 0 ? "apache_tint"
+                    : "soldier001_shoot".equals(actor.linkage)
+                    ? "soldier001_shoot_tint" : "soldier001_tint";
+        }
+        ShaderProgram previousShader = batch.getShader();
+        float previousColor = batch.getPackedColor();
+        try {
+            drawApacheClip(batch, bounds, actor, linkage,
+                    tint ? apacheTint(animation.getColorName()) : null);
+        } finally {
+            batch.setShader(previousShader);
+            batch.setPackedColor(previousColor);
+        }
+    }
+
+    public void drawApacheShadow(SpriteBatch batch, Rectangle bounds,
+                                  FlashApacheMarineAnimation animation) {
+        if (!assets.isLoaded() || !animation.getApacheShadow().visible) return;
+        ShaderProgram previousShader = batch.getShader();
+        float previousColor = batch.getPackedColor();
+        try {
+            drawApacheClip(batch, bounds, animation.getApacheShadow(), "apache_shadow", null);
+        } finally {
+            batch.setShader(previousShader);
+            batch.setPackedColor(previousColor);
+        }
     }
 
     private static FlashColorTransform apacheTint(String colorName) {

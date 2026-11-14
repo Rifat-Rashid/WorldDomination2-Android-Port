@@ -48,6 +48,13 @@ public final class SourceBattleActionFrames {
                 }
             } else if (flames[index] == null
                     || flames[index].characterId != characterId) {
+                // View.showActionBuildingFromObj first enters the religion
+                // parent at its default `mus` frame, then seeks the selected
+                // religion. Both newly placed children run their frame-1 script.
+                // A retained religion parent instead keeps its current child.
+                if (flames[index] == null && characterId != FLAME_IDS[0]) {
+                    random.nextInt(109);
+                }
                 if (flames[index] != null && flames[index].animation != null)
                     flames[index].animation.clearFlameFrame();
                 Flame flame = new Flame(null, characterId,
@@ -84,15 +91,30 @@ public final class SourceBattleActionFrames {
     /** Advances attached child timelines, including retained slots during idle. */
     public void tick() {
         for (int index : DEPTH_ORDER) {
-            Flame flame = flames[index];
-            if (flame == null) continue;
-            if (flame.frameOneBased == flame.frameCount) {
-                flame.frameOneBased = 2 + random.nextInt(109);
-            } else {
-                flame.frameOneBased++;
-            }
-            flame.animation.setFlameFrame(flame.characterId, flame.frameOneBased);
+            advance(flames[index]);
         }
+    }
+
+    /** Battle depth swaps change the host's callback order as well as its drawing. */
+    public void tick(BattlefieldDisplayState display) {
+        SourceDisplayList<BattlefieldDisplayState.Item> clips =
+                Objects.requireNonNull(display, "display").clips();
+        for (int index = 0; index < clips.size(); index++) {
+            BattlefieldDisplayState.Item item = clips.entryAt(index).getValue();
+            if (item.kind != BattlefieldDisplayState.Kind.ACTION_BUILDING) continue;
+            Flame flame = flames[item.index];
+            if (flame != null && flame.animation == item.owner) advance(flame);
+        }
+    }
+
+    private void advance(Flame flame) {
+        if (flame == null) return;
+        if (flame.frameOneBased == flame.frameCount) {
+            flame.frameOneBased = 2 + random.nextInt(109);
+        } else {
+            flame.frameOneBased++;
+        }
+        flame.animation.setFlameFrame(flame.characterId, flame.frameOneBased);
     }
 
     /** Source religion label chooses Massmedia 1..4 only while sound is enabled. */
@@ -101,7 +123,7 @@ public final class SourceBattleActionFrames {
                 ? 1 + random.nextInt(4) : 0;
     }
 
-    /** New-game reset drops old physical clip phases and random-stream ownership. */
+    /** A new parent drops old physical clip phases and random-stream ownership. */
     public void reset() {
         for (int index = 0; index < SLOT_COUNT; index++) {
             if (flames[index] != null && flames[index].animation != null)

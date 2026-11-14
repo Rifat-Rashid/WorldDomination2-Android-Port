@@ -214,66 +214,72 @@ public final class BattlefieldCityRenderer {
             while (markerIndex < CITY_COUNT
                     && BattlefieldCityLayout.sourceDepth(CITY_RENDER_ORDER[markerIndex])
                     + 1500 < cityDepth) {
-                orderMarkerRenderer.drawCity(batch, mapBounds, game,
-                        CITY_RENDER_ORDER[markerIndex++]);
+                drawCityMarker(batch, mapBounds, game, CITY_RENDER_ORDER[markerIndex++]);
             }
-            int playerId = address / BattlefieldCityLayout.CITIES_PER_PLAYER;
-            int cityIndex = address % BattlefieldCityLayout.CITIES_PER_PLAYER;
-            GameState.PlayerState owner = game.getPlayerState(playerId);
-            CityState city = owner.getCity(cityIndex);
-            if (city == null) {
-                continue;
-            }
-            int cityAddress = playerId * BattlefieldCityLayout.CITIES_PER_PLAYER + cityIndex;
-            CityShrinkSequence sequence = citySequences[cityAddress];
-            int frameNumber = sequence.getFrameNumber();
-            if (frameNumber >= 1) {
-                Frame frame = cityAssets.getFrame(owner.getReligionCode(), frameNumber);
-                if (frame != null) {
-                    CitySpriteHitGeometry.setBounds(drawBounds, mapBounds, playerId,
-                            cityIndex, frame.offsetX, frame.offsetY,
-                            frame.region.getRegionWidth(), frame.region.getRegionHeight(),
-                            cityAssets.getArtworkScale());
-                    float red = batch.getColor().r;
-                    float green = batch.getColor().g;
-                    float blue = batch.getColor().b;
-                    float previousAlpha = batch.getColor().a;
-                    float alpha = sequence.getAlpha() / 100f;
-                    if (alpha < 1f) {
-                        batch.setColor(red, green, blue, previousAlpha * alpha);
-                    }
-                    BattlefieldCitySelection.Tint selection = BattlefieldCitySelection.tint(
-                            game, playerId, cityIndex, selectedEquipment);
-                    ShaderProgram previousShader = batch.getShader();
-                    if (selection != BattlefieldCitySelection.Tint.DEFAULT) {
-                        ensurePropagandaTintShader();
-                        if (propagandaTintShader == null)
-                            throw new IllegalStateException("Source city color shader is unavailable");
-                        FlashColorTransform tint = selection == BattlefieldCitySelection.Tint.RED
-                                ? FlashColorTransform.CITY_RED : FlashColorTransform.CITY_GREEN;
-                        batch.setShader(propagandaTintShader);
-                        propagandaTintShader.setUniformf("u_flashMultipliers", tint.redMultiplier,
-                                tint.greenMultiplier, tint.blueMultiplier, tint.alphaMultiplier);
-                        propagandaTintShader.setUniformf("u_flashAdditions", tint.redAdd,
-                                tint.greenAdd, tint.blueAdd, tint.alphaAdd);
-                    }
-                    batch.draw(frame.region, drawBounds.x, drawBounds.y,
-                            drawBounds.width, drawBounds.height);
-                    if (selection != BattlefieldCitySelection.Tint.DEFAULT)
-                        batch.setShader(previousShader);
-                    if (alpha < 1f) {
-                        batch.setColor(red, green, blue, previousAlpha);
-                    }
-                }
-            }
-            drawPropagandaBeams(batch, mapBounds, owner, playerId, cityIndex,
-                    cityAddress, sequence.getAlpha());
-            bioloadCloudRenderer.drawCity(batch, mapBounds, playerId, cityIndex);
+            drawCityBody(batch, mapBounds, game, selectedEquipment, address);
         }
         while (markerIndex < CITY_COUNT) {
-            orderMarkerRenderer.drawCity(batch, mapBounds, game,
-                    CITY_RENDER_ORDER[markerIndex++]);
+            drawCityMarker(batch, mapBounds, game, CITY_RENDER_ORDER[markerIndex++]);
         }
+    }
+
+    /** Draws one city root, including its retained child overlays and clouds. */
+    public void drawCityBody(SpriteBatch batch, Rectangle mapBounds, GameState game,
+                             String selectedEquipment, int address) {
+        if (game == null || address < 0 || address >= CITY_COUNT) return;
+        int playerId = address / BattlefieldCityLayout.CITIES_PER_PLAYER;
+        int cityIndex = address % BattlefieldCityLayout.CITIES_PER_PLAYER;
+        GameState.PlayerState owner = game.getPlayerState(playerId);
+        CityState city = owner.getCity(cityIndex);
+        if (city == null) return;
+        int cityAddress = playerId * BattlefieldCityLayout.CITIES_PER_PLAYER + cityIndex;
+        CityShrinkSequence sequence = citySequences[cityAddress];
+        int frameNumber = sequence.getFrameNumber();
+        if (frameNumber >= 1) {
+            Frame frame = cityAssets.getFrame(owner.getReligionCode(), frameNumber);
+            if (frame != null) {
+                CitySpriteHitGeometry.setBounds(drawBounds, mapBounds, playerId,
+                        cityIndex, frame.offsetX, frame.offsetY,
+                        frame.region.getRegionWidth(), frame.region.getRegionHeight(),
+                        cityAssets.getArtworkScale());
+                float red = batch.getColor().r;
+                float green = batch.getColor().g;
+                float blue = batch.getColor().b;
+                float previousAlpha = batch.getColor().a;
+                float alpha = sequence.getAlpha() / 100f;
+                if (alpha < 1f) batch.setColor(red, green, blue, previousAlpha * alpha);
+                BattlefieldCitySelection.Tint selection = BattlefieldCitySelection.tint(
+                        game, playerId, cityIndex, selectedEquipment);
+                ShaderProgram previousShader = batch.getShader();
+                if (selection != BattlefieldCitySelection.Tint.DEFAULT) {
+                    ensurePropagandaTintShader();
+                    if (propagandaTintShader == null)
+                        throw new IllegalStateException("Source city color shader is unavailable");
+                    FlashColorTransform tint = selection == BattlefieldCitySelection.Tint.RED
+                            ? FlashColorTransform.CITY_RED : FlashColorTransform.CITY_GREEN;
+                    batch.setShader(propagandaTintShader);
+                    propagandaTintShader.setUniformf("u_flashMultipliers", tint.redMultiplier,
+                            tint.greenMultiplier, tint.blueMultiplier, tint.alphaMultiplier);
+                    propagandaTintShader.setUniformf("u_flashAdditions", tint.redAdd,
+                            tint.greenAdd, tint.blueAdd, tint.alphaAdd);
+                }
+                batch.draw(frame.region, drawBounds.x, drawBounds.y,
+                        drawBounds.width, drawBounds.height);
+                if (selection != BattlefieldCitySelection.Tint.DEFAULT)
+                    batch.setShader(previousShader);
+                if (alpha < 1f) batch.setColor(red, green, blue, previousAlpha);
+            }
+        }
+        drawPropagandaBeams(batch, mapBounds, owner, playerId, cityIndex,
+                cityAddress, sequence.getAlpha());
+        bioloadCloudRenderer.drawCity(batch, mapBounds, playerId, cityIndex);
+    }
+
+    /** Draws the separately attached marker for one city at its own depth. */
+    public void drawCityMarker(SpriteBatch batch, Rectangle mapBounds, GameState game,
+                               int address) {
+        if (address < 0 || address >= CITY_COUNT) return;
+        orderMarkerRenderer.drawCity(batch, mapBounds, game, address);
     }
 
     private void drawPropagandaBeams(SpriteBatch batch, Rectangle mapBounds,

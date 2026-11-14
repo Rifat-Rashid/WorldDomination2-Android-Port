@@ -34,28 +34,40 @@ public final class BattlefieldFlagRenderer implements Disposable {
     public void tick() { sourceTicks = BattlefieldFlagState.animationFrame(sourceTicks + 1L); }
 
     public void draw(SpriteBatch batch, Rectangle mapBounds, GameState game) {
-        float scale = BattlefieldCityLayout.sourceScale(mapBounds);
         batch.setColor(1, 1, 1, 1);
         for (int island = 0; island < 5; island++) {
-            float x = BattlefieldCityLayout.sourceX(mapBounds,
-                    BattlefieldFlagState.sourceX(island), island);
-            float y = BattlefieldCityLayout.sourceY(mapBounds,
-                    BattlefieldFlagState.sourceY(island));
-            if (!assets.areBattlefieldFlagsLoaded()) continue;
-            int color = BattlefieldFlagState.color(game, island);
-            if (color == 0) continue;
-            FlashAnimationTimeline timeline = assets.getTimeline("flag_pole");
-            if (timeline == null) continue;
-            FlashAnimationTimeline.Frame frame = timeline.getFrameByLabel(
-                    BattlefieldFlagState.religion(game, island));
-            if (frame == null) continue;
+            drawIsland(batch, mapBounds, game, island);
+        }
+        batch.setColor(1, 1, 1, 1);
+    }
+
+    /** Draws one flag root and its nested pole and tint layers. */
+    public void drawIsland(SpriteBatch batch, Rectangle mapBounds, GameState game, int island) {
+        if (game == null || island < 0 || island >= 5
+                || !assets.areBattlefieldFlagsLoaded()) return;
+        int color = BattlefieldFlagState.color(game, island);
+        if (color == 0) return;
+        FlashAnimationTimeline timeline = assets.getTimeline("flag_pole");
+        if (timeline == null) return;
+        FlashAnimationTimeline.Frame frame = timeline.getFrameByLabel(
+                BattlefieldFlagState.religion(game, island));
+        if (frame == null) return;
+        float x = BattlefieldCityLayout.sourceX(mapBounds,
+                BattlefieldFlagState.sourceX(island), island);
+        float y = BattlefieldCityLayout.sourceY(mapBounds,
+                BattlefieldFlagState.sourceY(island));
+        float scale = BattlefieldCityLayout.sourceScale(mapBounds);
+        float previousColor = batch.getPackedColor();
+        batch.setColor(1, 1, 1, 1);
+        try {
             transforms[0].setIdentity();
             colors[0].identity();
             for (FlashAnimationTimeline.Layer layer : frame.layers) {
                 drawLayer(batch, layer, x, y, scale, color, 0);
             }
+        } finally {
+            batch.setPackedColor(previousColor);
         }
-        batch.setColor(1, 1, 1, 1);
     }
 
     private void drawLayer(SpriteBatch batch, FlashAnimationTimeline.Layer layer,

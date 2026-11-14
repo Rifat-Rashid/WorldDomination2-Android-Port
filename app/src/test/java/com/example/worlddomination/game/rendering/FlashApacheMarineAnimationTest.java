@@ -23,6 +23,26 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 public final class FlashApacheMarineAnimationTest {
+    @Test public void hiddenMarineTimelinesAutoplayAndWrapWithoutMovingOrDrawingRandom()
+            throws Exception {
+        FlashApacheMarineAnimation animation = createAnimation(2);
+        Field field = FlashApacheMarineAnimation.class.getDeclaredField("presentationRandom");
+        field.setAccessible(true);
+        ReferenceRandom random = (ReferenceRandom) field.get(animation);
+        double next = random.copy().nextDouble();
+        for (int tick = 1; tick <= 433; tick++) {
+            animation.advanceAttachedTimelines();
+            for (int actor = 1; actor <= 3; actor++) {
+                assertFalse(animation.getActor(actor).visible);
+                assertEquals(tick % 432, animation.getActor(actor).sourceFrame);
+                assertEquals(0f, animation.getActor(actor).sourceX, 0f);
+                assertEquals(0f, animation.getActor(actor).sourceY, 0f);
+            }
+            assertEquals(next, random.copy().nextDouble(), 0d);
+        }
+        assertEquals(0, animation.getActor(0).sourceFrame);
+    }
+
     @Test
     public void waitingApacheUsesSourceOriginThenHeliStartBeforeRecordDelay() throws Exception {
         FlashApacheMarineAnimation animation = createAnimation(2);

@@ -18,7 +18,7 @@ public final class SourceBattleRecordClock {
     private long elapsedTicks;
     private boolean battleActive;
 
-    /** Starts a new match, discarding any prior battle and carried counter. */
+    /** Starts a fresh model snapshot, discarding any prior battle and carried counter. */
     public void reset() {
         carriedCounter = 0;
         recordCount = 0;

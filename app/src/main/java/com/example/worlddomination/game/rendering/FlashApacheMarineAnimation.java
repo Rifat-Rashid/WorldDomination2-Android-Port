@@ -25,14 +25,26 @@ public final class FlashApacheMarineAnimation {
         public int islandPlayerId;
         public boolean visible;
         private Actor pairedClip;
+        private SourceStoppedClipQueue.Clip boundClip;
+
+        void bindClip(SourceStoppedClipQueue.Clip clip) { boundClip = clip; }
 
         @Override public void detach() {
             visible = false;
             if (pairedClip != null) pairedClip.visible = false;
+            if (boundClip != null) boundClip.detach();
         }
     }
 
+    /** Observes a source-visited marine after its exact-double movement step. */
+    public interface MarineFrameListener {
+        void onMarineFrame(int nativeActorIndex, double exactY,
+                           boolean walking, boolean firstShoot);
+    }
+
     private static final int MARINE_COUNT = 3;
+    // DefineSprite443 (marine) autoplays before View first seeks its visible pose.
+    public static final int MARINE_TIMELINE_FRAMES = 432;
     private static final int LIFTOFF_SETUP_TICKS = 2;
     private static final int LIFTOFF_TICKS = 25;
     // Unit.heli_unload tests unloadTimer >= 10 before incrementing it.
@@ -61,6 +73,11 @@ public final class FlashApacheMarineAnimation {
     private float apacheShadowYOffset;
     private final boolean[] marineQueued = new boolean[MARINE_COUNT];
     private ApachePhase apachePhase = ApachePhase.HELIPAD;
+    private MarineFrameListener marineFrameListener;
+
+    public void setMarineFrameListener(MarineFrameListener listener) {
+        marineFrameListener = listener;
+    }
 
     public FlashApacheMarineAnimation(FlashBattleRoutes.ApacheMarineAttack route,
                                       ReferenceRandom presentationRandom,
@@ -113,6 +130,16 @@ public final class FlashApacheMarineAnimation {
         tickSourceFrame();
     }
 
+    /** Attached hidden clips autoplay during labels and record delays, without RNG. */
+    public void advanceAttachedTimelines() {
+        for (MarineTrack marine : marines) {
+            if (!marine.started) {
+                marine.actor.sourceFrame = (marine.actor.sourceFrame + 1)
+                        % MARINE_TIMELINE_FRAMES;
+            }
+        }
+    }
+
     /** True when a removed marine ends View.f_37 before later wrappers. */
     public boolean tickSourceFrame() {
         if (isFinished()) {
@@ -125,9 +152,19 @@ public final class FlashApacheMarineAnimation {
 
         tickApache();
         syncApacheShadow();
-        for (MarineTrack marine : marines) {
+        for (int index = 0; index < MARINE_COUNT; index++) {
+            MarineTrack marine = marines[index];
             if (marine.started && !marine.finished) {
+                String oldLinkage = marine.actor.linkage;
                 if (marine.tick()) pendingAudioCues++;
+                if (marineFrameListener != null && !marine.removedThisTick) {
+                    boolean firstShoot = "marine".equals(oldLinkage)
+                            && "soldier001_shoot".equals(marine.actor.linkage);
+                    boolean walking = "marine".equals(marine.actor.linkage)
+                            && !marine.stopped && !marine.finished;
+                    marineFrameListener.onMarineFrame(index + 1, marine.y,
+                            walking, firstShoot);
+                }
                 if (marine.removedThisTick) return true;
             }
         }

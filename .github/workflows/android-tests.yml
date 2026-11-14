@@ -432,6 +432,9 @@ jobs:
           - id: apache-marine-playback-tests
             check: Apache and marine playback tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashApacheMarineAnimationTest" --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest.packagedStrikeAndInterceptionSymbolsMatchSourceTimelines" --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.marineDirectAttackUsesTheOriginalSealGunCue"'
+          - id: source-display-depths
+            check: Source battle clip occupancy and Apache depth order
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.SourceBattleOracleResourcesTest" --tests "com.example.worlddomination.game.rendering.SourceDisplayListTest" --tests "com.example.worlddomination.game.rendering.BattlefieldDisplayStateTest" --tests "com.example.worlddomination.game.rendering.SourceApacheDisplayDepthsTest" --tests "com.example.worlddomination.game.rendering.SourceBattleUnitAllocationTest" --tests "com.example.worlddomination.game.assets.OriginalBattleDisplayAssetsTest"'
           - id: source-action-flame-tests
             check: Source action flame timing and reveal audio
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.SourceBattleActionFramesTest" --tests "com.example.worlddomination.game.audio.OriginalAudioTest.religionLabelUsesTheFourRecoveredMassMediaVariations"'
