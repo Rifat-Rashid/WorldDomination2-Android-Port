@@ -3612,16 +3612,33 @@ public final class GameState {
                     && !order.actionBuildingResolved) {
                 continue;
             }
-            String key = order.playerId + ":" + order.actionBuildingFrameName;
+            String frameName = resolvedActionBuildingFrame(order);
+            String key = order.playerId + ":" + frameName;
             if (!seen.add(key)) {
                 continue;
             }
             lastTurnActionBuildings.add(new ActionBuildingEvent(order.playerId,
                     order.action, order.actionBuildingSlot,
-                    order.actionBuildingFrameName,
+                    frameName,
                     playerById(order.playerId).getReligionCode(),
                     lastTurnActionBuildings.size(), order.battleStartNum));
         }
+    }
+
+    private String resolvedActionBuildingFrame(ActionOrder order) {
+        if (order.action != Action.DEFENSE) return order.actionBuildingFrameName;
+        for (CombatEvent event : lastTurnCombatEvents) {
+            if (event.defenderPlayerId == order.playerId
+                    && event.counterActionBuildingSlot == order.actionBuildingSlot
+                    && order.weaponName.equals(event.counterWeaponName)) {
+                return sourceDefenseBuildingFrame(order.weaponName);
+            }
+        }
+        // fireDefense changes a matched counter's still clip to its fire clip.
+        // An unused defense retains the source label-bearing still artwork.
+        if ("antiAir".equals(order.weaponName)) return "antiAir_still";
+        if ("antiRocket".equals(order.weaponName)) return "antiRocket_still";
+        return order.actionBuildingFrameName;
     }
 
     /**

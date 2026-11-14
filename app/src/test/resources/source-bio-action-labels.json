@@ -25,6 +25,10 @@
   "excludedFrames": ["antiAir_fire", "antiRocket_fire", "spyCenter", "propaganda_2", "unknown"],
   "interceptedShipFrames": ["ship", "helipad", "antiAir_fire", "factory", "resources", "resources"],
   "successfulShipFrames": ["ship", "helipad", "antiAir_still", "factory", "resources", "resources"],
+  "legalShipDefenseCases": [
+    {"target":1,"defender":1,"frame":"antiAir_fire","distinctLabels":4,"gateOpenTick":192},
+    {"target":2,"defender":1,"frame":"antiAir_still","distinctLabels":5,"gateOpenTick":231}
+  ],
   "interceptedDistinctLabels": 4,
   "successfulDistinctLabels": 5,
   "interceptedGateOpenTick": 192,
