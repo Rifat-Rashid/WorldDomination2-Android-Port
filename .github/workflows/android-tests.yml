@@ -87,6 +87,9 @@ jobs:
       max-parallel: 6
       matrix:
         include:
+          - id: source-carrier-display-roles
+            check: Source carrier body, tint, shadow, and retained poses
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.SourceCarrierRolePlaybackTest"'
           - id: source-carrier-anti-tracking
             check: Source carrier anti bearing, impact depths, and legal oracles
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.SourceCarrierAntiDirectionTest" --tests "com.example.worlddomination.game.rendering.SourceCarrierAntiFixtureIntegrityTest" --tests "com.example.worlddomination.game.rendering.SourceCarrierPlaneDisplayDepthsTest"'

@@ -13,3 +13,5 @@ app/src/test/resources/source-intercepted-plane001-* -text whitespace=blank-at-e
 app/src/test/resources/source-aircraft-audio-*.json -text whitespace=cr-at-eol
 app/src/test/resources/source-plane002-*.json -text whitespace=cr-at-eol
 app/src/test/resources/source-carrier-anti-*.json -text whitespace=cr-at-eol
+app/src/test/resources/source-carrier-roles-*.csv -text whitespace=cr-at-eol
+app/src/test/resources/source-carrier-roles-*.json -text whitespace=cr-at-eol

@@ -27,6 +27,7 @@ public final class FlashCarrierPlaneAnimation
     private final FlashBattleRoutes.CarrierPlaneStrike route;
     private final String impactLinkage;
     private final OriginalAudio.Cue impactCue;
+    private FlashColorTransform tint = FlashColorTransform.forPlayerColor(5);
     private final Actor actor = new Actor();
     private SourceAircraftTrail sourceTrail;
     private SourceCarrierPlanePlayback sourcePlayback;
@@ -71,8 +72,18 @@ public final class FlashCarrierPlaneAnimation
                                       int delayTicks, String impactLinkage,
                                       OriginalAudio.Cue impactCue,
                                       ReferenceRandom presentationRandom, int payloadCount) {
+        this(route, delayTicks, impactLinkage, impactCue, presentationRandom, payloadCount, 5);
+    }
+
+    public FlashCarrierPlaneAnimation(FlashBattleRoutes.CarrierPlaneStrike route,
+                                      int delayTicks, String impactLinkage,
+                                      OriginalAudio.Cue impactCue,
+                                      ReferenceRandom presentationRandom, int payloadCount,
+                                      int playerColor) {
         this(route, delayTicks, impactLinkage, impactCue);
-        sourcePlayback = new SourceCarrierPlanePlayback(route, presentationRandom, payloadCount);
+        tint = FlashColorTransform.forPlayerColor(playerColor);
+        sourcePlayback = new SourceCarrierPlanePlayback(route, presentationRandom, payloadCount,
+                tint.alphaMultiplier * 100d);
         sourceTrail = sourcePlayback.getTrail();
         double previousX = sourcePlayback.getX();
         double previousY = sourcePlayback.getY();
@@ -87,6 +98,7 @@ public final class FlashCarrierPlaneAnimation
 
     public SourceAircraftTrail getSourceTrail() { return sourceTrail; }
     public SourceCarrierPlanePlayback getSourcePlayback() { return sourcePlayback; }
+    public FlashColorTransform getTint() { return tint; }
 
     public boolean tickSourceFrame(boolean recordActivated) {
         if (sourcePlayback == null) throw new IllegalStateException("No source carrier aircraft");

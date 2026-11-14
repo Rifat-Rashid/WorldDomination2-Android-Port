@@ -1968,8 +1968,11 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                         battleUnitRenderer.drawInterceptedAircraftRole(batch, mapBounds,
                                 (SourceInterceptedAircraftDisplayDepths) item.owner, item.kind);
                     } else if (item.owner instanceof SourceCarrierPlaneDisplayDepths) {
-                        battleUnitRenderer.drawCarrierExplosion(batch, mapBounds,
-                                (SourceCarrierPlaneDisplayDepths) item.owner);
+                        SourceCarrierPlaneDisplayDepths binding =
+                                (SourceCarrierPlaneDisplayDepths) item.owner;
+                        if (item.kind == BattlefieldDisplayState.Kind.EFFECT)
+                            battleUnitRenderer.drawCarrierExplosion(batch, mapBounds, binding);
+                        else battleUnitRenderer.drawCarrierRole(batch, mapBounds, binding, item.kind);
                     } else if (item.owner instanceof SourceRocketDisplayDepths.Binding) {
                         battleUnitRenderer.drawSourceRocketRole(batch, mapBounds,
                                 (SourceRocketDisplayDepths.Binding) item.owner, item.kind, item.index);
@@ -5082,7 +5085,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                         new FlashCarrierPlaneAnimation(route,
                         recordDelay,
                         SourceCombatAnimationMapping.linkageFor(event), cue, presentationRandom,
-                        carrierPayloadCounts.get(event.battleStartNum));
+                        carrierPayloadCounts.get(event.battleStartNum),
+                        game.getPlayerState(event.attackerPlayerId).getPlayerColor());
                 carrierPlaneAnimations.add(planeAnimation);
                 aircraftAudioOwners.put(planeAnimation,
                         audio.createAircraftAudio(AircraftAudioPlayback.Kind.FIGHTER));

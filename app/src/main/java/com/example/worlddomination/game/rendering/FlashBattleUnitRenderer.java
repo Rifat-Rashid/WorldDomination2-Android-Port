@@ -928,6 +928,8 @@ public final class FlashBattleUnitRenderer {
         }
         float mapScale = BattlefieldCityLayout.sourceScale(mapBounds);
         for (FlashCarrierPlaneAnimation animation : animations) {
+            // Source aircraft paint their individual peers in the root display walk.
+            if (animation.getSourcePlayback() != null) continue;
             FlashCarrierPlaneAnimation.Actor actor = animation.getActor();
             if (!actor.visible) {
                 continue;
@@ -937,14 +939,6 @@ public final class FlashBattleUnitRenderer {
                 continue;
             }
             FlashBattleRoutes.CarrierPlaneStrike route = animation.getRoute();
-            if (animation.getSourcePlayback() != null) {
-                drawPlaneLinkage(batch, mapBounds, timeline, actor.sourceFrame,
-                        actor.sourceX, actor.sourceY, route.attackerPlayerId,
-                        route.targetPlayerId, actor.routeProgress, actor.alpha,
-                        actor.scale * mapScale, null, false, false,
-                        actor.sourceFrame, 1f, 0, planeTransformScratch[0].setIdentity());
-                continue;
-            }
             batch.setColor(com.badlogic.gdx.graphics.Color.WHITE);
             for (FlashAnimationTimeline.Layer layer : frame.layers) {
                 TextureRegion region = assets.getShape(layer.shapeId);
@@ -1020,6 +1014,47 @@ public final class FlashBattleUnitRenderer {
                     actor.sourceFrame, 1f, 0, planeTransformScratch[0].setIdentity());
             batch.setColor(com.badlogic.gdx.graphics.Color.WHITE);
             batch.setShader(null);
+        }
+    }
+
+    /** Draws a carrier's original body, shadow, tint or dot at its physical root depth. */
+    public void drawCarrierRole(SpriteBatch batch, Rectangle mapBounds,
+            SourceCarrierPlaneDisplayDepths binding, BattlefieldDisplayState.Kind kind) {
+        if (!assets.isLoaded()) return;
+        FlashCarrierPlaneAnimation animation = binding.animation;
+        SourceCarrierPlanePlayback core = animation.getSourcePlayback();
+        if (kind == BattlefieldDisplayState.Kind.UNIT_DOT) {
+            if (core.getDotRole().isAttached() && core.getDotRole().isVisible())
+                drawTargetDot(batch, mapBounds, animation.getTint());
+            return;
+        }
+        boolean shadow = kind == BattlefieldDisplayState.Kind.UNIT_SHADOW;
+        boolean tint = kind == BattlefieldDisplayState.Kind.UNIT_TINT;
+        SourceCarrierPlanePlayback.RolePose pose = shadow ? core.getShadowRole()
+                : tint ? core.getTintRole() : core.getBodyRole();
+        if (!pose.isAttached() || !pose.isVisible()) return;
+        ShaderProgram shader = batch.getShader();
+        float color = batch.getPackedColor();
+        try {
+            FlashBattleRoutes.CarrierPlaneStrike route = animation.getRoute();
+            float x = (float) pose.getX();
+            float crop = BattlefieldCityLayout.sourceXBetween(mapBounds, x,
+                    route.attackerPlayerId, route.targetPlayerId,
+                    animation.getActor().routeProgress)
+                    - BattlefieldCityLayout.sourceX(mapBounds, x, route.targetPlayerId);
+            sourceAircraftRoleActor.sourceX = x + crop / BattlefieldCityLayout.sourceScale(mapBounds);
+            sourceAircraftRoleActor.sourceY = (float) pose.getY();
+            sourceAircraftRoleActor.sourceFrame = (shadow ? pose.getNestedFrame() : pose.getFrame()) - 1;
+            sourceAircraftRoleActor.islandPlayerId = route.targetPlayerId;
+            sourceAircraftRoleActor.scale = (float) (pose.getScale() / 100d);
+            // Color.setTransform already owns the tint's palette alpha channel.
+            sourceAircraftRoleActor.alpha = tint ? 1f : (float) (pose.getAlpha() / 100d);
+            drawApacheClip(batch, mapBounds, sourceAircraftRoleActor,
+                    shadow ? "plane001_shadow" : tint ? "plane001_tint" : "ship_plane",
+                    tint ? animation.getTint() : null);
+        } finally {
+            batch.setShader(shader);
+            batch.setPackedColor(color);
         }
     }
 

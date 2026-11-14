@@ -6,11 +6,47 @@ import java.util.Objects;
 
 /** One ship_plane Unit and its View.f_37 callback state. */
 public final class SourceCarrierPlanePlayback {
+    /** Stable, source-stage MovieClip pose. Frames are authored one-based. */
+    public static final class RolePose {
+        private double x;
+        private double y;
+        private double scale;
+        private double alpha;
+        private int frame;
+        private int nestedFrame;
+        private boolean visible;
+        private boolean attached = true;
+
+        private RolePose(double x, double y, int frame, int nestedFrame,
+                         double scale, double alpha, boolean visible) {
+            this.x = x;
+            this.y = y;
+            this.frame = frame;
+            this.nestedFrame = nestedFrame;
+            this.scale = scale;
+            this.alpha = alpha;
+            this.visible = visible;
+        }
+
+        public double getX() { return x; }
+        public double getY() { return y; }
+        public double getScale() { return scale; }
+        public double getAlpha() { return alpha; }
+        public int getFrame() { return frame; }
+        public int getNestedFrame() { return nestedFrame; }
+        public boolean isVisible() { return visible; }
+        public boolean isAttached() { return attached; }
+    }
+
     private boolean soundStopPending;
     private int sourceSoundVolumePercent = 100;
     private int sourceSoundPanPercent;
     private final FlashBattleRoutes.CarrierPlaneStrike route;
     private final SourceAircraftTrail trail;
+    private final RolePose bodyRole = new RolePose(0d, 0d, 1, 0, 50d, 0d, true);
+    private final RolePose shadowRole;
+    private final RolePose tintRole;
+    private final RolePose dotRole;
     private final double[] waypointX;
     private final double[] waypointY;
     private final String[] waypointAction;
@@ -31,6 +67,8 @@ public final class SourceCarrierPlanePlayback {
     private int waypointIndex;
     private int liftOffCount;
     private int stopCount;
+    private int eligibleFlightSteps;
+    private double shadowYOffset;
     private boolean paintedWaitingPose;
     private boolean activeAndMoving;
     private boolean bodyAttached = true;
@@ -39,18 +77,30 @@ public final class SourceCarrierPlanePlayback {
 
     public SourceCarrierPlanePlayback(FlashBattleRoutes.CarrierPlaneStrike route,
                                       ReferenceRandom sharedBattleRandom) {
-        this(route, sharedBattleRandom, 3);
+        this(route, sharedBattleRandom, 3, 75d);
     }
 
     /** Number of payloads in this carrier record, not the entire turn. */
     public SourceCarrierPlanePlayback(FlashBattleRoutes.CarrierPlaneStrike route,
                                       ReferenceRandom sharedBattleRandom,
                                       int payloadCount) {
+        this(route, sharedBattleRandom, payloadCount, 75d);
+    }
+
+    /** Palette alpha from Unit.colorTrans.aa; blue/brown use 100, others 75. */
+    public SourceCarrierPlanePlayback(FlashBattleRoutes.CarrierPlaneStrike route,
+                                      ReferenceRandom sharedBattleRandom,
+                                      int payloadCount, double paletteAlphaPercent) {
         this.route = Objects.requireNonNull(route, "route");
         if (payloadCount < 1 || payloadCount > 3
                 || route.planeIndex < 0 || route.planeIndex >= payloadCount) {
             throw new IllegalArgumentException("Invalid source carrier payload count/index");
         }
+        if (!Double.isFinite(paletteAlphaPercent) || paletteAlphaPercent < 0d
+                || paletteAlphaPercent > 100d)
+            throw new IllegalArgumentException("Invalid source palette alpha");
+        tintRole = new RolePose(0d, 0d, 1, 0, 50d, paletteAlphaPercent, true);
+        dotRole = new RolePose(0d, 0d, 1, 0, 100d, paletteAlphaPercent, true);
         trail = new SourceAircraftTrail(SourceAircraftTrail.Origin.SHIP_OFFSET,
                 Objects.requireNonNull(sharedBattleRandom, "sharedBattleRandom"));
         // Battle's ASArray for-in enumerates payload keys count-1..0 while
@@ -62,6 +112,7 @@ public final class SourceCarrierPlanePlayback {
                         payloadCount - 1 - route.planeIndex, route.intercepted);
         x = sourceDouble(physicalRoute.start.x);
         y = sourceDouble(physicalRoute.start.y);
+        shadowRole = new RolePose(x, y, 1, 1, 50d, 100d, false);
         waypointX = new double[route.waypoints.length];
         waypointY = new double[route.waypoints.length];
         waypointAction = new String[route.waypoints.length];
@@ -81,6 +132,7 @@ public final class SourceCarrierPlanePlayback {
         sourceFrame = 4;
         alpha = 100d;
         paintedWaitingPose = true;
+        updatePaintedRoles();
     }
 
     /** One global View.f_37 visit. Activation is supplied by the record clock. */
@@ -97,6 +149,8 @@ public final class SourceCarrierPlanePlayback {
             if (liftOffCount >= route.planeIndex * 20) action = "liftOff";
             if ("waitForLiftOff".equals(action)) sourceFrame = 4;
             else publishDirection();
+            if (!"waitForLiftOff".equals(action)) shadowRole.visible = true;
+            updatePaintedRoles();
             return false;
         }
 
@@ -125,6 +179,11 @@ public final class SourceCarrierPlanePlayback {
                 sourceSoundVolumePercent -= 2;
         }
 
+        // Unit.moveUnit counts eight eligible aircraft steps before raising
+        // the shadow by two stage pixels per visit, capped at ninety.
+        if (eligibleFlightSteps < 8) eligibleFlightSteps++;
+        else if (shadowYOffset < 90d) shadowYOffset += 2d;
+
         // Unit.moveUnit performs setStep even after killUnit/stop. Its x
         // target calculation uses the PREVIOUS yDist, a source operation-order
         // detail that changes the entire route after the first movement.
@@ -142,7 +201,37 @@ public final class SourceCarrierPlanePlayback {
         if (scale < 70d && !"waitForLiftOff".equals(action)) scale++;
         if (alpha < 100d) alpha = Math.min(100d, alpha + 10d);
         publishDirection();
+        if (!bodyAttached) {
+            bodyRole.attached = false;
+            shadowRole.attached = false;
+            tintRole.attached = false;
+        }
+        shadowRole.visible = true;
+        updatePaintedRoles();
         return impact;
+    }
+
+    private void updatePaintedRoles() {
+        bodyRole.x = renderX;
+        bodyRole.y = renderY;
+        bodyRole.frame = sourceFrame;
+        bodyRole.scale = scale;
+        bodyRole.alpha = alpha;
+        tintRole.x = renderX;
+        tintRole.y = renderY;
+        tintRole.frame = sourceFrame;
+        tintRole.scale = scale;
+        shadowRole.x = renderX;
+        shadowRole.y = renderY + shadowYOffset;
+        shadowRole.nestedFrame = sourceFrame;
+        shadowRole.scale = scale;
+    }
+
+    /** Presenter.allUnitsDone removes retained body, shadow and tint clips. */
+    public void clearStoppedRoles() {
+        bodyRole.attached = false;
+        shadowRole.attached = false;
+        tintRole.attached = false;
     }
 
     private boolean setStep() {
@@ -209,6 +298,11 @@ public final class SourceCarrierPlanePlayback {
         boolean pulse = soundStopPending; soundStopPending = false; return pulse;
     }
     public SourceAircraftTrail getTrail() { return trail; }
+    public RolePose getBodyRole() { return bodyRole; }
+    public RolePose getShadowRole() { return shadowRole; }
+    public RolePose getTintRole() { return tintRole; }
+    public RolePose getDotRole() { return dotRole; }
+    public double getShadowYOffset() { return shadowYOffset; }
     public String getAction() { return action; }
     public double getX() { return x; }
     public double getY() { return y; }
