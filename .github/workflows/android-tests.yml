@@ -447,6 +447,9 @@ jobs:
           - id: source-suicide-display-depths
             check: Source suicide depths, sound and retained explosion lifecycle
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.SourceSuicideDisplayDepthsTest" --tests "com.example.worlddomination.game.rendering.SourceBattleOracleResourcesTest.suicideBattleCaptureRetainsLegalSourceHashesAndImpactBoundary" --tests "com.example.worlddomination.game.rendering.FlashBattleUnitRendererTest" --tests "com.example.worlddomination.game.audio.OriginalAudioTest.combatCuesPointToTheOriginalPackagedSounds"'
+          - id: source-battle-phase-isolation
+            check: Source canonical and battle city state isolation
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.BattlefieldCityPresentationIsolationTest" --tests "com.example.worlddomination.game.rendering.SourceBattleOracleResourcesTest.battlePhaseCapturesRetainSourceHashesAndHandoffBoundaries"'
           - id: source-action-flame-tests
             check: Source action flame timing and reveal audio
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.SourceBattleActionFramesTest" --tests "com.example.worlddomination.game.audio.OriginalAudioTest.religionLabelUsesTheFourRecoveredMassMediaVariations"'

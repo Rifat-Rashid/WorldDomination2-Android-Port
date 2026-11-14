@@ -58,13 +58,16 @@ public final class BattlefieldCityRenderer {
     private final OriginalFlashAnimationAssets flashAssets;
     private final CityBioloadCloudRenderer bioloadCloudRenderer;
     private final BattlefieldCityOrderMarkerRenderer orderMarkerRenderer;
-    private final CityShrinkSequence[] citySequences = new CityShrinkSequence[CITY_COUNT];
-    private final CityPropagandaBeamSequence[] propagandaSequences =
-            new CityPropagandaBeamSequence[CITY_COUNT];
-    private final int[] trackedTargets = new int[CITY_COUNT];
-    private final SourceCityImpactState[] sourceImpacts = new SourceCityImpactState[CITY_COUNT];
-    private final List<List<CityDust>> sourceDust = new ArrayList<>(CITY_COUNT);
-    private final int[] sourceDustNames = new int[CITY_COUNT];
+    private final PresentationState canonicalState = new PresentationState();
+    private final PresentationState battleState = new PresentationState();
+    private PresentationState activeState = canonicalState;
+    // Drawing and callbacks share the active presentation without recreating cached artwork.
+    private CityShrinkSequence[] citySequences = canonicalState.citySequences;
+    private CityPropagandaBeamSequence[] propagandaSequences = canonicalState.propagandaSequences;
+    private int[] trackedTargets = canonicalState.trackedTargets;
+    private SourceCityImpactState[] sourceImpacts = canonicalState.sourceImpacts;
+    private List<List<CityDust>> sourceDust = canonicalState.sourceDust;
+    private int[] sourceDustNames = canonicalState.sourceDustNames;
     private final Rectangle[] hitBounds = new Rectangle[CITY_COUNT];
     private final boolean[] hitVisible = new boolean[CITY_COUNT];
     private final Rectangle drawBounds = new Rectangle();
@@ -78,15 +81,76 @@ public final class BattlefieldCityRenderer {
         this.flashAssets = flashAssets;
         bioloadCloudRenderer = new CityBioloadCloudRenderer(flashAssets);
         orderMarkerRenderer = new BattlefieldCityOrderMarkerRenderer(flashAssets);
-        Arrays.fill(sourceDustNames, -1);
         for (int address = 0; address < CITY_COUNT; address++) {
-            sourceDust.add(new ArrayList<>());
-            citySequences[address] = new CityShrinkSequence();
-            propagandaSequences[address] = new CityPropagandaBeamSequence();
-            trackedTargets[address] = Integer.MIN_VALUE;
             hitBounds[address] = new Rectangle();
         }
     }
+
+    private static final class PresentationState {
+        final CityShrinkSequence[] citySequences = new CityShrinkSequence[CITY_COUNT];
+        final CityPropagandaBeamSequence[] propagandaSequences =
+                new CityPropagandaBeamSequence[CITY_COUNT];
+        final int[] trackedTargets = new int[CITY_COUNT];
+        final SourceCityImpactState[] sourceImpacts = new SourceCityImpactState[CITY_COUNT];
+        final List<List<CityDust>> sourceDust = new ArrayList<>(CITY_COUNT);
+        final int[] sourceDustNames = new int[CITY_COUNT];
+
+        PresentationState() {
+            Arrays.fill(sourceDustNames, -1);
+            for (int address = 0; address < CITY_COUNT; address++) {
+                citySequences[address] = new CityShrinkSequence();
+                propagandaSequences[address] = new CityPropagandaBeamSequence();
+                sourceDust.add(new ArrayList<>());
+                trackedTargets[address] = Integer.MIN_VALUE;
+            }
+        }
+    }
+
+    private void activate(PresentationState state) {
+        activeState = state;
+        citySequences = state.citySequences;
+        propagandaSequences = state.propagandaSequences;
+        trackedTargets = state.trackedTargets;
+        sourceImpacts = state.sourceImpacts;
+        sourceDust = state.sourceDust;
+        sourceDustNames = state.sourceDustNames;
+    }
+
+    private void resetActive(GameState game, boolean snapshotFrames) {
+        clearSourceImpacts();
+        for (int address = 0; address < CITY_COUNT; address++) {
+            CityState city = cityAt(game, address);
+            int frameNumber = city == null ? -1 : city.getArtworkFrame();
+            if (snapshotFrames && city != null) {
+                frameNumber = game.getBattlePresentationCity(
+                        address / BattlefieldCityLayout.CITIES_PER_PLAYER,
+                        address % BattlefieldCityLayout.CITIES_PER_PLAYER).artworkFrame;
+            }
+            citySequences[address].reset(frameNumber);
+            propagandaSequences[address].reset();
+            trackedTargets[address] = frameNumber;
+        }
+    }
+
+    /** Freezes the post-resolution canonical presentation and opens a fresh source battle. */
+    public void beginBattle(GameState game) {
+        activate(canonicalState);
+        resetActive(game, false);
+        bioloadCloudRenderer.beginBattle(game);
+        activate(battleState);
+        resetActive(game, true);
+    }
+
+    /** Discards battle-only transitions without advancing the canonical presentation. */
+    public void endBattle() {
+        activate(battleState);
+        clearSourceImpacts();
+        for (CityPropagandaBeamSequence sequence : propagandaSequences) sequence.reset();
+        bioloadCloudRenderer.endBattle();
+        activate(canonicalState);
+    }
+
+    public boolean isBattleActive() { return activeState == battleState; }
 
     /** Hits current presentation frames using the phone reference's island and depth dispatch. */
     public int hitTest(float x, float y, Rectangle mapBounds, GameState game) {
@@ -116,15 +180,11 @@ public final class BattlefieldCityRenderer {
 
     /** Seeds presentation frames when a match starts, without animating initial cities. */
     public void reset(GameState game) {
-        clearSourceImpacts();
-        bioloadCloudRenderer.reset(game);
-        for (int address = 0; address < CITY_COUNT; address++) {
-            CityState city = cityAt(game, address);
-            int frameNumber = city == null ? -1 : city.getArtworkFrame();
-            citySequences[address].reset(frameNumber);
-            propagandaSequences[address].reset();
-            trackedTargets[address] = frameNumber;
-        }
+        activate(battleState);
+        resetActive(game, false);
+        activate(canonicalState);
+        resetActive(game, false);
+        bioloadCloudRenderer.resetBoth(game);
     }
 
     /** Starts original Flash beam clips for the resolved city results of one turn. */

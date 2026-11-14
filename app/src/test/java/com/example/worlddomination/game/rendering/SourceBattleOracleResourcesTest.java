@@ -12,6 +12,66 @@ import static org.junit.Assert.*;
 
 /** Reference captures must survive checkout unchanged, independently of replay code. */
 public final class SourceBattleOracleResourcesTest {
+    @Test public void battlePhaseCapturesRetainSourceHashesAndHandoffBoundaries()
+            throws Exception {
+        JsonValue provenance = json("source-phase-provenance.json");
+        String swf = "fe60c4d8793a23e7ddd59ddcb406b5471540e28d64f7552d17308fbb269e6fe1";
+        assertEquals(swf, provenance.get("sourceSha256").getString("WorldDomination2.swf"));
+        assertEquals(swf, provenance.get("suicideHandoff")
+                .get("sourceSha256").getString("WorldDomination2.swf"));
+        assertEquals(json("source-apache-depths-provenance.json").getString("sourceSwfSha256"),
+                swf);
+        assertEquals("b72ab1b0cb2aec47ace662223d8ce4eaa08c715a0f9e79d088fc911dbfa358e3",
+                provenance.getString("baselineGeneratorSha256"));
+        assertEquals("31647286f84f07b21b180a6fe2472d13fa5eb6cc4365d06b4d19a15e3e6597bc",
+                provenance.getString("sourceGeneratorSha256"));
+        assertEquals("8b35c2fc69b0aa078dcc25baf94f1ed35d0952baecdd657716376260e04552db",
+                provenance.getString("packagingGeneratorSha256"));
+        assertEquals("45a7a3f5e490a8053cae898c9cc20d75ebc2d41b223b9b6d871b3483a37e99e2",
+                provenance.get("suicideHandoff").getString("sourceGeneratorSha256"));
+
+        byte[] twoTurns = bytes("source-phase-two-turns.csv");
+        byte[] suicide = bytes("source-phase-suicide-handoff.csv");
+        assertEquals("f32cf4d0a281463b79eee7997bd98f4a6940f7141eef21e92df703018d5951b3",
+                sha256(twoTurns));
+        assertEquals("d560fff75f4a6de7b0ba3110c281494f873bc93ee4649124bb39163bb3938020",
+                sha256(suicide));
+        assertEquals(440, provenance.getInt("rows"));
+        assertEquals(365, provenance.get("suicideHandoff").getInt("rows"));
+        assertEquals(provenance.getString("sha256"), sha256(twoTurns));
+        assertEquals(provenance.get("suicideHandoff").getString("sha256"), sha256(suicide));
+        String[] simpleRows = new String(twoTurns, StandardCharsets.UTF_8).split("\\R");
+        String[] impactRows = new String(suicide, StandardCharsets.UTF_8).split("\\R");
+        assertEquals("two battles, 220 ticks each, plus header", 441, simpleRows.length);
+        assertEquals("battle ticks 0..363, first idle 364, plus header", 366,
+                impactRows.length);
+        assertEquals("turn,tick,canonicalClock,canonicalFlag0Tint,battleFlag0Tint,"
+                + "canonicalCity0Frame,canonicalCity0Alpha,battleCity0Frame,"
+                + "battleCity0Alpha,battleAb01Frame,battleAb02Frame,battleAb02PumpFrame,"
+                + "canonicalRngNext,battleRngNext", simpleRows[0]);
+        assertEquals("phase,tick,canonicalClock,canonicalCity7Frame,canonicalCity7Alpha,"
+                + "battleCity7Frame,battleCity7Alpha,playbackDone,menuHasPlayback",
+                impactRows[0]);
+        assertEquals("1,0,0,1,1,6,100.0,6,100.0,7,8,1,"
+                + "0.18031790152968785,0.5962868615831063", simpleRows[1]);
+        assertEquals("1,94,94,1,20,6,100.0,6,100.0,7,8,2,"
+                + "0.18031790152968785,0.38490114597266045", simpleRows[95]);
+        assertEquals("1,98,98,1,24,6,100.0,6,100.0,7,8,6,"
+                + "0.18031790152968785,0.1867295282555551", simpleRows[99]);
+        assertEquals("1,219,219,1,20,6,100.0,6,100.0,7,8,3,"
+                + "0.18031790152968785,0.1867295282555551", simpleRows[220]);
+        assertEquals("2,0,220,1,1,6,100.0,6,100.0,7,8,1,"
+                + "0.8124149323637591,0.04569649356841665", simpleRows[221]);
+        assertEquals("2,219,439,1,20,6,100.0,6,100.0,7,8,3,"
+                + "0.8124149323637591,0.2878779148564", simpleRows[440]);
+        assertEquals("after_confirm,0,0,2,100.0,4,100.0,0,1", impactRows[1]);
+        assertEquals("playback,299,299,2,100.0,4,100.0,0,1", impactRows[300]);
+        assertEquals("playback,300,300,2,100.0,4,85.0,0,1", impactRows[301]);
+        assertEquals("playback,362,362,2,100.0,2,100.0,0,1", impactRows[363]);
+        assertEquals("end_playback,363,363,2,100.0,2,100.0,1,0", impactRows[364]);
+        assertEquals("first_idle,364,364,2,100.0,2,100.0,1,0", impactRows[365]);
+    }
+
     @Test public void suicideBattleCaptureRetainsLegalSourceHashesAndImpactBoundary()
             throws Exception {
         assertEquals("e69dce0e6645f466167b05cdabb3ac288c19efa0dacd55717b4e215fb11c5469",

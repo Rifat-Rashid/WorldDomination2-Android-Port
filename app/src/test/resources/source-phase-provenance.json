@@ -1,0 +1,74 @@
+{
+  "fixture": "source-phase-two-turns.csv",
+  "rows": 440,
+  "sha256": "f32cf4d0a281463b79eee7997bd98f4a6940f7141eef21e92df703018d5951b3",
+  "bytes": 32985,
+  "inputFrameTraceSha256": "142e4197f7349031929a9a5265bdd8633524d9c240b0c30fd5ae6534ed6f9908",
+  "sourceSha256": {
+    "WorldDomination2.swf": "fe60c4d8793a23e7ddd59ddcb406b5471540e28d64f7552d17308fbb269e6fe1",
+    "wd2\\setup_menu.py": "5633326451e768a84a14bde04e452043ba7fac2617a4c71b7b36dcd0495f0c4a",
+    "wd2\\battle_playback.py": "9aa8c82295b1977897cea2a60afbb6569e0d31e14bb9725267e422c7b9167901",
+    "wd2\\original_gameplay.py": "e1162e40e608101c2427679cb5d1d86aa9c724ad9c36ea342a766b565139a59c",
+    "wd2\\presentation_clock.py": "5f2564ca11a6b568f55478fe861bac7402e31c3cae2888e230b9ca86ef57ff08",
+    "wd2\\movieclip_host.py": "a489c5f3b33a1fdac4448afd07f4ca63aa32d676440dc573805ab11fb4002765",
+    "reverse\\export\\scripts\\__Packages\\View.as": "205221608f0bb54e326cceb12f0fc92920da714b4a8daf7dce933fcd6df25f40"
+  },
+  "baselineGeneratorSha256": "b72ab1b0cb2aec47ace662223d8ce4eaa08c715a0f9e79d088fc911dbfa358e3",
+  "sourceGeneratorSha256": "31647286f84f07b21b180a6fe2472d13fa5eb6cc4365d06b4d19a15e3e6597bc",
+  "packagingGeneratorSha256": "8b35c2fc69b0aa078dcc25baf94f1ed35d0952baecdd657716376260e04552db",
+  "schedule": [
+    {
+      "turn": 1,
+      "technology": "soldier2",
+      "actions": [
+        {
+          "action": "research",
+          "researchTechIds": [
+            13
+          ]
+        },
+        {
+          "action": "resources",
+          "researchTechIds": []
+        }
+      ],
+      "battleTicks": 219
+    },
+    {
+      "turn": 2,
+      "technology": "soldier3",
+      "actions": [
+        {
+          "action": "research",
+          "researchTechIds": [
+            14
+          ]
+        },
+        {
+          "action": "resources",
+          "researchTechIds": []
+        }
+      ],
+      "battleTicks": 219
+    }
+  ],
+  "scope": "Rows tick 0..219 per turn; canonical and isolated host; one-based Flash clip frames.",
+  "suicideHandoff": {
+    "fixture": "source-phase-suicide-handoff.csv",
+    "rows": 365,
+    "sha256": "d560fff75f4a6de7b0ba3110c281494f873bc93ee4649124bb39163bb3938020",
+    "bytes": 13560,
+    "sourceSha256": {
+      "WorldDomination2.swf": "fe60c4d8793a23e7ddd59ddcb406b5471540e28d64f7552d17308fbb269e6fe1",
+      "wd2\\setup_menu.py": "5633326451e768a84a14bde04e452043ba7fac2617a4c71b7b36dcd0495f0c4a",
+      "wd2\\battle_playback.py": "9aa8c82295b1977897cea2a60afbb6569e0d31e14bb9725267e422c7b9167901",
+      "wd2\\original_gameplay.py": "e1162e40e608101c2427679cb5d1d86aa9c724ad9c36ea342a766b565139a59c"
+    },
+    "sourceGeneratorSha256": "45a7a3f5e490a8053cae898c9cc20d75ebc2d41b223b9b6d871b3483a37e99e2",
+    "beforeConfirmCity7": [
+      4,
+      100.0
+    ],
+    "scope": "Legal four-turn suicide battle, tick 0..363 plus first idle 364; canonical and isolated city7."
+  }
+}

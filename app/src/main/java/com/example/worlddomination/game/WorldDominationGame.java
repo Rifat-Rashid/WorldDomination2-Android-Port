@@ -756,7 +756,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             suicideBomberAnimations.get(index).advanceAttachedTimelines();
         }
         // BattleMC's retained action-building children precede the center-screen
-        // and unit callbacks in the source display-list traversal, even at idle.
+        // and unit callbacks. The isolated root is discarded at battle finish.
         battleActionFrames.tick(battlefieldDisplay);
         if (turnPlaybackSequence.isBlockingInput() && battlePresentationRandom != null) {
             battleInterfaceFrames.tick(battlePresentationRandom);
@@ -1126,7 +1126,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         satelliteFlightCuePlayed = false;
         pendingBattleAnimations.clear();
         battlePresentationRecords = Collections.emptyList();
-        cityRenderer.finishSourceCityImpacts(game);
+        actionBuildingAnimations.clear();
+        battleActionFrames.reset();
+        cityRenderer.endBattle();
+        flagRenderer.endBattle();
         resetBattlefieldDisplay(false);
     }
 
@@ -4821,6 +4824,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     private void confirmTurnAndPreparePlayback() {
         game.confirmTurn();
+        // Canonical refresh seeks resolved city frames immediately. The fresh
+        // battle root instead starts from the pre-casualty presentation snapshot.
+        cityRenderer.beginBattle(game);
         // Python BattlePlayback creates a fresh root for each resolved turn.
         // Old canonical slots must not carry flame phases or stale buildings
         // into the new parent (even when its final building frame is identical).
@@ -4831,7 +4837,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         battleRecordClock.reset();
         resetBattlefieldDisplay(true);
         // original_gameplay.refresh -> View.update_flags recreates the child clips.
-        flagRenderer.reset();
+        flagRenderer.beginBattle();
         queueActionBuildingAnimations();
         audio.play(OriginalAudio.Cue.ACTION_ACCEPT);
         battlePresentationRecords = game.getLastTurnBattleRecords();
