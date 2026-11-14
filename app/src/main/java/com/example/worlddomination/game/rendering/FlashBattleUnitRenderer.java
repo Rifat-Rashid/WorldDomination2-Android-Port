@@ -1023,6 +1023,28 @@ public final class FlashBattleUnitRenderer {
         }
     }
 
+    /** A carrier impact is a retained direct child, interleaved with aircraft smoke. */
+    public void drawCarrierExplosion(SpriteBatch batch, Rectangle mapBounds,
+            SourceCarrierPlaneDisplayDepths binding) {
+        if (!assets.isLoaded() || binding.explosion() == null
+                || !binding.explosion().isAttached()) return;
+        ShaderProgram shader = batch.getShader();
+        float color = batch.getPackedColor();
+        try {
+            sourceAircraftRoleActor.sourceX = (float) binding.getExplosionX();
+            sourceAircraftRoleActor.sourceY = (float) binding.getExplosionY();
+            sourceAircraftRoleActor.sourceFrame = binding.getExplosionFrameIndex();
+            sourceAircraftRoleActor.islandPlayerId = binding.animation.getRoute().targetPlayerId;
+            sourceAircraftRoleActor.scale = 1f;
+            sourceAircraftRoleActor.alpha = 1f;
+            drawApacheClip(batch, mapBounds, sourceAircraftRoleActor,
+                    binding.getExplosionLinkage(), null);
+        } finally {
+            batch.setShader(shader);
+            batch.setPackedColor(color);
+        }
+    }
+
     /** One intercepted plane's direct root peer, including its retained self explosion. */
     public void drawInterceptedAircraftRole(SpriteBatch batch, Rectangle mapBounds,
             SourceInterceptedAircraftDisplayDepths binding, BattlefieldDisplayState.Kind kind) {

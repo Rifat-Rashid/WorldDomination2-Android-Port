@@ -12,3 +12,4 @@ app/src/test/resources/source-intercepted-plane001-* -text whitespace=blank-at-e
 # Source audio oracles are byte-hashed by integrity tests.
 app/src/test/resources/source-aircraft-audio-*.json -text whitespace=cr-at-eol
 app/src/test/resources/source-plane002-*.json -text whitespace=cr-at-eol
+app/src/test/resources/source-carrier-anti-*.json -text whitespace=cr-at-eol

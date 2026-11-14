@@ -48,6 +48,7 @@ import com.example.worlddomination.game.rendering.SourceChinookDisplayDepths;
 import com.example.worlddomination.game.rendering.SourceSuicideDisplayDepths;
 import com.example.worlddomination.game.rendering.SourceRocketDisplayDepths;
 import com.example.worlddomination.game.rendering.SourceInterceptedAircraftDisplayDepths;
+import com.example.worlddomination.game.rendering.SourceCarrierPlaneDisplayDepths;
 import com.example.worlddomination.game.rendering.SourceAircraftTrail;
 import com.example.worlddomination.game.rendering.SourceAircraftTrailDisplay;
 import com.example.worlddomination.game.rendering.SourceActionLabelMapping;
@@ -242,6 +243,12 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             sourceAircraftTrails = new java.util.IdentityHashMap<>();
     private final List<FlashSubmarineAnimation> submarineBattleAnimations = new ArrayList<>();
     private final List<FlashCarrierPlaneAnimation> carrierPlaneAnimations = new ArrayList<>();
+    private final List<SourceCarrierPlaneDisplayDepths> sourceCarrierPlaneBindings =
+            new ArrayList<>();
+    private static final class DeferredCarrierDefense {
+        boolean attempted;
+        FlashAntiDefenseTrackingAnimation animation;
+    }
     private final List<FlashStandalonePlaneAnimation> standalonePlaneAnimations = new ArrayList<>();
     private final java.util.Map<Object, AircraftAudioPlayback.Owner> aircraftAudioOwners =
             new java.util.IdentityHashMap<>();
@@ -784,6 +791,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             sourceRocketBindings.get(index).advanceAttachedTimelines();
         for (int index = 0; index < sourceInterceptedAircraftBindings.size(); index++)
             sourceInterceptedAircraftBindings.get(index).advanceAttachedTimelines();
+        for (int index = 0; index < sourceCarrierPlaneBindings.size(); index++)
+            sourceCarrierPlaneBindings.get(index).advanceAttachedTimelines();
         // MovieClipHost dispatches all onEnterFrame callbacks before autoplay
         // frame actions; fixedUpdate advances those after the city callbacks.
         TurnPlaybackSequence.Phase previousPhase = turnPlaybackSequence.getPhase();
@@ -945,12 +954,14 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     }
 
     private boolean advanceCarrierPlaneUnit(FlashCarrierPlaneAnimation animation,
-                                             GameState.CombatEvent event) {
+                                             GameState.CombatEvent event,
+                                             SourceCarrierPlaneDisplayDepths depths) {
         if (animation.isFinished()) return false;
         boolean impact = animation.getSourcePlayback() == null ? animation.tick()
                 : animation.tickSourceFrame(turnPlaybackSequence.isReadyForBattle()
                     && event.battleStartNum <= battleRecordClock.getActivatedRecordCount());
         updateAircraftTrailDisplay(animation.getSourceTrail());
+        if (depths != null) depths.afterUnitFrame(impact);
         AircraftAudioPlayback.Owner voice = aircraftAudioOwners.get(animation);
         if (voice != null) {
             if (animation.takeTakeoffCue()) voice.requestTakeoff();
@@ -964,17 +975,24 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         if (impact) {
             applyProjectileCityImpact(event);
-            FlashAnimationTimeline timeline = flashAnimationAssets.getTimeline(
-                    animation.getImpactLinkage());
-            if (timeline != null) {
-                FlashBattleRoutes.CarrierPlaneStrike route = animation.getRoute();
-                FlashBattleRoutes.Point impactPoint =
-                        route.waypoints[route.waypoints.length - 1];
-                battleAnimations.add(new BattleAnimationSequence(timeline,
-                        route.targetPlayerId, route.targetCityIndex, 0,
-                        animation.getImpactCue(), impactPoint.x, impactPoint.y));
-            } else if (animation.getImpactCue() != null) {
-                audio.play(animation.getImpactCue());
+            if (depths != null) {
+                // killUnit(default) has no explosion sound; a successful payload
+                // uses its original cue while its effect paints in root depth order.
+                if (!animation.getRoute().intercepted && animation.getImpactCue() != null)
+                    audio.play(animation.getImpactCue());
+            } else {
+                FlashAnimationTimeline timeline = flashAnimationAssets.getTimeline(
+                        animation.getImpactLinkage());
+                if (timeline != null) {
+                    FlashBattleRoutes.CarrierPlaneStrike route = animation.getRoute();
+                    FlashBattleRoutes.Point impactPoint =
+                            route.waypoints[route.waypoints.length - 1];
+                    battleAnimations.add(new BattleAnimationSequence(timeline,
+                            route.targetPlayerId, route.targetCityIndex, 0,
+                            animation.getImpactCue(), impactPoint.x, impactPoint.y));
+                } else if (animation.getImpactCue() != null) {
+                    audio.play(animation.getImpactCue());
+                }
             }
         }
         if (animation.isFinished()) {
@@ -1252,6 +1270,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             stopAircraftAudio(animation);
         }
         carrierPlaneAnimations.clear();
+        sourceCarrierPlaneBindings.clear();
     }
 
     private void clearStandalonePlaneAnimations() {
@@ -1948,6 +1967,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                     } else if (item.owner instanceof SourceInterceptedAircraftDisplayDepths) {
                         battleUnitRenderer.drawInterceptedAircraftRole(batch, mapBounds,
                                 (SourceInterceptedAircraftDisplayDepths) item.owner, item.kind);
+                    } else if (item.owner instanceof SourceCarrierPlaneDisplayDepths) {
+                        battleUnitRenderer.drawCarrierExplosion(batch, mapBounds,
+                                (SourceCarrierPlaneDisplayDepths) item.owner);
                     } else if (item.owner instanceof SourceRocketDisplayDepths.Binding) {
                         battleUnitRenderer.drawSourceRocketRole(batch, mapBounds,
                                 (SourceRocketDisplayDepths.Binding) item.owner, item.kind, item.index);
@@ -5068,11 +5090,31 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                         new SourceAircraftTrailDisplay(battlefieldDisplay,
                                 planeAnimation.getSourceTrail(), event.attackerPlayerId,
                                 precedingUnitParameter));
-                FlashAntiDefenseTrackingAnimation anti = addAntiDefenseTrackingAnimation(event, planeAnimation,
-                        antiDefenseTargetLock);
+                DeferredCarrierDefense defense = new DeferredCarrierDefense();
+                SourceCarrierPlaneDisplayDepths carrierDepths =
+                        new SourceCarrierPlaneDisplayDepths(battlefieldDisplay,
+                                planeAnimation, precedingUnitParameter, sourceStoppedClips);
+                sourceCarrierPlaneBindings.add(carrierDepths);
                 sourceUnitPlayback.addConstructed(() -> {
-                    boolean stop = advanceCarrierPlaneUnit(planeAnimation, event);
-                    if (!stop && anti != null) advanceAntiDefenseUnit(anti);
+                    boolean stop = advanceCarrierPlaneUnit(planeAnimation, event, carrierDepths);
+                    if (!stop) {
+                        // View elects the first active target in reverse Unit
+                        // visit order, including a carrier still waiting to lift off.
+                        if (!defense.attempted && planeAnimation.isVisible()) {
+                            defense.attempted = true;
+                            defense.animation = addAntiDefenseTrackingAnimation(
+                                    event, planeAnimation, antiDefenseTargetLock);
+                        }
+                        if (defense.animation != null) {
+                            advanceAntiDefenseUnit(defense.animation);
+                            if (planeAnimation.getSourcePlayback() != null) {
+                                FlashBattleRoutes.Point origin =
+                                        defense.animation.getBuildingPosition();
+                                planeAnimation.getSourcePlayback().applySourceAntiDirection(
+                                        origin.x, origin.y);
+                            }
+                        }
+                    }
                     return stop;
                 });
                 continue;
