@@ -267,6 +267,17 @@ public final class GameState {
         }
     }
 
+    /** City image values at the source battle's pre-presentation boundary. */
+    public static final class BattleCitySnapshot {
+        public final int populationMillions;
+        public final int artworkFrame;
+
+        private BattleCitySnapshot(int populationMillions, int artworkFrame) {
+            this.populationMillions = populationMillions;
+            this.artworkFrame = artworkFrame;
+        }
+    }
+
     public static final class PlayerState {
         public final int id;
         public final boolean human;
@@ -746,6 +757,8 @@ public final class GameState {
     private final List<DiplomacyProposal> acceptedHumanDiplomacy = new ArrayList<>();
     private final List<DiplomacyProposal> rejectedHumanDiplomacy = new ArrayList<>();
     private ReferenceRandom lastTurnBattleRandom;
+    private final BattleCitySnapshot[] lastTurnBattleCities = new BattleCitySnapshot[25];
+    private boolean hasLastTurnBattleCities;
     private final List<WeaponState> battleStockUses = new ArrayList<>();
     private final int[] battleSatelliteLaunches = new int[5];
     private final List<SpyMissionEvent> lastTurnSpyMissions = new ArrayList<>();
@@ -2667,6 +2680,17 @@ public final class GameState {
         return lastTurnBattleRandom.copy();
     }
 
+    /** Immutable city population and image captured before resolved damage is applied. */
+    public BattleCitySnapshot getBattlePresentationCity(int playerId, int cityIndex) {
+        if (!hasLastTurnBattleCities) {
+            throw new IllegalStateException("No resolved battle city presentation snapshot");
+        }
+        if (playerId < 0 || playerId >= players.length || cityIndex < 0 || cityIndex >= 5) {
+            throw new IllegalArgumentException("Invalid battle city address");
+        }
+        return lastTurnBattleCities[playerId * 5 + cityIndex];
+    }
+
     /** Resolves human and opponent actions using the source turn order. */
     public void confirmTurn() {
         if (queuedActions.size() != MAX_TURN_ACTIONS) {
@@ -2813,6 +2837,14 @@ public final class GameState {
         // an isolated snapshot. Retain that boundary, before later turn draws.
         lastTurnBattleRandom = random instanceof ReferenceRandom
                 ? ((ReferenceRandom) random).copy() : null;
+        for (int playerId = 0; playerId < players.length; playerId++) {
+            for (int cityIndex = 0; cityIndex < 5; cityIndex++) {
+                CityState city = players[playerId].getCity(cityIndex);
+                lastTurnBattleCities[playerId * 5 + cityIndex] =
+                        new BattleCitySnapshot(city.populationMillions, city.getArtworkFrame());
+            }
+        }
+        hasLastTurnBattleCities = true;
         // The Flash applies battle and propaganda population changes before
         // Presenter.updatePlayerVars_2. If the human is eliminated, that
         // result phase is skipped, including research and production.

@@ -32,7 +32,9 @@ public final class CityShrinkSequenceTest {
         assertEquals(5, sequence.getFrameNumber());
         assertEquals(CityShrinkSequence.Phase.FADE_IN, sequence.getPhase());
 
-        int[] fadeInAlpha = {15, 30, 45, 60, 75, 90, 100};
+        // Source alpha reaches -5, then rises by 15 from that script value.
+        assertEquals(-5, sequence.getSourceAlpha());
+        int[] fadeInAlpha = {10, 25, 40, 55, 70, 85, 100};
         for (int alpha : fadeInAlpha) {
             sequence.tick();
             tickCount++;
@@ -73,7 +75,7 @@ public final class CityShrinkSequenceTest {
             sequence.tick();
         }
         sequence.tick();
-        assertEquals(15, sequence.getAlpha());
+        assertEquals(10, sequence.getAlpha());
         assertEquals(2, sequence.getFrameNumber());
 
         sequence.target(3);

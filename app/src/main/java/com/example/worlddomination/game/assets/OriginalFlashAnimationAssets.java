@@ -94,6 +94,7 @@ public final class OriginalFlashAnimationAssets implements Disposable {
             "explosion_warhead_1", "explosion_warhead_2", "explosion_warhead_3",
             "explosion_warhead_4", "explosion_bioload_1", "explosion_bioload_2",
             "explosion_bioload_3", "explosion_bioload_4", "explosion001", "explosion002",
+            "explosion_dust",
             "explosion003", "satellite",
             "rocket", "trail",
             "submarine",

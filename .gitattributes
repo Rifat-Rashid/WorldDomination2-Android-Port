@@ -2,3 +2,4 @@ scripts/*.sh text eol=lf
 # Preserve the byte hashes of captured reference replay fixtures on every host.
 app/src/test/resources/source-apache-*.csv -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 app/src/test/resources/source-infantry-*.csv -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+app/src/test/resources/source-chinook-*.csv -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

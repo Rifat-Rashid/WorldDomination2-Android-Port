@@ -22,11 +22,9 @@ public final class SourceBattleUnitAllocation {
             // Body/tint/dot handles are installed by SourceInfantryDisplayDepths.
             parameter += 20;
         } else if (FlashBattleRoutes.supportsChinookTank(event)) {
-            reserve(false, false, true, 0, false); // tankTop at param_depth.
-            // Native playback resolves the source tank_noShade typo to the
-            // recovered tank_noshade artwork, so its body occupies a real depth.
-            reserve(false, false, false, 0, false);
-            reserve(true, false, false, 0, false);
+            // Install the original top/base/carrier handles immediately after
+            // route construction, including the recovered native tank alias.
+            parameter += 15;
         } else if (FlashBattleRoutes.supportsSuicideBomber(event)) {
             reserve(false, true, false, 0, true);
         } else if (FlashBattleRoutes.supportsCarrierPlaneStrike(event)) {

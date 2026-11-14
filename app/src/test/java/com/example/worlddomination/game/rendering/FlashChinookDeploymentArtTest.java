@@ -16,18 +16,26 @@ import static org.junit.Assert.assertTrue;
 /** Presentation state recovered from the Chinook and tank Flash display lists. */
 public final class FlashChinookDeploymentArtTest {
     @Test
-    public void delayedStartKeepsAllDeploymentArtHiddenUntilFirstActiveTick()
+    public void delayedStartKeepsSourceClipsAttachedBeforeFirstActiveTick()
             throws Exception {
         FlashChinookTankAnimation animation = animation(2);
         FlashChinookTankAnimation.Actor carrier = animation.getActor(0);
         FlashChinookTankAnimation.Actor base = animation.getActor(1);
         FlashChinookTankAnimation.Actor shadow = animation.getChinookShadow();
 
+        assertTrue("source constructor attaches a visible carrier", carrier.visible);
+        assertTrue("native repaired source linkage attaches a visible tank", base.visible);
+        assertEquals("painted body starts at parent origin", 0f, carrier.renderX, 0f);
+        assertEquals(0f, carrier.renderY, 0f);
+        assertEquals(0f, base.renderX, 0f);
+        assertEquals(0f, base.renderY, 0f);
+
         for (int tick = 0; tick < 2; tick++) {
             animation.tick();
-            assertFalse(carrier.visible);
-            assertFalse(base.visible);
-            assertFalse(shadow.visible);
+            assertTrue(carrier.visible);
+            assertTrue(base.visible);
+            assertTrue(shadow.visible);
+            assertFalse("waiting does not launch audio", animation.takeAudioCue());
             assertFalse(animation.isTankShadowVisible());
             assertFalse(animation.isTankDeployed());
         }

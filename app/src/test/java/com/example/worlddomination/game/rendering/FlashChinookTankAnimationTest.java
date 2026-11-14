@@ -30,9 +30,20 @@ public final class FlashChinookTankAnimationTest {
         assertEquals("chinook", animation.getActor(0).linkage);
         assertEquals("tank_noshade", animation.getActor(1).linkage);
         assertEquals("tankTop_blue", animation.getActor(2).linkage);
+        for (int actor = 0; actor < 3; actor++) {
+            assertTrue("Source-attached body is visible at construction",
+                    animation.getActor(actor).visible);
+            assertEquals("Attached MovieClip starts at battle-parent origin", 0f,
+                    animation.getActor(actor).renderX, 0f);
+            assertEquals(0f, animation.getActor(actor).renderY, 0f);
+        }
+        assertEquals(420f, animation.getChinookShadow().renderX, 0f);
+        assertEquals(310f, animation.getChinookShadow().renderY, 0f);
         for (int i = 0; i < 3; i++) {
             animation.tick();
-            assertFalse(animation.getActor(0).visible);
+            assertTrue(animation.getActor(0).visible);
+            assertFalse("Waiting visits do not start the chopper cue",
+                    animation.takeAudioCue());
         }
         animation.tick();
         assertTrue(animation.getActor(0).visible);
@@ -85,6 +96,46 @@ public final class FlashChinookTankAnimationTest {
     }
 
     @Test
+    public void waitingAndActiveVisitsInvokeOneCarrierBaseTopCallbackEach() throws Exception {
+        FlashBattleRoutes.ChinookTankAttack route = FlashBattleRoutes.createSoldierThreeAttack(
+                0, 1, 2, 1, "green", loadAnchors());
+        FlashChinookTankAnimation animation = new FlashChinookTankAnimation(route, 2);
+        List<Integer> visits = new ArrayList<>();
+        animation.setActorFrameListener((actor, sourceY, changed) -> visits.add(actor));
+        animation.tick();
+        assertEquals(Arrays.asList(0, 1, 2), visits);
+        visits.clear();
+        animation.tick();
+        assertEquals(Arrays.asList(0, 1, 2), visits);
+        visits.clear();
+        animation.tick();
+        assertEquals(Arrays.asList(0, 1, 2), visits);
+        assertEquals(OriginalAudio.Cue.TANK_CHOPPER, takeCue(animation));
+    }
+
+    @Test
+    public void inactiveChinookSeeksAuthoredSevenEightNineThenAlternates()
+            throws Exception {
+        FlashBattleRoutes.ChinookTankAttack route = FlashBattleRoutes.createSoldierThreeAttack(
+                0, 1, 2, 1, "green", loadAnchors());
+        FlashChinookTankAnimation animation = new FlashChinookTankAnimation(route, 8);
+        int[] expectedZeroBased = {6, 7, 8, 7, 8};
+        for (int frame : expectedZeroBased) {
+            animation.presentWaitingFrame();
+            assertEquals("View's inactive Chinook fixedFrame seek", frame,
+                    animation.getActor(0).sourceFrame);
+            assertEquals(route.chinookStart.x, animation.getActor(0).renderX, 0f);
+            assertEquals(route.chinookStart.y, animation.getActor(0).renderY, 0f);
+            assertEquals(animation.getActor(1).sourceX,
+                    animation.getActor(1).renderX, 0f);
+            assertEquals(animation.getActor(2).sourceY,
+                    animation.getActor(2).renderY, 0f);
+        }
+        assertFalse("Waiting seeks do not start activation audio",
+                animation.takeAudioCue());
+    }
+
+    @Test
     public void rejectsMissingRouteAndNegativeDelay() throws Exception {
         FlashBattleRoutes.ChinookTankAttack route = FlashBattleRoutes.createSoldierThreeAttack(
                 0, 1, 0, 1, "blue", loadAnchors());
@@ -123,6 +174,43 @@ public final class FlashChinookTankAnimationTest {
         }
         assertTrue(animation.isFinished());
         assertTrue("Removed Chinook clip survives until allUnitsDone", animation.getActor(0).visible);
+    }
+
+    @Test
+    public void cityImpactIsTakenOnceOnPostShotStopBeforeWrapperRemoval() throws Exception {
+        FlashBattleRoutes.ChinookTankAttack route = FlashBattleRoutes.createSoldierThreeAttack(
+                0, 1, 0, 2, "blue", loadAnchors());
+        FlashChinookTankAnimation animation = new FlashChinookTankAnimation(route, 3);
+        for (int waiting = 0; waiting < 3; waiting++) {
+            animation.tick();
+            assertFalse(animation.takeCityImpact());
+        }
+
+        int activeVisits = 0;
+        while (!animation.isTankStopped() && activeVisits < 900) {
+            assertFalse("No impact precedes the source stop visit",
+                    animation.takeCityImpact());
+            animation.tick();
+            activeVisits++;
+        }
+        assertTrue("The tank must reach its post-60-shot stop visit",
+                animation.isTankStopped());
+        Field shotCount = FlashChinookTankAnimation.class.getDeclaredField("shotCount");
+        shotCount.setAccessible(true);
+        assertEquals("Impact follows all 60 source shots", 60,
+                shotCount.getInt(animation));
+        assertFalse("Stop and wrapper removal have separate source visits",
+                animation.isTankRemoved());
+        assertTrue(animation.takeCityImpact());
+        assertFalse("City impact is a one-shot event", animation.takeCityImpact());
+
+        animation.tick();
+        assertTrue(animation.isTankRemoved());
+        assertFalse(animation.takeCityImpact());
+        SourceStoppedClipQueue queue = new SourceStoppedClipQueue();
+        animation.registerStoppedClips(queue);
+        queue.removeAtAllUnitsDone();
+        assertFalse("Cleanup cannot replay the impact", animation.takeCityImpact());
     }
 
     @Test
