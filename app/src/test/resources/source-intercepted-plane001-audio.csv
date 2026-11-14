@@ -1,0 +1,20 @@
+tick,event,linkage,loops,volume,pan
+39,start,building_Resource.wav,1,100,0
+77,start,Massmedia 2.wav,1,100,0
+116,start,building_airfield.wav,1,100,0
+154,start,unit_Suicide Hatch.wav,1,100,0
+192,stop,Resources ambient loop.wav,,,
+192,stop,Resources ambient loop.wav,,,
+192,stop,Massmedia ambient loop.wav,,,
+196,start,unit_Fightertakeoff.wav,1,100,0
+208,start,unit_Suicide scream.wav,1,100,0
+301,start,unit_Suicide explode.wav,1,100,41.625
+301,stop,unit_Suicide scream.wav,,,
+314,start,Explode small3.wav,1,100,-87.93181211582746
+314,stop,unit_Fightertakeoff.wav,,,
+377,stop,building_Resource.wav,,,
+377,stop,Massmedia 2.wav,,,
+377,stop,building_airfield.wav,,,
+377,stop,unit_Suicide Hatch.wav,,,
+377,stop,unit_Suicide explode.wav,,,
+377,stop,Explode small3.wav,,,

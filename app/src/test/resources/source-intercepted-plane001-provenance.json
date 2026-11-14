@@ -1,0 +1,383 @@
+{
+  "seed": 0,
+  "difficulty": "normal",
+  "leaders": [
+    0,
+    1
+  ],
+  "schedule": [
+    {
+      "turn": 1,
+      "action": "research",
+      "options": {
+        "tech": "rocket2"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 2,
+      "action": "research",
+      "options": {
+        "tech": "rocket3"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 3,
+      "action": "research",
+      "options": {
+        "tech": "rocket4"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 4,
+      "action": "research",
+      "options": {
+        "tech": "warhead2"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 5,
+      "action": "research",
+      "options": {
+        "tech": "warhead3"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 6,
+      "action": "research",
+      "options": {
+        "tech": "warhead4"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 7,
+      "action": "research",
+      "options": {
+        "tech": "bioload2"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 8,
+      "action": "research",
+      "options": {
+        "tech": "bioload3"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 9,
+      "action": "research",
+      "options": {
+        "tech": "bioload4"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 10,
+      "action": "research",
+      "options": {
+        "tech": "soldier2"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 11,
+      "action": "research",
+      "options": {
+        "tech": "soldier3"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 12,
+      "action": "research",
+      "options": {
+        "tech": "soldier4"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 13,
+      "action": "research",
+      "options": {
+        "tech": "sub"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 14,
+      "action": "research",
+      "options": {
+        "tech": "ship"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 15,
+      "action": "production",
+      "options": {
+        "category": "special",
+        "percent": 100
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 16,
+      "action": "production",
+      "options": {
+        "category": "bioload",
+        "percent": 100
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 17,
+      "action": "production",
+      "options": {
+        "category": "bioload",
+        "percent": 100
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 18,
+      "action": "production",
+      "options": {
+        "category": "bioload",
+        "percent": 100
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 19,
+      "action": "production",
+      "options": {
+        "category": "bioload",
+        "percent": 100
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 20,
+      "action": "production",
+      "options": {
+        "category": "planes",
+        "percent": 100
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 21,
+      "action": "preAttack",
+      "options": {
+        "weapon": "plane1"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 22,
+      "action": "preAttack",
+      "options": {
+        "weapon": "plane1",
+        "payload": "bioload1",
+        "target": 1,
+        "city": 0
+      },
+      "second": "resources",
+      "confirm": "btn46"
+    }
+  ],
+  "event": {
+    "_player": 0,
+    "_item": "battle",
+    "_value": "preAttack",
+    "_a": 0,
+    "_b": 1,
+    "_weapon": 20,
+    "_carrier": 20,
+    "_payload": 8,
+    "_city": 5,
+    "_blocked": false,
+    "_casualties": 0,
+    "_frame": "airfield",
+    "_result": false,
+    "_isShip": false,
+    "_attack_arr": null,
+    "_result_arr": null,
+    "_action": null
+  },
+  "lastTick": 377,
+  "rows": 378,
+  "audio": [
+    {
+      "tick": 39,
+      "event": "start",
+      "linkage": "building_Resource.wav",
+      "loops": 1,
+      "volume": 100,
+      "pan": 0
+    },
+    {
+      "tick": 77,
+      "event": "start",
+      "linkage": "Massmedia 2.wav",
+      "loops": 1,
+      "volume": 100,
+      "pan": 0
+    },
+    {
+      "tick": 116,
+      "event": "start",
+      "linkage": "building_airfield.wav",
+      "loops": 1,
+      "volume": 100,
+      "pan": 0
+    },
+    {
+      "tick": 154,
+      "event": "start",
+      "linkage": "unit_Suicide Hatch.wav",
+      "loops": 1,
+      "volume": 100,
+      "pan": 0
+    },
+    {
+      "tick": 192,
+      "event": "stop",
+      "linkage": "Resources ambient loop.wav"
+    },
+    {
+      "tick": 192,
+      "event": "stop",
+      "linkage": "Resources ambient loop.wav"
+    },
+    {
+      "tick": 192,
+      "event": "stop",
+      "linkage": "Massmedia ambient loop.wav"
+    },
+    {
+      "tick": 196,
+      "event": "start",
+      "linkage": "unit_Fightertakeoff.wav",
+      "loops": 1,
+      "volume": 100,
+      "pan": 0
+    },
+    {
+      "tick": 208,
+      "event": "start",
+      "linkage": "unit_Suicide scream.wav",
+      "loops": 1,
+      "volume": 100,
+      "pan": 0
+    },
+    {
+      "tick": 301,
+      "event": "start",
+      "linkage": "unit_Suicide explode.wav",
+      "loops": 1,
+      "volume": 100,
+      "pan": 41.625
+    },
+    {
+      "tick": 301,
+      "event": "stop",
+      "linkage": "unit_Suicide scream.wav"
+    },
+    {
+      "tick": 314,
+      "event": "start",
+      "linkage": "Explode small3.wav",
+      "loops": 1,
+      "volume": 100,
+      "pan": -87.93181211582746
+    },
+    {
+      "tick": 314,
+      "event": "stop",
+      "linkage": "unit_Fightertakeoff.wav"
+    },
+    {
+      "tick": 377,
+      "event": "stop",
+      "linkage": "building_Resource.wav"
+    },
+    {
+      "tick": 377,
+      "event": "stop",
+      "linkage": "Massmedia 2.wav"
+    },
+    {
+      "tick": 377,
+      "event": "stop",
+      "linkage": "building_airfield.wav"
+    },
+    {
+      "tick": 377,
+      "event": "stop",
+      "linkage": "unit_Suicide Hatch.wav"
+    },
+    {
+      "tick": 377,
+      "event": "stop",
+      "linkage": "unit_Suicide explode.wav"
+    },
+    {
+      "tick": 377,
+      "event": "stop",
+      "linkage": "Explode small3.wav"
+    }
+  ],
+  "fixtureSha256": {
+    "units": "86df4af51afe0344c05c324a0e14b106666bab1364191ade1a28448437c76fbd",
+    "roles": "be7c89884d4f0db2c2de975d579b686cd305496696e005126fb4d6fa4cd6fe13",
+    "smoke": "38f413f039f9c50acff9c4e5af2feabb93b51e6f493868aa019591c2e7efa99f",
+    "city": "d77a26aff926e83dea6e1b64d802ce57800f9e087acecb59c311b70519a5a091",
+    "audio": "09cbd98253bc00cff2f373567bb0f161090b84d7d675a6d28b81d3e2445df9db",
+    "rng": "718fd05b0edc55f2fd73dd19294611a18902c694832664dea6c4767c45ddfd5d"
+  },
+  "fixtureRows": {
+    "units": 378,
+    "roles": 2027,
+    "smoke": 19,
+    "city": 378,
+    "audio": 19
+  },
+  "sourceSha256": {
+    "wd2/generated/Battle.py": "c6e9c790d6a624b0425344260b4de904db5197ea756fdf3a2de912eb8cd73c10",
+    "wd2/generated/Unit.py": "bc54c0e6c46f4e33bbb20e786c755f93aaba5d3d7224b0120eeeccc81eef8539",
+    "wd2/generated/View.py": "2de8afd493f28e36c3a94afa96b80795d685b8b023b12dc9d9ed634692c3accf",
+    "wd2/setup_menu.py": "5633326451e768a84a14bde04e452043ba7fac2617a4c71b7b36dcd0495f0c4a",
+    "assets/runtime/scene.json.gz": "7213f06fac4e887050ad89e0d3c9a67f47789096d559af8e08333991f7616629",
+    "WorldDomination2.swf": "fe60c4d8793a23e7ddd59ddcb406b5471540e28d64f7552d17308fbb269e6fe1"
+  },
+  "scriptSha256": "0470e5def94a78cc0487388c5ceeb77da5292106a4a39b40c8e6b9a35092a745",
+  "packagedFixtureSha256": {
+    "source-intercepted-plane001-audio.csv": "09cbd98253bc00cff2f373567bb0f161090b84d7d675a6d28b81d3e2445df9db",
+    "source-intercepted-plane001-city.csv": "d77a26aff926e83dea6e1b64d802ce57800f9e087acecb59c311b70519a5a091",
+    "source-intercepted-plane001-rng.json": "718fd05b0edc55f2fd73dd19294611a18902c694832664dea6c4767c45ddfd5d",
+    "source-intercepted-plane001-roles.csv": "be7c89884d4f0db2c2de975d579b686cd305496696e005126fb4d6fa4cd6fe13",
+    "source-intercepted-plane001-smoke.csv": "38f413f039f9c50acff9c4e5af2feabb93b51e6f493868aa019591c2e7efa99f",
+    "source-intercepted-plane001-state.csv": "86df4af51afe0344c05c324a0e14b106666bab1364191ade1a28448437c76fbd",
+    "source-intercepted-plane001-units.csv": "9f06b3f97603ee324f38829b99043658ec765344669b2b09c00cdf761eb51c36"
+  },
+  "packagedRows": {
+    "units": 378,
+    "state": 378,
+    "roles": 2027,
+    "smoke": 19,
+    "city": 378,
+    "audio": 19
+  },
+  "linkageAliasPolicy": "None: source trace uses literal plane001, plane001_tint, plane001_shadow, redDot, trail, and explosion003 linkages.",
+  "hashKeyMeaning": "fixtureSha256.units is the full ignored intercepted-plane001.csv capture, also packaged unchanged as source-intercepted-plane001-state.csv. packagedFixtureSha256 names the actual test resource files; source-intercepted-plane001-units.csv is a compact projection of state.",
+  "explosionCleanup": "Source explosion003 frame 22 action only stops playback. The effect stays attached through tick 375 and Presenter_allUnitsDone removes it at tick 376 from _toDeleteUnitsArr after View schedules the 2500 ms cleanup callback.",
+  "packagerSha256": "1a37b7a04d6949ac7850b67a56a681380b26ba8259a1badac132a108647f5d61"
+}

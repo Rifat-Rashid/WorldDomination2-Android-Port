@@ -46,6 +46,7 @@ import com.example.worlddomination.game.rendering.SourceInfantryDisplayDepths;
 import com.example.worlddomination.game.rendering.SourceChinookDisplayDepths;
 import com.example.worlddomination.game.rendering.SourceSuicideDisplayDepths;
 import com.example.worlddomination.game.rendering.SourceRocketDisplayDepths;
+import com.example.worlddomination.game.rendering.SourceInterceptedAircraftDisplayDepths;
 import com.example.worlddomination.game.rendering.SourceAircraftTrail;
 import com.example.worlddomination.game.rendering.SourceAircraftTrailDisplay;
 import com.example.worlddomination.game.rendering.SourceActionLabelMapping;
@@ -234,6 +235,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private final List<FlashSuicideBomberAnimation> suicideBomberAnimations = new ArrayList<>();
     private final List<FlashRocketAnimation> rocketBattleAnimations = new ArrayList<>();
     private final List<SourceRocketDisplayDepths> sourceRocketBindings = new ArrayList<>();
+    private final List<SourceInterceptedAircraftDisplayDepths> sourceInterceptedAircraftBindings =
+            new ArrayList<>();
     private final java.util.Map<SourceAircraftTrail, SourceAircraftTrailDisplay>
             sourceAircraftTrails = new java.util.IdentityHashMap<>();
     private final List<FlashSubmarineAnimation> submarineBattleAnimations = new ArrayList<>();
@@ -776,6 +779,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         for (int index = 0; index < sourceRocketBindings.size(); index++)
             sourceRocketBindings.get(index).advanceAttachedTimelines();
+        for (int index = 0; index < sourceInterceptedAircraftBindings.size(); index++)
+            sourceInterceptedAircraftBindings.get(index).advanceAttachedTimelines();
         // MovieClipHost dispatches all onEnterFrame callbacks before autoplay
         // frame actions; fixedUpdate advances those after the city callbacks.
         TurnPlaybackSequence.Phase previousPhase = turnPlaybackSequence.getPhase();
@@ -973,14 +978,21 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     }
 
     private boolean advanceStandalonePlaneUnit(FlashStandalonePlaneAnimation animation,
-                                                GameState.CombatEvent event) {
+                                                GameState.CombatEvent event,
+                                                SourceInterceptedAircraftDisplayDepths depths) {
         if (animation.isFinished()) return false;
         boolean impact = animation.getSourcePlayback() == null ? animation.tick()
                 : animation.tickSourceFrame(turnPlaybackSequence.isReadyForBattle()
                     && event.battleStartNum <= battleRecordClock.getActivatedRecordCount());
         updateAircraftTrailDisplay(animation.getSourceTrail());
+        if (depths != null) depths.afterUnitFrame();
         if (animation.takeTakeoffCue()) {
-            audio.play(animation.getTakeoffCue());
+            if (depths != null) {
+                // The source bridge coalesces the first eight soundAction requests.
+                if (!animation.hasSourceTakeoffRequested() && audio.isSoundEnabled())
+                    animation.setSourceTakeoffSoundId(
+                            audio.playInstance(animation.getTakeoffCue(), 0f));
+            } else audio.play(animation.getTakeoffCue());
         }
         if (animation.takeFlightCue()) {
             if (animation.loopsFlightCue()) {
@@ -988,6 +1000,15 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             } else {
                 audio.play(animation.getFlightCue());
             }
+        }
+        if (animation.getSourcePlayback() != null
+                && animation.getSourcePlayback().takeDeath()) {
+            // Unit.speedup_die updates the city even with zero casualties, then
+            // killUnit captures an effect at logical XY while its cue uses old MC X.
+            applyProjectileCityImpact(event, false);
+            audio.play(OriginalAudio.Cue.EXPLOSION_SMALL3,
+                    sourceAudioPan((float) animation.getSourcePlayback().getDeathSoundX()));
+            animation.stopSourceTakeoff(audio);
         }
         if (impact) {
             applyProjectileCityImpact(event);
@@ -1201,6 +1222,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         suicideBomberAnimations.clear();
         clearRocketBattleAnimations();
         sourceRocketBindings.clear();
+        sourceInterceptedAircraftBindings.clear();
         sourceAircraftTrails.clear();
         submarineBattleAnimations.clear();
         clearCarrierPlaneAnimations();
@@ -1232,6 +1254,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     private void clearStandalonePlaneAnimations() {
         for (FlashStandalonePlaneAnimation animation : standalonePlaneAnimations) {
+            animation.stopSourceTakeoff(audio);
             if (animation.loopsFlightCue()) {
                 audio.stop(OriginalAudio.Cue.CARRIERJET_FLIGHT,
                         animation.getFlightSoundId());
@@ -1919,6 +1942,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                         SourceAircraftTrailDisplay display = (SourceAircraftTrailDisplay) item.owner;
                         battleUnitRenderer.drawSourceAircraftSmoke(batch, mapBounds,
                                 display.trail, item.index, display.attackerPlayerId);
+                    } else if (item.owner instanceof SourceInterceptedAircraftDisplayDepths) {
+                        battleUnitRenderer.drawInterceptedAircraftRole(batch, mapBounds,
+                                (SourceInterceptedAircraftDisplayDepths) item.owner, item.kind);
                     } else if (item.owner instanceof SourceRocketDisplayDepths.Binding) {
                         battleUnitRenderer.drawSourceRocketRole(batch, mapBounds,
                                 (SourceRocketDisplayDepths.Binding) item.owner, item.kind, item.index);
@@ -3778,6 +3804,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         suicideBomberAnimations.clear();
         clearRocketBattleAnimations();
         sourceRocketBindings.clear();
+        sourceInterceptedAircraftBindings.clear();
         sourceAircraftTrails.clear();
         submarineBattleAnimations.clear();
         clearCarrierPlaneAnimations();
@@ -4289,6 +4316,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 suicideBomberAnimations.clear();
                 clearRocketBattleAnimations();
                 sourceRocketBindings.clear();
+                sourceInterceptedAircraftBindings.clear();
                 sourceAircraftTrails.clear();
                 submarineBattleAnimations.clear();
                 clearCarrierPlaneAnimations();
@@ -5062,10 +5090,18 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                             new SourceAircraftTrailDisplay(battlefieldDisplay,
                                     planeAnimation.getSourceTrail(), event.attackerPlayerId,
                                     precedingUnitParameter));
+                SourceInterceptedAircraftDisplayDepths aircraftDepths = null;
+                if (planeAnimation.getSourcePlayback() != null && route.intercepted) {
+                    aircraftDepths = new SourceInterceptedAircraftDisplayDepths(
+                            battlefieldDisplay, planeAnimation, precedingUnitParameter,
+                            sourceStoppedClips);
+                    sourceInterceptedAircraftBindings.add(aircraftDepths);
+                }
+                final SourceInterceptedAircraftDisplayDepths sourceAircraftDepths = aircraftDepths;
                 FlashAntiDefenseTrackingAnimation anti = addAntiDefenseTrackingAnimation(event, planeAnimation,
                         antiDefenseTargetLock);
                 sourceUnitPlayback.addConstructed(() -> {
-                    boolean stop = advanceStandalonePlaneUnit(planeAnimation, event);
+                    boolean stop = advanceStandalonePlaneUnit(planeAnimation, event, sourceAircraftDepths);
                     if (!stop && anti != null) advanceAntiDefenseUnit(anti);
                     return stop;
                 });
@@ -5591,6 +5627,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         suicideBomberAnimations.clear();
         clearRocketBattleAnimations();
         sourceRocketBindings.clear();
+        sourceInterceptedAircraftBindings.clear();
         sourceAircraftTrails.clear();
         submarineBattleAnimations.clear();
         clearCarrierPlaneAnimations();

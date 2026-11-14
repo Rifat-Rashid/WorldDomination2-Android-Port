@@ -79,6 +79,8 @@ public final class FlashStandalonePlaneAnimation
     private float orbitCenterY;
     private float distanceTravelled;
     private long flightSoundId = -1L;
+    private long sourceTakeoffSoundId = -1L;
+    private boolean sourceTakeoffRequested;
     private boolean takeoffCuePending;
     private boolean flightCuePending;
     private boolean impactPending;
@@ -125,7 +127,7 @@ public final class FlashStandalonePlaneAnimation
                                          String impactLinkage, OriginalAudio.Cue impactCue,
                                          ReferenceRandom presentationRandom) {
         this(route, playerColor, delayTicks, impactLinkage, impactCue);
-        if (!pairedTrail && !route.intercepted) {
+        if (!pairedTrail) {
             sourceTrail = new SourceAircraftTrail(
                     SourceAircraftTrail.Origin.PREVIOUS_UNIT_POSITION, presentationRandom);
             sourcePlayback = new SourceAircraftPlayback(route, sourceTrail);
@@ -153,7 +155,7 @@ public final class FlashStandalonePlaneAnimation
         actor.scale = (float) (sourcePlayback.getScalePercent() / 100d);
         actor.shadowYOffset = (float) sourcePlayback.getShadowYOffset();
         actor.sourceFrame = Math.max(0, sourcePlayback.getFrame() - 1);
-        actor.visible = !sourcePlayback.isRemoved();
+        actor.visible = sourcePlayback.isBodyAttached();
         distanceTravelled += distance(priorRenderX, priorRenderY,
                 actor.sourceX, actor.sourceY);
         switch (sourcePlayback.getAction()) {
@@ -589,6 +591,19 @@ public final class FlashStandalonePlaneAnimation
 
     public long getFlightSoundId() {
         return flightSoundId;
+    }
+
+    public boolean hasSourceTakeoffRequested() { return sourceTakeoffRequested; }
+    public long getSourceTakeoffSoundId() { return sourceTakeoffSoundId; }
+    public void setSourceTakeoffSoundId(long id) {
+        sourceTakeoffSoundId = id;
+        sourceTakeoffRequested = true;
+    }
+
+    /** Stops only this Unit's owned voice; muting or another Unit may share the cue. */
+    public void stopSourceTakeoff(OriginalAudio audio) {
+        audio.stop(takeoffCue, sourceTakeoffSoundId);
+        sourceTakeoffSoundId = -1L;
     }
 
     public void setFlightSoundId(long soundId) {

@@ -1,0 +1,46 @@
+{
+  "scenario": "legal seed0 normal two-rival turn22 plane1+bioload1 P1 city0",
+  "referenceReadOnly": "C:\\Users\\Seize\\Downloads\\RealTest",
+  "command": "python -B analysis/intercepted-plane-audit/capture_muted.py",
+  "soundOption": {
+    "battleTick0": false,
+    "beforeStepTick199": true,
+    "canonicalResolution": true
+  },
+  "sourceSha256": {
+    "wd2/generated/Battle.py": "c6e9c790d6a624b0425344260b4de904db5197ea756fdf3a2de912eb8cd73c10",
+    "wd2/generated/Unit.py": "bc54c0e6c46f4e33bbb20e786c755f93aaba5d3d7224b0120eeeccc81eef8539",
+    "wd2/generated/View.py": "2de8afd493f28e36c3a94afa96b80795d685b8b023b12dc9d9ed634692c3accf",
+    "wd2/setup_menu.py": "5633326451e768a84a14bde04e452043ba7fac2617a4c71b7b36dcd0495f0c4a",
+    "assets/runtime/scene.json.gz": "7213f06fac4e887050ad89e0d3c9a67f47789096d559af8e08333991f7616629",
+    "WorldDomination2.swf": "fe60c4d8793a23e7ddd59ddcb406b5471540e28d64f7552d17308fbb269e6fe1"
+  },
+  "captureScriptSha256": "7bece94401a07230d5898fc4a4974ec12e620abaa0b516dacc1655b1e846f921",
+  "normalStateSha256": "86df4af51afe0344c05c324a0e14b106666bab1364191ade1a28448437c76fbd",
+  "normalRolesSha256": "be7c89884d4f0db2c2de975d579b686cd305496696e005126fb4d6fa4cd6fe13",
+  "normalRolesByteIdentical": true,
+  "normalCityVisualColumnsIdentical": true,
+  "normalUnitPoseColumnsIdentical": true,
+  "cityRngColumnUsesMutedStream": true,
+  "firstRngDivergenceFromNormalTick": 77,
+  "lastTick": 377,
+  "battleResult": false,
+  "battleCasualtiesMillions": 0,
+  "captureSha256": {
+    "units": "292071bcf3f916cb2bbcef9d8e618bdfb6450f78e004a8f883f47949d1fc4ef5",
+    "roles": "be7c89884d4f0db2c2de975d579b686cd305496696e005126fb4d6fa4cd6fe13",
+    "smoke": "a471c834e975b6c90ccc8a87c659c06662398e20e94353a01edbbc668865139c",
+    "city": "4e0f47669105970c4fe0091b07be32fe6ff1b94eb84c6107db24d823ad8616f8",
+    "audio": "44c5b6d324ae9eb7aa9ff671a072a7e1bd5cba60831083bcc7474ff92368420f",
+    "rng": "718fd05b0edc55f2fd73dd19294611a18902c694832664dea6c4767c45ddfd5d"
+  },
+  "packagedSha256": {
+    "source-intercepted-plane001-muted-state.csv": "292071bcf3f916cb2bbcef9d8e618bdfb6450f78e004a8f883f47949d1fc4ef5",
+    "source-intercepted-plane001-muted-audio.csv": "44c5b6d324ae9eb7aa9ff671a072a7e1bd5cba60831083bcc7474ff92368420f"
+  },
+  "rows": {
+    "state": 378,
+    "audio": 11
+  },
+  "scope": "Sound option only changes presentation after confirmation; canonical resolution remains unmuted. No source or outcome mutation."
+}
