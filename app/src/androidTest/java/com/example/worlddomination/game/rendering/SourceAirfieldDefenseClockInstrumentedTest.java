@@ -35,22 +35,22 @@ import static org.junit.Assert.fail;
 /** Real World visits compared with legal source host states after every full 24 Hz tick. */
 @RunWith(AndroidJUnit4.class)
 public final class SourceAirfieldDefenseClockInstrumentedTest {
-    private static final String PREFIX = "source-airfield-defense-";
+    private static final String PREFIX = "source-finite-airfield-defense-";
 
-    @Test public void plane001SuccessHasNoAirfieldDefenseForAll534HostTicks() throws Exception {
-        verify("p1_success", 534, 0, false);
+    @Test public void plane001SuccessHasNoAirfieldDefenseForAll500HostTicks() throws Exception {
+        verify("p1_success", 500, 0, false);
     }
 
-    @Test public void plane001InterceptionMatchesAll378HostTicks() throws Exception {
-        verify("p1_intercept", 378, 119, true);
+    @Test public void plane001InterceptionMatchesAll365HostTicks() throws Exception {
+        verify("p1_intercept", 365, 85, true);
     }
 
-    @Test public void plane002SuccessHasNoAirfieldDefenseForAll572HostTicks() throws Exception {
-        verify("p2_success", 572, 0, false);
+    @Test public void plane002SuccessHasNoAirfieldDefenseForAll560HostTicks() throws Exception {
+        verify("p2_success", 560, 0, false);
     }
 
     @Test public void plane002InterceptionMatchesAll364HostTicks() throws Exception {
-        verify("p2_intercept", 364, 105, true);
+        verify("p2_intercept", 364, 70, true);
     }
 
     private static void verify(String scenario, int expectedHosts, int expectedCallbacks,

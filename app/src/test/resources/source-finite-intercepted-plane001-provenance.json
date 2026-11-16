@@ -1,0 +1,413 @@
+{
+  "preparationBridge": {
+    "tick": 0,
+    "preStart": [
+      386.25,
+      377.25
+    ],
+    "preLocation": 1,
+    "symbol": 5658,
+    "frame": 13,
+    "matrix": [
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      386.25,
+      352.25
+    ]
+  },
+  "transferProof": {
+    "canonicalBefore": {
+      "preStart": null,
+      "preLocation": null
+    },
+    "otherStoredFieldCount": 6230,
+    "otherStoredIdentitiesUnchanged": true,
+    "canonicalRngStateUnchanged": true,
+    "canonicalRngNext": 0.02788874944966646
+  },
+  "boundary": "in-memory compatibility transfer of preStart and _preLocation only; not uninterrupted host",
+  "musicCompletion": "No synthetic playback completion is injected; integration must use real completion callback",
+  "seed": 0,
+  "difficulty": "normal",
+  "leaders": [
+    0,
+    1
+  ],
+  "schedule": [
+    {
+      "turn": 1,
+      "action": "research",
+      "options": {
+        "tech": "rocket2"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 2,
+      "action": "research",
+      "options": {
+        "tech": "rocket3"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 3,
+      "action": "research",
+      "options": {
+        "tech": "rocket4"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 4,
+      "action": "research",
+      "options": {
+        "tech": "warhead2"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 5,
+      "action": "research",
+      "options": {
+        "tech": "warhead3"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 6,
+      "action": "research",
+      "options": {
+        "tech": "warhead4"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 7,
+      "action": "research",
+      "options": {
+        "tech": "bioload2"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 8,
+      "action": "research",
+      "options": {
+        "tech": "bioload3"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 9,
+      "action": "research",
+      "options": {
+        "tech": "bioload4"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 10,
+      "action": "research",
+      "options": {
+        "tech": "soldier2"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 11,
+      "action": "research",
+      "options": {
+        "tech": "soldier3"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 12,
+      "action": "research",
+      "options": {
+        "tech": "soldier4"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 13,
+      "action": "research",
+      "options": {
+        "tech": "sub"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 14,
+      "action": "research",
+      "options": {
+        "tech": "ship"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 15,
+      "action": "production",
+      "options": {
+        "category": "special",
+        "percent": 100
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 16,
+      "action": "production",
+      "options": {
+        "category": "bioload",
+        "percent": 100
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 17,
+      "action": "production",
+      "options": {
+        "category": "bioload",
+        "percent": 100
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 18,
+      "action": "production",
+      "options": {
+        "category": "bioload",
+        "percent": 100
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 19,
+      "action": "production",
+      "options": {
+        "category": "bioload",
+        "percent": 100
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 20,
+      "action": "production",
+      "options": {
+        "category": "planes",
+        "percent": 100
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 21,
+      "action": "preAttack",
+      "options": {
+        "weapon": "plane1"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 22,
+      "action": "preAttack",
+      "options": {
+        "weapon": "plane1",
+        "payload": "bioload1",
+        "target": 1,
+        "city": 0
+      },
+      "second": "resources",
+      "confirm": "btn46"
+    }
+  ],
+  "event": {
+    "_player": 0,
+    "_item": "battle",
+    "_value": "preAttack",
+    "_a": 0,
+    "_b": 1,
+    "_weapon": 20,
+    "_carrier": 20,
+    "_payload": 8,
+    "_city": 5,
+    "_blocked": false,
+    "_casualties": 0,
+    "_frame": "airfield",
+    "_result": false,
+    "_isShip": false,
+    "_attack_arr": null,
+    "_result_arr": null,
+    "_action": null
+  },
+  "lastTick": 364,
+  "rows": 365,
+  "audio": [
+    {
+      "tick": 39,
+      "event": "start",
+      "linkage": "building_Resource.wav",
+      "loops": 1,
+      "volume": 100,
+      "pan": 0
+    },
+    {
+      "tick": 77,
+      "event": "start",
+      "linkage": "Massmedia 2.wav",
+      "loops": 1,
+      "volume": 100,
+      "pan": 0
+    },
+    {
+      "tick": 116,
+      "event": "start",
+      "linkage": "building_airfield.wav",
+      "loops": 1,
+      "volume": 100,
+      "pan": 0
+    },
+    {
+      "tick": 154,
+      "event": "start",
+      "linkage": "unit_Suicide Hatch.wav",
+      "loops": 1,
+      "volume": 100,
+      "pan": 0
+    },
+    {
+      "tick": 192,
+      "event": "stop",
+      "linkage": "Resources ambient loop.wav"
+    },
+    {
+      "tick": 192,
+      "event": "stop",
+      "linkage": "Resources ambient loop.wav"
+    },
+    {
+      "tick": 192,
+      "event": "stop",
+      "linkage": "Massmedia ambient loop.wav"
+    },
+    {
+      "tick": 196,
+      "event": "start",
+      "linkage": "unit_Fightertakeoff.wav",
+      "loops": 1,
+      "volume": 100,
+      "pan": 0
+    },
+    {
+      "tick": 208,
+      "event": "start",
+      "linkage": "unit_Suicide scream.wav",
+      "loops": 1,
+      "volume": 100,
+      "pan": 0
+    },
+    {
+      "tick": 280,
+      "event": "start",
+      "linkage": "Explode small3.wav",
+      "loops": 1,
+      "volume": 100,
+      "pan": -87.76115629528262
+    },
+    {
+      "tick": 280,
+      "event": "stop",
+      "linkage": "unit_Fightertakeoff.wav"
+    },
+    {
+      "tick": 301,
+      "event": "start",
+      "linkage": "unit_Suicide explode.wav",
+      "loops": 1,
+      "volume": 100,
+      "pan": 41.625
+    },
+    {
+      "tick": 301,
+      "event": "stop",
+      "linkage": "unit_Suicide scream.wav"
+    },
+    {
+      "tick": 364,
+      "event": "stop",
+      "linkage": "building_Resource.wav"
+    },
+    {
+      "tick": 364,
+      "event": "stop",
+      "linkage": "Massmedia 2.wav"
+    },
+    {
+      "tick": 364,
+      "event": "stop",
+      "linkage": "building_airfield.wav"
+    },
+    {
+      "tick": 364,
+      "event": "stop",
+      "linkage": "unit_Suicide Hatch.wav"
+    },
+    {
+      "tick": 364,
+      "event": "stop",
+      "linkage": "Explode small3.wav"
+    },
+    {
+      "tick": 364,
+      "event": "stop",
+      "linkage": "unit_Suicide explode.wav"
+    }
+  ],
+  "fixtureSha256": {
+    "units": "f2e4d037af150970bac13494ed416226c2db1068113c071f4037c6d0c8c488e0",
+    "roles": "e71e93aa35909e6b31e7730fef6f433c222f568abe0573d2e2246d7cdf359681",
+    "smoke": "82f4d42b2ad4dbd330555a414eed299df954aa25457b65eb07818dc5c380aba9",
+    "city": "a01ac39e46a89fb9ab8e4cdf4204a8cb506f5134acc2613a4e603d835b0db1f3",
+    "audio": "bc4177ab1cc593bdece7e4599b8abd2333a279615cc12403f2bdd53c5711dbb0",
+    "rng": "718fd05b0edc55f2fd73dd19294611a18902c694832664dea6c4767c45ddfd5d"
+  },
+  "fixtureRows": {
+    "units": 365,
+    "roles": 1970,
+    "smoke": 19,
+    "city": 365,
+    "audio": 19
+  },
+  "sourceSha256": {
+    "wd2/generated/Battle.py": "c6e9c790d6a624b0425344260b4de904db5197ea756fdf3a2de912eb8cd73c10",
+    "wd2/generated/Unit.py": "bc54c0e6c46f4e33bbb20e786c755f93aaba5d3d7224b0120eeeccc81eef8539",
+    "wd2/generated/View.py": "2de8afd493f28e36c3a94afa96b80795d685b8b023b12dc9d9ed634692c3accf",
+    "wd2/setup_menu.py": "5633326451e768a84a14bde04e452043ba7fac2617a4c71b7b36dcd0495f0c4a",
+    "assets/runtime/scene.json.gz": "7213f06fac4e887050ad89e0d3c9a67f47789096d559af8e08333991f7616629",
+    "WorldDomination2.swf": "fe60c4d8793a23e7ddd59ddcb406b5471540e28d64f7552d17308fbb269e6fe1"
+  },
+  "scriptSha256": "66a4e51fd9f975c66f0a87c0089a979d74850a6f5c5d86951d2dfff8cea531b6",
+  "packagedFixtureSha256": {
+    "source-finite-intercepted-plane001-audio.csv": "bc4177ab1cc593bdece7e4599b8abd2333a279615cc12403f2bdd53c5711dbb0",
+    "source-finite-intercepted-plane001-city.csv": "a01ac39e46a89fb9ab8e4cdf4204a8cb506f5134acc2613a4e603d835b0db1f3",
+    "source-finite-intercepted-plane001-rng.json": "718fd05b0edc55f2fd73dd19294611a18902c694832664dea6c4767c45ddfd5d",
+    "source-finite-intercepted-plane001-roles.csv": "e71e93aa35909e6b31e7730fef6f433c222f568abe0573d2e2246d7cdf359681",
+    "source-finite-intercepted-plane001-smoke.csv": "82f4d42b2ad4dbd330555a414eed299df954aa25457b65eb07818dc5c380aba9",
+    "source-finite-intercepted-plane001-state.csv": "f2e4d037af150970bac13494ed416226c2db1068113c071f4037c6d0c8c488e0",
+    "source-finite-intercepted-plane001-units.csv": "cf79393e726dfff686d247d1f13ccdc89df875e756676f40d2c2e2ddeda990a0"
+  },
+  "packagedRows": {
+    "units": 365,
+    "state": 365,
+    "roles": 1970,
+    "smoke": 19,
+    "city": 365,
+    "audio": 19
+  },
+  "linkageAliasPolicy": "None: source trace uses literal plane001, plane001_tint, plane001_shadow, redDot, trail, and explosion003 linkages.",
+  "hashKeyMeaning": "fixtureSha256.units is the full ignored intercepted-plane001.csv capture, also packaged unchanged as source-finite-intercepted-plane001-state.csv. packagedFixtureSha256 names the actual test resource files; source-finite-intercepted-plane001-units.csv is a compact projection of state.",
+  "explosionCleanup": "Inspect captured role rows for stop and cleanup; no fixed legacy tick assumed.",
+  "packagerSha256": "6325f4392ba13816aa647218a2f0e057bdd8aa49d815b40a9fb74d18d0e8ed51"
+}

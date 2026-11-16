@@ -135,6 +135,18 @@ public final class FlashStandalonePlaneAnimation
         actor.visible = true;
     }
 
+    /** Source Unit starts at the physical position retained during preparation. */
+    public static FlashStandalonePlaneAnimation forPreparedLaunch(
+            FlashBattleRoutes.StandalonePlaneStrike route, int playerColor, int delayTicks,
+            String impactLinkage, OriginalAudio.Cue impactCue,
+            ReferenceRandom presentationRandom) {
+        FlashStandalonePlaneAnimation animation = new FlashStandalonePlaneAnimation(route,
+                playerColor, delayTicks, impactLinkage, impactCue, presentationRandom);
+        animation.sourcePlayback = SourceAircraftPlayback.forPreparedLaunch(
+                route, animation.sourceTrail);
+        return animation;
+    }
+
     public SourceAircraftTrail getSourceTrail() { return sourceTrail; }
     public SourceAircraftPlayback getSourcePlayback() { return sourcePlayback; }
 
@@ -142,6 +154,8 @@ public final class FlashStandalonePlaneAnimation
         if (sourcePlayback == null) throw new IllegalStateException("No source aircraft");
         float priorRenderX = actor.sourceX;
         float priorRenderY = actor.sourceY;
+        double priorLogicalX = sourcePlayback.getX();
+        double priorLogicalY = sourcePlayback.getY();
         if (recordActivated) sourcePlayback.tickSourceFrame();
         else sourcePlayback.presentWaitingFrame();
         actor.previousX = (float) sourcePlayback.getPreviousX();
@@ -154,8 +168,18 @@ public final class FlashStandalonePlaneAnimation
         actor.sourceFrame = Math.max(0, sourcePlayback.getFrame() - 1);
         actor.sourceTintFrame = Math.max(0, sourcePlayback.getTintFrame() - 1);
         actor.visible = sourcePlayback.isBodyAttached();
-        distanceTravelled += distance(priorRenderX, priorRenderY,
-                actor.sourceX, actor.sourceY);
+        if (recordActivated) {
+            if (Double.isFinite(priorLogicalX) && Double.isFinite(priorLogicalY)) {
+                distanceTravelled += (float) Math.hypot(
+                        sourcePlayback.getX() - priorLogicalX,
+                        sourcePlayback.getY() - priorLogicalY);
+            } else {
+                // The isolated-adapter compatibility path starts with undefined
+                // logical coordinates and first falls back to its painted pose.
+                distanceTravelled += distance(priorRenderX, priorRenderY,
+                        actor.sourceX, actor.sourceY);
+            }
+        }
         switch (sourcePlayback.getAction()) {
             case "plane_circular_flight": phase = Phase.ORBIT; break;
             case "bomb": phase = Phase.APPROACH; break;

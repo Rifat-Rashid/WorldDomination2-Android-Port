@@ -72,6 +72,89 @@ public final class SourcePreparedAirfieldLocationInstrumentedTest {
             assertFalse("battle handed off",cities.isBattleActive());
         });
     }
+    @Test public void finiteSlotTwoFlightMatchesAll459SourceHostStates() throws Exception {
+        java.util.List<String[]> rows = new java.util.ArrayList<>();
+        java.security.MessageDigest digest = java.security.MessageDigest.getInstance("SHA-256");
+        try (java.io.InputStream in = androidx.test.platform.app.InstrumentationRegistry
+                .getInstrumentation().getContext().getAssets()
+                .open("source-finite-prepared-airfield-slot2.csv")) {
+            java.io.ByteArrayOutputStream bytes = new java.io.ByteArrayOutputStream();
+            byte[] buffer = new byte[8192];
+            for (int n; (n = in.read(buffer)) != -1;) {
+                digest.update(buffer, 0, n); bytes.write(buffer, 0, n);
+            }
+            StringBuilder hex = new StringBuilder();
+            for (byte b : digest.digest()) hex.append(String.format("%02x", b & 255));
+            assertEquals("source capture bytes", "73741278558be0efeea96c77415768fe8930c2927a1f8b863f7f887f8f9f2688", hex.toString());
+            try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(
+                    new java.io.ByteArrayInputStream(bytes.toByteArray()), java.nio.charset.StandardCharsets.UTF_8))) {
+                assertEquals("tick,x,y,action,status,angle,moving,privateRngNext,canonicalRngNext,activeIndex", reader.readLine());
+                for (String line; (line = reader.readLine()) != null;) {
+                    String[] values = line.split(",", -1); assertEquals(10, values.length); rows.add(values);
+                }
+            }
+        }
+        assertEquals(459, rows.size());
+        SourceBattleCleanupInstrumentedTest.runInGame(app -> {
+            GameSetup setup = new GameSetup(0L); setup.setDifficulty(1);
+            assertTrue(setup.toggleOpponent(0)); assertTrue(setup.toggleOpponent(1));
+            GameState game = new GameState(setup);
+            production(game, "soldier", 50); production(game, "planes", 100); production(game, "bioload", 100);
+            decline(game); game.selectAction(GameState.Action.ATTACK);
+            assertTrue(game.configureAttack(1, 2, "soldier1")); assertTrue(game.acceptSelectedAction());
+            game.selectAction(GameState.Action.PREPARED_ATTACK);
+            assertTrue(game.configurePreparedCarrier("plane1")); assertTrue(game.acceptSelectedAction());
+            field(WorldDominationGame.class, "game").set(app, game);
+            BattlefieldCityRenderer cities = (BattlefieldCityRenderer) field(WorldDominationGame.class, "cityRenderer").get(app);
+            cities.reset(game);
+            ((SourceBattleRecordClock) field(WorldDominationGame.class, "battleRecordClock").get(app)).reset();
+            Method fixed = WorldDominationGame.class.getDeclaredMethod("fixedUpdate", float.class); fixed.setAccessible(true);
+            invoke(app, "confirmTurnAndPreparePlayback"); checkBuilding(app);
+            for (int i = 0; i < 1600 && cities.isBattleActive(); i++) fixed.invoke(app, 1f / 24f);
+            assertFalse("preparation handed off", cities.isBattleActive());
+            decline(game); game.selectAction(GameState.Action.PREPARED_ATTACK);
+            assertTrue(game.configurePreparedLaunch(1, 2, "bioload1")); assertTrue(game.acceptSelectedAction()); resources(game);
+            invoke(app, "confirmTurnAndPreparePlayback"); checkBuilding(app); assertEquals(5, game.getTurn());
+            @SuppressWarnings("unchecked") List<FlashStandalonePlaneAnimation> planes =
+                    (List<FlashStandalonePlaneAnimation>) field(WorldDominationGame.class, "standalonePlaneAnimations").get(app);
+            FlashStandalonePlaneAnimation plane = null;
+            for (FlashStandalonePlaneAnimation candidate : planes)
+                if (candidate.targetPlayerId() == 1 && "plane001".equals(candidate.getRoute().linkage)) plane = candidate;
+            assertNotNull(plane); assertEquals(2, plane.getRoute().actionBuildingSlot);
+            SourceAircraftPlayback core = plane.getSourcePlayback(); assertNotNull(core);
+            com.example.worlddomination.game.simulation.ReferenceRandom rng =
+                    (com.example.worlddomination.game.simulation.ReferenceRandom) field(WorldDominationGame.class, "battlePresentationRandom").get(app);
+            double canonical = game.createPresentationRandomCopy().nextDouble();
+            com.badlogic.gdx.math.Rectangle phone = new com.badlogic.gdx.math.Rectangle(0, 0, 1194, 552);
+            for (int tick = 0; tick < rows.size(); tick++) {
+                if (tick > 0) fixed.invoke(app, 1f / 24f);
+                String[] row = rows.get(tick); String label = "finite slot 2 host " + tick;
+                assertEquals(label, tick, Integer.parseInt(row[0]));
+                assertEquals(label + " x", Double.parseDouble(row[1]), core.getX(), 1e-9);
+                assertEquals(label + " y", Double.parseDouble(row[2]), core.getY(), 1e-9);
+                assertEquals(label + " action", row[3], core.getAction());
+                assertEquals(label + " status", row[4], core.getUnitStatus());
+                assertEquals(label + " angle", Double.parseDouble(row[5]), core.getAngle(), 0d);
+                assertEquals(label + " moving", Boolean.parseBoolean(row[6]), core.isActiveAndMoving());
+                if (tick > 0 && !core.isActiveAndMoving()) {
+                    assertEquals(label + " waiting crop stays at departure", 0f,
+                            plane.getActor().routeProgress, 0f);
+                    float expectedX = com.example.worlddomination.game.ui.BattlefieldCityLayout.sourceX(
+                            phone, plane.getActor().sourceX, plane.getRoute().attackerPlayerId);
+                    float paintedX = com.example.worlddomination.game.ui.BattlefieldCityLayout.sourceXBetween(
+                            phone, plane.getActor().sourceX, plane.getRoute().attackerPlayerId,
+                            plane.getRoute().targetPlayerId, plane.getActor().routeProgress);
+                    assertEquals(label + " phone departure projection", expectedX, paintedX, 0f);
+                }
+                assertEquals(label + " private RNG", Double.parseDouble(row[7]), rng.copy().nextDouble(), 0d);
+                assertEquals(label + " canonical source RNG", Double.parseDouble(row[8]), canonical, 0d);
+                assertEquals(label + " canonical frozen", canonical, game.createPresentationRandomCopy().nextDouble(), 0d);
+                assertEquals(label + " retained wrapper", Integer.parseInt(row[9]) >= 0, !core.isRemoved());
+            }
+            assertFalse("flight handed off", cities.isBattleActive());
+        });
+    }
+
     private static void checkBuilding(WorldDominationGame app) throws Exception {
         @SuppressWarnings("unchecked") List<FlashActionBuildingAnimation> buildings=
                 (List<FlashActionBuildingAnimation>)field(WorldDominationGame.class,"actionBuildingAnimations").get(app);

@@ -1,0 +1,177 @@
+{
+  "boundary": "compatibility: only prep View preStart and preLocation copied to canonical",
+  "seed": 0,
+  "schedule": [
+    "soldier 50% + resources",
+    "planes 100% + resources",
+    "bioload 100% + resources",
+    "soldier1 attack + plane1 preparation",
+    "plane1 bioload1 launch + resources"
+  ],
+  "stocksBeforePreparation": {
+    "soldier1": 5,
+    "plane1": 5,
+    "bioload1": 5
+  },
+  "prepEvents": [
+    {
+      "_player": 0,
+      "_item": "setPreAttack",
+      "_value": "ready",
+      "_a": 0,
+      "_b": 1,
+      "_weapon": 20,
+      "_carrier": 20,
+      "_payload": null,
+      "_city": 5,
+      "_frame": "airfield",
+      "_blocked": false
+    },
+    {
+      "_player": 0,
+      "_item": "battle",
+      "_value": "attack",
+      "_a": 0,
+      "_b": 1,
+      "_weapon": 12,
+      "_city": 7,
+      "_casualties": 2,
+      "_result": true,
+      "_spyArr": null,
+      "_spyBuilding": "spyCenter"
+    },
+    {
+      "_player": 0,
+      "_item": "regard",
+      "_value": "attack",
+      "_a": 0,
+      "_b": 1,
+      "_wpnLevel": 1
+    }
+  ],
+  "preparation": {
+    "tick": 0,
+    "preStart": [
+      432.25,
+      321.75
+    ],
+    "preLocation": 2,
+    "building": {
+      "slot": 2,
+      "name": "ab0_2",
+      "symbol": 5658,
+      "frame": 13,
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        432.25,
+        296.75
+      ],
+      "attached": true
+    },
+    "privateRngNext": 0.4554702368121878
+  },
+  "transfer": {
+    "canonicalBefore": {
+      "preStart": null,
+      "preLocation": null
+    },
+    "otherStoredFields": 6200,
+    "otherStoredFieldIdentitiesUnchanged": true,
+    "canonicalRngStateUnchanged": true,
+    "canonicalRngNext": 0.8102508494373589
+  },
+  "launchEvents": [
+    {
+      "_player": 0,
+      "_item": "resources",
+      "_value": 41,
+      "_plusmin": "plus"
+    },
+    {
+      "_player": 0,
+      "_item": "battle",
+      "_value": "preAttack",
+      "_a": 0,
+      "_b": 1,
+      "_weapon": 20,
+      "_carrier": 20,
+      "_payload": 8,
+      "_city": 7,
+      "_blocked": false,
+      "_casualties": 9,
+      "_frame": "airfield",
+      "_result": true,
+      "_isShip": false,
+      "_attack_arr": null,
+      "_result_arr": null,
+      "_action": null,
+      "_bioload": true
+    },
+    {
+      "_player": 0,
+      "_item": "setPreAttack",
+      "_value": "inactive"
+    },
+    {
+      "_player": 0,
+      "_item": "regard",
+      "_a": 0,
+      "_b": 1
+    },
+    {
+      "_player": 0,
+      "_item": "regard",
+      "_value": "preAttack",
+      "_a": 0,
+      "_b": 1,
+      "_wpnLevel": 1
+    }
+  ],
+  "launch": {
+    "building": {
+      "slot": 2,
+      "name": "ab0_2",
+      "symbol": 5658,
+      "frame": 13,
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        432.25,
+        296.75
+      ],
+      "attached": true
+    },
+    "unit": {
+      "x": 442.25,
+      "y": 296.75,
+      "action": "liftOff",
+      "name": "unit1",
+      "startNum": 2.0,
+      "result": true,
+      "waypoints": [
+        {
+          "x": 327,
+          "y": 246,
+          "type": "default"
+        },
+        {
+          "x": 173,
+          "y": 298,
+          "type": "plane_circular_flight"
+        },
+        {
+          "x": 212.8,
+          "y": 66.75,
+          "type": "bomb"
+        }
+      ]
+    },
+    "privateRngNext": 0.72254277208884
+  },
+  "capturedTicks": 459
+}

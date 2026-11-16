@@ -25,7 +25,7 @@ import static org.junit.Assert.*;
 @RunWith(AndroidJUnit4.class)
 public final class SourceBomberPlaybackInstrumentedTest {
     @Test public void legalSuccessRetainsBodyAfterWrapperUntilSourceCleanup() throws Exception {
-        compare("success", 16, 571);
+        compare("success", 16, 559);
     }
 
     @Test public void legalInterceptionKeepsEffectThroughSourceCleanup() throws Exception {
@@ -164,9 +164,9 @@ public final class SourceBomberPlaybackInstrumentedTest {
                         actor.visible);
                 assertEquals("wrapper t" + tick, row.get(0).asBoolean(),
                         !core.isRemoved());
-                sourceNumber("shadow X", shadow.get(0), actor.sourceX, tick, .001);
+                sourceNumber("shadow X", shadow.get(0), core.getShadowRenderX(), tick, .001);
                 sourceNumber("shadow Y", shadow.get(1),
-                        actor.sourceY + actor.shadowYOffset, tick, .001);
+                        core.getShadowRenderY(), tick, .001);
                 sourceNumber("shadow scale", shadow.get(4), actor.scale * 100d,
                         tick, .001);
                 sourceNumber("tint X", tint.get(0), actor.sourceX, tick, .001);
@@ -196,6 +196,9 @@ public final class SourceBomberPlaybackInstrumentedTest {
                         privateRandom.copy().nextDouble(), 0d);
                 assertEquals("canonical RNG isolation t" + tick, canonical,
                         game.createPresentationRandomCopy().nextDouble(), 0d);
+                assertEquals("captured canonical RNG t" + tick,
+                        oracle.get("finiteCaptureExtensions").get("canonicalRngNextByHost")
+                                .get(tick).asDouble(), canonical, 0d);
                 if (snapshotTick(name, tick)) snapshot(app, name, tick);
             }
             assertNull("all source trail operations consumed", nextTrailEvent);
@@ -339,13 +342,13 @@ public final class SourceBomberPlaybackInstrumentedTest {
 
     private static JsonValue source(String name) throws Exception {
         try (InputStream input = InstrumentationRegistry.getInstrumentation()
-                .getContext().getAssets().open("source-plane002-" + name + ".json")) {
+                .getContext().getAssets().open("source-finite-plane002-" + name + ".json")) {
             return new JsonReader().parse(input);
         }
     }
 
     private static boolean snapshotTick(String name, int tick) {
-        return "success".equals(name) ? tick == 272 || tick == 509 || tick == 570
+        return "success".equals(name) ? tick == 272 || tick == 475 || tick == 558
                 : tick == 195 || tick == 299 || tick == 362;
     }
 
@@ -354,7 +357,7 @@ public final class SourceBomberPlaybackInstrumentedTest {
         Method capture = SourceBattleCleanupInstrumentedTest.class.getDeclaredMethod(
                 "capture", WorldDominationGame.class, String.class);
         capture.setAccessible(true);
-        capture.invoke(null, app, "source-plane002-" + name + "-t" + tick + ".png");
+        capture.invoke(null, app, "source-finite-plane002-" + name + "-t" + tick + ".png");
     }
 
     private static void advance(WorldDominationGame app) throws Exception {

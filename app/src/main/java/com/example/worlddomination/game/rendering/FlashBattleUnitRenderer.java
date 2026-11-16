@@ -992,8 +992,7 @@ public final class FlashBattleUnitRenderer {
             FlashStandalonePlaneAnimation.Actor actor = animation.getActor();
             FlashBattleRoutes.StandalonePlaneStrike route = animation.getRoute();
             // The intercepted source path paints these peers at occupied root depths.
-            if (animation.getSourcePlayback() != null && (route.intercepted
-                    || "plane002".equals(route.linkage))) continue;
+            if (animation.getSourcePlayback() != null) continue;
             if (smokeRegion != null) {
                 for (int index = 0; index < animation.getTrailSlotCount(); index++) {
                     float alpha = animation.getTrailAlpha(index);
@@ -1017,8 +1016,12 @@ public final class FlashBattleUnitRenderer {
                     actor.alpha, actor.scale * mapScale, null, false, false,
                     actor.sourceFrame, 1f, 0, planeTransformScratch[0].setIdentity());
 
+            SourceAircraftPlayback source = animation.getSourcePlayback();
+            float shadowX = source == null ? actor.sourceX : (float) source.getShadowRenderX();
+            float shadowY = source == null ? actor.sourceY + actor.shadowYOffset
+                    : (float) source.getShadowRenderY();
             drawPlaneLinkage(batch, mapBounds, assets.getTimeline(linkage + "_shadow"),
-                    0, actor.sourceX, actor.sourceY + actor.shadowYOffset,
+                    0, shadowX, shadowY,
                     route.attackerPlayerId, route.targetPlayerId, actor.routeProgress,
                     1f, actor.scale * mapScale, null, false, true,
                     actor.sourceFrame, 1f, 0, planeTransformScratch[0].setIdentity());
@@ -1117,7 +1120,7 @@ public final class FlashBattleUnitRenderer {
                     sourceAircraftRoleActor.alpha = 1f;
                     // This walker preserves each exported SVG's registration origin.
                     drawApacheClip(batch, mapBounds, sourceAircraftRoleActor,
-                            "explosion003", null);
+                            binding.getExplosionLinkage(), null);
                 } finally {
                     batch.setShader(shader);
                     batch.setPackedColor(color);
@@ -1136,13 +1139,15 @@ public final class FlashBattleUnitRenderer {
         float previousColor = batch.getPackedColor();
         ShaderProgram previousShader = batch.getShader();
         try {
-            float crop = BattlefieldCityLayout.sourceXBetween(mapBounds, actor.sourceX,
+            SourceAircraftPlayback core = animation.getSourcePlayback();
+            float roleX = shadow ? (float) core.getShadowRenderX() : actor.sourceX;
+            float roleY = shadow ? (float) core.getShadowRenderY() : actor.sourceY;
+            float crop = BattlefieldCityLayout.sourceXBetween(mapBounds, roleX,
                     route.attackerPlayerId, route.targetPlayerId, actor.routeProgress)
-                    - BattlefieldCityLayout.sourceX(mapBounds, actor.sourceX, route.targetPlayerId);
-            sourceAircraftRoleActor.sourceX = actor.sourceX
+                    - BattlefieldCityLayout.sourceX(mapBounds, roleX, route.targetPlayerId);
+            sourceAircraftRoleActor.sourceX = roleX
                     + crop / BattlefieldCityLayout.sourceScale(mapBounds);
-            sourceAircraftRoleActor.sourceY = actor.sourceY
-                    + (shadow ? actor.shadowYOffset : 0f);
+            sourceAircraftRoleActor.sourceY = roleY;
             // The shadow wrapper has one frame, but its nested mc follows the
             // same captured direction as tintMC (View.f_37).
             sourceAircraftRoleActor.sourceFrame = shadow || tint

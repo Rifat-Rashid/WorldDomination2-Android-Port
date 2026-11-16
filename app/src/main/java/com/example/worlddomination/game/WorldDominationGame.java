@@ -1034,6 +1034,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         boolean impact = animation.getSourcePlayback() == null ? animation.tick()
                 : animation.tickSourceFrame(turnPlaybackSequence.isReadyForBattle()
                     && event.battleStartNum <= battleRecordClock.getActivatedRecordCount());
+        // Unit.bomb attaches its payload before removing the smoke peers;
+        // their occupied depths determine the new effect's physical depth.
+        if (impact && depths != null) depths.attachPayloadImpact();
         updateAircraftTrailDisplay(animation.getSourceTrail());
         if (depths != null) depths.afterUnitFrame();
         AircraftAudioPlayback.Owner voice = aircraftAudioOwners.get(animation);
@@ -1057,15 +1060,21 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         if (impact) {
             applyProjectileCityImpact(event);
-            FlashAnimationTimeline timeline = flashAnimationAssets.getTimeline(
-                    animation.getImpactLinkage());
-            FlashBattleRoutes.StandalonePlaneStrike route = animation.getRoute();
-            if (timeline != null) {
-                battleAnimations.add(new BattleAnimationSequence(timeline,
-                        route.targetPlayerId, route.targetCityIndex, 0,
-                        animation.getImpactCue(), route.target.x, route.target.y));
-            } else if (animation.getImpactCue() != null) {
-                audio.play(animation.getImpactCue());
+            if (depths != null) {
+                if (animation.getImpactCue() != null)
+                    audio.play(animation.getImpactCue(), sourceAudioPan(
+                            (float) animation.getSourcePlayback().getImpactSoundX()));
+            } else {
+                FlashAnimationTimeline timeline = flashAnimationAssets.getTimeline(
+                        animation.getImpactLinkage());
+                FlashBattleRoutes.StandalonePlaneStrike route = animation.getRoute();
+                if (timeline != null) {
+                    battleAnimations.add(new BattleAnimationSequence(timeline,
+                            route.targetPlayerId, route.targetCityIndex, 0,
+                            animation.getImpactCue(), route.target.x, route.target.y));
+                } else if (animation.getImpactCue() != null) {
+                    audio.play(animation.getImpactCue());
+                }
             }
         }
         if (animation.isFinished()) {
@@ -5245,7 +5254,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 int playerColor = game.getPlayerState(event.attackerPlayerId)
                         .getPlayerColor();
                 FlashStandalonePlaneAnimation planeAnimation =
-                        new FlashStandalonePlaneAnimation(
+                        FlashStandalonePlaneAnimation.forPreparedLaunch(
                         route, playerColor, recordDelay,
                         SourceCombatAnimationMapping.linkageFor(event), cue, presentationRandom);
                 standalonePlaneAnimations.add(planeAnimation);
@@ -5258,8 +5267,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                                     planeAnimation.getSourceTrail(), event.attackerPlayerId,
                                     precedingUnitParameter));
                 SourceInterceptedAircraftDisplayDepths aircraftDepths = null;
-                if (planeAnimation.getSourcePlayback() != null && (route.intercepted
-                        || "plane002".equals(route.linkage))) {
+                if (planeAnimation.getSourcePlayback() != null) {
                     aircraftDepths = new SourceInterceptedAircraftDisplayDepths(
                             battlefieldDisplay, planeAnimation, precedingUnitParameter,
                             sourceStoppedClips);

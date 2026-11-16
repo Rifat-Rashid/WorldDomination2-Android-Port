@@ -41,17 +41,16 @@ import static org.junit.Assert.fail;
 public final class SourceBomberRolesRenderingInstrumentedTest {
     private static final int WIDTH = 800;
     private static final int HEIGHT = 600;
-    // Source tick 272 is at (2, 1): pan the unchanged 800 x 600 source stage
-    // into the FBO so the entire first painted plane can be inspected.
-    private static final float STAGE_X = 350f;
-    private static final float STAGE_Y = -300f;
+    // The finite source pose is fully inside the unshifted 800 x 600 stage.
+    private static final float STAGE_X = 0f;
+    private static final float STAGE_Y = 0f;
     private static final Rectangle BOUNDS = new Rectangle(STAGE_X, STAGE_Y,
             WIDTH, HEIGHT);
     private static final int TICK = 272;
-    // scene.json.gz: plane002[10] -> shape818; plane002_tint[10] -> 2394;
-    // plane002_shadow[1] -> nested plane002, whose mc seeks frame10 in View.f_37.
-    private static final int BODY_SHAPE = 818;
-    private static final int TINT_SHAPE = 2394;
+    // scene.json.gz: plane002[22] -> shape842; plane002_tint[22] -> 2418;
+    // plane002_shadow[1] -> nested plane002, whose mc seeks frame22 in View.f_37.
+    private static final int BODY_SHAPE = 842;
+    private static final int TINT_SHAPE = 2418;
     private static final int WRONG_SHADOW_SHAPE = 800;
     private static final float SHADOW_SCALE = .6999969482421875f;
     private static final float SHADOW_ALPHA = .69921875f;
@@ -70,20 +69,20 @@ public final class SourceBomberRolesRenderingInstrumentedTest {
     @Test public void firstVisibleBomberUsesNestedShadowAndSourceTint() throws Exception {
         JsonValue oracle;
         try (InputStream input = InstrumentationRegistry.getInstrumentation().getContext()
-                .getAssets().open("source-plane002-success.json")) {
+                .getAssets().open("source-finite-plane002-success.json")) {
             oracle = new JsonReader().parse(input);
         }
-        assertEquals("legal unforced plane2", oracle.getString("mode"));
+        assertEquals("legal unforced finite prepared plane2", oracle.getString("mode"));
         JsonValue source = oracle.get("rows").get(TICK);
-        assertEquals(2d, source.get(2).get(0).asDouble(), 0d);
-        assertEquals(1d, source.get(2).get(1).asDouble(), 0d);
-        assertEquals(10, source.get(2).get(2).asInt());
+        assertEquals(394.25d, source.get(2).get(0).asDouble(), 0d);
+        assertEquals(351.25d, source.get(2).get(1).asDouble(), 0d);
+        assertEquals(22, source.get(2).get(2).asInt());
         assertEquals(10d, source.get(2).get(3).asDouble(), 0d);
         assertEquals(50d, source.get(2).get(4).asDouble(), 0d);
         assertEquals(1, source.get(4).get(2).asInt());
-        assertEquals(10, source.get(6).get(2).asInt());
+        assertEquals(22, source.get(6).get(2).asInt());
         assertEquals(75d, source.get(6).get(3).asDouble(), 0d);
-        assertEquals(10, source.get(13).asInt());
+        assertEquals(22, source.get(13).asInt());
 
         SourceBattleCleanupInstrumentedTest.runInGame(app -> {
             Method builder = SourceBomberPlaybackInstrumentedTest.class.getDeclaredMethod(
@@ -114,10 +113,10 @@ public final class SourceBomberRolesRenderingInstrumentedTest {
             assertTrue(binding.shadow().getDepth() < binding.tint().getDepth());
             FlashStandalonePlaneAnimation.Actor actor = binding.animation.getActor();
             assertTrue(actor.visible);
-            assertEquals(2f, actor.sourceX, .001f);
-            assertEquals(1f, actor.sourceY, .001f);
-            assertEquals(9, actor.sourceFrame);
-            assertEquals(9, actor.sourceTintFrame);
+            assertEquals(394.25f, actor.sourceX, .001f);
+            assertEquals(351.25f, actor.sourceY, .001f);
+            assertEquals(21, actor.sourceFrame);
+            assertEquals(21, actor.sourceTintFrame);
             assertEquals(.1f, actor.alpha, .0001f);
             assertEquals(.5f, actor.scale, .0001f);
             assertEquals(0f, actor.shadowYOffset, .0001f);
@@ -133,9 +132,9 @@ public final class SourceBomberRolesRenderingInstrumentedTest {
             assertEquals(2423, assets.getTimeline("plane002_tint").symbolId);
             assertEquals(848, assets.getTimeline("plane002_shadow").symbolId);
             assertEquals(BODY_SHAPE,
-                    assets.getTimeline("plane002").getFrame(9).layers[0].shapeId);
+                    assets.getTimeline("plane002").getFrame(21).layers[0].shapeId);
             assertEquals(TINT_SHAPE,
-                    assets.getTimeline("plane002_tint").getFrame(9).layers[0].shapeId);
+                    assets.getTimeline("plane002_tint").getFrame(21).layers[0].shapeId);
             FlashAnimationTimeline.Layer shadowLayer = assets.getTimeline("plane002_shadow")
                     .getFrame(0).layers[0];
             assertEquals(847, shadowLayer.shapeId);
@@ -179,10 +178,10 @@ public final class SourceBomberRolesRenderingInstrumentedTest {
                         () -> drawOracle(batch, oracleShader, assets, BODY_SHAPE, false));
                 byte[] wrongShadow = render(buffer, batch,
                         () -> drawOracle(batch, oracleShader, assets, WRONG_SHADOW_SHAPE, true));
-                evidence("source-bomber-t272-roles-actual.png", actual);
-                evidence("source-bomber-t272-roles-expected.png", expected);
-                evidence("source-bomber-t272-roles-no-tint.png", noTint);
-                evidence("source-bomber-t272-roles-wrong-shadow-frame.png", wrongShadow);
+                evidence("source-finite-bomber-t272-roles-actual.png", actual);
+                evidence("source-finite-bomber-t272-roles-expected.png", expected);
+                evidence("source-finite-bomber-t272-roles-no-tint.png", noTint);
+                evidence("source-finite-bomber-t272-roles-wrong-shadow-frame.png", wrongShadow);
                 assertPixels(actual, expected);
                 assertTrue("omitting source tint must alter painted pixels",
                         changedPixels(expected, noTint) > 0);
@@ -211,13 +210,13 @@ public final class SourceBomberRolesRenderingInstrumentedTest {
     /** Leaf IDs, matrices and colors are literal source observations, not renderer traversal. */
     private static void drawOracle(SpriteBatch batch, ShaderProgram shader,
             OriginalFlashAnimationAssets assets, int shadowShape, boolean includeTint) {
-        drawLeaf(batch, shader, assets, BODY_SHAPE, 2f, 1f, .5f, .1f,
+        drawLeaf(batch, shader, assets, BODY_SHAPE, 394.25f, 351.25f, .5f, .1f,
                 1f, 1f, 1f, 0f, 0f, 0f);
-        drawLeaf(batch, shader, assets, shadowShape, 2f, 1f,
+        drawLeaf(batch, shader, assets, shadowShape, 394.25f, 351.25f,
                 .5f * SHADOW_SCALE, SHADOW_ALPHA,
                 0f, 0f, 0f, -1f, .6f, 0f);
         if (includeTint)
-            drawLeaf(batch, shader, assets, TINT_SHAPE, 2f, 1f, .5f,
+            drawLeaf(batch, shader, assets, TINT_SHAPE, 394.25f, 351.25f, .5f,
                     GREEN[3], GREEN[0], GREEN[1], GREEN[2],
                     0f, 0f, GREEN[5]);
     }

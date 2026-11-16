@@ -214,7 +214,9 @@ public final class SourceAircraftAudioInstrumentedTest {
 
     private static JsonValue sourceCase(String name) throws Exception {
         try (InputStream input = InstrumentationRegistry.getInstrumentation()
-                .getContext().getAssets().open("source-aircraft-audio-tails.json")) {
+                .getContext().getAssets().open(name.startsWith("plane")
+                        ? "source-finite-aircraft-audio-tails.json"
+                        : "source-aircraft-audio-tails.json")) {
             JsonValue root = new JsonReader().parse(
                     new InputStreamReader(input, StandardCharsets.UTF_8));
             assertEquals("source-aircraft-audio-tails-v1", root.getString("schema"));

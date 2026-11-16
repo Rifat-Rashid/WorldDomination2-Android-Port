@@ -22,7 +22,7 @@ import java.lang.reflect.Field;
 
 import static org.junit.Assert.*;
 
-/** Independent source-green pixel oracle called by the legal tick-313 Android test. */
+/** Independent source-green pixel oracle called by the legal tick-279 Android test. */
 final class SourceInterceptedAircraftTintPixels {
     private static final int WIDTH = 800, HEIGHT = 600;
     private static final Rectangle BOUNDS = new Rectangle(0, 0, WIDTH, HEIGHT);
@@ -54,9 +54,9 @@ final class SourceInterceptedAircraftTintPixels {
         assertTrue(binding.tint().isAttached());
         assertTrue(binding.dot().isAttached());
         FlashStandalonePlaneAnimation.Actor actor = binding.animation.getActor();
-        assertEquals("source tick 313 is authored frame 1", 0, actor.sourceFrame);
-        assertEquals("source x", 48.27275153669018, actor.sourceX, .002);
-        assertEquals("source y", 254.7482852266179, actor.sourceY, .002);
+        assertEquals("source tick 279 is authored frame 1", 0, actor.sourceFrame);
+        assertEquals("source x", 48.95537481886953, actor.sourceX, .002);
+        assertEquals("source y", 251.09795662304163, actor.sourceY, .002);
         assertEquals("source scale", .82f, actor.scale, .0001f);
         assertEquals("source tint alpha already applied by palette", .75f,
                 binding.animation.getTint().alphaMultiplier, .0001f);
@@ -91,9 +91,9 @@ final class SourceInterceptedAircraftTintPixels {
                         expectedShader, assets, label, 1f));
                 byte[] wrongAlpha = render(buffer, batch, () -> drawExpected(batch,
                         expectedShader, assets, label, .75f));
-                evidence("source-intercepted-plane-t313-" + label + "-actual.png", actual);
-                evidence("source-intercepted-plane-t313-" + label + "-expected.png", expected);
-                evidence("source-intercepted-plane-t313-" + label + "-wrongalpha.png", wrongAlpha);
+                evidence("source-finite-intercepted-plane-t279-" + label + "-actual.png", actual);
+                evidence("source-finite-intercepted-plane-t279-" + label + "-expected.png", expected);
+                evidence("source-finite-intercepted-plane-t279-" + label + "-wrongalpha.png", wrongAlpha);
                 assertPixels(label, actual, expected);
                 assertTrue("double alpha must be visible in " + label,
                         differingPixels(expected, wrongAlpha) > 0);
@@ -113,8 +113,8 @@ final class SourceInterceptedAircraftTintPixels {
         String linkage = "tint".equals(label) ? "plane001_tint" : "redDot";
         FlashAnimationTimeline timeline = assets.getTimeline(linkage);
         assertNotNull("original " + linkage, timeline);
-        float sourceX = "tint".equals(label) ? 48.27275153669018f : 0f;
-        float sourceY = "tint".equals(label) ? 254.7482852266179f : 0f;
+        float sourceX = "tint".equals(label) ? 48.95537481886953f : 0f;
+        float sourceY = "tint".equals(label) ? 251.09795662304163f : 0f;
         float scale = "tint".equals(label) ? .82f : 1f;
         float[] root = {scale, 0f, 0f, scale, 0f, 0f};
         float[] color = GREEN.clone();

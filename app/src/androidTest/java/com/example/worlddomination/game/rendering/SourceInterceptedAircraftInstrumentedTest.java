@@ -45,7 +45,7 @@ import static org.junit.Assert.*;
 /** An unmodified legal turn22 fighter interception, with its concurrent AI suicide Unit. */
 @RunWith(AndroidJUnit4.class)
 public final class SourceInterceptedAircraftInstrumentedTest {
-    private static final String PREFIX = "source-intercepted-plane001-";
+    private static final String PREFIX = "source-finite-intercepted-plane001-";
 
     @Test public void legalInterceptMatchesUnitRootCityRandomnessAndOwnedAudio() throws Exception {
         verify(0);
@@ -59,7 +59,7 @@ public final class SourceInterceptedAircraftInstrumentedTest {
         List<Map<String,String>> source = csv(muteThroughTick > 0 ? "muted-state.csv" : "state.csv");
         List<Map<String,String>> roles = csv("roles.csv");
         List<Map<String,String>> city = csv("city.csv");
-        assertEquals(378, source.size());
+        assertEquals(365, source.size());
         SourceBattleCleanupInstrumentedTest.runInGame(app -> {
             OriginalAudio originalAudio = (OriginalAudio) field(app, "audio");
             int[] tick = {0};
@@ -111,7 +111,7 @@ public final class SourceInterceptedAircraftInstrumentedTest {
                 int roleCursor = 0;
                 MusicVoice takeoff = null, flight = null;
                 int soundStartTick = muteThroughTick > 0 ? muteThroughTick + 1 : 196;
-                for (int frame = 0; frame <= 377; frame++) {
+                for (int frame = 0; frame <= 364; frame++) {
                     tick[0] = frame;
                     if (muteThroughTick > 0 && frame == muteThroughTick + 1) audio.toggleSound();
                     if (frame > 0) update.invoke(app, 1f / 24f);
@@ -147,14 +147,14 @@ public final class SourceInterceptedAircraftInstrumentedTest {
                     assertEquals("body t"+frame,bool(row,"bodyAttached"),plane.getActor().visible);
                     assertEquals("isolated RNG t"+frame,decimal(row,"rngNext"),random.copy().nextDouble(),0);
                     assertEquals("canonical RNG frozen t"+frame,canonical,game.createPresentationRandomCopy().nextDouble(),0);
-                    if (frame < 377) {
+                    if (frame < 364) {
                         assertTrue("private city still active t"+frame,cities.isBattleActive());
                         assertEquals("city frame t"+frame,integer(city.get(frame),"imageFrame"),cities.getSourceCityFrame(5));
                         assertEquals("no biological callback on intercept t"+frame,0,cities.getSourceCloudCount(5));
                     } else assertFalse(cities.isBattleActive());
                     while (roleCursor < roles.size() && integer(roles.get(roleCursor),"tick") == frame) {
                         Map<String,String> role = roles.get(roleCursor++);
-                        if (frame == 377) continue; // Detached Python adapter retains its root after native canonical handoff.
+                        if (frame == 364) continue; // Detached Python adapter retains its root after native canonical handoff.
                         if (role.get("role").startsWith("rootExplosion:")) {
                             SourceDisplayList.Entry<BattlefieldDisplayState.Item> effect = root.clips()
                                     .atDepth(integer(role,"depth"));
@@ -187,21 +187,21 @@ public final class SourceInterceptedAircraftInstrumentedTest {
                     assertEquals("one coalesced takeoff t"+frame,
                             frame < soundStartTick ? 0 : 1,
                             takeoff == null ? 0 : takeoff.plays);
-                    assertEquals("owned takeoff stop t"+frame,frame < 314 ? 0 : 1,
+                    assertEquals("owned takeoff stop t"+frame,frame < 280 ? 0 : 1,
                             takeoff == null ? 0 : takeoff.stops);
-                    assertEquals("owned flight stop t"+frame,frame < 314 ? 0 : 1,
+                    assertEquals("owned flight stop t"+frame,frame < 280 ? 0 : 1,
                             flight == null ? 0 : flight.stops);
-                    assertEquals("one death cue t"+frame,frame < 314 ? 0 : 1,hit.plays);
-                    if (frame == 313 && muteThroughTick == 0)
+                    assertEquals("one death cue t"+frame,frame < 280 ? 0 : 1,hit.plays);
+                    if (frame == 279 && muteThroughTick == 0)
                         SourceInterceptedAircraftTintPixels.verify(app,binding);
-                    if (frame == 314 && muteThroughTick == 0) verifyExplosionPixels(app,binding);
+                    if (frame == 280 && muteThroughTick == 0) verifyExplosionPixels(app,binding);
                 }
                 assertEquals(roles.size(),roleCursor);
                 assertNotNull(takeoff); assertNotNull(flight);
-                assertEquals(314,takeoff.stopTick);
-                assertEquals(314,flight.stopTick);
-                assertEquals(314,hit.playTick);
-                assertEquals(-.8793181211582746f,hit.pan,.000001f);
+                assertEquals(280,takeoff.stopTick);
+                assertEquals(280,flight.stopTick);
+                assertEquals(280,hit.playTick);
+                assertEquals(-.8776115629528262f,hit.pan,.000001f);
             } finally {
                 restore(sounds,OriginalAudio.Cue.EXPLOSION_SMALL3,oldHit);
                 set(app, "audio", originalAudio);
@@ -279,9 +279,9 @@ public final class SourceInterceptedAircraftInstrumentedTest {
                 float top=BattlefieldCityLayout.sourceY(bounds,(float)binding.getExplosionY());
                 batch.draw(shape,x,top-shape.getRegionHeight(),shape.getRegionWidth(),shape.getRegionHeight());
             });
-            evidence("source-intercepted-plane-t314-actual.png",actual);
-            evidence("source-intercepted-plane-t314-expected.png",expected);
-            evidence("source-intercepted-plane-t314-unregistered.png",unregistered);
+            evidence("source-finite-intercepted-plane-t280-actual.png",actual);
+            evidence("source-finite-intercepted-plane-t280-expected.png",expected);
+            evidence("source-finite-intercepted-plane-t280-unregistered.png",unregistered);
             assertTrue("negative detects missing original registration",differences(expected,unregistered)>100);
             assertEquals("source explosion registration pixels",0,differences(expected,actual));
         } finally {batch.dispose();buffer.dispose();}

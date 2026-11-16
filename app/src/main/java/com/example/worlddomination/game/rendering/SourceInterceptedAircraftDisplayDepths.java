@@ -2,7 +2,7 @@ package com.example.worlddomination.game.rendering;
 
 import java.util.Objects;
 
-/** Physical source aircraft roles and a retained rocket_self effect in the battle root. */
+/** Physical source aircraft roles and retained battle-root effects. */
 public final class SourceInterceptedAircraftDisplayDepths implements SourceStoppedClipQueue.Clip {
     public final FlashStandalonePlaneAnimation animation;
     private final BattlefieldDisplayState display;
@@ -16,6 +16,7 @@ public final class SourceInterceptedAircraftDisplayDepths implements SourceStopp
     private int explosionFrameIndex = -1;
     private double explosionX;
     private double explosionY;
+    private String explosionLinkage;
     private boolean queued;
 
     public SourceInterceptedAircraftDisplayDepths(BattlefieldDisplayState display,
@@ -24,9 +25,8 @@ public final class SourceInterceptedAircraftDisplayDepths implements SourceStopp
         this.display = Objects.requireNonNull(display, "display");
         this.animation = Objects.requireNonNull(animation, "animation");
         this.stoppedClips = Objects.requireNonNull(stoppedClips, "stoppedClips");
-        if (animation.getSourcePlayback() == null || !(animation.getRoute().intercepted
-                || "plane002".equals(animation.getRoute().linkage)))
-            throw new IllegalArgumentException("A source interception or bomber is required");
+        if (animation.getSourcePlayback() == null)
+            throw new IllegalArgumentException("A source aircraft is required");
         if (precedingUnitParameter < 0 || precedingUnitParameter % 5 != 0)
             throw new IllegalArgumentException("Invalid source Unit parameter");
         unitName = "unit" + (precedingUnitParameter + 5) / 5;
@@ -51,9 +51,23 @@ public final class SourceInterceptedAircraftDisplayDepths implements SourceStopp
 
     /** Existing children autoplay before this frame's Unit callbacks; birth is frame 1. */
     public void advanceAttachedTimelines() {
-        // explosion003's authored frame22 stops; it does not remove its parent.
-        if (explosion != null && explosion.isAttached() && explosionFrameIndex < 21)
+        if (explosion != null && explosion.isAttached()
+                && explosionFrameIndex + 1 < SourceRocketDisplayDepths.sourceExplosionStopFrame(
+                        explosionLinkage, Integer.MAX_VALUE))
             explosionFrameIndex++;
+    }
+
+    /** Unit.bomb attaches the payload before its smoke clips are removed from the root. */
+    public void attachPayloadImpact() {
+        if (explosion != null) throw new IllegalStateException("Aircraft effect already attached");
+        String linkage = animation.getImpactLinkage();
+        explosionLinkage = linkage == null || linkage.isEmpty() ? "explosion_warhead_1" : linkage;
+        FlashBattleRoutes.Point waypoint = animation.getRoute().bombWaypoint;
+        explosionX = Double.parseDouble(Float.toString(waypoint.x));
+        explosionY = Double.parseDouble(Float.toString(waypoint.y)) + 100d;
+        explosion = display.attach(BattlefieldDisplayState.Kind.EFFECT, -1,
+                unitName + "explosion", this, display.nextDepth());
+        explosionFrameIndex = 0;
     }
 
     /** Call after the Unit has removed all its smoke, before advancing other Units. */
@@ -63,6 +77,7 @@ public final class SourceInterceptedAircraftDisplayDepths implements SourceStopp
             display.remove(body);
             display.remove(shadow);
             display.remove(tint);
+            explosionLinkage = "explosion003";
             explosionX = core.getDeathEffectX();
             explosionY = core.getDeathEffectY();
             explosion = display.attach(BattlefieldDisplayState.Kind.EFFECT, -1,
@@ -88,6 +103,7 @@ public final class SourceInterceptedAircraftDisplayDepths implements SourceStopp
     public SourceDisplayList.Entry<BattlefieldDisplayState.Item> tint() { return tint; }
     public SourceDisplayList.Entry<BattlefieldDisplayState.Item> dot() { return dot; }
     public SourceDisplayList.Entry<BattlefieldDisplayState.Item> explosion() { return explosion; }
+    public String getExplosionLinkage() { return explosionLinkage; }
     public int getExplosionFrameIndex() { return explosionFrameIndex; }
     public double getExplosionX() { return explosionX; }
     public double getExplosionY() { return explosionY; }

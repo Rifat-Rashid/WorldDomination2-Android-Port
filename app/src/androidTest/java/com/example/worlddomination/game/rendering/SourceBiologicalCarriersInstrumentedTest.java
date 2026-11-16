@@ -31,11 +31,11 @@ import static org.junit.Assert.*;
 @RunWith(AndroidJUnit4.class)
 public final class SourceBiologicalCarriersInstrumentedTest {
     @Test public void planeOneBiologicalPayloadMatchesAllSourceTicks() throws Exception {
-        verify("source-bio-plane1", 533, 1, new int[]{2}, true, false);
+        verify("source-finite-bio-plane1", 499, 1, new int[]{2}, true, false);
     }
 
     @Test public void planeOneWarheadDoesNotCreateBiologicalClouds() throws Exception {
-        verify("source-bio-plane1-warhead1", 533, 1, new int[]{2}, false, false);
+        verify("source-finite-bio-plane1-warhead1", 499, 1, new int[]{2}, false, false);
     }
 
     @Test public void threeShipBiologicalStrikesReachPlayerTwoCities() throws Exception {

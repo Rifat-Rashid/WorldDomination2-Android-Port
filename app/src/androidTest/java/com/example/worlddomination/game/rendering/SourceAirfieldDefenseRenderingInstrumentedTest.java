@@ -42,9 +42,9 @@ public final class SourceAirfieldDefenseRenderingInstrumentedTest {
     private static final float X = 130.75f + 54.7f - 77.5f;
     private static final float Y = 91.75f + 6.55f - 61.5f;
     private static final int TURRET_SYMBOL = 5553;
-    private static final int SOURCE_FRAME = 32;
-    private static final int SOURCE_SHAPE = 5544;
-    private static final int WRONG_SHAPE = 5542; // Authored frame 31.
+    private static final int SOURCE_FRAME = 14;
+    private static final int SOURCE_SHAPE = 5508;
+    private static final int WRONG_SHAPE = 5506; // Callback frame 13 before host autoplay.
 
     @Test public void interceptedPlaneOnePaintsFirstPhysicalTurretFrame() throws Exception {
         verify(false, 196);
@@ -118,10 +118,10 @@ public final class SourceAirfieldDefenseRenderingInstrumentedTest {
                             () -> drawOriginalLeaf(batch, assets, SOURCE_SHAPE));
                     byte[] wrong = render(buffer, batch,
                             () -> drawOriginalLeaf(batch, assets, WRONG_SHAPE));
-                    String name = bomber ? "plane002-t195" : "plane001-t196";
-                    evidence("source-airfield-defense-" + name + "-actual.png", actual);
-                    evidence("source-airfield-defense-" + name + "-expected.png", expected);
-                    evidence("source-airfield-defense-" + name + "-wrong-frame.png", wrong);
+                    String name = bomber ? "p2t195" : "p1t196";
+                    evidence("source-finite-airfield-defense-" + name + "-actual.png", actual);
+                    evidence("source-finite-airfield-defense-" + name + "-expected.png", expected);
+                    evidence("source-finite-airfield-defense-" + name + "-wrong-frame.png", wrong);
                     int painted = 0, negative = 0;
                     for (int pixel = 0; pixel < expected.length; pixel += 4) {
                         boolean changed = false;
@@ -161,7 +161,7 @@ public final class SourceAirfieldDefenseRenderingInstrumentedTest {
         }
         JsonValue source;
         try (InputStream input = InstrumentationRegistry.getInstrumentation()
-                .getContext().getAssets().open("source-plane002-intercept.json")) {
+                .getContext().getAssets().open("source-finite-plane002-intercept.json")) {
             source = new JsonReader().parse(input);
         }
         Method method = SourceBomberPlaybackInstrumentedTest.class
