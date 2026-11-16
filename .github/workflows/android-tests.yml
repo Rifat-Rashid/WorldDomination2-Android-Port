@@ -327,6 +327,12 @@ jobs:
           - id: source-accepted-diplomacy-campaign
             check: Easy campaign with accepted diplomacy through 60 source turns
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.SourceLegalAcceptedDiplomacyCampaignTest"'
+          - id: source-empty-carrier-random
+            check: Empty carrier selection preserves source random stream
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.SourceEmptyCarrierRandomTest"'
+          - id: source-legal-victory-campaign
+            check: Legal combat campaign through source victory
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.SourceLegalVictoryCampaignTest"'
           - id: source-easy-campaign-boundaries
             check: Easy spy production, ship slot replacement and duplicate routes
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.SourceEasySpyProductionTest" --tests "com.example.worlddomination.game.simulation.SourceNullWeaponAttackTest" --tests "com.example.worlddomination.game.ai.SourceShipSlotOverwriteTest" --tests "com.example.worlddomination.game.ai.SourceDuplicateAttackRouteTest"'

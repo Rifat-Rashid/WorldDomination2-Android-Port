@@ -84,7 +84,8 @@
     "com.example.worlddomination.game.rendering.SourceHelpInstrumentedTest",
     "com.example.worlddomination.game.simulation.SourceLegalSpyCampaignInstrumentedTest",
     "com.example.worlddomination.game.simulation.SourceLegalEasyCampaignInstrumentedTest",
-    "com.example.worlddomination.game.simulation.SourceLegalAcceptedDiplomacyCampaignInstrumentedTest"
+    "com.example.worlddomination.game.simulation.SourceLegalAcceptedDiplomacyCampaignInstrumentedTest",
+    "com.example.worlddomination.game.simulation.SourceLegalVictoryCampaignInstrumentedTest"
   ],
   "groups": [
     {
@@ -130,7 +131,8 @@
         "com.example.worlddomination.game.rendering.SourceRocketImpactRenderingInstrumentedTest",
         "com.example.worlddomination.game.simulation.SourceLegalSpyCampaignInstrumentedTest",
         "com.example.worlddomination.game.simulation.SourceLegalEasyCampaignInstrumentedTest",
-        "com.example.worlddomination.game.simulation.SourceLegalAcceptedDiplomacyCampaignInstrumentedTest"
+        "com.example.worlddomination.game.simulation.SourceLegalAcceptedDiplomacyCampaignInstrumentedTest",
+        "com.example.worlddomination.game.simulation.SourceLegalVictoryCampaignInstrumentedTest"
       ],
       "evidence": [
         "beta-ui-evidence",
@@ -692,6 +694,10 @@
     [
       "com.example.worlddomination.game.simulation.SourceLegalAcceptedDiplomacyCampaignInstrumentedTest",
       "acceptedDiplomacyCampaignMatchesEveryCapturedState"
+    ],
+    [
+      "com.example.worlddomination.game.simulation.SourceLegalVictoryCampaignInstrumentedTest",
+      "legalCombatCampaignReachesSourceVictory"
     ]
   ]
 }
