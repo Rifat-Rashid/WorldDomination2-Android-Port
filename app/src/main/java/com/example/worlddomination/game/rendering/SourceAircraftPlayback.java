@@ -7,6 +7,7 @@ public final class SourceAircraftPlayback {
 
     private final FlashBattleRoutes.StandalonePlaneStrike route;
     private final SourceAircraftTrail trail;
+    private final boolean finiteStart;
     private final double[] waypointX = new double[3];
     private final double[] waypointY = new double[3];
     private final String[] waypointAction = {"default", "plane_circular_flight", "bomb"};
@@ -28,8 +29,7 @@ public final class SourceAircraftPlayback {
     private double targetY;
     private double adjacentSide;
     private double oppositeSide;
-    // Unit starts at zero; the first inactive View direction calculation
-    // changes it to undefined before the first paired-smoke birth.
+    // Unit starts at zero; View calculates direction on waiting host frames.
     private double angle;
     private double alpha;
     private double scale = 50d;
@@ -51,6 +51,7 @@ public final class SourceAircraftPlayback {
     private boolean circularCenterSet;
     private boolean atTarget;
     private boolean started;
+    private boolean viewPosePublished;
     private boolean removed;
     private boolean impactPending;
     private boolean deathPending;
@@ -63,15 +64,32 @@ public final class SourceAircraftPlayback {
     private double deathEffectX = Double.NaN;
     private double deathEffectY = Double.NaN;
     private double deathSoundX = Double.NaN;
+    private double impactSoundX = Double.NaN;
 
-    /** The caller gates visits with the source battle record clock. */
+    /** Explicit compatibility path for isolated adapter captures missing preStart. */
     public SourceAircraftPlayback(FlashBattleRoutes.StandalonePlaneStrike route,
                                   SourceAircraftTrail trail) {
+        this(route, trail, false);
+    }
+
+    /** The caller gates visits with the source battle record clock. */
+    public static SourceAircraftPlayback forPreparedLaunch(
+            FlashBattleRoutes.StandalonePlaneStrike route, SourceAircraftTrail trail) {
+        return new SourceAircraftPlayback(route, trail, true);
+    }
+
+    private SourceAircraftPlayback(FlashBattleRoutes.StandalonePlaneStrike route,
+                                   SourceAircraftTrail trail, boolean finiteStart) {
         if (route == null || !("plane001".equals(route.linkage)
                 || "plane002".equals(route.linkage)))
             throw new IllegalArgumentException("A plane001 route is required");
         this.route = route;
         this.trail = trail;
+        this.finiteStart = finiteStart;
+        if (finiteStart) {
+            x = route.start.x;
+            y = route.start.y;
+        }
         if (route.intercepted) waypointAction[2] = "speedup_die";
         circularRadius = route.orbitRadius;
         circularAngle = route.orbitStartAngle;
@@ -83,13 +101,24 @@ public final class SourceAircraftPlayback {
         waypointY[2] = route.bombWaypoint.y;
     }
 
-    /** MovieClipHost autoplays the invisible body while View has not visited it. */
+    /** Publish a source waiting View visit before movement activation. */
     public void presentWaitingFrame() {
         if (!started && !removed) {
-            angle = Double.NaN;
-            // The tint's callback copies the body before the latter autoplays.
-            tintFrame = frame;
-            frame = frame % 24 + 1;
+            if (finiteStart) {
+                renderX = x;
+                renderY = y;
+                viewPosePublished = true;
+                // View seeks the body first, then copies that frame into tint
+                // and the nested shadow, even before movement is activated.
+                updateDirectionFrame();
+                tintFrame = frame;
+            } else {
+                // With the adapter's undefined start, the seek is ignored;
+                // the host callback copies the frame before body autoplay.
+                tintFrame = frame;
+                angle = Double.NaN;
+                frame = frame % 24 + 1;
+            }
         }
     }
 
@@ -109,6 +138,7 @@ public final class SourceAircraftPlayback {
         // active visits issue takeoff soundAction; the original Sound bridge
         // decides whether that restarts a channel.
         if ("bomb".equals(action)) {
+            impactSoundX = renderX;
             impactPending = true;
             action = "flyOff";
             if (trail != null) trail.removeTrail();
@@ -172,6 +202,7 @@ public final class SourceAircraftPlayback {
         }
         renderX = x;
         renderY = y;
+        viewPosePublished = true;
         if (scale < 80d && freeFlightCount >= 8) {
             double desired = scale + 2d;
             // MovieClipHost's _xscale setter scales the current matrix, then
@@ -274,10 +305,18 @@ public final class SourceAircraftPlayback {
     public double getDeathEffectX() { return deathEffectX; }
     public double getDeathEffectY() { return deathEffectY; }
     public double getDeathSoundX() { return deathSoundX; }
+    public double getImpactSoundX() { return impactSoundX; }
     public double getX() { return x; }
     public double getY() { return y; }
     public double getRenderX() { return renderX; }
     public double getRenderY() { return renderY; }
+    /** Unit constructs the shadow at startXY before View publishes any body pose. */
+    public double getShadowRenderX() {
+        return finiteStart && !viewPosePublished ? x : renderX;
+    }
+    public double getShadowRenderY() {
+        return finiteStart && !viewPosePublished ? y : renderY + shadowYOffset;
+    }
     public double getPreviousX() { return previousX; }
     public double getPreviousY() { return previousY; }
     public double getAlpha() { return alpha; }

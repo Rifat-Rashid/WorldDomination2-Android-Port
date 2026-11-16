@@ -28,3 +28,11 @@ app/src/test/resources/source-silo-rocket-*.json -text whitespace=cr-at-eol
 # Successful defended-rocket replay fixtures retain source byte hashes.
 app/src/test/resources/source-silo-pass-*.tsv -text whitespace=-blank-at-eol,cr-at-eol
 app/src/test/resources/source-silo-pass-*.json -text whitespace=cr-at-eol
+
+# Finite prepared-aircraft source captures are hash-pinned byte fixtures.
+app/src/test/resources/source-aircraft-finite-*.json -text whitespace=-blank-at-eol,cr-at-eol
+app/src/test/resources/source-aircraft-finite-*.tsv -text whitespace=-blank-at-eol,cr-at-eol
+app/src/test/resources/source-aircraft-finite-*.csv -text whitespace=-blank-at-eol,cr-at-eol
+app/src/test/resources/source-finite-*.json -text whitespace=-blank-at-eol,cr-at-eol
+app/src/test/resources/source-finite-*.tsv -text whitespace=-blank-at-eol,cr-at-eol
+app/src/test/resources/source-finite-*.csv -text whitespace=-blank-at-eol,cr-at-eol

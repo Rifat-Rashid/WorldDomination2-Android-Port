@@ -491,11 +491,11 @@
     ],
     [
       "com.example.worlddomination.game.rendering.SourceAirfieldDefenseClockInstrumentedTest",
-      "plane002SuccessHasNoAirfieldDefenseForAll572HostTicks"
+      "plane002SuccessHasNoAirfieldDefenseForAll560HostTicks"
     ],
     [
       "com.example.worlddomination.game.rendering.SourceAirfieldDefenseClockInstrumentedTest",
-      "plane001InterceptionMatchesAll378HostTicks"
+      "plane001InterceptionMatchesAll365HostTicks"
     ],
     [
       "com.example.worlddomination.game.rendering.SourceAirfieldDefenseClockInstrumentedTest",
@@ -503,7 +503,7 @@
     ],
     [
       "com.example.worlddomination.game.rendering.SourceAirfieldDefenseClockInstrumentedTest",
-      "plane001SuccessHasNoAirfieldDefenseForAll534HostTicks"
+      "plane001SuccessHasNoAirfieldDefenseForAll500HostTicks"
     ],
     [
       "com.example.worlddomination.game.audio.AircraftRealCompletionInstrumentedTest",
@@ -584,6 +584,10 @@
     [
       "com.example.worlddomination.game.rendering.SourcePassedRocketDefenseRenderingInstrumentedTest",
       "physicalDefenseMatchesCapturedFramesAtStageAndPhoneSizes"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.SourcePreparedAirfieldLocationInstrumentedTest",
+      "finiteSlotTwoFlightMatchesAll459SourceHostStates"
     ]
   ]
 }

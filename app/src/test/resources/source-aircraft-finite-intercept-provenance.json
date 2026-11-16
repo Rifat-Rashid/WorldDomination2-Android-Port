@@ -1,0 +1,237 @@
+{
+  "boundary": "compatibility: prep View preStart/preLocation bridged across isolated adapter",
+  "preparation": {
+    "tick": 0,
+    "preStart": [
+      386.25,
+      377.25
+    ],
+    "preLocation": 1,
+    "symbol": 5658,
+    "frame": 13,
+    "matrix": [
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      386.25,
+      352.25
+    ]
+  },
+  "transfer": {
+    "canonicalBefore": {
+      "preStart": null,
+      "preLocation": null
+    },
+    "otherStoredFieldCount": 6230,
+    "otherStoredIdentitiesUnchanged": true,
+    "canonicalRngStateUnchanged": true,
+    "canonicalRngNext": 0.02788874944966646
+  },
+  "sourceCaptureSha256": "b22ae03b214c422f3d49037c3aa66a6f12fe28a710b3d1c2d6aae7735b0f40be",
+  "fixtureSha256": "8be5bbb881a34764b1a89a01553d62c5fb8ee5e2e7e56b443fd2f3e45964f596",
+  "captureScriptSha256": "1080ec0c97678b880de08d24eddf1a6667ed73cae33641b93c156edb4f3f088f",
+  "sourceSha256": {
+    "wd2/generated/Unit.py": "bc54c0e6c46f4e33bbb20e786c755f93aaba5d3d7224b0120eeeccc81eef8539",
+    "wd2/generated/View.py": "2de8afd493f28e36c3a94afa96b80795d685b8b023b12dc9d9ed634692c3accf",
+    "wd2/generated/Battle.py": "c6e9c790d6a624b0425344260b4de904db5197ea756fdf3a2de912eb8cd73c10",
+    "wd2/generated/Presenter.py": "eb8aad7305c870b157a3199b7d8213edb22f4fd35d169395cee3db95b12c08b9",
+    "wd2/setup_menu.py": "5633326451e768a84a14bde04e452043ba7fac2617a4c71b7b36dcd0495f0c4a",
+    "wd2/movieclip_host.py": "a489c5f3b33a1fdac4448afd07f4ca63aa32d676440dc573805ab11fb4002765",
+    "wd2/battle_playback.py": "9aa8c82295b1977897cea2a60afbb6569e0d31e14bb9725267e422c7b9167901",
+    "WorldDomination2.swf": "fe60c4d8793a23e7ddd59ddcb406b5471540e28d64f7552d17308fbb269e6fe1"
+  },
+  "hostRows": 365,
+  "sourceAntiCallbackPairs": 85,
+  "postMoveCallbackTicks": 84,
+  "terminalPreMoveCallbackTick": 280,
+  "activationTick": 196,
+  "schedule": [
+    {
+      "turn": 1,
+      "action": "research",
+      "options": {
+        "tech": "rocket2"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 2,
+      "action": "research",
+      "options": {
+        "tech": "rocket3"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 3,
+      "action": "research",
+      "options": {
+        "tech": "rocket4"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 4,
+      "action": "research",
+      "options": {
+        "tech": "warhead2"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 5,
+      "action": "research",
+      "options": {
+        "tech": "warhead3"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 6,
+      "action": "research",
+      "options": {
+        "tech": "warhead4"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 7,
+      "action": "research",
+      "options": {
+        "tech": "bioload2"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 8,
+      "action": "research",
+      "options": {
+        "tech": "bioload3"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 9,
+      "action": "research",
+      "options": {
+        "tech": "bioload4"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 10,
+      "action": "research",
+      "options": {
+        "tech": "soldier2"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 11,
+      "action": "research",
+      "options": {
+        "tech": "soldier3"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 12,
+      "action": "research",
+      "options": {
+        "tech": "soldier4"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 13,
+      "action": "research",
+      "options": {
+        "tech": "sub"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 14,
+      "action": "research",
+      "options": {
+        "tech": "ship"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 15,
+      "action": "production",
+      "options": {
+        "category": "special",
+        "percent": 100
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 16,
+      "action": "production",
+      "options": {
+        "category": "bioload",
+        "percent": 100
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 17,
+      "action": "production",
+      "options": {
+        "category": "bioload",
+        "percent": 100
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 18,
+      "action": "production",
+      "options": {
+        "category": "bioload",
+        "percent": 100
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 19,
+      "action": "production",
+      "options": {
+        "category": "bioload",
+        "percent": 100
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 20,
+      "action": "production",
+      "options": {
+        "category": "planes",
+        "percent": 100
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 21,
+      "action": "preAttack",
+      "options": {
+        "weapon": "plane1"
+      },
+      "second": "resources"
+    },
+    {
+      "turn": 22,
+      "action": "preAttack",
+      "options": {
+        "weapon": "plane1",
+        "payload": "bioload1",
+        "target": 1,
+        "city": 0
+      },
+      "second": "resources",
+      "confirm": "btn46"
+    }
+  ]
+}

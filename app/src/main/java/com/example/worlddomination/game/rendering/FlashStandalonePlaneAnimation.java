@@ -135,6 +135,18 @@ public final class FlashStandalonePlaneAnimation
         actor.visible = true;
     }
 
+    /** Source Unit starts at the physical position retained during preparation. */
+    public static FlashStandalonePlaneAnimation forPreparedLaunch(
+            FlashBattleRoutes.StandalonePlaneStrike route, int playerColor, int delayTicks,
+            String impactLinkage, OriginalAudio.Cue impactCue,
+            ReferenceRandom presentationRandom) {
+        FlashStandalonePlaneAnimation animation = new FlashStandalonePlaneAnimation(route,
+                playerColor, delayTicks, impactLinkage, impactCue, presentationRandom);
+        animation.sourcePlayback = SourceAircraftPlayback.forPreparedLaunch(
+                route, animation.sourceTrail);
+        return animation;
+    }
+
     public SourceAircraftTrail getSourceTrail() { return sourceTrail; }
     public SourceAircraftPlayback getSourcePlayback() { return sourcePlayback; }
 
