@@ -58,3 +58,9 @@ app/src/test/resources/source-campaign-*.json -text whitespace=cr-at-eol
 
 # Synthetic source paired-target oracle preserves its capture hash.
 app/src/test/resources/source-ai-paired-tie*.json -text whitespace=cr-at-eol
+
+# Source weapon-only spy stock totals preserve original capture bytes.
+app/src/test/resources/source-spy-stock-level*.json -text whitespace=cr-at-eol
+
+# Legal source spy campaign and provenance preserve their capture bytes.
+app/src/test/resources/source-spy-campaign-*.json -text whitespace=cr-at-eol

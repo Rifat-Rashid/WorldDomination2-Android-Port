@@ -81,7 +81,8 @@
     "com.example.worlddomination.game.rendering.SourcePreparedRocketSlotTwoInstrumentedTest",
     "com.example.worlddomination.game.rendering.SourceProductionSliderBudgetInstrumentedTest",
     "com.example.worlddomination.game.rendering.SourceProductionFooterInstrumentedTest",
-    "com.example.worlddomination.game.rendering.SourceHelpInstrumentedTest"
+    "com.example.worlddomination.game.rendering.SourceHelpInstrumentedTest",
+    "com.example.worlddomination.game.simulation.SourceLegalSpyCampaignInstrumentedTest"
   ],
   "groups": [
     {
@@ -124,7 +125,8 @@
         "com.example.worlddomination.game.rendering.SourcePreparedAirfieldLocationInstrumentedTest",
         "com.example.worlddomination.game.rendering.SourcePassedRocketDefenseClockInstrumentedTest",
         "com.example.worlddomination.game.rendering.SourceAircraftSmokeCropRenderingInstrumentedTest",
-        "com.example.worlddomination.game.rendering.SourceRocketImpactRenderingInstrumentedTest"
+        "com.example.worlddomination.game.rendering.SourceRocketImpactRenderingInstrumentedTest",
+        "com.example.worlddomination.game.simulation.SourceLegalSpyCampaignInstrumentedTest"
       ],
       "evidence": [
         "beta-ui-evidence",
@@ -674,6 +676,10 @@
     [
       "com.example.worlddomination.game.rendering.SourceHelpInstrumentedTest",
       "originalPagesAndHitTransformsMatchAtBothAspectRatios"
+    ],
+    [
+      "com.example.worlddomination.game.simulation.SourceLegalSpyCampaignInstrumentedTest",
+      "legalResourcesAndMassMediaCampaignMatchesEveryCapturedState"
     ]
   ]
 }

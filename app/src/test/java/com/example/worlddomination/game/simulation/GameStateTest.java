@@ -2101,7 +2101,7 @@ public final class GameStateTest {
     }
 
     @Test
-    public void propagandaUsesBattleCasualtiesEvenWhenAttackIsQueuedAfterIt() {
+    public void propagandaUsesPreBattlePopulationEvenWhenAttackIsQueuedAfterIt() {
         GameState state = new GameState(1, 40L, false);
         GameState.PlayerState attacker = state.getHuman();
         GameState.PlayerState defender = state.getPlayerState(1);
@@ -2122,11 +2122,15 @@ public final class GameStateTest {
         assertTrue(state.acceptSelectedAction());
         state.confirmTurn();
 
-        int battleCasualties = 91 - 2 - defender.getCity(0).populationMillions;
+        // Source Battle.createBattleScriptVars groups propaganda callbacks
+        // before battle callbacks, independently of the queued action slots.
+        assertEquals(3, state.getLastTurnPropagandaEvents().get(0).transferredMillions);
+        int battleCasualties = state.getLastTurnCombatEvents().get(0).casualtiesMillions;
         assertTrue(battleCasualties >= 2 && battleCasualties <= 4);
-        assertEquals(450 - battleCasualties - 2, defender.populationMillions);
-        assertEquals("a two million transfer rounds to zero across five cities",
-                450, attacker.populationMillions);
+        assertEquals(91 - battleCasualties - 3, defender.getCity(0).populationMillions);
+        assertEquals(450 - battleCasualties - 3, defender.populationMillions);
+        assertEquals("a three million transfer rounds to one in each of five cities",
+                455, attacker.populationMillions);
     }
 
     @Test

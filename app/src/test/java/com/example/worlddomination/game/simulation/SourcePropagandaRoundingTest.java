@@ -76,9 +76,11 @@ public final class SourcePropagandaRoundingTest {
         Object order = constructor.newInstance(context.attacker.id, GameState.Action.PROPAGANDA,
                 Collections.emptyMap(), Collections.emptyList(), 0, context.defender.id, 0,
                 null, null, false, null, 0);
-        Method resolve = GameState.class.getDeclaredMethod("resolvePropaganda", orderClass, changesClass);
+        Method resolve = GameState.class.getDeclaredMethod("resolvePropaganda", orderClass, changesClass, int.class);
         resolve.setAccessible(true);
-        resolve.invoke(context.game, order, changes);
+        // This direct callback oracle explicitly publishes the captured damage;
+        // normal turn construction publishes propaganda before any battle damage.
+        resolve.invoke(context.game, order, changes, before.getInt("battleCasualties"));
 
         int loss = c.get("targetPropagandaMin").getInt(0);
         assertEquals(1, context.game.getLastTurnPropagandaEvents().size());

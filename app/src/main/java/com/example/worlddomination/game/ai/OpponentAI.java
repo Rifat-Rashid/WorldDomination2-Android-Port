@@ -317,7 +317,7 @@ public final class OpponentAI {
         }
 
         return planRemainingRankedActions(state, player, scores, random,
-                decisions, plannedWeaponUse, 0);
+                decisions, plannedWeaponUse, 0, attackSlot == 0);
     }
 
     /**
@@ -329,6 +329,15 @@ public final class OpponentAI {
             GameState state, GameState.PlayerState player, List<ScoredAction> scores,
             Random random, List<Decision> decisions,
             Map<String, Integer> plannedWeaponUse, int firstActionIndex) {
+        return planRemainingRankedActions(state, player, scores, random, decisions,
+                plannedWeaponUse, firstActionIndex, false);
+    }
+
+    private static List<Decision> planRemainingRankedActions(
+            GameState state, GameState.PlayerState player, List<ScoredAction> scores,
+            Random random, List<Decision> decisions,
+            Map<String, Integer> plannedWeaponUse, int firstActionIndex,
+            boolean initialAttackAlreadyAttempted) {
         for (int index = firstActionIndex; index < scores.size()
                 && decisions.size() < 2; index++) {
             ScoredAction scored = scores.get(index);
@@ -337,9 +346,12 @@ public final class OpponentAI {
                         && scored.score - 50 > scores.get(1).score;
                 List<Decision> attackPlan = planSourceAttack(state, player, random,
                         duplicateAttack, plannedWeaponUse);
-                if (attackPlan.isEmpty() && index == decisions.size()) {
+                if (attackPlan.isEmpty() && index == decisions.size()
+                        && !(initialAttackAlreadyAttempted && index == firstActionIndex)) {
                     // Model.doTurn retries the initial candidate for the
                     // current slot once before advancing its score cursor.
+                    // The leading attack may already have used its first try
+                    // in planScoredActions; never give it a third attempt.
                     attackPlan = planSourceAttack(state, player, random,
                             duplicateAttack, plannedWeaponUse);
                 }
@@ -1201,21 +1213,20 @@ public final class OpponentAI {
                 (GameState.WeaponState item) -> item.definition.maxKillsMillions)
                 .reversed());
         GameState.WeaponState selected = null;
-        int initialCity = -1;
-        if (!availableSoldiers.isEmpty()) {
-            initialCity = randomPopulatedCity(target, random);
-            if (initialCity < 0) {
-                return null;
-            }
-            int sourceIndex = randomInclusive(random, 0, 3);
-            if (sourceIndex < availableSoldiers.size()) {
-                // ActionScript sorts the available list by descending maxKills,
-                // then enumerates its numeric keys in reverse when building the
-                // soldier-only choices. The random index therefore addresses the
-                // ascending-strength view of this sorted list.
-                selected = availableSoldiers.get(availableSoldiers.size()
-                        - 1 - sourceIndex);
-            }
+        // Model.getTarget draws a city and a soldier index even when only
+        // spies made allowDir true and the soldier-only array is empty.
+        int initialCity = randomPopulatedCity(target, random);
+        if (initialCity < 0) {
+            return null;
+        }
+        int sourceIndex = randomInclusive(random, 0, 3);
+        if (sourceIndex < availableSoldiers.size()) {
+            // ActionScript sorts the available list by descending maxKills,
+            // then enumerates its numeric keys in reverse when building the
+            // soldier-only choices. The random index therefore addresses the
+            // ascending-strength view of this sorted list.
+            selected = availableSoldiers.get(availableSoldiers.size()
+                    - 1 - sourceIndex);
         }
         SpyTarget spyTarget = findSpyTarget(state, attacker, random);
         boolean useSpy = shouldUseSpy(spyTarget, selected != null, random);
@@ -1496,7 +1507,9 @@ public final class OpponentAI {
     private static int stockAtLevel(GameState.PlayerState player, int level) {
         int stock = 0;
         for (GameState.WeaponState weapon : player.getWeapons().values()) {
-            if (weapon.definition.level == level) {
+            // Source inStock_perLevel_obj sums weaponArr, excluding the
+            // separate anti-air/anti-rocket counterArr. Inactive stock counts.
+            if (weapon.definition.level == level && !"anti".equals(weapon.definition.type)) {
                 stock += weapon.inStock;
             }
         }
