@@ -72,7 +72,9 @@
     "com.example.worlddomination.game.ui.PropagandaUiInstrumentedTest",
     "com.example.worlddomination.game.rendering.SourceSiloRocketClockInstrumentedTest",
     "com.example.worlddomination.game.rendering.SourceSiloRocketRenderingInstrumentedTest",
-    "com.example.worlddomination.game.rendering.SourcePreparedAirfieldLocationInstrumentedTest"
+    "com.example.worlddomination.game.rendering.SourcePreparedAirfieldLocationInstrumentedTest",
+    "com.example.worlddomination.game.rendering.SourcePassedRocketDefenseClockInstrumentedTest",
+    "com.example.worlddomination.game.rendering.SourcePassedRocketDefenseRenderingInstrumentedTest"
   ],
   "groups": [
     {
@@ -111,7 +113,8 @@
         "com.example.worlddomination.game.rendering.SourceEndgameInstrumentedTest",
         "com.example.worlddomination.game.ui.PropagandaUiInstrumentedTest",
         "com.example.worlddomination.game.rendering.SourceSiloRocketClockInstrumentedTest",
-        "com.example.worlddomination.game.rendering.SourcePreparedAirfieldLocationInstrumentedTest"
+        "com.example.worlddomination.game.rendering.SourcePreparedAirfieldLocationInstrumentedTest",
+        "com.example.worlddomination.game.rendering.SourcePassedRocketDefenseClockInstrumentedTest"
       ],
       "evidence": [
         "beta-ui-evidence",
@@ -153,7 +156,8 @@
         "com.example.worlddomination.game.rendering.ApacheTurnPlaybackInstrumentedTest",
         "com.example.worlddomination.game.rendering.MassMediaValueLayoutInstrumentedTest",
         "com.example.worlddomination.game.rendering.SourceEndgameContextRecoveryInstrumentedTest",
-        "com.example.worlddomination.game.rendering.SourceSiloRocketRenderingInstrumentedTest"
+        "com.example.worlddomination.game.rendering.SourceSiloRocketRenderingInstrumentedTest",
+        "com.example.worlddomination.game.rendering.SourcePassedRocketDefenseRenderingInstrumentedTest"
       ],
       "evidence": [
         "beta-ui-evidence"
@@ -572,6 +576,14 @@
     [
       "com.example.worlddomination.game.rendering.SourcePreparedAirfieldLocationInstrumentedTest",
       "slotTwoAirfieldRetainsPreparedPositionAcrossWorldPlayback"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.SourcePassedRocketDefenseClockInstrumentedTest",
+      "successfulStrikeWithActiveDefenseMatches342HostTicks"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.SourcePassedRocketDefenseRenderingInstrumentedTest",
+      "physicalDefenseMatchesCapturedFramesAtStageAndPhoneSizes"
     ]
   ]
 }
