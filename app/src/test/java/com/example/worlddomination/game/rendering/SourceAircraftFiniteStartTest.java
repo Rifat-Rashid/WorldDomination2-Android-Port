@@ -1,6 +1,9 @@
 package com.example.worlddomination.game.rendering;
 
 import org.junit.Test;
+import com.badlogic.gdx.math.Rectangle;
+import com.example.worlddomination.game.simulation.ReferenceRandom;
+import com.example.worlddomination.game.ui.BattlefieldCityLayout;
 import java.io.BufferedReader;
 import java.nio.charset.StandardCharsets;
 import java.io.ByteArrayInputStream;
@@ -110,6 +113,45 @@ public final class SourceAircraftFiniteStartTest {
         assertTrue(core.getShadowYOffset()>0d);
         assertEquals(core.getRenderX(),core.getShadowRenderX(),0d);
         assertEquals(core.getRenderY()+core.getShadowYOffset(),core.getShadowRenderY(),0d);
+    }
+
+    @Test public void waitingFighterAndBomberProjectFromDepartureIslandWithoutRngDraws() {
+        Rectangle phone = new Rectangle(0f,0f,1194f,552f);
+        for(String name:new String[]{"plane1","plane2"}) {
+            FlashBattleRoutes.StandalonePlaneStrike route =
+                    FlashBattleRoutes.createStandalonePlaneStrike(0,1,2,1,name,false);
+            ReferenceRandom random=new ReferenceRandom(42);
+            FlashStandalonePlaneAnimation plane=FlashStandalonePlaneAnimation.forPreparedLaunch(
+                    route,1,0,null,null,random);
+            double expectedNext=random.copy().nextDouble();
+            for(int tick=0;tick<20;tick++) {
+                plane.tickSourceFrame(false);
+                FlashStandalonePlaneAnimation.Actor actor=plane.getActor();
+                assertEquals(name+" waiting route progress",0f,actor.routeProgress,0f);
+                assertEquals(name+" departure crop",
+                        BattlefieldCityLayout.sourceX(phone,actor.sourceX,route.attackerPlayerId),
+                        BattlefieldCityLayout.sourceXBetween(phone,actor.sourceX,
+                                route.attackerPlayerId,route.targetPlayerId,actor.routeProgress),0f);
+                assertEquals(name+" waiting frame",8,actor.sourceFrame);
+                assertEquals(name+" shared RNG unchanged",expectedNext,random.copy().nextDouble(),0d);
+            }
+        }
+    }
+
+    @Test public void firstActiveVisitCountsOnlyRealFighterAndBomberMotion() {
+        for(String name:new String[]{"plane1","plane2"}) {
+            FlashBattleRoutes.StandalonePlaneStrike route =
+                    FlashBattleRoutes.createStandalonePlaneStrike(0,1,2,1,name,false);
+            FlashStandalonePlaneAnimation plane=FlashStandalonePlaneAnimation.forPreparedLaunch(
+                    route,1,0,null,null,new ReferenceRandom(42));
+            plane.tickSourceFrame(true);
+            FlashStandalonePlaneAnimation.Actor actor=plane.getActor();
+            assertEquals(name+" first source X",394.25f,actor.sourceX,0f);
+            assertEquals(name+" first source Y",351.25f,actor.sourceY,0f);
+            assertEquals(name+" first direction frame",21,actor.sourceFrame);
+            assertTrue(name+" real movement contributes progress",actor.routeProgress>0f);
+            assertTrue(name+" initial paint jump is not movement",actor.routeProgress<0.1f);
+        }
     }
 
     @Test public void legacyConstructorRepresentsMissingAdapterPreStart() {

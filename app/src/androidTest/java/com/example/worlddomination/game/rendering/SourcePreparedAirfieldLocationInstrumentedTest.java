@@ -125,6 +125,7 @@ public final class SourcePreparedAirfieldLocationInstrumentedTest {
             com.example.worlddomination.game.simulation.ReferenceRandom rng =
                     (com.example.worlddomination.game.simulation.ReferenceRandom) field(WorldDominationGame.class, "battlePresentationRandom").get(app);
             double canonical = game.createPresentationRandomCopy().nextDouble();
+            com.badlogic.gdx.math.Rectangle phone = new com.badlogic.gdx.math.Rectangle(0, 0, 1194, 552);
             for (int tick = 0; tick < rows.size(); tick++) {
                 if (tick > 0) fixed.invoke(app, 1f / 24f);
                 String[] row = rows.get(tick); String label = "finite slot 2 host " + tick;
@@ -135,6 +136,16 @@ public final class SourcePreparedAirfieldLocationInstrumentedTest {
                 assertEquals(label + " status", row[4], core.getUnitStatus());
                 assertEquals(label + " angle", Double.parseDouble(row[5]), core.getAngle(), 0d);
                 assertEquals(label + " moving", Boolean.parseBoolean(row[6]), core.isActiveAndMoving());
+                if (tick > 0 && !core.isActiveAndMoving()) {
+                    assertEquals(label + " waiting crop stays at departure", 0f,
+                            plane.getActor().routeProgress, 0f);
+                    float expectedX = com.example.worlddomination.game.ui.BattlefieldCityLayout.sourceX(
+                            phone, plane.getActor().sourceX, plane.getRoute().attackerPlayerId);
+                    float paintedX = com.example.worlddomination.game.ui.BattlefieldCityLayout.sourceXBetween(
+                            phone, plane.getActor().sourceX, plane.getRoute().attackerPlayerId,
+                            plane.getRoute().targetPlayerId, plane.getActor().routeProgress);
+                    assertEquals(label + " phone departure projection", expectedX, paintedX, 0f);
+                }
                 assertEquals(label + " private RNG", Double.parseDouble(row[7]), rng.copy().nextDouble(), 0d);
                 assertEquals(label + " canonical source RNG", Double.parseDouble(row[8]), canonical, 0d);
                 assertEquals(label + " canonical frozen", canonical, game.createPresentationRandomCopy().nextDouble(), 0d);
