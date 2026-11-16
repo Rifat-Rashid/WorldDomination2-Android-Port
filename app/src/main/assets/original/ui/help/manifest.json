@@ -1,0 +1,1249 @@
+{
+  "crop": [
+    205,
+    135,
+    365,
+    275
+  ],
+  "scale": 3,
+  "pages": [
+    {
+      "id": 0,
+      "topic": "help_index",
+      "frame": 101,
+      "asset": "help_index.png",
+      "width": 1095,
+      "height": 825,
+      "sha256": "36420ac07b4ef9f6feb9035cf98e190332105559088ff61b8c5bedbb77a75361",
+      "controls": [
+        {
+          "name": "btn_overview",
+          "target": "help_overview",
+          "bounds": [
+            148.25,
+            44.55000000000001,
+            74.99536214404509,
+            22.34610214526765
+          ]
+        },
+        {
+          "name": "btn_interface",
+          "target": "help_interface",
+          "bounds": [
+            148.25,
+            84.55000000000001,
+            74.99536214404509,
+            22.34610214526765
+          ]
+        },
+        {
+          "name": "btn_attacking",
+          "target": "help_attacking",
+          "bounds": [
+            148.25,
+            125.55000000000001,
+            74.99536214404509,
+            22.34610214526765
+          ]
+        },
+        {
+          "name": "btn_weapondetails",
+          "target": "help_weapondetail",
+          "bounds": [
+            128.25,
+            164.55,
+            115.00663575592915,
+            22.34610214526765
+          ]
+        },
+        {
+          "name": "btn_actiondetails",
+          "target": "help_actiondetails",
+          "bounds": [
+            128.25,
+            204.55,
+            115.00663575592915,
+            22.34610214526765
+          ]
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "topic": "help_weapondetail",
+      "frame": 102,
+      "asset": "help_weapondetail.png",
+      "width": 1095,
+      "height": 825,
+      "sha256": "1dcb8c8b58c767a22605cd0c3c62b30b246acb183bdeaafe71a2213b2160dc26",
+      "controls": [
+        {
+          "name": "btn_rockets",
+          "target": "help_rockets",
+          "bounds": [
+            13.050000000000011,
+            84.35000000000002,
+            74.99536214404503,
+            15.331306326203048
+          ]
+        },
+        {
+          "name": "btn_aircraft",
+          "target": "help_aircraft",
+          "bounds": [
+            13.050000000000011,
+            102.85000000000002,
+            74.99536214404503,
+            15.331306326203048
+          ]
+        },
+        {
+          "name": "btn_specialcarriers",
+          "target": "help_subs",
+          "bounds": [
+            14.550000000000011,
+            121.35000000000002,
+            86.99803316890029,
+            15.331306326203048
+          ]
+        },
+        {
+          "name": "btn_warheads",
+          "target": "help_warheads",
+          "bounds": [
+            15.150000000000006,
+            138.85000000000002,
+            57.50331787796458,
+            15.331306326203048
+          ]
+        },
+        {
+          "name": "btn_infanterie",
+          "target": "help_infanterie",
+          "bounds": [
+            18.150000000000006,
+            159.35000000000002,
+            57.50331787796458,
+            15.331306326203048
+          ]
+        },
+        {
+          "name": "btn_intelligence",
+          "target": "help_intelligence",
+          "bounds": [
+            17.650000000000006,
+            177.35000000000002,
+            62.5091711963876,
+            15.331306326203048
+          ]
+        },
+        {
+          "name": "btn_antiweapons",
+          "target": "help_antiweapons",
+          "bounds": [
+            18.650000000000006,
+            195.35000000000002,
+            71.51117446502903,
+            15.331306326203048
+          ]
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "topic": "help_actiondetails",
+      "frame": 103,
+      "asset": "help_actiondetails.png",
+      "width": 1095,
+      "height": 825,
+      "sha256": "831752f113642f18dfcadf62f01532878123cc957e7dbf65b4ecc51807c65c44",
+      "controls": [
+        {
+          "name": "btn_resources",
+          "target": "help_resources",
+          "bounds": [
+            18.05000000000001,
+            72.35000000000002,
+            60.994616144080624,
+            15.331306326203048
+          ]
+        },
+        {
+          "name": "btn_production",
+          "target": "help_production",
+          "bounds": [
+            18.05000000000001,
+            90.85000000000002,
+            61.990098338085204,
+            15.331306326203048
+          ]
+        },
+        {
+          "name": "btn_technology",
+          "target": "help_technology",
+          "bounds": [
+            18.05000000000001,
+            109.35000000000002,
+            64.99787668139908,
+            15.331306326203048
+          ]
+        },
+        {
+          "name": "btn_massmedia",
+          "target": "help_massmedia",
+          "bounds": [
+            18.05000000000001,
+            126.85000000000002,
+            65.5098389526014,
+            15.331306326203048
+          ]
+        },
+        {
+          "name": "btn_directattack",
+          "target": "help_directattack",
+          "bounds": [
+            18.05000000000001,
+            147.35000000000002,
+            68.50339612171518,
+            15.331306326203048
+          ]
+        },
+        {
+          "name": "btn_preparedattack",
+          "target": "help_preattack",
+          "bounds": [
+            18.05000000000001,
+            165.35000000000002,
+            89.51518100231186,
+            15.331306326203048
+          ]
+        },
+        {
+          "name": "btn_defense",
+          "target": "help_defense",
+          "bounds": [
+            18.05000000000001,
+            183.35000000000002,
+            46.55301374391422,
+            15.331306326203048
+          ]
+        },
+        {
+          "name": "btn_propaganda",
+          "target": "help_propaganda",
+          "bounds": [
+            16.05000000000001,
+            201.3,
+            67.5079139277106,
+            15.331306326203048
+          ]
+        },
+        {
+          "name": "btn_diplomacy",
+          "target": "help_diplomacy",
+          "bounds": [
+            16.05000000000001,
+            219.3,
+            62.509171196387626,
+            15.331306326203048
+          ]
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "topic": "help_overview",
+      "frame": 106,
+      "asset": "help_overview.png",
+      "width": 1095,
+      "height": 825,
+      "sha256": "91d3043704ccb159ec0d21da28168dafb92e89e198d06d15a8254097946e7865",
+      "controls": [
+        {
+          "name": "btnIndex",
+          "target": "help_index",
+          "bounds": [
+            156.0,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        },
+        {
+          "name": "btnPrev",
+          "target": "help_actiondetails",
+          "bounds": [
+            23.5,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        },
+        {
+          "name": "btnNext",
+          "target": "help_interface",
+          "bounds": [
+            288.75,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "topic": "help_interface",
+      "frame": 107,
+      "asset": "help_interface.png",
+      "width": 1095,
+      "height": 825,
+      "sha256": "050542dd6d32468a7e3cefe11f1b4aa301fc95382e58db455d4353a1698c51c0",
+      "controls": [
+        {
+          "name": "btnIndex",
+          "target": "help_index",
+          "bounds": [
+            156.0,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        },
+        {
+          "name": "btnPrev",
+          "target": "help_overview",
+          "bounds": [
+            23.5,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        },
+        {
+          "name": "btnNext",
+          "target": "help_interface2",
+          "bounds": [
+            288.75,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "topic": "help_interface2",
+      "frame": 108,
+      "asset": "help_interface2.png",
+      "width": 1095,
+      "height": 825,
+      "sha256": "2a6f599df1cd9ebc3f85ef8e4dd0ecda2da5e7f891538172878fcf71de07a8c9",
+      "controls": [
+        {
+          "name": "btnIndex",
+          "target": "help_index",
+          "bounds": [
+            156.0,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        },
+        {
+          "name": "btnPrev",
+          "target": "help_interface",
+          "bounds": [
+            23.5,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        },
+        {
+          "name": "btnNext",
+          "target": "help_interface3",
+          "bounds": [
+            288.75,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "topic": "help_interface3",
+      "frame": 109,
+      "asset": "help_interface3.png",
+      "width": 1095,
+      "height": 825,
+      "sha256": "d363d7ee4ddc984db5503f87458b2f9655e377e5191e05dafcb9214945e0086e",
+      "controls": [
+        {
+          "name": "btnIndex",
+          "target": "help_index",
+          "bounds": [
+            156.0,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        },
+        {
+          "name": "btnPrev",
+          "target": "help_interface2",
+          "bounds": [
+            23.5,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        },
+        {
+          "name": "btnNext",
+          "target": "help_interface4",
+          "bounds": [
+            288.75,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "topic": "help_interface4",
+      "frame": 110,
+      "asset": "help_interface4.png",
+      "width": 1095,
+      "height": 825,
+      "sha256": "3dba68e9e7d9ca39c8f503d064e3e1a9528666c90fae44c30ae4107455d57a06",
+      "controls": [
+        {
+          "name": "btnIndex",
+          "target": "help_index",
+          "bounds": [
+            156.0,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        },
+        {
+          "name": "btnPrev",
+          "target": "help_interface3",
+          "bounds": [
+            23.5,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        },
+        {
+          "name": "btnNext",
+          "target": "help_attacking",
+          "bounds": [
+            288.75,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "topic": "help_attacking",
+      "frame": 111,
+      "asset": "help_attacking.png",
+      "width": 1095,
+      "height": 825,
+      "sha256": "eb541dcc878e2f369c91700db0fbafcfee3d90d02205730f3f33358cedf638f1",
+      "controls": [
+        {
+          "name": "btnIndex",
+          "target": "help_index",
+          "bounds": [
+            156.0,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        },
+        {
+          "name": "btnNext",
+          "target": "help_attacking2",
+          "bounds": [
+            288.75,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "topic": "help_attacking2",
+      "frame": 112,
+      "asset": "help_attacking2.png",
+      "width": 1095,
+      "height": 825,
+      "sha256": "eea96b242515e45ca94dab1b7e849ec2c047561f32ca0b5004b666442ba11034",
+      "controls": [
+        {
+          "name": "btnIndex",
+          "target": "help_index",
+          "bounds": [
+            156.0,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        },
+        {
+          "name": "btnPrev",
+          "target": "help_attacking",
+          "bounds": [
+            23.5,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        },
+        {
+          "name": "btnNext",
+          "target": "help_attacking3",
+          "bounds": [
+            288.75,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "topic": "help_attacking3",
+      "frame": 113,
+      "asset": "help_attacking3.png",
+      "width": 1095,
+      "height": 825,
+      "sha256": "53df96bf6575243f85a2bf3305fcf413d28eb1b5b5d32bc4869858eab7b52daa",
+      "controls": [
+        {
+          "name": "btnIndex",
+          "target": "help_index",
+          "bounds": [
+            156.0,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        },
+        {
+          "name": "btnPrev",
+          "target": "help_attacking2",
+          "bounds": [
+            23.5,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        },
+        {
+          "name": "btnNext",
+          "target": "help_rockets",
+          "bounds": [
+            288.75,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "topic": "help_rockets",
+      "frame": 115,
+      "asset": "help_rockets.png",
+      "width": 1095,
+      "height": 825,
+      "sha256": "0263ad6523fb5f23cc73e1b31e27a01d53ad16e0f0232f49195f372823beee0c",
+      "controls": [
+        {
+          "name": "btnIndex",
+          "target": "help_index",
+          "bounds": [
+            156.0,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        },
+        {
+          "name": "btnNext",
+          "target": "help_aircraft",
+          "bounds": [
+            288.75,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "topic": "help_aircraft",
+      "frame": 116,
+      "asset": "help_aircraft.png",
+      "width": 1095,
+      "height": 825,
+      "sha256": "56398fed1b1a65abb70446300a145ff11696292cbac1dd00b18a5cf3d9409c34",
+      "controls": [
+        {
+          "name": "btnIndex",
+          "target": "help_index",
+          "bounds": [
+            156.0,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        },
+        {
+          "name": "btnPrev",
+          "target": "help_rockets",
+          "bounds": [
+            23.5,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        },
+        {
+          "name": "btnNext",
+          "target": "help_subs",
+          "bounds": [
+            288.75,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "topic": "help_subs",
+      "frame": 117,
+      "asset": "help_subs.png",
+      "width": 1095,
+      "height": 825,
+      "sha256": "fad2d5eb5fe3949a8e32ab8252b19255cc975d6c07bd9dcada01fca29d13f58f",
+      "controls": [
+        {
+          "name": "btnIndex",
+          "target": "help_index",
+          "bounds": [
+            156.0,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        },
+        {
+          "name": "btnPrev",
+          "target": "help_aircraft",
+          "bounds": [
+            23.5,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        },
+        {
+          "name": "btnNext",
+          "target": "help_carrier",
+          "bounds": [
+            288.75,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "topic": "help_carrier",
+      "frame": 118,
+      "asset": "help_carrier.png",
+      "width": 1095,
+      "height": 825,
+      "sha256": "8c7fb8e19d5f775feb34d125f8a2ce2ad386c587c53aa7b5878f68e63c492ec8",
+      "controls": [
+        {
+          "name": "btnIndex",
+          "target": "help_index",
+          "bounds": [
+            156.0,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        },
+        {
+          "name": "btnPrev",
+          "target": "help_subs",
+          "bounds": [
+            23.5,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        },
+        {
+          "name": "btnNext",
+          "target": "help_space",
+          "bounds": [
+            288.75,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        }
+      ]
+    },
+    {
+      "id": 15,
+      "topic": "help_space",
+      "frame": 119,
+      "asset": "help_space.png",
+      "width": 1095,
+      "height": 825,
+      "sha256": "d9b0f38d717a132c700c815362b506ab6d70a62f4f5c2ecdfc00d9e05c973830",
+      "controls": [
+        {
+          "name": "btnIndex",
+          "target": "help_index",
+          "bounds": [
+            156.0,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        },
+        {
+          "name": "btnPrev",
+          "target": "help_carrier",
+          "bounds": [
+            23.5,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        },
+        {
+          "name": "btnNext",
+          "target": "help_warheads",
+          "bounds": [
+            288.75,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        }
+      ]
+    },
+    {
+      "id": 16,
+      "topic": "help_warheads",
+      "frame": 120,
+      "asset": "help_warheads.png",
+      "width": 1095,
+      "height": 825,
+      "sha256": "c0537ee178de770b04a9ebe5be8be09b810dca18cf40e4b75ec8657698b0b801",
+      "controls": [
+        {
+          "name": "btnIndex",
+          "target": "help_index",
+          "bounds": [
+            156.0,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        },
+        {
+          "name": "btnPrev",
+          "target": "help_space",
+          "bounds": [
+            23.5,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        },
+        {
+          "name": "btnNext",
+          "target": "help_infantrie",
+          "bounds": [
+            288.75,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        }
+      ]
+    },
+    {
+      "id": 17,
+      "topic": "help_infantrie",
+      "frame": 121,
+      "asset": "help_infantrie.png",
+      "width": 1095,
+      "height": 825,
+      "sha256": "0cdd900f94f4fe0332ce76473e7c5c5bcea197400f799e7710ca503b2f2ef74d",
+      "controls": [
+        {
+          "name": "btnIndex",
+          "target": "help_index",
+          "bounds": [
+            156.0,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        },
+        {
+          "name": "btnPrev",
+          "target": "help_warheads",
+          "bounds": [
+            23.5,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        },
+        {
+          "name": "btnNext",
+          "target": "help_intelligence",
+          "bounds": [
+            288.75,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        }
+      ]
+    },
+    {
+      "id": 18,
+      "topic": "help_intelligence",
+      "frame": 122,
+      "asset": "help_intelligence.png",
+      "width": 1095,
+      "height": 825,
+      "sha256": "d3b4fef302e007ed80cda30d40cf0c0ff7c84d53b6a9e1a713238949f1e44b21",
+      "controls": [
+        {
+          "name": "btnIndex",
+          "target": "help_index",
+          "bounds": [
+            156.0,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        },
+        {
+          "name": "btnPrev",
+          "target": "help_infantrie",
+          "bounds": [
+            23.5,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        },
+        {
+          "name": "btnNext",
+          "target": "help_resources",
+          "bounds": [
+            288.75,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        }
+      ]
+    },
+    {
+      "id": 19,
+      "topic": "help_resources",
+      "frame": 123,
+      "asset": "help_resources.png",
+      "width": 1095,
+      "height": 825,
+      "sha256": "2ce27418b3d544c9f6d24c3c0c5fb03698b19484635c481831f0aba4900cf7fb",
+      "controls": [
+        {
+          "name": "btnIndex",
+          "target": "help_index",
+          "bounds": [
+            156.0,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        },
+        {
+          "name": "btnPrev",
+          "target": "help_intelligence",
+          "bounds": [
+            23.5,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        },
+        {
+          "name": "btnNext",
+          "target": "help_production",
+          "bounds": [
+            288.75,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "topic": "help_production",
+      "frame": 124,
+      "asset": "help_production.png",
+      "width": 1095,
+      "height": 825,
+      "sha256": "e64646cf90fb6d8a2035bff3e6406d17230ad76e20b157ffb803575a1788ce0b",
+      "controls": [
+        {
+          "name": "btnIndex",
+          "target": "help_index",
+          "bounds": [
+            156.0,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        },
+        {
+          "name": "btnPrev",
+          "target": "help_resources",
+          "bounds": [
+            23.5,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        },
+        {
+          "name": "btnNext",
+          "target": "help_technology",
+          "bounds": [
+            288.75,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        }
+      ]
+    },
+    {
+      "id": 21,
+      "topic": "help_technology",
+      "frame": 125,
+      "asset": "help_technology.png",
+      "width": 1095,
+      "height": 825,
+      "sha256": "864a8075c3232e4f772929d0b935156fbc68ddc43c70dec5b21da6822156f224",
+      "controls": [
+        {
+          "name": "btnIndex",
+          "target": "help_index",
+          "bounds": [
+            156.0,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        },
+        {
+          "name": "btnPrev",
+          "target": "help_production",
+          "bounds": [
+            23.5,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        },
+        {
+          "name": "btnNext",
+          "target": "help_massmedia",
+          "bounds": [
+            288.75,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        }
+      ]
+    },
+    {
+      "id": 22,
+      "topic": "help_massmedia",
+      "frame": 126,
+      "asset": "help_massmedia.png",
+      "width": 1095,
+      "height": 825,
+      "sha256": "7fac3a2cef4ee14eff3eb73b0aa21093567c011962ba721cc48b1170515ae140",
+      "controls": [
+        {
+          "name": "btnIndex",
+          "target": "help_index",
+          "bounds": [
+            156.0,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        },
+        {
+          "name": "btnPrev",
+          "target": "help_technology",
+          "bounds": [
+            23.5,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        },
+        {
+          "name": "btnNext",
+          "target": "help_directattack",
+          "bounds": [
+            288.75,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        }
+      ]
+    },
+    {
+      "id": 23,
+      "topic": "help_directattack",
+      "frame": 127,
+      "asset": "help_directattack.png",
+      "width": 1095,
+      "height": 825,
+      "sha256": "fbb0b48cd2e49ce1093234bc65352167a1cdf365d4227700ca219b39634308e0",
+      "controls": [
+        {
+          "name": "btnIndex",
+          "target": "help_index",
+          "bounds": [
+            156.0,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        },
+        {
+          "name": "btnPrev",
+          "target": "help_massmedia",
+          "bounds": [
+            23.5,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        },
+        {
+          "name": "btnNext",
+          "target": "help_preattack",
+          "bounds": [
+            288.75,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        }
+      ]
+    },
+    {
+      "id": 24,
+      "topic": "help_preattack",
+      "frame": 128,
+      "asset": "help_preattack.png",
+      "width": 1095,
+      "height": 825,
+      "sha256": "19b72439667c8ac4d6181aa3fe82a5d2dcc9289b519723530a4e959feed603d1",
+      "controls": [
+        {
+          "name": "btnIndex",
+          "target": "help_index",
+          "bounds": [
+            156.0,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        },
+        {
+          "name": "btnPrev",
+          "target": "help_directattack",
+          "bounds": [
+            23.5,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        },
+        {
+          "name": "btnNext",
+          "target": "help_defense",
+          "bounds": [
+            288.75,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        }
+      ]
+    },
+    {
+      "id": 25,
+      "topic": "help_defense",
+      "frame": 129,
+      "asset": "help_defense.png",
+      "width": 1095,
+      "height": 825,
+      "sha256": "644a0f10d6b9f19eed614d388279db90b50ef8778f7db40b10848c87fc5e50c4",
+      "controls": [
+        {
+          "name": "btnIndex",
+          "target": "help_index",
+          "bounds": [
+            156.0,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        },
+        {
+          "name": "btnPrev",
+          "target": "help_preattack",
+          "bounds": [
+            23.5,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        },
+        {
+          "name": "btnNext",
+          "target": "help_propaganda",
+          "bounds": [
+            288.75,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        }
+      ]
+    },
+    {
+      "id": 26,
+      "topic": "help_propaganda",
+      "frame": 130,
+      "asset": "help_propaganda.png",
+      "width": 1095,
+      "height": 825,
+      "sha256": "866d5750cca9790b36656c2320893d926663f7229720d3b9b7cfe5e3ff631ba3",
+      "controls": [
+        {
+          "name": "btnIndex",
+          "target": "help_index",
+          "bounds": [
+            156.0,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        },
+        {
+          "name": "btnPrev",
+          "target": "help_defense",
+          "bounds": [
+            23.5,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        },
+        {
+          "name": "btnNext",
+          "target": "help_diplomacy",
+          "bounds": [
+            288.75,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        }
+      ]
+    },
+    {
+      "id": 27,
+      "topic": "help_diplomacy",
+      "frame": 131,
+      "asset": "help_diplomacy.png",
+      "width": 1095,
+      "height": 825,
+      "sha256": "79c86a7dd3d564d1562a5bc34c1cc6aeb70407285fc898ac78dc7a294d7fba99",
+      "controls": [
+        {
+          "name": "btnIndex",
+          "target": "help_index",
+          "bounds": [
+            156.0,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        },
+        {
+          "name": "btnPrev",
+          "target": "help_propaganda",
+          "bounds": [
+            23.5,
+            248.45000000000005,
+            55.0,
+            24.0
+          ]
+        }
+      ]
+    }
+  ]
+}

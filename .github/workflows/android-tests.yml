@@ -303,6 +303,12 @@ jobs:
           - id: source-defense-production-candidates
             check: Shared defense production exact cost and zero budget
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.SourceDefenseProductionCandidatesTest"'
+          - id: source-help-navigation
+            check: Original help topics, navigation, and phone hide state
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.SourceHelpStateTest"'
+          - id: source-help-assets
+            check: Original help pages, source controls, and lossless asset integrity
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.SourceHelpAssetsTest"'
           - id: source-production-summary-fields
             check: Source production summary fields and crop alignment
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.ProductionScreenLayoutTest.summaryRowsUseSourceFieldClipsAndSeparateLineSpacing" --tests "com.example.worlddomination.game.ui.ProductionScreenLayoutTest.summaryTotalUsesCroppedSourceFieldAndAnchors"'

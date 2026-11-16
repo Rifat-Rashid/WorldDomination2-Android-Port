@@ -10,6 +10,8 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.example.worlddomination.game.rendering.ResourceMenuRenderer;
+import com.example.worlddomination.game.rendering.SourceHelpRenderer;
+import com.example.worlddomination.game.ui.SourceHelpState;
 import com.example.worlddomination.game.rendering.MessagePanelRenderer;
 import com.example.worlddomination.game.ui.MessagePanelLayout;
 import com.example.worlddomination.game.assets.OriginalActionTubeAssets;
@@ -276,6 +278,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private final int[] portraitPlayerIds = {-1, -1, -1, -1};
     private final Rectangle toolbarPanel = new Rectangle();
     private final Rectangle helpButton = new Rectangle();
+    private final Rectangle helpMapButton = new Rectangle();
     private final Rectangle muteButton = new Rectangle();
     private final Rectangle settingsButton = new Rectangle();
     private final Rectangle stockPanel = new Rectangle();
@@ -349,6 +352,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private ShapeRenderer shapes;
     private BitmapFont font;
     private ResourceMenuRenderer resourceMenuRenderer;
+    private SourceHelpRenderer helpRenderer;
+    private final SourceHelpState helpState = new SourceHelpState();
     private SourceActionMenuRenderer sourceActionMenuRenderer;
     private final SourceActionMenuState sourceActionMenu = new SourceActionMenuState();
     private final SourceActionInstruction sourceActionInstruction = new SourceActionInstruction();
@@ -475,6 +480,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         batch = new SpriteBatch();
         shapes = new ShapeRenderer();
         resourceMenuRenderer = new ResourceMenuRenderer();
+        helpRenderer = new SourceHelpRenderer();
         sourceActionMenuRenderer = new SourceActionMenuRenderer();
         messagePanelRenderer = new MessagePanelRenderer();
         actionTubeAssets = new OriginalActionTubeAssets();
@@ -689,7 +695,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         } else {
             drawPanelsAndMap();
             drawTextAndControls();
-            if (!isTurnInputBlocked() && game.getPendingHumanDiplomacyProposal() != null) {
+            if (!isTurnInputBlocked() && helpState.isOpen()) {
+                drawHelpScreen();
+            } else if (!isTurnInputBlocked() && game.getPendingHumanDiplomacyProposal() != null) {
                 drawDiplomacyResponseModal();
             } else if (!isTurnInputBlocked() && (modalOpen
                     || SourceActionMenuState.supports(game.getSelectedAction())
@@ -703,6 +711,31 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         setContinuousRendering(RenderLoopPolicy.shouldRenderContinuously(game != null,
                 showExitPromptSeconds > 0f, hasActivePresentation()));
         renderingFrame = false;
+    }
+
+    private void drawHelpScreen() {
+        batch.setProjectionMatrix(camera.combined);
+        batch.setColor(Color.WHITE);
+        font.setColor(Color.WHITE);
+        if (helpState.isVisible()) {
+            helpRenderer.prepare(helpState.getTopic());
+            batch.begin();
+            helpRenderer.draw(batch, mapBounds);
+            helpMapButton.set(mapBounds.x + mapBounds.width - 52f,
+                    mapBounds.y + mapBounds.height - 24f, 50f, 22f);
+            drawOriginalButton(helpMapButton);
+            drawCentered("MAP", helpMapButton.x + 25f, helpMapButton.y + 14f, 8f);
+            batch.end();
+        } else {
+            batch.begin();
+            for (int i = 0; i < actionFooterButtons.length; i++) {
+                Rectangle button = actionFooterButtons[i];
+                drawOriginalButton(button);
+                drawCentered(i == 0 ? "DETAILS" : i == 1 ? "CANCEL" : "ACCEPT", button.x + button.width / 2f,
+                        button.y + button.height / 2f + 3f, 8f);
+            }
+            batch.end();
+        }
     }
 
     private boolean hasActivePresentation() {
@@ -2809,6 +2842,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     }
 
     private void drawInlineActionFooter() {
+        if (helpState.isOpen()) return;
         GameState.Action action = game.getSelectedAction();
         if (SourceActionMenuState.supports(action)) {
             if (action == GameState.Action.PROPAGANDA && sourceActionMenu.isMapSelection())
@@ -3939,6 +3973,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     }
 
     private void beginNewGameSetup() {
+        helpState.close();
         audio.finishSatelliteAudio();
         audio.finishAircraftAudio();
         audio.finishAntiDefenseAudio();
@@ -4252,7 +4287,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     private int pointArea(float x, float y) {
         if (outcomeSequence.isEndgameVisible()) return GESTURE_NONE;
-        if (modalOpen && game != null && !sourceActionMenu.isEconomyWarning(game)
+        if (!helpState.isOpen() && modalOpen && game != null && !sourceActionMenu.isEconomyWarning(game)
                 && game.getSelectedAction() == GameState.Action.PRODUCTION) {
             for (int i = 0; i < productionSliderHitTargets.length; i++) {
                 if (productionSliderHitTargets[i].contains(x, y)) {
@@ -4273,7 +4308,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     }
 
     private boolean canScrollMessageHistory() {
-        return game != null && !modalOpen
+        return game != null && !helpState.isOpen() && !modalOpen
                 && !ActionScreenLayout.hasInlineActionControls(game.getSelectedAction());
     }
 
@@ -4828,6 +4863,15 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
     }
 
+    private void closeHelpSelection() {
+        helpState.close();
+        game.cancelSelection();
+        sourceActionMenu.clearEconomyWarning();
+        selectedEquipment = "";
+        modalOpen = false;
+        audio.playAmbient(OriginalAudio.Cue.GAME_AMBIENT);
+    }
+
     private void activateAt(float x, float y) {
         if (game == null) {
             activateSetupAt(x, y);
@@ -4851,6 +4895,52 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         if (settingsButton.contains(x, y)) {
             audio.toggleMusic();
             return;
+        }
+        if (helpButton.contains(x, y)) {
+            // The reference replaces the center view without cancelling an
+            // unaccepted action or touching already reserved turn orders.
+            helpState.open();
+            return;
+        }
+        if (helpState.isOpen()) {
+            helpRenderer.prepare(helpState.getTopic());
+            if (navViewport.contains(x, y)) {
+                for (Rectangle row : navRows) {
+                    if (row.contains(x, y)) {
+                        closeHelpSelection();
+                        activateNavigationRow(x, y);
+                        break;
+                    }
+                }
+                return;
+            } else if (equipmentViewport.contains(x, y)) {
+                // Help is a selected source interface action, so a stock
+                // button cannot invoke the idle automatic-action shortcut.
+                return;
+            } else {
+                boolean turnControl = confirmButton.contains(x, y)
+                        && game.getQueuedActionCount() == 2
+                        && confirmTurnAnimation.getFrame() == ConfirmTurnAnimation.OPEN_FRAME;
+                for (int slot = 0; slot < actionSlots.length; slot++) {
+                    turnControl |= actionSlots[slot].contains(x, y)
+                            && game.getQueuedAction(slot) != null;
+                }
+                if (!turnControl) {
+                    if (helpState.isVisible()) {
+                        if (helpMapButton.contains(x, y)) helpState.hide();
+                        else helpState.activate(helpRenderer.controlAt(mapBounds, x, y));
+                    } else if (actionFooterButtons[0].contains(x, y)) {
+                        helpState.show();
+                    } else if (actionFooterButtons[1].contains(x, y)) {
+                        // Route the phone footer to Cancel directly: the
+                        // reference adapter searches for an absent authored
+                        // btnCancel on help pages, leaving its footer inert.
+                        closeHelpSelection();
+                    }
+                    return;
+                }
+                closeHelpSelection();
+            }
         }
         if (game.getPendingHumanDiplomacyProposal() != null) {
             activateSourceActionMenu(x, y, true);
@@ -5541,6 +5631,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     private boolean handleBack() {
         if (isTurnInputBlocked()) return true;
+        if (helpState.isOpen()) {
+            closeHelpSelection();
+            return true;
+        }
         if (game == null) {
             if (splashState.isVisible()) {
                 splashState.dismiss();
@@ -5890,6 +5984,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             font.dispose();
         }
         if (sourceActionMenuRenderer != null) sourceActionMenuRenderer.dispose();
+        if (helpRenderer != null) helpRenderer.dispose();
         if (resourceMenuRenderer != null) {
             resourceMenuRenderer.dispose();
         }
