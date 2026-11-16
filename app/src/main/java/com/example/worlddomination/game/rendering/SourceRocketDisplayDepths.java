@@ -151,10 +151,12 @@ public final class SourceRocketDisplayDepths {
             SourceDisplayList.Entry<BattlefieldDisplayState.Item> entry = binding.smoke[slot];
             if (rocket.isTrailAttached(slot)) {
                 if (entry == null) {
-                    if (slot == 0) rocket.setTrailDepthBase(state.nextDepth());
+                    if (!rocket.isOrdinary() && slot == 0) rocket.setTrailDepthBase(state.nextDepth());
                     binding.smoke[slot] = state.attach(BattlefieldDisplayState.Kind.EFFECT,
                             slot, binding.unitName + "trail" + slot,
                             binding, state.nextDepth());
+                    if (rocket.isOrdinary())
+                        rocket.setTrailDepth(slot, binding.smoke[slot].getDepth());
                 }
             } else if (entry != null && entry.isAttached()) {
                 state.remove(entry);

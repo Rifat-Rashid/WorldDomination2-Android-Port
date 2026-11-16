@@ -128,6 +128,8 @@ public final class SourceBattleUnitAllocationTest {
         assertSame(depth.binding(), depth.binding().body().getValue().owner);
         assertSame(depth.binding(), depth.binding().dot().getValue().owner);
         assertEquals(5, submarineAllocation.reserveBeforeEvent(strike("rocket1", null, 1, -1)));
+        assertEquals("No duplicate reserved rocket clips", 22511, submarineState.nextDepth());
+        bindRocket(submarineState, 5, 1, false);
         occupied(submarineState, 22511, "unit2");
         occupied(submarineState, 22512, "targetDotunit2");
         assertSingle("space", GameState.CombatEventType.STRIKE_IMPACT, "specialLoad", -1,
@@ -209,6 +211,8 @@ public final class SourceBattleUnitAllocationTest {
         SourceBattleUnitAllocation allocation = new SourceBattleUnitAllocation(state);
         assertEquals(30024, state.nextDepth());
         assertEquals(0, allocation.reserveBeforeEvent(strike("rocket2", "warhead1", 1, -1)));
+        assertEquals("Binding owns the source roles", 30024, state.nextDepth());
+        bindRocket(state, 0, 1, false);
         occupied(state, 30024, "unit1");
         occupied(state, 30025, "targetDotunit1");
         assertEquals(30026, state.nextDepth());
@@ -219,12 +223,28 @@ public final class SourceBattleUnitAllocationTest {
                                      int slot, int firstDepth, String... names) throws Exception {
         BattlefieldDisplayState state = state(2);
         SourceBattleUnitAllocation allocation = new SourceBattleUnitAllocation(state);
-        assertEquals(0, allocation.reserveBeforeEvent(event(type, weapon, payload, slot, -1)));
+        GameState.CombatEvent event = event(type, weapon, payload, slot, -1);
+        assertEquals(0, allocation.reserveBeforeEvent(event));
+        if (FlashBattleRoutes.supportsRocketStrike(event)) {
+            assertEquals("No phantom roles before the binding", firstDepth, state.nextDepth());
+            bindRocket(state, 0, slot, type == GameState.CombatEventType.STRIKE_INTERCEPTED);
+        }
         for (int index = 0; index < names.length; index++) {
             if (names[index] != null) occupied(state, firstDepth + index, names[index]);
         }
         assertEquals(firstDepth + names.length, state.nextDepth());
         assertEquals(5, allocation.reserveBeforeEvent(unsupported()));
+    }
+
+    private static void bindRocket(BattlefieldDisplayState state, int parameter,
+                                   int slot, boolean intercepted) {
+        FlashRocketAnimation animation = FlashRocketAnimation.forSourceOrdinary(
+                FlashBattleRoutes.createRocketStrike(0, 1, 2, slot, intercepted),
+                "explosion_warhead_1", null, new ReferenceRandom(0), 5);
+        SourceRocketDisplayDepths binding = new SourceRocketDisplayDepths(state,
+                animation, parameter, () -> null, new SourceStoppedClipQueue());
+        assertSame(binding.binding(), binding.binding().body().getValue().owner);
+        assertSame(binding.binding(), binding.binding().dot().getValue().owner);
     }
 
     private static void occupied(BattlefieldDisplayState state, int depth, String name) {

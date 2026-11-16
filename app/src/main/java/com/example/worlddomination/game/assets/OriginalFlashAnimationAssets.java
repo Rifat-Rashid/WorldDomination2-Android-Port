@@ -375,6 +375,10 @@ public final class OriginalFlashAnimationAssets implements Disposable {
                     loadedTimelines.get("satellite")));
             loadedNestedTimelines.putAll(loadNestedTimelines(scene,
                     loadedTimelines.get("submarine")));
+            // Rocket mask and tint are nested movie clips (790 and 795),
+            // whose leaf shapes must be included in the battle atlas.
+            loadedNestedTimelines.putAll(loadNestedTimelines(scene,
+                    loadedTimelines.get("rocket")));
             loadedNestedTimelines.putAll(loadNestedTimelines(scene,
                     loadedTimelines.get("plane001_shadow")));
             loadedNestedTimelines.putAll(loadNestedTimelines(scene,

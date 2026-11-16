@@ -51,6 +51,7 @@ import com.example.worlddomination.game.rendering.SourceRocketDisplayDepths;
 import com.example.worlddomination.game.rendering.SourceInterceptedAircraftDisplayDepths;
 import com.example.worlddomination.game.rendering.SourceCarrierPlaneDisplayDepths;
 import com.example.worlddomination.game.rendering.SourceAirDefenseController;
+import com.example.worlddomination.game.rendering.SourceRocketDefenseController;
 import com.example.worlddomination.game.rendering.SourceAircraftTrail;
 import com.example.worlddomination.game.rendering.SourceAircraftTrailDisplay;
 import com.example.worlddomination.game.rendering.SourceActionLabelMapping;
@@ -246,6 +247,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private final List<FlashSubmarineAnimation> submarineBattleAnimations = new ArrayList<>();
     private final List<FlashCarrierPlaneAnimation> carrierPlaneAnimations = new ArrayList<>();
     private final List<SourceCarrierPlaneDisplayDepths> sourceCarrierPlaneBindings =
+            new ArrayList<>();
+    private final List<SourceRocketDefenseController> sourceRocketDefenseControllers =
             new ArrayList<>();
     private final List<SourceAirDefenseController> sourceAirDefenseControllers =
             new ArrayList<>();
@@ -776,6 +779,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             // city and action-building callback on the global source frame.
             for (SourceAirDefenseController defense : sourceAirDefenseControllers)
                 defense.advanceHostFrame();
+            for (SourceRocketDefenseController defense : sourceRocketDefenseControllers)
+                defense.advanceHostFrame();
         }
         advanceOutcomeSequence();
     }
@@ -875,6 +880,11 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 FlashCarrierPlaneAnimation plane = carrierPlaneAnimations.get(index);
                 if (plane.getSourcePlayback() != null) plane.tickSourceFrame(false);
             }
+            for (FlashRocketAnimation rocket : rocketBattleAnimations) {
+                if (rocket.getSourcePlayback() != null
+                        && rocket.getSourcePlayback().isOrdinary())
+                    rocket.visitWaitingSourceOrdinary();
+            }
         }
         if (turnPlaybackSequence.isWaitingForActionLabels()) return;
         for (int i = battleAnimations.size() - 1; i >= 0; i--) {
@@ -916,18 +926,26 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         if (animation.isFinished()) return false;
         if (animation.getSourcePlayback() != null
                 && (!turnPlaybackSequence.isReadyForBattle()
-                    || event.battleStartNum > battleRecordClock.getActivatedRecordCount())) return false;
+                    || event.battleStartNum > battleRecordClock.getActivatedRecordCount())) {
+            if (animation.getSourcePlayback().isOrdinary())
+                animation.visitWaitingSourceOrdinary();
+            return false;
+        }
         if (submarine != null && animation.getSourcePlayback() == null
                 && !turnPlaybackSequence.isReadyForBattle()) return false;
-        float sourcePan = sourceAudioPan(animation.getRocket().sourceX);
         boolean source = animation.getSourcePlayback() != null;
+        float sourcePan = source && animation.getSourcePlayback().isOrdinary()
+                ? (float) (Math.floor(((animation.getSourcePlayback().getRenderX() / 8d
+                        - 50d) * 2d) + 0.5d) / 100d)
+                : sourceAudioPan(animation.getRocket().sourceX);
         boolean impact = source ? animation.tickSourceFrame(submarine != null
                 && submarine.getSourceFrameIndex() > 0) : animation.tick();
         if (sourceDepths != null) sourceDepths.afterUnitFrame();
         if (animation.takeLaunchSound()) {
             // Unit.sub_rocket_launch starts its owned sound in this callback.
             if (source) animation.setSourceLaunchSoundId(
-                    audio.playInstance(animation.getLaunchCue(), 0f));
+                    audio.playInstance(animation.getLaunchCue(),
+                            animation.getSourcePlayback().isOrdinary() ? sourcePan : 0f));
             else audio.play(animation.getLaunchCue());
         }
         if (impact) {
@@ -951,6 +969,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 }
             }
         }
+        if (source && animation.getSourcePlayback().isOrdinary())
+            audio.setInstancePan(animation.getLaunchCue(),
+                    animation.getSourceLaunchSoundId(), sourcePan);
         if (animation.isFinished()) {
             rocketBattleAnimations.remove(animation);
         }
@@ -1357,10 +1378,50 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         if (current != null) antiDefenseTrackingAnimations.add(current);
     }
 
+    private SourceRocketDefenseController rocketDefenseFor(GameState.CombatEvent event,
+            FlashAntiDefenseTrackingAnimation.TargetLock sharedTargetLock) {
+        if (!"antiRocket".equals(event.counterWeaponName)) return null;
+        for (SourceRocketDefenseController controller : sourceRocketDefenseControllers) {
+            if (controller.getDefenderPlayerId() != event.defenderPlayerId) continue;
+            if (controller.getActionBuildingSlot() != event.counterActionBuildingSlot)
+                throw new IllegalStateException("Source defender has two anti-rocket locations");
+            return controller;
+        }
+        FlashActionBuildingAnimation building = null;
+        for (FlashActionBuildingAnimation candidate : actionBuildingAnimations) {
+            if (candidate.playerId == event.defenderPlayerId
+                    && candidate.slot == event.counterActionBuildingSlot) {
+                building = candidate;
+                break;
+            }
+        }
+        SourceRocketDefenseController controller = new SourceRocketDefenseController(
+                event.defenderPlayerId, event.counterActionBuildingSlot,
+                game.getPlayerState(event.defenderPlayerId).getReligionCode(), building,
+                sharedTargetLock);
+        sourceRocketDefenseControllers.add(controller);
+        return controller;
+    }
+
+    private void synchronizeSourceRocketDefenseTracker(SourceRocketDefenseController controller) {
+        if (!controller.takeTrackerChange()) return;
+        for (int index = antiDefenseTrackingAnimations.size() - 1; index >= 0; index--) {
+            FlashAntiDefenseTrackingAnimation previous = antiDefenseTrackingAnimations.get(index);
+            if (previous.isSourceDriven()
+                    && previous.getDefenderPlayerId() == controller.getDefenderPlayerId())
+                antiDefenseTrackingAnimations.remove(index);
+        }
+        FlashAntiDefenseTrackingAnimation current = controller.getTracker();
+        if (current != null) antiDefenseTrackingAnimations.add(current);
+    }
+
     private void clearSourceAirDefenses() {
         for (SourceAirDefenseController controller : sourceAirDefenseControllers)
             controller.clear();
         sourceAirDefenseControllers.clear();
+        for (SourceRocketDefenseController controller : sourceRocketDefenseControllers)
+            controller.clear();
+        sourceRocketDefenseControllers.clear();
     }
 
     private static float sourceAudioPan(float sourceX) {
@@ -5227,15 +5288,33 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                         event.attackerPlayerId, event.defenderPlayerId,
                         event.cityIndex, event.actionBuildingSlot,
                         event.type == GameState.CombatEventType.STRIKE_INTERCEPTED);
-                FlashRocketAnimation rocketAnimation = new FlashRocketAnimation(route,
-                        recordDelay,
-                        SourceCombatAnimationMapping.linkageFor(event), cue);
+                FlashRocketAnimation rocketAnimation = FlashRocketAnimation.forSourceOrdinary(
+                        route, SourceCombatAnimationMapping.linkageFor(event), cue,
+                        presentationRandom,
+                        game.getPlayerState(event.attackerPlayerId).getPlayerColor());
                 rocketBattleAnimations.add(rocketAnimation);
-                FlashAntiDefenseTrackingAnimation anti = addAntiDefenseTrackingAnimation(event, rocketAnimation,
-                        antiDefenseTargetLock);
+                SourceRocketDisplayDepths depths = new SourceRocketDisplayDepths(
+                        battlefieldDisplay, rocketAnimation, precedingUnitParameter,
+                        () -> flashAnimationAssets.getTimeline(rocketAnimation.getImpactLinkage()),
+                        sourceStoppedClips);
+                sourceRocketBindings.add(depths);
+                SourceRocketDefenseController defense = rocketDefenseFor(event, antiDefenseTargetLock);
+                SourceRocketDefenseController.UnitVisit defenseUnit = defense == null ? null
+                        : defense.register(rocketAnimation,
+                            audio.createAntiDefenseOwner(AntiDefenseAudioPlayback.Type.ROCKET));
                 sourceUnitPlayback.addConstructed(() -> {
-                    boolean stop = advanceRocketUnit(rocketAnimation, event, null, null);
-                    if (!stop && anti != null) advanceAntiDefenseUnit(anti);
+                    if (rocketAnimation.isFinished()) return false;
+                    boolean bodyWasAttached = rocketAnimation.getSourcePlayback().isBodyAttached();
+                    boolean stop = advanceRocketUnit(rocketAnimation, event, null, depths);
+                    if (!stop && defenseUnit != null) {
+                        if (rocketAnimation.getSourcePlayback().takeFireDefense())
+                            defense.notifyFireDefense(defense.getBuilding().seekSourceRocketFire());
+                        boolean selfKill = rocketAnimation.getSourcePlayback().takeSelfKillPulse();
+                        defense.afterUnitVisit(defenseUnit, selfKill,
+                                selfKill || bodyWasAttached
+                                    && !rocketAnimation.getSourcePlayback().isBodyAttached());
+                        synchronizeSourceRocketDefenseTracker(defense);
+                    }
                     return stop;
                 });
                 continue;

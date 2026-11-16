@@ -69,7 +69,9 @@
     "com.example.worlddomination.game.rendering.MassMediaValueLayoutInstrumentedTest",
     "com.example.worlddomination.game.rendering.SourceEndgameInstrumentedTest",
     "com.example.worlddomination.game.rendering.SourceEndgameContextRecoveryInstrumentedTest",
-    "com.example.worlddomination.game.ui.PropagandaUiInstrumentedTest"
+    "com.example.worlddomination.game.ui.PropagandaUiInstrumentedTest",
+    "com.example.worlddomination.game.rendering.SourceSiloRocketClockInstrumentedTest",
+    "com.example.worlddomination.game.rendering.SourceSiloRocketRenderingInstrumentedTest"
   ],
   "groups": [
     {
@@ -106,7 +108,8 @@
         "com.example.worlddomination.game.rendering.SourceBiologicalRenderingInstrumentedTest",
         "com.example.worlddomination.game.rendering.ApacheRenderingInstrumentedTest",
         "com.example.worlddomination.game.rendering.SourceEndgameInstrumentedTest",
-        "com.example.worlddomination.game.ui.PropagandaUiInstrumentedTest"
+        "com.example.worlddomination.game.ui.PropagandaUiInstrumentedTest",
+        "com.example.worlddomination.game.rendering.SourceSiloRocketClockInstrumentedTest"
       ],
       "evidence": [
         "beta-ui-evidence",
@@ -147,7 +150,8 @@
         "com.example.worlddomination.game.rendering.SourceBiologicalAudioInstrumentedTest",
         "com.example.worlddomination.game.rendering.ApacheTurnPlaybackInstrumentedTest",
         "com.example.worlddomination.game.rendering.MassMediaValueLayoutInstrumentedTest",
-        "com.example.worlddomination.game.rendering.SourceEndgameContextRecoveryInstrumentedTest"
+        "com.example.worlddomination.game.rendering.SourceEndgameContextRecoveryInstrumentedTest",
+        "com.example.worlddomination.game.rendering.SourceSiloRocketRenderingInstrumentedTest"
       ],
       "evidence": [
         "beta-ui-evidence"
@@ -550,6 +554,18 @@
     [
       "com.example.worlddomination.game.ui.PropagandaUiInstrumentedTest",
       "citySelectionConfirmationCancelAndTurnPlaybackUseTheOriginalPanel"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.SourceSiloRocketClockInstrumentedTest",
+      "earlySuccessfulStrikeMatches341HostTicks"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.SourceSiloRocketClockInstrumentedTest",
+      "lateInterceptedStrikeMatches646HostTicks"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.SourceSiloRocketRenderingInstrumentedTest",
+      "sourceFramesMatchAtStageAndPhoneSizes"
     ]
   ]
 }

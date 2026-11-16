@@ -337,6 +337,7 @@ public final class GameState {
         private final Map<String, Integer> desiredStock = new LinkedHashMap<>();
         private final Set<Action> bioloadedActions = new LinkedHashSet<>();
         private String preparedCarrierName;
+        private int preparedRocketSlot = -1;
         private boolean bioloaded;
         private int turnBattleCasualties;
         private int turnBattleKills;
@@ -1736,6 +1737,7 @@ public final class GameState {
         if (selectedAction != Action.PREPARED_ATTACK || getHuman().preparedCarrierName == null
                 || "ship".equals(getHuman().preparedCarrierName)) return false;
         getHuman().preparedCarrierName = null;
+        getHuman().preparedRocketSlot = -1;
         cancelSelection();
         return true;
     }
@@ -3467,6 +3469,19 @@ public final class GameState {
         @SuppressWarnings("unchecked")
         Map<String, Integer>[] slotsByPlayer = new Map[players.length];
         int[] nextSlotByPlayer = new int[players.length];
+        // A ready rocket's source silo remains at its earlier preparation location.
+        // Reserve it before visiting other frames, regardless of their queue order.
+        for (ActionOrder order : turnOrders) {
+            if (order.playerId < 0 || order.playerId >= players.length
+                    || order.action != Action.PREPARED_ATTACK || order.prepareCarrier
+                    || !"silo".equals(order.actionBuildingFrameName)) continue;
+            PlayerState player = playerById(order.playerId);
+            if (!order.weaponName.equals(player.preparedCarrierName)
+                    || player.preparedRocketSlot < 1 || player.preparedRocketSlot > 2) continue;
+            if (slotsByPlayer[order.playerId] == null)
+                slotsByPlayer[order.playerId] = new LinkedHashMap<>();
+            slotsByPlayer[order.playerId].put("silo", player.preparedRocketSlot);
+        }
         for (ActionOrder order : sourceActionBuildingOrder(turnOrders)) {
             if (order.playerId < 0 || order.playerId >= players.length
                     || order.actionBuildingFrameName == null) {
@@ -3482,6 +3497,7 @@ public final class GameState {
                 order.actionBuildingSlot = existingSlot;
             } else {
                 int slot = nextSlotByPlayer[order.playerId] % 2 + 1;
+                if (slots.size() < 2 && slots.containsValue(slot)) slot = 3 - slot;
                 nextSlotByPlayer[order.playerId]++;
                 slots.put(order.actionBuildingFrameName, slot);
                 order.actionBuildingSlot = slot;
@@ -3744,6 +3760,8 @@ public final class GameState {
             }
             battleStockUses.add(carrier);
             attacker.preparedCarrierName = order.weaponName;
+            attacker.preparedRocketSlot = "rocket".equals(carrier.definition.type)
+                    ? order.actionBuildingSlot : -1;
             addMessage(attacker, "Nation " + attacker.id + " prepared " + order.weaponName + ".");
             return;
         }
@@ -3767,6 +3785,7 @@ public final class GameState {
         }
 
         attacker.preparedCarrierName = null;
+        attacker.preparedRocketSlot = -1;
         battleStockUses.add(payload);
         if ("space".equals(carrier.definition.type)) {
             battleSatelliteLaunches[attacker.id]++;
@@ -4042,6 +4061,7 @@ public final class GameState {
             }
             if (!usedPreparedAttackAction) {
                 player.preparedCarrierName = null;
+                player.preparedRocketSlot = -1;
                 addMessage(player, "Nation " + player.id + " cancelled its unused prepared strike.");
             }
         }
