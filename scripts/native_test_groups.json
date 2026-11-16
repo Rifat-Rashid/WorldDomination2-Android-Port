@@ -79,7 +79,8 @@
     "com.example.worlddomination.game.rendering.SourceAircraftSmokeBirthInstrumentedTest",
     "com.example.worlddomination.game.rendering.SourceRocketImpactRenderingInstrumentedTest",
     "com.example.worlddomination.game.rendering.SourcePreparedRocketSlotTwoInstrumentedTest",
-    "com.example.worlddomination.game.rendering.SourceProductionSliderBudgetInstrumentedTest"
+    "com.example.worlddomination.game.rendering.SourceProductionSliderBudgetInstrumentedTest",
+    "com.example.worlddomination.game.rendering.SourceProductionFooterInstrumentedTest"
   ],
   "groups": [
     {
@@ -167,7 +168,8 @@
         "com.example.worlddomination.game.rendering.SourcePassedRocketDefenseRenderingInstrumentedTest",
         "com.example.worlddomination.game.rendering.SourceAircraftSmokeBirthInstrumentedTest",
         "com.example.worlddomination.game.rendering.SourcePreparedRocketSlotTwoInstrumentedTest",
-        "com.example.worlddomination.game.rendering.SourceProductionSliderBudgetInstrumentedTest"
+        "com.example.worlddomination.game.rendering.SourceProductionSliderBudgetInstrumentedTest",
+        "com.example.worlddomination.game.rendering.SourceProductionFooterInstrumentedTest"
       ],
       "evidence": [
         "beta-ui-evidence"
@@ -654,6 +656,14 @@
     [
       "com.example.worlddomination.game.rendering.SourceProductionSliderBudgetInstrumentedTest",
       "defenseSliderUsesOriginalCandidatesAndRoundedUnusedAmounts"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.SourceProductionFooterInstrumentedTest",
+      "selectedTotalFitsSourceFieldAtBothAspectRatios"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.SourceProductionFooterInstrumentedTest",
+      "fiveSelectedRowsLeaveTheSourceFooterClear"
     ]
   ]
 }

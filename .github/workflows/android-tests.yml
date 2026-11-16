@@ -303,6 +303,9 @@ jobs:
           - id: source-defense-production-candidates
             check: Shared defense production exact cost and zero budget
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.SourceDefenseProductionCandidatesTest"'
+          - id: source-production-summary-fields
+            check: Source production summary fields and crop alignment
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.ProductionScreenLayoutTest.summaryRowsUseSourceFieldClipsAndSeparateLineSpacing" --tests "com.example.worlddomination.game.ui.ProductionScreenLayoutTest.summaryTotalUsesCroppedSourceFieldAndAnchors"'
           - id: production-screen-layout-tests
             check: Original production slider layout and touch mapping
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.ProductionScreenLayoutTest"'

@@ -10,6 +10,39 @@ import static org.junit.Assert.assertTrue;
 
 public final class ProductionScreenLayoutTest {
     @Test
+    public void summaryRowsUseSourceFieldClipsAndSeparateLineSpacing() {
+        Rectangle modal = new Rectangle(0f, 0f, 365f, 275f);
+        Rectangle categories = ProductionScreenLayout.setSummaryCategoryBounds(modal, new Rectangle());
+        Rectangle amounts = ProductionScreenLayout.setSummaryAmountBounds(modal, new Rectangle());
+        assertEquals(128.95f, categories.x, .001f);
+        assertEquals(96.4f, categories.width, .001f);
+        assertEquals(47f, categories.y, .001f);
+        assertEquals(71.9f, categories.height, .001f);
+        assertEquals(220.85f, amounts.x, .001f);
+        assertEquals(134.2f, amounts.width, .001f);
+        assertEquals(categories.y, amounts.y, 0f);
+        assertEquals(130.95f, ProductionScreenLayout.summaryCategoryLeft(modal), .001f);
+        assertEquals(353.85f, ProductionScreenLayout.summaryAmountRight(modal), .001f);
+        assertEquals(114.9f, ProductionScreenLayout.summaryRowTop(modal, 0, false), .001f);
+        assertEquals(62.9f, ProductionScreenLayout.summaryRowTop(modal, 4, false), .001f);
+        assertEquals(66.9f, ProductionScreenLayout.summaryRowTop(modal, 4, true), .001f);
+        assertTrue(ProductionScreenLayout.summaryRowTop(modal, 4, false)
+                > ProductionScreenLayout.summaryTotalTop(modal));
+    }
+
+    @Test
+    public void summaryTotalUsesCroppedSourceFieldAndAnchors() {
+        Rectangle modal = new Rectangle(100f, 40f, 730f, 550f);
+        Rectangle field = ProductionScreenLayout.setSummaryTotalBounds(modal, new Rectangle());
+        assertEquals(359.2f, field.x, 0.001f);
+        assertEquals(103.6f, field.y, 0.001f);
+        assertEquals(453.9f, field.width, 0.001f);
+        assertEquals(33.1f, field.height, 0.001f);
+        assertEquals(809.2f, ProductionScreenLayout.summaryTotalRight(modal), 0.001f);
+        assertEquals(128.7f, ProductionScreenLayout.summaryTotalTop(modal), 0.001f);
+    }
+
+    @Test
     public void productionRowsFollowTheOriginalFlashOrderAndColumns() {
         String[] expected = {
                 "rockets", "planes", "special", "warhead", "bioload", "soldier", "spy", "defense"
