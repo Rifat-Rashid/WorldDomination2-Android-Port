@@ -2844,7 +2844,7 @@ public final class GameState {
                 resolveDefense(order, resolvedDefenses);
             }
         }
-        // Resolve every battle before propaganda calculates its city transfer.
+        // Roll every battle before the later presentation result callbacks.
         // The Flash builds turn-result records in reverse active-player order,
         // then Presenter.turnResults walks that array backward. Side effects
         // such as spy theft and casualty rolls therefore resolve by ascending
@@ -2887,7 +2887,9 @@ public final class GameState {
             }
             for (ActionOrder order : turnOrders) {
                 if (order.playerId == actor.id && order.action == Action.PROPAGANDA) {
-                    resolvePropaganda(order, populationChanges);
+                    // Battle.createBattleScriptVars publishes all propaganda
+                    // before battle casualties, despite the earlier damage rolls.
+                    resolvePropaganda(order, populationChanges, 0);
                 }
             }
         }
@@ -3015,8 +3017,8 @@ public final class GameState {
             // result phases, and copies budgets only for active players.
             if (humanSurvivedBattle && player.alive) {
                 player.turnMoneyMillions = player.moneyMillions;
+                player.resetAiTurnMoneyValidity();
             }
-            player.resetAiTurnMoneyValidity();
         }
         if (humanSurvivedBattle) {
             tickCeasefires();
@@ -4287,7 +4289,8 @@ public final class GameState {
      * acting nation's populated cities using the source's rounded per-city share.
      */
     private void resolvePropaganda(ActionOrder order,
-                                   TurnPopulationChanges populationChanges) {
+                                   TurnPopulationChanges populationChanges,
+                                   int publishedBattleCasualties) {
         PlayerState attacker = playerById(order.playerId);
         PlayerState defender = playerById(order.targetPlayerId);
         CityState targetCity = defender.getCity(order.targetCityIndex);
@@ -4297,7 +4300,7 @@ public final class GameState {
         }
 
         int transfer = calculatePropagandaTransfer(attacker, defender,
-                populationChanges.remainingAfterBattle(targetCity));
+                Math.max(0, targetCity.populationMillions - publishedBattleCasualties));
         int targetLossSequenceIndex = populationChanges
                 .propagandaLossesFor(targetCity).size();
         // Source passes the Player object where addToHighscore expects a player

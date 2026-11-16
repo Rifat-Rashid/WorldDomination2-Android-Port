@@ -1579,7 +1579,9 @@ public final class OpponentAITest {
         opponent.spyReadiness = 0;
         state.getHuman().moneyMillions = 500;
 
-        SequenceRandom random = new SequenceRandom(0, 0, 4);
+        // The empty soldier route still draws its initial city and index,
+        // before the independent cash alert, spy city and building draws.
+        SequenceRandom random = new SequenceRandom(0, 0, 0, 0, 4);
         OpponentAI.Decision decision = OpponentAI.planAction(state, opponent,
                 GameState.Action.ATTACK, random, 1,
                 Collections.<String, Integer>emptyMap());
@@ -1589,7 +1591,7 @@ public final class OpponentAITest {
         assertEquals("spy1", decision.weaponName);
         assertEquals(state.getHuman().id, decision.targetPlayerId);
         assertEquals("factory", decision.spyBuilding);
-        assertEquals("Source consumes alert, city, then building draws", 3,
+        assertEquals("Source consumes initial city/index, alert, spy city/building", 5,
                 random.getDrawCount());
     }
 
