@@ -343,7 +343,8 @@ public final class OpponentAI {
             ScoredAction scored = scores.get(index);
             if (scored.action == GameState.Action.ATTACK) {
                 boolean duplicateAttack = index == 0 && scores.size() > 1
-                        && scored.score - 50 > scores.get(1).score;
+                        && scored.score - 50 > scores.get(1).score
+                        && !(initialAttackAlreadyAttempted && index == firstActionIndex);
                 List<Decision> attackPlan = planSourceAttack(state, player, random,
                         duplicateAttack, plannedWeaponUse);
                 if (attackPlan.isEmpty() && index == decisions.size()
@@ -352,8 +353,10 @@ public final class OpponentAI {
                     // current slot once before advancing its score cursor.
                     // The leading attack may already have used its first try
                     // in planScoredActions; never give it a third attempt.
+                    // On rejection Model.doTurn restores the ranked companion
+                    // action before retrying, replacing any duplicate attack.
                     attackPlan = planSourceAttack(state, player, random,
-                            duplicateAttack, plannedWeaponUse);
+                            false, plannedWeaponUse);
                 }
                 for (Decision decision : attackPlan) {
                     if (decisions.size() == 2) {

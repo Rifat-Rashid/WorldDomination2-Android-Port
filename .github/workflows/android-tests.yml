@@ -318,6 +318,9 @@ jobs:
           - id: source-legal-spy-campaign
             check: Legal source spy campaign through turn 58 and defeat
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.SourceLegalSpyCampaignTest"'
+          - id: source-hard-campaign-retry
+            check: Hard four-opponent campaign, attack retries and cash recovery
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.SourceLegalHardCampaignTest" --tests "com.example.worlddomination.game.simulation.SourceTurnCashRecoveryTest"'
           - id: source-help-navigation
             check: Original help topics, navigation, and phone hide state
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.SourceHelpStateTest"'
