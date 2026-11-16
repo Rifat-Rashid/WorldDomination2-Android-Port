@@ -100,6 +100,9 @@ public final class FlashCarrierPlaneAnimation
     public SourceCarrierPlanePlayback getSourcePlayback() { return sourcePlayback; }
     public FlashColorTransform getTint() { return tint; }
 
+    /** Ship smoke is placed from the same current pose as the published actor. */
+    public float getSourceTrailCropProgress() { return actor.routeProgress; }
+
     public boolean tickSourceFrame(boolean recordActivated) {
         if (sourcePlayback == null) throw new IllegalStateException("No source carrier aircraft");
         boolean impact = sourcePlayback.tickSourceFrame(recordActivated);

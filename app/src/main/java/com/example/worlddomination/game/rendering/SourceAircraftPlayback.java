@@ -19,6 +19,10 @@ public final class SourceAircraftPlayback {
     private double renderY;
     private double previousX;
     private double previousY;
+    private double trailVisitX;
+    private double trailVisitY;
+    private double trailVisitPreviousX;
+    private double trailVisitPreviousY;
     private double xStep;
     private double yStep;
     private double xDistance;
@@ -182,8 +186,14 @@ public final class SourceAircraftPlayback {
             x += xStep;
             y += yStep;
         }
-        if (trail != null)
+        if (trail != null) {
+            // Source trail update runs before a possible circular movement.
+            trailVisitX = x;
+            trailVisitY = y;
+            trailVisitPreviousX = previousX;
+            trailVisitPreviousY = previousY;
             trail.visit(true, action, previousX, previousY, x, y, angle);
+        }
         if (atTarget) {
             action = waypointAction[currentWaypoint++];
             atTarget = false;
@@ -317,6 +327,10 @@ public final class SourceAircraftPlayback {
     public double getShadowRenderY() {
         return finiteStart && !viewPosePublished ? y : renderY + shadowYOffset;
     }
+    public double getTrailVisitX() { return trailVisitX; }
+    public double getTrailVisitY() { return trailVisitY; }
+    public double getTrailVisitPreviousX() { return trailVisitPreviousX; }
+    public double getTrailVisitPreviousY() { return trailVisitPreviousY; }
     public double getPreviousX() { return previousX; }
     public double getPreviousY() { return previousY; }
     public double getAlpha() { return alpha; }

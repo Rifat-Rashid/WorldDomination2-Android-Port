@@ -837,6 +837,22 @@ public final class FlashBattleUnitRenderer {
     public void drawSourceAircraftSmoke(SpriteBatch batch, Rectangle mapBounds,
                                          SourceAircraftTrail trail, int slot,
                                          int attackerPlayerId) {
+        drawSourceAircraftSmoke(batch, mapBounds, trail, slot, attackerPlayerId,
+                attackerPlayerId, 0f);
+    }
+
+    /** Root-owned smoke retains the phone crop in effect when it was born. */
+    public void drawSourceAircraftSmoke(SpriteBatch batch, Rectangle mapBounds,
+                                         SourceAircraftTrailDisplay display, int slot) {
+        drawSourceAircraftSmoke(batch, mapBounds, display.trail, slot,
+                display.attackerPlayerId, display.targetPlayerId,
+                display.getBirthCropBlend(slot));
+    }
+
+    private void drawSourceAircraftSmoke(SpriteBatch batch, Rectangle mapBounds,
+                                          SourceAircraftTrail trail, int slot,
+                                          int attackerPlayerId, int targetPlayerId,
+                                          float birthCropBlend) {
         if (!assets.isLoaded() || !trail.isAttached(slot)) return;
         int shape = OriginalFlashAnimationAssets.ROCKET_TRAIL_SHAPE_ID;
         TextureRegion smoke = assets.getShape(shape);
@@ -849,6 +865,12 @@ public final class FlashBattleUnitRenderer {
                 (float) trail.getX(slot), (float) trail.getY(slot), attackerPlayerId,
                 assets.getShapeOriginX(shape), assets.getShapeOriginY(shape),
                 smoke.getRegionWidth(), smoke.getRegionHeight());
+        float sourceX = (float) trail.getX(slot);
+        float cropOffset = BattlefieldCityLayout.sourceXBetween(mapBounds, sourceX,
+                attackerPlayerId, targetPlayerId, birthCropBlend)
+                - BattlefieldCityLayout.sourceX(mapBounds, sourceX, attackerPlayerId);
+        for (int vertex = 0; vertex < 20; vertex += 5)
+            sourceRocketVertices[vertex] += cropOffset;
         batch.setColor(1f, 1f, 1f, (float) Math.max(0d, Math.min(1d,
                 trail.getAlpha(slot) / 100d)));
         float packed = batch.getPackedColor();
