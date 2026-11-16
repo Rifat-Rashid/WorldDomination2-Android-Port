@@ -131,7 +131,9 @@ public final class SourceSpyStockLevelTest {
         Scenario s = new Scenario(fixture().get("cases").get(0));
         s.actor.getWeapons().get("soldier1").active = true;
         s.actor.getWeapons().get("soldier1").inStock = 1;
-        SequenceRandom random = new SequenceRandom(0, 0, 1, 0, 0, 0, 0);
+        // Keep the duplicate, then explicitly choose the direct route before
+        // rejecting soldier2 and retrying with soldier1.
+        SequenceRandom random = new SequenceRandom(0, 1, 0, 1, 0, 0, 0, 0);
         List<OpponentAI.Decision> result = OpponentAI.planScoredActions(s.game, s.actor,
                 random, Arrays.asList(new OpponentAI.ScoredAction(GameState.Action.ATTACK, 100),
                         new OpponentAI.ScoredAction(GameState.Action.MASS_MEDIA, 40)));
@@ -139,7 +141,7 @@ public final class SourceSpyStockLevelTest {
         assertEquals(GameState.Action.ATTACK, result.get(0).action);
         assertEquals("soldier1", result.get(0).weaponName);
         assertEquals(GameState.Action.MASS_MEDIA, result.get(1).action);
-        assertEquals(Arrays.asList(3, 5, 4, 91, 5, 4, 91), random.bounds);
+        assertEquals(Arrays.asList(3, 2, 5, 4, 91, 5, 4, 91), random.bounds);
     }
 
     /** Synthetic boundary derived from Model.py:814-844, not a campaign replay. */

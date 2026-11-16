@@ -225,6 +225,29 @@ public final class OpponentAI {
                 attackPlan = planSourceAttack(state, player, random,
                         false, plannedWeaponUse);
             }
+            if (precedingOrder != null && !attackPlan.isEmpty()) {
+                Decision ship = attackPlan.get(0);
+                if (ship.action == GameState.Action.PREPARED_ATTACK && !ship.prepareCarrier
+                        && "ship".equals(ship.weaponName)) {
+                    // A ready ship in slot two rewrites the already accepted
+                    // first ActionTarget, even when its conventional weapon is
+                    // undefined. Its prior reservations are not refunded here.
+                    GameState.PlayerState target = state.getPlayerState(ship.targetPlayerId);
+                    List<CityState> cities = target.getCities();
+                    for (int index = cities.size() - 1; index >= 0; index--) {
+                        CityState city = cities.get(index);
+                        if (city.populationMillions > 0) {
+                            GameState.WeaponState soldier = strongestAvailableSoldier(
+                                    player, plannedWeaponUse);
+                            Decision companion = attackDecision(player.id, target.id, city.index,
+                                    soldier == null ? null : soldier.definition.name);
+                            decisions.set(0, companion);
+                            markPlannedUse(companion, plannedWeaponUse);
+                            break;
+                        }
+                    }
+                }
+            }
             for (Decision decision : attackPlan) {
                 if (decisions.size() == 2) {
                     break;
@@ -900,11 +923,14 @@ public final class OpponentAI {
         boolean allowPre = !carriers.isEmpty();
         boolean hasSpy = hasAvailableSpy(attacker, plannedUse);
         boolean allowDir = hasAvailableSoldier(attacker, plannedUse) || hasSpy;
-        if (!allowDir && !allowPre && !hasSpy) {
+        if (!duplicateAttack && !allowDir && !allowPre && !hasSpy) {
             return decisions;
         }
 
-        int selectedRoute = allowPre && allowDir ? randomInclusive(random, 1, 2)
+        // A preserved duplicate chooses a route unconditionally in getTarget,
+        // including when neither route currently has an available weapon.
+        int selectedRoute = duplicateAttack || (allowPre && allowDir)
+                ? randomInclusive(random, 1, 2)
                 : allowPre ? 1 : 2;
         if (selectedRoute == 1) {
             String carrierName = randomAvailableCarrier(attacker, random, logicalCarriers);

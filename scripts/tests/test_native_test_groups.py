@@ -91,8 +91,8 @@ class NativeGroupTests(unittest.TestCase):
                         (folder / name).write_bytes(PNG)
 
     def test_manifest_is_exact_closed_inventory_and_both_groups_make_beta(self):
-        self.assertEqual(77, len(self.manifest["requiredClasses"]))
-        self.assertEqual(125, len(self.manifest["expectedCases"]))
+        self.assertEqual(78, len(self.manifest["requiredClasses"]))
+        self.assertEqual(126, len(self.manifest["expectedCases"]))
         self.assertEqual({"a", "b"}, {g["id"] for g in self.manifest["groups"]})
         self.assertEqual({"beta-ui-evidence", "propaganda-evidence"},
                          {e for g in self.manifest["groups"] for e in g["evidence"]})
@@ -144,8 +144,8 @@ class NativeGroupTests(unittest.TestCase):
     def test_downloaded_groups_require_exact_junit_sets_and_valid_png_headers(self):
         self.fixture()
         result = groups.verify_artifacts(self.manifest, self.root)
-        self.assertEqual(77, sum(row["classes"] for row in result.values()))
-        self.assertEqual(125, sum(row["executed"] for row in result.values()))
+        self.assertEqual(78, sum(row["classes"] for row in result.values()))
+        self.assertEqual(126, sum(row["executed"] for row in result.values()))
         self.assertEqual(28, sum(row["requiredPngs"] for row in result.values()))
 
     def test_missing_help_screenshots_cannot_pass_using_other_test_images(self):

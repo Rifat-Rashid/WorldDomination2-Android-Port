@@ -82,7 +82,8 @@
     "com.example.worlddomination.game.rendering.SourceProductionSliderBudgetInstrumentedTest",
     "com.example.worlddomination.game.rendering.SourceProductionFooterInstrumentedTest",
     "com.example.worlddomination.game.rendering.SourceHelpInstrumentedTest",
-    "com.example.worlddomination.game.simulation.SourceLegalSpyCampaignInstrumentedTest"
+    "com.example.worlddomination.game.simulation.SourceLegalSpyCampaignInstrumentedTest",
+    "com.example.worlddomination.game.simulation.SourceLegalEasyCampaignInstrumentedTest"
   ],
   "groups": [
     {
@@ -126,7 +127,8 @@
         "com.example.worlddomination.game.rendering.SourcePassedRocketDefenseClockInstrumentedTest",
         "com.example.worlddomination.game.rendering.SourceAircraftSmokeCropRenderingInstrumentedTest",
         "com.example.worlddomination.game.rendering.SourceRocketImpactRenderingInstrumentedTest",
-        "com.example.worlddomination.game.simulation.SourceLegalSpyCampaignInstrumentedTest"
+        "com.example.worlddomination.game.simulation.SourceLegalSpyCampaignInstrumentedTest",
+        "com.example.worlddomination.game.simulation.SourceLegalEasyCampaignInstrumentedTest"
       ],
       "evidence": [
         "beta-ui-evidence",
@@ -680,6 +682,10 @@
     [
       "com.example.worlddomination.game.simulation.SourceLegalSpyCampaignInstrumentedTest",
       "legalResourcesAndMassMediaCampaignMatchesEveryCapturedState"
+    ],
+    [
+      "com.example.worlddomination.game.simulation.SourceLegalEasyCampaignInstrumentedTest",
+      "easyFourOpponentCampaignMatchesEveryCapturedState"
     ]
   ]
 }
