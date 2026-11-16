@@ -28,12 +28,14 @@ public final class SourceDuplicateAttackRouteTest {
         Scenario carrier = new Scenario(0, 0, 0);
         assertTrue(carrier.plan().isEmpty());
         assertEquals(Arrays.asList(3, 2, 3), carrier.random.bounds);
+        assertEquals(1, carrier.random.zeroWidthDraws);
     }
 
     @Test public void suppressedDuplicateKeepsOrdinaryEmptyAvailabilityShortcut() throws Exception {
         Scenario s = new Scenario(1);
         assertTrue(s.plan().isEmpty());
         assertEquals(Collections.singletonList(3), s.random.bounds);
+        assertEquals(0, s.random.zeroWidthDraws);
     }
 
     private static final class Scenario {
@@ -59,6 +61,8 @@ public final class SourceDuplicateAttackRouteTest {
     private static final class SequenceRandom extends Random {
         final int[] values;
         int index;
+        int zeroWidthDraws;
+        @Override public double nextDouble() { zeroWidthDraws++; return 0.25d; }
         final List<Integer> bounds = new ArrayList<>();
         SequenceRandom(int... values) { this.values = values; }
         @Override public int nextInt(int bound) {
