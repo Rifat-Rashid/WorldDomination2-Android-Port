@@ -174,13 +174,9 @@ public final class OpponentAI {
                                             List<ScoredAction> scores) {
 
         List<Decision> decisions = new ArrayList<>(2);
-        List<ScoredAction> availableScores = new ArrayList<>(scores.size());
-        for (ScoredAction scored : scores) {
-            if (!state.isActionBioloaded(player.id, scored.action)) {
-                availableScores.add(scored);
-            }
-        }
-        scores = availableScores;
+        // Source calcPoints calls splice on an action row, not the action array.
+        // That call is a no-op: biological action locks do not filter AI choices.
+        // The human's UI restrictions are handled separately by GameState.
         if (scores.isEmpty()) {
             return decisions;
         }
@@ -574,12 +570,6 @@ public final class OpponentAI {
         scores.add(new ScoredAction(GameState.Action.RESOURCES, resources));
         scores.add(new ScoredAction(GameState.Action.PRODUCTION, production));
         scores.add(new ScoredAction(GameState.Action.RESEARCH, research));
-        for (int index = 0; index < scores.size(); index++) {
-            ScoredAction scored = scores.get(index);
-            if (state.isActionBioloaded(player.id, scored.action)) {
-                scores.set(index, new ScoredAction(scored.action, -999));
-            }
-        }
         return scores;
     }
 
@@ -738,9 +728,6 @@ public final class OpponentAI {
     static Decision planAction(GameState state, GameState.PlayerState player,
                                GameState.Action action, Random random, int slot,
                                Map<String, Integer> plannedWeaponUse) {
-        if (state.isActionBioloaded(player.id, action)) {
-            return null;
-        }
         switch (action) {
             case ATTACK:
                 List<Decision> sourceAttack = planSourceAttack(state, player, random,

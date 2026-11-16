@@ -2955,10 +2955,11 @@ public final class GameState {
             }
             applyBiologicalEffects(biologicalEffects);
         }
-        // updatePlayerVars_2 consumes research and propaganda turn results in
+        // updatePlayerVars_2 consumes research, diplomacy and propaganda results in
         // player and action-slot order. Human diplomacy answers follow the
-        // human's results, before the next player's results. Production and
-        // outgoing diplomacy belong to the later updatePlayerVars_3 phase.
+        // human's results, before the next player's results. Production belongs
+        // to the later updatePlayerVars_3 phase. A sent proposal's regard bonus
+        // must be visible to a following propaganda or combat regard result.
         for (int playerIndex = 0; humanSurvivedBattle
                 && playerIndex < players.length; playerIndex++) {
             PlayerState actor = players[playerIndex];
@@ -2976,6 +2977,8 @@ public final class GameState {
                     applyPropagandaHostilityEffects(actor, defender);
                 } else if (order.action == Action.RESEARCH) {
                     resolveResearch(order);
+                } else if (order.action == Action.DIPLOMACY) {
+                    resolveDiplomacy(order);
                 }
             }
             if (actor.human) {
@@ -2991,8 +2994,6 @@ public final class GameState {
                 }
                 if (order.action == Action.PRODUCTION) {
                     resolveProduction(order);
-                } else if (order.action == Action.DIPLOMACY) {
-                    resolveDiplomacy(order);
                 } else if (order.action != Action.RESOURCES
                         && order.action != Action.MASS_MEDIA
                         && order.action != Action.ATTACK
@@ -3000,6 +3001,7 @@ public final class GameState {
                         && order.action != Action.DEFENSE
                         && order.action != Action.PROPAGANDA
                         && order.action != Action.RESEARCH
+                        && order.action != Action.DIPLOMACY
                         && order.action != Action.SKIP) {
                     throw new IllegalStateException("Unported action entered the turn queue: "
                             + order.action);
@@ -3875,6 +3877,10 @@ public final class GameState {
             intercepted = counterIntercepts(random);
         }
         if (intercepted) {
+            // Source still emits a zero-casualty battle result. Its update2
+            // callback applies special-leader hostility even after interception.
+            order.battleRegardLoss = 0;
+            order.hasBattleRegardResult = true;
             lastTurnCombatEvents.add(new CombatEvent(CombatEventType.STRIKE_INTERCEPTED,
                     attacker.id, defender.id, city.index, carrier.definition.name,
                     payload.definition.name, 0, counterName, order.actionBuildingSlot,
