@@ -77,7 +77,8 @@
     "com.example.worlddomination.game.rendering.SourcePassedRocketDefenseRenderingInstrumentedTest",
     "com.example.worlddomination.game.rendering.SourceAircraftSmokeCropRenderingInstrumentedTest",
     "com.example.worlddomination.game.rendering.SourceAircraftSmokeBirthInstrumentedTest",
-    "com.example.worlddomination.game.rendering.SourceRocketImpactRenderingInstrumentedTest"
+    "com.example.worlddomination.game.rendering.SourceRocketImpactRenderingInstrumentedTest",
+    "com.example.worlddomination.game.rendering.SourcePreparedRocketSlotTwoInstrumentedTest"
   ],
   "groups": [
     {
@@ -163,7 +164,8 @@
         "com.example.worlddomination.game.rendering.SourceEndgameContextRecoveryInstrumentedTest",
         "com.example.worlddomination.game.rendering.SourceSiloRocketRenderingInstrumentedTest",
         "com.example.worlddomination.game.rendering.SourcePassedRocketDefenseRenderingInstrumentedTest",
-        "com.example.worlddomination.game.rendering.SourceAircraftSmokeBirthInstrumentedTest"
+        "com.example.worlddomination.game.rendering.SourceAircraftSmokeBirthInstrumentedTest",
+        "com.example.worlddomination.game.rendering.SourcePreparedRocketSlotTwoInstrumentedTest"
       ],
       "evidence": [
         "beta-ui-evidence"
@@ -630,6 +632,14 @@
     [
       "com.example.worlddomination.game.rendering.SourceRocketImpactRenderingInstrumentedTest",
       "successfulWarheadUsesRegisteredTargetArtwork"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.SourcePreparedRocketSlotTwoInstrumentedTest",
+      "legalSlotTwoWorldMatchesAll366SourceFrames"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.SourcePreparedRocketSlotTwoInstrumentedTest",
+      "movingRocketAndPhysicalSiloUseSlotTwoArtwork"
     ]
   ]
 }

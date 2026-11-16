@@ -36,3 +36,7 @@ app/src/test/resources/source-aircraft-finite-*.csv -text whitespace=-blank-at-e
 app/src/test/resources/source-finite-*.json -text whitespace=-blank-at-eol,cr-at-eol
 app/src/test/resources/source-finite-*.tsv -text whitespace=-blank-at-eol,cr-at-eol
 app/src/test/resources/source-finite-*.csv -text whitespace=-blank-at-eol,cr-at-eol
+
+# Actual prepared silo slot-two reference byte fixtures.
+app/src/test/resources/source-silo-slot2-*.csv -text whitespace=-blank-at-eol,cr-at-eol
+app/src/test/resources/source-silo-slot2-*.json -text whitespace=cr-at-eol

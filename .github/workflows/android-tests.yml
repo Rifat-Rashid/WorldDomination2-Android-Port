@@ -129,6 +129,9 @@ jobs:
           - id: source-rocket-impact-order
             check: Source rocket payload attachment and self impact cleanup order
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.SourceRocketImpactAttachmentOrderTest"'
+          - id: source-rocket-slot-two
+            check: Source slot-two silo route and captured rocket poses
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.SourceRocketSlotTwoFixtureTest"'
           - id: source-panel-fling
             check: Source panel fling timing and uptime precision
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.PanelGestureVelocityTest"'
