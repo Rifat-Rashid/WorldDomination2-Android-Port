@@ -38,13 +38,12 @@ public final class SourceBattleUnitAllocation {
             reserve(true, true, carrierFormationNumber);
         } else if (FlashBattleRoutes.supportsStandalonePlaneStrike(event)) {
             reserve(true, true, 0);
-        } else if (FlashBattleRoutes.supportsSubmarineRocketStrike(event)) {
+        } else if (FlashBattleRoutes.supportsSubmarineRocketStrike(event)
+                || FlashBattleRoutes.supportsRocketStrike(event)) {
             // SourceRocketDisplayDepths installs the actual body and nested-tint
             // rocket roles before the next event is constructed.
             parameter += 5;
-        } else if (FlashBattleRoutes.supportsRocketStrike(event)
-                || FlashBattleRoutes.supportsSubmarineRocketStrike(event)
-                || FlashBattleRoutes.supportsSatelliteStrike(event)) {
+        } else if (FlashBattleRoutes.supportsSatelliteStrike(event)) {
             reserve(false, false, 0);
         }
         return preceding;

@@ -102,6 +102,16 @@ public final class FlashAntiDefenseTrackingAnimation {
                 playback, unitState);
     }
 
+    /** Source rocket turret uses its physical action-building clock. */
+    static FlashAntiDefenseTrackingAnimation sourceDrivenRocket(
+            Target target, int defenderPlayerId, int actionBuildingSlot,
+            String religionCode, SourceAntiDefensePlayback playback,
+            SourceAntiDefensePlayback.UnitState unitState) {
+        return new FlashAntiDefenseTrackingAnimation(target, defenderPlayerId,
+                actionBuildingSlot, religionCode, DefenseType.ROCKET, true,
+                playback, unitState);
+    }
+
     private FlashAntiDefenseTrackingAnimation(Target target, int defenderPlayerId,
                                               int actionBuildingSlot, String religionCode,
                                               DefenseType defenseType, boolean sourceDriven,

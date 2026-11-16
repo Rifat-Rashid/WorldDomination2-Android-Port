@@ -119,12 +119,28 @@ public final class FlashRocketAnimation implements FlashAntiDefenseTrackingAnima
         return animation;
     }
 
+    /** Ordinary Unit/View path; record activation is owned by the battle host. */
+    public static FlashRocketAnimation forSourceOrdinary(
+            FlashBattleRoutes.RocketStrike route, String impactLinkage,
+            OriginalAudio.Cue impactCue, ReferenceRandom sharedBattleRandom,
+            int attackerPlayerColor) {
+        FlashRocketAnimation animation = new FlashRocketAnimation(
+                route, 0, impactLinkage, impactCue);
+        animation.sourcePlayback = SourceRocketPlayback.forOrdinary(route, sharedBattleRandom);
+        animation.sourceTint = FlashColorTransform.forPlayerColor(attackerPlayerColor);
+        animation.rocket.sourceX = 0f;
+        animation.rocket.sourceY = 0f;
+        animation.rocket.visible = true;
+        return animation;
+    }
+
     /** Visits an eligible source frame; readiness comes from the prior hull frame. */
     public boolean tickSourceFrame(boolean submarineLaunchReady) {
         if (sourcePlayback == null) {
             throw new IllegalStateException("Not a source rocket animation");
         }
-        boolean impact = sourcePlayback.tick(submarineLaunchReady);
+        boolean impact = route.submarineLaunch ? sourcePlayback.tick(submarineLaunchReady)
+                : sourcePlayback.tickOrdinary();
         rocket.sourceX = (float) sourcePlayback.getRenderX();
         rocket.sourceY = (float) sourcePlayback.getRenderY();
         rocket.rotationDegrees = (float) sourcePlayback.getRotation();
@@ -133,6 +149,14 @@ public final class FlashRocketAnimation implements FlashAntiDefenseTrackingAnima
         launchSoundPending = sourcePlayback.takeLaunchSound();
         impactPending = impact;
         return takeImpact();
+    }
+
+    public void visitWaitingSourceOrdinary() {
+        if (sourcePlayback == null) throw new IllegalStateException("Missing source rocket");
+        sourcePlayback.visitWaitingOrdinary();
+        rocket.sourceX = (float) sourcePlayback.getRenderX();
+        rocket.sourceY = (float) sourcePlayback.getRenderY();
+        rocket.rotationDegrees = (float) sourcePlayback.getRotation();
     }
 
     public SourceRocketPlayback getSourcePlayback() { return sourcePlayback; }

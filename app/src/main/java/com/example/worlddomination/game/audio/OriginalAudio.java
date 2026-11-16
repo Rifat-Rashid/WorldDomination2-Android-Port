@@ -292,6 +292,15 @@ public final class OriginalAudio {
         }
     }
 
+    /** Updates one existing libGDX voice without loading or restarting its cue. */
+    public void setInstancePan(Cue cue, long soundId, float pan) {
+        if (cue == null || soundId < 0L || !Float.isFinite(pan)) return;
+        Sound sound = sounds.get(cue);
+        if (sound != null) {
+            sound.setPan(soundId, Math.max(-1f, Math.min(1f, pan)), EFFECT_VOLUME);
+        }
+    }
+
     public void pause() {
         satellitePlayback.pause();
         aircraftPlayback.pause();

@@ -15,6 +15,19 @@ public final class SourceAntiDefensePlayback {
         return new SourceAntiDefensePlayback(frames, 1, 100d);
     }
 
+    /** Authored antiRocket nested clocks, distinct from the antiAir artwork. */
+    public static SourceAntiDefensePlayback forRocketReligion(String religionCode) {
+        int frames;
+        switch (religionCode) {
+            case "mus": case "jew": frames = 53; break;
+            case "com": frames = 51; break;
+            case "chr": frames = 52; break;
+            case "bhu": frames = 36; break;
+            default: throw new IllegalArgumentException("Unknown source religion");
+        }
+        return new SourceAntiDefensePlayback(frames, 1, 100d);
+    }
+
     /** Unit fields belong to each aircraft or rocket, even when clips share a turret. */
     public static final class UnitState {
         private int countdown = INITIAL_COUNTDOWN;

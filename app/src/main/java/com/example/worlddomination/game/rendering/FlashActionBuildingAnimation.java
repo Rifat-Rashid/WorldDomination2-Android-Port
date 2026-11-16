@@ -20,6 +20,7 @@ public final class FlashActionBuildingAnimation {
     public final String religionCode;
     public final int sequenceIndex;
 
+    private String sourceFrameOverride;
     private int elapsedTicks;
     private long playbackTicks;
     private int factorySmokeFrame;
@@ -123,6 +124,17 @@ public final class FlashActionBuildingAnimation {
     void clearFlameFrame() {
         flameCharacterId = 0;
         flameFrameOneBased = 0;
+    }
+
+    /** Presenter.fireDefense changes the physical clip, not the turn's action record. */
+    public boolean seekSourceRocketFire() {
+        boolean changed = !"antiRocket_fire".equals(getSourceFrameName());
+        sourceFrameOverride = "antiRocket_fire";
+        return changed;
+    }
+
+    public String getSourceFrameName() {
+        return sourceFrameOverride == null ? frameName : sourceFrameOverride;
     }
 
     /** The carrier source turret is a child of this persistent building. */

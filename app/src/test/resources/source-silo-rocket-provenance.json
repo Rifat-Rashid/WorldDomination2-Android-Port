@@ -1,0 +1,38 @@
+{
+  "label": "in-memory prep preStart compatibility replay, not literal Python model adapter",
+  "sourceSceneSha256": "7213f06fac4e887050ad89e0d3c9a67f47789096d559af8e08333991f7616629",
+  "sourceUnitPySha256": "bc54c0e6c46f4e33bbb20e786c755f93aaba5d3d7224b0120eeeccc81eef8539",
+  "sourceViewPySha256": "2de8afd493f28e36c3a94afa96b80795d685b8b023b12dc9d9ed634692c3accf",
+  "cases": {
+    "success": {
+      "sourceCsvSha256": "08ec88b32755f58cc3c08e9e87c9f08fcc0e8005f388a1556cf4d24d28154504",
+      "sourcePaintSha256": "ce4b588619e7f5d14002ab7ed0892eccbccbe238044495ef964b8589bec8ce10",
+      "sourceCallbacksSha256": "72acdb3968cf51a92f00b701898d6578fc0d3ec4d1bc2a6f7ed6ec5d5540a4f4",
+      "sourceProvenanceSha256": "0ce38cf814565fb266082e018b1a324aec1d9eb025c6e4d664ea92f6fd3c5caa",
+      "ticks": 341,
+      "trailRows": 1030,
+      "tickFixtureSha256": "0f0300a020c10267ce8056e25c8f5d57c8a0a1fe62f6b2783ed34d5768f87096",
+      "trailFixtureSha256": "3bec64bc159808b904123c2c02b8ae31717eb9552973c609358e31fe1144c4b1",
+      "firstEligibleTick": 157,
+      "firstDetachedTick": 277,
+      "lastTick": 340,
+      "preMoveRngSnapshotSha256": "150a26569a978a432dda6b027a730d2a19e39820bca82e87eeb9dd188719381d",
+      "preMoveRngStateIndex": 368
+    },
+    "failed": {
+      "sourceCsvSha256": "24ec582aedf0ca220c18be2930c159fbaff679a2aa0dfd433ae2fd38050d03a0",
+      "sourcePaintSha256": "5597e5e2de2fdacb3733f7b1e3b47d608d99778c36524b10b16953373ccade31",
+      "sourceCallbacksSha256": "c5ab58134812ef20875f9eebef0226a02b74683dc6bdb69442efa157ca5f473d",
+      "sourceProvenanceSha256": "dd440655654108024e49c0cb2850849468d44031f43fffef55fe3ec14b5ed415",
+      "ticks": 646,
+      "trailRows": 1035,
+      "tickFixtureSha256": "d9b3cf2ffacf279ee9a5f11af15adde3043592177aabf8198cf51005d2cd2da0",
+      "trailFixtureSha256": "b481d695a94b135d0df9138cc2f40131afe4b77d73aea7d8f767aeeb9956bfd0",
+      "firstEligibleTick": 195,
+      "firstDetachedTick": 297,
+      "lastTick": 645,
+      "preMoveRngSnapshotSha256": "11a8806da5b588d787a2766debfbe7a0a641cc1f705d57edcedd7b3217116240",
+      "preMoveRngStateIndex": 382
+    }
+  }
+}

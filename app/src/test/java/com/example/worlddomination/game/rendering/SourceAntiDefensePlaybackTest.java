@@ -54,7 +54,7 @@ public final class SourceAntiDefensePlaybackTest {
             assertEquals(100d, model.getTurretAlphaPercent(), 0d);
             assertFalse(model.isShootSoundRequested());
         }
-        // Source capture: 50→48 at t195, 2 at t218, 0 at t219 and thereafter.
+        // Source capture: 50â†’48 at t195, 2 at t218, 0 at t219 and thereafter.
         assertEquals(0, ship.getCountdown());
     }
 
@@ -152,6 +152,33 @@ public final class SourceAntiDefensePlaybackTest {
             // published final authored frame rolls into its frame-1 stop action.
             model.invoke(unit, true, -400d, 0d, 0d, 0d, false);
             model.publishHostFrame(lengths[i]);
+            model.advanceHostFrame();
+            assertEquals(religions[i], 1, model.getTurretFrame());
+            assertFalse(religions[i], model.isTurretPlaying());
+            model.advanceHostFrame();
+            assertEquals(religions[i], 1, model.getTurretFrame());
+        }
+    }
+
+    @Test
+    public void rocketReligionClocksWrapAtTheirDistinctAuthoredFrameOneStops() {
+        String[] religions = {"mus", "jew", "com", "chr", "bhu"};
+        int[] lengths = {53, 53, 51, 52, 36};
+        for (int i = 0; i < religions.length; i++) {
+            SourceAntiDefensePlayback model =
+                    SourceAntiDefensePlayback.forRocketReligion(religions[i]);
+            assertEquals(1, model.getTurretFrame());
+            assertFalse(model.isTurretPlaying());
+            assertEquals(100d, model.getTurretAlphaPercent(), 0d);
+            SourceAntiDefensePlayback.UnitState unit = new SourceAntiDefensePlayback.UnitState();
+            // Synthetic host boundary: far enough away to keep autoplay running.
+            model.invoke(unit, true, 500d, 0d, 0d, 0d, false);
+            assertEquals(17, model.getTurretFrame());
+            for (int frame = 18; frame <= lengths[i]; frame++) {
+                model.advanceHostFrame();
+                assertEquals(religions[i], frame, model.getTurretFrame());
+                assertTrue(religions[i], model.isTurretPlaying());
+            }
             model.advanceHostFrame();
             assertEquals(religions[i], 1, model.getTurretFrame());
             assertFalse(religions[i], model.isTurretPlaying());

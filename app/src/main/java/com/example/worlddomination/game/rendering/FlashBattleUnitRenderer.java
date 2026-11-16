@@ -216,7 +216,7 @@ public final class FlashBattleUnitRenderer {
         FlashAnimationTimeline timeline = assets.getTimeline(
                 OriginalFlashAnimationAssets.ACTION_BUILDINGS_TIMELINE);
         if (timeline == null) return;
-        FlashAnimationTimeline.Frame frame = timeline.getFrameByLabel(animation.frameName);
+        FlashAnimationTimeline.Frame frame = timeline.getFrameByLabel(animation.getSourceFrameName());
         if (frame == null) frame = timeline.getFrame(0);
         float previousColor = batch.getPackedColor();
         try {
@@ -759,7 +759,8 @@ public final class FlashBattleUnitRenderer {
                 float sine = (float) Math.sin(radians);
                 FlashAffineTransform parent = sourceRocketTransforms[0].setIdentity();
                 parent.setProduct(sourceRocketTransforms[1].setIdentity(),
-                        cosine, sine, -sine * 0.5f, cosine * 0.5f, 0f, 0f);
+                        cosine, sine, -sine * (float) rocket.getParentScaleY(),
+                        cosine * (float) rocket.getParentScaleY(), 0f, 0f);
                 float sourceX = (float) rocket.getRenderX();
                 float sourceY = (float) rocket.getRenderY();
                 int maskShape = rocket.getSourceFrame() == 1 ? 789 : 797;
@@ -791,6 +792,17 @@ public final class FlashBattleUnitRenderer {
                         }
                     }
                     actionBuildingMasks.pop(batch);
+                    // Frame 3 replaces the mask at depth 1 and body at depth 2;
+                    // the newly placed depth-4 tint clip is outside clip_depth 3.
+                    // The old tinted AS2 reference is detached, so this child is plain.
+                    if (rocket.getSourceFrame() == 3 && rocket.getParentScaleY() == 1d) {
+                        TextureRegion tint = assets.getShape(794);
+                        if (tint != null) {
+                            child.setProduct(parent, 1f, 0f, 0f, 1f, -22.05f, -5.55f);
+                            drawSourceRocketShape(batch, mapBounds, route, 794, tint,
+                                    child, sourceX, sourceY, 1f);
+                        }
+                    }
                 }
             }
         } finally {
@@ -805,6 +817,7 @@ public final class FlashBattleUnitRenderer {
                 OriginalFlashAnimationAssets.ROCKET_TRAIL_SHAPE_ID);
         if (smoke == null) return;
         SourceRocketPlayback rocket = animation.getSourcePlayback();
+        float previousColor = batch.getPackedColor();
         FlashAffineTransform transform = sourceRocketTransforms[0]
                 .setProduct(sourceRocketTransforms[1].setIdentity(),
                         1f, 0f, 0f, 1f, -5f, -5f);
@@ -813,7 +826,11 @@ public final class FlashBattleUnitRenderer {
                 smoke, transform, (float) rocket.getTrailX(slot),
                 (float) rocket.getTrailY(slot),
                 (float) (rocket.getTrailAlpha(slot) / 100d));
-        batch.setColor(com.badlogic.gdx.graphics.Color.WHITE);
+        if (rocket.getParentScaleY() == 1d) {
+            batch.setPackedColor(previousColor);
+        } else {
+            batch.setColor(com.badlogic.gdx.graphics.Color.WHITE);
+        }
     }
 
     /** A source trail clip keeps its authored scale; nominal width is an AS2 property. */
