@@ -71,7 +71,8 @@
     "com.example.worlddomination.game.rendering.SourceEndgameContextRecoveryInstrumentedTest",
     "com.example.worlddomination.game.ui.PropagandaUiInstrumentedTest",
     "com.example.worlddomination.game.rendering.SourceSiloRocketClockInstrumentedTest",
-    "com.example.worlddomination.game.rendering.SourceSiloRocketRenderingInstrumentedTest"
+    "com.example.worlddomination.game.rendering.SourceSiloRocketRenderingInstrumentedTest",
+    "com.example.worlddomination.game.rendering.SourcePreparedAirfieldLocationInstrumentedTest"
   ],
   "groups": [
     {
@@ -109,7 +110,8 @@
         "com.example.worlddomination.game.rendering.ApacheRenderingInstrumentedTest",
         "com.example.worlddomination.game.rendering.SourceEndgameInstrumentedTest",
         "com.example.worlddomination.game.ui.PropagandaUiInstrumentedTest",
-        "com.example.worlddomination.game.rendering.SourceSiloRocketClockInstrumentedTest"
+        "com.example.worlddomination.game.rendering.SourceSiloRocketClockInstrumentedTest",
+        "com.example.worlddomination.game.rendering.SourcePreparedAirfieldLocationInstrumentedTest"
       ],
       "evidence": [
         "beta-ui-evidence",
@@ -566,6 +568,10 @@
     [
       "com.example.worlddomination.game.rendering.SourceSiloRocketRenderingInstrumentedTest",
       "sourceFramesMatchAtStageAndPhoneSizes"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.SourcePreparedAirfieldLocationInstrumentedTest",
+      "slotTwoAirfieldRetainsPreparedPositionAcrossWorldPlayback"
     ]
   ]
 }
