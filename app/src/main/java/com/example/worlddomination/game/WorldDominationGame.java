@@ -2083,7 +2083,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                     if (item.owner instanceof SourceAircraftTrailDisplay) {
                         SourceAircraftTrailDisplay display = (SourceAircraftTrailDisplay) item.owner;
                         battleUnitRenderer.drawSourceAircraftSmoke(batch, mapBounds,
-                                display.trail, item.index, display.attackerPlayerId);
+                                display, item.index);
                     } else if (item.owner instanceof SourceInterceptedAircraftDisplayDepths) {
                         battleUnitRenderer.drawInterceptedAircraftRole(batch, mapBounds,
                                 (SourceInterceptedAircraftDisplayDepths) item.owner, item.kind);
@@ -5220,7 +5220,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 sourceAircraftTrails.put(planeAnimation.getSourceTrail(),
                         new SourceAircraftTrailDisplay(battlefieldDisplay,
                                 planeAnimation.getSourceTrail(), event.attackerPlayerId,
-                                precedingUnitParameter));
+                                precedingUnitParameter, event.defenderPlayerId,
+                                planeAnimation::getSourceTrailCropProgress));
                 SourceAirDefenseController defense = airDefenseFor(
                         event, antiDefenseTargetLock);
                 SourceAirDefenseController.UnitVisit defenseUnit = defense == null
@@ -5265,7 +5266,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                     sourceAircraftTrails.put(planeAnimation.getSourceTrail(),
                             new SourceAircraftTrailDisplay(battlefieldDisplay,
                                     planeAnimation.getSourceTrail(), event.attackerPlayerId,
-                                    precedingUnitParameter));
+                                    precedingUnitParameter, event.defenderPlayerId,
+                                    planeAnimation::getSourceTrailCropProgress));
                 SourceInterceptedAircraftDisplayDepths aircraftDepths = null;
                 if (planeAnimation.getSourcePlayback() != null) {
                     aircraftDepths = new SourceInterceptedAircraftDisplayDepths(

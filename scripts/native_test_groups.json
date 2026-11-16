@@ -74,7 +74,9 @@
     "com.example.worlddomination.game.rendering.SourceSiloRocketRenderingInstrumentedTest",
     "com.example.worlddomination.game.rendering.SourcePreparedAirfieldLocationInstrumentedTest",
     "com.example.worlddomination.game.rendering.SourcePassedRocketDefenseClockInstrumentedTest",
-    "com.example.worlddomination.game.rendering.SourcePassedRocketDefenseRenderingInstrumentedTest"
+    "com.example.worlddomination.game.rendering.SourcePassedRocketDefenseRenderingInstrumentedTest",
+    "com.example.worlddomination.game.rendering.SourceAircraftSmokeCropRenderingInstrumentedTest",
+    "com.example.worlddomination.game.rendering.SourceAircraftSmokeBirthInstrumentedTest"
   ],
   "groups": [
     {
@@ -114,7 +116,8 @@
         "com.example.worlddomination.game.ui.PropagandaUiInstrumentedTest",
         "com.example.worlddomination.game.rendering.SourceSiloRocketClockInstrumentedTest",
         "com.example.worlddomination.game.rendering.SourcePreparedAirfieldLocationInstrumentedTest",
-        "com.example.worlddomination.game.rendering.SourcePassedRocketDefenseClockInstrumentedTest"
+        "com.example.worlddomination.game.rendering.SourcePassedRocketDefenseClockInstrumentedTest",
+        "com.example.worlddomination.game.rendering.SourceAircraftSmokeCropRenderingInstrumentedTest"
       ],
       "evidence": [
         "beta-ui-evidence",
@@ -157,7 +160,8 @@
         "com.example.worlddomination.game.rendering.MassMediaValueLayoutInstrumentedTest",
         "com.example.worlddomination.game.rendering.SourceEndgameContextRecoveryInstrumentedTest",
         "com.example.worlddomination.game.rendering.SourceSiloRocketRenderingInstrumentedTest",
-        "com.example.worlddomination.game.rendering.SourcePassedRocketDefenseRenderingInstrumentedTest"
+        "com.example.worlddomination.game.rendering.SourcePassedRocketDefenseRenderingInstrumentedTest",
+        "com.example.worlddomination.game.rendering.SourceAircraftSmokeBirthInstrumentedTest"
       ],
       "evidence": [
         "beta-ui-evidence"
@@ -588,6 +592,26 @@
     [
       "com.example.worlddomination.game.rendering.SourcePreparedAirfieldLocationInstrumentedTest",
       "finiteSlotTwoFlightMatchesAll459SourceHostStates"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.SourceAircraftSmokeCropRenderingInstrumentedTest",
+      "singlePuffKeepsBirthCropInBothDirectionsAndRatios"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.SourceAircraftSmokeCropRenderingInstrumentedTest",
+      "pairedPuffsKeepIndependentBirthCropInBothDirectionsAndRatios"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.SourceAircraftSmokeBirthInstrumentedTest",
+      "preparedFighterBirthAndHandoff"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.SourceAircraftSmokeBirthInstrumentedTest",
+      "preparedBomberBirthAndHandoff"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.SourceAircraftSmokeBirthInstrumentedTest",
+      "carrierAircraftBirthAndHandoff"
     ]
   ]
 }

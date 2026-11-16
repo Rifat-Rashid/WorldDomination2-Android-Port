@@ -79,6 +79,8 @@ public final class FlashStandalonePlaneAnimation
     private float orbitCenterX;
     private float orbitCenterY;
     private float distanceTravelled;
+    private float previousPoseCropProgress;
+    private float sourceTrailCropProgress;
     private boolean takeoffCuePending;
     private boolean flightCuePending;
     private boolean impactPending;
@@ -150,14 +152,48 @@ public final class FlashStandalonePlaneAnimation
     public SourceAircraftTrail getSourceTrail() { return sourceTrail; }
     public SourceAircraftPlayback getSourcePlayback() { return sourcePlayback; }
 
+    /** Crop progress of the source coordinates supplied to this visit's trail update. */
+    public float getSourceTrailCropProgress() { return sourceTrailCropProgress; }
+
     public boolean tickSourceFrame(boolean recordActivated) {
         if (sourcePlayback == null) throw new IllegalStateException("No source aircraft");
         float priorRenderX = actor.sourceX;
         float priorRenderY = actor.sourceY;
         double priorLogicalX = sourcePlayback.getX();
         double priorLogicalY = sourcePlayback.getY();
+        double priorPreviousX = sourcePlayback.getPreviousX();
+        double priorPreviousY = sourcePlayback.getPreviousY();
+        float priorProgress = actor.routeProgress;
+        float priorDistance = distanceTravelled;
+        Phase priorPhase = phase;
         if (recordActivated) sourcePlayback.tickSourceFrame();
         else sourcePlayback.presentWaitingFrame();
+        if (recordActivated && sourceTrail != null && sourcePlayback.isActiveAndMoving()) {
+            double startX = Double.isFinite(priorLogicalX) ? priorLogicalX : priorRenderX;
+            double startY = Double.isFinite(priorLogicalY) ? priorLogicalY : priorRenderY;
+            double trailX = sourcePlayback.getTrailVisitX();
+            double trailY = sourcePlayback.getTrailVisitY();
+            float currentTrailProgress = samePose(trailX, trailY, startX, startY)
+                    ? priorProgress
+                    : routeProgressAt(priorDistance + (float) Math.hypot(
+                            trailX - startX, trailY - startY),
+                            (float) trailX, (float) trailY, priorPhase);
+            if (sourceTrail.isPaired()) {
+                sourceTrailCropProgress = currentTrailProgress;
+            } else if (samePose(sourcePlayback.getTrailVisitPreviousX(),
+                    sourcePlayback.getTrailVisitPreviousY(), startX, startY)) {
+                sourceTrailCropProgress = priorProgress;
+            } else if (samePose(sourcePlayback.getTrailVisitPreviousX(),
+                    sourcePlayback.getTrailVisitPreviousY(), priorPreviousX, priorPreviousY)) {
+                sourceTrailCropProgress = previousPoseCropProgress;
+            } else {
+                sourceTrailCropProgress = currentTrailProgress;
+            }
+            if (samePose(sourcePlayback.getPreviousX(), sourcePlayback.getPreviousY(),
+                    trailX, trailY)) previousPoseCropProgress = currentTrailProgress;
+            else if (samePose(sourcePlayback.getPreviousX(), sourcePlayback.getPreviousY(),
+                    startX, startY)) previousPoseCropProgress = priorProgress;
+        }
         actor.previousX = (float) sourcePlayback.getPreviousX();
         actor.previousY = (float) sourcePlayback.getPreviousY();
         actor.sourceX = (float) sourcePlayback.getRenderX();
@@ -461,6 +497,11 @@ public final class FlashStandalonePlaneAnimation
     }
 
     private void updateRouteProgress() {
+        actor.routeProgress = routeProgressAt(distanceTravelled,
+                actor.sourceX, actor.sourceY, phase);
+    }
+
+    private float routeProgressAt(float travelled, float x, float y, Phase posePhase) {
         float startToTarget = distance(route.start.x, route.start.y,
                 route.target.x, route.target.y);
         float expectedOrbitDistance = 48f * route.orbitRadius * (float) Math.PI / 180f;
@@ -472,14 +513,16 @@ public final class FlashStandalonePlaneAnimation
                 + distance(route.orbitEntry.x, route.orbitEntry.y,
                 route.target.x, route.target.y);
         float total = Math.max(startToTarget, expectedLength);
-        actor.routeProgress = total == 0f ? 1f
-                : Math.min(1f, distanceTravelled / total);
-        if (phase == Phase.APPROACH) {
-            float remaining = distance(actor.sourceX, actor.sourceY,
-                    route.target.x, route.target.y);
-            actor.routeProgress = Math.max(actor.routeProgress,
-                    1f - remaining / Math.max(startToTarget, 1f));
+        float progress = total == 0f ? 1f : Math.min(1f, travelled / total);
+        if (posePhase == Phase.APPROACH) {
+            float remaining = distance(x, y, route.target.x, route.target.y);
+            progress = Math.max(progress, 1f - remaining / Math.max(startToTarget, 1f));
         }
+        return progress;
+    }
+
+    private static boolean samePose(double ax, double ay, double bx, double by) {
+        return ax == bx && ay == by;
     }
 
     private static int directionFrame(float dx, float dy) {
