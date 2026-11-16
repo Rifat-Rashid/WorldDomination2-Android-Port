@@ -47,6 +47,48 @@ public final class ProductionScreenLayout {
                 mapFrame.y + (mapFrame.height - height) / 2f, width, height);
     }
 
+    /** Authored txt1 and txt2 fields in the source phone crop. */
+    public static Rectangle setSummaryCategoryBounds(Rectangle modal, Rectangle output) {
+        float sx = modal.width / ART_WIDTH, sy = modal.height / ART_HEIGHT;
+        return output.set(modal.x + 128.95f * sx, modal.y + modal.height - 228f * sy,
+                96.4f * sx, 71.9f * sy);
+    }
+
+    public static Rectangle setSummaryAmountBounds(Rectangle modal, Rectangle output) {
+        float sx = modal.width / ART_WIDTH, sy = modal.height / ART_HEIGHT;
+        return output.set(modal.x + 220.85f * sx, modal.y + modal.height - 228f * sy,
+                134.2f * sx, 71.9f * sy);
+    }
+
+    public static float summaryCategoryLeft(Rectangle modal) {
+        return modal.x + 130.95f * modal.width / ART_WIDTH;
+    }
+
+    public static float summaryAmountRight(Rectangle modal) {
+        return modal.x + 353.85f * modal.width / ART_WIDTH;
+    }
+
+    public static float summaryRowTop(Rectangle modal, int row, boolean amount) {
+        return modal.y + modal.height - (160.1f + row * (amount ? 12f : 13f))
+                * modal.height / ART_HEIGHT;
+    }
+
+    /** Authored txt3 field, converted from the source phone crop to world coordinates. */
+    public static Rectangle setSummaryTotalBounds(Rectangle modal, Rectangle output) {
+        float sx = modal.width / ART_WIDTH;
+        float sy = modal.height / ART_HEIGHT;
+        return output.set(modal.x + 129.6f * sx,
+                modal.y + modal.height - 243.2f * sy, 226.95f * sx, 16.55f * sy);
+    }
+
+    public static float summaryTotalRight(Rectangle modal) {
+        return modal.x + 354.6f * modal.width / ART_WIDTH;
+    }
+
+    public static float summaryTotalTop(Rectangle modal) {
+        return modal.y + modal.height - 230.65f * modal.height / ART_HEIGHT;
+    }
+
     /** Sets a touch target around one source slider track, in game world coordinates. */
     public static Rectangle setSliderHitBounds(int sliderIndex, Rectangle modal,
                                                Rectangle output) {

@@ -336,6 +336,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private final Vector3 pointer = new Vector3();
     private final GlyphLayout glyphLayout = new GlyphLayout();
     private final GlyphLayout productionSummaryLayout = new GlyphLayout();
+    private final Rectangle productionSummaryTotalBounds = new Rectangle();
+    private final Rectangle productionSummaryCategoryBounds = new Rectangle();
+    private final Rectangle productionSummaryAmountBounds = new Rectangle();
     private final GlyphLayout messageHistoryLayout = new GlyphLayout();
     private final GlyphLayout instructionLayout = new GlyphLayout();
     private String laidOutInstruction;
@@ -3811,27 +3814,45 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     private void drawProductionSummary() {
         float scaleY = modal.height / ProductionScreenLayout.ART_HEIGHT;
-        float scaleX = modal.width / ProductionScreenLayout.ART_WIDTH;
         float originalScale = font.getScaleX();
         font.getData().setScale(0.64f * scaleY);
         font.setColor(Color.WHITE);
 
         int visibleLines = Math.min(5, productionSummaryCount);
+        ProductionScreenLayout.setSummaryCategoryBounds(modal, productionSummaryCategoryBounds);
+        batch.flush();
+        setScissor(productionSummaryCategoryBounds);
         for (int i = 0; i < visibleLines; i++) {
-            float baseline = modal.y + modal.height - (173f + i * 13.5f) * scaleY;
             font.draw(batch, productionSummaryCategories[i],
-                    modal.x + 128f * scaleX, baseline);
+                    ProductionScreenLayout.summaryCategoryLeft(modal),
+                    ProductionScreenLayout.summaryRowTop(modal, i, false));
+        }
+        batch.flush();
+        Gdx.gl.glDisable(GL20.GL_SCISSOR_TEST);
+
+        ProductionScreenLayout.setSummaryAmountBounds(modal, productionSummaryAmountBounds);
+        setScissor(productionSummaryAmountBounds);
+        for (int i = 0; i < visibleLines; i++) {
             String amount = productionSummaryAmounts[i];
             productionSummaryLayout.setText(font, amount);
             font.draw(batch, amount,
-                    modal.x + 350f * scaleX - productionSummaryLayout.width, baseline);
+                    ProductionScreenLayout.summaryAmountRight(modal) - productionSummaryLayout.width,
+                    ProductionScreenLayout.summaryRowTop(modal, i, true));
         }
+        batch.flush();
+        Gdx.gl.glDisable(GL20.GL_SCISSOR_TEST);
 
         if (productionSummaryCount > 0) {
             font.setColor(0f, 36f / 255f, 60f / 255f, 1f);
+            productionSummaryLayout.setText(font, productionSummaryTotal);
+            ProductionScreenLayout.setSummaryTotalBounds(modal, productionSummaryTotalBounds);
+            batch.flush();
+            setScissor(productionSummaryTotalBounds);
             font.draw(batch, productionSummaryTotal,
-                    modal.x + 126f * scaleX,
-                    modal.y + (ProductionScreenLayout.ART_HEIGHT - 237f) * scaleY);
+                    ProductionScreenLayout.summaryTotalRight(modal) - productionSummaryLayout.width,
+                    ProductionScreenLayout.summaryTotalTop(modal));
+            batch.flush();
+            Gdx.gl.glDisable(GL20.GL_SCISSOR_TEST);
         }
         font.setColor(Color.WHITE);
         font.getData().setScale(originalScale);
