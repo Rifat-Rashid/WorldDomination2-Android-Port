@@ -112,6 +112,36 @@ public final class SourceSpyStockLevelTest {
         assertEquals(Arrays.asList(5, 4, 91, 5, 4, 91), random.bounds);
     }
 
+    @Test public void rejectedAttackPreservesCompanionResetOnRetry() throws Exception {
+        Scenario s = new Scenario(fixture().get("cases").get(0));
+        s.actor.getWeapons().get("soldier1").active = true;
+        s.actor.getWeapons().get("soldier1").inStock = 1;
+        SequenceRandom random = new SequenceRandom(1, 0, 1, 0, 0, 0, 0);
+        List<OpponentAI.Decision> result = OpponentAI.planScoredActions(s.game, s.actor,
+                random, Arrays.asList(new OpponentAI.ScoredAction(GameState.Action.ATTACK, 100),
+                        new OpponentAI.ScoredAction(GameState.Action.MASS_MEDIA, 40)));
+        assertEquals(2, result.size());
+        assertEquals(GameState.Action.ATTACK, result.get(0).action);
+        assertEquals("soldier1", result.get(0).weaponName);
+        assertEquals(GameState.Action.MASS_MEDIA, result.get(1).action);
+        assertEquals(Arrays.asList(3, 5, 4, 91, 5, 4, 91), random.bounds);
+    }
+
+    @Test public void rejectedAttackRestoresRankedCompanionEvenWhenDuplicateWasKept() throws Exception {
+        Scenario s = new Scenario(fixture().get("cases").get(0));
+        s.actor.getWeapons().get("soldier1").active = true;
+        s.actor.getWeapons().get("soldier1").inStock = 1;
+        SequenceRandom random = new SequenceRandom(0, 0, 1, 0, 0, 0, 0);
+        List<OpponentAI.Decision> result = OpponentAI.planScoredActions(s.game, s.actor,
+                random, Arrays.asList(new OpponentAI.ScoredAction(GameState.Action.ATTACK, 100),
+                        new OpponentAI.ScoredAction(GameState.Action.MASS_MEDIA, 40)));
+        assertEquals(2, result.size());
+        assertEquals(GameState.Action.ATTACK, result.get(0).action);
+        assertEquals("soldier1", result.get(0).weaponName);
+        assertEquals(GameState.Action.MASS_MEDIA, result.get(1).action);
+        assertEquals(Arrays.asList(3, 5, 4, 91, 5, 4, 91), random.bounds);
+    }
+
     /** Synthetic boundary derived from Model.py:814-844, not a campaign replay. */
     private static OpponentAI.Decision directAttack(Scenario scenario, Random random) throws Exception {
         Method method = OpponentAI.class.getDeclaredMethod("planDirectAttackForTarget",
@@ -145,6 +175,20 @@ public final class SourceSpyStockLevelTest {
         int draws;
         final List<Integer> bounds = new ArrayList<>();
         @Override public int nextInt(int bound) { draws++; bounds.add(bound); return 0; }
+    }
+
+    private static final class SequenceRandom extends Random {
+        final List<Integer> bounds = new ArrayList<>();
+        final int[] values;
+        int index;
+        SequenceRandom(int... values) { this.values = values; }
+        @Override public int nextInt(int bound) {
+            bounds.add(bound);
+            assertTrue("unexpected random draw " + bounds, index < values.length);
+            int value = values[index++];
+            assertTrue("random value outside bound", value >= 0 && value < bound);
+            return value;
+        }
     }
 
     private static final class Scenario {

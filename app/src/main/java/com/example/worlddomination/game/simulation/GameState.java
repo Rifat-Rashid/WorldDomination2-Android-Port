@@ -3306,6 +3306,12 @@ public final class GameState {
             updateDiplomacyRelations(player);
             reassignDeadPlayerEnemies(player);
             decayReligion(player);
+            // Sub_presenter.turnResults repairs negative cash after planning,
+            // before special income and result callbacks. The reserved turn
+            // budget remains unchanged until the normal new-turn boundary.
+            if (player.moneyMillions < 0) {
+                player.moneyMillions = 1;
+            }
             applySpecialAiIncome(player);
             tickDiplomacyOfferCooldowns(player);
         }
