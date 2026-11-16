@@ -327,6 +327,9 @@ jobs:
           - id: source-easy-campaign-boundaries
             check: Easy spy production, ship slot replacement and duplicate routes
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.SourceEasySpyProductionTest" --tests "com.example.worlddomination.game.simulation.SourceNullWeaponAttackTest" --tests "com.example.worlddomination.game.ai.SourceShipSlotOverwriteTest" --tests "com.example.worlddomination.game.ai.SourceDuplicateAttackRouteTest"'
+          - id: source-ship-spy-companion
+            check: Source ship cash-alert companion and reserved budgets
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.SourceShipCashAlertCompanionTest"'
           - id: source-help-navigation
             check: Original help topics, navigation, and phone hide state
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.SourceHelpStateTest"'

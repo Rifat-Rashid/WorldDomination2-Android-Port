@@ -214,7 +214,7 @@ public final class OpponentAI {
             }
 
             List<Decision> attackPlan = planSourceAttack(state, player, random,
-                    false, plannedWeaponUse);
+                    false, plannedWeaponUse, null, precedingOrder != null);
             if (attackPlan.isEmpty() && precedingOrder != null) {
                 // The source keeps the second-slot ActionTarget on its initial
                 // score for one more getTarget call before it advances to a
@@ -223,29 +223,18 @@ public final class OpponentAI {
                 // If the preceding action failed, this attack instead belongs
                 // to the first slot's advancing score cursor and gets one try.
                 attackPlan = planSourceAttack(state, player, random,
-                        false, plannedWeaponUse);
+                        false, plannedWeaponUse, null, precedingOrder != null);
             }
-            if (precedingOrder != null && !attackPlan.isEmpty()) {
+            if (precedingOrder != null && attackPlan.size() > 1) {
                 Decision ship = attackPlan.get(0);
                 if (ship.action == GameState.Action.PREPARED_ATTACK && !ship.prepareCarrier
                         && "ship".equals(ship.weaponName)) {
-                    // A ready ship in slot two rewrites the already accepted
-                    // first ActionTarget, even when its conventional weapon is
-                    // undefined. Its prior reservations are not refunded here.
-                    GameState.PlayerState target = state.getPlayerState(ship.targetPlayerId);
-                    List<CityState> cities = target.getCities();
-                    for (int index = cities.size() - 1; index >= 0; index--) {
-                        CityState city = cities.get(index);
-                        if (city.populationMillions > 0) {
-                            GameState.WeaponState soldier = strongestAvailableSoldier(
-                                    player, plannedWeaponUse);
-                            Decision companion = attackDecision(player.id, target.id, city.index,
-                                    soldier == null ? null : soldier.definition.name);
-                            decisions.set(0, companion);
-                            markPlannedUse(companion, plannedWeaponUse);
-                            break;
-                        }
-                    }
+                    // getTarget may replace this accepted slot first with a
+                    // conventional companion and then with the cash-alert spy.
+                    // Preserve the final result without refunding reservations.
+                    Decision companion = attackPlan.get(1);
+                    decisions.set(0, companion);
+                    markPlannedUse(companion, plannedWeaponUse);
                 }
             }
             for (Decision decision : attackPlan) {
@@ -794,6 +783,17 @@ public final class OpponentAI {
                                                    boolean duplicateAttack,
                                                    Map<String, Integer> plannedUse,
                                                    boolean[] duplicateSuppressed) {
+        return planSourceAttack(state, attacker, random, duplicateAttack,
+                plannedUse, duplicateSuppressed, false);
+    }
+
+    private static List<Decision> planSourceAttack(GameState state,
+                                                   GameState.PlayerState attacker,
+                                                   Random random,
+                                                   boolean duplicateAttack,
+                                                   Map<String, Integer> plannedUse,
+                                                   boolean[] duplicateSuppressed,
+                                                   boolean retainShipCompanion) {
         List<Decision> decisions = new ArrayList<>(2);
         GameState.PlayerState target = attackTarget(state, attacker, random);
         if (target == null) {
@@ -824,22 +824,35 @@ public final class OpponentAI {
                     return decisions;
                 }
                 decisions.add(ship);
-                // Model.getTarget runs the common spy-cash alert check after
-                // choosing a ready ship's three strike targets. It can replace
-                // the prepared attack with a spy mission, and consumes a draw
-                // even when the human's funds stay below the sampled threshold.
+                Decision companion = null;
+                if (retainShipCompanion) {
+                    List<CityState> cities = target.getCities();
+                    for (int index = cities.size() - 1; index >= 0; index--) {
+                        CityState city = cities.get(index);
+                        if (city.populationMillions > 0) {
+                            GameState.WeaponState soldier = strongestAvailableSoldier(
+                                    attacker, plannedUse);
+                            companion = attackDecision(attacker.id, target.id, city.index,
+                                    soldier == null ? null : soldier.definition.name);
+                            break;
+                        }
+                    }
+                }
+                // The cash-alert check follows the three ship-target draws.
+                // Its spy replaces the conventional companion, not the ship.
                 SpyTarget spyTarget = findSpyTarget(state, attacker, random);
                 if (spyTarget != null && spyTarget.cashAlert) {
-                    // Model.getTarget stages the spy mission in the second slot
-                    // while keeping the ship strike in the first. The second
-                    // slot is rejected as a duplicate attack and the planner
-                    // fills it from the next ranked action. Consume the source
-                    // city/building draws but do not replace the ship strike.
-                    planCashAlertSpyAttack(state, attacker, spyTarget, random);
+                    Decision spy = planCashAlertSpyAttack(state, attacker, spyTarget, random);
+                    if (retainShipCompanion && spy != null) {
+                        companion = spy;
+                    }
+                    // With a first-slot ship, doTurn rejects the staged second
+                    // slot's attack and retries its ranked action instead. Its
+                    // spy city/building draws still belong to the random stream.
                 }
-                // A ship may stage a conventional companion in its source
-                // ActionTarget, but doTurn rejects that second-slot attack and
-                // fills the slot from the next ranked action instead.
+                if (companion != null) {
+                    decisions.add(companion);
+                }
                 return decisions;
             }
 
