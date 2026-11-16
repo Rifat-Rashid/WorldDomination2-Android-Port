@@ -1,0 +1,274 @@
+[
+  {
+    "syntheticInitialFunds": false,
+    "sliderIndex": 8,
+    "sliderPath": "sliderBG",
+    "pointer": [
+      234.4336331891556,
+      339.05
+    ],
+    "percent": 20,
+    "initial": {
+      "money": 65,
+      "turnMoney": 65,
+      "score": 0,
+      "stocks": {
+        "antiAir": {
+          "inStock": 2,
+          "cost": 15,
+          "active": true
+        },
+        "antiRocket": {
+          "inStock": 2,
+          "cost": 15,
+          "active": true
+        }
+      },
+      "rngNext": 0.8050278270130223
+    },
+    "row": [
+      "defense",
+      20,
+      8,
+      13.0
+    ],
+    "accepted": {
+      "row": [
+        "defense",
+        20,
+        8,
+        13.0
+      ],
+      "reserved": 13,
+      "money": 65,
+      "turnMoney": 52,
+      "rngNext": 0.8050278270130223
+    },
+    "final": {
+      "money": 106,
+      "turnMoney": 106,
+      "score": 9102,
+      "stocks": {
+        "antiAir": {
+          "inStock": 2,
+          "cost": 15,
+          "active": true
+        },
+        "antiRocket": {
+          "inStock": 2,
+          "cost": 15,
+          "active": true
+        }
+      },
+      "refund": 13,
+      "rngNext": 0.18031790152968785,
+      "events": [
+        {
+          "_player": 0,
+          "_item": "resources",
+          "_value": 41,
+          "_plusmin": "plus"
+        },
+        {
+          "_player": 0,
+          "_item": "produce2",
+          "_value": "defense",
+          "_amount": 20,
+          "_group": 8,
+          "_money": 13.0
+        },
+        {
+          "_player": 0,
+          "_item": "production_building"
+        }
+      ],
+      "messages": [
+        "",
+        "Money returned from production: 13.000.000",
+        "",
+        "You GAINED $ 41.000.000 from resources"
+      ]
+    }
+  },
+  {
+    "syntheticInitialFunds": false,
+    "sliderIndex": 8,
+    "sliderPath": "sliderBG",
+    "pointer": [
+      244.6254497837334,
+      339.05
+    ],
+    "percent": 30,
+    "initial": {
+      "money": 65,
+      "turnMoney": 65,
+      "score": 0,
+      "stocks": {
+        "antiAir": {
+          "inStock": 2,
+          "cost": 15,
+          "active": true
+        },
+        "antiRocket": {
+          "inStock": 2,
+          "cost": 15,
+          "active": true
+        }
+      },
+      "rngNext": 0.8050278270130223
+    },
+    "row": [
+      "defense",
+      30,
+      8,
+      19.5
+    ],
+    "accepted": {
+      "row": [
+        "defense",
+        30,
+        8,
+        19.5
+      ],
+      "reserved": 20,
+      "money": 65,
+      "turnMoney": 45,
+      "rngNext": 0.8050278270130223
+    },
+    "final": {
+      "money": 91,
+      "turnMoney": 91,
+      "score": 11122,
+      "stocks": {
+        "antiAir": {
+          "inStock": 2,
+          "cost": 15,
+          "active": true
+        },
+        "antiRocket": {
+          "inStock": 3,
+          "cost": 15,
+          "active": true
+        }
+      },
+      "refund": 5,
+      "rngNext": 0.5036365052098872,
+      "events": [
+        {
+          "_player": 0,
+          "_item": "resources",
+          "_value": 41,
+          "_plusmin": "plus"
+        },
+        {
+          "_player": 0,
+          "_item": "produce2",
+          "_value": "defense",
+          "_amount": 30,
+          "_group": 8,
+          "_money": 19.5
+        },
+        {
+          "_player": 0,
+          "_item": "production_building"
+        }
+      ],
+      "messages": [
+        "Weapons produced:  <br /> -- Anti Rocket x1 <br />",
+        "Money returned from production: 5.000.000",
+        "",
+        "You GAINED $ 41.000.000 from resources"
+      ]
+    }
+  },
+  {
+    "syntheticInitialFunds": true,
+    "sliderIndex": 8,
+    "sliderPath": "sliderBG",
+    "pointer": [
+      244.6254497837334,
+      339.05
+    ],
+    "percent": 30,
+    "initial": {
+      "money": 50,
+      "turnMoney": 50,
+      "score": 0,
+      "stocks": {
+        "antiAir": {
+          "inStock": 2,
+          "cost": 15,
+          "active": true
+        },
+        "antiRocket": {
+          "inStock": 2,
+          "cost": 15,
+          "active": true
+        }
+      },
+      "rngNext": 0.8050278270130223
+    },
+    "row": [
+      "defense",
+      30,
+      8,
+      15.0
+    ],
+    "accepted": {
+      "row": [
+        "defense",
+        30,
+        8,
+        15.0
+      ],
+      "reserved": 15,
+      "money": 50,
+      "turnMoney": 35,
+      "rngNext": 0.8050278270130223
+    },
+    "final": {
+      "money": 76,
+      "turnMoney": 76,
+      "score": 11122,
+      "stocks": {
+        "antiAir": {
+          "inStock": 2,
+          "cost": 15,
+          "active": true
+        },
+        "antiRocket": {
+          "inStock": 3,
+          "cost": 15,
+          "active": true
+        }
+      },
+      "refund": 0,
+      "rngNext": 0.5036365052098872,
+      "events": [
+        {
+          "_player": 0,
+          "_item": "resources",
+          "_value": 41,
+          "_plusmin": "plus"
+        },
+        {
+          "_player": 0,
+          "_item": "produce2",
+          "_value": "defense",
+          "_amount": 30,
+          "_group": 8,
+          "_money": 15.0
+        },
+        {
+          "_player": 0,
+          "_item": "production_building"
+        }
+      ],
+      "messages": [
+        "Weapons produced:  <br /> -- Anti Rocket x1 <br />",
+        "",
+        "You GAINED $ 41.000.000 from resources"
+      ]
+    }
+  }
+]

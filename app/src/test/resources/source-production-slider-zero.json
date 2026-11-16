@@ -1,0 +1,143 @@
+{
+  "boundary": "synthetic source UI money/turnMoney overwritten before original controls",
+  "seed": 0,
+  "percentTarget": 20,
+  "cases": [
+    {
+      "fundsSynthetic": 1,
+      "initialRngNext": 0.8050278270130223,
+      "row": [
+        "rockets",
+        20,
+        1,
+        0.2
+      ],
+      "selected": null,
+      "acceptVisible": true,
+      "beforeActions": [
+        null,
+        null
+      ],
+      "accepted": {
+        "queued": true,
+        "actions": [
+          "production",
+          null
+        ],
+        "money": 1,
+        "turnMoney": 1,
+        "reserved": 0,
+        "queuedRow": [
+          "rockets",
+          20,
+          1,
+          0.2
+        ],
+        "rngNext": 0.8050278270130223
+      },
+      "afterTurn": {
+        "turn": 1,
+        "money": 42,
+        "turnMoney": 42,
+        "score": 9102,
+        "refund": 0,
+        "rngNext": 0.18031790152968785,
+        "rngStateChanged": true,
+        "humanProductionRandomCalls": [
+          [
+            0,
+            -1
+          ]
+        ],
+        "events": [
+          {
+            "_player": 0,
+            "_item": "resources",
+            "_value": 41,
+            "_plusmin": "plus"
+          },
+          {
+            "_player": 0,
+            "_item": "produce2",
+            "_value": "rockets",
+            "_amount": 20,
+            "_group": 1,
+            "_money": 0.2
+          },
+          {
+            "_player": 0,
+            "_item": "production_building"
+          }
+        ]
+      }
+    },
+    {
+      "fundsSynthetic": 0,
+      "initialRngNext": 0.8050278270130223,
+      "row": [
+        "rockets",
+        20,
+        1,
+        0.0
+      ],
+      "selected": null,
+      "acceptVisible": true,
+      "beforeActions": [
+        null,
+        null
+      ],
+      "accepted": {
+        "queued": true,
+        "actions": [
+          "production",
+          null
+        ],
+        "money": 0,
+        "turnMoney": 0,
+        "reserved": 0,
+        "queuedRow": [
+          "rockets",
+          20,
+          1,
+          0.0
+        ],
+        "rngNext": 0.8050278270130223
+      },
+      "afterTurn": {
+        "turn": 1,
+        "money": 41,
+        "turnMoney": 41,
+        "score": 9102,
+        "refund": 0,
+        "rngNext": 0.18031790152968785,
+        "rngStateChanged": true,
+        "humanProductionRandomCalls": [
+          [
+            0,
+            -1
+          ]
+        ],
+        "events": [
+          {
+            "_player": 0,
+            "_item": "resources",
+            "_value": 41,
+            "_plusmin": "plus"
+          },
+          {
+            "_player": 0,
+            "_item": "produce2",
+            "_value": "rockets",
+            "_amount": 20,
+            "_group": 1,
+            "_money": 0.0
+          },
+          {
+            "_player": 0,
+            "_item": "production_building"
+          }
+        ]
+      }
+    }
+  ]
+}

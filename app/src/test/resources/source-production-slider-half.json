@@ -1,0 +1,98 @@
+{
+  "boundary": "Python phone UI: original control/slider callbacks; synchronous adapter turn resolution",
+  "seed": 0,
+  "difficulty": "normal",
+  "leaders": [
+    0,
+    1
+  ],
+  "schedule": [
+    "UI production rockets slider 50%",
+    "UI Resources",
+    "UI confirm turn"
+  ],
+  "sliderBounds": [
+    212.35000000000002,
+    177.55,
+    327.27560632963434,
+    198.5499237060547
+  ],
+  "pointer": [
+    264,
+    184
+  ],
+  "initial": {
+    "money": 65,
+    "turnMoney": 65,
+    "score": 0,
+    "stocks": {
+      "rocket1": 1,
+      "rocket2": 0,
+      "rocket3": 0,
+      "rocket4": 0
+    },
+    "rngNext": 0.8050278270130223
+  },
+  "sliderRow": [
+    "rockets",
+    50,
+    1,
+    32.5
+  ],
+  "beforeAccept": {
+    "money": 65,
+    "turnMoney": 65,
+    "rngNext": 0.8050278270130223
+  },
+  "accepted": {
+    "money": 65,
+    "turnMoney": 32,
+    "adapterReserved": 33,
+    "queuedRow": [
+      "rockets",
+      50,
+      1,
+      32.5
+    ],
+    "rngNext": 0.8050278270130223
+  },
+  "final": {
+    "money": 86,
+    "turnMoney": 86,
+    "score": 17181,
+    "stocks": {
+      "rocket1": 5,
+      "rocket2": 0,
+      "rocket3": 0,
+      "rocket4": 0
+    },
+    "productionMoneyReturned": 13,
+    "rngNext": 0.24013040782635398,
+    "events": [
+      {
+        "_player": 0,
+        "_item": "resources",
+        "_value": 41,
+        "_plusmin": "plus"
+      },
+      {
+        "_player": 0,
+        "_item": "produce2",
+        "_value": "rockets",
+        "_amount": 50,
+        "_group": 1,
+        "_money": 32.5
+      },
+      {
+        "_player": 0,
+        "_item": "production_building"
+      }
+    ],
+    "messages": [
+      "Weapons produced:  <br /> -- ROCKET (10 MEG) x4 <br />",
+      "Money returned from production: 13.000.000",
+      "",
+      "You GAINED $ 41.000.000 from resources"
+    ]
+  }
+}

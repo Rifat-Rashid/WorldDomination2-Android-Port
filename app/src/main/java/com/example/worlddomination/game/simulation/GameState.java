@@ -565,6 +565,8 @@ public final class GameState {
         final int playerId;
         final Action action;
         final Map<String, Integer> productionBudgets;
+        // Non-null only for a human action entered through the source slider.
+        Map<String, Double> sliderProductionBudgets;
         final List<String> technologies;
         final int reservedMillions;
         final int targetPlayerId;
@@ -742,6 +744,9 @@ public final class GameState {
     private static final String[] STARTING_PRODUCTION_CATEGORIES = {
             "rockets", "warhead", "bioload", "soldier", "spy", "planes", "special", "defense"
     };
+    private static final String[] SOURCE_PRODUCTION_REVERSE_ORDER = {
+            "defense", "spy", "soldier", "bioload", "warhead", "special", "planes", "rockets"
+    };
     private static final int[] PRODUCTION_GROUPS = {1, 2, 3, 4, 5, 6, 7, 8};
     private static final int PLAYER_STOCK_CAP = 4;
     private static final int MAX_TURN_ACTIONS = 2;
@@ -792,6 +797,7 @@ public final class GameState {
     private boolean propagandaCitySelected;
     private String selectedProductionCategory = "soldier";
     private final Map<String, Integer> selectedProductionPercentages = new LinkedHashMap<>();
+    private boolean selectedProductionUsesSlider;
     private final Set<String> selectedResearchTechnologies = new LinkedHashSet<>();
     private int selectedTargetPlayer = 1;
     private int selectedTargetCity;
@@ -1347,6 +1353,15 @@ public final class GameState {
 
     /** Sets one unlocked category's share while preserving the total 100 percent budget. */
     public boolean configureProduction(String category, int percent) {
+        return configureProductionShare(category, percent, false);
+    }
+
+    /** Original human slider keeps its fractional per-category allocation. */
+    public boolean configureProductionSlider(String category, int percent) {
+        return configureProductionShare(category, percent, true);
+    }
+
+    private boolean configureProductionShare(String category, int percent, boolean slider) {
         if (selectedAction != Action.PRODUCTION) {
             throw new IllegalStateException("Select Production before setting its investment");
         }
@@ -1364,6 +1379,7 @@ public final class GameState {
             throw new IllegalArgumentException("Production allocations cannot exceed 100 percent");
         }
         selectedProductionCategory = category;
+        selectedProductionUsesSlider = slider;
         if (percent == 0) {
             selectedProductionPercentages.remove(category);
         } else {
@@ -2294,12 +2310,35 @@ public final class GameState {
                 getSelectedProductionPercent());
     }
 
-    public int getSelectedProductionTotalBudgetMillions() {
-        return (int) Math.round(getHuman().turnMoneyMillions / 100.0d
+    /** Exact source slider row value before the action reserves its total. */
+    public double getProductionSliderBudgetMillions(String category) {
+        return (getHuman().turnMoneyMillions / 100.0d) * getProductionPercent(category);
+    }
+
+    public double getSelectedProductionSliderBudgetMillions() {
+        return getProductionSliderBudgetMillions(selectedProductionCategory);
+    }
+
+    /** Source display rounds its percentage total independently of reservation. */
+    public int getSelectedProductionSliderDisplayTotalBudgetMillions() {
+        return (int) Math.round((getHuman().turnMoneyMillions / 100.0d)
                 * getSelectedProductionAllocatedPercent());
     }
 
-    /** Matches the Flash source's Math.floor((turnMoney / 100) * percentage). */
+    public int getSelectedProductionTotalBudgetMillions() {
+        if (selectedProductionUsesSlider) {
+            double total = 0d;
+            // TurnAction.productionMoneySpend enumerates the source rows in
+            // reverse display order, then the phone UI reserves the rounded sum.
+            for (String category : SOURCE_PRODUCTION_REVERSE_ORDER) {
+                total += getProductionSliderBudgetMillions(category);
+            }
+            return (int) Math.round(total);
+        }
+        return getSelectedProductionSliderDisplayTotalBudgetMillions();
+    }
+
+    /** Floored allocation used by AI and the existing scripted entry, not the human slider. */
     public static int sourceProductionBudgetMillions(int turnMoneyMillions, int percentage) {
         return (int) Math.floor((turnMoneyMillions / 100.0d) * percentage);
     }
@@ -2396,6 +2435,14 @@ public final class GameState {
                 selectedAction == Action.PREPARED_ATTACK
                         && getHuman().preparedCarrierName == null,
                 selectedSpyBuilding, selectedDiplomacyOption, selectedShipStrikes);
+        if (selectedAction == Action.PRODUCTION && selectedProductionUsesSlider) {
+            order.sliderProductionBudgets = new LinkedHashMap<>();
+            for (String category : STARTING_PRODUCTION_CATEGORIES) {
+                int percent = getProductionPercent(category);
+                if (percent > 0) order.sliderProductionBudgets.put(category,
+                        getProductionSliderBudgetMillions(category));
+            }
+        }
         order.humanActionSlot = getNextActionSlot();
         queuedActions.add(order.humanActionSlot, order);
         if (selectedAction == Action.RESEARCH) {
@@ -2435,6 +2482,7 @@ public final class GameState {
     private void resetProductionSelection() {
         selectedProductionPercentages.clear();
         selectedProductionCategory = "soldier";
+        selectedProductionUsesSlider = false;
     }
 
     private void resetTargetFromMapSelection() {
@@ -4472,16 +4520,26 @@ public final class GameState {
 
     private void resolveProduction(ActionOrder order) {
         PlayerState producer = playerById(order.playerId);
-        List<Map.Entry<String, Integer>> investments = new ArrayList<>(
-                order.productionBudgets.entrySet());
+        Map<String, Double> amounts = new LinkedHashMap<>();
+        if (order.sliderProductionBudgets != null) amounts.putAll(order.sliderProductionBudgets);
+        else for (Map.Entry<String, Integer> entry : order.productionBudgets.entrySet())
+            amounts.put(entry.getKey(), entry.getValue().doubleValue());
+        List<Map.Entry<String, Double>> investments = new ArrayList<>(amounts.entrySet());
         investments.sort((left, right) -> Integer.compare(
                 sourceProductionInvestmentOrder(left.getKey()),
                 sourceProductionInvestmentOrder(right.getKey())));
         // The Flash's productionInvestmentArr has a fixed display order that
         // differs from weapon group numbers. Turn results preserve that order.
-        for (Map.Entry<String, Integer> investment : investments) {
-            resolveProductionInvestment(producer, investment.getKey(), investment.getValue());
+        long sourceReturned = 0;
+        for (Map.Entry<String, Double> investment : investments) {
+            long returned = resolveProductionInvestment(producer, investment.getKey(),
+                    investment.getValue(), order.sliderProductionBudgets != null);
+            if (order.sliderProductionBudgets != null) sourceReturned += returned;
+            else if (returned > 0) addMessage(producer, "Money returned from nation "
+                    + producer.id + " production: " + returned + ".000.000");
         }
+        if (order.sliderProductionBudgets != null && sourceReturned > 0)
+            addMessage(producer, "Money returned from production: " + sourceReturned + ".000.000");
     }
 
     private static int sourceProductionInvestmentOrder(String category) {
@@ -4498,18 +4556,24 @@ public final class GameState {
         }
     }
 
-    private void resolveProductionInvestment(PlayerState producer, String category,
-                                             int budget) {
+    private long resolveProductionInvestment(PlayerState producer, String category,
+                                             double budget, boolean sourceSlider) {
         int group = productionGroup(category);
-        if (group == 0 || budget <= 0) {
-            return;
+        // A positive slider percentage still emits produce2 when its exact
+        // allocation is zero. Source visits its candidate loop in that case.
+        if (group == 0 || budget < 0 || (!sourceSlider && budget == 0)) {
+            return 0;
         }
         List<WeaponState> candidates = new ArrayList<>();
         int minimumCost = Integer.MAX_VALUE;
         for (WeaponState weapon : producer.weapons.values()) {
             WeaponCatalog.Definition definition = weapon.definition;
-            if (definition.productionGroup == group && weapon.active
-                    && (group == 7 || definition.costMillions < budget)) {
+            // Presenter.updatePlayerVars_3 explicitly inserts both defense
+            // counters before considering budget or active state. Keep the
+            // scripted/AI candidate policy unchanged at this UI boundary.
+            if (definition.productionGroup == group
+                    && ((sourceSlider && group == 8)
+                    || (weapon.active && (group == 7 || definition.costMillions < budget)))) {
                 candidates.add(weapon);
                 minimumCost = Math.min(minimumCost, definition.costMillions);
             }
@@ -4533,9 +4597,9 @@ public final class GameState {
             // for an empty filtered production list. Tools.randRange consumes
             // one random() draw and returns zero for that zero-width range.
             random.nextDouble();
-            return;
+            return 0;
         }
-        int remaining = budget;
+        double remaining = budget;
         int attempts = 0;
         Map<String, Integer> bought = new LinkedHashMap<>();
         while (!candidates.isEmpty()) {
@@ -4580,10 +4644,7 @@ public final class GameState {
             }
             addMessage(producer, summary.toString());
         }
-        if (remaining > 0 && !candidates.isEmpty()) {
-            addMessage(producer, "Money returned from nation " + producer.id
-                    + " production: " + remaining + ".000.000");
-        }
+        return remaining > 0 && !candidates.isEmpty() ? Math.round(remaining) : 0;
     }
 
     void addToHighscore(PlayerState player, int actionIndex, int multiplier) {

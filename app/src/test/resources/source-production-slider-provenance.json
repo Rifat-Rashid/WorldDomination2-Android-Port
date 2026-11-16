@@ -1,0 +1,44 @@
+{
+  "format": 1,
+  "boundary": "Actual original human production control and slider callbacks with synchronous adapter turn resolution. Scripted Game.queue is not the slider oracle.",
+  "seed": 0,
+  "difficulty": 1,
+  "opponents": [
+    0,
+    1
+  ],
+  "scenarios": [
+    "rockets50+resources",
+    "rockets50/soldier50+resources",
+    "defense20+resources",
+    "defense30+resources"
+  ],
+  "referenceReadOnly": true,
+  "referenceSha256": {
+    "wd2/generated/Presenter_interface.py": "ac502ef9e94a205f5027fc0598c3deb2fa1913aa1dfc6f0d5ca4ca12d1d95afd",
+    "wd2/generated/Sub_presenter.py": "bc430ada2d55929127927089fe8f3d06e51213dede5838e3c12ef9bc61e8fa14",
+    "wd2/generated/Presenter.py": "eb8aad7305c870b157a3199b7d8213edb22f4fd35d169395cee3db95b12c08b9",
+    "wd2/generated/TurnAction.py": "169c4d6f8959668931d66e29378168afd64bfe1572c827baf602c856d3ef82a2",
+    "wd2/game.py": "b3ff34d109ed9048d42bd05ee46fa5dee1b1c02e088e903bee7942d0ef9a07be",
+    "wd2/setup_menu.py": "5633326451e768a84a14bde04e452043ba7fac2617a4c71b7b36dcd0495f0c4a",
+    "wd2/runtime.py": "bf58b6cf0cddae89c5efd153713df03751eacf72d0e5c836413bc19a8752b30b",
+    "assets/runtime/scene.json.gz": "7213f06fac4e887050ad89e0d3c9a67f47789096d559af8e08333991f7616629"
+  },
+  "fixtureSha256": {
+    "source-production-slider-half.json": "c2b3fd3eb024e480b1720a20f206e05029abd39aeaa6ce9aabd0ad93fcfb9923",
+    "source-production-slider-split.json": "6c69c7a9c6f9310bca843d939b55f7b22bd62bf14d8a584e9962a9953e56f773",
+    "source-production-slider-zero.json": "21aff351a7782a7296de876fa8707b5f3d932225099a1d71e40d1628c066ef99",
+    "source-production-slider-defense.json": "79d409ed0d934f49dade1ee9b29c51dc6be501e86b95dc4a04dba1dc3ced3a57"
+  },
+  "captureScriptSha256": {
+    "production-ui-budget-capture.py": "fa130184b527f6cc580f141a85a5cb2cb6a138f339c837125af0a30c542c1f17",
+    "production-ui-budget-split.py": "cc7fdab2ec0ed78da881ea69717fa7b69ba9adad9db56f3a07f2aaadf9abda97",
+    "production-ui-budget-zero-capture.py": "a6adfb8e023e6e3b605e83d165b1697345ad887deb11f24b0584f58008b6329c",
+    "production-defense-budget-capture.py": "09030bb809ba22850e43b8fa53317fd497e9acaf0770eea6fe9f867dd07b753d"
+  },
+  "independentReplay": "Root reran all four original UI callback capture scripts with reference write rejection; all result JSON byte-identical.",
+  "syntheticBoundaries": [
+    "money/turnMoney explicitly set to1 and0; original slider20% and accept/confirm callbacks; not claimed as a legal earned balance",
+    "Defense30% with initialmoney50M explicitly overwritten to probe exact15M cost; not claimed as earned legal balance."
+  ]
+}
