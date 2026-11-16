@@ -3011,7 +3011,11 @@ public final class GameState {
         }
         for (PlayerState player : players) {
             player.religion = Math.min(100, Math.max(0, player.religion));
-            player.turnMoneyMillions = player.moneyMillions;
+            // resetPlayersForNewturn is reached only after a surviving human's
+            // result phases, and copies budgets only for active players.
+            if (humanSurvivedBattle && player.alive) {
+                player.turnMoneyMillions = player.moneyMillions;
+            }
             player.resetAiTurnMoneyValidity();
         }
         if (humanSurvivedBattle) {
@@ -3026,7 +3030,6 @@ public final class GameState {
         }
         collectActionBuildingEvents(turnOrders);
         turn++;
-        getHuman().turnMoneyMillions = getHuman().moneyMillions;
         addMessage(getHuman(), "Turn " + turn + " complete.");
         for (PlayerMessage message : spyResultMessages) {
             addMessage(message.playerId, message.text);
@@ -3375,8 +3378,9 @@ public final class GameState {
 
     private void resolveResources(PlayerState player) {
         int income = resourceIncome(player);
+        // Source resource callbacks credit money; the later new-turn reset
+        // copies the spendable budget, and is skipped on human defeat.
         player.moneyMillions += income;
-        player.turnMoneyMillions += income;
         addToHighscore(player, 5, income);
         player.turnResourcesGained += income;
     }
@@ -4433,9 +4437,12 @@ public final class GameState {
         int influence = attacker.religion > defender.religion ? religionAdvantage : 0;
         influence = Math.min(attacker.human ? 15 : 25, influence);
         influence = defender.religion == 100 ? 0 : Math.max(0, influence + populationShift);
-        int roundedLoss = Math.min(Math.round((float) cityPopulationAfterBattle
-                * (influence + 5) / 100f), 40);
-        return Math.round(roundedLoss / 2f);
+        // Presenter.doTR_from_battle divides first using doubles. Reordering
+        // this expression changes half-boundaries (58M at influence 20).
+        // The recovered runtime implements Math.round as floor(value + .5).
+        double loss = (cityPopulationAfterBattle / 100.0d) * (influence + 5);
+        int roundedLoss = Math.min((int) Math.floor(loss + 0.5d), 40);
+        return (int) Math.floor(roundedLoss / 2.0d + 0.5d);
     }
 
     private void applyPopulationChanges(TurnPopulationChanges changes) {

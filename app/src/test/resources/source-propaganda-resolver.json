@@ -1,0 +1,1227 @@
+{
+  "roundBoundary": [
+    {
+      "input": 0.49999999999999994,
+      "sourceRound": 1,
+      "javaMathRound": 0
+    },
+    {
+      "input": 1.4999999999999998,
+      "sourceRound": 1,
+      "javaMathRound": 1
+    },
+    {
+      "input": 14.499999999999998,
+      "sourceRound": 14,
+      "javaMathRound": 14
+    },
+    {
+      "input": 0.5,
+      "sourceRound": 1,
+      "javaMathRound": 1
+    },
+    {
+      "input": 1.5,
+      "sourceRound": 2,
+      "javaMathRound": 2
+    }
+  ],
+  "humanInfluenceProof": "For religions 0..100 the capped nonnegative human advantage spans 0..15; population-difference thresholds yield shifts -4,-2,-1,0,1,2,4, and defender religion 100 forces zero. After max(0, advantage+shift), the exact reachable numeric influence range is 0..19. The scan covers that reduced state space.",
+  "scope": "SYNTHETIC direct source Presenter.doTR_from_battle; no campaign reachability claim",
+  "setup": "SetupMenu(0), medium, leaders 0/1; reset private synthetic fields and RNG before each invocation",
+  "humanNumericScan": {
+    "populationRange": [
+      0,
+      90
+    ],
+    "influenceRange": [
+      0,
+      19
+    ],
+    "pairs": 1820,
+    "method": "source and Java float arithmetic evaluation, not individual presenter calls",
+    "mismatches": []
+  },
+  "cases": [
+    {
+      "before": {
+        "attacker": 1,
+        "defender": 0,
+        "attackerPlayedBy": "AI",
+        "cityId": 0,
+        "cityPopulation": 58,
+        "battleCasualties": 0,
+        "attackerPopulation": 58,
+        "defenderPopulation": 58,
+        "attackerReligion": 20,
+        "defenderReligion": 0,
+        "recipients": [
+          58,
+          0,
+          0,
+          0,
+          0
+        ],
+        "rngNext": 0.8050278270130223
+      },
+      "targetPropagandaMin": [
+        7
+      ],
+      "recipientPropagandaPlus": [
+        7,
+        0,
+        0,
+        0,
+        0
+      ],
+      "attackerMessages": [
+        {
+          "_type": "propagandaGained",
+          "_msg": "You gained 7.000.000 citizens from propaganda"
+        }
+      ],
+      "defenderMessages": [
+        {
+          "_type": "propagandaLost",
+          "_msg": "You lost 7.000.000 citizens from propaganda"
+        }
+      ],
+      "rngNext": 0.5486993038355893,
+      "effectiveInfluence": 20,
+      "rawDouble": 14.499999999999998,
+      "nativeFloat": 14.5,
+      "arithmeticSource": 7,
+      "arithmeticJavaFloat": 8
+    },
+    {
+      "before": {
+        "attacker": 1,
+        "defender": 0,
+        "attackerPlayedBy": "AI",
+        "cityId": 0,
+        "cityPopulation": 114,
+        "battleCasualties": 0,
+        "attackerPopulation": 114,
+        "defenderPopulation": 114,
+        "attackerReligion": 20,
+        "defenderReligion": 0,
+        "recipients": [
+          114,
+          0,
+          0,
+          0,
+          0
+        ],
+        "rngNext": 0.8050278270130223
+      },
+      "targetPropagandaMin": [
+        14
+      ],
+      "recipientPropagandaPlus": [
+        14,
+        0,
+        0,
+        0,
+        0
+      ],
+      "attackerMessages": [
+        {
+          "_type": "propagandaGained",
+          "_msg": "You gained 14.000.000 citizens from propaganda"
+        }
+      ],
+      "defenderMessages": [
+        {
+          "_type": "propagandaLost",
+          "_msg": "You lost 14.000.000 citizens from propaganda"
+        }
+      ],
+      "rngNext": 0.5486993038355893,
+      "effectiveInfluence": 20,
+      "rawDouble": 28.499999999999996,
+      "nativeFloat": 28.5,
+      "arithmeticSource": 14,
+      "arithmeticJavaFloat": 15
+    },
+    {
+      "before": {
+        "attacker": 0,
+        "defender": 1,
+        "attackerPlayedBy": "human",
+        "cityId": 5,
+        "cityPopulation": 10,
+        "battleCasualties": 0,
+        "attackerPopulation": 10,
+        "defenderPopulation": 10,
+        "attackerReligion": 10,
+        "defenderReligion": 0,
+        "recipients": [
+          10,
+          0,
+          0,
+          0,
+          0
+        ],
+        "rngNext": 0.8050278270130223
+      },
+      "targetPropagandaMin": [
+        1
+      ],
+      "recipientPropagandaPlus": [
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      "attackerMessages": [
+        {
+          "_type": "propagandaGained",
+          "_msg": "You gained 1.000.000 citizens from propaganda"
+        }
+      ],
+      "defenderMessages": [
+        {
+          "_type": "propagandaLost",
+          "_msg": "You lost 1.000.000 citizens from propaganda"
+        }
+      ],
+      "rngNext": 0.5486993038355893,
+      "effectiveInfluence": 10,
+      "rawDouble": 1.5,
+      "nativeFloat": 1.5,
+      "arithmeticSource": 1,
+      "arithmeticJavaFloat": 1
+    },
+    {
+      "before": {
+        "attacker": 0,
+        "defender": 1,
+        "attackerPlayedBy": "human",
+        "cityId": 5,
+        "cityPopulation": 29,
+        "battleCasualties": 0,
+        "attackerPopulation": 29,
+        "defenderPopulation": 29,
+        "attackerReligion": 0,
+        "defenderReligion": 0,
+        "recipients": [
+          29,
+          0,
+          0,
+          0,
+          0
+        ],
+        "rngNext": 0.8050278270130223
+      },
+      "targetPropagandaMin": [
+        1
+      ],
+      "recipientPropagandaPlus": [
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      "attackerMessages": [
+        {
+          "_type": "propagandaGained",
+          "_msg": "You gained 1.000.000 citizens from propaganda"
+        }
+      ],
+      "defenderMessages": [
+        {
+          "_type": "propagandaLost",
+          "_msg": "You lost 1.000.000 citizens from propaganda"
+        }
+      ],
+      "rngNext": 0.5486993038355893,
+      "effectiveInfluence": 0,
+      "rawDouble": 1.45,
+      "nativeFloat": 1.4500000476837158,
+      "arithmeticSource": 1,
+      "arithmeticJavaFloat": 1
+    },
+    {
+      "before": {
+        "attacker": 0,
+        "defender": 1,
+        "attackerPlayedBy": "human",
+        "cityId": 5,
+        "cityPopulation": 58,
+        "battleCasualties": 0,
+        "attackerPopulation": 58,
+        "defenderPopulation": 139,
+        "attackerReligion": 15,
+        "defenderReligion": 0,
+        "recipients": [
+          58,
+          0,
+          0,
+          0,
+          0
+        ],
+        "rngNext": 0.8050278270130223
+      },
+      "targetPropagandaMin": [
+        7
+      ],
+      "recipientPropagandaPlus": [
+        7,
+        0,
+        0,
+        0,
+        0
+      ],
+      "attackerMessages": [
+        {
+          "_type": "propagandaGained",
+          "_msg": "You gained 7.000.000 citizens from propaganda"
+        }
+      ],
+      "defenderMessages": [
+        {
+          "_type": "propagandaLost",
+          "_msg": "You lost 7.000.000 citizens from propaganda"
+        }
+      ],
+      "rngNext": 0.5486993038355893,
+      "effectiveInfluence": 19,
+      "rawDouble": 13.919999999999998,
+      "nativeFloat": 13.920000076293945,
+      "arithmeticSource": 7,
+      "arithmeticJavaFloat": 7
+    },
+    {
+      "before": {
+        "attacker": 0,
+        "defender": 1,
+        "attackerPlayedBy": "human",
+        "cityId": 5,
+        "cityPopulation": 50,
+        "battleCasualties": 0,
+        "attackerPopulation": 50,
+        "defenderPopulation": 50,
+        "attackerReligion": 0,
+        "defenderReligion": 0,
+        "recipients": [
+          50,
+          0,
+          0,
+          0,
+          0
+        ],
+        "rngNext": 0.8050278270130223
+      },
+      "targetPropagandaMin": [
+        2
+      ],
+      "recipientPropagandaPlus": [
+        2,
+        0,
+        0,
+        0,
+        0
+      ],
+      "attackerMessages": [
+        {
+          "_type": "propagandaGained",
+          "_msg": "You gained 2.000.000 citizens from propaganda"
+        }
+      ],
+      "defenderMessages": [
+        {
+          "_type": "propagandaLost",
+          "_msg": "You lost 2.000.000 citizens from propaganda"
+        }
+      ],
+      "rngNext": 0.5486993038355893,
+      "effectiveInfluence": 0,
+      "rawDouble": 2.5,
+      "nativeFloat": 2.5,
+      "arithmeticSource": 2,
+      "arithmeticJavaFloat": 2
+    },
+    {
+      "before": {
+        "attacker": 0,
+        "defender": 1,
+        "attackerPlayedBy": "human",
+        "cityId": 5,
+        "cityPopulation": 30,
+        "battleCasualties": 0,
+        "attackerPopulation": 30,
+        "defenderPopulation": 30,
+        "attackerReligion": 10,
+        "defenderReligion": 0,
+        "recipients": [
+          30,
+          0,
+          0,
+          0,
+          0
+        ],
+        "rngNext": 0.8050278270130223
+      },
+      "targetPropagandaMin": [
+        3
+      ],
+      "recipientPropagandaPlus": [
+        3,
+        0,
+        0,
+        0,
+        0
+      ],
+      "attackerMessages": [
+        {
+          "_type": "propagandaGained",
+          "_msg": "You gained 3.000.000 citizens from propaganda"
+        }
+      ],
+      "defenderMessages": [
+        {
+          "_type": "propagandaLost",
+          "_msg": "You lost 3.000.000 citizens from propaganda"
+        }
+      ],
+      "rngNext": 0.5486993038355893,
+      "effectiveInfluence": 10,
+      "rawDouble": 4.5,
+      "nativeFloat": 4.5,
+      "arithmeticSource": 3,
+      "arithmeticJavaFloat": 3
+    },
+    {
+      "before": {
+        "attacker": 0,
+        "defender": 1,
+        "attackerPlayedBy": "human",
+        "cityId": 5,
+        "cityPopulation": 90,
+        "battleCasualties": 0,
+        "attackerPopulation": 90,
+        "defenderPopulation": 90,
+        "attackerReligion": 15,
+        "defenderReligion": 0,
+        "recipients": [
+          90,
+          0,
+          0,
+          0,
+          0
+        ],
+        "rngNext": 0.8050278270130223
+      },
+      "targetPropagandaMin": [
+        9
+      ],
+      "recipientPropagandaPlus": [
+        9,
+        0,
+        0,
+        0,
+        0
+      ],
+      "attackerMessages": [
+        {
+          "_type": "propagandaGained",
+          "_msg": "You gained 9.000.000 citizens from propaganda"
+        }
+      ],
+      "defenderMessages": [
+        {
+          "_type": "propagandaLost",
+          "_msg": "You lost 9.000.000 citizens from propaganda"
+        }
+      ],
+      "rngNext": 0.5486993038355893,
+      "effectiveInfluence": 15,
+      "rawDouble": 18.0,
+      "nativeFloat": 18.0,
+      "arithmeticSource": 9,
+      "arithmeticJavaFloat": 9
+    },
+    {
+      "before": {
+        "attacker": 0,
+        "defender": 1,
+        "attackerPlayedBy": "human",
+        "cityId": 5,
+        "cityPopulation": 1,
+        "battleCasualties": 0,
+        "attackerPopulation": 1,
+        "defenderPopulation": 82,
+        "attackerReligion": 15,
+        "defenderReligion": 0,
+        "recipients": [
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "rngNext": 0.8050278270130223
+      },
+      "targetPropagandaMin": [
+        0
+      ],
+      "recipientPropagandaPlus": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "attackerMessages": [],
+      "defenderMessages": [],
+      "rngNext": 0.5486993038355893,
+      "effectiveInfluence": 19,
+      "rawDouble": 0.24,
+      "nativeFloat": 0.23999999463558197,
+      "arithmeticSource": 0,
+      "arithmeticJavaFloat": 0
+    },
+    {
+      "before": {
+        "attacker": 0,
+        "defender": 1,
+        "attackerPlayedBy": "human",
+        "cityId": 5,
+        "cityPopulation": 0,
+        "battleCasualties": 0,
+        "attackerPopulation": 0,
+        "defenderPopulation": 0,
+        "attackerReligion": 0,
+        "defenderReligion": 0,
+        "recipients": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "rngNext": 0.8050278270130223
+      },
+      "targetPropagandaMin": [
+        0
+      ],
+      "recipientPropagandaPlus": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "attackerMessages": [],
+      "defenderMessages": [],
+      "rngNext": 0.5486993038355893,
+      "effectiveInfluence": 0,
+      "rawDouble": 0.0,
+      "nativeFloat": 0.0,
+      "arithmeticSource": 0,
+      "arithmeticJavaFloat": 0
+    },
+    {
+      "before": {
+        "attacker": 1,
+        "defender": 0,
+        "attackerPlayedBy": "AI",
+        "cityId": 0,
+        "cityPopulation": 90,
+        "battleCasualties": 32,
+        "attackerPopulation": 450,
+        "defenderPopulation": 450,
+        "attackerReligion": 20,
+        "defenderReligion": 0,
+        "recipients": [
+          90,
+          90,
+          90,
+          90,
+          90
+        ],
+        "rngNext": 0.8050278270130223
+      },
+      "targetPropagandaMin": [
+        7
+      ],
+      "recipientPropagandaPlus": [
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "attackerMessages": [
+        {
+          "_type": "propagandaGained",
+          "_msg": "You gained 7.000.000 citizens from propaganda"
+        }
+      ],
+      "defenderMessages": [
+        {
+          "_type": "propagandaLost",
+          "_msg": "You lost 7.000.000 citizens from propaganda"
+        }
+      ],
+      "rngNext": 0.5486993038355893,
+      "effectiveInfluence": 20,
+      "rawDouble": 14.499999999999998,
+      "nativeFloat": 14.5,
+      "arithmeticSource": 7,
+      "arithmeticJavaFloat": 8
+    },
+    {
+      "before": {
+        "attacker": 1,
+        "defender": 0,
+        "attackerPlayedBy": "AI",
+        "cityId": 0,
+        "cityPopulation": 400,
+        "battleCasualties": 0,
+        "attackerPopulation": 2000,
+        "defenderPopulation": 2000,
+        "attackerReligion": 25,
+        "defenderReligion": 0,
+        "recipients": [
+          400,
+          400,
+          400,
+          400,
+          400
+        ],
+        "rngNext": 0.8050278270130223
+      },
+      "targetPropagandaMin": [
+        20
+      ],
+      "recipientPropagandaPlus": [
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "attackerMessages": [
+        {
+          "_type": "propagandaGained",
+          "_msg": "You gained 20.000.000 citizens from propaganda"
+        }
+      ],
+      "defenderMessages": [
+        {
+          "_type": "propagandaLost",
+          "_msg": "You lost 20.000.000 citizens from propaganda"
+        }
+      ],
+      "rngNext": 0.5486993038355893,
+      "effectiveInfluence": 25,
+      "rawDouble": 120.0,
+      "nativeFloat": 120.0,
+      "arithmeticSource": 20,
+      "arithmeticJavaFloat": 20
+    },
+    {
+      "before": {
+        "attacker": 0,
+        "defender": 1,
+        "attackerPlayedBy": "human",
+        "cityId": 5,
+        "cityPopulation": 58,
+        "battleCasualties": 0,
+        "attackerPopulation": 139,
+        "defenderPopulation": 58,
+        "attackerReligion": 10,
+        "defenderReligion": 0,
+        "recipients": [
+          58,
+          81,
+          0,
+          0,
+          0
+        ],
+        "rngNext": 0.8050278270130223
+      },
+      "targetPropagandaMin": [
+        3
+      ],
+      "recipientPropagandaPlus": [
+        2,
+        2,
+        0,
+        0,
+        0
+      ],
+      "attackerMessages": [
+        {
+          "_type": "propagandaGained",
+          "_msg": "You gained 3.000.000 citizens from propaganda"
+        }
+      ],
+      "defenderMessages": [
+        {
+          "_type": "propagandaLost",
+          "_msg": "You lost 3.000.000 citizens from propaganda"
+        }
+      ],
+      "rngNext": 0.5486993038355893,
+      "effectiveInfluence": 6,
+      "rawDouble": 6.38,
+      "nativeFloat": 6.380000114440918,
+      "arithmeticSource": 3,
+      "arithmeticJavaFloat": 3
+    },
+    {
+      "before": {
+        "attacker": 0,
+        "defender": 1,
+        "attackerPlayedBy": "human",
+        "cityId": 5,
+        "cityPopulation": 58,
+        "battleCasualties": 0,
+        "attackerPopulation": 138,
+        "defenderPopulation": 58,
+        "attackerReligion": 10,
+        "defenderReligion": 0,
+        "recipients": [
+          58,
+          80,
+          0,
+          0,
+          0
+        ],
+        "rngNext": 0.8050278270130223
+      },
+      "targetPropagandaMin": [
+        4
+      ],
+      "recipientPropagandaPlus": [
+        2,
+        2,
+        0,
+        0,
+        0
+      ],
+      "attackerMessages": [
+        {
+          "_type": "propagandaGained",
+          "_msg": "You gained 4.000.000 citizens from propaganda"
+        }
+      ],
+      "defenderMessages": [
+        {
+          "_type": "propagandaLost",
+          "_msg": "You lost 4.000.000 citizens from propaganda"
+        }
+      ],
+      "rngNext": 0.5486993038355893,
+      "effectiveInfluence": 8,
+      "rawDouble": 7.539999999999999,
+      "nativeFloat": 7.539999961853027,
+      "arithmeticSource": 4,
+      "arithmeticJavaFloat": 4
+    },
+    {
+      "before": {
+        "attacker": 0,
+        "defender": 1,
+        "attackerPlayedBy": "human",
+        "cityId": 5,
+        "cityPopulation": 58,
+        "battleCasualties": 0,
+        "attackerPopulation": 99,
+        "defenderPopulation": 58,
+        "attackerReligion": 10,
+        "defenderReligion": 0,
+        "recipients": [
+          58,
+          41,
+          0,
+          0,
+          0
+        ],
+        "rngNext": 0.8050278270130223
+      },
+      "targetPropagandaMin": [
+        4
+      ],
+      "recipientPropagandaPlus": [
+        2,
+        2,
+        0,
+        0,
+        0
+      ],
+      "attackerMessages": [
+        {
+          "_type": "propagandaGained",
+          "_msg": "You gained 4.000.000 citizens from propaganda"
+        }
+      ],
+      "defenderMessages": [
+        {
+          "_type": "propagandaLost",
+          "_msg": "You lost 4.000.000 citizens from propaganda"
+        }
+      ],
+      "rngNext": 0.5486993038355893,
+      "effectiveInfluence": 8,
+      "rawDouble": 7.539999999999999,
+      "nativeFloat": 7.539999961853027,
+      "arithmeticSource": 4,
+      "arithmeticJavaFloat": 4
+    },
+    {
+      "before": {
+        "attacker": 0,
+        "defender": 1,
+        "attackerPlayedBy": "human",
+        "cityId": 5,
+        "cityPopulation": 58,
+        "battleCasualties": 0,
+        "attackerPopulation": 98,
+        "defenderPopulation": 58,
+        "attackerReligion": 10,
+        "defenderReligion": 0,
+        "recipients": [
+          58,
+          40,
+          0,
+          0,
+          0
+        ],
+        "rngNext": 0.8050278270130223
+      },
+      "targetPropagandaMin": [
+        4
+      ],
+      "recipientPropagandaPlus": [
+        2,
+        2,
+        0,
+        0,
+        0
+      ],
+      "attackerMessages": [
+        {
+          "_type": "propagandaGained",
+          "_msg": "You gained 4.000.000 citizens from propaganda"
+        }
+      ],
+      "defenderMessages": [
+        {
+          "_type": "propagandaLost",
+          "_msg": "You lost 4.000.000 citizens from propaganda"
+        }
+      ],
+      "rngNext": 0.5486993038355893,
+      "effectiveInfluence": 9,
+      "rawDouble": 8.12,
+      "nativeFloat": 8.119999885559082,
+      "arithmeticSource": 4,
+      "arithmeticJavaFloat": 4
+    },
+    {
+      "before": {
+        "attacker": 0,
+        "defender": 1,
+        "attackerPlayedBy": "human",
+        "cityId": 5,
+        "cityPopulation": 58,
+        "battleCasualties": 0,
+        "attackerPopulation": 79,
+        "defenderPopulation": 58,
+        "attackerReligion": 10,
+        "defenderReligion": 0,
+        "recipients": [
+          58,
+          21,
+          0,
+          0,
+          0
+        ],
+        "rngNext": 0.8050278270130223
+      },
+      "targetPropagandaMin": [
+        4
+      ],
+      "recipientPropagandaPlus": [
+        2,
+        2,
+        0,
+        0,
+        0
+      ],
+      "attackerMessages": [
+        {
+          "_type": "propagandaGained",
+          "_msg": "You gained 4.000.000 citizens from propaganda"
+        }
+      ],
+      "defenderMessages": [
+        {
+          "_type": "propagandaLost",
+          "_msg": "You lost 4.000.000 citizens from propaganda"
+        }
+      ],
+      "rngNext": 0.5486993038355893,
+      "effectiveInfluence": 9,
+      "rawDouble": 8.12,
+      "nativeFloat": 8.119999885559082,
+      "arithmeticSource": 4,
+      "arithmeticJavaFloat": 4
+    },
+    {
+      "before": {
+        "attacker": 0,
+        "defender": 1,
+        "attackerPlayedBy": "human",
+        "cityId": 5,
+        "cityPopulation": 58,
+        "battleCasualties": 0,
+        "attackerPopulation": 78,
+        "defenderPopulation": 58,
+        "attackerReligion": 10,
+        "defenderReligion": 0,
+        "recipients": [
+          58,
+          20,
+          0,
+          0,
+          0
+        ],
+        "rngNext": 0.8050278270130223
+      },
+      "targetPropagandaMin": [
+        5
+      ],
+      "recipientPropagandaPlus": [
+        3,
+        3,
+        0,
+        0,
+        0
+      ],
+      "attackerMessages": [
+        {
+          "_type": "propagandaGained",
+          "_msg": "You gained 5.000.000 citizens from propaganda"
+        }
+      ],
+      "defenderMessages": [
+        {
+          "_type": "propagandaLost",
+          "_msg": "You lost 5.000.000 citizens from propaganda"
+        }
+      ],
+      "rngNext": 0.5486993038355893,
+      "effectiveInfluence": 10,
+      "rawDouble": 8.7,
+      "nativeFloat": 8.699999809265137,
+      "arithmeticSource": 5,
+      "arithmeticJavaFloat": 5
+    },
+    {
+      "before": {
+        "attacker": 0,
+        "defender": 1,
+        "attackerPlayedBy": "human",
+        "cityId": 5,
+        "cityPopulation": 58,
+        "battleCasualties": 0,
+        "attackerPopulation": 58,
+        "defenderPopulation": 78,
+        "attackerReligion": 10,
+        "defenderReligion": 0,
+        "recipients": [
+          58,
+          0,
+          0,
+          0,
+          0
+        ],
+        "rngNext": 0.8050278270130223
+      },
+      "targetPropagandaMin": [
+        5
+      ],
+      "recipientPropagandaPlus": [
+        5,
+        0,
+        0,
+        0,
+        0
+      ],
+      "attackerMessages": [
+        {
+          "_type": "propagandaGained",
+          "_msg": "You gained 5.000.000 citizens from propaganda"
+        }
+      ],
+      "defenderMessages": [
+        {
+          "_type": "propagandaLost",
+          "_msg": "You lost 5.000.000 citizens from propaganda"
+        }
+      ],
+      "rngNext": 0.5486993038355893,
+      "effectiveInfluence": 10,
+      "rawDouble": 8.7,
+      "nativeFloat": 8.699999809265137,
+      "arithmeticSource": 5,
+      "arithmeticJavaFloat": 5
+    },
+    {
+      "before": {
+        "attacker": 0,
+        "defender": 1,
+        "attackerPlayedBy": "human",
+        "cityId": 5,
+        "cityPopulation": 58,
+        "battleCasualties": 0,
+        "attackerPopulation": 58,
+        "defenderPopulation": 79,
+        "attackerReligion": 10,
+        "defenderReligion": 0,
+        "recipients": [
+          58,
+          0,
+          0,
+          0,
+          0
+        ],
+        "rngNext": 0.8050278270130223
+      },
+      "targetPropagandaMin": [
+        5
+      ],
+      "recipientPropagandaPlus": [
+        5,
+        0,
+        0,
+        0,
+        0
+      ],
+      "attackerMessages": [
+        {
+          "_type": "propagandaGained",
+          "_msg": "You gained 5.000.000 citizens from propaganda"
+        }
+      ],
+      "defenderMessages": [
+        {
+          "_type": "propagandaLost",
+          "_msg": "You lost 5.000.000 citizens from propaganda"
+        }
+      ],
+      "rngNext": 0.5486993038355893,
+      "effectiveInfluence": 11,
+      "rawDouble": 9.28,
+      "nativeFloat": 9.279999732971191,
+      "arithmeticSource": 5,
+      "arithmeticJavaFloat": 5
+    },
+    {
+      "before": {
+        "attacker": 0,
+        "defender": 1,
+        "attackerPlayedBy": "human",
+        "cityId": 5,
+        "cityPopulation": 58,
+        "battleCasualties": 0,
+        "attackerPopulation": 58,
+        "defenderPopulation": 98,
+        "attackerReligion": 10,
+        "defenderReligion": 0,
+        "recipients": [
+          58,
+          0,
+          0,
+          0,
+          0
+        ],
+        "rngNext": 0.8050278270130223
+      },
+      "targetPropagandaMin": [
+        5
+      ],
+      "recipientPropagandaPlus": [
+        5,
+        0,
+        0,
+        0,
+        0
+      ],
+      "attackerMessages": [
+        {
+          "_type": "propagandaGained",
+          "_msg": "You gained 5.000.000 citizens from propaganda"
+        }
+      ],
+      "defenderMessages": [
+        {
+          "_type": "propagandaLost",
+          "_msg": "You lost 5.000.000 citizens from propaganda"
+        }
+      ],
+      "rngNext": 0.5486993038355893,
+      "effectiveInfluence": 11,
+      "rawDouble": 9.28,
+      "nativeFloat": 9.279999732971191,
+      "arithmeticSource": 5,
+      "arithmeticJavaFloat": 5
+    },
+    {
+      "before": {
+        "attacker": 0,
+        "defender": 1,
+        "attackerPlayedBy": "human",
+        "cityId": 5,
+        "cityPopulation": 58,
+        "battleCasualties": 0,
+        "attackerPopulation": 58,
+        "defenderPopulation": 99,
+        "attackerReligion": 10,
+        "defenderReligion": 0,
+        "recipients": [
+          58,
+          0,
+          0,
+          0,
+          0
+        ],
+        "rngNext": 0.8050278270130223
+      },
+      "targetPropagandaMin": [
+        5
+      ],
+      "recipientPropagandaPlus": [
+        5,
+        0,
+        0,
+        0,
+        0
+      ],
+      "attackerMessages": [
+        {
+          "_type": "propagandaGained",
+          "_msg": "You gained 5.000.000 citizens from propaganda"
+        }
+      ],
+      "defenderMessages": [
+        {
+          "_type": "propagandaLost",
+          "_msg": "You lost 5.000.000 citizens from propaganda"
+        }
+      ],
+      "rngNext": 0.5486993038355893,
+      "effectiveInfluence": 12,
+      "rawDouble": 9.86,
+      "nativeFloat": 9.859999656677246,
+      "arithmeticSource": 5,
+      "arithmeticJavaFloat": 5
+    },
+    {
+      "before": {
+        "attacker": 0,
+        "defender": 1,
+        "attackerPlayedBy": "human",
+        "cityId": 5,
+        "cityPopulation": 58,
+        "battleCasualties": 0,
+        "attackerPopulation": 58,
+        "defenderPopulation": 138,
+        "attackerReligion": 10,
+        "defenderReligion": 0,
+        "recipients": [
+          58,
+          0,
+          0,
+          0,
+          0
+        ],
+        "rngNext": 0.8050278270130223
+      },
+      "targetPropagandaMin": [
+        5
+      ],
+      "recipientPropagandaPlus": [
+        5,
+        0,
+        0,
+        0,
+        0
+      ],
+      "attackerMessages": [
+        {
+          "_type": "propagandaGained",
+          "_msg": "You gained 5.000.000 citizens from propaganda"
+        }
+      ],
+      "defenderMessages": [
+        {
+          "_type": "propagandaLost",
+          "_msg": "You lost 5.000.000 citizens from propaganda"
+        }
+      ],
+      "rngNext": 0.5486993038355893,
+      "effectiveInfluence": 12,
+      "rawDouble": 9.86,
+      "nativeFloat": 9.859999656677246,
+      "arithmeticSource": 5,
+      "arithmeticJavaFloat": 5
+    },
+    {
+      "before": {
+        "attacker": 0,
+        "defender": 1,
+        "attackerPlayedBy": "human",
+        "cityId": 5,
+        "cityPopulation": 58,
+        "battleCasualties": 0,
+        "attackerPopulation": 58,
+        "defenderPopulation": 139,
+        "attackerReligion": 10,
+        "defenderReligion": 0,
+        "recipients": [
+          58,
+          0,
+          0,
+          0,
+          0
+        ],
+        "rngNext": 0.8050278270130223
+      },
+      "targetPropagandaMin": [
+        6
+      ],
+      "recipientPropagandaPlus": [
+        6,
+        0,
+        0,
+        0,
+        0
+      ],
+      "attackerMessages": [
+        {
+          "_type": "propagandaGained",
+          "_msg": "You gained 6.000.000 citizens from propaganda"
+        }
+      ],
+      "defenderMessages": [
+        {
+          "_type": "propagandaLost",
+          "_msg": "You lost 6.000.000 citizens from propaganda"
+        }
+      ],
+      "rngNext": 0.5486993038355893,
+      "effectiveInfluence": 14,
+      "rawDouble": 11.02,
+      "nativeFloat": 11.020000457763672,
+      "arithmeticSource": 6,
+      "arithmeticJavaFloat": 6
+    }
+  ]
+}

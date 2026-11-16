@@ -49,3 +49,12 @@ app/src/test/resources/source-defense-production-*.json -text whitespace=cr-at-e
 
 # Source Help navigation capture is byte-hashed.
 app/src/test/resources/source-help-navigation.json -text whitespace=cr-at-eol
+
+# Synthetic source propaganda resolver captures preserve exact bytes.
+app/src/test/resources/source-propaganda-*.json -text whitespace=cr-at-eol
+
+# Legal UI campaign captures retain their independently verified byte hashes.
+app/src/test/resources/source-campaign-*.json -text whitespace=cr-at-eol
+
+# Synthetic source paired-target oracle preserves its capture hash.
+app/src/test/resources/source-ai-paired-tie*.json -text whitespace=cr-at-eol

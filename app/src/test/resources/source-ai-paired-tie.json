@@ -1,0 +1,68 @@
+{
+  "after": {
+    "chosenMaxKills": [
+      90,
+      4
+    ],
+    "returned": true,
+    "rngNext": 0.8474337369372327,
+    "slots": [
+      {
+        "action": "preAttack",
+        "city": 4,
+        "targetPlayer": 0,
+        "weapon": "warhead3"
+      },
+      {
+        "action": "set_attack",
+        "city": 4,
+        "targetPlayer": 0,
+        "weapon": "soldier1"
+      }
+    ]
+  },
+  "before": {
+    "actor": 2,
+    "cityArrayKeys": [
+      "4",
+      "3",
+      "2",
+      "1",
+      "0"
+    ],
+    "preAttackStatus": "ready",
+    "preAttackWeapon": "sub",
+    "seededSyntheticRngNext": 0.13436424411240122,
+    "slots": [
+      {
+        "action": "_attack",
+        "city": null,
+        "targetPlayer": null,
+        "weapon": null
+      },
+      {
+        "action": "_attack",
+        "city": null,
+        "targetPlayer": null,
+        "weapon": null
+      }
+    ],
+    "targetCityPopulations": [
+      [
+        27,
+        90,
+        90,
+        27,
+        90
+      ],
+      [
+        27,
+        90,
+        90,
+        27,
+        90
+      ]
+    ]
+  },
+  "scope": "synthetic tie; modified populations/actions and explicit RNG state after legal seed1 21-turn warmup; no natural-reachability claim"
+}

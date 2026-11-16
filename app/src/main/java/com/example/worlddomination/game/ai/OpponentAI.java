@@ -1077,7 +1077,11 @@ public final class OpponentAI {
 
     private static int lastCityAtOrBelowKills(GameState.PlayerState target, int maxKills) {
         int selected = -1;
-        for (CityState city : target.getCities()) {
+        // Source keys(cityArr) visits highest index first and overwrites every
+        // eligible city, leaving the lowest eligible index as the final target.
+        List<CityState> cities = target.getCities();
+        for (int index = cities.size() - 1; index >= 0; index--) {
+            CityState city = cities.get(index);
             if (city.populationMillions <= maxKills && city.populationMillions > 0) {
                 selected = city.index;
             }
@@ -1088,7 +1092,10 @@ public final class OpponentAI {
     private static CityState largestCityBelowCombinedKills(GameState.PlayerState target,
                                                             int combinedKills) {
         CityState selected = null;
-        for (CityState city : target.getCities()) {
+        // A strict maximum keeps the first equal city in descending source keys.
+        List<CityState> cities = target.getCities();
+        for (int index = cities.size() - 1; index >= 0; index--) {
+            CityState city = cities.get(index);
             if (city.populationMillions > 0 && city.populationMillions < combinedKills
                     && (selected == null || city.populationMillions
                     > selected.populationMillions)) {

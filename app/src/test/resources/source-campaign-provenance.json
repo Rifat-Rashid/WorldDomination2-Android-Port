@@ -1,0 +1,15 @@
+{
+  "pythonBytecodeDisabledRequired": true,
+  "referenceWriteAuditHook": true,
+  "sha256": {
+    "C:\\Users\\Seize\\Downloads\\RealTest\\wd2\\game.py": "b3ff34d109ed9048d42bd05ee46fa5dee1b1c02e088e903bee7942d0ef9a07be",
+    "C:\\Users\\Seize\\Downloads\\RealTest\\wd2\\generated\\Model.py": "13c46e8768bf975f8f7559436dbe34f647e3b73c80b7472163822d6741cb7824",
+    "C:\\Users\\Seize\\Downloads\\RealTest\\wd2\\generated\\Player.py": "3672a235acd58e30ec5f81b35d3193366c887af464da7e90c71e454d783c26a5",
+    "C:\\Users\\Seize\\Downloads\\RealTest\\wd2\\generated\\Presenter.py": "eb8aad7305c870b157a3199b7d8213edb22f4fd35d169395cee3db95b12c08b9",
+    "C:\\Users\\Seize\\Downloads\\RealTest\\wd2\\generated\\Presenter_interface.py": "ac502ef9e94a205f5027fc0598c3deb2fa1913aa1dfc6f0d5ca4ca12d1d95afd",
+    "C:\\Users\\Seize\\Downloads\\RealTest\\wd2\\generated\\Sub_presenter.py": "bc430ada2d55929127927089fe8f3d06e51213dede5838e3c12ef9bc61e8fa14",
+    "C:\\Users\\Seize\\Downloads\\RealTest\\wd2\\setup_menu.py": "5633326451e768a84a14bde04e452043ba7fac2617a4c71b7b36dcd0495f0c4a",
+    "D:\\WorldDomination-propaganda-rounding\\analysis\\source-campaign-capture.py": "5d837d636564313d0d688c013b144661d96c772d3408970b4b0cbf7e21578330",
+    "D:\\WorldDomination-propaganda-rounding\\analysis\\source-campaign-seed1.json": "e270960743ffef77cf5e940da5775b706026460dfbbf5f30dcd585bdb05f732c"
+  }
+}
