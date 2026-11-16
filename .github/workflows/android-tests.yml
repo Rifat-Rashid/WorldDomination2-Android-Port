@@ -87,6 +87,9 @@ jobs:
       max-parallel: 6
       matrix:
         include:
+          - id: prepared-airfield-location
+            check: Prepared airfield source location persistence
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.PreparedAirfieldLocationTest"'
           - id: source-silo-rocket
             check: Source silo rocket flight, defense callbacks, and host clocks
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.SourceOrdinaryRocketPlaybackTest" --tests "com.example.worlddomination.game.rendering.SourceRocketDefenseControllerTest" --tests "com.example.worlddomination.game.rendering.SourceAntiDefensePlaybackTest" --tests "com.example.worlddomination.game.simulation.PreparedRocketLocationTest" --tests "com.example.worlddomination.game.audio.OriginalAudioInstancePanTest"'
