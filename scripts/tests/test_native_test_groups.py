@@ -86,6 +86,9 @@ class NativeGroupTests(unittest.TestCase):
                 image = folder / f"{group_id}-{evidence}-proof.png"
                 image.write_bytes(b"not png" if tamper == (group_id, "bad-png")
                                   and evidence == group["evidence"][0] else PNG)
+                if evidence == "beta-ui-evidence" and groups.HELP in group["classes"]:
+                    for name in groups.HELP_EVIDENCE:
+                        (folder / name).write_bytes(PNG)
 
     def test_manifest_is_exact_closed_inventory_and_both_groups_make_beta(self):
         self.assertEqual(76, len(self.manifest["requiredClasses"]))
@@ -143,7 +146,16 @@ class NativeGroupTests(unittest.TestCase):
         result = groups.verify_artifacts(self.manifest, self.root)
         self.assertEqual(76, sum(row["classes"] for row in result.values()))
         self.assertEqual(124, sum(row["executed"] for row in result.values()))
-        self.assertEqual(3, sum(row["requiredPngs"] for row in result.values()))
+        self.assertEqual(28, sum(row["requiredPngs"] for row in result.values()))
+
+    def test_missing_help_screenshots_cannot_pass_using_other_test_images(self):
+        self.fixture()
+        self.assertEqual(25, len(groups.HELP_EVIDENCE))
+        group = next(g for g in self.manifest["groups"] if groups.HELP in g["classes"])
+        folder = self.root / ("android-native-" + group["id"] + "-results") / "reports/androidTests/beta-ui-evidence"
+        (folder / "source-help-help_index-800x600-actual.png").unlink()
+        with self.assertRaisesRegex(ValueError, "Missing required Help screenshots"):
+            groups.verify_artifacts(self.manifest, self.root)
 
     def test_tampered_junit_skips_and_failed_cases_rejected(self):
         for defect in ("omit-class", "omit-method", "skip", "summary-skip", "fail",

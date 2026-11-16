@@ -23,6 +23,13 @@ BETA_PRODUCERS = {
     "com.example.worlddomination.game.rendering.SourceAirfieldDefenseRenderingInstrumentedTest",
 }
 PROPAGANDA = "com.example.worlddomination.game.ui.PropagandaUiInstrumentedTest"
+HELP = "com.example.worlddomination.game.rendering.SourceHelpInstrumentedTest"
+HELP_EVIDENCE = {"source-help-live-overview.png"} | {
+    f"source-help-{page}-{size}-{variant}.png"
+    for page in ("help_index", "help_interface", "help_production", "help_diplomacy")
+    for size in ("800x600", "1194x552")
+    for variant in ("actual", "expected", "stretched")
+}
 
 
 def load_manifest(path: Path = MANIFEST) -> dict:
@@ -162,6 +169,10 @@ def verify_group_artifact(manifest: dict, group: dict, artifact: Path) -> tuple[
             raise ValueError(f"Empty required evidence folder: {folder}")
         for image in images:
             _png_header(image)
+        if evidence == "beta-ui-evidence" and HELP in group["classes"]:
+            missing = HELP_EVIDENCE - {image.name for image in images}
+            if missing:
+                raise ValueError(f"Missing required Help screenshots: {sorted(missing)}")
         png_count += len(images)
     return executed, reports, png_count
 

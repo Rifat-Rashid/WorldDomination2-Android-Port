@@ -213,7 +213,9 @@ public final class SourceHelpInstrumentedTest {
         Field f=WorldDominationGame.class.getDeclaredField(name);f.setAccessible(true);return f;
     }
     private static void evidence(String name, byte[] bytes, int[] size) {
-        File dir=new File(Gdx.files.getLocalStoragePath(),"beta-ui-evidence");assertTrue(dir.isDirectory()||dir.mkdirs());
+        File dir=androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
+                .getTargetContext().getExternalFilesDir("beta-ui-evidence");
+        assertNotNull(dir);assertTrue(dir.isDirectory()||dir.mkdirs());
         Pixmap pixmap=new Pixmap(size[0],size[1],Pixmap.Format.RGBA8888);
         try {pixmap.getPixels().put(bytes);PixmapIO.writePNG(Gdx.files.absolute(new File(dir,name).getAbsolutePath()),pixmap);}
         finally {pixmap.dispose();}
