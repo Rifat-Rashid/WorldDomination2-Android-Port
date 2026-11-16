@@ -1,0 +1,51 @@
+[
+  {
+    "syntheticStartingFunds": 5,
+    "before": {
+      "money": 5,
+      "score": 0,
+      "stocks": {
+        "rocket1": 1,
+        "rocket2": 0
+      },
+      "rngNext": 0.8050278270130223
+    },
+    "queuedRow": [
+      "rockets",
+      100,
+      1,
+      5,
+      1
+    ],
+    "after": {
+      "money": 46,
+      "score": 9102,
+      "stocks": {
+        "rocket1": 1,
+        "rocket2": 0
+      },
+      "refund": 0,
+      "rngNext": 0.18031790152968785,
+      "events": [
+        {
+          "_player": 0,
+          "_item": "resources",
+          "_value": 41,
+          "_plusmin": "plus"
+        },
+        {
+          "_player": 0,
+          "_item": "produce2",
+          "_value": "rockets",
+          "_amount": 100,
+          "_group": 1,
+          "_money": 5
+        },
+        {
+          "_player": 0,
+          "_item": "production_building"
+        }
+      ]
+    }
+  }
+]

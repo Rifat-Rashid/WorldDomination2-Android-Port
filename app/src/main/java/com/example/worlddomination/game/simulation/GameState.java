@@ -4559,9 +4559,9 @@ public final class GameState {
     private long resolveProductionInvestment(PlayerState producer, String category,
                                              double budget, boolean sourceSlider) {
         int group = productionGroup(category);
-        // A positive slider percentage still emits produce2 when its exact
-        // allocation is zero. Source visits its candidate loop in that case.
-        if (group == 0 || budget < 0 || (!sourceSlider && budget == 0)) {
+        // Positive human-slider or floored defense allocations still emit
+        // produce2 at zero budget and visit the source candidate loop.
+        if (group == 0 || budget < 0 || (!sourceSlider && group != 8 && budget == 0)) {
             return 0;
         }
         List<WeaponState> candidates = new ArrayList<>();
@@ -4569,10 +4569,10 @@ public final class GameState {
         for (WeaponState weapon : producer.weapons.values()) {
             WeaponCatalog.Definition definition = weapon.definition;
             // Presenter.updatePlayerVars_3 explicitly inserts both defense
-            // counters before considering budget or active state. Keep the
-            // scripted/AI candidate policy unchanged at this UI boundary.
+            // counters before considering budget or active state for every
+            // producer, including scripted and AI actions.
             if (definition.productionGroup == group
-                    && ((sourceSlider && group == 8)
+                    && (group == 8
                     || (weapon.active && (group == 7 || definition.costMillions < budget)))) {
                 candidates.add(weapon);
                 minimumCost = Math.min(minimumCost, definition.costMillions);

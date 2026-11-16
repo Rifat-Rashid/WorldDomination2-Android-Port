@@ -300,6 +300,9 @@ jobs:
           - id: source-human-production-slider
             check: Human source slider fractions, reservations, purchases, and RNG
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.SourceHumanProductionSliderBudgetTest"'
+          - id: source-defense-production-candidates
+            check: Shared defense production exact cost and zero budget
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.SourceDefenseProductionCandidatesTest"'
           - id: production-screen-layout-tests
             check: Original production slider layout and touch mapping
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.ProductionScreenLayoutTest"'
