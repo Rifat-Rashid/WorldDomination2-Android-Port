@@ -990,6 +990,9 @@ public final class OpponentAI {
         // WeaponStock.randomAvailableCarrier performs this unused draw first.
         randomInclusive(random, 1, 3);
         if (carriers.isEmpty()) {
+            // Source still evaluates randRange(0, -1) for the empty type array.
+            // The selection is undefined, but its zero-width draw advances RNG.
+            random.nextDouble();
             return null;
         }
         String[] typeOrder = {"rocket", "plane", "sub", "ship", "space"};
