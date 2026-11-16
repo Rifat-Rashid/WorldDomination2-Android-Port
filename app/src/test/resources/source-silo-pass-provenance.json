@@ -1,0 +1,339 @@
+{
+  "label": "all research and production UI controls; isolated preparation View preStart transferred in memory; NOT literal Python host",
+  "seed": 32,
+  "schedule": [
+    [
+      1,
+      "research",
+      {
+        "tech": "rocket2"
+      }
+    ],
+    [
+      2,
+      "research",
+      {
+        "tech": "rocket3"
+      }
+    ],
+    [
+      3,
+      "research",
+      {
+        "tech": "rocket4"
+      }
+    ],
+    [
+      4,
+      "research",
+      {
+        "tech": "warhead2"
+      }
+    ],
+    [
+      5,
+      "research",
+      {
+        "tech": "warhead3"
+      }
+    ],
+    [
+      6,
+      "research",
+      {
+        "tech": "warhead4"
+      }
+    ],
+    [
+      7,
+      "research",
+      {
+        "tech": "bioload2"
+      }
+    ],
+    [
+      8,
+      "research",
+      {
+        "tech": "bioload3"
+      }
+    ],
+    [
+      9,
+      "research",
+      {
+        "tech": "bioload4"
+      }
+    ],
+    [
+      10,
+      "research",
+      {
+        "tech": "soldier2"
+      }
+    ],
+    [
+      11,
+      "research",
+      {
+        "tech": "soldier3"
+      }
+    ],
+    [
+      12,
+      "research",
+      {
+        "tech": "soldier4"
+      }
+    ],
+    [
+      13,
+      "research",
+      {
+        "tech": "sub"
+      }
+    ],
+    [
+      14,
+      "research",
+      {
+        "tech": "ship"
+      }
+    ],
+    [
+      15,
+      "production",
+      {
+        "category": "special",
+        "percent": 100
+      }
+    ],
+    [
+      16,
+      "production",
+      {
+        "category": "bioload",
+        "percent": 100
+      }
+    ],
+    [
+      17,
+      "production",
+      {
+        "category": "bioload",
+        "percent": 100
+      }
+    ],
+    [
+      18,
+      "production",
+      {
+        "category": "bioload",
+        "percent": 100
+      }
+    ],
+    [
+      19,
+      "production",
+      {
+        "category": "bioload",
+        "percent": 100
+      }
+    ],
+    [
+      20,
+      "production",
+      {
+        "category": "rockets",
+        "percent": 100
+      }
+    ],
+    [
+      21,
+      "preAttack",
+      {
+        "weapon": "rocket1"
+      }
+    ],
+    [
+      22,
+      "preAttack",
+      {
+        "weapon": "rocket1",
+        "payload": "bioload1",
+        "target": 1,
+        "city": 2
+      }
+    ]
+  ],
+  "events": [
+    {
+      "_player": 1,
+      "_item": "defense",
+      "_value": 26,
+      "_result": true,
+      "_frame": "antiRocket"
+    },
+    {
+      "_player": 0,
+      "_item": "battle",
+      "_value": "preAttack",
+      "_a": 0,
+      "_b": 1,
+      "_weapon": 0,
+      "_carrier": 0,
+      "_payload": 8,
+      "_city": 7,
+      "_blocked": false,
+      "_casualties": 10,
+      "_frame": "silo",
+      "_result": true,
+      "_isShip": false,
+      "_attack_arr": [],
+      "_result_arr": null,
+      "_action": null,
+      "_pass_anti": true,
+      "_bioload": true
+    }
+  ],
+  "uiValidation": [
+    {
+      "tech": "rocket2",
+      "preOrder": true
+    },
+    {
+      "tech": "rocket3",
+      "preOrder": true
+    },
+    {
+      "tech": "rocket4",
+      "preOrder": true
+    },
+    {
+      "tech": "warhead2",
+      "preOrder": true
+    },
+    {
+      "tech": "warhead3",
+      "preOrder": true
+    },
+    {
+      "tech": "warhead4",
+      "preOrder": true
+    },
+    {
+      "tech": "bioload2",
+      "preOrder": true
+    },
+    {
+      "tech": "bioload3",
+      "preOrder": true
+    },
+    {
+      "tech": "bioload4",
+      "preOrder": true
+    },
+    {
+      "tech": "soldier2",
+      "preOrder": true
+    },
+    {
+      "tech": "soldier3",
+      "preOrder": true
+    },
+    {
+      "tech": "soldier4",
+      "preOrder": true
+    },
+    {
+      "tech": "sub",
+      "preOrder": true
+    },
+    {
+      "tech": "ship",
+      "preOrder": true
+    },
+    {
+      "category": "special",
+      "percent": 100,
+      "uiBudget": 282.0,
+      "funds": 282
+    },
+    {
+      "category": "bioload",
+      "percent": 100,
+      "uiBudget": 41.0,
+      "funds": 41
+    },
+    {
+      "category": "bioload",
+      "percent": 100,
+      "uiBudget": 37.0,
+      "funds": 37
+    },
+    {
+      "category": "bioload",
+      "percent": 100,
+      "uiBudget": 38.0,
+      "funds": 38
+    },
+    {
+      "category": "bioload",
+      "percent": 100,
+      "uiBudget": 43.0,
+      "funds": 43
+    },
+    {
+      "category": "rockets",
+      "percent": 100,
+      "uiBudget": 42.0,
+      "funds": 42
+    }
+  ],
+  "targetPlayer": 1,
+  "targetCity": 2,
+  "firstPrepTick": 1,
+  "prepStart": [
+    386.25,
+    377.25
+  ],
+  "canonicalFieldChangeOnly": "preStart",
+  "otherCanonicalDirectFieldIdentityUnchanged": true,
+  "otherCanonicalStoredFieldCount": 6245,
+  "canonicalRngStateUnchangedAtTransfer": true,
+  "attackStartFinite": true,
+  "rows": 342,
+  "callbacks": 122,
+  "csvSha256": "854a80bc142322aa485a474b4d02ccbebba5247ee6046834ef5dbad1eb385c27",
+  "callbackSha256": "052ad235252518d379d3cf9f377cad0bf00bb21e30dff5a0ef2cab276f1a1364",
+  "killSha256": "dc40bafb8871fc53ebbc744b65fdec0432acd0253a499d29304873692e6743c1",
+  "killCalls": 1,
+  "paintSha256": "2d25238c8f39ccc0fc78621e783687507aa1dfb65d6afe4122547610b7338020",
+  "paintRows": 342,
+  "smokeSlotCapacity": 50,
+  "smokeAgeDefinition": "derived from first observed attachment; no stored age field assumed",
+  "sceneSha256": "7213f06fac4e887050ad89e0d3c9a67f47789096d559af8e08333991f7616629",
+  "sourceHashes": {
+    "Battle.py": "c6e9c790d6a624b0425344260b4de904db5197ea756fdf3a2de912eb8cd73c10",
+    "Unit.py": "bc54c0e6c46f4e33bbb20e786c755f93aaba5d3d7224b0120eeeccc81eef8539",
+    "View.py": "2de8afd493f28e36c3a94afa96b80795d685b8b023b12dc9d9ed634692c3accf",
+    "Presenter.py": "eb8aad7305c870b157a3199b7d8213edb22f4fd35d169395cee3db95b12c08b9"
+  },
+  "hostHashes": {
+    "battle_playback.py": "9aa8c82295b1977897cea2a60afbb6569e0d31e14bb9725267e422c7b9167901",
+    "original_gameplay.py": "e1162e40e608101c2427679cb5d1d86aa9c724ad9c36ea342a766b565139a59c"
+  },
+  "probeSha256": "6e493709d59465b7d5a26358896fcc08392ed9cf6894791c87bc5ab58165ee1a",
+  "compactHashes": {
+    "source-silo-pass-ticks.tsv": "0249cfeb22ac4f8d203298f373e95af471afd062e6258d5bdd1147cf5e4e0548",
+    "source-silo-pass-trails.tsv": "844fa11263aa45d9ef103786797dd910525b32bc9aff67a9335401e71f14ea9a",
+    "source-silo-pass-callbacks.tsv": "db12012b4c7f5ab332a3fa715590e8fe99deeda46a77c84e435f7b0c12cee29e"
+  },
+  "trailRows": 1006,
+  "uiSourceHashes": {
+    "generated/Presenter_interface.py": "ac502ef9e94a205f5027fc0598c3deb2fa1913aa1dfc6f0d5ca4ca12d1d95afd",
+    "generated/Sub_Presenter_interface.py": "bdb6675220507323b784b4867af0d3f80b4366935f353903b12c2d052d714bd7",
+    "action_entry.py": "a662f645d9047d7109bc0db95c7137b08e24e1248e644ec64e237cf666345c37",
+    "original_gameplay.py": "e1162e40e608101c2427679cb5d1d86aa9c724ad9c36ea342a766b565139a59c"
+  }
+}

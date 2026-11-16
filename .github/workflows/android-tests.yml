@@ -87,6 +87,9 @@ jobs:
       max-parallel: 6
       matrix:
         include:
+          - id: source-rocket-defended-success
+            check: Source rocket success against active defense
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.SourcePassedRocketDefenseTest"'
           - id: prepared-airfield-location
             check: Prepared airfield source location persistence
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.PreparedAirfieldLocationTest"'
