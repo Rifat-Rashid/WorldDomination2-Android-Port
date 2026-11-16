@@ -113,7 +113,8 @@ collect_evidence() {
 }
 trap collect_evidence EXIT
 
-./gradlew --no-daemon --stacktrace :app:connectedDebugAndroidTest \
+python3 scripts/retry_gradle_dependency_download.py \
+  ./gradlew --no-daemon --stacktrace :app:connectedDebugAndroidTest \
   "-Pandroid.testInstrumentationRunnerArguments.class=$classes" \
   -Pandroid.injected.androidTest.leaveApksInstalledAfterRun=true
 python3 scripts/verify_junit_results.py app/build/outputs/androidTest-results/connected/debug

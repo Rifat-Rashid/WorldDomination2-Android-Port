@@ -37,7 +37,12 @@ class AndroidNativeRunnerTest(unittest.TestCase):
             mocks = {
                 "gradlew": 'printf "gradle %s\\n" "$*" >> "$TRACE"\n'
                            'exit "$GRADLE_STATUS"\n',
-                "python3": 'printf "verify %s\\n" "$*" >> "$TRACE"\n'
+                "python3": 'if [[ "$1" == "scripts/retry_gradle_dependency_download.py" ]]; then\n'
+                           '  shift\n'
+                           '  if [[ "$1" == "--" ]]; then shift; fi\n'
+                           '  exec "$@"\n'
+                           'fi\n'
+                           'printf "verify %s\\n" "$*" >> "$TRACE"\n'
                            'exit "$VERIFIER_STATUS"\n',
                 "timeout": 'printf "timeout %s\\n" "$*" >> "$TRACE"\n'
                            'shift 2\n'
