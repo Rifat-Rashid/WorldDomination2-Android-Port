@@ -321,6 +321,12 @@ jobs:
           - id: source-hard-campaign-retry
             check: Hard four-opponent campaign, attack retries and cash recovery
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.SourceLegalHardCampaignTest" --tests "com.example.worlddomination.game.simulation.SourceTurnCashRecoveryTest"'
+          - id: source-legal-easy-campaign
+            check: Easy four-opponent campaign through 60 source turns
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.SourceLegalEasyCampaignTest"'
+          - id: source-easy-campaign-boundaries
+            check: Easy spy production, ship slot replacement and duplicate routes
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.SourceEasySpyProductionTest" --tests "com.example.worlddomination.game.simulation.SourceNullWeaponAttackTest" --tests "com.example.worlddomination.game.ai.SourceShipSlotOverwriteTest" --tests "com.example.worlddomination.game.ai.SourceDuplicateAttackRouteTest"'
           - id: source-help-navigation
             check: Original help topics, navigation, and phone hide state
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.SourceHelpStateTest"'

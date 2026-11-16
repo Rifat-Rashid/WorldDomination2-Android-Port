@@ -582,6 +582,9 @@ public final class GameState {
         String actionBuildingFrameName;
         boolean actionBuildingResolved;
         int battleStartNum;
+        // Presenter settles these after elimination, only if the human survives.
+        int battleRegardLoss;
+        boolean hasBattleRegardResult;
 
         ActionOrder(int playerId, Action action,
                     Map<String, Integer> productionBudgets, List<String> technologies,
@@ -2959,14 +2962,16 @@ public final class GameState {
         for (int playerIndex = 0; humanSurvivedBattle
                 && playerIndex < players.length; playerIndex++) {
             PlayerState actor = players[playerIndex];
-            if (!actor.alive) {
-                continue;
-            }
+            // Source settles already-created results even if their AI actor
+            // died in battle; only human defeat skips these result phases.
             for (ActionOrder order : turnOrders) {
                 if (order.playerId != actor.id) {
                     continue;
                 }
-                if (order.action == Action.PROPAGANDA) {
+                if (order.hasBattleRegardResult) {
+                    applyTurnResultBattleHostilityEffects(actor,
+                            playerById(order.targetPlayerId), order.battleRegardLoss);
+                } else if (order.action == Action.PROPAGANDA) {
                     PlayerState defender = playerById(order.targetPlayerId);
                     applyPropagandaHostilityEffects(actor, defender);
                 } else if (order.action == Action.RESEARCH) {
@@ -2980,9 +2985,6 @@ public final class GameState {
         for (int playerIndex = 0; humanSurvivedBattle
                 && playerIndex < players.length; playerIndex++) {
             PlayerState actor = players[playerIndex];
-            if (!actor.alive) {
-                continue;
-            }
             for (ActionOrder order : turnOrders) {
                 if (order.playerId != actor.id) {
                     continue;
@@ -3446,6 +3448,17 @@ public final class GameState {
         PlayerState defender = playerById(order.targetPlayerId);
         CityState city = defender.getCity(order.targetCityIndex);
         WeaponState weapon = attacker.weapons.get(order.weaponName);
+        // A source ship can overwrite the other slot with an undefined-weapon
+        // attack. Its NaN casualty roll still consumes Math.random, but causes
+        // no damage or score. Keep this draw before the following ship strikes.
+        if (order.weaponName == null && defender.alive && city != null) {
+            random.nextDouble();
+            // Presenter treats the undefined casualty value as 40 for regard
+            // loss, independently of its zero population/score effect.
+            order.battleRegardLoss = 40;
+            order.hasBattleRegardResult = true;
+            return;
+        }
         boolean spyMission = weapon != null && "spy".equals(weapon.definition.type);
         // Readiness constrains mission selection. The source's high-cash spy-alert
         // override can dispatch the highest stocked spy regardless of readiness, and
@@ -3486,7 +3499,8 @@ public final class GameState {
                     casualties, null, order.actionBuildingSlot, -1, -1,
                     order.battleStartNum));
             recordLargestBattle(attacker, defender, casualties);
-            applyTurnResultBattleHostilityEffects(attacker, defender, casualties);
+            order.battleRegardLoss = casualties;
+            order.hasBattleRegardResult = true;
             // Source scores a successful casualty roll before treating a city
             // as visually empty. A roll can be clamped to zero by earlier
             // attacks on the same city and still consumes its score draw.
@@ -3881,7 +3895,8 @@ public final class GameState {
                 counterDefense == null ? -1 : counterDefense.actionBuildingSlot,
                 -1, order.battleStartNum, order.payloadName.startsWith("bioload")));
         recordLargestBattle(attacker, defender, casualties);
-        applyTurnResultBattleHostilityEffects(attacker, defender, casualties);
+        order.battleRegardLoss = casualties;
+        order.hasBattleRegardResult = true;
         if (rolledCasualties > 0) {
             addToHighscore(attacker, 1, casualties);
         }
@@ -3998,8 +4013,8 @@ public final class GameState {
         // attack array, whose entries contain only city/weapon IDs. Its sum is
         // NaN and the source falls back to 40 for regard loss, even though the
         // resolved sortie results may have a different casualty total.
-        applyTurnResultBattleHostilityEffects(attacker, defender,
-                SOURCE_SHIP_REGARD_LOSS_FALLBACK);
+        order.battleRegardLoss = SOURCE_SHIP_REGARD_LOSS_FALLBACK;
+        order.hasBattleRegardResult = true;
     }
 
     /** Source ship counter roll uses randRange(1, 3) == 2: one of three strikes. */
@@ -4637,11 +4652,18 @@ public final class GameState {
                         unitsBought++;
                     }
                 } else if (weapon.definition.costMillions <= remaining) {
-                    weapon.inStock++;
-                    producer.moneyMillions -= weapon.definition.costMillions;
-                    remaining -= weapon.definition.costMillions;
-                    Integer count = bought.get(weapon.definition.name);
-                    bought.put(weapon.definition.name, count == null ? 1 : count + 1);
+                    // Source Easy AI scores selections of spy3/spy4 but does
+                    // not purchase them or spend their production budget.
+                    boolean blockedEasyAiSpy = !producer.human && difficulty == 0
+                            && ("spy3".equals(weapon.definition.name)
+                            || "spy4".equals(weapon.definition.name));
+                    if (!blockedEasyAiSpy) {
+                        weapon.inStock++;
+                        producer.moneyMillions -= weapon.definition.costMillions;
+                        remaining -= weapon.definition.costMillions;
+                        Integer count = bought.get(weapon.definition.name);
+                        bought.put(weapon.definition.name, count == null ? 1 : count + 1);
+                    }
                     addToHighscore(producer, 3, weapon.definition.level);
                 }
             }
