@@ -1,0 +1,345 @@
+{
+  "source": "Python Help_data and View_interface adapter trace, 2026-11-16; host frame and visibility from actual updateView",
+  "traceSha256": "c2617c864393528eed179cb5eab3726294e65f24511b87e73748435b008a7821",
+  "pages": [
+    {
+      "id": 0,
+      "topic": "help_index",
+      "frame": 101,
+      "index": false,
+      "previous": false,
+      "next": false,
+      "links": [
+        {
+          "_mcName": "btn_overview",
+          "_trgtString": "help_overview"
+        },
+        {
+          "_mcName": "btn_interface",
+          "_trgtString": "help_interface"
+        },
+        {
+          "_mcName": "btn_attacking",
+          "_trgtString": "help_attacking"
+        },
+        {
+          "_mcName": "btn_weapondetails",
+          "_trgtString": "help_weapondetail"
+        },
+        {
+          "_mcName": "btn_actiondetails",
+          "_trgtString": "help_actiondetails"
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "topic": "help_weapondetail",
+      "frame": 102,
+      "index": false,
+      "previous": false,
+      "next": false,
+      "links": [
+        {
+          "_mcName": "btn_rockets",
+          "_trgtString": "help_rockets"
+        },
+        {
+          "_mcName": "btn_aircraft",
+          "_trgtString": "help_aircraft"
+        },
+        {
+          "_mcName": "btn_specialcarriers",
+          "_trgtString": "help_subs"
+        },
+        {
+          "_mcName": "btn_warheads",
+          "_trgtString": "help_warheads"
+        },
+        {
+          "_mcName": "btn_infanterie",
+          "_trgtString": "help_infanterie"
+        },
+        {
+          "_mcName": "btn_intelligence",
+          "_trgtString": "help_intelligence"
+        },
+        {
+          "_mcName": "btn_antiweapons",
+          "_trgtString": "help_antiweapons"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "topic": "help_actiondetails",
+      "frame": 103,
+      "index": false,
+      "previous": false,
+      "next": false,
+      "links": [
+        {
+          "_mcName": "btn_resources",
+          "_trgtString": "help_resources"
+        },
+        {
+          "_mcName": "btn_production",
+          "_trgtString": "help_production"
+        },
+        {
+          "_mcName": "btn_technology",
+          "_trgtString": "help_technology"
+        },
+        {
+          "_mcName": "btn_massmedia",
+          "_trgtString": "help_massmedia"
+        },
+        {
+          "_mcName": "btn_directattack",
+          "_trgtString": "help_directattack"
+        },
+        {
+          "_mcName": "btn_preparedattack",
+          "_trgtString": "help_preattack"
+        },
+        {
+          "_mcName": "btn_defense",
+          "_trgtString": "help_defense"
+        },
+        {
+          "_mcName": "btn_propaganda",
+          "_trgtString": "help_propaganda"
+        },
+        {
+          "_mcName": "btn_diplomacy",
+          "_trgtString": "help_diplomacy"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "topic": "help_overview",
+      "frame": 106,
+      "index": true,
+      "previous": true,
+      "next": true,
+      "links": []
+    },
+    {
+      "id": 4,
+      "topic": "help_interface",
+      "frame": 107,
+      "index": true,
+      "previous": true,
+      "next": true,
+      "links": []
+    },
+    {
+      "id": 5,
+      "topic": "help_interface2",
+      "frame": 108,
+      "index": true,
+      "previous": true,
+      "next": true,
+      "links": []
+    },
+    {
+      "id": 6,
+      "topic": "help_interface3",
+      "frame": 109,
+      "index": true,
+      "previous": true,
+      "next": true,
+      "links": []
+    },
+    {
+      "id": 7,
+      "topic": "help_interface4",
+      "frame": 110,
+      "index": true,
+      "previous": true,
+      "next": true,
+      "links": []
+    },
+    {
+      "id": 8,
+      "topic": "help_attacking",
+      "frame": 111,
+      "index": true,
+      "previous": false,
+      "next": true,
+      "links": []
+    },
+    {
+      "id": 9,
+      "topic": "help_attacking2",
+      "frame": 112,
+      "index": true,
+      "previous": true,
+      "next": true,
+      "links": []
+    },
+    {
+      "id": 10,
+      "topic": "help_attacking3",
+      "frame": 113,
+      "index": true,
+      "previous": true,
+      "next": true,
+      "links": []
+    },
+    {
+      "id": 11,
+      "topic": "help_rockets",
+      "frame": 115,
+      "index": true,
+      "previous": false,
+      "next": true,
+      "links": []
+    },
+    {
+      "id": 12,
+      "topic": "help_aircraft",
+      "frame": 116,
+      "index": true,
+      "previous": true,
+      "next": true,
+      "links": []
+    },
+    {
+      "id": 13,
+      "topic": "help_subs",
+      "frame": 117,
+      "index": true,
+      "previous": true,
+      "next": true,
+      "links": []
+    },
+    {
+      "id": 14,
+      "topic": "help_carrier",
+      "frame": 118,
+      "index": true,
+      "previous": true,
+      "next": true,
+      "links": []
+    },
+    {
+      "id": 15,
+      "topic": "help_space",
+      "frame": 119,
+      "index": true,
+      "previous": true,
+      "next": true,
+      "links": []
+    },
+    {
+      "id": 16,
+      "topic": "help_warheads",
+      "frame": 120,
+      "index": true,
+      "previous": true,
+      "next": true,
+      "links": []
+    },
+    {
+      "id": 17,
+      "topic": "help_infantrie",
+      "frame": 121,
+      "index": true,
+      "previous": true,
+      "next": true,
+      "links": []
+    },
+    {
+      "id": 18,
+      "topic": "help_intelligence",
+      "frame": 122,
+      "index": true,
+      "previous": true,
+      "next": true,
+      "links": []
+    },
+    {
+      "id": 19,
+      "topic": "help_resources",
+      "frame": 123,
+      "index": true,
+      "previous": true,
+      "next": true,
+      "links": []
+    },
+    {
+      "id": 20,
+      "topic": "help_production",
+      "frame": 124,
+      "index": true,
+      "previous": true,
+      "next": true,
+      "links": []
+    },
+    {
+      "id": 21,
+      "topic": "help_technology",
+      "frame": 125,
+      "index": true,
+      "previous": true,
+      "next": true,
+      "links": []
+    },
+    {
+      "id": 22,
+      "topic": "help_massmedia",
+      "frame": 126,
+      "index": true,
+      "previous": true,
+      "next": true,
+      "links": []
+    },
+    {
+      "id": 23,
+      "topic": "help_directattack",
+      "frame": 127,
+      "index": true,
+      "previous": true,
+      "next": true,
+      "links": []
+    },
+    {
+      "id": 24,
+      "topic": "help_preattack",
+      "frame": 128,
+      "index": true,
+      "previous": true,
+      "next": true,
+      "links": []
+    },
+    {
+      "id": 25,
+      "topic": "help_defense",
+      "frame": 129,
+      "index": true,
+      "previous": true,
+      "next": true,
+      "links": []
+    },
+    {
+      "id": 26,
+      "topic": "help_propaganda",
+      "frame": 130,
+      "index": true,
+      "previous": true,
+      "next": true,
+      "links": []
+    },
+    {
+      "id": 27,
+      "topic": "help_diplomacy",
+      "frame": 131,
+      "index": true,
+      "previous": true,
+      "next": false,
+      "links": []
+    }
+  ]
+}

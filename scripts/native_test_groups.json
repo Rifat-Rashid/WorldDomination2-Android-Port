@@ -80,7 +80,8 @@
     "com.example.worlddomination.game.rendering.SourceRocketImpactRenderingInstrumentedTest",
     "com.example.worlddomination.game.rendering.SourcePreparedRocketSlotTwoInstrumentedTest",
     "com.example.worlddomination.game.rendering.SourceProductionSliderBudgetInstrumentedTest",
-    "com.example.worlddomination.game.rendering.SourceProductionFooterInstrumentedTest"
+    "com.example.worlddomination.game.rendering.SourceProductionFooterInstrumentedTest",
+    "com.example.worlddomination.game.rendering.SourceHelpInstrumentedTest"
   ],
   "groups": [
     {
@@ -96,6 +97,7 @@
         "com.example.worlddomination.game.rendering.BattlefieldTerrainInstrumentedTest",
         "com.example.worlddomination.game.rendering.IndependentPanelGesturesInstrumentedTest",
         "com.example.worlddomination.game.rendering.SourceActionMenusInstrumentedTest",
+        "com.example.worlddomination.game.rendering.SourceHelpInstrumentedTest",
         "com.example.worlddomination.game.rendering.HumanDiplomacyResponseInstrumentedTest",
         "com.example.worlddomination.game.rendering.CarrierSortieInstrumentedTest",
         "com.example.worlddomination.game.rendering.ChinookDeploymentArtInstrumentedTest",
@@ -664,6 +666,14 @@
     [
       "com.example.worlddomination.game.rendering.SourceProductionFooterInstrumentedTest",
       "fiveSelectedRowsLeaveTheSourceFooterClear"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.SourceHelpInstrumentedTest",
+      "navigationPreservesSelectionsReservationsAndGameplayRandom"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.SourceHelpInstrumentedTest",
+      "originalPagesAndHitTransformsMatchAtBothAspectRatios"
     ]
   ]
 }

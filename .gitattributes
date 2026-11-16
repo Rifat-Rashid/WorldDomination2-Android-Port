@@ -46,3 +46,6 @@ app/src/test/resources/source-production-slider-*.json -text whitespace=cr-at-eo
 
 # Source scripted and AI defense-production captures keep exact byte hashes.
 app/src/test/resources/source-defense-production-*.json -text whitespace=cr-at-eol
+
+# Source Help navigation capture is byte-hashed.
+app/src/test/resources/source-help-navigation.json -text whitespace=cr-at-eol
