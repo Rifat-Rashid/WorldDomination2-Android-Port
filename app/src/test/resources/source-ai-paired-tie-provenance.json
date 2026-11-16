@@ -1,0 +1,10 @@
+{
+  "referenceReadOnlyAuditHook": true,
+  "runsIdentical": 2,
+  "sha256": {
+    "D:\\WorldDomination-propaganda-rounding\\analysis\\source-paired-tie-synthetic.py": "7856e81aa87db32d6955e5be805fdfad116e200b1852bdbbeb933d516ac6e291",
+    "D:\\WorldDomination-propaganda-rounding\\analysis\\source-paired-tie-synthetic.json": "2d9db70c5e997f923316c69c048a82bbf8ec3e6e6d57221a9a497c29cc153ea2",
+    "C:\\Users\\Seize\\Downloads\\RealTest\\wd2\\generated\\Model.py": "13c46e8768bf975f8f7559436dbe34f647e3b73c80b7472163822d6741cb7824",
+    "C:\\Users\\Seize\\Downloads\\RealTest\\wd2\\runtime.py": "bf58b6cf0cddae89c5efd153713df03751eacf72d0e5c836413bc19a8752b30b"
+  }
+}

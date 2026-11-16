@@ -303,6 +303,15 @@ jobs:
           - id: source-defense-production-candidates
             check: Shared defense production exact cost and zero budget
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.SourceDefenseProductionCandidatesTest"'
+          - id: source-legal-defeat-campaign
+            check: Legal source campaign through turn 29 and defeat
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.SourceLegalDefeatCampaignTest"'
+          - id: source-propaganda-rounding
+            check: Source propaganda rounding and population sharing
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.SourcePropagandaRoundingTest"'
+          - id: source-prepared-city-order
+            check: Source prepared strike target order and tied cities
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.SourcePreparedTargetOrderTest"'
           - id: source-help-navigation
             check: Original help topics, navigation, and phone hide state
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.SourceHelpStateTest"'
