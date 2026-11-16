@@ -297,6 +297,9 @@ jobs:
           - id: production-budget-tests
             check: Production budget and stock tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.productionReservesBudgetAndTurnsItIntoWeaponStock" --tests "com.example.worlddomination.game.simulation.GameStateTest.productionRejectsLockedTechnologyGroupAndKeepsExistingSelection" --tests "com.example.worlddomination.game.simulation.GameStateTest.productionCanSplitOneHundredPercentAcrossMultipleCategories" --tests "com.example.worlddomination.game.simulation.GameStateTest.productionAllocationCannotExceedSharedHundredPercentLimit" --tests "com.example.worlddomination.game.simulation.GameStateTest.productionReservationRoundsCombinedShareAndRefundsOnRemoval" --tests "com.example.worlddomination.game.simulation.GameStateTest.productionActionReservesAndResolvesEveryAllocatedCategory" --tests "com.example.worlddomination.game.simulation.GameStateTest.researchThenProductionUsesUnlockedUnitAndSourceCostOrder"'
+          - id: source-human-production-slider
+            check: Human source slider fractions, reservations, purchases, and RNG
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.SourceHumanProductionSliderBudgetTest"'
           - id: production-screen-layout-tests
             check: Original production slider layout and touch mapping
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.ProductionScreenLayoutTest"'

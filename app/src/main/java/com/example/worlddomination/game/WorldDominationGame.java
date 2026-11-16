@@ -3799,14 +3799,14 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 continue;
             }
             productionSummaryCategories[productionSummaryCount] = category;
-            double amountMillions = game.getTurnMoneyMillions() * percent / 100.0d;
+            double amountMillions = game.getProductionSliderBudgetMillions(category);
             long amountDollars = Math.round(amountMillions * 1_000_000d);
             productionSummaryAmounts[productionSummaryCount] = percent
                     + " % ( $ " + formatProductionDollars(amountDollars) + " )";
             productionSummaryCount++;
         }
         productionSummaryTotal = "total estimated amount: "
-                + formatMillions(game.getSelectedProductionTotalBudgetMillions());
+                + formatMillions(game.getSelectedProductionSliderDisplayTotalBudgetMillions());
     }
 
     private void drawProductionSummary() {
@@ -3866,7 +3866,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         int remainingPercent = game.getSelectedProductionMaximumPercent();
         int percent = ProductionScreenLayout.percentAt(
                 sliderIndex, modal, worldX, handleGrabOffsetX, remainingPercent);
-        boolean updated = game.configureProduction(category, percent);
+        boolean updated = game.configureProductionSlider(category, percent);
         if (updated) {
             refreshProductionSummary();
         } else {

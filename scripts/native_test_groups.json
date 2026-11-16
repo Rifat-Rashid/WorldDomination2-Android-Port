@@ -78,7 +78,8 @@
     "com.example.worlddomination.game.rendering.SourceAircraftSmokeCropRenderingInstrumentedTest",
     "com.example.worlddomination.game.rendering.SourceAircraftSmokeBirthInstrumentedTest",
     "com.example.worlddomination.game.rendering.SourceRocketImpactRenderingInstrumentedTest",
-    "com.example.worlddomination.game.rendering.SourcePreparedRocketSlotTwoInstrumentedTest"
+    "com.example.worlddomination.game.rendering.SourcePreparedRocketSlotTwoInstrumentedTest",
+    "com.example.worlddomination.game.rendering.SourceProductionSliderBudgetInstrumentedTest"
   ],
   "groups": [
     {
@@ -165,7 +166,8 @@
         "com.example.worlddomination.game.rendering.SourceSiloRocketRenderingInstrumentedTest",
         "com.example.worlddomination.game.rendering.SourcePassedRocketDefenseRenderingInstrumentedTest",
         "com.example.worlddomination.game.rendering.SourceAircraftSmokeBirthInstrumentedTest",
-        "com.example.worlddomination.game.rendering.SourcePreparedRocketSlotTwoInstrumentedTest"
+        "com.example.worlddomination.game.rendering.SourcePreparedRocketSlotTwoInstrumentedTest",
+        "com.example.worlddomination.game.rendering.SourceProductionSliderBudgetInstrumentedTest"
       ],
       "evidence": [
         "beta-ui-evidence"
@@ -640,6 +642,18 @@
     [
       "com.example.worlddomination.game.rendering.SourcePreparedRocketSlotTwoInstrumentedTest",
       "movingRocketAndPhysicalSiloUseSlotTwoArtwork"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.SourceProductionSliderBudgetInstrumentedTest",
+      "sliderTouchPreservesFractionThroughReservationAndTurn"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.SourceProductionSliderBudgetInstrumentedTest",
+      "splitSlidersPreserveFractionsThroughReservationAndTurn"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.SourceProductionSliderBudgetInstrumentedTest",
+      "defenseSliderUsesOriginalCandidatesAndRoundedUnusedAmounts"
     ]
   ]
 }
