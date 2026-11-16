@@ -44,6 +44,14 @@ public final class SourceOrdinaryRocketPlaybackTest {
                 "3bec64bc159808b904123c2c02b8ae31717eb9552973c609358e31fe1144c4b1");
         assertSha("source-silo-rocket-failed-trails.tsv",
                 "b481d695a94b135d0df9138cc2f40131afe4b77d73aea7d8f767aeeb9956bfd0");
+        assertSha("source-silo-rocket-failed-defense.tsv",
+                "72c3d31be23eee597d412618e039ffbcabc42838e2861b72486501979a3b526f");
+        assertSha("source-silo-rocket-success-rng-pre-move.json",
+                "150a26569a978a432dda6b027a730d2a19e39820bca82e87eeb9dd188719381d");
+        assertSha("source-silo-rocket-failed-rng-pre-move.json",
+                "11a8806da5b588d787a2766debfbe7a0a641cc1f705d57edcedd7b3217116240");
+        assertSha("source-silo-rocket-provenance.json",
+                "ca95681471f4972318e63ee8e9a743bf06743363f7c3d97ab985e2ad1e573f20");
         List<Map<String, String>> success = rows("source-silo-rocket-success-ticks.tsv");
         List<Map<String, String>> failed = rows("source-silo-rocket-failed-ticks.tsv");
         assertEquals(341, success.size());
