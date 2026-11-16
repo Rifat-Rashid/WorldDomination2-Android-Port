@@ -249,9 +249,9 @@ jobs:
           - id: prepared-ship-map-tap-tests
             check: Prepared ship city-tap selection
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.PreparedShipStrikeSelectionTest"'
-          - id: ai-bioload-action-filter-tests
-            check: AI excludes bio-disabled action choices
-            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.OpponentAITest.plannerDoesNotFillSecondSlotFromBioDisabledActionScores" --tests "com.example.worlddomination.game.ai.OpponentAITest.plannerReturnsNoActionWhenEverySourceChoiceIsBioDisabled"'
+          - id: ai-bioload-action-planning-tests
+            check: Source AI retains bio-disabled action choices
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.OpponentAITest.plannerCanFillSecondSlotFromBioDisabledActionScores" --tests "com.example.worlddomination.game.ai.OpponentAITest.plannerCanChooseWhenEverySourceActionIsBioDisabled"'
           - id: noncombat-elimination-tests
             check: Noncombat zero-population elimination
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.turnEndEliminatesZeroPopulationNationWithoutCombat"'
@@ -324,6 +324,9 @@ jobs:
           - id: source-legal-easy-campaign
             check: Easy four-opponent campaign through 60 source turns
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.SourceLegalEasyCampaignTest"'
+          - id: source-accepted-diplomacy-campaign
+            check: Easy campaign with accepted diplomacy through 60 source turns
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.SourceLegalAcceptedDiplomacyCampaignTest"'
           - id: source-easy-campaign-boundaries
             check: Easy spy production, ship slot replacement and duplicate routes
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.SourceEasySpyProductionTest" --tests "com.example.worlddomination.game.simulation.SourceNullWeaponAttackTest" --tests "com.example.worlddomination.game.ai.SourceShipSlotOverwriteTest" --tests "com.example.worlddomination.game.ai.SourceDuplicateAttackRouteTest"'

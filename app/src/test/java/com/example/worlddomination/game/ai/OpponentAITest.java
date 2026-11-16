@@ -1728,7 +1728,7 @@ public final class OpponentAITest {
     @Test
     public void biologicalStrikeBlocksHumanActionsAndRestoresTemporaryWeaponLocks()
             throws Exception {
-        GameState state = new GameState(1, 62L);
+        GameState state = new GameState(1, 1L);
         GameState.PlayerState attacker = state.getPlayerState(1);
         assertFalse(attacker.isSpecialPerson());
         assertFalse(attacker.isSuicidePerson());
@@ -1748,9 +1748,7 @@ public final class OpponentAITest {
             }
         }
         state.getHuman().getWeapons().get("antiRocket").inStock = 0;
-        // Keep this integration test focused on the biological attack flow;
-        // source AI scoring can otherwise choose a different valid action first.
-        markEveryActionExceptBioloaded(attacker, GameState.Action.ATTACK);
+        // Seed 1 naturally selects the stocked rocket and then its biological payload.
 
         state.selectAction(GameState.Action.RESOURCES);
         assertTrue(state.acceptSelectedAction());
@@ -1823,7 +1821,7 @@ public final class OpponentAITest {
     }
 
     @Test
-    public void biologicalEffectsAlsoKeepContaminatedOpponentFromChoosingDisabledActions() {
+    public void biologicalEffectsLeaveOpponentActionScoringUnfiltered() throws Exception {
         GameState state = new GameState(1, 552L);
         GameState.PlayerState human = state.getHuman();
         GameState.PlayerState target = state.getPlayerState(1);
@@ -1847,36 +1845,67 @@ public final class OpponentAITest {
 
         assertTrue(target.isBioloaded());
         assertFalse(target.getBioloadedActions().isEmpty());
-        List<OpponentAI.Decision> decisions = OpponentAI.plan(state, target, new Random(553L));
-        for (OpponentAI.Decision decision : decisions) {
-            assertFalse("AI selected bio-disabled action " + decision.action,
-                    target.isActionBioloaded(decision.action));
-        }
+        assertBioFlagsDoNotChangeScores(state, target, 553L);
     }
 
     @Test
-    public void plannerDoesNotFillSecondSlotFromBioDisabledActionScores() throws Exception {
+    public void plannerCanFillSecondSlotFromBioDisabledActionScores() throws Exception {
         GameState state = new GameState(1, 554L);
         GameState.PlayerState actor = state.getPlayerState(1);
         markEveryActionExceptBioloaded(actor, GameState.Action.RESOURCES);
-
-        List<OpponentAI.Decision> decisions = OpponentAI.plan(state, actor,
-                new Random(555L));
-
-        assertEquals(1, decisions.size());
+        assertBioFlagsDoNotChangeScores(state, actor, 555L);
+        BoundRecordingRandom random = new BoundRecordingRandom();
+        List<OpponentAI.Decision> decisions = OpponentAI.planScoredActions(state, actor, random,
+                Arrays.asList(new OpponentAI.ScoredAction(GameState.Action.RESOURCES, 100),
+                        new OpponentAI.ScoredAction(GameState.Action.MASS_MEDIA, 90)));
+        assertTrue(actor.isActionBioloaded(GameState.Action.MASS_MEDIA));
+        assertEquals(2, decisions.size());
         assertEquals(GameState.Action.RESOURCES, decisions.get(0).action);
+        assertEquals(GameState.Action.MASS_MEDIA, decisions.get(1).action);
+        assertTrue(random.bounds.isEmpty());
     }
 
     @Test
-    public void plannerReturnsNoActionWhenEverySourceChoiceIsBioDisabled() throws Exception {
+    public void plannerCanChooseWhenEverySourceActionIsBioDisabled() throws Exception {
         GameState state = new GameState(1, 556L);
         GameState.PlayerState actor = state.getPlayerState(1);
         markEveryActionExceptBioloaded(actor, null);
+        assertBioFlagsDoNotChangeScores(state, actor, 557L);
+        BoundRecordingRandom random = new BoundRecordingRandom();
+        List<OpponentAI.Decision> decisions = OpponentAI.planScoredActions(state, actor, random,
+                Arrays.asList(new OpponentAI.ScoredAction(GameState.Action.MASS_MEDIA, 100),
+                        new OpponentAI.ScoredAction(GameState.Action.RESOURCES, 90)));
+        assertTrue(actor.isActionBioloaded(GameState.Action.MASS_MEDIA));
+        assertTrue(actor.isActionBioloaded(GameState.Action.RESOURCES));
+        assertEquals(2, decisions.size());
+        assertEquals(GameState.Action.MASS_MEDIA, decisions.get(0).action);
+        assertEquals(GameState.Action.RESOURCES, decisions.get(1).action);
+        assertTrue(random.bounds.isEmpty());
+    }
 
-        List<OpponentAI.Decision> decisions = OpponentAI.plan(state, actor,
-                new Random(557L));
-
-        assertTrue(decisions.isEmpty());
+    /** Model.py's splice on an action row does not remove its score. */
+    @SuppressWarnings("unchecked")
+    private static void assertBioFlagsDoNotChangeScores(GameState state,
+            GameState.PlayerState player, long seed) throws Exception {
+        Field field = GameState.PlayerState.class.getDeclaredField("bioloadedActions");
+        field.setAccessible(true);
+        Set<GameState.Action> flags = (Set<GameState.Action>) field.get(player);
+        Set<GameState.Action> saved = new java.util.HashSet<>(flags);
+        CountingRandom flaggedRandom = new CountingRandom(seed);
+        List<OpponentAI.ScoredAction> flagged = OpponentAI.scoreActions(state, player, flaggedRandom);
+        flags.clear();
+        try {
+            CountingRandom cleanRandom = new CountingRandom(seed);
+            List<OpponentAI.ScoredAction> clean = OpponentAI.scoreActions(state, player, cleanRandom);
+            assertEquals(cleanRandom.getDrawCount(), flaggedRandom.getDrawCount());
+            assertEquals(clean.size(), flagged.size());
+            for (int i = 0; i < clean.size(); i++) {
+                assertEquals(clean.get(i).action, flagged.get(i).action);
+                assertEquals(clean.get(i).score, flagged.get(i).score, 0d);
+            }
+        } finally {
+            flags.addAll(saved);
+        }
     }
 
     @Test
