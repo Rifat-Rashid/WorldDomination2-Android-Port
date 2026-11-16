@@ -3,7 +3,7 @@ package com.example.worlddomination.game.rendering;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-/** Direct battle-root roles for one source submarine rocket and its smoke. */
+/** Physical root roles for one source rocket, its smoke, and its payload effects. */
 public final class SourceRocketDisplayDepths {
     public static final int EXPLOSION_ROLE_INDEX = -1;
 
@@ -147,6 +147,10 @@ public final class SourceRocketDisplayDepths {
     /** Applies direct-root attaches/removals after one source Unit visit. */
     public void afterUnitFrame() {
         SourceRocketPlayback rocket = binding.animation.getSourcePlayback();
+        // Both source rocket_explode_city variants attach the payload effect
+        // before killUnit removes smoke and body. Self-kill attaches afterward.
+        if (!rocket.isBodyAttached() && !rocket.isSelfImpact()
+                && binding.explosionCount == 0) attachExplosion(rocket);
         for (int slot = 0; slot < binding.smoke.length; slot++) {
             SourceDisplayList.Entry<BattlefieldDisplayState.Item> entry = binding.smoke[slot];
             if (rocket.isTrailAttached(slot)) {
@@ -165,20 +169,22 @@ public final class SourceRocketDisplayDepths {
         if (!rocket.isBodyAttached() && binding.body.isAttached()) state.remove(binding.body);
         int expectedEffects = rocket.isSelfImpact()
                 ? rocket.getSelfExplosionCount() : rocket.isBodyAttached() ? 0 : 1;
-        while (binding.explosionCount < expectedEffects) {
-            int index = binding.explosionCount++;
-            SourceDisplayList.Entry<BattlefieldDisplayState.Item> entry = state.attach(
-                    BattlefieldDisplayState.Kind.EFFECT, EXPLOSION_ROLE_INDEX - index,
-                    binding.unitName + "explosion", binding, state.nextDepth());
-            binding.explosions[index] = entry;
-            binding.explosion = entry;
-            binding.explosionFrameIndices[index] = 0;
-            binding.explosionX[index] = rocket.getImpactEffectX();
-            binding.explosionY[index] = rocket.getImpactEffectY();
-        }
+        while (binding.explosionCount < expectedEffects) attachExplosion(rocket);
         if (rocket.isRemoved() && !queuedForCleanup) {
             stoppedClips.add(binding);
             queuedForCleanup = true;
         }
+    }
+
+    private void attachExplosion(SourceRocketPlayback rocket) {
+        int index = binding.explosionCount++;
+        SourceDisplayList.Entry<BattlefieldDisplayState.Item> entry = state.attach(
+                BattlefieldDisplayState.Kind.EFFECT, EXPLOSION_ROLE_INDEX - index,
+                binding.unitName + "explosion", binding, state.nextDepth());
+        binding.explosions[index] = entry;
+        binding.explosion = entry;
+        binding.explosionFrameIndices[index] = 0;
+        binding.explosionX[index] = rocket.getImpactEffectX();
+        binding.explosionY[index] = rocket.getImpactEffectY();
     }
 }

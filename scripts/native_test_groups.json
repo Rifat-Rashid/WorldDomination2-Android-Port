@@ -76,7 +76,8 @@
     "com.example.worlddomination.game.rendering.SourcePassedRocketDefenseClockInstrumentedTest",
     "com.example.worlddomination.game.rendering.SourcePassedRocketDefenseRenderingInstrumentedTest",
     "com.example.worlddomination.game.rendering.SourceAircraftSmokeCropRenderingInstrumentedTest",
-    "com.example.worlddomination.game.rendering.SourceAircraftSmokeBirthInstrumentedTest"
+    "com.example.worlddomination.game.rendering.SourceAircraftSmokeBirthInstrumentedTest",
+    "com.example.worlddomination.game.rendering.SourceRocketImpactRenderingInstrumentedTest"
   ],
   "groups": [
     {
@@ -117,7 +118,8 @@
         "com.example.worlddomination.game.rendering.SourceSiloRocketClockInstrumentedTest",
         "com.example.worlddomination.game.rendering.SourcePreparedAirfieldLocationInstrumentedTest",
         "com.example.worlddomination.game.rendering.SourcePassedRocketDefenseClockInstrumentedTest",
-        "com.example.worlddomination.game.rendering.SourceAircraftSmokeCropRenderingInstrumentedTest"
+        "com.example.worlddomination.game.rendering.SourceAircraftSmokeCropRenderingInstrumentedTest",
+        "com.example.worlddomination.game.rendering.SourceRocketImpactRenderingInstrumentedTest"
       ],
       "evidence": [
         "beta-ui-evidence",
@@ -612,6 +614,22 @@
     [
       "com.example.worlddomination.game.rendering.SourceAircraftSmokeBirthInstrumentedTest",
       "carrierAircraftBirthAndHandoff"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.SourceRocketImpactRenderingInstrumentedTest",
+      "capturedWorldInterceptionProjectsFromPreMovePosition"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.SourceRocketImpactRenderingInstrumentedTest",
+      "reverseDirectionUsesSameSourceCrop"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.SourceRocketImpactRenderingInstrumentedTest",
+      "successfulBioloadUsesRegisteredTargetArtwork"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.SourceRocketImpactRenderingInstrumentedTest",
+      "successfulWarheadUsesRegisteredTargetArtwork"
     ]
   ]
 }

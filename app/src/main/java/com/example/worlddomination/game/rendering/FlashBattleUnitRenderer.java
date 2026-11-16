@@ -731,11 +731,29 @@ public final class FlashBattleUnitRenderer {
                 FlashAnimationTimeline timeline = assets.getTimeline(
                         binding.animation.getImpactLinkage());
                 if (timeline != null) {
-                    drawTimelineFrame(batch, mapBounds,
-                              timeline.getFrame(binding.getExplosionFrameIndex(effectIndex)),
-                              (float) binding.getExplosionX(effectIndex),
-                              (float) binding.getExplosionY(effectIndex),
-                            route.targetPlayerId, 1f, 1f);
+                    FlashAnimationTimeline.Frame frame = timeline.getFrame(
+                            binding.getExplosionFrameIndex(effectIndex));
+                    float effectX = (float) binding.getExplosionX(effectIndex);
+                    float effectY = (float) binding.getExplosionY(effectIndex);
+                    boolean targetAnchored = !binding.animation.getSourcePlayback().isSelfImpact();
+                    float previousColor = batch.getPackedColor();
+                    try {
+                        if (frame != null) {
+                            for (FlashAnimationTimeline.Layer layer : frame.layers) {
+                                TextureRegion shape = assets.getShape(layer.shapeId);
+                                if (shape == null) continue;
+                                FlashAffineTransform transform = sourceRocketTransforms[0]
+                                        .setProduct(sourceRocketTransforms[1].setIdentity(),
+                                                layer.a, layer.b, layer.c, layer.d,
+                                                layer.tx, layer.ty);
+                                drawSourceRocketShape(batch, mapBounds, route, layer.shapeId,
+                                        shape, transform, effectX, effectY, layer.alpha,
+                                        targetAnchored);
+                            }
+                        }
+                    } finally {
+                        batch.setPackedColor(previousColor);
+                    }
                 }
             } else if (index >= 0 && index < binding.getSmokeSlotCount()) {
                 if (binding.smoke(index) != null && binding.smoke(index).isAttached()) {
@@ -893,11 +911,21 @@ public final class FlashBattleUnitRenderer {
                                        int shapeId, TextureRegion region,
                                        FlashAffineTransform transform,
                                        float sourceX, float sourceY, float alpha) {
+        drawSourceRocketShape(batch, mapBounds, route, shapeId, region, transform,
+                sourceX, sourceY, alpha, false);
+    }
+
+    private void drawSourceRocketShape(SpriteBatch batch, Rectangle mapBounds,
+                                       FlashBattleRoutes.RocketStrike route,
+                                       int shapeId, TextureRegion region,
+                                       FlashAffineTransform transform,
+                                       float sourceX, float sourceY, float alpha,
+                                       boolean targetAnchored) {
         FlashSpriteQuad.positions(sourceRocketVertices, transform, mapBounds,
                 sourceX, sourceY, route.attackerPlayerId,
                 assets.getShapeOriginX(shapeId), assets.getShapeOriginY(shapeId),
                 region.getRegionWidth(), region.getRegionHeight());
-        float progress = rocketProgress(route, sourceX);
+        float progress = targetAnchored ? 1f : rocketProgress(route, sourceX);
         float cropOffset = BattlefieldCityLayout.sourceXBetween(mapBounds, sourceX,
                 route.attackerPlayerId, route.targetPlayerId, progress)
                 - BattlefieldCityLayout.sourceX(mapBounds, sourceX,

@@ -126,6 +126,9 @@ jobs:
           - id: source-aircraft-smoke-crop
             check: Aircraft smoke retains its source birth pose on phone crops
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.SourceAircraftTrailCropTest" --tests "com.example.worlddomination.game.rendering.SourceAircraftTrailPoseCropTest"'
+          - id: source-rocket-impact-order
+            check: Source rocket payload attachment and self impact cleanup order
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.SourceRocketImpactAttachmentOrderTest"'
           - id: source-panel-fling
             check: Source panel fling timing and uptime precision
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.PanelGestureVelocityTest"'
