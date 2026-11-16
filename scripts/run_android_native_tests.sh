@@ -2,6 +2,28 @@
 set -euo pipefail
 
 classes="${1:?Pass the comma-separated Android instrumentation classes}"
+shift
+
+# Shards may request only the evidence they produce. Validate before running
+# instrumentation so every filesystem path below remains a fixed allowlisted name.
+if (( $# == 0 )); then
+  required_evidence=(beta-ui-evidence propaganda-evidence)
+else
+  required_evidence=()
+  for name in "$@"; do
+    case "$name" in
+      beta-ui-evidence|propaganda-evidence) ;;
+      *) echo "Invalid required evidence folder: '$name'" >&2; exit 64 ;;
+    esac
+    for selected in "${required_evidence[@]}"; do
+      if [[ "$selected" == "$name" ]]; then
+        echo "Duplicate required evidence folder: '$name'" >&2
+        exit 64
+      fi
+    done
+    required_evidence+=("$name")
+  done
+fi
 
 reports="app/build/reports/androidTests"
 staging="app/build/native-evidence-staging"
@@ -80,8 +102,9 @@ collect_evidence() {
   evidence_status=0
   rm -rf -- "$reports/beta-ui-evidence" || evidence_status=1
   rm -rf -- "$reports/propaganda-evidence" || evidence_status=1
-  collect_directory beta-ui-evidence || evidence_status=1
-  collect_directory propaganda-evidence || evidence_status=1
+  for name in "${required_evidence[@]}"; do
+    collect_directory "$name" || evidence_status=1
+  done
   if (( evidence_status != 0 )); then
     echo "::error title=Android native screenshots::Required screenshot evidence could not be recovered" >&2
   fi
