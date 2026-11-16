@@ -49,6 +49,12 @@ public final class SourceHelpInstrumentedTest {
             SourceHelpState help = (SourceHelpState) field("helpState").get(app);
             assertEquals("help_index", help.getTopic());
             assertEquals(50, game.getProductionPercent("rockets"));
+            tap(app,((Rectangle[])field("actionSlots").get(app))[0]);render(app);
+            assertTrue("Empty source tube cannot open Skip while Help is selected",help.isOpen());
+            tap(app,(Rectangle)field("confirmButton").get(app));render(app);
+            assertTrue("Closed confirm cannot dismiss Help",help.isOpen());
+            assertEquals(0,game.getQueuedActionCount());
+            assertEquals(50,game.getProductionPercent("rockets"));
             control(app, "btn_overview");
             assertEquals("help_overview", help.getTopic());
             evidence("source-help-live-overview.png",ScreenUtils.getFrameBufferPixels(0,0,
@@ -94,6 +100,17 @@ public final class SourceHelpInstrumentedTest {
             tap(app, ((Rectangle[]) field("navRows").get(app))[0]);
             assertEquals(GameState.Action.RESOURCES, game.getSelectedAction());
             assertEquals(1, game.getQueuedActionCount());
+            tap(app,(Rectangle)field("modalAccept").get(app));
+            java.lang.reflect.Method update=WorldDominationGame.class.getDeclaredMethod("fixedUpdate",float.class);
+            update.setAccessible(true);
+            for(int i=0;i<11;i++)update.invoke(app,1f/24f);
+            tap(app,(Rectangle)field("helpButton").get(app));render(app);
+            assertTrue(help.isOpen());
+            tap(app,(Rectangle)field("confirmButton").get(app));
+            assertFalse(help.isOpen());assertEquals(0,game.getTurn());
+            for(int i=0;i<22;i++)update.invoke(app,1f/24f);
+            assertEquals(1,game.getTurn());assertEquals(5,game.getWeaponStock("rocket1"));
+            assertEquals(86,game.getHuman().moneyMillions);assertEquals(17181,game.getHuman().score);
         });
     }
 

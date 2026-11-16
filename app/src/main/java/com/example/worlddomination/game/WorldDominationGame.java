@@ -4918,8 +4918,13 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 // button cannot invoke the idle automatic-action shortcut.
                 return;
             } else {
-                boolean turnControl = confirmButton.contains(x, y);
-                for (Rectangle slot : actionSlots) turnControl |= slot.contains(x, y);
+                boolean turnControl = confirmButton.contains(x, y)
+                        && game.getQueuedActionCount() == 2
+                        && confirmTurnAnimation.getFrame() == ConfirmTurnAnimation.OPEN_FRAME;
+                for (int slot = 0; slot < actionSlots.length; slot++) {
+                    turnControl |= actionSlots[slot].contains(x, y)
+                            && game.getQueuedAction(slot) != null;
+                }
                 if (!turnControl) {
                     if (helpState.isVisible()) {
                         if (helpMapButton.contains(x, y)) helpState.hide();
