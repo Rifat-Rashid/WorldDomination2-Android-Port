@@ -46,19 +46,50 @@ public final class SatelliteAudioPlaybackTest {
         for (FakeMusic music : factory.created) assertEquals(1, music.disposals);
     }
 
-    @Test public void muteChangesVolumeWithoutBreakingAnExistingChain() {
+    @Test public void soundOptionGatesNewRevealButKeepsExistingChainAudible() {
         Factory factory = new Factory();
         SatelliteAudioPlayback playback = new SatelliteAudioPlayback(factory::create, .7f);
         playback.prepare(1);
         assertTrue(playback.play());
-        playback.setMuted(true);
-        for (FakeMusic music : factory.created) assertEquals(0f, music.volume, 0f);
+        playback.setSoundEnabled(false);
+        assertFalse(playback.play());
+        for (FakeMusic music : factory.created) assertEquals(.7f, music.volume, 0f);
         factory.created.get(0).complete();
         assertEquals(1, factory.created.get(1).plays);
-        assertEquals(0f, factory.created.get(1).volume, 0f);
-        playback.setMuted(false);
+        assertEquals(.7f, factory.created.get(1).volume, 0f);
+        playback.setSoundEnabled(true);
+        assertTrue("a suppressed reveal remains available", playback.play());
         for (FakeMusic music : factory.created) assertEquals(.7f, music.volume, 0f);
         playback.finish();
+    }
+
+    @Test public void outputMuteKeepsActiveAndFutureChainsTimedAndHonorsSourceOption() {
+        Factory factory = new Factory();
+        SatelliteAudioPlayback playback = new SatelliteAudioPlayback(factory::create, .7f);
+        playback.prepare(1);
+        assertTrue(playback.play());
+        playback.setOutputMuted(true);
+        assertEquals(0f, factory.created.get(0).volume, 0f);
+        assertTrue("output mute does not gate a new reveal", playback.play());
+        assertEquals(1, factory.created.get(2).plays);
+        assertEquals(0f, factory.created.get(2).volume, 0f);
+        factory.created.get(0).complete();
+        assertEquals("laser completion still starts attack", 1, factory.created.get(1).plays);
+        assertEquals(0f, factory.created.get(1).volume, 0f);
+        playback.pause();
+        factory.created.get(2).complete();
+        assertEquals(0, factory.created.get(3).plays);
+        playback.resume();
+        assertEquals(1, factory.created.get(3).plays);
+        assertEquals(0f, factory.created.get(3).volume, 0f);
+        playback.setSoundEnabled(false);
+        playback.setOutputMuted(false);
+        for (FakeMusic music : factory.created) assertEquals(.7f, music.volume, 0f);
+        assertFalse("sound option suppresses a new reveal", playback.play());
+        playback.setSoundEnabled(true);
+        assertTrue(playback.play());
+        for (FakeMusic music : factory.created) assertEquals(.7f, music.volume, 0f);
+        playback.dispose();
     }
 
     @Test public void pauseDefersCompletionAndResumesOnlyTheCurrentCue() {
@@ -150,7 +181,7 @@ public final class SatelliteAudioPlaybackTest {
         playback.dispose();
     }
 
-    @Test public void originalAudioGatesMutedStartsWithoutReplayingOnUnmute() {
+    @Test public void originalAudioSoundOptionGatesStartsWithoutReplayingOnReenable() {
         Factory factory = new Factory();
         OriginalAudio audio = new OriginalAudio(new SatelliteAudioPlayback(factory::create, .8f));
         audio.prepareSatelliteAudio(1);
@@ -158,7 +189,7 @@ public final class SatelliteAudioPlaybackTest {
         audio.play(OriginalAudio.Cue.SATELLITE_LASER);
         assertEquals(0, factory.created.get(0).plays);
         assertTrue(audio.toggleSound());
-        assertEquals("Unmute cannot replay a previously suppressed start",
+        assertEquals("Reenable cannot replay a previously suppressed start",
                 0, factory.created.get(0).plays);
         audio.play(OriginalAudio.Cue.SATELLITE_LASER);
         assertEquals(1, factory.created.get(0).plays);
@@ -166,7 +197,7 @@ public final class SatelliteAudioPlaybackTest {
         audio.dispose();
     }
 
-    @Test public void originalAudioMuteKeepsCompletionFlowAndMusicToggleIsIndependent() {
+    @Test public void originalAudioSoundOptionKeepsExistingCompletionAudible() {
         Factory factory = new Factory();
         OriginalAudio audio = new OriginalAudio(new SatelliteAudioPlayback(factory::create, .8f));
         audio.prepareSatelliteAudio(1);
@@ -176,7 +207,7 @@ public final class SatelliteAudioPlaybackTest {
         assertTrue(audio.isMusicEnabled());
         factory.created.get(0).complete();
         assertEquals(1, factory.created.get(1).plays);
-        assertEquals(0f, factory.created.get(1).volume, 0f);
+        assertEquals(.8f, factory.created.get(1).volume, 0f);
         assertFalse(audio.toggleMusic());
         assertFalse(audio.isSoundEnabled());
         assertTrue(audio.toggleSound());

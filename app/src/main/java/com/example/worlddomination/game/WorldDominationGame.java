@@ -1995,7 +1995,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         shapes.setProjectionMatrix(camera.combined);
         shapes.begin(ShapeRenderer.ShapeType.Filled);
         drawButtonGradient(helpButton, false);
-        drawButtonGradient(muteButton, !audio.isSoundEnabled());
+        drawButtonGradient(muteButton, false);
         shapes.end();
 
         drawNavigationRows();
@@ -2666,7 +2666,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         font.setColor(TITLE_TEXT);
         drawCentered("HELP", helpButton.x + helpButton.width / 2f,
                 helpButton.y + helpButton.height / 2f + 3f, 9f);
-        drawCentered("MUTE", muteButton.x + muteButton.width / 2f,
+        drawCentered(audio.isOutputMuted() ? "UNMUTE" : "MUTE", muteButton.x + muteButton.width / 2f,
                 muteButton.y + muteButton.height / 2f + 3f, 9f);
 
         drawStatistics();
@@ -3012,7 +3012,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     private void drawSettingsGear() {
         shapes.begin(ShapeRenderer.ShapeType.Line);
-        shapes.setColor(audio.isMusicEnabled() ? TITLE_TEXT : DISABLED_TEXT);
+        shapes.setColor(TITLE_TEXT);
         float cx = settingsButton.x + settingsButton.width / 2f;
         float cy = settingsButton.y + settingsButton.height / 2f;
         shapes.circle(cx, cy, 6.5f, 16);
@@ -4781,11 +4781,11 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             return;
         }
         if (muteButton.contains(x, y)) {
-            audio.toggleSound();
+            audio.toggleOutputMuted();
             return;
         }
         if (settingsButton.contains(x, y)) {
-            audio.toggleMusic();
+            audio.toggleSound();
             return;
         }
         if (helpButton.contains(x, y)) {

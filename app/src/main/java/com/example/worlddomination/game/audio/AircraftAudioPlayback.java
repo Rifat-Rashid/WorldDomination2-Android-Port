@@ -18,7 +18,8 @@ public final class AircraftAudioPlayback {
     private final Consumer<Runnable> resumeDispatcher;
     private final float volume;
     private final List<Owner> owners = new ArrayList<>();
-    private boolean muted;
+    private boolean soundEnabled = true;
+    private boolean outputMuted;
     private boolean paused;
     private boolean disposed;
     private boolean resumeQueued;
@@ -46,10 +47,16 @@ public final class AircraftAudioPlayback {
         return owner;
     }
 
-    /** Source mute changes volume on active sounds without cancelling their callbacks. */
-    public synchronized void setMuted(boolean muted) {
+    /** Source option gates new Unit.soundAction starts; existing voices stay audible. */
+    public synchronized void setSoundEnabled(boolean soundEnabled) {
         if (disposed) return;
-        this.muted = muted;
+        this.soundEnabled = soundEnabled;
+    }
+
+    /** Silences output while allowing new source Sounds and callbacks to run. */
+    public synchronized void setOutputMuted(boolean outputMuted) {
+        if (disposed) return;
+        this.outputMuted = outputMuted;
         for (Owner owner : owners) owner.applyAudio();
     }
 
@@ -124,10 +131,10 @@ public final class AircraftAudioPlayback {
 
         private Owner(Kind kind) { this.kind = kind; }
 
-        /** Coalesces repeated Unit.soundAction visits; muted starts remain retryable. */
+        /** Coalesces visits; an option-disabled start remains retryable. */
         public boolean requestTakeoff() {
             synchronized (AircraftAudioPlayback.this) {
-                if (disposed || closed || started || muted || paused) return false;
+                if (disposed || closed || started || !soundEnabled || paused) return false;
                 if (!loadPair()) return false;
                 started = true;
                 takeoff.play();
@@ -199,7 +206,7 @@ public final class AircraftAudioPlayback {
         }
 
         private void applyAudio() {
-            float audible = muted ? 0f : volume * sourceVolumePercent / 100f;
+            float audible = outputMuted ? 0f : volume * sourceVolumePercent / 100f;
             float pan = sourcePanPercent / 100f;
             if (takeoff != null) takeoff.setPan(pan, audible);
             if (flight != null) flight.setPan(pan, audible);

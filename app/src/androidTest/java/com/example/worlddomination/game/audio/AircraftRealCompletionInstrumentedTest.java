@@ -106,14 +106,14 @@ public final class AircraftRealCompletionInstrumentedTest {
                         flight.plays.get());
 
                 runOnGl(scenario, () -> {
-                    playback.setMuted(true);
+                    playback.setOutputMuted(true);
                     assertEquals(0f, flight.getVolume(), .001f);
                 });
                 assertTrue("muted real flight still completes and repeats",
                         flight.secondCompleted.await(CALLBACK_TIMEOUT_SECONDS, TimeUnit.SECONDS));
                 assertEquals(3, flight.plays.get());
                 runOnGl(scenario, () -> {
-                    playback.setMuted(false);
+                    playback.setOutputMuted(false);
                     assertEquals(.8f, flight.getVolume(), .01f);
                     owner.stop();
                     int stoppedPlays = flight.plays.get();

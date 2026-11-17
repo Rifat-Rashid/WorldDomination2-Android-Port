@@ -21,7 +21,8 @@ public final class AntiDefenseAudioPlayback {
     private final Consumer<Runnable> dispatcher;
     private final float masterGain;
     private final List<Owner> owners = new ArrayList<>();
-    private boolean muted;
+    private boolean soundEnabled = true;
+    private boolean outputMuted;
     private boolean paused;
     private boolean disposed;
     private boolean resumeQueued;
@@ -50,11 +51,21 @@ public final class AntiDefenseAudioPlayback {
         return owner;
     }
 
-    /** Existing source Sounds continue their completion chains at zero volume. */
-    public synchronized void setMuted(boolean muted) {
+    /** Source option gates new anti starts; existing finite groups stay audible. */
+    public synchronized void setSoundEnabled(boolean soundEnabled) {
         if (disposed) return;
-        this.muted = muted;
+        this.soundEnabled = soundEnabled;
+    }
+
+    /** Phone output mute keeps finite groups and callbacks active at zero gain. */
+    public synchronized void setOutputMuted(boolean outputMuted) {
+        if (disposed) return;
+        this.outputMuted = outputMuted;
         for (Owner owner : owners) owner.applyVolume();
+    }
+
+    private float audibleVolume() {
+        return outputMuted ? 0f : SOURCE_VOLUME * masterGain;
     }
 
     public synchronized void pause() {
@@ -108,7 +119,7 @@ public final class AntiDefenseAudioPlayback {
             if (music == null) return null;
             Voice voice = new Voice(music);
             music.setLooping(false);
-            music.setPan(SOURCE_PAN, muted ? 0f : SOURCE_VOLUME * masterGain);
+            music.setPan(SOURCE_PAN, audibleVolume());
             music.setOnCompletionListener(completed ->
                     dispatcher.accept(() -> completeVoice(owner, shot, voice)));
             return voice;
@@ -146,10 +157,11 @@ public final class AntiDefenseAudioPlayback {
 
         private Owner(Type type) { this.type = type; }
 
-        /** Unit.sound_anti: muted requests do not create a rotation owner. */
+        /** Unit.sound_anti: option-disabled requests do not create a rotation owner. */
         public boolean requestRotation() {
             synchronized (AntiDefenseAudioPlayback.this) {
-                if (disposed || closed || muted || paused || rotationVoice != null) return false;
+                if (disposed || closed || !soundEnabled || paused || rotationVoice != null)
+                    return false;
                 Voice voice = prepareVoice(this, false, OriginalAudio.Cue.ANTI_AIR_ROTATE, 1);
                 if (voice == null) return false;
                 rotationVoice = voice;
@@ -169,7 +181,7 @@ public final class AntiDefenseAudioPlayback {
             synchronized (AntiDefenseAudioPlayback.this) {
                 if (disposed || closed || paused || shotBusy) return false;
                 shotBusy = true;
-                if (muted) return false; // Source installs no completion callback.
+                if (!soundEnabled) return false; // Source installs no completion callback.
                 OriginalAudio.Cue cue = type == Type.AIR ? OriginalAudio.Cue.ANTI_AIR_GUN
                         : OriginalAudio.Cue.ANTI_ROCKET_FIRE;
                 Voice voice = prepareVoice(this, true, cue,
@@ -188,7 +200,7 @@ public final class AntiDefenseAudioPlayback {
         }
 
         private void applyVolume() {
-            float audible = muted ? 0f : SOURCE_VOLUME * masterGain;
+            float audible = audibleVolume();
             if (rotationVoice != null) rotationVoice.music.setPan(SOURCE_PAN, audible);
             if (shotVoice != null) shotVoice.music.setPan(SOURCE_PAN, audible);
         }
