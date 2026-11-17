@@ -20,6 +20,8 @@ public final class OriginalUiAssets implements Disposable {
     public final TextureRegion navigationPanel;
     private final Texture informationPanelTexture;
     public final TextureRegion informationPanel;
+    private final Texture[] phonePanelTextures = new Texture[3];
+    public final TextureRegion[] phonePanel = new TextureRegion[3];
     private final Texture[] equipmentCardTextures = new Texture[8];
     public final TextureRegion[] equipmentCards = new TextureRegion[8];
     private final Texture[] scoreTextures = new Texture[8];
@@ -52,6 +54,13 @@ public final class OriginalUiAssets implements Disposable {
     public final TextureRegion[] actionControls = new TextureRegion[3];
 
     public OriginalUiAssets() {
+        String[] phonePanelNames = {"interior-tile", "chrome-42", "chrome-43"};
+        for (int i = 0; i < phonePanelNames.length; i++) {
+            phonePanelTextures[i] = new Texture(Gdx.files.internal(
+                    "original/ui/phone-panel/" + phonePanelNames[i] + ".png"));
+            phonePanelTextures[i].setFilter(TextureFilter.Nearest, TextureFilter.Nearest);
+            phonePanel[i] = new TextureRegion(phonePanelTextures[i]);
+        }
         atlas = new TextureAtlas(Gdx.files.internal("original/ui/ui.atlas"));
         metalPanel = new Texture(Gdx.files.internal("original/ui/metal-panel.png"), true);
         metalPanel.setFilter(TextureFilter.Linear, TextureFilter.Linear);
@@ -172,6 +181,7 @@ public final class OriginalUiAssets implements Disposable {
         battlefieldFrameTexture.dispose();
         navigationPanelTexture.dispose();
         informationPanelTexture.dispose();
+        for (Texture texture : phonePanelTextures) texture.dispose();
         for (Texture texture : equipmentCardTextures) texture.dispose();
         for (Texture texture : scoreTextures) texture.dispose();
         productionModalTexture.dispose();

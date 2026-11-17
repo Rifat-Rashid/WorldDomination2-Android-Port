@@ -46,6 +46,7 @@ import com.example.worlddomination.game.assets.OriginalFlashAnimationAssets;
 import com.example.worlddomination.game.assets.OriginalSplashAssets;
 import com.example.worlddomination.game.assets.OriginalUiAssets;
 import com.example.worlddomination.game.rendering.OriginalBattlefieldFrame;
+import com.example.worlddomination.game.rendering.SourcePhonePanel;
 import com.example.worlddomination.game.rendering.SourceSetupPanelRenderer;
 import com.example.worlddomination.game.rendering.SourceSetupColorIndicators;
 import com.example.worlddomination.game.rendering.SourceSetupBuildingIndicators;
@@ -376,6 +377,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private final SourceActionMenuRenderer.PortraitDrawer menuPortraitDrawer = this::drawSetupLeaderPortrait;
     private MessagePanelRenderer messagePanelRenderer;
     private SourceNavigationPanel navigationPanelRenderer;
+    private SourcePhonePanel phonePanelRenderer;
     private SourceInformationPanel informationPanelRenderer;
     private SourceEquipmentCards equipmentCardsRenderer;
     private SourceScorePanel scorePanelRenderer;
@@ -515,6 +517,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         font.setColor(Color.WHITE);
         uiAssets = new OriginalUiAssets();
         navigationPanelRenderer = new SourceNavigationPanel(uiAssets.navigationPanel);
+        phonePanelRenderer = new SourcePhonePanel(uiAssets.phonePanel[0],
+                uiAssets.phonePanel[1], uiAssets.phonePanel[2]);
         informationPanelRenderer = new SourceInformationPanel(uiAssets.informationPanel);
         equipmentCardsRenderer = new SourceEquipmentCards(uiAssets.equipmentCards);
         scorePanelRenderer = new SourceScorePanel(uiAssets.scoreBacking, uiAssets.scoreWindow,
@@ -1936,13 +1940,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         shapes.begin(ShapeRenderer.ShapeType.Filled);
         drawPanelFill(leftPanel);
         drawPanelFill(rightPanel);
-        drawPanelFill(logoPanel);
-        drawPanelFill(centerHeader);
-        drawPanelFill(toolbarPanel);
-        drawPanelFill(stockPanel);
         drawPanelFill(mapFrame);
-        drawPanelFill(messagePanel);
-        drawPanelFill(actionPanel);
         shapes.setColor(0.015f, 0.035f, 0.048f, 1f);
         shapes.rect(portraitStrip.x, portraitStrip.y,
                 portraitStrip.width, portraitStrip.height);
@@ -1952,15 +1950,15 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         batch.begin();
         drawPanelTexture(leftPanel);
         drawPanelTexture(rightPanel);
-        drawPanelTexture(logoPanel);
-        drawPanelTexture(centerHeader);
-        drawPanelTexture(toolbarPanel);
-        drawPanelTexture(stockPanel);
+        phonePanelRenderer.draw(batch, logoPanel);
+        phonePanelRenderer.draw(batch, centerHeader);
+        phonePanelRenderer.draw(batch, toolbarPanel);
+        phonePanelRenderer.draw(batch, stockPanel);
         drawPanelTexture(mapFrame);
-        drawPanelTexture(messagePanel);
+        phonePanelRenderer.draw(batch, messagePanel);
         messagePanelRenderer.drawBackground(batch, messagePanel);
         scorePanelRenderer.draw(batch, scorePanel, game.getHuman().getPlayerColor());
-        drawPanelTexture(actionPanel);
+        phonePanelRenderer.draw(batch, actionPanel);
         battlefieldFrameRenderer.draw(batch, mapFrame);
         batch.flush();
         setScissor(mapBounds);
@@ -2000,12 +1998,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         Gdx.gl.glDisable(GL20.GL_SCISSOR_TEST);
         drawPanelEdges(leftPanel);
         drawPanelEdges(rightPanel);
-        drawPanelEdges(logoPanel);
-        drawPanelEdges(centerHeader);
-        drawPanelEdges(toolbarPanel);
-        drawPanelEdges(stockPanel);
-        drawPanelEdges(messagePanel);
-        drawPanelEdges(actionPanel);
         shapes.end();
 
         batch.setProjectionMatrix(camera.combined);
@@ -2023,7 +2015,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
         drawNavigationRows();
         drawEquipmentRows();
-        drawPortraitCardEdges();
     }
 
     private void drawPanelTexture(Rectangle rectangle) {
@@ -2180,7 +2171,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             Rectangle card = portraitCards[visibleSlot];
             card.set(x, y, cardWidth, cardHeight);
             portraitPlayerIds[visibleSlot] = playerId;
-            drawPanelTexture(card);
+            phonePanelRenderer.draw(batch, card);
             int leaderId = player.getLeaderId();
             if (leaderId >= 0) {
                 drawSetupLeaderPortrait(leaderId, x + 5f, y + 3f,
@@ -2208,17 +2199,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                     ? SETUP_PLAYER_COLORS[color - 1] : PORTRAIT_COLORS[i]);
             shapes.rect(card.x + 5f, card.y + card.height - 4f,
                     card.width - 10f, 2f);
-        }
-        shapes.end();
-    }
-
-    private void drawPortraitCardEdges() {
-        shapes.setProjectionMatrix(camera.combined);
-        shapes.begin(ShapeRenderer.ShapeType.Line);
-        for (Rectangle card : portraitCards) {
-            if (card.width > 0f && card.height > 0f) {
-                drawPanelEdges(card);
-            }
         }
         shapes.end();
     }

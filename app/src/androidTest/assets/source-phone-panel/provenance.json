@@ -1,0 +1,87 @@
+{
+  "method": "actual MobileSkin.panel after SetupMenu.start_game; untitled; transparent target",
+  "sizeNote": "1194x552 zero-inset native layout, dimensions rounded to nearest integer; not Python phone layout",
+  "sourceCropStageXYWH": [
+    45,
+    4,
+    110,
+    12
+  ],
+  "texturePixels3x": [
+    330,
+    36
+  ],
+  "sourceSha256": {
+    "wd2/iphone_skin.py": "e02d7da51b6cdfda30ea79ab921eb51b8c33b2b31be21e3e20f19b9a1b2eb902",
+    "wd2/iphone_ui.py": "1146ccec8049db82a1fe1ca5d5c68dae6311c7ce92dc07369d7a390721badf7e",
+    "wd2/setup_menu.py": "5633326451e768a84a14bde04e452043ba7fac2617a4c71b7b36dcd0495f0c4a",
+    "wd2/surface_renderer.py": "21667d5c34a4289c2b318531118898e225a8ba879bc20624fad9d19dd1b7e14a",
+    "assets/runtime/shapes/4450.svgz": "cc116b79d10537ca6c3d7f67fb436bc4776e92e21bce0d81034914f1ebc2953f"
+  },
+  "cases": {
+    "portrait": {
+      "size": [
+        81,
+        51
+      ],
+      "sha256": "8103c50b9a7c324045d9fb5f307d4112152d4e234cb02294704b3ecc54114e75"
+    },
+    "logo": {
+      "size": [
+        255,
+        62
+      ],
+      "sha256": "0b812ef1a3bfff67696e241c820096aa520328a0426a5c9e1efe71c8a44e0d68"
+    },
+    "header": {
+      "size": [
+        607,
+        62
+      ],
+      "sha256": "63568235f50b0e89cbf319a685ba4b1e06ebc681c3d657bae113f6185ccf0f8d"
+    },
+    "toolbar": {
+      "size": [
+        314,
+        34
+      ],
+      "sha256": "131b57892c069e7e97e9618d6a170175cf0ec7f84cbadcf4f44b119db501d5dd"
+    },
+    "stock": {
+      "size": [
+        300,
+        435
+      ],
+      "sha256": "efece1d7070ec1c84811da7ff5a458dd96fc2ea9450958269ea173fd4d45d426"
+    },
+    "message": {
+      "size": [
+        407,
+        64
+      ],
+      "sha256": "b6c0ea7b5b463d1bac47aa4a51fc3b8723b8e2abcc30ae636efaea2f8e061ee9"
+    },
+    "action": {
+      "size": [
+        314,
+        64
+      ],
+      "sha256": "255f97f643a52fffe6ffa85774a9121f4c4f3b046105e4027b7e741df68e2339"
+    },
+    "threshold-42": {
+      "size": [
+        160,
+        42
+      ],
+      "sha256": "17cdb77eadd1fbf92774ec4059cebec45fb2ce262bb2df3ebb56922b8e62d325"
+    },
+    "threshold-43": {
+      "size": [
+        160,
+        43
+      ],
+      "sha256": "fe2564245e2d77a1fab97c5ed360d0eca8e0caea240ddae1455705df93de0b3e"
+    }
+  },
+  "textureSha256": "b1538c1195574f0edc21eb00e25f6765d0058a16d5992a9b4bdc614b72d7b82a"
+}
