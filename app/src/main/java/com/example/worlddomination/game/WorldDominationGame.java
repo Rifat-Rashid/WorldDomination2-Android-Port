@@ -5794,6 +5794,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     @Override
     public void pause() {
         accumulator = 0f;
+        // Release regenerable targets while the old GL context is still current.
+        // Android restores managed FBOs before our resume callback runs.
+        if (phonePanelRenderer != null) phonePanelRenderer.invalidate();
         audio.pause();
         Gdx.input.setInputProcessor(null);
     }
