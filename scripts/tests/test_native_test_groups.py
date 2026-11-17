@@ -94,14 +94,15 @@ class NativeGroupTests(unittest.TestCase):
                             (groups.SETUP_COLORS, groups.SETUP_COLORS_EVIDENCE),
                             (groups.SETUP_BUTTONS, groups.SETUP_BUTTONS_EVIDENCE),
                             (groups.SETUP_CAROUSEL, groups.SETUP_CAROUSEL_EVIDENCE),
-                            (groups.SETUP_BUILDINGS, groups.SETUP_BUILDINGS_EVIDENCE)):
+                            (groups.SETUP_BUILDINGS, groups.SETUP_BUILDINGS_EVIDENCE),
+                            (groups.SETUP_ENEMIES, groups.SETUP_ENEMIES_EVIDENCE)):
                         if selected in group["classes"]:
                             for name in required:
                                 (folder / name).write_bytes(PNG)
 
     def test_manifest_is_exact_closed_inventory_and_both_groups_make_beta(self):
-        self.assertEqual(94, len(self.manifest["requiredClasses"]))
-        self.assertEqual(144, len(self.manifest["expectedCases"]))
+        self.assertEqual(95, len(self.manifest["requiredClasses"]))
+        self.assertEqual(146, len(self.manifest["expectedCases"]))
         self.assertEqual({"a", "b"}, {g["id"] for g in self.manifest["groups"]})
         self.assertEqual({"beta-ui-evidence", "propaganda-evidence"},
                          {e for g in self.manifest["groups"] for e in g["evidence"]})
@@ -153,9 +154,9 @@ class NativeGroupTests(unittest.TestCase):
     def test_downloaded_groups_require_exact_junit_sets_and_valid_png_headers(self):
         self.fixture()
         result = groups.verify_artifacts(self.manifest, self.root)
-        self.assertEqual(94, sum(row["classes"] for row in result.values()))
-        self.assertEqual(144, sum(row["executed"] for row in result.values()))
-        self.assertEqual(60, sum(row["requiredPngs"] for row in result.values()))
+        self.assertEqual(95, sum(row["classes"] for row in result.values()))
+        self.assertEqual(146, sum(row["executed"] for row in result.values()))
+        self.assertEqual(102, sum(row["requiredPngs"] for row in result.values()))
 
     def test_missing_help_screenshots_cannot_pass_using_other_test_images(self):
         self.fixture()
@@ -217,6 +218,38 @@ class NativeGroupTests(unittest.TestCase):
         (folder / "source-setup-buildings-1194x552-wrong.png").unlink()
         with self.assertRaisesRegex(ValueError, "Missing required setup buildings screenshots"):
             groups.verify_artifacts(self.manifest, self.root)
+
+    def test_missing_setup_enemy_screenshots_are_rejected(self):
+        self.fixture()
+        self.assertEqual(42, len(groups.SETUP_ENEMIES_EVIDENCE))
+        group = next(g for g in self.manifest["groups"] if groups.SETUP_ENEMIES in g["classes"])
+        folder = self.root / ("android-native-" + group["id"] + "-results") / "reports/androidTests/beta-ui-evidence"
+        for name in ("source-enemy-wells-800-wrong.png", "source-selected-1194-0-expected.png",
+                     "source-selected-800-4-shifted.png", "source-selected-1194-4-opaque.png"):
+            image = folder / name
+            image.unlink()
+            with self.subTest(image=name), self.assertRaisesRegex(ValueError, "Missing required setup enemies screenshots"):
+                groups.verify_artifacts(self.manifest, self.root)
+            image.write_bytes(PNG)
+
+    def test_missing_new_setup_enemy_case_is_rejected(self):
+        self.fixture()
+        group = next(g for g in self.manifest["groups"] if groups.SETUP_ENEMIES in g["classes"])
+        xml = self.root / ("android-native-" + group["id"] + "-results") / "outputs/androidTest-results/connected/debug/TEST-device.xml"
+        original = xml.read_bytes()
+        for method in ("originalFourWellsAndArrowAtBothSizes",
+                       "portraitAndCancelUseIndependentSourceRegistrationAndOpacity"):
+            tree = ET.parse(xml)
+            suite = next(s for s in tree.getroot().findall("testsuite")
+                         if s.get("name") == groups.SETUP_ENEMIES)
+            case = next(c for c in suite.findall("testcase") if c.get("name") == method)
+            suite.remove(case)
+            suite.set("tests", str(int(suite.get("tests")) - 1))
+            tree.getroot().set("tests", str(int(tree.getroot().get("tests")) - 1))
+            tree.write(xml)
+            with self.subTest(method=method), self.assertRaisesRegex(ValueError, "JUnit method mismatch"):
+                groups.verify_artifacts(self.manifest, self.root)
+            xml.write_bytes(original)
 
     def test_tampered_junit_skips_and_failed_cases_rejected(self):
         for defect in ("omit-class", "omit-method", "skip", "summary-skip", "fail",

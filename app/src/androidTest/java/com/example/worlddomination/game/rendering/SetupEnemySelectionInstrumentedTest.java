@@ -107,6 +107,36 @@ public final class SetupEnemySelectionInstrumentedTest {
                         }
                     }
 
+                    // Route actual pointer coordinates through both requested world sizes.
+                    Viewport viewport = (Viewport) field("viewport").get(app);
+                    float oldWidth = viewport.getWorldWidth(), oldHeight = viewport.getWorldHeight();
+                    try {
+                        for (float[] size : new float[][]{{800,600},{1194,552}}) {
+                            viewport.setWorldSize(size[0], size[1]);
+                            viewport.apply();
+                            layout.update(size[0], size[1], 0, 0, 0, 0);
+                            for (int removedIndex = 0; removedIndex < 4; removedIndex++) {
+                                for (int i = 0; i < 4; i++) {
+                                    tap(app, layout.leaderCards[i]);
+                                    assertEquals(i + 1, setup.getSelectedOpponentIds().size());
+                                }
+                                java.util.List<Integer> expected = new java.util.ArrayList<>(
+                                        setup.getSelectedOpponentIds());
+                                expected.remove(removedIndex);
+                                tap(app, layout.opponentRemoveIcons[removedIndex]);
+                                assertEquals("actual icon hit compacts selection", expected,
+                                        setup.getSelectedOpponentIds());
+                                while (!setup.getSelectedOpponentIds().isEmpty())
+                                    tap(app, layout.opponentRemoveIcons[0]);
+                                assertTrue(setup.getSelectedOpponentIds().isEmpty());
+                            }
+                        }
+                    } finally {
+                        viewport.setWorldSize(oldWidth, oldHeight);
+                        viewport.apply();
+                        layout.update(oldWidth, oldHeight, 0, 0, 0, 0);
+                    }
+
                     tap(app, layout.leaderPrevious);
                     assertEquals("Previous wraps to the final source leader", 18,
                             field("setupLeaderListStart").getInt(app));

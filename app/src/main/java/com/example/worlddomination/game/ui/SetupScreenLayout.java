@@ -5,6 +5,9 @@ import com.badlogic.gdx.math.Rectangle;
 /** Responsive hit and render geometry for the landscape game setup screen. */
 public final class SetupScreenLayout {
     public static final int VISIBLE_LEADERS = 6;
+    private static final float[] PORTRAIT_X = {-2.3f, -0.75f, -2.3f, -1.85f};
+    private static final float[] PORTRAIT_Y = {-3f, -3f, -3.5f, -3.5f};
+    private static final float[] CANCEL_X = {48.25f, 49.25f, 47.25f, 48.25f};
     /** Presenter_gameMenu.update_leader_list uses _alpha = 20 for selected rivals. */
     public static final float SELECTED_LEADER_ALPHA = 0.2f;
 
@@ -24,6 +27,8 @@ public final class SetupScreenLayout {
     public final Rectangle[] buildingButtons = rectangles(5);
     public final Rectangle[] opponentSlots = rectangles(4);
     public final Rectangle[] opponentRemoveIcons = rectangles(4);
+    public final Rectangle[] opponentWells = rectangles(4);
+    public final Rectangle[] opponentPortraits = rectangles(4);
     public final Rectangle[] leaderCards = rectangles(VISIBLE_LEADERS);
 
     /** Lays out the mockup's top difficulty row, split player style, rival picker and footer. */
@@ -86,17 +91,23 @@ public final class SetupScreenLayout {
         for (int i = 0; i < opponentSlots.length; i++) {
             opponentSlots[i].set(slotX + i * (slotWidth + slotGap), slotY,
                     slotWidth, slotHeight);
-            // Original shape 5825 is 17.3 x 17.1 inside a 67.38 x 72.69 card.
-            // Keep its aspect ratio when adapting the card to a wide phone layout.
-            float iconHeight = Math.min(slotHeight * (17.1f / 72.69f),
-                    slotWidth * (17.1f / 67.38f));
-            float iconWidth = iconHeight * (17.3f / 17.1f);
-            opponentRemoveIcons[i].set(opponentSlots[i].x + slotWidth * 0.97f - iconWidth,
-                    slotY + slotHeight * 0.9925f - iconHeight, iconWidth, iconHeight);
+            // Fit the full 70x75 portrait, then place all leaves in the same
+            // source coordinate system. The larger slot remains the hit target.
+            float scale = Math.min(slotWidth / 70f, slotHeight / 75f);
+            float portraitX = slotX + i * (slotWidth + slotGap) + (slotWidth - 70f * scale) / 2f;
+            float portraitY = slotY + (slotHeight - 75f * scale) / 2f;
+            opponentPortraits[i].set(portraitX, portraitY, 70f * scale, 75f * scale);
+            float wellX = portraitX - PORTRAIT_X[i] * scale;
+            float wellY = portraitY + (PORTRAIT_Y[i] + 5f) * scale;
+            opponentWells[i].set(wellX, wellY, 64f * scale, 70f * scale);
+            opponentRemoveIcons[i].set(wellX + CANCEL_X[i] * scale,
+                    wellY + (70f - 0.35f - 17.1f) * scale, 17.3f * scale, 17.1f * scale);
         }
+        float arrowScale = Math.min(enemiesPanel.width * 0.15f / 100f,
+                opponentWells[0].height / 70f);
         opponentArrow.set(enemiesPanel.x + enemiesPanel.width * 0.12f,
-                slotY + slotHeight * 0.37f,
-                enemiesPanel.width * 0.15f, slotHeight * 0.26f);
+                slotY + (slotHeight - 53f * arrowScale) / 2f,
+                100f * arrowScale, 53f * arrowScale);
 
         leaderCarouselPanel.set(enemiesPanel.x + enemiesPanel.width * 0.07f,
                 enemiesPanel.y + enemiesPanel.height * 0.085f,
