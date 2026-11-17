@@ -87,6 +87,7 @@ public final class OriginalAudio {
     private static final String INTERNAL_ROOT = "original/runtime/audio/";
     private static final String CACHE_ROOT = "worlddomination/audio/";
     private static final float SOURCE_THEME_VOLUME = 1f;
+    private static final float SOURCE_SATELLITE_VOLUME = 1f;
     private static final float EFFECT_VOLUME = 0.8f;
     private static final float SOURCE_UI_VOLUME = 1f;
 
@@ -116,7 +117,7 @@ public final class OriginalAudio {
     private boolean initialized;
 
     public OriginalAudio() {
-        satellitePlayback = new SatelliteAudioPlayback(this::loadMusic, EFFECT_VOLUME);
+        satellitePlayback = new SatelliteAudioPlayback(this::loadMusic, SOURCE_SATELLITE_VOLUME);
         aircraftPlayback = new AircraftAudioPlayback(this::loadMusic, EFFECT_VOLUME,
                 OriginalAudio::dispatchAircraftResume);
     }
@@ -520,6 +521,11 @@ public final class OriginalAudio {
     public void prepareSatelliteAudio(int count) {
         satellitePlayback.prepare(count);
         satellitePlayback.setSoundEnabled(soundEnabled);
+    }
+
+    /** Reserve the source Unit's sound identity before any satellite starts firing. */
+    public SatelliteAudioPlayback.Owner claimSatelliteAudio() {
+        return satellitePlayback.claim();
     }
 
     /** Python BattlePlayback.finish closes remaining sounds at endBattle. */

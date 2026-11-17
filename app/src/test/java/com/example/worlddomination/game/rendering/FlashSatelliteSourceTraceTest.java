@@ -1,5 +1,7 @@
 package com.example.worlddomination.game.rendering;
 
+import com.badlogic.gdx.utils.JsonReader;
+import com.badlogic.gdx.utils.JsonValue;
 import com.example.worlddomination.game.simulation.GameSetup;
 import com.example.worlddomination.game.simulation.GameState;
 
@@ -24,6 +26,28 @@ public final class FlashSatelliteSourceTraceTest {
 
     @Test public void realTurnSatelliteMatchesEverySourceTickAndDelayedCleanup() throws Exception {
         Observation[] source = readSource();
+        JsonValue sourceSound;
+        try (InputStreamReader reader = new InputStreamReader(
+                getClass().getResourceAsStream("/source-satellite-audio-pan.json"),
+                StandardCharsets.UTF_8)) {
+            sourceSound = new JsonReader().parse(reader);
+        }
+        JsonValue soundTicks = sourceSound.get("ticks");
+        assertEquals(LAST_TICK + 1, soundTicks.size);
+        JsonValue soundEvents = sourceSound.get("events");
+        assertEquals(5, soundEvents.size);
+        assertEquals("start", soundEvents.get(0).getString("op"));
+        assertEquals(397, soundEvents.get(0).getInt("tick"));
+        assertEquals(0, soundEvents.get(0).getInt("pan"));
+        assertEquals(100, soundEvents.get(0).getInt("volume"));
+        assertEquals("pan", soundEvents.get(1).getString("op"));
+        assertEquals(-8, soundEvents.get(1).getInt("after"));
+        assertEquals("start", soundEvents.get(2).getString("op"));
+        assertEquals(-8, soundEvents.get(2).getInt("pan"));
+        assertEquals("synthetic immediate completion; actual callback timing not captured",
+                sourceSound.get("completionBoundary").getString("kind"));
+        assertEquals(423, soundEvents.get(3).getInt("tick"));
+        assertEquals(425, soundEvents.get(4).getInt("tick"));
         GameSetup setup = new GameSetup(0L);
         assertTrue(setup.toggleOpponent(0));
         assertTrue(setup.toggleOpponent(1));
@@ -163,6 +187,18 @@ public final class FlashSatelliteSourceTraceTest {
                 assertEquals(4, deletion.removeAtAllUnitsDone());
             }
             assertFrame(tick, source[tick], satellite, ticker, sequence, deletion);
+            JsonValue expectedSound = soundTicks.get(tick);
+            assertEquals(tick, expectedSound.getInt("tick"));
+            boolean soundExists = !expectedSound.get("pan").isNull();
+            assertEquals("source satellite sound created tick " + tick,
+                    soundExists, satellite.hasFiredLaserSound());
+            if (soundExists) {
+                assertEquals("source owner volume tick " + tick, 100,
+                        expectedSound.getInt("volume"));
+                assertEquals("source owner pan tick " + tick,
+                        expectedSound.getInt("pan") / 100f,
+                        satellite.getSourceSoundPan(), 0f);
+            }
         }
         assertEquals(1, impactCount);
         assertEquals(1, flightCueCount);

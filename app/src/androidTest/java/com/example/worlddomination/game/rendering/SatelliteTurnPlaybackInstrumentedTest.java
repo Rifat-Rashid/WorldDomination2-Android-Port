@@ -3,6 +3,9 @@ package com.example.worlddomination.game.rendering;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.audio.Music;
+import com.badlogic.gdx.utils.JsonReader;
+import com.badlogic.gdx.utils.JsonValue;
 import com.example.worlddomination.MainActivity;
 import com.example.worlddomination.game.WorldDominationGame;
 import com.example.worlddomination.game.assets.OriginalFlashAnimationAssets;
@@ -18,6 +21,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.function.Function;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -33,6 +38,12 @@ public final class SatelliteTurnPlaybackInstrumentedTest {
     @Test public void satelliteAndConcurrentChinookKeepSourceOrderThroughCleanup()
             throws Exception {
         Observation[] source = readSource();
+        JsonValue sourceAudio;
+        try (InputStreamReader reader = new InputStreamReader(InstrumentationRegistry
+                .getInstrumentation().getContext().getAssets()
+                .open("source-satellite-audio-pan.json"), StandardCharsets.UTF_8)) {
+            sourceAudio = new JsonReader().parse(reader);
+        }
         try (GameActivityScenario scenario = GameActivityScenario.launch(MainActivity.class)) {
             CountDownLatch done = new CountDownLatch(1);
             AtomicReference<Throwable> failure = new AtomicReference<>();
@@ -52,11 +63,26 @@ public final class SatelliteTurnPlaybackInstrumentedTest {
                     field("game").set(app, game);
                     ((BattlefieldCityRenderer) field("cityRenderer").get(app)).reset(game);
                     ((SourceBattleRecordClock) field("battleRecordClock").get(app)).reset();
-                    invoke(app, "confirmTurnAndPreparePlayback");
                     OriginalAudio audio = (OriginalAudio) field("audio").get(app);
                     SatelliteAudioPlayback soundPlayback = (SatelliteAudioPlayback)
                             SourceBattleCleanupInstrumentedTest.field(OriginalAudio.class,
                                     "satellitePlayback").get(audio);
+                    Field factoryField = SourceBattleCleanupInstrumentedTest.field(
+                            SatelliteAudioPlayback.class, "factory");
+                    @SuppressWarnings("unchecked")
+                    Function<OriginalAudio.Cue, Music> originalFactory =
+                            (Function<OriginalAudio.Cue, Music>) factoryField.get(soundPlayback);
+                    List<RecordedMusic> recorded = new ArrayList<>();
+                    factoryField.set(soundPlayback, (Function<OriginalAudio.Cue, Music>) cue -> {
+                        RecordedMusic music = new RecordedMusic(originalFactory.apply(cue));
+                        recorded.add(music);
+                        return music;
+                    });
+                    invoke(app, "confirmTurnAndPreparePlayback");
+                    assertEquals(2, recorded.size());
+                    RecordedMusic laser = recorded.get(0), attack = recorded.get(1);
+                    int warmPanWrites = laser.panWrites;
+                    int sourcePanWrites = 0;
                     @SuppressWarnings("unchecked")
                     List<Object> soundVoices = (List<Object>) SourceBattleCleanupInstrumentedTest
                             .field(SatelliteAudioPlayback.class, "voices").get(soundPlayback);
@@ -113,6 +139,33 @@ public final class SatelliteTurnPlaybackInstrumentedTest {
                                 tick >= 397, soundUsed.getBoolean(satelliteSound));
                         assertEquals("Sound remains owned until endBattle " + tick,
                                 tick == LAST_TICK, soundClosed.getBoolean(satelliteSound));
+                        for (JsonValue visit : sourceAudio.get("panVisitTicks")) {
+                            if (visit.asInt() == tick) sourcePanWrites++;
+                        }
+                        assertEquals("Source updatePan visits including stop-frame break " + tick,
+                                warmPanWrites + sourcePanWrites, laser.panWrites);
+                        JsonValue mix = sourceAudio.get("ticks").get(tick);
+                        if (!mix.get("pan").isNull()) {
+                            assertEquals("Laser source gain " + tick,
+                                    mix.getInt("volume") / 100f, laser.volume, 0f);
+                            assertEquals("Laser source pan " + tick,
+                                    mix.getInt("pan") / 100f, laser.pan, 0f);
+                            assertEquals("Attack shares its Unit pan " + tick, laser.pan, attack.pan, 0f);
+                            assertEquals("Attack shares its Unit gain " + tick, laser.volume, attack.volume, 0f);
+                        }
+                        if (tick == 397) {
+                            JsonValue start = sourceAudio.get("events").get(0);
+                            assertEquals(1, laser.plays);
+                            assertEquals(start.getInt("pan") / 100f, laser.startedPan, 0f);
+                            assertEquals(start.getInt("volume") / 100f, laser.startedVolume, 0f);
+                            // Match the fixture's explicitly synthetic completion. Natural
+                            // Android timing is tested by SatelliteAudioInstrumentedTest.
+                            laser.listener.onCompletion(laser);
+                            JsonValue next = sourceAudio.get("completionBoundary").get("after");
+                            assertEquals(1, attack.plays);
+                            assertEquals(next.getInt("pan") / 100f, attack.startedPan, 0f);
+                            assertEquals(next.getInt("volume") / 100f, attack.startedVolume, 0f);
+                        }
                         if (tick < LAST_TICK) {
                             assertEquals("One prepared voice; no per-frame sound allocation " + tick,
                                     1, soundVoices.size());
@@ -168,6 +221,10 @@ public final class SatelliteTurnPlaybackInstrumentedTest {
                     assertFalse(sequence.isBlockingInput());
                     assertEquals("EndBattle releases deletion-list references", 0, queue.size());
                     assertTrue("EndBattle releases completion-driven voices", soundVoices.isEmpty());
+                    assertEquals(1, laser.disposals);
+                    assertEquals(1, attack.disposals);
+                    assertEquals("No retained animation-to-sound owners after handoff", 0,
+                            ((java.util.Map<?, ?>) field("satelliteAudioOwners").get(app)).size());
                 } catch (Throwable error) {
                     failure.set(error);
                 } finally { done.countDown(); }
@@ -340,5 +397,34 @@ public final class SatelliteTurnPlaybackInstrumentedTest {
         Field result = WorldDominationGame.class.getDeclaredField(name);
         result.setAccessible(true);
         return result;
+    }
+
+    /** Records the real native boundary without replacing the production gain or factory. */
+    private static final class RecordedMusic implements Music {
+        final Music delegate;
+        OnCompletionListener listener;
+        float pan, volume, startedPan, startedVolume;
+        int plays, panWrites, disposals;
+        RecordedMusic(Music delegate) { assertNotNull(delegate); this.delegate = delegate; }
+        @Override public void play() {
+            plays++; startedPan = pan; startedVolume = volume; delegate.play();
+        }
+        @Override public void pause() { delegate.pause(); }
+        @Override public void stop() { delegate.stop(); }
+        @Override public boolean isPlaying() { return delegate.isPlaying(); }
+        @Override public void setLooping(boolean value) { delegate.setLooping(value); }
+        @Override public boolean isLooping() { return delegate.isLooping(); }
+        @Override public void setVolume(float value) { volume = value; delegate.setVolume(value); }
+        @Override public float getVolume() { return delegate.getVolume(); }
+        @Override public void setPan(float value, float gain) {
+            panWrites++; pan = value; volume = gain; delegate.setPan(value, gain);
+        }
+        @Override public void setPosition(float value) { delegate.setPosition(value); }
+        @Override public float getPosition() { return delegate.getPosition(); }
+        @Override public void dispose() { disposals++; delegate.dispose(); }
+        @Override public void setOnCompletionListener(OnCompletionListener value) {
+            listener = value;
+            delegate.setOnCompletionListener(value == null ? null : ignored -> value.onCompletion(this));
+        }
     }
 }

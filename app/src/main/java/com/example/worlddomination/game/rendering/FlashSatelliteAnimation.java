@@ -121,6 +121,17 @@ public final class FlashSatelliteAnimation implements SourceStoppedClipQueue.Cli
         return pending;
     }
 
+    /** Unit.sound is constructed by the one-time sat_laser action, not during approach. */
+    public boolean hasFiredLaserSound() {
+        return laserCueTaken;
+    }
+
+    /** Unit.soundPan: Math.round((MC._x / 8 - 50) * 2), then MenuSound clamps. */
+    public float getSourceSoundPan() {
+        double percent = Math.floor(((double) displaySourceX / 8d - 50d) * 2d + .5d);
+        return (float) (Math.max(-100d, Math.min(100d, percent)) / 100d);
+    }
+
     public boolean isStarted() {
         return started;
     }

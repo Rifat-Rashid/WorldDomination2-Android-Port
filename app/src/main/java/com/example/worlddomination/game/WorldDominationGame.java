@@ -37,6 +37,7 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.example.worlddomination.game.audio.OriginalAudio;
+import com.example.worlddomination.game.audio.SatelliteAudioPlayback;
 import com.example.worlddomination.game.audio.AircraftAudioPlayback;
 import com.example.worlddomination.game.audio.AntiDefenseAudioPlayback;
 import com.example.worlddomination.game.assets.OriginalCityAssets;
@@ -273,6 +274,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private final List<FlashAntiDefenseTrackingAnimation> antiDefenseTrackingAnimations =
             new ArrayList<>();
     private final List<FlashSatelliteAnimation> satelliteBattleAnimations = new ArrayList<>();
+    private final java.util.Map<FlashSatelliteAnimation, SatelliteAudioPlayback.Owner>
+            satelliteAudioOwners = new java.util.IdentityHashMap<>();
     private final List<PendingBattleAnimation> pendingBattleAnimations = new ArrayList<>();
     private final MatchOutcomeSequence outcomeSequence =
             new MatchOutcomeSequence();
@@ -1211,9 +1214,13 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                         route.targetPlayerId, route.targetCityIndex, 0, null));
             }
         }
-        if (animation.takeLaserCue()) {
-            audio.play(OriginalAudio.Cue.SATELLITE_LASER);
-        }
+        SatelliteAudioPlayback.Owner voice = satelliteAudioOwners.get(animation);
+        if (animation.takeLaserCue() && voice != null) voice.playLaser();
+        // Source creates the laser at centered pan, then moveUnit updates it in
+        // the same visit. The stop-frame break skips that update; removal's final
+        // visit still runs it. Keep the owner alive until the battle handoff.
+        if (voice != null && animation.hasFiredLaserSound() && !animation.didStopSourceFrame())
+            voice.setPan(animation.getSourceSoundPan());
         // Stopped satellite clips remain until Presenter.allUnitsDone.
         if (animation.didStopSourceFrame()) return true;
         return false;
@@ -1361,6 +1368,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         antiDefenseTrackingAnimations.clear();
         clearSourceAirDefenses();
         satelliteBattleAnimations.clear();
+        satelliteAudioOwners.clear();
         satelliteFlightCuePlayed = false;
         pendingBattleAnimations.clear();
         battlePresentationRecords = Collections.emptyList();
@@ -3919,6 +3927,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         antiDefenseTrackingAnimations.clear();
         clearSourceAirDefenses();
         satelliteBattleAnimations.clear();
+        satelliteAudioOwners.clear();
         satelliteFlightCuePlayed = false;
         pendingBattleAnimations.clear();
     }
@@ -4423,6 +4432,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 clearSourceAirDefenses();
                 audio.finishAntiDefenseAudio();
                 satelliteBattleAnimations.clear();
+                satelliteAudioOwners.clear();
                 satelliteFlightCuePlayed = false;
                 pendingBattleAnimations.clear();
                 modalOpen = false;
@@ -5423,6 +5433,11 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         // Presenter initializes religion child clips after constructing routes.
         // These callbacks share the private presentation stream with the units.
         audio.prepareSatelliteAudio(satelliteBattleAnimations.size());
+        satelliteAudioOwners.clear();
+        for (FlashSatelliteAnimation satellite : satelliteBattleAnimations) {
+            SatelliteAudioPlayback.Owner owner = audio.claimSatelliteAudio();
+            if (owner != null) satelliteAudioOwners.put(satellite, owner);
+        }
         battleActionFrames.begin(actionBuildingAnimations,
                 game.getLastTurnActionBuildings(), presentationRandom);
     }
@@ -5832,6 +5847,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         antiDefenseTrackingAnimations.clear();
         clearSourceAirDefenses();
         satelliteBattleAnimations.clear();
+        satelliteAudioOwners.clear();
         pendingBattleAnimations.clear();
         audio.dispose();
         if (setupPanelRenderer != null) setupPanelRenderer.dispose();
