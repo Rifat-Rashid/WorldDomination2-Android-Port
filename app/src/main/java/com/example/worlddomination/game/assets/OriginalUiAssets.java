@@ -20,6 +20,8 @@ public final class OriginalUiAssets implements Disposable {
     public final TextureRegion navigationPanel;
     private final Texture informationPanelTexture;
     public final TextureRegion informationPanel;
+    private final Texture[] equipmentCardTextures = new Texture[8];
+    public final TextureRegion[] equipmentCards = new TextureRegion[8];
     private final Texture productionModalTexture;
     private final Texture neutralButtonTexture;
     private final Texture propagandaFrameTexture;
@@ -73,6 +75,15 @@ public final class OriginalUiAssets implements Disposable {
                 Gdx.files.internal("original/ui/information-panel.png"), true);
         informationPanelTexture.setFilter(TextureFilter.MipMapLinearLinear, TextureFilter.Linear);
         informationPanel = new TextureRegion(informationPanelTexture);
+        String[] equipmentNames = {"rockets", "aircraft", "special", "warheads",
+                "bioloads", "infantry", "intelligence", "defense"};
+        for (int group = 0; group < equipmentNames.length; group++) {
+            Texture texture = new Texture(Gdx.files.internal(
+                    "original/ui/equipment-cards/" + equipmentNames[group] + ".png"), true);
+            texture.setFilter(TextureFilter.MipMapLinearLinear, TextureFilter.Linear);
+            equipmentCardTextures[group] = texture;
+            equipmentCards[group] = new TextureRegion(texture);
+        }
         productionModalTexture = new Texture(
                 Gdx.files.internal("original/ui/production-modal.png"), true);
         productionModalTexture.setFilter(TextureFilter.Linear, TextureFilter.Linear);
@@ -144,6 +155,7 @@ public final class OriginalUiAssets implements Disposable {
         battlefieldFrameTexture.dispose();
         navigationPanelTexture.dispose();
         informationPanelTexture.dispose();
+        for (Texture texture : equipmentCardTextures) texture.dispose();
         productionModalTexture.dispose();
         propagandaFrameTexture.dispose();
         propagandaStrengthFont.dispose();

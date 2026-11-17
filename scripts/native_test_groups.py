@@ -121,6 +121,13 @@ STATISTIC_BARS_EVIDENCE = {
     "source-statistic-bars-expected.png",
     "source-statistic-bars-eight-band.png",
 }
+EQUIPMENT_CARDS = (
+    "com.example.worlddomination.game.rendering.SourceEquipmentCardsInstrumentedTest")
+EQUIPMENT_CARDS_EVIDENCE = {
+    f"source-equipment-cards-{variant}.png"
+    for variant in ("actual", "expected", "wrong-band", "missing-art",
+                    "world-top", "world-bottom", "world-missing")
+}
 
 
 def load_manifest(path: Path = MANIFEST) -> dict:
@@ -273,7 +280,8 @@ def verify_group_artifact(manifest: dict, group: dict, artifact: Path) -> tuple[
                     (SETUP_ENEMIES, SETUP_ENEMIES_EVIDENCE, "setup enemies"),
                     (NAVIGATION_PANEL, NAVIGATION_PANEL_EVIDENCE, "navigation panel"),
                     (INFORMATION_PANEL, INFORMATION_PANEL_EVIDENCE, "information panel"),
-                    (STATISTIC_BARS, STATISTIC_BARS_EVIDENCE, "statistic bars")):
+                    (STATISTIC_BARS, STATISTIC_BARS_EVIDENCE, "statistic bars"),
+                    (EQUIPMENT_CARDS, EQUIPMENT_CARDS_EVIDENCE, "equipment cards")):
                 if selected_class in group["classes"]:
                     missing = required - names
                     if missing:

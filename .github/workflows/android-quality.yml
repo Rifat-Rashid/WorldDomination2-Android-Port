@@ -99,7 +99,7 @@ jobs:
           python-version: "3.x"
 
       - name: Install source artwork decoder
-        run: python3 -m pip install Pillow
+        run: python3 -m pip install Pillow resvg-py==0.5.0
 
       - name: Test gameplay boundary check failure cases
         run: python3 -m unittest discover -s scripts/tests -p "test_*.py" -v

@@ -14,6 +14,7 @@ import com.example.worlddomination.game.rendering.SourceHelpRenderer;
 import com.example.worlddomination.game.rendering.SourceNavigationGradient;
 import com.example.worlddomination.game.rendering.SourceNavigationPanel;
 import com.example.worlddomination.game.rendering.SourceInformationPanel;
+import com.example.worlddomination.game.rendering.SourceEquipmentCards;
 import com.example.worlddomination.game.ui.SourceHelpState;
 import com.example.worlddomination.game.rendering.MessagePanelRenderer;
 import com.example.worlddomination.game.ui.MessagePanelLayout;
@@ -134,6 +135,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private static final float NAV_ROW_HEIGHT = 40f;
     private static final float NAV_ROW_GAP = 4f;
     private static final float EQUIPMENT_ROW_HEIGHT = 36f;
+    private static final float EQUIPMENT_TOP_PADDING = 10f;
     private static final float MAP_WIDTH = 523f;
     private static final float MAP_HEIGHT = 318f;
     private static final int RESEARCH_ROWS_PER_PAGE = 6;
@@ -368,6 +370,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private MessagePanelRenderer messagePanelRenderer;
     private SourceNavigationPanel navigationPanelRenderer;
     private SourceInformationPanel informationPanelRenderer;
+    private SourceEquipmentCards equipmentCardsRenderer;
     private OriginalActionTubeAssets actionTubeAssets;
     private final ActionSlotAnimation actionSlotAnimation = new ActionSlotAnimation();
     private final ConfirmTurnAnimation confirmTurnAnimation = new ConfirmTurnAnimation();
@@ -468,7 +471,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     }
 
     private static float equipmentContentHeight() {
-        float height = 0f;
+        // Include the inset used by drawing so the last frame can scroll fully into view.
+        float height = EQUIPMENT_TOP_PADDING;
         for (int i = 0; i < EQUIPMENT_GROUP_STARTS.length; i++) {
             int count = EQUIPMENT_GROUP_COUNTS[i];
             int columns = i == 2 ? 1 : 2;
@@ -504,6 +508,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         uiAssets = new OriginalUiAssets();
         navigationPanelRenderer = new SourceNavigationPanel(uiAssets.navigationPanel);
         informationPanelRenderer = new SourceInformationPanel(uiAssets.informationPanel);
+        equipmentCardsRenderer = new SourceEquipmentCards(uiAssets.equipmentCards);
         battlefieldFrameRenderer = new OriginalBattlefieldFrame(uiAssets.battlefieldFrame);
         setupPanelRenderer = new SourceSetupPanelRenderer();
         splashAssets = new OriginalSplashAssets();
@@ -2485,8 +2490,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private void drawEquipmentRows() {
         setScissor(equipmentViewport);
         float top = equipmentViewport.y + equipmentViewport.height
-                + equipmentScroll.getOffset() - 10f;
-        shapes.begin(ShapeRenderer.ShapeType.Filled);
+                + equipmentScroll.getOffset() - EQUIPMENT_TOP_PADDING;
         for (int group = 0; group < EQUIPMENT_GROUP_STARTS.length; group++) {
             int start = EQUIPMENT_GROUP_STARTS[group];
             int count = EQUIPMENT_GROUP_COUNTS[group];
@@ -2499,7 +2503,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                     equipmentViewport.width - 8f, cardHeight);
             equipmentRows[start].set(card.x, card.y + card.height - 23f,
                     card.width, 22f);
-            drawPanelFill(card);
 
             float bodyX = card.x + 8f;
             float bodyWidth = card.width - 16f;
@@ -2526,12 +2529,14 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             }
             top = cardY - 3f;
         }
-        shapes.end();
-
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
         for (int group = 0; group < equipmentCards.length; group++) {
-            drawPanelTexture(equipmentCards[group]);
+            Rectangle card = equipmentCards[group];
+            if (card.y + card.height >= equipmentViewport.y
+                    && card.y <= equipmentViewport.y + equipmentViewport.height) {
+                equipmentCardsRenderer.draw(batch, group, card);
+            }
         }
         for (int rowIndex = 0; rowIndex < EQUIPMENT_ROWS.length; rowIndex++) {
             if (isEquipmentHeading(rowIndex)) {
@@ -2554,15 +2559,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             batch.draw(uiAssets.stockCounter, counterX, controlY, counterWidth, controlHeight);
         }
         batch.end();
-
-        shapes.begin(ShapeRenderer.ShapeType.Line);
-        for (Rectangle card : equipmentCards) {
-            if (card.y + card.height >= equipmentViewport.y
-                    && card.y <= equipmentViewport.y + equipmentViewport.height) {
-                drawPanelEdges(card);
-            }
-        }
-        shapes.end();
 
         batch.begin();
         float originalTextScale = font.getScaleX();
@@ -2618,22 +2614,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         font.getData().setScale(originalTextScale);
         batch.end();
 
-        shapes.setProjectionMatrix(camera.combined);
-        shapes.begin(ShapeRenderer.ShapeType.Line);
-        shapes.setColor(0.36f, 0.49f, 0.54f, 1f);
-        for (int group = 0; group < EQUIPMENT_GROUP_STARTS.length; group++) {
-            Rectangle card = equipmentCards[group];
-            if (card.y + card.height < equipmentViewport.y
-                    || card.y > equipmentViewport.y + equipmentViewport.height) {
-                continue;
-            }
-            Rectangle heading = equipmentRows[EQUIPMENT_GROUP_STARTS[group]];
-            shapes.line(card.x + 8f, heading.y + 11f,
-                    heading.x + heading.width * 0.30f, heading.y + 11f);
-            shapes.line(heading.x + heading.width * 0.70f, heading.y + 11f,
-                    card.x + card.width - 8f, heading.y + 11f);
-        }
-        shapes.end();
         Gdx.gl.glDisable(GL20.GL_SCISSOR_TEST);
         drawScrollbar(equipmentViewport, equipmentScroll, equipmentContentHeight());
     }

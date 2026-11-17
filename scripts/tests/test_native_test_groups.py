@@ -98,14 +98,15 @@ class NativeGroupTests(unittest.TestCase):
                             (groups.SETUP_ENEMIES, groups.SETUP_ENEMIES_EVIDENCE),
                             (groups.NAVIGATION_PANEL, groups.NAVIGATION_PANEL_EVIDENCE),
                             (groups.INFORMATION_PANEL, groups.INFORMATION_PANEL_EVIDENCE),
-                            (groups.STATISTIC_BARS, groups.STATISTIC_BARS_EVIDENCE)):
+                            (groups.STATISTIC_BARS, groups.STATISTIC_BARS_EVIDENCE),
+                            (groups.EQUIPMENT_CARDS, groups.EQUIPMENT_CARDS_EVIDENCE)):
                         if selected in group["classes"]:
                             for name in required:
                                 (folder / name).write_bytes(PNG)
 
     def test_manifest_is_exact_closed_inventory_and_both_groups_make_beta(self):
-        self.assertEqual(98, len(self.manifest["requiredClasses"]))
-        self.assertEqual(154, len(self.manifest["expectedCases"]))
+        self.assertEqual(99, len(self.manifest["requiredClasses"]))
+        self.assertEqual(156, len(self.manifest["expectedCases"]))
         self.assertEqual({"a", "b"}, {g["id"] for g in self.manifest["groups"]})
         self.assertEqual({"beta-ui-evidence", "propaganda-evidence"},
                          {e for g in self.manifest["groups"] for e in g["evidence"]})
@@ -157,9 +158,24 @@ class NativeGroupTests(unittest.TestCase):
     def test_downloaded_groups_require_exact_junit_sets_and_valid_png_headers(self):
         self.fixture()
         result = groups.verify_artifacts(self.manifest, self.root)
-        self.assertEqual(98, sum(row["classes"] for row in result.values()))
-        self.assertEqual(154, sum(row["executed"] for row in result.values()))
-        self.assertEqual(127, sum(row["requiredPngs"] for row in result.values()))
+        self.assertEqual(99, sum(row["classes"] for row in result.values()))
+        self.assertEqual(156, sum(row["executed"] for row in result.values()))
+        self.assertEqual(134, sum(row["requiredPngs"] for row in result.values()))
+
+    def test_missing_equipment_card_screenshots_are_rejected(self):
+        self.fixture()
+        self.assertEqual(7, len(groups.EQUIPMENT_CARDS_EVIDENCE))
+        group = next(g for g in self.manifest["groups"]
+                     if groups.EQUIPMENT_CARDS in g["classes"])
+        folder = (self.root / ("android-native-" + group["id"] + "-results")
+                  / "reports/androidTests/beta-ui-evidence")
+        for name in sorted(groups.EQUIPMENT_CARDS_EVIDENCE):
+            image = folder / name
+            image.unlink()
+            with self.subTest(image=name), self.assertRaisesRegex(
+                    ValueError, "Missing required equipment cards screenshots"):
+                groups.verify_artifacts(self.manifest, self.root)
+            image.write_bytes(PNG)
 
     def test_missing_information_panel_screenshots_are_rejected(self):
         self.fixture()
