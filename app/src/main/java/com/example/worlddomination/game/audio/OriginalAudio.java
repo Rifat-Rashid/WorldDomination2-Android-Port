@@ -78,6 +78,7 @@ public final class OriginalAudio {
     private static final String CACHE_ROOT = "worlddomination/audio/";
     private static final float MUSIC_VOLUME = 0.55f;
     private static final float EFFECT_VOLUME = 0.8f;
+    private static final float SOURCE_UI_VOLUME = 1f;
 
     private final Map<Cue, Sound> sounds = new EnumMap<>(Cue.class);
     private final Map<Cue, Long> soundLifetimes = new EnumMap<>(Cue.class);
@@ -246,7 +247,7 @@ public final class OriginalAudio {
     public void finishBattleAmbient() { battleAmbient.stopAll(); }
 
     public void play(Cue cue) {
-        play(cue, 0f);
+        play(cue, sourceUiPan(cue));
     }
 
     /** Plays an original effect at the source Flash stage's normalized horizontal position. */
@@ -269,8 +270,9 @@ public final class OriginalAudio {
         }
         if (sound == null) return -1L;
         float boundedPan = Float.isFinite(pan) ? Math.max(-1f, Math.min(1f, pan)) : 0f;
-        long id = sound.play(outputMuted ? 0f : EFFECT_VOLUME, 1f, boundedPan);
-        soundVoices.register(sound, id, EFFECT_VOLUME, boundedPan, false,
+        float volume = sourceEffectVolume(cue);
+        long id = sound.play(outputMuted ? 0f : volume, 1f, boundedPan);
+        soundVoices.register(sound, id, volume, boundedPan, false,
                 soundLifetimes.getOrDefault(cue, Long.MAX_VALUE));
         return id;
     }
@@ -285,9 +287,37 @@ public final class OriginalAudio {
             sound = loadSound(cue);
         }
         if (sound == null) return -1L;
-        long id = sound.loop(outputMuted ? 0f : EFFECT_VOLUME);
-        soundVoices.register(sound, id, EFFECT_VOLUME, 0f, true, Long.MAX_VALUE);
+        float volume = sourceEffectVolume(cue);
+        float pan = sourceUiPan(cue);
+        long id = sound.loop(outputMuted ? 0f : volume, 1f, pan);
+        soundVoices.register(sound, id, volume, pan, true, Long.MAX_VALUE);
         return id;
+    }
+
+    /** Sub_model's interface action table supplies two pan overrides and no volume overrides. */
+    private static float sourceUiPan(Cue cue) {
+        if (cue == Cue.ACTION_SWITCH || cue == Cue.ACTION_SWITCH_OFF) return -0.8f;
+        if (cue == Cue.STOCK_SELECT) return 0.8f;
+        return 0f;
+    }
+
+    private static float sourceEffectVolume(Cue cue) {
+        switch (cue) {
+            case STARTUP:
+            case ACTION_SWITCH:
+            case ACTION_SWITCH_OFF:
+            case STOCK_SELECT:
+            case UNIT_SELECT:
+            case CONFIRM_OPEN:
+            case CONFIRM_CLOSE:
+            case ACTION_ACCEPT:
+            case ACTION_OPEN:
+            case ACTION_CLOSE:
+                // MenuSound starts at 100%; none of these action records sets _vol.
+                return SOURCE_UI_VOLUME;
+            default:
+                return EFFECT_VOLUME;
+        }
     }
 
     public void stop(Cue cue, long soundId) {

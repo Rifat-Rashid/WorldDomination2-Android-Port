@@ -654,6 +654,9 @@ jobs:
           - id: asset-audio-tests
             check: Asset and audio integrity tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.*" --tests "com.example.worlddomination.game.audio.*" --tests "com.example.worlddomination.ExampleUnitTest"'
+          - id: source-ui-action-audio
+            check: Source interface sound gain and panning
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.audio.SourceUiActionAudioTest"'
           - id: original-ui-manifest-tests
             check: Original UI asset manifest tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.OriginalUiAssetManifestTest"'
