@@ -109,6 +109,11 @@ public final class OriginalFlashAnimationAssets implements Disposable {
             "tankTop_orange", "tankTop_yellow", "tankTop_green"
     };
 
+    private final CachedAssetPredicate cachedShape =
+            new CachedAssetPredicate(OriginalFlashAnimationAssets::hasPackagedShape);
+    private final CachedAssetPredicate cachedCenterUiArt = new CachedAssetPredicate(
+            id -> cachedShape.test(id)
+                    || Gdx.files.internal(TEXT_PATH + id + ".svgz").exists());
     private final Object loadLock = new Object();
     private volatile Map<String, FlashAnimationTimeline> timelines = Collections.emptyMap();
     private volatile Map<Integer, FlashAnimationTimeline> nestedTimelines =
@@ -196,7 +201,7 @@ public final class OriginalFlashAnimationAssets implements Disposable {
         }
 
         Map<Integer, TextureRegion> generatedRegions = new LinkedHashMap<>();
-        Set<Integer> battleShapeIds = collectShapeIds(timelines, nestedTimelines);
+        Set<Integer> battleShapeIds = collectShapeIds(timelines, nestedTimelines, cachedShape);
         battleShapeIds.addAll(centerUiArtworkIds);
         battleShapeIds = excludeAlreadyPackedShapes(battleShapeIds,
                 portraitShapeIds, earlyPackedShapeIds);
@@ -298,7 +303,7 @@ public final class OriginalFlashAnimationAssets implements Disposable {
             FlashAnimationTimeline portraits = loadTimelineBySymbolId(
                     scene, LEADER_PORTRAITS_SYMBOL_ID);
             Set<Integer> loadedPortraitIds = collectPortraitShapeIds(
-                    portraits, OriginalFlashAnimationAssets::hasPackagedShape);
+                    portraits, cachedShape);
             Map<Integer, ShapeOrigin> loadedShapeOrigins = new LinkedHashMap<>();
             packShapes(portraitPacker, loadedPortraitIds, loadedShapeOrigins);
             beforePortraitPublication.run();
@@ -337,11 +342,11 @@ public final class OriginalFlashAnimationAssets implements Disposable {
             earlyChildren.putAll(flagChildren);
             Set<Integer> loadedCenterUiArt = collectCenterUiArtworkIds(loadedCenterUi,
                     centerUiChildren, centerUiFrames,
-                    OriginalFlashAnimationAssets::hasPackagedCenterUiArt);
+                    cachedCenterUiArt);
             Set<Integer> loadedEarlyCenterUiArt = collectInitialCenterUiArtworkIds(
                     loadedCenterUi, centerUiChildren,
                     centerUiFrames,
-                    OriginalFlashAnimationAssets::hasPackagedCenterUiArt);
+                    cachedCenterUiArt);
 
             synchronized (loadLock) {
                 if (disposed) {
@@ -353,10 +358,10 @@ public final class OriginalFlashAnimationAssets implements Disposable {
                 centerUiArtworkIds = Collections.unmodifiableSet(loadedCenterUiArt);
             }
 
-            Set<Integer> earlyShapeIds = collectSetupPortraitShapeIds(loadedTimelines);
+            Set<Integer> earlyShapeIds = collectSetupPortraitShapeIds(loadedTimelines, cachedShape);
             earlyShapeIds.addAll(loadedEarlyCenterUiArt);
             earlyShapeIds.addAll(collectFlagFamilyShapeIds(loadedTimelines, flagChildren,
-                    OriginalFlashAnimationAssets::hasPackagedShape));
+                    cachedShape));
             earlyShapeIds.removeAll(loadedPortraitIds);
             earlyUiPacker = new PixmapPacker(1024, 1024,
                     Pixmap.Format.RGBA8888, 2, true);
@@ -415,11 +420,11 @@ public final class OriginalFlashAnimationAssets implements Disposable {
             packer = new PixmapPacker(1024, 1024,
                     Pixmap.Format.RGBA8888, 2, true);
             Set<Integer> battleShapeIds = collectShapeIds(loadedTimelines,
-                    loadedNestedTimelines);
+                    loadedNestedTimelines, cachedShape);
             battleShapeIds.addAll(loadedCenterUiArt);
             battleShapeIds.addAll(collectFrameShapeIds(loadedCenterUi,
                     new int[]{researchFrame, massMediaFrame},
-                    OriginalFlashAnimationAssets::hasPackagedShape));
+                    cachedShape));
             battleShapeIds.removeAll(earlyShapeIds);
             battleShapeIds.removeAll(loadedPortraitIds);
             packShapes(packer, battleShapeIds, loadedShapeOrigins);

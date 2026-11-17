@@ -336,6 +336,9 @@ jobs:
           - id: source-defeated-flag-credit
             check: Source defeated flag attribution and score credit
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.SourceDefeatedFlagCreditTest"'
+          - id: cached-flash-asset-lookups
+            check: Flash asset lookup cache and ordered scene equivalence
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.CachedAssetPredicateTest" --tests "com.example.worlddomination.game.assets.OriginalFlashAnimationAssetsTest.packagedSceneCollectorsPreserveOrderedIdsWithCachedExistenceChecks"'
           - id: source-legal-victory-campaign
             check: Legal combat campaign through source victory
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.SourceLegalVictoryCampaignTest"'

@@ -169,6 +169,44 @@ public final class OriginalFlashAnimationAssetsTest {
     }
 
     @Test
+    public void packagedSceneCollectorsPreserveOrderedIdsWithCachedExistenceChecks()
+            throws IOException {
+        JsonValue scene = loadScene();
+        Map<String, FlashAnimationTimeline> timelines =
+                OriginalFlashAnimationAssets.loadTimelines(scene);
+        Map<Integer, FlashAnimationTimeline> children =
+                OriginalFlashAnimationAssets.loadNestedTimelines(scene, timelines.get("flag_pole"));
+        Map<Integer, Integer> uncachedCalls = new LinkedHashMap<>();
+        java.util.function.IntPredicate uncached = id -> {
+            uncachedCalls.merge(id, 1, Integer::sum);
+            return Files.isRegularFile(shapeAsset(id));
+        };
+        Map<Integer, Integer> cachedCalls = new LinkedHashMap<>();
+        CachedAssetPredicate cached = new CachedAssetPredicate(id -> {
+            cachedCalls.merge(id, 1, Integer::sum);
+            return Files.isRegularFile(shapeAsset(id));
+        });
+        for (int pass = 0; pass < 2; pass++) {
+            Set<Integer> expected = OriginalFlashAnimationAssets.collectShapeIds(
+                    timelines, children, uncached);
+            Set<Integer> actual = OriginalFlashAnimationAssets.collectShapeIds(
+                    timelines, children, cached);
+            assertEquals(new java.util.ArrayList<>(expected), new java.util.ArrayList<>(actual));
+        }
+        assertEquals(uncachedCalls.keySet(), cachedCalls.keySet());
+        assertTrue("Expected repeated scene references",
+                uncachedCalls.values().stream().anyMatch(count -> count > 2));
+        assertTrue("Expected packaged shapes",
+                cachedCalls.keySet().stream().anyMatch(id -> Files.isRegularFile(shapeAsset(id))));
+        assertTrue("Expected missing shape candidates, including nested clips",
+                cachedCalls.keySet().stream().anyMatch(id -> !Files.isRegularFile(shapeAsset(id))));
+        for (Map.Entry<Integer, Integer> entry : cachedCalls.entrySet()) {
+            assertEquals("Each present or missing ID should be probed once: " + entry.getKey(),
+                    Integer.valueOf(1), entry.getValue());
+        }
+    }
+
+    @Test
     public void flagPoleFamilyUsesEarlyAtlasWithoutDuplicateBattlePacking()
             throws IOException {
         JsonValue scene = loadScene();
