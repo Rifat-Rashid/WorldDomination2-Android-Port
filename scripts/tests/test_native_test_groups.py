@@ -107,8 +107,8 @@ class NativeGroupTests(unittest.TestCase):
                                 (folder / name).write_bytes(PNG)
 
     def test_manifest_is_exact_closed_inventory_and_both_groups_make_beta(self):
-        self.assertEqual(104, len(self.manifest["requiredClasses"]))
-        self.assertEqual(163, len(self.manifest["expectedCases"]))
+        self.assertEqual(105, len(self.manifest["requiredClasses"]))
+        self.assertEqual(165, len(self.manifest["expectedCases"]))
         self.assertEqual({"a", "b"}, {g["id"] for g in self.manifest["groups"]})
         self.assertEqual({"beta-ui-evidence", "propaganda-evidence"},
                          {e for g in self.manifest["groups"] for e in g["evidence"]})
@@ -116,6 +116,14 @@ class NativeGroupTests(unittest.TestCase):
                          {c for g in self.manifest["groups"] for c in g["classes"]})
         self.assertEqual(set(self.manifest["requiredClasses"]),
                          {name for name, _ in self.manifest["expectedCases"]})
+
+    def test_bitmap_pixmap_transfer_is_selected_in_group_a_with_both_cases(self):
+        name = "com.example.worlddomination.game.assets.BitmapPixmapTransferInstrumentedTest"
+        self.assertIn(name, groups.group_by_id(self.manifest, "a")["classes"])
+        self.assertEqual({"exactTransferForPremultipliedAndUnpremultipliedPixels",
+                          "exactTransferForPackagedOriginalBitmap"},
+                         {method for selected, method in self.manifest["expectedCases"]
+                          if selected == name})
 
     def test_missing_duplicate_and_unselected_classes_rejected(self):
         data = copy.deepcopy(self.manifest)
@@ -160,8 +168,8 @@ class NativeGroupTests(unittest.TestCase):
     def test_downloaded_groups_require_exact_junit_sets_and_valid_png_headers(self):
         self.fixture()
         result = groups.verify_artifacts(self.manifest, self.root)
-        self.assertEqual(104, sum(row["classes"] for row in result.values()))
-        self.assertEqual(163, sum(row["executed"] for row in result.values()))
+        self.assertEqual(105, sum(row["classes"] for row in result.values()))
+        self.assertEqual(165, sum(row["executed"] for row in result.values()))
         self.assertEqual(152, sum(row["requiredPngs"] for row in result.values()))
 
     def test_missing_phone_toolbar_audio_screenshots_are_rejected(self):

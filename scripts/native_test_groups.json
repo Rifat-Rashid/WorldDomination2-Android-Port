@@ -98,6 +98,7 @@
     "com.example.worlddomination.game.rendering.SourceScorePanelInstrumentedTest",
     "com.example.worlddomination.game.rendering.CenteredTextLayoutInstrumentedTest",
     "com.example.worlddomination.game.assets.SetupPortraitReadinessInstrumentedTest",
+    "com.example.worlddomination.game.assets.BitmapPixmapTransferInstrumentedTest",
     "com.example.worlddomination.game.rendering.SourceSetupPortraitRenderingInstrumentedTest",
     "com.example.worlddomination.game.rendering.SourceSetupPanelsInstrumentedTest",
     "com.example.worlddomination.game.rendering.SetupPanelLayoutInstrumentedTest",
@@ -117,6 +118,7 @@
       "classes": [
         "com.example.worlddomination.testing.GameActivityScenarioInstrumentedTest",
         "com.example.worlddomination.game.assets.EarlySetupPortraitsInstrumentedTest",
+        "com.example.worlddomination.game.assets.BitmapPixmapTransferInstrumentedTest",
         "com.example.worlddomination.game.rendering.FlashAtlasContextRecoveryInstrumentedTest",
         "com.example.worlddomination.game.rendering.FlashBattleContextRecoveryInstrumentedTest",
         "com.example.worlddomination.game.rendering.SourceCityOrderMarkersInstrumentedTest",
@@ -886,6 +888,14 @@
     [
       "com.example.worlddomination.game.rendering.ActionRevealAudioInstrumentedTest",
       "worldRevealsSourceOneShotsAndClosesOnlyBattleVoices"
+    ],
+    [
+      "com.example.worlddomination.game.assets.BitmapPixmapTransferInstrumentedTest",
+      "exactTransferForPremultipliedAndUnpremultipliedPixels"
+    ],
+    [
+      "com.example.worlddomination.game.assets.BitmapPixmapTransferInstrumentedTest",
+      "exactTransferForPackagedOriginalBitmap"
     ]
   ]
 }
