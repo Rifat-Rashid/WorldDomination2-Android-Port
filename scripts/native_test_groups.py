@@ -33,6 +33,12 @@ HELP_EVIDENCE = {"source-help-live-overview.png"} | {
 
 
 SETUP_PANELS = "com.example.worlddomination.game.rendering.SourceSetupPanelsInstrumentedTest"
+SETUP_COLORS = "com.example.worlddomination.game.rendering.SourceSetupColorsInstrumentedTest"
+SETUP_COLORS_EVIDENCE = {
+    f"source-setup-colors-{size}-{variant}.png"
+    for size in ("800x600", "1194x552")
+    for variant in ("actual", "expected")
+}
 SETUP_LAYOUT = "com.example.worlddomination.game.rendering.SetupPanelLayoutInstrumentedTest"
 SETUP_PANELS_EVIDENCE = {
     f"source-setup-panels-{size}{variant}.png"
@@ -188,7 +194,8 @@ def verify_group_artifact(manifest: dict, group: dict, artifact: Path) -> tuple[
             for selected_class, required, label in (
                     (HELP, HELP_EVIDENCE, "Help"),
                     (SETUP_PANELS, SETUP_PANELS_EVIDENCE, "setup panels"),
-                    (SETUP_LAYOUT, SETUP_LAYOUT_EVIDENCE, "setup layout")):
+                    (SETUP_LAYOUT, SETUP_LAYOUT_EVIDENCE, "setup layout"),
+                    (SETUP_COLORS, SETUP_COLORS_EVIDENCE, "setup colors")):
                 if selected_class in group["classes"]:
                     missing = required - names
                     if missing:

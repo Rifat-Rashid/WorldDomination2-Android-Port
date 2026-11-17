@@ -287,7 +287,7 @@ public final class OriginalFlashAnimationAssets implements Disposable {
     }
 
     private void loadInBackground() {
-        // All nineteen 70x75 source portraits fit one page, including padding.
+        // Setup portraits and color controls share the first ready atlas.
         PixmapPacker portraitPacker = new PixmapPacker(512, 512,
                 Pixmap.Format.RGBA8888, 2, true);
         PixmapPacker earlyUiPacker = null;
@@ -304,6 +304,14 @@ public final class OriginalFlashAnimationAssets implements Disposable {
                     scene, LEADER_PORTRAITS_SYMBOL_ID);
             Set<Integer> loadedPortraitIds = collectPortraitShapeIds(
                     portraits, cachedShape);
+            for (int color = 0; color < 5; color++) {
+                for (int state = 0; state < 2; state++) {
+                    int id = com.example.worlddomination.game.rendering.SourceSetupColorIndicators
+                            .shapeId(color, state != 0);
+                    if (!cachedShape.test(id)) throw new IllegalStateException("Missing setup color shape " + id);
+                    loadedPortraitIds.add(id);
+                }
+            }
             Map<Integer, ShapeOrigin> loadedShapeOrigins = new LinkedHashMap<>();
             packShapes(portraitPacker, loadedPortraitIds, loadedShapeOrigins);
             beforePortraitPublication.run();

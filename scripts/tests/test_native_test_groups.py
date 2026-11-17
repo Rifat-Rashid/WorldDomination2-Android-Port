@@ -90,14 +90,15 @@ class NativeGroupTests(unittest.TestCase):
                     for selected, required in (
                             (groups.HELP, groups.HELP_EVIDENCE),
                             (groups.SETUP_PANELS, groups.SETUP_PANELS_EVIDENCE),
-                            (groups.SETUP_LAYOUT, groups.SETUP_LAYOUT_EVIDENCE)):
+                            (groups.SETUP_LAYOUT, groups.SETUP_LAYOUT_EVIDENCE),
+                            (groups.SETUP_COLORS, groups.SETUP_COLORS_EVIDENCE)):
                         if selected in group["classes"]:
                             for name in required:
                                 (folder / name).write_bytes(PNG)
 
     def test_manifest_is_exact_closed_inventory_and_both_groups_make_beta(self):
-        self.assertEqual(90, len(self.manifest["requiredClasses"]))
-        self.assertEqual(140, len(self.manifest["expectedCases"]))
+        self.assertEqual(91, len(self.manifest["requiredClasses"]))
+        self.assertEqual(141, len(self.manifest["expectedCases"]))
         self.assertEqual({"a", "b"}, {g["id"] for g in self.manifest["groups"]})
         self.assertEqual({"beta-ui-evidence", "propaganda-evidence"},
                          {e for g in self.manifest["groups"] for e in g["evidence"]})
@@ -149,9 +150,9 @@ class NativeGroupTests(unittest.TestCase):
     def test_downloaded_groups_require_exact_junit_sets_and_valid_png_headers(self):
         self.fixture()
         result = groups.verify_artifacts(self.manifest, self.root)
-        self.assertEqual(90, sum(row["classes"] for row in result.values()))
-        self.assertEqual(140, sum(row["executed"] for row in result.values()))
-        self.assertEqual(38, sum(row["requiredPngs"] for row in result.values()))
+        self.assertEqual(91, sum(row["classes"] for row in result.values()))
+        self.assertEqual(141, sum(row["executed"] for row in result.values()))
+        self.assertEqual(42, sum(row["requiredPngs"] for row in result.values()))
 
     def test_missing_help_screenshots_cannot_pass_using_other_test_images(self):
         self.fixture()
@@ -177,6 +178,15 @@ class NativeGroupTests(unittest.TestCase):
                     ValueError, "Missing required " + label + " screenshots"):
                 groups.verify_artifacts(self.manifest, self.root)
             missing.write_bytes(PNG)
+
+    def test_missing_setup_color_screenshot_is_rejected(self):
+        self.fixture()
+        self.assertEqual(4, len(groups.SETUP_COLORS_EVIDENCE))
+        group = next(g for g in self.manifest["groups"] if groups.SETUP_COLORS in g["classes"])
+        folder = self.root / ("android-native-" + group["id"] + "-results") / "reports/androidTests/beta-ui-evidence"
+        (folder / "source-setup-colors-1194x552-expected.png").unlink()
+        with self.assertRaisesRegex(ValueError, "Missing required setup colors screenshots"):
+            groups.verify_artifacts(self.manifest, self.root)
 
     def test_tampered_junit_skips_and_failed_cases_rejected(self):
         for defect in ("omit-class", "omit-method", "skip", "summary-skip", "fail",

@@ -95,7 +95,8 @@
     "com.example.worlddomination.game.assets.SetupPortraitReadinessInstrumentedTest",
     "com.example.worlddomination.game.rendering.SourceSetupPortraitRenderingInstrumentedTest",
     "com.example.worlddomination.game.rendering.SourceSetupPanelsInstrumentedTest",
-    "com.example.worlddomination.game.rendering.SetupPanelLayoutInstrumentedTest"
+    "com.example.worlddomination.game.rendering.SetupPanelLayoutInstrumentedTest",
+    "com.example.worlddomination.game.rendering.SourceSetupColorsInstrumentedTest"
   ],
   "groups": [
     {
@@ -199,7 +200,8 @@
         "com.example.worlddomination.game.assets.SetupPortraitReadinessInstrumentedTest",
         "com.example.worlddomination.game.rendering.SourceSetupPortraitRenderingInstrumentedTest",
         "com.example.worlddomination.game.rendering.SourceSetupPanelsInstrumentedTest",
-        "com.example.worlddomination.game.rendering.SetupPanelLayoutInstrumentedTest"
+        "com.example.worlddomination.game.rendering.SetupPanelLayoutInstrumentedTest",
+        "com.example.worlddomination.game.rendering.SourceSetupColorsInstrumentedTest"
       ],
       "evidence": [
         "beta-ui-evidence"
@@ -766,6 +768,10 @@
     [
       "com.example.worlddomination.game.rendering.SetupPanelLayoutInstrumentedTest",
       "fullSetupKeepsControlsAlignedWithSourcePanels"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.SourceSetupColorsInstrumentedTest",
+      "earlyColorsMatchOriginalFramesAtBothSizes"
     ]
   ]
 }
