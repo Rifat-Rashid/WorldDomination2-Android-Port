@@ -547,6 +547,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     }
 
     private void layout(int width, int height) {
+        if (phonePanelRenderer != null) phonePanelRenderer.invalidate();
         safeLeft = pendingSafeLeft;
         safeTop = pendingSafeTop;
         safeRight = pendingSafeRight;
@@ -1934,6 +1935,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     }
 
     private void drawPanelsAndMap() {
+        preparePhonePanels();
         if (displayGame != game) resetBattlefieldDisplay(false);
         battlefieldDisplay.syncCityMarkers(game);
         shapes.setProjectionMatrix(camera.combined);
@@ -3972,6 +3974,29 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         shapes.end();
     }
 
+    private void preparePhonePanels() {
+        preparePhonePanel(logoPanel);
+        preparePhonePanel(centerHeader);
+        preparePhonePanel(toolbarPanel);
+        preparePhonePanel(stockPanel);
+        preparePhonePanel(messagePanel);
+        preparePhonePanel(actionPanel);
+        int visiblePlayers = 0;
+        for (int id = 1; id < 5; id++) {
+            GameState.PlayerState player = game.getPlayerState(id);
+            if (player.alive || player.getLeaderId() >= 0) visiblePlayers++;
+        }
+        if (visiblePlayers > 0) {
+            phonePanelRenderer.prepare(Math.round(Math.min(84f,
+                    (centerHeader.width - 16f) / visiblePlayers) - 3f),
+                    Math.round(Math.min(51f, centerHeader.height - 9f)));
+        }
+    }
+
+    private void preparePhonePanel(Rectangle bounds) {
+        phonePanelRenderer.prepare(Math.round(bounds.width), Math.round(bounds.height));
+    }
+
     private void drawPanelFill(Rectangle rectangle) {
         shapes.setColor(PANEL);
         shapes.rect(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
@@ -5776,6 +5801,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     @Override
     public void resume() {
         accumulator = 0f;
+        if (phonePanelRenderer != null) phonePanelRenderer.invalidate();
         audio.resume();
         Gdx.input.setInputProcessor(this);
         setContinuousRendering(RenderLoopPolicy.shouldRenderContinuously(game != null,
@@ -5831,6 +5857,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         if (splashAssets != null) {
             splashAssets.dispose();
         }
+        if (phonePanelRenderer != null) phonePanelRenderer.dispose();
         if (uiAssets != null) {
             uiAssets.dispose();
         }

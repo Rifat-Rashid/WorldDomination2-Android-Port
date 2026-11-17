@@ -30,7 +30,9 @@ import static org.junit.Assert.*;
 /** Compares Android rendering with captures of actual Python MobileSkin.panel. */
 @RunWith(AndroidJUnit4.class)
 public final class SourcePhonePanelInstrumentedTest {
-    private static final int WIDTH = 800, HEIGHT = 1000;
+    // A binary-exact projection keeps integer pixel centers exact under linear
+    // filtering. Fractional screen transforms are exercised by the World test.
+    private static final int WIDTH = 1024, HEIGHT = 1024;
     private static final String[] NAMES = {"logo", "header", "toolbar", "stock", "message",
             "action", "threshold-42", "threshold-43", "portrait"};
     private static final int[][] CASES = {{255,62,5}, {607,62,72}, {314,34,139},
@@ -49,12 +51,13 @@ public final class SourcePhonePanelInstrumentedTest {
             Object original = rendererField.get(app);
             Texture[] transparent = new Texture[3];
             int[][] sizes = {{160,14}, {160,42}, {160,43}};
+            SourcePhonePanel missing = null;
             try {
                 for (int i = 0; i < sizes.length; i++) {
                     Pixmap p = new Pixmap(sizes[i][0], sizes[i][1], Pixmap.Format.RGBA8888);
                     transparent[i] = new Texture(p); p.dispose();
                 }
-                SourcePhonePanel missing = new SourcePhonePanel(new TextureRegion(transparent[0]),
+                missing = new SourcePhonePanel(new TextureRegion(transparent[0]),
                         new TextureRegion(transparent[1]), new TextureRegion(transparent[2]));
                 for (int[] size : new int[][]{{800,600}, {1194,552}}) {
                     int w = size[0], h = size[1];
@@ -102,6 +105,7 @@ public final class SourcePhonePanelInstrumentedTest {
             } finally {
                 rendererField.set(app, original);
                 app.resize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+                if (missing != null) missing.dispose();
                 for (Texture texture : transparent) if (texture != null) texture.dispose();
             }
         });
@@ -150,15 +154,29 @@ public final class SourcePhonePanelInstrumentedTest {
             FrameBuffer fb = new FrameBuffer(Pixmap.Format.RGBA8888, WIDTH, HEIGHT, false);
             Matrix4 oldProjection = new Matrix4(batch.getProjectionMatrix());
             float oldColor = batch.getPackedColor();
+            SourcePhonePanel actual = null, missing = null;
             try {
                 for (int i = 0; i < NAMES.length; i++) expected[i] = sourceCapture(NAMES[i]);
-                SourcePhonePanel actual = new SourcePhonePanel(new TextureRegion(tile),
+                actual = new SourcePhonePanel(new TextureRegion(tile),
                         new TextureRegion(shortChrome), new TextureRegion(tallChrome));
-                SourcePhonePanel missing = new SourcePhonePanel(new TextureRegion(blank),
+                missing = new SourcePhonePanel(new TextureRegion(blank),
                         new TextureRegion(shortChrome), new TextureRegion(tallChrome));
                 batch.setProjectionMatrix(new Matrix4().setToOrtho2D(0, 0, WIDTH, HEIGHT));
                 byte[] actualPixels = render(fb, batch, actual, null, null);
                 byte[] expectedPixels = render(fb, batch, null, expected, null);
+                Field buffersField = SourcePhonePanel.class.getDeclaredField("buffers");
+                buffersField.setAccessible(true);
+                FrameBuffer[] cached = ((FrameBuffer[]) buffersField.get(actual)).clone();
+                for (int i = 0; i < CASES.length; i++)
+                    assertUnfilteredComposite(cached[i], NAMES[i], CASES[i][0], CASES[i][1]);
+                assertArrayEquals("repeated draw keeps identical pixels", actualPixels,
+                        render(fb, batch, actual, null, null));
+                FrameBuffer[] reused = (FrameBuffer[]) buffersField.get(actual);
+                for (int i = 0; i < cached.length; i++) assertSame(cached[i], reused[i]);
+                actual.invalidate();
+                for (FrameBuffer entry : (FrameBuffer[]) buffersField.get(actual)) assertNull(entry);
+                assertArrayEquals("invalidated targets are regenerated from source", actualPixels,
+                        render(fb, batch, actual, null, null));
                 byte[] missingPixels = render(fb, batch, missing, null, null);
                 byte[] oldPixels = render(fb, batch, null, null, white);
                 evidence("source-phone-panels-actual.png", actualPixels);
@@ -180,6 +198,8 @@ public final class SourcePhonePanelInstrumentedTest {
                 assertEquals(GL20.GL_NO_ERROR, Gdx.gl.glGetError());
             } finally {
                 fb.dispose(); batch.setProjectionMatrix(oldProjection); batch.setPackedColor(oldColor);
+                if (actual != null) actual.dispose();
+                if (missing != null) missing.dispose();
                 for (Texture texture : expected) if (texture != null) texture.dispose();
                 white.dispose(); blank.dispose(); tile.dispose(); shortChrome.dispose(); tallChrome.dispose();
             }
@@ -189,6 +209,7 @@ public final class SourcePhonePanelInstrumentedTest {
     private static byte[] render(FrameBuffer fb, SpriteBatch batch, SourcePhonePanel renderer,
             Texture[] captures, Texture square) {
         fb.begin(); Gdx.gl.glDisable(GL20.GL_SCISSOR_TEST);
+        if (renderer != null) for (int[] size : CASES) renderer.prepare(size[0], size[1]);
         Gdx.gl.glClearColor(0, 0, 0, 0); Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         batch.begin(); batch.setColor(.2f, .4f, .6f, .8f);
         float original = batch.getPackedColor();
@@ -198,7 +219,11 @@ public final class SourcePhonePanelInstrumentedTest {
                 renderer.draw(batch, new Rectangle(10, y, w, h));
                 assertEquals("caller color", original, batch.getPackedColor(), 0f);
             } else if (captures != null) {
-                batch.setColor(1, 1, 1, 1); batch.draw(captures[i], 10, y, w, h);
+                // The independent PNG uses the same bottom-up texture storage
+                // and final linear sampling as a render-target composite.
+                TextureRegion capture = new TextureRegion(captures[i]);
+                capture.flip(false, true);
+                batch.setColor(1, 1, 1, 1); batch.draw(capture, 10, y, w, h);
             } else {
                 batch.setColor(.37f, .51f, .57f, 1f);
                 batch.draw(square, 10, y, w, 1); batch.draw(square, 10, y + h - 1, w, 1);
@@ -229,12 +254,39 @@ public final class SourcePhonePanelInstrumentedTest {
             try {
                 for (int y = 0; y < height; y++) for (int x = 0; x < width; x++) {
                     int argb = pixels[y * width + x];
-                    pixmap.drawPixel(x, y, (argb << 8) | (argb >>> 24));
+                    pixmap.drawPixel(x, height - 1 - y, (argb << 8) | (argb >>> 24));
                 }
                 Texture texture = new Texture(pixmap);
-                texture.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
+                texture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
                 return texture;
             } finally { pixmap.dispose(); bitmap.recycle(); }
+        }
+    }
+
+    private static void assertUnfilteredComposite(FrameBuffer composite, String name,
+            int width, int height) throws Exception {
+        composite.begin();
+        byte[] actual;
+        try { actual = ScreenUtils.getFrameBufferPixels(0, 0, width, height, true); }
+        finally { composite.end(); }
+        try (InputStream in = InstrumentationRegistry.getInstrumentation().getContext().getAssets()
+                .open("source-phone-panel/" + name + ".png")) {
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inPremultiplied = false;
+            Bitmap bitmap = BitmapFactory.decodeStream(in, null, options);
+            assertNotNull(bitmap);
+            try {
+                int[] expected = new int[width * height];
+                bitmap.getPixels(expected, 0, width, 0, 0, width, height);
+                for (int i = 0; i < expected.length; i++) {
+                    int argb = expected[i];
+                    int k = i * 4;
+                    int rgba = (actual[k] & 255) << 24 | (actual[k+1] & 255) << 16
+                            | (actual[k+2] & 255) << 8 | (actual[k+3] & 255);
+                    assertEquals("unfiltered source composite " + name + " pixel " + i,
+                            (argb << 8) | (argb >>> 24), rgba);
+                }
+            } finally { bitmap.recycle(); }
         }
     }
 
