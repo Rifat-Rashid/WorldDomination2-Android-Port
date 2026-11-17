@@ -86,7 +86,8 @@
     "com.example.worlddomination.game.simulation.SourceLegalEasyCampaignInstrumentedTest",
     "com.example.worlddomination.game.simulation.SourceLegalAcceptedDiplomacyCampaignInstrumentedTest",
     "com.example.worlddomination.game.simulation.SourceLegalVictoryCampaignInstrumentedTest",
-    "com.example.worlddomination.game.rendering.SourceEndgameScoreClockInstrumentedTest"
+    "com.example.worlddomination.game.rendering.SourceEndgameScoreClockInstrumentedTest",
+    "com.example.worlddomination.game.rendering.OriginalBattlefieldFrameInstrumentedTest"
   ],
   "groups": [
     {
@@ -134,7 +135,8 @@
         "com.example.worlddomination.game.simulation.SourceLegalEasyCampaignInstrumentedTest",
         "com.example.worlddomination.game.simulation.SourceLegalAcceptedDiplomacyCampaignInstrumentedTest",
         "com.example.worlddomination.game.simulation.SourceLegalVictoryCampaignInstrumentedTest",
-        "com.example.worlddomination.game.rendering.SourceEndgameScoreClockInstrumentedTest"
+        "com.example.worlddomination.game.rendering.SourceEndgameScoreClockInstrumentedTest",
+        "com.example.worlddomination.game.rendering.OriginalBattlefieldFrameInstrumentedTest"
       ],
       "evidence": [
         "beta-ui-evidence",
@@ -704,6 +706,10 @@
     [
       "com.example.worlddomination.game.rendering.SourceEndgameScoreClockInstrumentedTest",
       "naturalVictoryMatchesSourceScoreClockAndFrozenRandomStreams"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.OriginalBattlefieldFrameInstrumentedTest",
+      "authoredFramePreservesSourceCornersAndWorldMapGeometry"
     ]
   ]
 }

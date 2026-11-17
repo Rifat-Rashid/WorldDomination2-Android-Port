@@ -28,6 +28,22 @@ import static org.junit.Assert.fail;
 
 public final class OriginalFlashAnimationAssetsTest {
     @Test
+    public void battlefieldFramePreservesTheSourceTransparentBitmap() throws Exception {
+        Path path = Paths.get("src/main/assets/original/ui/battlefield-frame.png");
+        byte[] bytes = Files.readAllBytes(path);
+        byte[] digest = java.security.MessageDigest.getInstance("SHA-256").digest(bytes);
+        StringBuilder hex = new StringBuilder();
+        for (byte value : digest) hex.append(String.format("%02x", value & 255));
+        assertEquals("f12203872b0981cf7cd3a90132ec673d4c7888dd893f6439b57b62457b534ae6",
+                hex.toString());
+        java.nio.ByteBuffer header = java.nio.ByteBuffer.wrap(bytes);
+        assertEquals(413, header.getInt(16));
+        assertEquals(304, header.getInt(20));
+        assertEquals("Keep 8-bit channels", 8, bytes[24]);
+        assertEquals("Keep RGBA rather than flattening the transparent frame", 6, bytes[25]);
+    }
+
+    @Test
     public void firstStageContainsEverySourcePortraitAndRemovalButNoMarkers()
             throws IOException {
         JsonValue scene = loadScene();
