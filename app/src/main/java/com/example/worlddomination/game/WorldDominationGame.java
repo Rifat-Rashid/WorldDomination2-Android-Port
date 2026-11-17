@@ -4203,7 +4203,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         float scale = targetHeight / Math.max(textHeight, 1f);
         font.getData().setScale(scale);
         glyphLayout.setText(font, text);
-        font.draw(batch, text, centerX - glyphLayout.width / 2f, baselineY);
+        font.draw(batch, glyphLayout, centerX - glyphLayout.width / 2f, baselineY);
         font.getData().setScale(originalScale);
     }
 
