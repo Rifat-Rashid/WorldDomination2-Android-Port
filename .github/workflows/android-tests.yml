@@ -87,6 +87,9 @@ jobs:
       max-parallel: 6
       matrix:
         include:
+          - id: source-statistic-bar-gradient
+            check: Source statistic bar colors and ties-to-even fill
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.SourceStatisticBarTest"'
           - id: source-finite-prepared-aircraft
             check: Finite prepared aircraft source trajectories and payload effects
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.SourceAircraftFiniteStartTest" --tests "com.example.worlddomination.game.rendering.SourceFiniteBomberPlaybackTest" --tests "com.example.worlddomination.game.rendering.SourceAircraftPayloadDisplayDepthsTest"'

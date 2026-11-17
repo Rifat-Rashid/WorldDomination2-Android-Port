@@ -1,0 +1,339 @@
+{
+  "sourceSha256": {
+    "wd2\\iphone_ui.py": "1146ccec8049db82a1fe1ca5d5c68dae6311c7ce92dc07369d7a390721badf7e",
+    "wd2\\runtime.py": "bf58b6cf0cddae89c5efd153713df03751eacf72d0e5c836413bc19a8752b30b"
+  },
+  "captureSha256": "7afda36c9da35dbc7f2400ab9b01cc0e381846c54fd98b404ee4c80331a13a28",
+  "scope": "Injected phone presentation values. PNG repeats source RGBA samples over native six-point rows; source track height differs.",
+  "imageSize": [
+    256,
+    464
+  ],
+  "placement": "x=16, bottom y=16+i*8, height=6; source pixels copied including one trailing sample",
+  "cases": [
+    {
+      "width": 49.0,
+      "value": -1,
+      "syntheticFractionalInner": false,
+      "sampleCount": 50
+    },
+    {
+      "width": 49.0,
+      "value": 0,
+      "syntheticFractionalInner": false,
+      "sampleCount": 50
+    },
+    {
+      "width": 49.0,
+      "value": 1,
+      "syntheticFractionalInner": false,
+      "sampleCount": 50
+    },
+    {
+      "width": 49.0,
+      "value": 3,
+      "syntheticFractionalInner": false,
+      "sampleCount": 50
+    },
+    {
+      "width": 49.0,
+      "value": 5,
+      "syntheticFractionalInner": false,
+      "sampleCount": 50
+    },
+    {
+      "width": 49.0,
+      "value": 25,
+      "syntheticFractionalInner": false,
+      "sampleCount": 50
+    },
+    {
+      "width": 49.0,
+      "value": 50,
+      "syntheticFractionalInner": false,
+      "sampleCount": 50
+    },
+    {
+      "width": 49.0,
+      "value": 100,
+      "syntheticFractionalInner": false,
+      "sampleCount": 50
+    },
+    {
+      "width": 49.0,
+      "value": 101,
+      "syntheticFractionalInner": false,
+      "sampleCount": 50
+    },
+    {
+      "width": 78.4,
+      "value": -1,
+      "syntheticFractionalInner": false,
+      "sampleCount": 79
+    },
+    {
+      "width": 78.4,
+      "value": 0,
+      "syntheticFractionalInner": false,
+      "sampleCount": 79
+    },
+    {
+      "width": 78.4,
+      "value": 1,
+      "syntheticFractionalInner": false,
+      "sampleCount": 79
+    },
+    {
+      "width": 78.4,
+      "value": 3,
+      "syntheticFractionalInner": false,
+      "sampleCount": 79
+    },
+    {
+      "width": 78.4,
+      "value": 5,
+      "syntheticFractionalInner": false,
+      "sampleCount": 79
+    },
+    {
+      "width": 78.4,
+      "value": 25,
+      "syntheticFractionalInner": false,
+      "sampleCount": 79
+    },
+    {
+      "width": 78.4,
+      "value": 50,
+      "syntheticFractionalInner": false,
+      "sampleCount": 79
+    },
+    {
+      "width": 78.4,
+      "value": 100,
+      "syntheticFractionalInner": false,
+      "sampleCount": 79
+    },
+    {
+      "width": 78.4,
+      "value": 101,
+      "syntheticFractionalInner": false,
+      "sampleCount": 79
+    },
+    {
+      "width": 78.89,
+      "value": -1,
+      "syntheticFractionalInner": false,
+      "sampleCount": 79
+    },
+    {
+      "width": 78.89,
+      "value": 0,
+      "syntheticFractionalInner": false,
+      "sampleCount": 79
+    },
+    {
+      "width": 78.89,
+      "value": 1,
+      "syntheticFractionalInner": false,
+      "sampleCount": 79
+    },
+    {
+      "width": 78.89,
+      "value": 3,
+      "syntheticFractionalInner": false,
+      "sampleCount": 79
+    },
+    {
+      "width": 78.89,
+      "value": 5,
+      "syntheticFractionalInner": false,
+      "sampleCount": 79
+    },
+    {
+      "width": 78.89,
+      "value": 25,
+      "syntheticFractionalInner": false,
+      "sampleCount": 79
+    },
+    {
+      "width": 78.89,
+      "value": 50,
+      "syntheticFractionalInner": false,
+      "sampleCount": 79
+    },
+    {
+      "width": 78.89,
+      "value": 100,
+      "syntheticFractionalInner": false,
+      "sampleCount": 79
+    },
+    {
+      "width": 78.89,
+      "value": 101,
+      "syntheticFractionalInner": false,
+      "sampleCount": 79
+    },
+    {
+      "width": 147.0,
+      "value": -1,
+      "syntheticFractionalInner": false,
+      "sampleCount": 148
+    },
+    {
+      "width": 147.0,
+      "value": 0,
+      "syntheticFractionalInner": false,
+      "sampleCount": 148
+    },
+    {
+      "width": 147.0,
+      "value": 1,
+      "syntheticFractionalInner": false,
+      "sampleCount": 148
+    },
+    {
+      "width": 147.0,
+      "value": 3,
+      "syntheticFractionalInner": false,
+      "sampleCount": 148
+    },
+    {
+      "width": 147.0,
+      "value": 5,
+      "syntheticFractionalInner": false,
+      "sampleCount": 148
+    },
+    {
+      "width": 147.0,
+      "value": 25,
+      "syntheticFractionalInner": false,
+      "sampleCount": 148
+    },
+    {
+      "width": 147.0,
+      "value": 50,
+      "syntheticFractionalInner": false,
+      "sampleCount": 148
+    },
+    {
+      "width": 147.0,
+      "value": 100,
+      "syntheticFractionalInner": false,
+      "sampleCount": 148
+    },
+    {
+      "width": 147.0,
+      "value": 101,
+      "syntheticFractionalInner": false,
+      "sampleCount": 148
+    },
+    {
+      "width": 50.0,
+      "value": -1,
+      "syntheticFractionalInner": true,
+      "sampleCount": 51
+    },
+    {
+      "width": 50.0,
+      "value": 0,
+      "syntheticFractionalInner": true,
+      "sampleCount": 51
+    },
+    {
+      "width": 50.0,
+      "value": 1,
+      "syntheticFractionalInner": true,
+      "sampleCount": 51
+    },
+    {
+      "width": 50.0,
+      "value": 3,
+      "syntheticFractionalInner": true,
+      "sampleCount": 51
+    },
+    {
+      "width": 50.0,
+      "value": 5,
+      "syntheticFractionalInner": true,
+      "sampleCount": 51
+    },
+    {
+      "width": 50.0,
+      "value": 25,
+      "syntheticFractionalInner": true,
+      "sampleCount": 51
+    },
+    {
+      "width": 50.0,
+      "value": 50,
+      "syntheticFractionalInner": true,
+      "sampleCount": 51
+    },
+    {
+      "width": 50.0,
+      "value": 100,
+      "syntheticFractionalInner": true,
+      "sampleCount": 51
+    },
+    {
+      "width": 50.0,
+      "value": 101,
+      "syntheticFractionalInner": true,
+      "sampleCount": 51
+    },
+    {
+      "width": 100.0,
+      "value": -1,
+      "syntheticFractionalInner": true,
+      "sampleCount": 101
+    },
+    {
+      "width": 100.0,
+      "value": 0,
+      "syntheticFractionalInner": true,
+      "sampleCount": 101
+    },
+    {
+      "width": 100.0,
+      "value": 1,
+      "syntheticFractionalInner": true,
+      "sampleCount": 101
+    },
+    {
+      "width": 100.0,
+      "value": 3,
+      "syntheticFractionalInner": true,
+      "sampleCount": 101
+    },
+    {
+      "width": 100.0,
+      "value": 5,
+      "syntheticFractionalInner": true,
+      "sampleCount": 101
+    },
+    {
+      "width": 100.0,
+      "value": 25,
+      "syntheticFractionalInner": true,
+      "sampleCount": 101
+    },
+    {
+      "width": 100.0,
+      "value": 50,
+      "syntheticFractionalInner": true,
+      "sampleCount": 101
+    },
+    {
+      "width": 100.0,
+      "value": 100,
+      "syntheticFractionalInner": true,
+      "sampleCount": 101
+    },
+    {
+      "width": 100.0,
+      "value": 101,
+      "syntheticFractionalInner": true,
+      "sampleCount": 101
+    }
+  ]
+}
