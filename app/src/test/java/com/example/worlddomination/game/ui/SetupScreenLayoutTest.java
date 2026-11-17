@@ -5,6 +5,7 @@ import com.badlogic.gdx.math.Rectangle;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public final class SetupScreenLayoutTest {
@@ -91,6 +92,28 @@ public final class SetupScreenLayoutTest {
             for (Rectangle card : layout.leaderCards) assertTrue(carousel.contains(card));
             assertTrue(carousel.contains(layout.leaderPrevious));
             assertTrue(carousel.contains(layout.leaderNext));
+        }
+    }
+
+    @Test
+    public void carouselRetainsWideFootprintAndCardTargets() {
+        for (float[] size : new float[][]{{800, 600}, {1194, 552}}) {
+            SetupScreenLayout layout = new SetupScreenLayout();
+            layout.update(size[0], size[1], 0, 0, 0, 0);
+            Rectangle crop = layout.leaderCarouselPanel;
+            assertEquals(layout.enemiesPanel.width * .86f, crop.width, .001f);
+            float oldWidth = (layout.enemiesPanel.width * .86f
+                    - 2f * layout.enemiesPanel.width * .018f
+                    - 2f * layout.enemiesPanel.width * .028f
+                    - 7f * layout.enemiesPanel.width * .012f) / 6f;
+            for (Rectangle card : layout.leaderCards) {
+                assertEquals(oldWidth, card.width, .001f);
+                assertEquals(layout.enemiesPanel.height * .326f, card.height, .001f);
+                assertTrue(crop.contains(card));
+            }
+            assertFalse(layout.leaderPrevious.overlaps(layout.leaderCards[0]));
+            assertFalse(layout.leaderNext.overlaps(layout.leaderCards[5]));
+            assertTrue(crop.contains(layout.leaderDescription));
         }
     }
 

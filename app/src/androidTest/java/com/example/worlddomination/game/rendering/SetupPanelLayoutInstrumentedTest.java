@@ -65,6 +65,24 @@ public final class SetupPanelLayoutInstrumentedTest {
                     assertEquals(2,setup.getDifficulty());
                     assertEquals(1,setup.getPlayerColor());
                     assertEquals(2,setup.getStartingBuilding());
+                    for (int card = 0; card < layout.leaderCards.length; card++) {
+                        GameSetup isolated = new GameSetup(0L);
+                        field("setup").set(app, isolated);
+                        field("setupLeaderListStart").setInt(app, 0);
+                        tap(app, viewport, layout.leaderCards[card]);
+                        assertEquals("Every carousel well routes to its leader",
+                                Arrays.asList(card), isolated.getSelectedOpponentIds());
+                    }
+                    field("setup").set(app, setup);
+                    field("setupLeaderListStart").setInt(app, 0);
+                    tap(app, viewport, layout.leaderNext);
+                    assertEquals(1, field("setupLeaderListStart").getInt(app));
+                    tap(app, viewport, layout.leaderPrevious);
+                    assertEquals(0, field("setupLeaderListStart").getInt(app));
+                    tap(app, viewport, layout.leaderPrevious);
+                    assertEquals(GameSetup.leaders().size() - 1, field("setupLeaderListStart").getInt(app));
+                    tap(app, viewport, layout.leaderNext);
+                    assertEquals(0, field("setupLeaderListStart").getInt(app));
                     tap(app,viewport,layout.leaderCards[4]);
                     tap(app,viewport,layout.leaderCards[0]);
                     assertEquals(Arrays.asList(4,0),setup.getSelectedOpponentIds());

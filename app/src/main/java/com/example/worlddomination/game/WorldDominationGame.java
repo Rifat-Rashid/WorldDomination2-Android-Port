@@ -1646,15 +1646,13 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         setupPanelRenderer.draw(batch, setupLayout.startPanel, SourceSetupPanelRenderer.Plate.START);
         batch.end();
 
-        shapes.setProjectionMatrix(camera.combined);
-        shapes.begin(ShapeRenderer.ShapeType.Filled);
-        drawPanelFill(setupLayout.leaderCarouselPanel);
         java.util.List<Integer> selectedIds = setup.getSelectedOpponentIds();
-        shapes.end();
-
+        shapes.setProjectionMatrix(camera.combined);
         batch.begin();
-        drawPanelTexture(setupLayout.leaderCarouselPanel,
-                0.72f, 0.79f, 0.82f, 0.78f);
+        setupPanelRenderer.drawCarousel(batch, setupLayout.leaderCarouselPanel,
+                setupLayout.leaderCards, setupLayout.leaderDescription);
+        drawSourceCarouselArrow(setupLayout.leaderPrevious, 5819);
+        drawSourceCarouselArrow(setupLayout.leaderNext, 5822);
         batch.end();
 
         batch.begin();
@@ -1670,11 +1668,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         for (Rectangle button : setupLayout.opponentSlots) {
             drawOriginalButton(button);
         }
-        for (Rectangle button : setupLayout.leaderCards) {
-            drawOriginalButton(button);
-        }
-        drawOriginalButton(setupLayout.leaderPrevious);
-        drawOriginalButton(setupLayout.leaderNext);
         drawSourceSetupButton(setupLayout.startButton, setup.canStart());
         batch.end();
 
@@ -1699,14 +1692,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             }
         }
         drawSetupDirectionArrow(setupLayout.opponentArrow);
-        drawSetupInsetFill(setupLayout.leaderDescription);
-        for (int i = 0; i < setupLayout.leaderCards.length; i++) {
-            drawSetupButtonGradient(setupLayout.leaderCards[i], false);
-        }
-        drawSetupButtonGradient(setupLayout.leaderPrevious, false);
-        drawSetupButtonGradient(setupLayout.leaderNext, false);
-        drawSetupCarouselArrow(setupLayout.leaderPrevious, -1f);
-        drawSetupCarouselArrow(setupLayout.leaderNext, 1f);
         shapes.end();
 
         batch.begin();
@@ -1790,8 +1775,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         batch.end();
 
         shapes.begin(ShapeRenderer.ShapeType.Line);
-        drawSetupPanelEdges(setupLayout.leaderCarouselPanel);
-        drawSetupButtonEdges(setupLayout.leaderDescription, false);
         shapes.setColor(PANEL_EDGE);
         shapes.line(setupLayout.playerStylePanel.x
                         + setupLayout.playerStylePanel.width * 0.52f,
@@ -1803,16 +1786,21 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             Rectangle button = setupLayout.buildingButtons[i];
             drawSetupButtonEdges(button, i + 1 == setup.getStartingBuilding());
         }
-        for (int i = 0; i < setupLayout.leaderCards.length; i++) {
-            Rectangle card = setupLayout.leaderCards[i];
-            drawSetupButtonEdges(card, false);
-        }
-        drawSetupButtonEdges(setupLayout.leaderPrevious, false);
-        drawSetupButtonEdges(setupLayout.leaderNext, false);
         for (Rectangle slot : setupLayout.opponentSlots) {
             drawSetupButtonEdges(slot, false);
         }
         shapes.end();
+    }
+
+    private void drawSourceCarouselArrow(Rectangle target, int shapeId) {
+        TextureRegion art = flashAnimationAssets.getShape(shapeId);
+        if (art == null) throw new IllegalStateException("Missing setup carousel arrow " + shapeId);
+        float scale = Math.min(target.width / 12f, target.height / 44f);
+        float old = batch.getPackedColor();
+        batch.setColor(Color.WHITE);
+        batch.draw(art, target.x + (target.width - 12f * scale) / 2f,
+                target.y + (target.height - 44f * scale) / 2f, 12f * scale, 44f * scale);
+        batch.setPackedColor(old);
     }
 
     private void drawSourceSetupColor(Rectangle box, int colorIndex, boolean selected) {
@@ -1862,30 +1850,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         shapes.triangle(headStart + inset, rectangle.y + inset,
                 headStart + inset, rectangle.y + rectangle.height - inset,
                 headTip - inset, centerY);
-    }
-
-    private void drawSetupCarouselArrow(Rectangle rectangle, float direction) {
-        float centerX = rectangle.x + rectangle.width * 0.5f;
-        float centerY = rectangle.y + rectangle.height * 0.5f;
-        float halfWidth = rectangle.width * 0.28f;
-        float halfHeight = rectangle.height * 0.34f;
-        float tipX = centerX + direction * halfWidth;
-        float baseX = centerX - direction * halfWidth;
-        shapes.setColor(0.08f, 0.11f, 0.04f, 1f);
-        shapes.triangle(baseX, centerY - halfHeight,
-                baseX, centerY + halfHeight, tipX, centerY);
-        shapes.setColor(1f, 0.82f, 0.08f, 1f);
-        shapes.triangle(baseX - direction, centerY - halfHeight + 2f,
-                baseX - direction, centerY + halfHeight - 2f,
-                tipX - direction, centerY);
-    }
-
-    private void drawSetupInsetFill(Rectangle rectangle) {
-        shapes.setColor(0.008f, 0.027f, 0.038f, 1f);
-        shapes.rect(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
-        shapes.setColor(0.12f, 0.21f, 0.25f, 1f);
-        shapes.rect(rectangle.x + 2f, rectangle.y + rectangle.height - 2f,
-                rectangle.width - 4f, 1f);
     }
 
     private void drawSetupButtonGradient(Rectangle rectangle, boolean selected) {
