@@ -1,0 +1,368 @@
+{
+  "schema": "source-bio-sub-idle-handoff-v1",
+  "captureNote": "Legal seed 0 normal two-opponent campaign; source presenter rejects pending offers; prior turns run synchronous source resolution, then source battle playback. Idle samples after playback handoff, next confirm queues resources and religion.",
+  "sourceMetaSha256": "8b2fc57538fec0ccd89c1fdec846665715f8d8b7294c06bca56a71aa7c1ae345",
+  "sourceSha256": {
+    "wd2/setup_menu.py": "5633326451e768a84a14bde04e452043ba7fac2617a4c71b7b36dcd0495f0c4a",
+    "wd2/battle_playback.py": "9aa8c82295b1977897cea2a60afbb6569e0d31e14bb9725267e422c7b9167901",
+    "wd2/movieclip_host.py": "a489c5f3b33a1fdac4448afd07f4ca63aa32d676440dc573805ab11fb4002765"
+  },
+  "schedule": [
+    [
+      1,
+      "research",
+      {
+        "tech": "rocket2"
+      },
+      "resources",
+      {}
+    ],
+    [
+      2,
+      "research",
+      {
+        "tech": "rocket3"
+      },
+      "resources",
+      {}
+    ],
+    [
+      3,
+      "research",
+      {
+        "tech": "rocket4"
+      },
+      "resources",
+      {}
+    ],
+    [
+      4,
+      "research",
+      {
+        "tech": "warhead2"
+      },
+      "resources",
+      {}
+    ],
+    [
+      5,
+      "research",
+      {
+        "tech": "warhead3"
+      },
+      "resources",
+      {}
+    ],
+    [
+      6,
+      "research",
+      {
+        "tech": "warhead4"
+      },
+      "resources",
+      {}
+    ],
+    [
+      7,
+      "research",
+      {
+        "tech": "bioload2"
+      },
+      "resources",
+      {}
+    ],
+    [
+      8,
+      "research",
+      {
+        "tech": "bioload3"
+      },
+      "resources",
+      {}
+    ],
+    [
+      9,
+      "research",
+      {
+        "tech": "bioload4"
+      },
+      "resources",
+      {}
+    ],
+    [
+      10,
+      "research",
+      {
+        "tech": "soldier2"
+      },
+      "resources",
+      {}
+    ],
+    [
+      11,
+      "research",
+      {
+        "tech": "soldier3"
+      },
+      "resources",
+      {}
+    ],
+    [
+      12,
+      "research",
+      {
+        "tech": "soldier4"
+      },
+      "resources",
+      {}
+    ],
+    [
+      13,
+      "research",
+      {
+        "tech": "sub"
+      },
+      "resources",
+      {}
+    ],
+    [
+      14,
+      "production",
+      {
+        "category": "special",
+        "percent": 100
+      },
+      "resources",
+      {}
+    ],
+    [
+      15,
+      "production",
+      {
+        "category": "bioload",
+        "percent": 100
+      },
+      "resources",
+      {}
+    ],
+    [
+      16,
+      "preAttack",
+      {
+        "weapon": "sub"
+      },
+      "resources",
+      {}
+    ],
+    [
+      17,
+      "preAttack",
+      {
+        "weapon": "sub",
+        "payload": "bioload3",
+        "target": 1,
+        "city": 2
+      },
+      "resources",
+      {}
+    ]
+  ],
+  "dialogues": [
+    {
+      "afterTurn": 12,
+      "leader": 1,
+      "option": 5,
+      "answer": "reject"
+    },
+    {
+      "afterTurn": 17,
+      "leader": 1,
+      "option": 4,
+      "answer": "reject"
+    }
+  ],
+  "idleSamples": [
+    {
+      "idleTick": 1,
+      "bioloaded": false,
+      "bioload_in_battle": true,
+      "targetPlayerBioloaded": true,
+      "cloudCount": 0,
+      "container": null,
+      "modelImageFrame": 1,
+      "modelImageOnEnterFrame": false,
+      "sceneImage": {
+        "depth": 9011,
+        "attached": true,
+        "rootAttached": true,
+        "parent": "battleMC",
+        "frame": 1,
+        "alpha": 100.0,
+        "x": 212.8,
+        "y": 166.75,
+        "callback": false
+      },
+      "sceneCloudContainer": null,
+      "rngNext": 0.9551472373193942
+    },
+    {
+      "idleTick": 2,
+      "bioloaded": false,
+      "bioload_in_battle": true,
+      "targetPlayerBioloaded": true,
+      "cloudCount": 0,
+      "container": null,
+      "modelImageFrame": 1,
+      "modelImageOnEnterFrame": false,
+      "sceneImage": {
+        "depth": 9011,
+        "attached": true,
+        "rootAttached": true,
+        "parent": "battleMC",
+        "frame": 1,
+        "alpha": 100.0,
+        "x": 212.8,
+        "y": 166.75,
+        "callback": false
+      },
+      "sceneCloudContainer": null,
+      "rngNext": 0.9551472373193942
+    },
+    {
+      "idleTick": 24,
+      "bioloaded": false,
+      "bioload_in_battle": true,
+      "targetPlayerBioloaded": true,
+      "cloudCount": 0,
+      "container": null,
+      "modelImageFrame": 1,
+      "modelImageOnEnterFrame": false,
+      "sceneImage": {
+        "depth": 9011,
+        "attached": true,
+        "rootAttached": true,
+        "parent": "battleMC",
+        "frame": 1,
+        "alpha": 100.0,
+        "x": 212.8,
+        "y": 166.75,
+        "callback": false
+      },
+      "sceneCloudContainer": null,
+      "rngNext": 0.9551472373193942
+    },
+    {
+      "idleTick": 60,
+      "bioloaded": false,
+      "bioload_in_battle": true,
+      "targetPlayerBioloaded": true,
+      "cloudCount": 0,
+      "container": null,
+      "modelImageFrame": 1,
+      "modelImageOnEnterFrame": false,
+      "sceneImage": {
+        "depth": 9011,
+        "attached": true,
+        "rootAttached": true,
+        "parent": "battleMC",
+        "frame": 1,
+        "alpha": 100.0,
+        "x": 212.8,
+        "y": 166.75,
+        "callback": false
+      },
+      "sceneCloudContainer": null,
+      "rngNext": 0.9551472373193942
+    },
+    {
+      "idleTick": 120,
+      "bioloaded": false,
+      "bioload_in_battle": true,
+      "targetPlayerBioloaded": true,
+      "cloudCount": 0,
+      "container": null,
+      "modelImageFrame": 1,
+      "modelImageOnEnterFrame": false,
+      "sceneImage": {
+        "depth": 9011,
+        "attached": true,
+        "rootAttached": true,
+        "parent": "battleMC",
+        "frame": 1,
+        "alpha": 100.0,
+        "x": 212.8,
+        "y": 166.75,
+        "callback": false
+      },
+      "sceneCloudContainer": null,
+      "rngNext": 0.9551472373193942
+    }
+  ],
+  "nextActions": [
+    "resources",
+    "religion"
+  ],
+  "nextConfirm": {
+    "nextBattleRngNext": 0.3899076485519639,
+    "canonical": {
+      "bioloaded": false,
+      "bioload_in_battle": true,
+      "targetPlayerBioloaded": false,
+      "cloudCount": 0,
+      "container": null,
+      "modelImageFrame": 1,
+      "modelImageOnEnterFrame": false,
+      "sceneImage": {
+        "depth": 9011,
+        "attached": true,
+        "rootAttached": true,
+        "parent": "battleMC",
+        "frame": 1,
+        "alpha": 100.0,
+        "x": 212.8,
+        "y": 166.75,
+        "callback": false
+      },
+      "sceneCloudContainer": null,
+      "rngNext": 0.013467678145623552
+    },
+    "nextBattleBioloaded": false,
+    "nextBattleFlag": true,
+    "nextBattleCloudCount": 0,
+    "nextBattleContainer": null,
+    "nextBattleImage": {
+      "depth": 9011,
+      "attached": true,
+      "rootAttached": true,
+      "parent": "battleMC",
+      "frame": 1,
+      "alpha": 100.0,
+      "x": 212.8,
+      "y": 166.75,
+      "callback": false
+    }
+  },
+  "verifiedIdleTicks": 120,
+  "idleInvariant": {
+    "bioloaded": false,
+    "bioload_in_battle": true,
+    "targetPlayerBioloaded": true,
+    "cloudCount": 0,
+    "container": null,
+    "modelImageFrame": 1,
+    "modelImageOnEnterFrame": false,
+    "sceneImage": {
+      "depth": 9011,
+      "attached": true,
+      "rootAttached": true,
+      "parent": "battleMC",
+      "frame": 1,
+      "alpha": 100.0,
+      "x": 212.8,
+      "y": 166.75,
+      "callback": false
+    },
+    "sceneCloudContainer": null,
+    "rngNext": 0.9551472373193942
+  }
+}

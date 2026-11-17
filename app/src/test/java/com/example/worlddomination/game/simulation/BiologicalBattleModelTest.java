@@ -51,6 +51,63 @@ public final class BiologicalBattleModelTest {
                 game.createPresentationRandomCopy().nextDouble(), 0d);
     }
 
+    @Test
+    public void zeroIdRocketSurvivesBiologicalPenaltyAndKeepsNextAiTurnOnSourceStream() {
+        GameState game = legalSeventeenTurnBioLaunchQueued();
+        game.confirmTurn();
+        GameState.PlayerState target = game.getPlayerState(1);
+        GameState.WeaponState rocket = target.getWeapons().get("rocket1");
+        // Presenter.deactivateAfterBio tests truth(_stock): rocket1's ID 0 is false.
+        assertTrue("sampled zero-ID rocket stays active", rocket.active);
+        assertFalse("zero-ID stock does not receive contamination", rocket.bioloaded);
+        assertEquals(2, rocket.inStock);
+        for (String name : new String[]{"warhead1", "bioload1", "soldier1", "soldier3", "soldier4"}) {
+            GameState.WeaponState weapon = target.getWeapons().get(name);
+            assertFalse("positive-ID sampled stock disabled: " + name, weapon.active);
+            assertTrue("positive-ID sampled stock contaminated: " + name, weapon.bioloaded);
+        }
+        assertTrue("unsampled soldier remains active", target.getWeapons().get("soldier2").active);
+        assertEquals(0.9551472373193942,
+                game.createPresentationRandomCopy().nextDouble(), 0d);
+
+        rejectPendingDiplomacy(game);
+        resources(game);
+        game.selectAction(GameState.Action.MASS_MEDIA);
+        assertTrue(game.acceptSelectedAction());
+        game.confirmTurn();
+
+        assertEquals(18, game.getTurn());
+        assertEquals(java.util.Arrays.asList(GameState.Action.PREPARED_ATTACK,
+                GameState.Action.PRODUCTION), target.getLastTurnActions());
+        assertEquals(java.util.Arrays.asList(GameState.Action.RESOURCES,
+                GameState.Action.MASS_MEDIA), game.getPlayerState(2).getLastTurnActions());
+        assertEquals("rocket1", target.getPreparedCarrierName());
+        assertEquals(1, rocket.inStock);
+        assertFalse(target.isBioloaded());
+        assertTrue(target.getWeapons().get("warhead1").active);
+        assertFalse(target.getWeapons().get("warhead1").bioloaded);
+        // Independent Python capture, including all canonical city populations.
+        int[][] populations = {{91, 94, 75, 103, 37}, {93, 77, 7, 74, 171},
+                {102, 109, 65, 96, 93}};
+        int[] totals = {400, 422, 465};
+        int[] religions = {34, 44, 51};
+        long[] money = {150, 97, 126};
+        long[] scores = {335162, 224104, 491052};
+        for (int playerId = 0; playerId < 3; playerId++) {
+            GameState.PlayerState player = game.getPlayerState(playerId);
+            assertEquals("population player " + playerId, totals[playerId], player.populationMillions);
+            assertEquals("religion player " + playerId, religions[playerId], player.religion);
+            assertEquals("money player " + playerId, money[playerId], player.moneyMillions);
+            assertEquals("score player " + playerId, scores[playerId], player.score);
+            for (int city = 0; city < 5; city++) {
+                assertEquals("population player " + playerId + " city " + city,
+                        populations[playerId][city], player.getCity(city).populationMillions);
+            }
+        }
+        assertEquals("canonical next draw after 32 source draws", 0.013467678145623552,
+                game.createPresentationRandomCopy().nextDouble(), 0d);
+    }
+
     /** Legal source queue at turn 17, before confirm; reusable by native tests. */
     public static GameState legalSeventeenTurnBioLaunchQueued() {
         GameSetup setup = new GameSetup(0L);

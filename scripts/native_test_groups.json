@@ -480,6 +480,10 @@
       "legalSubmarineBattleMatchesSourceThroughCanonicalHandoff"
     ],
     [
+      "com.example.worlddomination.game.rendering.SourceBiologicalPlaybackInstrumentedTest",
+      "legalSubmarineIdleAndNextConfirmKeepCanonicalCloudsAbsent"
+    ],
+    [
       "com.example.worlddomination.game.rendering.SourceBiologicalCarriersInstrumentedTest",
       "planeOneBiologicalPayloadMatchesAllSourceTicks"
     ],

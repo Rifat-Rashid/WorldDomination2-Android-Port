@@ -10,6 +10,8 @@ import com.example.worlddomination.game.simulation.GameSetup;
 import com.example.worlddomination.game.simulation.GameState;
 import com.example.worlddomination.game.simulation.ReferenceRandom;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -76,6 +78,104 @@ public final class SourceBiologicalPlaybackInstrumentedTest {
                         roles[tick], game, cities, binding, core, privateRandom, playback);
             }
         }));
+    }
+
+    @Test public void legalSubmarineIdleAndNextConfirmKeepCanonicalCloudsAbsent()
+            throws Exception {
+        JSONObject fixture;
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(
+                InstrumentationRegistry.getInstrumentation().getContext().getAssets()
+                        .open("source-bio-sub-idle-handoff.json"), StandardCharsets.UTF_8))) {
+            StringBuilder text = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) text.append(line);
+            fixture = new JSONObject(text.toString());
+        }
+        assertEquals("source-bio-sub-idle-handoff-v1", fixture.getString("schema"));
+        assertEquals(17, fixture.getJSONArray("schedule").length());
+        assertEquals("resources", fixture.getJSONArray("nextActions").getString(0));
+        assertEquals("religion", fixture.getJSONArray("nextActions").getString(1));
+        SourceBattleCleanupInstrumentedTest.runInGame(app -> withSourceSound(app, ignored -> {
+            GameState game = gameReadyForSubmarine();
+            field(WorldDominationGame.class, "game").set(app, game);
+            BattlefieldCityRenderer cities = (BattlefieldCityRenderer)
+                    field(WorldDominationGame.class, "cityRenderer").get(app);
+            cities.reset(game);
+            ((SourceBattleRecordClock) field(WorldDominationGame.class,
+                    "battleRecordClock").get(app)).reset();
+            invoke(app, "confirmTurnAndPreparePlayback");
+            assertEquals(17, game.getTurn());
+            assertEquals(43, game.getLastTurnCombatEvents().get(0).casualtiesMillions);
+            assertTrue(game.getLastTurnCombatEvents().get(0).bioload);
+            for (int tick = 1; tick <= LAST_TICK; tick++) advance(app);
+            TurnPlaybackSequence sequence = (TurnPlaybackSequence)
+                    field(WorldDominationGame.class, "turnPlaybackSequence").get(app);
+            assertEquals(TurnPlaybackSequence.Phase.IDLE, sequence.getPhase());
+            JSONArray samples = fixture.getJSONArray("idleSamples");
+            JSONObject invariant = fixture.getJSONObject("idleInvariant");
+            assertEquals("source observed every idle tick", 120, fixture.getInt("verifiedIdleTicks"));
+            int anchor = 0;
+            for (int idleTick = 1; idleTick <= fixture.getInt("verifiedIdleTicks"); idleTick++) {
+                if (idleTick > 1) advance(app);
+                assertCanonicalIdle(invariant, game, cities);
+                assertEquals("idle playback phase at " + idleTick,
+                        TurnPlaybackSequence.Phase.IDLE, sequence.getPhase());
+                if (anchor < samples.length()
+                        && samples.getJSONObject(anchor).getInt("idleTick") == idleTick) {
+                    assertCanonicalIdle(samples.getJSONObject(anchor), game, cities);
+                    anchor++;
+                }
+            }
+            assertEquals("all source anchors visited", samples.length(), anchor);
+            rejectDiplomacy(game);
+            resources(game);
+            game.selectAction(GameState.Action.MASS_MEDIA);
+            assertTrue(game.acceptSelectedAction());
+            invoke(app, "confirmTurnAndPreparePlayback");
+            assertEquals(18, game.getTurn());
+            JSONObject next = fixture.getJSONObject("nextConfirm");
+            assertCanonicalIdle(next.getJSONObject("canonical"), game, cities);
+            assertTrue("next isolated city state active", cities.isBattleActive());
+            ReferenceRandom nextRandom = (ReferenceRandom) field(WorldDominationGame.class,
+                    "battlePresentationRandom").get(app);
+            assertNotNull(nextRandom);
+            assertEquals("next private battle RNG", next.getDouble("nextBattleRngNext"),
+                    nextRandom.copy().nextDouble(), 0d);
+            GameState.BattleCitySnapshot snapshot = game.getBattlePresentationCity(1, 2);
+            assertEquals(next.getBoolean("nextBattleBioloaded"), snapshot.bioloaded);
+            assertEquals(next.getBoolean("nextBattleFlag"), snapshot.bioloadInBattle);
+            assertEquals(next.getInt("nextBattleCloudCount"), cities.getSourceCloudCount(CITY));
+            assertFalse("next isolated city has no attached source cloud",
+                    cities.isSourceCloudAttached(CITY));
+            assertEquals(next.getJSONObject("nextBattleImage").getInt("frame"),
+                    cities.getSourceCityFrame(CITY));
+        }));
+    }
+
+    private static void assertCanonicalIdle(JSONObject expected, GameState game,
+                                             BattlefieldCityRenderer cities) throws Exception {
+        CityState city = game.getPlayerState(1).getCity(2);
+        assertEquals(expected.getBoolean("bioloaded"), city.bioloaded);
+        assertEquals(expected.getBoolean("bioload_in_battle"), city.bioloadInBattle);
+        assertEquals(expected.getBoolean("targetPlayerBioloaded"),
+                game.getPlayerState(1).isBioloaded());
+        assertEquals(expected.getInt("cloudCount"), canonicalCloudCount(cities));
+        assertEquals("source model image frame", expected.getInt("modelImageFrame"),
+                canonicalCity(cities).getFrameNumber());
+        assertEquals("canonical RNG next", expected.getDouble("rngNext"),
+                game.createPresentationRandomCopy().nextDouble(), 0d);
+        Object clouds = field(BattlefieldCityRenderer.class, "bioloadCloudRenderer").get(cities);
+        Object canonical = field(clouds.getClass(), "canonicalState").get(clouds);
+        boolean[] attached = (boolean[]) field(canonical.getClass(), "sourceAttached").get(canonical);
+        List<?> cohorts = (List<?>) field(canonical.getClass(), "retainedClouds").get(canonical);
+        assertEquals("canonical source attachment", !expected.isNull("sceneCloudContainer"),
+                attached[CITY]);
+        assertEquals("canonical retained source cloud children", expected.getInt("cloudCount"),
+                ((List<?>) cohorts.get(CITY)).size() * BioloadCloudAnimation.CLOUD_COUNT);
+        if (!cities.isBattleActive()) {
+            assertEquals("canonical source cloud count", 0, cities.getSourceCloudCount(CITY));
+            assertFalse("canonical source cloud detached", cities.isSourceCloudAttached(CITY));
+        }
     }
 
     static void withSourceSound(WorldDominationGame app,
