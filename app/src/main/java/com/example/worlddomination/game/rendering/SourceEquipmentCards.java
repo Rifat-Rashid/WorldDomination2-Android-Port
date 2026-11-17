@@ -7,7 +7,8 @@ import com.badlogic.gdx.math.Rectangle;
 /** Eight separately authored inventory frames, retaining their individual shading. */
 public final class SourceEquipmentCards {
     private static final int[] SOURCE_HEIGHTS = {73, 42, 117, 69, 79, 69, 69, 48};
-    private static final int EDGE = 8;
+    // Include the complete corner fastener and its highlight in each fixed cap.
+    private static final int EDGE = 18;
     private final TextureRegion[][][] pieces = new TextureRegion[8][3][3];
 
     public SourceEquipmentCards(TextureRegion[] sources) {

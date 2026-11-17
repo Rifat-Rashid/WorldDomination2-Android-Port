@@ -160,11 +160,11 @@ class NativeGroupTests(unittest.TestCase):
         result = groups.verify_artifacts(self.manifest, self.root)
         self.assertEqual(99, sum(row["classes"] for row in result.values()))
         self.assertEqual(156, sum(row["executed"] for row in result.values()))
-        self.assertEqual(134, sum(row["requiredPngs"] for row in result.values()))
+        self.assertEqual(137, sum(row["requiredPngs"] for row in result.values()))
 
     def test_missing_equipment_card_screenshots_are_rejected(self):
         self.fixture()
-        self.assertEqual(7, len(groups.EQUIPMENT_CARDS_EVIDENCE))
+        self.assertEqual(10, len(groups.EQUIPMENT_CARDS_EVIDENCE))
         group = next(g for g in self.manifest["groups"]
                      if groups.EQUIPMENT_CARDS in g["classes"])
         folder = (self.root / ("android-native-" + group["id"] + "-results")

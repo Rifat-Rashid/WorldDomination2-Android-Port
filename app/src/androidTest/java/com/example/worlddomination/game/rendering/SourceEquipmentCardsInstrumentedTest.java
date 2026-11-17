@@ -155,6 +155,7 @@ public final class SourceEquipmentCardsInstrumentedTest {
                             + maximumRgbDelta, 0, rgbAboveOne);
                     top += h + 8;
                 }
+                verifyResizedCorners(batch, renderer, source, packaged);
                 assertEquals(GL20.GL_NO_ERROR, Gdx.gl.glGetError());
             } finally {
                 fb.dispose();
@@ -301,6 +302,92 @@ public final class SourceEquipmentCardsInstrumentedTest {
             assertEquals("removing equipment art affects only its clipped viewport", 0, artOutside);
             assertEquals(GL20.GL_NO_ERROR, Gdx.gl.glGetError());
         });
+    }
+
+    private static void verifyResizedCorners(SpriteBatch batch, SourceEquipmentCards renderer,
+            Texture[] source, Texture[] packaged) {
+        // Independent source corner crops establish shape preservation after
+        // nonuniform resizing. The old 8px split is a deliberate negative control.
+        final int width = 660, height = 1440, cap = 18;
+        FrameBuffer fb = new FrameBuffer(Pixmap.Format.RGBA8888, width, height, false);
+        Matrix4 previous = new Matrix4(batch.getProjectionMatrix());
+        byte[][] captures = new byte[3][];
+        try {
+            batch.setProjectionMatrix(new Matrix4().setToOrtho2D(0, 0, width, height));
+            for (int mode = 0; mode < 3; mode++) {
+                fb.begin(); clear(); batch.begin(); batch.setColor(1f, 1f, 1f, 1f);
+                for (int group = 0; group < IDS.length; group++) {
+                    for (int size = 0; size < 2; size++) {
+                        Rectangle target = resizedTarget(group, size);
+                        if (mode == 0) renderer.draw(batch, group, target);
+                        else if (mode == 1) {
+                            for (int cy = 0; cy < 2; cy++) for (int cx = 0; cx < 2; cx++) {
+                                int sx = cx == 0 ? 0 : 197 - cap;
+                                int sy = cy == 0 ? 0 : VISIBLE_HEIGHTS[group] - cap;
+                                float dx = cx == 0 ? target.x : target.x + target.width - cap;
+                                float dy = cy == 0 ? target.y + target.height - cap : target.y;
+                                batch.draw(new TextureRegion(source[group], sx, sy, cap, cap),
+                                        dx, dy, cap, cap);
+                            }
+                        } else drawLegacyEightPixelSlices(batch, packaged[group], group, target);
+                    }
+                }
+                batch.end();
+                captures[mode] = ScreenUtils.getFrameBufferPixels(0, 0, width, height, true);
+                fb.end();
+            }
+            String[] suffixes = {"resized", "source-corners", "split-fasteners"};
+            for (int mode = 0; mode < 3; mode++) evidence(
+                    "source-equipment-cards-" + suffixes[mode] + ".png",
+                    captures[mode], width, height);
+            for (int group = 0; group < IDS.length; group++) for (int size = 0; size < 2; size++) {
+                Rectangle target = resizedTarget(group, size);
+                int distortedPixels = 0;
+                for (int cy = 0; cy < 2; cy++) for (int cx = 0; cx < 2; cx++) {
+                    int left = (int) (cx == 0 ? target.x : target.x + target.width - cap);
+                    int bottom = (int) (cy == 0 ? target.y + target.height - cap : target.y);
+                    for (int y = 0; y < cap; y++) for (int x = 0; x < cap; x++) {
+                        int k = ((height - 1 - bottom - y) * width + left + x) * 4;
+                        int maxLegacyDelta = 0;
+                        for (int c = 0; c < 4; c++) {
+                            int delta = Math.abs((captures[0][k + c] & 255)
+                                    - (captures[1][k + c] & 255));
+                            int tolerance = c < 3 ? 1
+                                    : group == 1 && cy == 0 && y == cap - 1 ? 2 : 0;
+                            assertTrue("resized source corner group " + group + " size " + size
+                                    + " corner " + cx + "," + cy + " pixel " + x + "," + y
+                                    + " channel " + c + " delta " + delta, delta <= tolerance);
+                            maxLegacyDelta = Math.max(maxLegacyDelta,
+                                    Math.abs((captures[2][k + c] & 255)
+                                            - (captures[1][k + c] & 255)));
+                        }
+                        if (maxLegacyDelta > 3) distortedPixels++;
+                    }
+                }
+                assertTrue("8px split visibly distorts fasteners group " + group + " size "
+                        + size + ": " + distortedPixels, distortedPixels > 100);
+            }
+        } finally {
+            batch.setProjectionMatrix(previous);
+            fb.dispose();
+        }
+    }
+
+    private static Rectangle resizedTarget(int group, int size) {
+        return new Rectangle(size == 0 ? 20 : 320, group * 180 + 20,
+                size == 0 ? 256 : 300, size == 0 ? 120 : 86);
+    }
+
+    private static void drawLegacyEightPixelSlices(SpriteBatch batch, Texture texture,
+            int group, Rectangle target) {
+        int[] sx = {0, 8, 189}, sy = {0, 8, VISIBLE_HEIGHTS[group] - 8};
+        int[] sw = {8, 181, 8}, sh = {8, VISIBLE_HEIGHTS[group] - 16, 8};
+        for (int row = 0; row < 3; row++) for (int col = 0; col < 3; col++) {
+            float x = col == 0 ? target.x : col == 1 ? target.x + 8 : target.x + target.width - 8;
+            float y = row == 0 ? target.y + target.height - 8 : row == 1 ? target.y + 8 : target.y;
+            batch.draw(new TextureRegion(texture, sx[col], sy[row], sw[col], sh[row]), x, y,
+                    col == 1 ? target.width - 16 : 8, row == 1 ? target.height - 16 : 8);
+        }
     }
 
     private static byte[] atlas(FrameBuffer fb, SpriteBatch batch, SourceEquipmentCards renderer,

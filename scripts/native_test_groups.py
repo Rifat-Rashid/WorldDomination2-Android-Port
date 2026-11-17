@@ -126,7 +126,8 @@ EQUIPMENT_CARDS = (
 EQUIPMENT_CARDS_EVIDENCE = {
     f"source-equipment-cards-{variant}.png"
     for variant in ("actual", "expected", "wrong-band", "missing-art",
-                    "world-top", "world-bottom", "world-missing")
+                    "world-top", "world-bottom", "world-missing",
+                    "resized", "source-corners", "split-fasteners")
 }
 
 
