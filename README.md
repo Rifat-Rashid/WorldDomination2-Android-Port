@@ -14,25 +14,25 @@
 
 ## Screenshots
 
-Choose your rivals, then manage the five-island battlefield. These are captures from the current Android QA build.
+Choose your rivals, then manage the five-island battlefield. Captures: beta.11 QA from `f109f25`, same app source as merged main `1237ded`, Pixel 10 API 37 emulator.
 
 <p align="center">
-  <a href="docs/images/setup-qa61.png"><img src="docs/images/setup-phone.svg" width="760" alt="Landscape Android phone showing the game setup and selected rivals"></a><br>
+  <a href="docs/images/setup-beta11-f109f25.png"><img src="docs/images/setup-phone.svg" width="760" alt="Landscape Android phone showing the game setup and selected rivals"></a><br>
   <strong>Choose your rivals</strong>
 </p>
 
 <p align="center">
-  <a href="docs/images/battlefield-qa61.png"><img src="docs/images/battlefield-phone.svg" width="760" alt="Landscape Android phone showing the five-island battlefield and game controls"></a><br>
+  <a href="docs/images/battlefield-beta11-f109f25.png"><img src="docs/images/battlefield-phone.svg" width="760" alt="Landscape Android phone showing the five-island battlefield and game controls"></a><br>
   <strong>Plan your next move</strong>
 </p>
 
-Select either image to view the original capture at full size.
+Select either image to view the original capture at full size. [Capture provenance](docs/images/README.md).
 
 ## About
 
 World Domination 2 is a turn-based strategy game about managing resources, developing technology, building an arsenal, and competing for control of a five-island world. This project ports the game to Android as a Java application rendered with libGDX and OpenGL ES.
 
-> **Development status:** Active. The Android app builds and runs, while gameplay behavior and the original presentation continue to be ported and checked against the Python reference. Full feature parity is not complete. Screenshots show the current Android build.
+> **Development status:** Active. The Android app builds and runs, while gameplay behavior and the original presentation continue to be ported and checked against the Python reference. Full feature parity is not complete. Screenshots show the identified beta.11 QA build above.
 
 ## Project highlights
 
