@@ -432,6 +432,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private boolean showSetupMessage;
     private boolean satelliteFlightCuePlayed;
     private boolean splashPointerDown;
+    private boolean splashContinuePending;
 
     public WorldDominationGame() {
         for (int i = 0; i < navRows.length; i++) {
@@ -659,6 +660,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         if (flashAnimationAssets != null) {
             flashAnimationAssets.update();
+            if (splashContinuePending && flashAnimationAssets.areSetupPortraitsLoaded()) {
+                splashContinuePending = false;
+                splashState.dismiss();
+            }
             preparePendingBattleAnimations();
         }
         if (cityRenderer != null) {
@@ -4582,6 +4587,13 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                         .readString("UTF-8"));
     }
 
+    private void requestSplashContinue() {
+        if (!splashState.isVisible()) return;
+        splashContinuePending = true;
+        startFlashAssetLoading();
+        Gdx.graphics.requestRendering();
+    }
+
     private void initializePreparedAttackSelection() {
         String preparedCarrier = game.getPreparedCarrierName(0);
         if (preparedCarrier == null) {
@@ -5643,8 +5655,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         if (game == null) {
             if (splashState.isVisible()) {
-                splashState.dismiss();
-                startFlashAssetLoading();
+                requestSplashContinue();
                 return true;
             }
             if (showExitPromptSeconds > 0f) {
@@ -5759,9 +5770,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         if (splashPointerDown) {
             splashPointerDown = false;
-            splashState.dismiss();
-            startFlashAssetLoading();
-            Gdx.graphics.requestRendering();
+            requestSplashContinue();
             return true;
         }
         if (splashState.isVisible()) {
