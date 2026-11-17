@@ -66,7 +66,7 @@ public final class AntiDefenseRealCompletionInstrumentedTest {
                     assertEquals(0.5961f, first.durationSeconds(), .04f);
                     // Stop in the same GL turn, before the short original cue can finish.
                     playback.pause();
-                    playback.setMuted(true);
+                    playback.setOutputMuted(true);
                     assertEquals(0f, first.getVolume(), .001f);
                 });
                 RecordingMusic first = firstRef.get();
@@ -88,7 +88,7 @@ public final class AntiDefenseRealCompletionInstrumentedTest {
                             factoryRef.get().created.size());
                     assertEquals("one final native callback", 1, first.completions.get());
                     assertEquals(1, first.disposals.get());
-                    playback.setMuted(false);
+                    playback.setOutputMuted(false);
                     assertTrue("final completion rearms the source group", owner.requestShot());
                     RecordingMusic second = factoryRef.get().created.get(1);
                     assertNotNull(second);

@@ -59,7 +59,7 @@ public final class SatelliteAudioInstrumentedTest {
                     SatelliteAudioPlayback owner = (SatelliteAudioPlayback) field(
                             OriginalAudio.class, "satellitePlayback").get(audio);
                     ownerRef.set(owner);
-                    owner.setMuted(true);
+                    owner.setOutputMuted(true);
                     Object voice = onlyVoice(owner);
                     voiceRef.set(voice);
                     Music laser = (Music) field(voice.getClass(), "laser").get(voice);

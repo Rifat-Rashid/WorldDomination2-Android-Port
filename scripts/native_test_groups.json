@@ -105,7 +105,8 @@
     "com.example.worlddomination.game.rendering.SourceSetupButtonsInstrumentedTest",
     "com.example.worlddomination.game.rendering.SourceSetupCarouselInstrumentedTest",
     "com.example.worlddomination.game.rendering.SourceSetupBuildingsInstrumentedTest",
-    "com.example.worlddomination.game.rendering.SourceSetupEnemyArtInstrumentedTest"
+    "com.example.worlddomination.game.rendering.SourceSetupEnemyArtInstrumentedTest",
+    "com.example.worlddomination.game.audio.PhoneToolbarAudioInstrumentedTest"
   ],
   "groups": [
     {
@@ -156,7 +157,8 @@
         "com.example.worlddomination.game.simulation.SourceLegalVictoryCampaignInstrumentedTest",
         "com.example.worlddomination.game.rendering.SourceEndgameScoreClockInstrumentedTest",
         "com.example.worlddomination.game.rendering.OriginalBattlefieldFrameInstrumentedTest",
-        "com.example.worlddomination.game.rendering.HudTextStabilityInstrumentedTest"
+        "com.example.worlddomination.game.rendering.HudTextStabilityInstrumentedTest",
+        "com.example.worlddomination.game.audio.PhoneToolbarAudioInstrumentedTest"
       ],
       "evidence": [
         "beta-ui-evidence",
@@ -862,6 +864,10 @@
     [
       "com.example.worlddomination.game.rendering.SourceSetupEnemyArtInstrumentedTest",
       "portraitAndCancelUseIndependentSourceRegistrationAndOpacity"
+    ],
+    [
+      "com.example.worlddomination.game.audio.PhoneToolbarAudioInstrumentedTest",
+      "worldToolbarMuteAndGearPreserveGameAndTheme"
     ]
   ]
 }

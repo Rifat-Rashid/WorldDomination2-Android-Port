@@ -80,6 +80,8 @@ public final class OriginalAudio {
     private static final float EFFECT_VOLUME = 0.8f;
 
     private final Map<Cue, Sound> sounds = new EnumMap<>(Cue.class);
+    private final Map<Cue, Long> soundLifetimes = new EnumMap<>(Cue.class);
+    private final SoundVoiceRegistry soundVoices = new SoundVoiceRegistry();
     private final SatelliteAudioPlayback satellitePlayback;
     private final AircraftAudioPlayback aircraftPlayback;
     private final AntiDefenseAudioPlayback antiDefensePlayback = new AntiDefenseAudioPlayback(
@@ -89,6 +91,7 @@ public final class OriginalAudio {
     private long ambientSoundId = -1L;
     private boolean soundEnabled = true;
     private boolean musicEnabled = true;
+    private boolean outputMuted;
     private boolean resumeMusicAfterPause;
     private boolean initialized;
 
@@ -170,7 +173,7 @@ public final class OriginalAudio {
         play(Cue.STARTUP);
         if (theme != null && musicEnabled) {
             theme.setLooping(true);
-            theme.setVolume(MUSIC_VOLUME);
+            theme.setVolume(outputMuted ? 0f : MUSIC_VOLUME);
             theme.play();
         }
     }
@@ -178,19 +181,11 @@ public final class OriginalAudio {
     /** Toggles source sound effects without changing the independent music setting. */
     public boolean toggleSound() {
         soundEnabled = !soundEnabled;
-        // The phone reference mutes active channels without cancelling their
-        // completion callbacks. New laser starts remain gated by play().
-        satellitePlayback.setMuted(!soundEnabled);
-        aircraftPlayback.setMuted(!soundEnabled);
-        antiDefensePlayback.setMuted(!soundEnabled);
-        if (!soundEnabled) {
-            for (Sound sound : sounds.values()) {
-                sound.stop();
-            }
-            stopAmbientPlayback();
-        } else if (ambientCue != null) {
-            ambientSoundId = loop(ambientCue);
-        }
+        // Option.setSound only gates new source soundAction requests. Existing
+        // ambience and completion chains retain their current playback and gain.
+        satellitePlayback.setSoundEnabled(soundEnabled);
+        aircraftPlayback.setSoundEnabled(soundEnabled);
+        antiDefensePlayback.setSoundEnabled(soundEnabled);
         return soundEnabled;
     }
 
@@ -200,7 +195,7 @@ public final class OriginalAudio {
         if (theme != null) {
             if (musicEnabled) {
                 theme.setLooping(true);
-                theme.setVolume(MUSIC_VOLUME);
+                theme.setVolume(outputMuted ? 0f : MUSIC_VOLUME);
                 theme.play();
             } else {
                 theme.stop();
@@ -209,7 +204,7 @@ public final class OriginalAudio {
         return musicEnabled;
     }
 
-    /** Backwards-compatible mute action; the original MUTE switch controls effects only. */
+    /** Legacy source sound-option alias. The phone toolbar uses toggleOutputMuted. */
     public boolean toggleMuted() {
         toggleSound();
         return !soundEnabled;
@@ -218,6 +213,19 @@ public final class OriginalAudio {
     public boolean isMuted() {
         return !soundEnabled;
     }
+
+    /** Phone backend mute: silence active/future output without changing source options. */
+    public boolean toggleOutputMuted() {
+        outputMuted = !outputMuted;
+        soundVoices.setMuted(outputMuted);
+        if (theme != null) theme.setVolume(outputMuted ? 0f : MUSIC_VOLUME);
+        satellitePlayback.setOutputMuted(outputMuted);
+        aircraftPlayback.setOutputMuted(outputMuted);
+        antiDefensePlayback.setOutputMuted(outputMuted);
+        return outputMuted;
+    }
+
+    public boolean isOutputMuted() { return outputMuted; }
 
     public boolean isSoundEnabled() {
         return soundEnabled;
@@ -229,12 +237,13 @@ public final class OriginalAudio {
 
     /** Starts the requested original ambience loop, replacing the previous one. */
     public void playAmbient(Cue cue) {
-        if (ambientCue == cue && (!soundEnabled || ambientSoundId >= 0L)) {
+        if (!soundEnabled) return;
+        if (ambientCue == cue && ambientSoundId >= 0L) {
             return;
         }
         stopAmbientPlayback();
         ambientCue = cue;
-        if (soundEnabled && cue != null) {
+        if (cue != null) {
             ambientSoundId = loop(cue);
         }
     }
@@ -266,8 +275,12 @@ public final class OriginalAudio {
         if (sound == null) {
             sound = loadSound(cue);
         }
-        return sound == null ? -1L
-                : sound.play(EFFECT_VOLUME, 1f, Math.max(-1f, Math.min(1f, pan)));
+        if (sound == null) return -1L;
+        float boundedPan = Float.isFinite(pan) ? Math.max(-1f, Math.min(1f, pan)) : 0f;
+        long id = sound.play(outputMuted ? 0f : EFFECT_VOLUME, 1f, boundedPan);
+        soundVoices.register(sound, id, EFFECT_VOLUME, boundedPan, false,
+                soundLifetimes.getOrDefault(cue, Long.MAX_VALUE));
+        return id;
     }
 
     /** Starts a looping original cue and returns its libGDX sound instance id. */
@@ -279,7 +292,10 @@ public final class OriginalAudio {
         if (sound == null) {
             sound = loadSound(cue);
         }
-        return sound == null ? -1L : sound.loop(EFFECT_VOLUME);
+        if (sound == null) return -1L;
+        long id = sound.loop(outputMuted ? 0f : EFFECT_VOLUME);
+        soundVoices.register(sound, id, EFFECT_VOLUME, 0f, true, Long.MAX_VALUE);
+        return id;
     }
 
     public void stop(Cue cue, long soundId) {
@@ -289,6 +305,7 @@ public final class OriginalAudio {
         Sound sound = sounds.get(cue);
         if (sound != null) {
             sound.stop(soundId);
+            soundVoices.forget(sound, soundId);
         }
     }
 
@@ -297,7 +314,7 @@ public final class OriginalAudio {
         if (cue == null || soundId < 0L || !Float.isFinite(pan)) return;
         Sound sound = sounds.get(cue);
         if (sound != null) {
-            sound.setPan(soundId, Math.max(-1f, Math.min(1f, pan)), EFFECT_VOLUME);
+            soundVoices.pan(sound, soundId, Math.max(-1f, Math.min(1f, pan)));
         }
     }
 
@@ -309,9 +326,7 @@ public final class OriginalAudio {
         if (resumeMusicAfterPause) {
             theme.pause();
         }
-        for (Sound sound : sounds.values()) {
-            sound.pause();
-        }
+        soundVoices.pause();
     }
 
     public void resume() {
@@ -321,11 +336,8 @@ public final class OriginalAudio {
         if (resumeMusicAfterPause && musicEnabled && theme != null) {
             theme.play();
         }
-        if (soundEnabled) {
-            for (Sound sound : sounds.values()) {
-                sound.resume();
-            }
-        }
+        // The sound option cannot suppress resumption of previously active voices.
+        soundVoices.resume();
         resumeMusicAfterPause = false;
     }
 
@@ -341,6 +353,8 @@ public final class OriginalAudio {
             sound.dispose();
         }
         sounds.clear();
+        soundLifetimes.clear();
+        soundVoices.clear();
         ambientCue = null;
         ambientSoundId = -1L;
         initialized = false;
@@ -349,7 +363,7 @@ public final class OriginalAudio {
     /** Warm each source satellite's independent completion-driven sound pair. */
     public void prepareSatelliteAudio(int count) {
         satellitePlayback.prepare(count);
-        satellitePlayback.setMuted(!soundEnabled);
+        satellitePlayback.setSoundEnabled(soundEnabled);
     }
 
     /** Python BattlePlayback.finish closes remaining sounds at endBattle. */
@@ -359,7 +373,7 @@ public final class OriginalAudio {
 
     /** One source Unit owns both cues; actual completion advances its linkage. */
     public AircraftAudioPlayback.Owner createAircraftAudio(AircraftAudioPlayback.Kind kind) {
-        aircraftPlayback.setMuted(!soundEnabled);
+        aircraftPlayback.setSoundEnabled(soundEnabled);
         return aircraftPlayback.createOwner(kind);
     }
 
@@ -368,7 +382,7 @@ public final class OriginalAudio {
 
     /** Each source Unit owns separate rotation and finite firing sound groups. */
     public AntiDefenseAudioPlayback.Owner createAntiDefenseOwner(AntiDefenseAudioPlayback.Type type) {
-        antiDefensePlayback.setMuted(!soundEnabled);
+        antiDefensePlayback.setSoundEnabled(soundEnabled);
         return antiDefensePlayback.createOwner(type);
     }
 
@@ -525,6 +539,12 @@ public final class OriginalAudio {
             }
             Sound sound = Gdx.audio.newSound(file);
             sounds.put(cue, sound);
+            // All packaged cues are MPEG audio, whose minimum supported bitrate is
+            // 8 kbit/s. One millisecond per encoded byte plus a second is a generous
+            // playback upper bound (including tags/padding). Retire stale SoundPool
+            // handles only after that bound; loops persist until their source stop.
+            soundLifetimes.put(cue, Math.addExact(Math.multiplyExact(file.length(),
+                    1_000_000L), 1_000_000_000L));
             return sound;
         } catch (RuntimeException exception) {
             logFailure(cue, exception);

@@ -70,26 +70,64 @@ public final class AircraftAudioPlaybackTest {
         assertEquals(1000, flight.plays);
     }
 
-    @Test public void mutedRequestRetriesAndExistingCompletionContinuesSilently() {
+    @Test public void soundOptionSuppressesNewTakeoffButExistingCompletionStaysAudible() {
         Factory factory = new Factory();
         AircraftAudioPlayback playback = new AircraftAudioPlayback(factory::create, .8f);
         AircraftAudioPlayback.Owner owner = playback.createOwner(AircraftAudioPlayback.Kind.FIGHTER);
-        playback.setMuted(true);
+        playback.setSoundEnabled(false);
         assertFalse(owner.requestTakeoff());
         assertEquals(0, factory.created.size());
-        playback.setMuted(false);
+        playback.setSoundEnabled(true);
         assertTrue(owner.requestTakeoff());
         owner.setSourceVolumePercent(40);
         assertEquals(.32f, factory.created.get(0).volume, .0001f);
-        playback.setMuted(true);
+        playback.setSoundEnabled(false);
         factory.created.get(0).complete();
         assertEquals(1, factory.created.get(1).plays);
-        assertEquals(0f, factory.created.get(1).volume, 0f);
-        factory.created.get(1).complete();
-        assertEquals("mute does not cancel retained source callbacks", 2,
-                factory.created.get(1).plays);
-        playback.setMuted(false);
         assertEquals(.32f, factory.created.get(1).volume, .0001f);
+        factory.created.get(1).complete();
+        assertEquals("sound option does not cancel retained source callbacks", 2,
+                factory.created.get(1).plays);
+        playback.setSoundEnabled(true);
+        assertEquals(.32f, factory.created.get(1).volume, .0001f);
+        playback.dispose();
+    }
+
+    @Test public void outputMuteAllowsNewTakeoffAndRetainsPanFadeAndResume() {
+        Factory factory = new Factory();
+        AircraftAudioPlayback playback = new AircraftAudioPlayback(factory::create, .8f);
+        AircraftAudioPlayback.Owner first = playback.createOwner(AircraftAudioPlayback.Kind.FIGHTER);
+        assertTrue(first.requestTakeoff());
+        first.setSourcePanPercent(-50);
+        first.setSourceVolumePercent(98);
+        playback.setOutputMuted(true);
+        FakeMusic takeoff = factory.created.get(0), flight = factory.created.get(1);
+        assertEquals(-.5f, takeoff.pan, 0f);
+        assertEquals(0f, takeoff.volume, 0f);
+        AircraftAudioPlayback.Owner second = playback.createOwner(AircraftAudioPlayback.Kind.CARRIER);
+        assertTrue("output mute does not gate Unit.soundAction", second.requestTakeoff());
+        assertEquals(1, factory.created.get(2).plays);
+        assertEquals(0f, factory.created.get(2).volume, 0f);
+        takeoff.complete();
+        assertEquals(1, flight.plays);
+        flight.complete();
+        assertEquals("retained flight callback continues silently", 2, flight.plays);
+        first.setSourcePanPercent(100);
+        first.setSourceVolumePercent(40);
+        assertEquals(1f, flight.pan, 0f);
+        assertEquals(0f, flight.volume, 0f);
+        playback.pause();
+        playback.resume();
+        assertEquals(0f, flight.volume, 0f);
+        playback.setSoundEnabled(false);
+        playback.setOutputMuted(false);
+        assertEquals(.32f, flight.volume, .0001f);
+        assertFalse("source option still gates new takeoff",
+                playback.createOwner(AircraftAudioPlayback.Kind.FIGHTER).requestTakeoff());
+        playback.setSoundEnabled(true);
+        assertEquals(1f, flight.pan, 0f);
+        assertEquals(.32f, flight.volume, .0001f);
+        assertEquals(.8f, factory.created.get(2).volume, 0f);
         playback.dispose();
     }
 
@@ -113,7 +151,7 @@ public final class AircraftAudioPlaybackTest {
         assertEquals(0f, other.pan, 0f);
         assertEquals(.8f, other.volume, 0f);
         first.setSourcePanPercent(100);
-        playback.setMuted(true);
+        playback.setOutputMuted(true);
         assertEquals(1f, takeoff.pan, 0f);
         assertEquals(0f, takeoff.volume, 0f);
         assertEquals(0f, flight.volume, 0f);
@@ -122,7 +160,7 @@ public final class AircraftAudioPlaybackTest {
         assertEquals(1f, flight.pan, 0f);
         flight.complete();
         assertEquals(2, flight.plays);
-        playback.setMuted(false);
+        playback.setOutputMuted(false);
         assertEquals(1f, flight.pan, 0f);
         assertEquals(.784f, flight.volume, .0001f);
         first.setSourcePanPercent(-100);

@@ -141,6 +141,13 @@ SCORE_PANEL_EVIDENCE = {
 } | {"source-score-panel-world.png", "source-score-panel-world-missing.png"}
 
 
+PHONE_TOOLBAR_AUDIO = "com.example.worlddomination.game.audio.PhoneToolbarAudioInstrumentedTest"
+PHONE_TOOLBAR_AUDIO_EVIDENCE = {
+    f"phone-toolbar-{variant}.png"
+    for variant in ("before", "muted", "restored", "gear")
+}
+
+
 def load_manifest(path: Path = MANIFEST) -> dict:
     data = json.loads(path.read_text(encoding="utf-8"))
     required = data.get("requiredClasses")
@@ -293,7 +300,8 @@ def verify_group_artifact(manifest: dict, group: dict, artifact: Path) -> tuple[
                     (INFORMATION_PANEL, INFORMATION_PANEL_EVIDENCE, "information panel"),
                     (STATISTIC_BARS, STATISTIC_BARS_EVIDENCE, "statistic bars"),
                     (EQUIPMENT_CARDS, EQUIPMENT_CARDS_EVIDENCE, "equipment cards"),
-                    (SCORE_PANEL, SCORE_PANEL_EVIDENCE, "score panel")):
+                    (SCORE_PANEL, SCORE_PANEL_EVIDENCE, "score panel"),
+                    (PHONE_TOOLBAR_AUDIO, PHONE_TOOLBAR_AUDIO_EVIDENCE, "phone toolbar audio")):
                 if selected_class in group["classes"]:
                     missing = required - names
                     if missing:

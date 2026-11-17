@@ -12,7 +12,8 @@ public final class SatelliteAudioPlayback {
     private final Function<OriginalAudio.Cue, Music> factory;
     private final List<Voice> voices = new ArrayList<>();
     private final float volume;
-    private boolean muted;
+    private boolean soundEnabled = true;
+    private boolean outputMuted;
     private boolean paused;
     private boolean prepared;
     private boolean disposed;
@@ -41,7 +42,7 @@ public final class SatelliteAudioPlayback {
 
     /** Starts a previously unused laser; its completion starts its own attack cue. */
     public synchronized boolean play() {
-        if (!prepared || disposed || paused) return false;
+        if (!prepared || disposed || paused || !soundEnabled) return false;
         Voice voice;
         if (nextVoice < voices.size()) {
             voice = voices.get(nextVoice++);
@@ -56,11 +57,20 @@ public final class SatelliteAudioPlayback {
         return true;
     }
 
-    /** Keeps in-flight chains alive while changing audible volume. */
-    public synchronized void setMuted(boolean muted) {
-        this.muted = muted;
-        for (Voice voice : voices) voice.setVolume(muted ? 0f : volume);
+    /** Source option gates new reveals; existing chains keep their volume and callbacks. */
+    public synchronized void setSoundEnabled(boolean soundEnabled) {
+        if (disposed) return;
+        this.soundEnabled = soundEnabled;
     }
+
+    /** Phone output mute silences streams without changing their completion chain. */
+    public synchronized void setOutputMuted(boolean outputMuted) {
+        if (disposed) return;
+        this.outputMuted = outputMuted;
+        for (Voice voice : voices) voice.setVolume(audibleVolume());
+    }
+
+    private float audibleVolume() { return outputMuted ? 0f : volume; }
 
     public synchronized void pause() {
         if (disposed || paused) return;
@@ -121,7 +131,7 @@ public final class SatelliteAudioPlayback {
             Voice voice = new Voice(laser, attack);
             laser.setLooping(false);
             attack.setLooping(false);
-            voice.setVolume(muted ? 0f : volume);
+            voice.setVolume(audibleVolume());
             laser.setOnCompletionListener(music -> voice.laserFinished());
             attack.setOnCompletionListener(music -> voice.attackFinished());
             return voice;

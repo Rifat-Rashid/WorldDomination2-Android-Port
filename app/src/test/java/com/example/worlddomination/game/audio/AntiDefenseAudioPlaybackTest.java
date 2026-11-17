@@ -66,11 +66,11 @@ public final class AntiDefenseAudioPlaybackTest {
         AntiDefenseAudioPlayback audio = new AntiDefenseAudioPlayback(factory::create, dispatcher::post);
         AntiDefenseAudioPlayback.Owner rocket = audio.createOwner(AntiDefenseAudioPlayback.Type.ROCKET);
         AntiDefenseAudioPlayback.Owner mutedFirst = audio.createOwner(AntiDefenseAudioPlayback.Type.AIR);
-        audio.setMuted(true);
+        audio.setSoundEnabled(false);
         assertFalse(mutedFirst.requestRotation());
         assertFalse(mutedFirst.requestShot());
         assertEquals(0, factory.created.size());
-        audio.setMuted(false);
+        audio.setSoundEnabled(true);
         assertFalse("source done=false has no callback to rearm", mutedFirst.requestShot());
         assertTrue(mutedFirst.requestRotation());
         assertTrue(rocket.requestShot());
@@ -84,26 +84,68 @@ public final class AntiDefenseAudioPlaybackTest {
         audio.dispose();
     }
 
-    @Test public void muteAfterStartPreservesFiniteGroupAtZeroVolume() {
+    @Test public void soundOptionAfterStartKeepsFiniteGroupAudibleAndCompleting() {
         Factory factory = new Factory();
         Queue dispatcher = new Queue();
         AntiDefenseAudioPlayback audio = new AntiDefenseAudioPlayback(factory::create, dispatcher::post);
         AntiDefenseAudioPlayback.Owner owner = audio.createOwner(AntiDefenseAudioPlayback.Type.AIR);
         assertTrue(owner.requestShot());
         FakeMusic first = factory.created.get(0);
-        audio.setMuted(true);
-        assertEquals(0f, first.volume, 0f);
+        audio.setSoundEnabled(false);
+        assertEquals(1f, first.volume, 0f);
         assertEquals(8, (int) factory.repeats.get(0));
         assertFalse(owner.requestShot());
         assertEquals(1, factory.created.size());
         first.complete();
         dispatcher.runAll();
-        assertEquals("muting an active source group does not cancel completion", 1,
+        assertEquals("source option does not cancel an active group", 1,
                 first.disposals);
-        audio.setMuted(false);
+        audio.setSoundEnabled(true);
         assertTrue(owner.requestShot());
         assertEquals(2, factory.created.size());
         audio.finish();
+    }
+
+    @Test public void outputMuteAllowsFiniteGroupsAndRestoresMasterGain() {
+        Factory factory = new Factory();
+        Queue dispatcher = new Queue();
+        AntiDefenseAudioPlayback audio = new AntiDefenseAudioPlayback(
+                factory::create, .8f, dispatcher::post);
+        AntiDefenseAudioPlayback.Owner first = audio.createOwner(AntiDefenseAudioPlayback.Type.AIR);
+        assertTrue(first.requestRotation());
+        FakeMusic rotation = factory.created.get(0);
+        audio.setOutputMuted(true);
+        assertEquals(0f, rotation.volume, 0f);
+        assertTrue("output mute does not gate a finite shot group", first.requestShot());
+        FakeMusic gun = factory.created.get(1);
+        assertEquals(8, (int) factory.repeats.get(1));
+        assertEquals(1, gun.plays);
+        assertEquals(0f, gun.volume, 0f);
+        AntiDefenseAudioPlayback.Owner second = audio.createOwner(AntiDefenseAudioPlayback.Type.ROCKET);
+        assertTrue(second.requestRotation());
+        assertEquals(0f, factory.created.get(2).volume, 0f);
+        gun.complete();
+        dispatcher.runAll();
+        assertTrue("finite completion rearms while output muted", first.requestShot());
+        assertEquals(0f, factory.created.get(3).volume, 0f);
+        audio.pause();
+        audio.resume();
+        dispatcher.runAll();
+        assertEquals(0f, rotation.volume, 0f);
+        audio.setSoundEnabled(false);
+        audio.setOutputMuted(false);
+        assertEquals(.8f, rotation.volume, 0f);
+        AntiDefenseAudioPlayback.Owner third = audio.createOwner(AntiDefenseAudioPlayback.Type.AIR);
+        int createdBeforeGate = factory.created.size();
+        assertFalse("source option gates a new rotation", third.requestRotation());
+        assertEquals(createdBeforeGate, factory.created.size());
+        assertFalse("source option still gates rotation", second.requestRotation());
+        audio.setSoundEnabled(true);
+        assertTrue("suppressed rotation remains retryable", third.requestRotation());
+        assertEquals(.8f, rotation.volume, 0f);
+        assertEquals(0f, rotation.pan, 0f);
+        assertEquals(.8f, factory.created.get(3).volume, 0f);
+        audio.dispose();
     }
 
     @Test public void queuedCompletionPauseResumeAndFinishRejectStaleVoices() {
@@ -179,9 +221,9 @@ public final class AntiDefenseAudioPlaybackTest {
             assertEquals(0f, music.pan, 0f);
             assertEquals(.8f, music.volume, 0f);
         }
-        audio.setMuted(true);
+        audio.setOutputMuted(true);
         for (FakeMusic music : factory.created) assertEquals(0f, music.volume, 0f);
-        audio.setMuted(false);
+        audio.setOutputMuted(false);
         for (FakeMusic music : factory.created) assertEquals(.8f, music.volume, 0f);
         audio.dispose();
     }
