@@ -87,8 +87,7 @@ public final class OriginalAudio {
     private final AntiDefenseAudioPlayback antiDefensePlayback = new AntiDefenseAudioPlayback(
             this::loadAntiDefenseMusic, EFFECT_VOLUME, OriginalAudio::dispatchAircraftResume);
     private Music theme;
-    private Cue ambientCue;
-    private long ambientSoundId = -1L;
+    private final BattleAmbientPlayback battleAmbient = new BattleAmbientPlayback(this::loadAmbientSound);
     private boolean soundEnabled = true;
     private boolean musicEnabled = true;
     private boolean outputMuted;
@@ -186,6 +185,7 @@ public final class OriginalAudio {
         satellitePlayback.setSoundEnabled(soundEnabled);
         aircraftPlayback.setSoundEnabled(soundEnabled);
         antiDefensePlayback.setSoundEnabled(soundEnabled);
+        battleAmbient.setSoundEnabled(soundEnabled);
         return soundEnabled;
     }
 
@@ -222,6 +222,7 @@ public final class OriginalAudio {
         satellitePlayback.setOutputMuted(outputMuted);
         aircraftPlayback.setOutputMuted(outputMuted);
         antiDefensePlayback.setOutputMuted(outputMuted);
+        battleAmbient.setOutputMuted(outputMuted);
         return outputMuted;
     }
 
@@ -235,23 +236,14 @@ public final class OriginalAudio {
         return musicEnabled;
     }
 
-    /** Starts the requested original ambience loop, replacing the previous one. */
-    public void playAmbient(Cue cue) {
-        if (!soundEnabled) return;
-        if (ambientCue == cue && ambientSoundId >= 0L) {
-            return;
-        }
-        stopAmbientPlayback();
-        ambientCue = cue;
-        if (cue != null) {
-            ambientSoundId = loop(cue);
-        }
-    }
+    /** The phone adapter constructs a fresh ambient slot ring for each private battle. */
+    public void beginBattleAmbient() { battleAmbient.beginBattle(); }
 
-    public void stopAmbient() {
-        stopAmbientPlayback();
-        ambientCue = null;
-    }
+    /** View.showActionBuildingFromObj uses the literal frame, before timed labels. */
+    public boolean startBuildingAmbient(String frame) { return battleAmbient.startForBuilding(frame); }
+
+    /** View.initiate_AB_interval stops these voices when its label pass is exhausted. */
+    public void finishBattleAmbient() { battleAmbient.stopAll(); }
 
     public void play(Cue cue) {
         play(cue, 0f);
@@ -322,6 +314,7 @@ public final class OriginalAudio {
         satellitePlayback.pause();
         aircraftPlayback.pause();
         antiDefensePlayback.pause();
+        battleAmbient.pause();
         resumeMusicAfterPause = musicEnabled && theme != null && theme.isPlaying();
         if (resumeMusicAfterPause) {
             theme.pause();
@@ -333,6 +326,7 @@ public final class OriginalAudio {
         satellitePlayback.resume();
         aircraftPlayback.resume();
         antiDefensePlayback.resume();
+        battleAmbient.resume();
         if (resumeMusicAfterPause && musicEnabled && theme != null) {
             theme.play();
         }
@@ -345,6 +339,7 @@ public final class OriginalAudio {
         satellitePlayback.dispose();
         aircraftPlayback.dispose();
         antiDefensePlayback.dispose();
+        battleAmbient.dispose();
         if (theme != null) {
             theme.dispose();
             theme = null;
@@ -355,8 +350,6 @@ public final class OriginalAudio {
         sounds.clear();
         soundLifetimes.clear();
         soundVoices.clear();
-        ambientCue = null;
-        ambientSoundId = -1L;
         initialized = false;
     }
 
@@ -407,29 +400,6 @@ public final class OriginalAudio {
             case 3: return Cue.MASS_MEDIA_REVEAL_3;
             case 4: return Cue.MASS_MEDIA_REVEAL_4;
             default: return null;
-        }
-    }
-
-    /** Maps the active source action panel to its original looping ambience. */
-    public static Cue ambientForAction(GameState.Action action) {
-        if (action == null) {
-            return Cue.GAME_AMBIENT;
-        }
-        switch (action) {
-            case RESOURCES:
-                return Cue.RESOURCES_AMBIENT;
-            case PRODUCTION:
-                return Cue.PRODUCTION_AMBIENT;
-            case RESEARCH:
-                return Cue.TECHNOLOGY_AMBIENT;
-            case MASS_MEDIA:
-                return Cue.MASS_MEDIA_AMBIENT;
-            case DIPLOMACY:
-                return Cue.DIPLOMACY_AMBIENT;
-            case DEFENSE:
-                return Cue.DEFENSE_AMBIENT;
-            default:
-                return Cue.GAME_AMBIENT;
         }
     }
 
@@ -521,11 +491,12 @@ public final class OriginalAudio {
         loadSound(cue);
     }
 
-    private void stopAmbientPlayback() {
-        if (ambientCue != null && ambientSoundId >= 0L) {
-            stop(ambientCue, ambientSoundId);
-        }
-        ambientSoundId = -1L;
+    private FiniteRepeatSound loadAmbientSound(Cue cue) {
+        Sound sound = sounds.get(cue);
+        if (sound == null) sound = loadSound(cue);
+        // MainActivity supplies the native finite-repeat backend. Never approximate
+        // the source's 9999 plays with an infinite loop or a gameplay timer.
+        return sound instanceof FiniteRepeatSound ? (FiniteRepeatSound) sound : null;
     }
 
     private Sound loadSound(Cue cue) {

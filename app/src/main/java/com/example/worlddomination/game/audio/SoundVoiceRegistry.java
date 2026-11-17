@@ -81,7 +81,12 @@ final class SoundVoiceRegistry {
         // bound on native playback duration; it never drives source completion or stops audio.
         for (int i = voices.size() - 1; i >= 0; i--) {
             Voice voice = voices.get(i);
-            if (!voice.loop && time - voice.started > voice.lifetime) voices.remove(i);
+            // The Android backend knows when its asynchronous load actually started
+            // playback. Its lifetime clock also accounts for global/native pauses.
+            boolean retired = voice.sound instanceof SoundHandleOwner
+                    ? !((SoundHandleOwner) voice.sound).isVoiceRetained(voice.id)
+                    : !voice.loop && time - voice.started > voice.lifetime;
+            if (retired) voices.remove(i);
         }
     }
 

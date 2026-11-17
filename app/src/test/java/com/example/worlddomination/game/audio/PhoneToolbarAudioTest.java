@@ -68,24 +68,33 @@ public final class PhoneToolbarAudioTest {
         assertTrue(f.audio.playInstance(OriginalAudio.Cue.WARROCKET, 0f) >= 0);
     }
 
-    @Test public void disabledAmbientRequestDoesNotReplaceOrRestartExistingLoop() throws Exception {
+    @Test public void disabledAmbientRequestPreservesOverlappingBattleVoices() throws Exception {
         Fixture f = new Fixture();
-        f.audio.playAmbient(OriginalAudio.Cue.GAME_AMBIENT);
-        long original = f.sound.nextId;
-        f.audio.toggleSound();
-        f.audio.playAmbient(OriginalAudio.Cue.RESOURCES_AMBIENT);
-        assertEquals(0, f.sound.stops);
-        assertEquals(OriginalAudio.Cue.GAME_AMBIENT, field(f.audio, "ambientCue"));
-        f.audio.toggleSound();
-        f.audio.playAmbient(OriginalAudio.Cue.GAME_AMBIENT);
-        assertEquals(1, f.sound.starts);
-        f.audio.toggleOutputMuted();
-        f.sound.assertVoice(original, 0f, 0f);
-        f.audio.toggleOutputMuted();
-        f.sound.assertVoice(original, 0f, .8f);
-        f.audio.playAmbient(OriginalAudio.Cue.RESOURCES_AMBIENT);
-        assertEquals(1, f.sound.stops);
+        f.audio.beginBattleAmbient();
+        f.audio.startBuildingAmbient("resources");
+        long first = f.sound.nextId;
+        f.audio.startBuildingAmbient("resources");
+        long second = f.sound.nextId;
         assertEquals(2, f.sound.starts);
+        assertEquals(9999, f.sound.finitePlays);
+        f.sound.assertVoice(first, 0f, .21f);
+        f.sound.assertVoice(second, 0f, .21f);
+        f.audio.toggleSound();
+        f.audio.startBuildingAmbient("game");
+        assertEquals(2, f.sound.starts);
+        assertEquals(0, f.sound.stops);
+        f.audio.toggleOutputMuted();
+        f.sound.assertVoice(first, 0f, 0f);
+        f.sound.assertVoice(second, 0f, 0f);
+        f.audio.toggleOutputMuted();
+        f.sound.assertVoice(first, 0f, .21f);
+        f.sound.assertVoice(second, 0f, .21f);
+        f.audio.toggleSound();
+        f.audio.startBuildingAmbient("resources");
+        assertEquals(3, f.sound.starts);
+        assertEquals(0, f.sound.stops);
+        f.audio.finishBattleAmbient();
+        assertEquals(3, f.sound.stops);
     }
 
     @Test public void musicOptionAndLifecycleKeepOutputMuteAndSoundOptionIndependent() throws Exception {
@@ -175,6 +184,27 @@ public final class PhoneToolbarAudioTest {
         assertEquals(1, b.changes);
     }
 
+    @Test public void asynchronousBackendOwnsHandleLifetimeUntilItRetiresTheVoice() {
+        AtomicLong clock = new AtomicLong();
+        SoundVoiceRegistry registry = new SoundVoiceRegistry(clock::get);
+        class OwnedSound extends FakeSound implements SoundHandleOwner {
+            boolean retained = true;
+            @Override public boolean isVoiceRetained(long id) { return retained; }
+        }
+        OwnedSound sound = new OwnedSound();
+        registry.register(sound, 1, .8f, .3f, false, 100);
+        clock.set(1_000_000L); // Loading may take longer than encoded playback.
+        registry.setMuted(true);
+        sound.assertVoice(1, .3f, 0f);
+        registry.setMuted(false);
+        sound.assertVoice(1, .3f, .8f);
+        sound.retained = false; // Native failure/stop/proven expiry, not a request timer.
+        int changes = sound.changes;
+        registry.setMuted(true);
+        assertEquals(changes, sound.changes);
+        assertEquals(0, sound.stops);
+    }
+
     private static Object field(Object target, String name) throws Exception {
         Field f = target.getClass().getDeclaredField(name);
         f.setAccessible(true);
@@ -197,11 +227,16 @@ public final class PhoneToolbarAudioTest {
         }
     }
 
-    private static final class FakeSound implements Sound {
+    private static class FakeSound implements FiniteRepeatSound {
         final Map<Long, float[]> voices = new HashMap<>();
         long nextId;
         int starts, stops, pauses, resumes, changes;
         boolean failStart;
+        int finitePlays;
+        public long playFinite(float volume, float pitch, float pan, int totalPlays) {
+            finitePlays = totalPlays;
+            return play(volume, pitch, pan);
+        }
         void assertVoice(long id, float pan, float volume) {
             assertNotNull(voices.get(id));
             assertEquals(pan, voices.get(id)[0], 0f);

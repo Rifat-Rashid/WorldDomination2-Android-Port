@@ -2,6 +2,7 @@ package com.example.worlddomination;
 
 import android.os.Build;
 import android.os.Bundle;
+import android.content.Context;
 import android.view.DisplayCutout;
 import android.view.View;
 import android.view.WindowInsets;
@@ -9,11 +10,19 @@ import android.view.WindowInsetsController;
 
 import com.badlogic.gdx.backends.android.AndroidApplication;
 import com.badlogic.gdx.backends.android.AndroidApplicationConfiguration;
+import com.badlogic.gdx.backends.android.AndroidAudio;
 import com.example.worlddomination.game.WorldDominationGame;
+import com.example.worlddomination.platform.audio.SourceAndroidAudio;
 
 /** Android-only landscape launcher for the libGDX game. */
 public final class MainActivity extends AndroidApplication {
     private WorldDominationGame game;
+
+    @Override
+    public AndroidAudio createAudio(Context context, AndroidApplicationConfiguration config) {
+        if (config.disableAudio) return super.createAudio(context, config);
+        return new SourceAndroidAudio(context, config);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

@@ -868,7 +868,11 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         // MovieClipHost dispatches all onEnterFrame callbacks before autoplay
         // frame actions; fixedUpdate advances those after the city callbacks.
         TurnPlaybackSequence.Phase previousPhase = turnPlaybackSequence.getPhase();
+        boolean waitingForLabels = turnPlaybackSequence.isWaitingForActionLabels();
         GameState.Action revealedAction = turnPlaybackSequence.advance(seconds);
+        if (waitingForLabels && !turnPlaybackSequence.isWaitingForActionLabels()) {
+            audio.finishBattleAmbient();
+        }
         if (revealedAction != null) {
             turnActionDisplay.reveal(revealedAction, game.getLastTurnActionBuildings());
             int mediaVariant = battleActionFrames.onActionRevealed(
@@ -1325,6 +1329,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     /** The phone adapter releases playback at the endBattle handoff. */
     private void finishBattlePresentation() {
+        audio.finishBattleAmbient();
         audio.finishSatelliteAudio();
         audio.finishAircraftAudio();
         audio.finishAntiDefenseAudio();
@@ -1539,6 +1544,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 }
             }
             actionBuildingAnimations.add(new FlashActionBuildingAnimation(event, reused));
+            audio.startBuildingAmbient(event.frameName);
         }
         turnActionDisplay.reset();
         turnPlaybackSequence.begin(resolvedActions);
@@ -1591,7 +1597,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             outcomeSequence.begin(game.getMatchStatus(), game.getFinalScoreBreakdown(),
                     game.createOutcomePresentationRandomCopy());
             modalOpen = false;
-            audio.stopAmbient();
+            audio.finishBattleAmbient();
         }
     }
 
@@ -3865,7 +3871,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         GameSetup nextSetup = setup == null
                 ? new GameSetup(System.nanoTime()) : setup.createNextSetup();
         stopScoreCounterSound();
-        audio.stopAmbient();
+        audio.finishBattleAmbient();
         outcomeSequence.reset();
         disposeEndgameResources();
         outcomePersonalBestText = "";
@@ -4218,7 +4224,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             if (!action.isPorted()) {
                 audio.play(OriginalAudio.Cue.ACTION_SWITCH);
                 game.cancelSelection();
-                audio.playAmbient(OriginalAudio.Cue.GAME_AMBIENT);
                 continue;
             }
             if (game.getSelectedAction() == action) {
@@ -4226,9 +4231,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                     modalOpen = !modalOpen;
                     audio.play(modalOpen ? OriginalAudio.Cue.ACTION_OPEN
                             : OriginalAudio.Cue.ACTION_CLOSE);
-                    audio.playAmbient(modalOpen
-                            ? OriginalAudio.ambientForAction(action)
-                            : OriginalAudio.Cue.GAME_AMBIENT);
                     return;
                 }
                 audio.play(OriginalAudio.Cue.ACTION_SWITCH_OFF);
@@ -4236,7 +4238,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 selectedEquipment = "";
                 modalOpen = false;
                 audio.play(OriginalAudio.Cue.ACTION_CLOSE);
-                audio.playAmbient(OriginalAudio.Cue.GAME_AMBIENT);
             } else {
                 audio.play(OriginalAudio.Cue.ACTION_SWITCH);
                 game.selectAction(action);
@@ -4257,9 +4258,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 if (modalOpen) {
                     audio.play(OriginalAudio.Cue.ACTION_OPEN);
                 }
-                audio.playAmbient(modalOpen
-                        ? OriginalAudio.ambientForAction(action)
-                        : OriginalAudio.Cue.GAME_AMBIENT);
             }
             return;
         }
@@ -4269,7 +4267,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         if (game.acceptSelectedAction()) {
             modalOpen = false;
             audio.play(OriginalAudio.Cue.ACTION_ACCEPT);
-            audio.playAmbient(OriginalAudio.Cue.GAME_AMBIENT);
         }
     }
 
@@ -4296,7 +4293,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                     }
                     modalOpen = !sourceActionMenu.isMapSelection();
                     if (automatic != null) {
-                        audio.playAmbient(OriginalAudio.ambientForAction(automatic));
                         if (modalOpen) audio.play(OriginalAudio.Cue.ACTION_OPEN);
                     }
                 } else {
@@ -4422,7 +4418,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 modalOpen = false;
                 accumulator = 0f;
                 audio.play(OriginalAudio.Cue.ACTION_ACCEPT);
-                audio.playAmbient(OriginalAudio.Cue.GAME_AMBIENT);
             } else {
                 setupMessage = "SELECT AT LEAST ONE RIVAL BEFORE STARTING";
                 showSetupMessage = true;
@@ -4687,7 +4682,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             sourceActionMenu.cancel(game);
             modalOpen = false;
             audio.play(OriginalAudio.Cue.ACTION_CLOSE);
-            audio.playAmbient(OriginalAudio.Cue.GAME_AMBIENT);
             return;
         }
         String control = sourceActionMenuRenderer.controlAt(modal, x, y, game, sourceActionMenu);
@@ -4704,7 +4698,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                     if (pending) game.cancelSelection();
                     modalOpen = false;
                     audio.play(OriginalAudio.Cue.ACTION_ACCEPT);
-                    audio.playAmbient(OriginalAudio.Cue.GAME_AMBIENT);
                 } else if (pending) {
                     sourceActionMenu.showMoneyError(game);
                 }
@@ -4715,7 +4708,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                     if (pending) game.cancelSelection();
                     modalOpen = false;
                     audio.play(OriginalAudio.Cue.ACTION_CLOSE);
-                    audio.playAmbient(OriginalAudio.Cue.GAME_AMBIENT);
                 }
             } else if (!pending && control.startsWith("leader")) {
                 if (sourceActionMenu.chooseLeader(game, control.charAt(6) - '0'))
@@ -4761,7 +4753,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         sourceActionMenu.clearEconomyWarning();
         selectedEquipment = "";
         modalOpen = false;
-        audio.playAmbient(OriginalAudio.Cue.GAME_AMBIENT);
     }
 
     private void activateAt(float x, float y) {
@@ -4863,7 +4854,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             if (actionFooterButtons[1].contains(x, y)) {
                 game.cancelSelection();
                 audio.play(OriginalAudio.Cue.ACTION_CLOSE);
-                audio.playAmbient(OriginalAudio.Cue.GAME_AMBIENT);
                 return;
             }
             if (mapBounds.contains(x, y)) {
@@ -4875,21 +4865,18 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             if (actionFooterButtons[0].contains(x, y)) {
                 modalOpen = true;
                 audio.play(OriginalAudio.Cue.ACTION_OPEN);
-                audio.playAmbient(OriginalAudio.ambientForAction(selectedAction));
                 return;
             }
             if (actionFooterButtons[1].contains(x, y)) {
                 game.cancelSelection();
                 modalOpen = false;
                 audio.play(OriginalAudio.Cue.ACTION_CLOSE);
-                audio.playAmbient(OriginalAudio.Cue.GAME_AMBIENT);
                 return;
             }
             if (actionFooterButtons[2].contains(x, y)) {
                 if (game.acceptSelectedAction()) {
                     modalOpen = false;
                     audio.play(OriginalAudio.Cue.ACTION_ACCEPT);
-                    audio.playAmbient(OriginalAudio.Cue.GAME_AMBIENT);
                 }
                 return;
             }
@@ -4913,7 +4900,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                     game.cancelSelection();
                     modalOpen = false;
                     audio.play(OriginalAudio.Cue.ACTION_CLOSE);
-                    audio.playAmbient(OriginalAudio.Cue.GAME_AMBIENT);
                     return;
                 }
                 for (int i = 0; i < productionSliderHitTargets.length; i++) {
@@ -5049,13 +5035,11 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 if (game.acceptSelectedAction()) {
                     modalOpen = false;
                     audio.play(OriginalAudio.Cue.ACTION_ACCEPT);
-                    audio.playAmbient(OriginalAudio.Cue.GAME_AMBIENT);
                 }
             } else if (modalCancel.contains(x, y)) {
                 game.cancelSelection();
                 modalOpen = false;
                 audio.play(OriginalAudio.Cue.ACTION_CLOSE);
-                audio.playAmbient(OriginalAudio.Cue.GAME_AMBIENT);
             }
             return;
         }
@@ -5081,7 +5065,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             selectedEquipment = "";
             modalOpen = false;
             audio.play(OriginalAudio.Cue.ACTION_OPEN);
-            audio.playAmbient(OriginalAudio.Cue.GAME_AMBIENT);
         } else if (game.getSelectedAction() == null) {
             game.selectAction(GameState.Action.SKIP);
             if (game.getSelectedAction() != GameState.Action.SKIP) return;
@@ -5091,7 +5074,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             selectedEquipment = "";
             modalOpen = true;
             audio.play(OriginalAudio.Cue.ACTION_OPEN);
-            audio.playAmbient(OriginalAudio.Cue.GAME_AMBIENT);
         }
     }
 
@@ -5128,6 +5110,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         resetBattlefieldDisplay(true);
         // original_gameplay.refresh -> View.update_flags recreates the child clips.
         flagRenderer.beginBattle();
+        audio.beginBattleAmbient();
         queueActionBuildingAnimations();
         audio.play(OriginalAudio.Cue.ACTION_ACCEPT);
         battlePresentationRecords = game.getLastTurnBattleRecords();
@@ -5431,9 +5414,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         audio.prepareSatelliteAudio(satelliteBattleAnimations.size());
         battleActionFrames.begin(actionBuildingAnimations,
                 game.getLastTurnActionBuildings(), presentationRandom);
-        if (game.getPendingHumanDiplomacyProposal() != null) {
-            audio.playAmbient(OriginalAudio.Cue.DIPLOMACY_AMBIENT);
-        }
     }
 
     private boolean selectMapTargetCity(GameState.Action action, float x, float y) {
@@ -5558,13 +5538,11 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         if (SourceActionMenuState.supports(game.getSelectedAction())) {
             modalOpen = !sourceActionMenu.cancel(game);
             if (!modalOpen) selectedEquipment = "";
-            audio.playAmbient(OriginalAudio.Cue.GAME_AMBIENT);
             return true;
         }
         if (modalOpen) {
             modalOpen = false;
             game.cancelSelection();
-            audio.playAmbient(OriginalAudio.Cue.GAME_AMBIENT);
             return true;
         }
         if (showExitPromptSeconds > 0f) {

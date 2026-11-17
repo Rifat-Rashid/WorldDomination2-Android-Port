@@ -229,27 +229,16 @@ public final class OriginalAudioTest {
     }
 
     @Test
-    public void actionPanelsUseTheirOriginalAmbientSoundAssignments() {
-        assertEquals(OriginalAudio.Cue.RESOURCES_AMBIENT,
-                OriginalAudio.ambientForAction(GameState.Action.RESOURCES));
-        assertEquals(OriginalAudio.Cue.PRODUCTION_AMBIENT,
-                OriginalAudio.ambientForAction(GameState.Action.PRODUCTION));
-        assertEquals(OriginalAudio.Cue.TECHNOLOGY_AMBIENT,
-                OriginalAudio.ambientForAction(GameState.Action.RESEARCH));
-        assertEquals(OriginalAudio.Cue.MASS_MEDIA_AMBIENT,
-                OriginalAudio.ambientForAction(GameState.Action.MASS_MEDIA));
-        assertEquals(OriginalAudio.Cue.DIPLOMACY_AMBIENT,
-                OriginalAudio.ambientForAction(GameState.Action.DIPLOMACY));
-        assertEquals(OriginalAudio.Cue.DEFENSE_AMBIENT,
-                OriginalAudio.ambientForAction(GameState.Action.DEFENSE));
-        assertEquals(OriginalAudio.Cue.GAME_AMBIENT,
-                OriginalAudio.ambientForAction(GameState.Action.ATTACK));
-        assertEquals(OriginalAudio.Cue.GAME_AMBIENT,
-                OriginalAudio.ambientForAction(GameState.Action.PREPARED_ATTACK));
-        assertEquals(OriginalAudio.Cue.GAME_AMBIENT,
-                OriginalAudio.ambientForAction(GameState.Action.PROPAGANDA));
-        assertEquals(OriginalAudio.Cue.GAME_AMBIENT,
-                OriginalAudio.ambientForAction(null));
+    public void buildingFramesUseTheirOriginalAmbientSoundAssignments() {
+        assertEquals(OriginalAudio.Cue.RESOURCES_AMBIENT, BattleAmbientPlayback.cueForFrame("resources"));
+        assertEquals(OriginalAudio.Cue.PRODUCTION_AMBIENT, BattleAmbientPlayback.cueForFrame("production"));
+        assertEquals(OriginalAudio.Cue.TECHNOLOGY_AMBIENT, BattleAmbientPlayback.cueForFrame("research"));
+        assertEquals(OriginalAudio.Cue.MASS_MEDIA_AMBIENT, BattleAmbientPlayback.cueForFrame("religion"));
+        assertEquals(OriginalAudio.Cue.DIPLOMACY_AMBIENT, BattleAmbientPlayback.cueForFrame("diplomacy"));
+        assertEquals(OriginalAudio.Cue.DEFENSE_AMBIENT, BattleAmbientPlayback.cueForFrame("defense"));
+        assertEquals(OriginalAudio.Cue.GAME_AMBIENT, BattleAmbientPlayback.cueForFrame("game"));
+        assertNull(BattleAmbientPlayback.cueForFrame("factory"));
+        assertNull(BattleAmbientPlayback.cueForFrame(null));
     }
 
     @Test
