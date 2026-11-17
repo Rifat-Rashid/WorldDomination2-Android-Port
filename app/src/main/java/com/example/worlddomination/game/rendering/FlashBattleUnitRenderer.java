@@ -813,7 +813,8 @@ public final class FlashBattleUnitRenderer {
                     // Frame 3 replaces the mask at depth 1 and body at depth 2;
                     // the newly placed depth-4 tint clip is outside clip_depth 3.
                     // The old tinted AS2 reference is detached, so this child is plain.
-                    if (rocket.getSourceFrame() == 3 && rocket.getParentScaleY() == 1d) {
+                    // Submarine rockets use this same timeline at half parent height.
+                    if (rocket.getSourceFrame() == 3) {
                         TextureRegion tint = assets.getShape(794);
                         if (tint != null) {
                             child.setProduct(parent, 1f, 0f, 0f, 1f, -22.05f, -5.55f);
