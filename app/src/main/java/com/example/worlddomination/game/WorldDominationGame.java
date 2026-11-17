@@ -15,6 +15,8 @@ import com.example.worlddomination.game.rendering.SourceNavigationGradient;
 import com.example.worlddomination.game.rendering.SourceNavigationPanel;
 import com.example.worlddomination.game.rendering.SourceInformationPanel;
 import com.example.worlddomination.game.rendering.SourceEquipmentCards;
+import com.example.worlddomination.game.rendering.SourceScorePanel;
+import com.example.worlddomination.game.ui.ScorePanelLayout;
 import com.example.worlddomination.game.ui.SourceHelpState;
 import com.example.worlddomination.game.rendering.MessagePanelRenderer;
 import com.example.worlddomination.game.ui.MessagePanelLayout;
@@ -281,7 +283,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private final Rectangle centerHeader = new Rectangle();
     private final Rectangle navPanel = new Rectangle();
     private final Rectangle infoPanel = new Rectangle();
-    private final Rectangle scoreTitlePlate = new Rectangle();
     private final Rectangle portraitStrip = new Rectangle();
     private final Rectangle[] portraitCards = new Rectangle[4];
     private final int[] portraitPlayerIds = {-1, -1, -1, -1};
@@ -298,6 +299,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private final Rectangle messagePanel = new Rectangle();
     private final Rectangle messageViewport = new Rectangle();
     private final Rectangle scorePanel = new Rectangle();
+    private final Rectangle scoreValueBounds = new Rectangle();
     private final Rectangle actionPanel = new Rectangle();
     private final Rectangle actionSlots[] = {new Rectangle(), new Rectangle()};
     private final Rectangle confirmButton = new Rectangle();
@@ -371,6 +373,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private SourceNavigationPanel navigationPanelRenderer;
     private SourceInformationPanel informationPanelRenderer;
     private SourceEquipmentCards equipmentCardsRenderer;
+    private SourceScorePanel scorePanelRenderer;
     private OriginalActionTubeAssets actionTubeAssets;
     private final ActionSlotAnimation actionSlotAnimation = new ActionSlotAnimation();
     private final ConfirmTurnAnimation confirmTurnAnimation = new ConfirmTurnAnimation();
@@ -509,6 +512,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         navigationPanelRenderer = new SourceNavigationPanel(uiAssets.navigationPanel);
         informationPanelRenderer = new SourceInformationPanel(uiAssets.informationPanel);
         equipmentCardsRenderer = new SourceEquipmentCards(uiAssets.equipmentCards);
+        scorePanelRenderer = new SourceScorePanel(uiAssets.scoreBacking, uiAssets.scoreWindow,
+                uiAssets.scoreDots, uiAssets.scoreTitle);
         battlefieldFrameRenderer = new OriginalBattlefieldFrame(uiAssets.battlefieldFrame);
         setupPanelRenderer = new SourceSetupPanelRenderer();
         splashAssets = new OriginalSplashAssets();
@@ -596,8 +601,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         messageLayoutWidth = -1f;
         scorePanel.set(messagePanel.x + messagePanel.width + 4f, contentY,
                 centerRight - messagePanel.x - messagePanel.width - 4f, footerHeight);
-        scoreTitlePlate.set(scorePanel.x + scorePanel.width / 2f,
-                scorePanel.y + scorePanel.height - 5f, 10f, 14f);
         actionPanel.set(rightPanel.x, contentY, rightWidth, footerHeight);
         float firstWidth = (actionPanel.width - 42f) * 0.5f;
         float tubeY = actionPanel.y + 5f;
@@ -607,7 +610,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         confirmButton.set(actionPanel.x + actionPanel.width - 35f, tubeY, 27f, 33f);
         portraitStrip.set(centerHeader.x + centerHeader.width * 0.28f,
                 centerHeader.y + 1f, centerHeader.width * 0.44f, 6f);
-        fitTitlePlate(scoreTitlePlate, "SCORE");
         for (int i = 0; i < actionFooterButtons.length; i++) {
             ActionFooterLayout.setButtonBounds(messagePanel, i, actionFooterButtons[i]);
         }
@@ -1917,7 +1919,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         drawPanelFill(stockPanel);
         drawPanelFill(mapFrame);
         drawPanelFill(messagePanel);
-        drawPanelFill(scorePanel);
         drawPanelFill(actionPanel);
         shapes.setColor(0.015f, 0.035f, 0.048f, 1f);
         shapes.rect(portraitStrip.x, portraitStrip.y,
@@ -1935,7 +1936,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         drawPanelTexture(mapFrame);
         drawPanelTexture(messagePanel);
         messagePanelRenderer.drawBackground(batch, messagePanel);
-        drawPanelTexture(scorePanel);
+        scorePanelRenderer.draw(batch, scorePanel, game.getHuman().getPlayerColor());
         drawPanelTexture(actionPanel);
         battlefieldFrameRenderer.draw(batch, mapFrame);
         batch.flush();
@@ -1981,11 +1982,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         drawPanelEdges(toolbarPanel);
         drawPanelEdges(stockPanel);
         drawPanelEdges(messagePanel);
-        drawPanelEdges(scorePanel);
         drawPanelEdges(actionPanel);
-        shapes.end();
-        shapes.begin(ShapeRenderer.ShapeType.Filled);
-        drawTitlePlate(scoreTitlePlate);
         shapes.end();
 
         batch.setProjectionMatrix(camera.combined);
@@ -2201,18 +2198,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             }
         }
         shapes.end();
-    }
-
-    private void fitTitlePlate(Rectangle plate, String title) {
-        float centerX = plate.x;
-        float centerY = plate.y;
-        float height = plate.height;
-        float previousScale = font.getScaleX();
-        font.getData().setScale(8f / Math.max(font.getLineHeight(), 1f));
-        glyphLayout.setText(font, title);
-        float width = glyphLayout.width + 14f;
-        plate.set(centerX - width / 2f, centerY - height / 2f, width, height);
-        font.getData().setScale(previousScale);
     }
 
     private void drawContained(com.badlogic.gdx.graphics.g2d.TextureRegion region,
@@ -2683,15 +2668,12 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 helpButton.y + helpButton.height / 2f + 3f, 9f);
         drawCentered("MUTE", muteButton.x + muteButton.width / 2f,
                 muteButton.y + muteButton.height / 2f + 3f, 9f);
-        drawCentered("SCORE", scoreTitlePlate.x + scoreTitlePlate.width / 2f,
-                scoreTitlePlate.y + scoreTitlePlate.height / 2f - 2f, 9f);
 
         drawStatistics();
         if (!ActionScreenLayout.hasInlineActionControls(game.getSelectedAction())
                 || SourceActionMenuState.supports(game.getSelectedAction())) drawMessageWell();
         font.setColor(TITLE_TEXT);
-        drawCentered(Long.toString(game.getHuman().score),
-                scorePanel.x + scorePanel.width / 2f, scorePanel.y + scorePanel.height / 2f + 2f, 13f);
+        drawScoreValue();
         drawCentered("FIRST ACTION", actionSlots[0].x + actionSlots[0].width / 2f,
                 actionPanel.y + actionPanel.height - 15f, 7f);
         drawCentered("SECOND ACTION", actionSlots[1].x + actionSlots[1].width / 2f,
@@ -2709,6 +2691,28 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         batch.end();
         drawInlineActionFooter();
         drawSettingsGear();
+    }
+
+    /** Center complete glyph output in the source window, including large scores. */
+    private void drawScoreValue() {
+        ScorePanelLayout.valueBounds(scorePanel, scoreValueBounds);
+        if (scoreValueBounds.width <= 0f || scoreValueBounds.height <= 0f) return;
+        float oldX = font.getScaleX(), oldY = font.getScaleY();
+        Color color = font.getColor();
+        float oldR = color.r, oldG = color.g, oldB = color.b, oldA = color.a;
+        String text = Long.toString(game.getHuman().score);
+        font.getData().setScale(1f);
+        glyphLayout.setText(font, text);
+        float scale = Math.min(13f / Math.max(1f, glyphLayout.height),
+                Math.min(scoreValueBounds.width / Math.max(1f, glyphLayout.width),
+                        scoreValueBounds.height / Math.max(1f, glyphLayout.height)));
+        font.getData().setScale(scale);
+        font.setColor(Color.WHITE);
+        glyphLayout.setText(font, text);
+        font.draw(batch, glyphLayout, scoreValueBounds.x + (scoreValueBounds.width - glyphLayout.width) / 2f,
+                scoreValueBounds.y + (scoreValueBounds.height + glyphLayout.height) / 2f);
+        font.getData().setScale(oldX, oldY);
+        font.setColor(oldR, oldG, oldB, oldA);
     }
 
     private void drawMessageWell() {
@@ -2855,27 +2859,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         font.draw(batch, text, x, baselineY);
         font.getData().setScale(originalScale);
-    }
-
-    private void drawTitlePlate(Rectangle rectangle) {
-        float radius = rectangle.height / 2f;
-        shapes.setColor(0.30f, 0.41f, 0.46f, 1f);
-        shapes.rect(rectangle.x + radius, rectangle.y,
-                rectangle.width - radius * 2f, rectangle.height);
-        shapes.circle(rectangle.x + radius, rectangle.y + radius, radius, 12);
-        shapes.circle(rectangle.x + rectangle.width - radius,
-                rectangle.y + radius, radius, 12);
-        shapes.setColor(0.045f, 0.085f, 0.105f, 1f);
-        float inset = 1f;
-        float innerRadius = Math.max(1f, radius - inset);
-        shapes.rect(rectangle.x + radius, rectangle.y + inset,
-                rectangle.width - radius * 2f, rectangle.height - inset * 2f);
-        shapes.circle(rectangle.x + radius, rectangle.y + radius, innerRadius, 12);
-        shapes.circle(rectangle.x + rectangle.width - radius,
-                rectangle.y + radius, innerRadius, 12);
-        shapes.setColor(0.23f, 0.32f, 0.37f, 1f);
-        shapes.line(rectangle.x + radius, rectangle.y + rectangle.height - 1.1f,
-                rectangle.x + rectangle.width - radius, rectangle.y + rectangle.height - 1.1f);
     }
 
     private void drawStatistics() {
