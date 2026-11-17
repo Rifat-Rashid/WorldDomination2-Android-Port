@@ -38,6 +38,7 @@ import com.example.worlddomination.game.assets.OriginalBattleDisplayAssets;
 import com.example.worlddomination.game.assets.OriginalFlashAnimationAssets;
 import com.example.worlddomination.game.assets.OriginalSplashAssets;
 import com.example.worlddomination.game.assets.OriginalUiAssets;
+import com.example.worlddomination.game.rendering.OriginalBattlefieldFrame;
 import com.example.worlddomination.game.persistence.LibGdxScorePreferenceBackend;
 import com.example.worlddomination.game.persistence.PersonalBestStore;
 import com.example.worlddomination.game.rendering.BattleAnimationSequence;
@@ -366,6 +367,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private TurnControlRenderer turnControlRenderer;
     private TechnologyArtworkAssets technologyArtwork;
     private OriginalUiAssets uiAssets;
+    private OriginalBattlefieldFrame battlefieldFrameRenderer;
     private OriginalSplashAssets splashAssets;
     private OriginalCityAssets cityAssets;
     private OriginalFlashAnimationAssets flashAnimationAssets;
@@ -490,6 +492,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         centerUiRenderer.setTechnologyArtwork(technologyArtwork);
         font.setColor(Color.WHITE);
         uiAssets = new OriginalUiAssets();
+        battlefieldFrameRenderer = new OriginalBattlefieldFrame(uiAssets.battlefieldFrame);
         splashAssets = new OriginalSplashAssets();
         cityAssets = new OriginalCityAssets(true);
         Preferences scorePreferences = Gdx.app.getPreferences("world_domination_2_scores");
@@ -2012,6 +2015,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         messagePanelRenderer.drawBackground(batch, messagePanel);
         drawPanelTexture(scorePanel);
         drawPanelTexture(actionPanel);
+        battlefieldFrameRenderer.draw(batch, mapFrame);
         batch.flush();
         setScissor(mapBounds);
         terrainRenderer.draw(batch, mapBounds);
@@ -2056,7 +2060,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         drawPanelEdges(infoPanel);
         drawPanelEdges(toolbarPanel);
         drawPanelEdges(stockPanel);
-        drawPanelEdges(mapFrame);
         drawPanelEdges(messagePanel);
         drawPanelEdges(scorePanel);
         drawPanelEdges(actionPanel);
