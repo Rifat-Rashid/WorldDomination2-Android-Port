@@ -790,6 +790,10 @@
       "cropAndArrowsMatchSourceAtBothSizes"
     ],
     [
+      "com.example.worlddomination.game.rendering.SourceSetupCarouselInstrumentedTest",
+      "responsiveLayoutsPaintContinuousCarousel"
+    ],
+    [
       "com.example.worlddomination.game.rendering.SourceSetupBuildingsInstrumentedTest",
       "earlyBuildingsMatchOriginalFramesAtBothSizes"
     ],
