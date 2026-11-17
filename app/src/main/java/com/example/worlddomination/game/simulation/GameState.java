@@ -4117,7 +4117,10 @@ public final class GameState {
             target.bioloadedActions.addAll(effect.disabledActions);
             for (String weaponName : effect.disabledWeapons) {
                 WeaponState weapon = target.weapons.get(weaponName);
-                if (weapon != null) {
+                // Presenter.deactivateAfterBio tests the numeric _stock field's
+                // truthiness. rocket1 has source weaponID 0, so its sampled
+                // entry consumes RNG but does not disable the target's stock.
+                if (weapon != null && !"rocket1".equals(weaponName)) {
                     weapon.active = false;
                     weapon.bioloaded = true;
                 }
