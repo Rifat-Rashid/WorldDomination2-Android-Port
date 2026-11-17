@@ -18,8 +18,6 @@ import com.badlogic.gdx.utils.viewport.Viewport;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.example.worlddomination.game.WorldDominationGame;
 import com.example.worlddomination.game.assets.OriginalUiAssets;
-import com.example.worlddomination.game.assets.HighResolutionBitmapFont;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.example.worlddomination.game.assets.OriginalCityAssets;
 import com.example.worlddomination.game.ui.BattlefieldCityLayout;
 import com.example.worlddomination.game.simulation.GameSetup;
@@ -98,7 +96,7 @@ public final class OriginalBattlefieldFrameInstrumentedTest {
             GameSetup setup=new GameSetup(0L);assertTrue(setup.toggleOpponent(0));
             GameState game=new GameState(setup);field("game").set(app,game);field("modalOpen").setBoolean(app,false);
             ((BattlefieldCityRenderer)field("cityRenderer").get(app)).reset(game);
-            renderStableText(app);
+            field("skipNextFrameDelta").setBoolean(app,true);app.render();
             assertNotNull("World uses authored frame",field("battlefieldFrameRenderer").get(app));
             Rectangle frameBounds=(Rectangle)field("mapFrame").get(app);
             Rectangle map=(Rectangle)field("mapBounds").get(app);
@@ -127,7 +125,7 @@ public final class OriginalBattlefieldFrameInstrumentedTest {
                 // Keep the Pixmap alive as the managed texture's reload source.
                 blank=new Texture(new PixmapTextureData(transparent,Pixmap.Format.RGBA8888,false,false,true));
                 field("battlefieldFrameRenderer").set(app,new OriginalBattlefieldFrame(new TextureRegion(blank)));
-                renderStableText(app);
+                field("skipNextFrameDelta").setBoolean(app,true);app.render();
                 byte[] missing=ScreenUtils.getFrameBufferPixels(0,0,w,h,true);
                 evidence("source-battlefield-frame-world-missing.png",missing,w,h);
                 Viewport viewport=(Viewport)field("viewport").get(app);
@@ -157,20 +155,6 @@ public final class OriginalBattlefieldFrameInstrumentedTest {
             }
             assertEquals(GL20.GL_NO_ERROR,Gdx.gl.glGetError());
         });
-    }
-    private static void renderStableText(WorldDominationGame app) throws Exception {
-        // BitmapFont.setScale repeatedly rescales mutable metrics. Use the same fresh
-        // metrics for each comparison so unrelated HUD text drift cannot mask border changes.
-        BitmapFont original=(BitmapFont)field("font").get(app);
-        HighResolutionBitmapFont comparison=new HighResolutionBitmapFont();
-        try {
-            field("font").set(app,comparison);
-            field("skipNextFrameDelta").setBoolean(app,true);
-            app.render();
-        } finally {
-            field("font").set(app,original);
-            comparison.dispose();
-        }
     }
     private static void evidence(String name,byte[] rgba,int width,int height) {
         File dir=InstrumentationRegistry.getInstrumentation().getTargetContext().getExternalFilesDir("beta-ui-evidence");
