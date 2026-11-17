@@ -100,6 +100,20 @@ NAVIGATION_PANEL_EVIDENCE = {
     for size in ("800x600", "1194x552")
 } | {"source-navigation-panel-world.png",
      "source-navigation-panel-world-missing.png"}
+INFORMATION_PANEL = (
+    "com.example.worlddomination.game.rendering.SourceInformationPanelInstrumentedTest")
+INFORMATION_PANEL_EVIDENCE = {
+    f"source-information-panel-native-{variant}.png"
+    for variant in ("actual", "expected", "missing-art")
+} | {
+    f"source-information-panel-responsive-{size}.png"
+    for size in ("800x600", "1194x552")
+} | {
+    f"source-information-panel-text-bars-{size}-{amount}.png"
+    for size in ("800x600", "1194x552")
+    for amount in ("normal", "wide")
+} | {"source-information-panel-world.png",
+     "source-information-panel-world-missing.png"}
 
 
 def load_manifest(path: Path = MANIFEST) -> dict:
@@ -250,7 +264,8 @@ def verify_group_artifact(manifest: dict, group: dict, artifact: Path) -> tuple[
                     (SETUP_CAROUSEL, SETUP_CAROUSEL_EVIDENCE, "setup carousel"),
                     (SETUP_BUILDINGS, SETUP_BUILDINGS_EVIDENCE, "setup buildings"),
                     (SETUP_ENEMIES, SETUP_ENEMIES_EVIDENCE, "setup enemies"),
-                    (NAVIGATION_PANEL, NAVIGATION_PANEL_EVIDENCE, "navigation panel")):
+                    (NAVIGATION_PANEL, NAVIGATION_PANEL_EVIDENCE, "navigation panel"),
+                    (INFORMATION_PANEL, INFORMATION_PANEL_EVIDENCE, "information panel")):
                 if selected_class in group["classes"]:
                     missing = required - names
                     if missing:
