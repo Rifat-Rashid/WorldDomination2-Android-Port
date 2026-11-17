@@ -795,6 +795,8 @@ public final class GameState {
     private List<String> researchChoicesCache = Collections.emptyList();
     private boolean researchChoicesDirty = true;
     private final Random random;
+    private final ReferenceRandom initialOutcomeRandom;
+    private final int initialPlayerCount;
     private Action selectedAction;
     private boolean selectedActionTargetConfirmed;
     private boolean propagandaCitySelected;
@@ -886,6 +888,7 @@ public final class GameState {
                 setup == null ? 1 : setup.getPlayerColor());
         List<Integer> opponentIds = setup == null
                 ? Collections.<Integer>emptyList() : setup.getSelectedOpponentIds();
+        initialPlayerCount = setup == null ? players.length : opponentIds.size() + 1;
         List<Integer> availableColors = new ArrayList<>(5);
         for (int color = 1; color <= 5; color++) {
             if (color != players[0].playerColor) {
@@ -942,6 +945,9 @@ public final class GameState {
         initializeSpecialPersonRegard();
         initializeCities();
         addMessage(getHuman(), "Welcome, commander. Select two actions.");
+        // The phone Lifecycle isolates score animation RNG at match creation.
+        initialOutcomeRandom = random instanceof ReferenceRandom
+                ? ((ReferenceRandom) random).copy() : null;
     }
 
     private void initializeAiEnemies(PlayerState player) {
@@ -2750,6 +2756,14 @@ public final class GameState {
         return ((ReferenceRandom) random).copy();
     }
 
+    /** Returns a private copy of the match-start score-animation stream. */
+    public ReferenceRandom createOutcomePresentationRandomCopy() {
+        if (initialOutcomeRandom == null) {
+            throw new IllegalStateException("Outcome playback requires reference-compatible random");
+        }
+        return initialOutcomeRandom.copy();
+    }
+
     /**
      * Copies the source battle's pre-route random stream, after script timer and
      * result draws but before later production/research updates. The live turn
@@ -4546,8 +4560,9 @@ public final class GameState {
             return;
         }
         int humanCreditedFlags = 0;
-        for (PlayerState player : players) {
-            if (player.lastAttackedByPlayerId == 0) {
+        // Source playerArr contains only nations selected for this match.
+        for (int playerId = 0; playerId < initialPlayerCount; playerId++) {
+            if (players[playerId].lastAttackedByPlayerId == 0) {
                 humanCreditedFlags++;
             }
         }

@@ -85,7 +85,8 @@
     "com.example.worlddomination.game.simulation.SourceLegalSpyCampaignInstrumentedTest",
     "com.example.worlddomination.game.simulation.SourceLegalEasyCampaignInstrumentedTest",
     "com.example.worlddomination.game.simulation.SourceLegalAcceptedDiplomacyCampaignInstrumentedTest",
-    "com.example.worlddomination.game.simulation.SourceLegalVictoryCampaignInstrumentedTest"
+    "com.example.worlddomination.game.simulation.SourceLegalVictoryCampaignInstrumentedTest",
+    "com.example.worlddomination.game.rendering.SourceEndgameScoreClockInstrumentedTest"
   ],
   "groups": [
     {
@@ -132,7 +133,8 @@
         "com.example.worlddomination.game.simulation.SourceLegalSpyCampaignInstrumentedTest",
         "com.example.worlddomination.game.simulation.SourceLegalEasyCampaignInstrumentedTest",
         "com.example.worlddomination.game.simulation.SourceLegalAcceptedDiplomacyCampaignInstrumentedTest",
-        "com.example.worlddomination.game.simulation.SourceLegalVictoryCampaignInstrumentedTest"
+        "com.example.worlddomination.game.simulation.SourceLegalVictoryCampaignInstrumentedTest",
+        "com.example.worlddomination.game.rendering.SourceEndgameScoreClockInstrumentedTest"
       ],
       "evidence": [
         "beta-ui-evidence",
@@ -698,6 +700,10 @@
     [
       "com.example.worlddomination.game.simulation.SourceLegalVictoryCampaignInstrumentedTest",
       "legalCombatCampaignReachesSourceVictory"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.SourceEndgameScoreClockInstrumentedTest",
+      "naturalVictoryMatchesSourceScoreClockAndFrozenRandomStreams"
     ]
   ]
 }

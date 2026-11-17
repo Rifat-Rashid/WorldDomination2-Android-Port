@@ -2,8 +2,7 @@ package com.example.worlddomination.game.ui;
 
 import com.example.worlddomination.game.simulation.FinalScoreBreakdown;
 import com.example.worlddomination.game.simulation.GameState;
-
-import java.util.Random;
+import com.example.worlddomination.game.simulation.ReferenceRandom;
 
 /** Frame-timed presentation of the Flash victory and defeat score sequence. */
 public final class MatchOutcomeSequence {
@@ -26,11 +25,12 @@ public final class MatchOutcomeSequence {
         BASE_SCORE,
         SATELLITE_BONUS,
         FLAG_BONUS,
+        FINISH_SCORE,
         COMPLETE
     }
 
-    private final Random presentationRandom;
-    private final long randomSeed;
+    private final ReferenceRandom initialRandom;
+    private ReferenceRandom presentationRandom;
     private Phase phase = Phase.INACTIVE;
     private GameState.MatchStatus outcome;
     private String scoreText = "0";
@@ -46,13 +46,23 @@ public final class MatchOutcomeSequence {
     private int phaseTicks;
     private boolean scoreVisible;
 
+    public MatchOutcomeSequence() {
+        this(0L);
+    }
+
     public MatchOutcomeSequence(long randomSeed) {
-        this.randomSeed = randomSeed;
-        presentationRandom = new Random(randomSeed);
+        initialRandom = new ReferenceRandom(randomSeed);
+        presentationRandom = initialRandom.copy();
     }
 
     public void begin(GameState.MatchStatus matchOutcome,
                       FinalScoreBreakdown breakdown) {
+        begin(matchOutcome, breakdown, initialRandom);
+    }
+
+    /** Takes ownership of a copy, leaving the match-start snapshot untouched. */
+    public void begin(GameState.MatchStatus matchOutcome, FinalScoreBreakdown breakdown,
+                      ReferenceRandom matchStartRandom) {
         if (!MatchOutcomePresentation.isFinished(matchOutcome) || breakdown == null) {
             reset();
             return;
@@ -70,8 +80,10 @@ public final class MatchOutcomeSequence {
         satelliteBonusText = "";
         flagBonusText = "";
         scoreVisible = false;
-        presentationRandom.setSeed(randomSeed ^ baseScore ^ ((long) satelliteCount << 32)
-                ^ flagBonusCount ^ outcome.ordinal());
+        if (matchStartRandom == null) {
+            throw new IllegalArgumentException("Match-start presentation random is required");
+        }
+        presentationRandom = matchStartRandom.copy();
         phase = Phase.BEFORE_ENDGAME;
     }
 
@@ -88,6 +100,7 @@ public final class MatchOutcomeSequence {
                 if (++phaseTicks >= TICKS_BEFORE_SCORE) {
                     phaseTicks = 0;
                     phase = Phase.BASE_SCORE;
+                    scoreVisible = true;
                     return EVENT_START_SCORE_COUNTER
                             | (outcome == GameState.MatchStatus.DEFEAT
                             ? EVENT_DEFEAT : EVENT_NONE);
@@ -99,6 +112,10 @@ public final class MatchOutcomeSequence {
                 return tickSatelliteBonus();
             case FLAG_BONUS:
                 return tickFlagBonus();
+            case FINISH_SCORE:
+                // Source sequence 4 removes its callback on the following tick.
+                phase = Phase.COMPLETE;
+                return EVENT_NONE;
             case INACTIVE:
             case COMPLETE:
             default:
@@ -107,13 +124,14 @@ public final class MatchOutcomeSequence {
     }
 
     private int tickBaseScore() {
-        if (scoreCount < baseScore) {
-            long maxIncrement = Math.max(1L, baseScore / 100L);
-            long increment = 1L + nextLong(maxIncrement);
-            scoreCount = increment >= baseScore - scoreCount
-                    ? baseScore : scoreCount + increment;
-            updateScoreText();
-        }
+        // Tools.randRange(1, score / 100) always consumes a double, even at zero.
+        // Keep its fractional bound and original arithmetic operation order.
+        double maxPlus = baseScore / 100d;
+        long increment = (long) Math.floor(presentationRandom.nextDouble()
+                * ((maxPlus - 1d) + 1d)) + 1L;
+        scoreCount = increment >= baseScore - scoreCount
+                ? baseScore : scoreCount + increment;
+        updateScoreText();
         scoreVisible = true;
         if (scoreCount >= baseScore) {
             phase = Phase.SATELLITE_BONUS;
@@ -159,7 +177,7 @@ public final class MatchOutcomeSequence {
 
     private int tickFlagBonus() {
         if (flagBonusCount == 0) {
-            phase = Phase.COMPLETE;
+            phase = Phase.FINISH_SCORE;
             scoreVisible = true;
             return EVENT_NONE;
         }
@@ -190,20 +208,6 @@ public final class MatchOutcomeSequence {
             scoreVisible = true;
         }
         return events;
-    }
-
-    private long nextLong(long bound) {
-        long mask = bound - 1L;
-        long random = presentationRandom.nextLong() >>> 1;
-        if ((bound & mask) == 0L) {
-            return random & mask;
-        }
-        long candidate = random % bound;
-        while (random + mask - candidate < 0L) {
-            random = presentationRandom.nextLong() >>> 1;
-            candidate = random % bound;
-        }
-        return candidate;
     }
 
     private void updateScoreText() {
@@ -241,7 +245,8 @@ public final class MatchOutcomeSequence {
 
     public boolean isScoreStarted() {
         return phase == Phase.BASE_SCORE || phase == Phase.SATELLITE_BONUS
-                || phase == Phase.FLAG_BONUS || phase == Phase.COMPLETE;
+                || phase == Phase.FLAG_BONUS || phase == Phase.FINISH_SCORE
+                || phase == Phase.COMPLETE;
     }
 
     public boolean isScoreVisible() {

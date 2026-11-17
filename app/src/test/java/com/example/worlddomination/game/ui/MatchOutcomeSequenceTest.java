@@ -76,6 +76,8 @@ public final class MatchOutcomeSequenceTest {
         assertEquals(MatchOutcomeSequence.EVENT_NONE, sequence.tick());
         assertEquals(MatchOutcomeSequence.Phase.FLAG_BONUS, sequence.getPhase());
         assertEquals(MatchOutcomeSequence.EVENT_NONE, sequence.tick());
+        assertEquals(MatchOutcomeSequence.Phase.FINISH_SCORE, sequence.getPhase());
+        assertEquals(MatchOutcomeSequence.EVENT_NONE, sequence.tick());
         assertEquals(MatchOutcomeSequence.Phase.COMPLETE, sequence.getPhase());
         assertEquals(0L, sequence.getScoreCount());
         assertEquals(sequence.getFinalScore(), sequence.getScoreCount());
@@ -123,6 +125,8 @@ public final class MatchOutcomeSequenceTest {
         assertEquals(400L, sequence.getScoreCount());
         tick(sequence, 6);
         assertEquals(MatchOutcomeSequence.Phase.FLAG_BONUS, sequence.getPhase());
+        sequence.tick();
+        assertEquals(MatchOutcomeSequence.Phase.FINISH_SCORE, sequence.getPhase());
         sequence.tick();
         assertEquals(MatchOutcomeSequence.Phase.COMPLETE, sequence.getPhase());
         assertEquals(sequence.getFinalScore(), sequence.getScoreCount());

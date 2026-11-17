@@ -222,6 +222,9 @@ public final class SourceEndgameInstrumentedTest {
                     render(app);
                     assertStableRepeatedFrame(app);
                     capture(prefix + "-score.png");
+                    // Source score frame writes a visible zero before the first counter tick.
+                    assertEquals("0", sequence.getScoreText());
+                    assertPhoneScoreVisible(app);
                     assertScoreBackgroundMatchesAuthoredLeaf(app, assets);
                     tapSource(app, 630f, 465f); // Safely inside Website's adjacent left edge.
                     assertSame("Website must not activate New Game", state,
