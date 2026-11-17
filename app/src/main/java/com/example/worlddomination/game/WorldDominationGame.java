@@ -41,6 +41,7 @@ import com.example.worlddomination.game.assets.OriginalSplashAssets;
 import com.example.worlddomination.game.assets.OriginalUiAssets;
 import com.example.worlddomination.game.rendering.OriginalBattlefieldFrame;
 import com.example.worlddomination.game.rendering.SourceSetupPanelRenderer;
+import com.example.worlddomination.game.rendering.SourceSetupColorIndicators;
 import com.example.worlddomination.game.persistence.LibGdxScorePreferenceBackend;
 import com.example.worlddomination.game.persistence.PersonalBestStore;
 import com.example.worlddomination.game.rendering.BattleAnimationSequence;
@@ -1660,8 +1661,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         for (Rectangle button : setupLayout.difficultyButtons) {
             drawOriginalButton(button);
         }
-        for (Rectangle button : setupLayout.colorSwatches) {
-            drawOriginalButton(button);
+        for (int i = 0; i < setupLayout.colorSwatches.length; i++) {
+            drawSourceSetupColor(setupLayout.colorSwatches[i], i, i + 1 == setup.getPlayerColor());
         }
         for (Rectangle button : setupLayout.buildingButtons) {
             drawOriginalButton(button);
@@ -1685,11 +1686,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             } else {
                 drawSetupButtonGradient(button, false);
             }
-        }
-        for (int i = 0; i < setupLayout.colorSwatches.length; i++) {
-            Rectangle swatch = setupLayout.colorSwatches[i];
-            drawSetupColorSwatch(swatch, SETUP_PLAYER_COLORS[i],
-                    i + 1 == setup.getPlayerColor());
         }
         for (int i = 0; i < setupLayout.buildingButtons.length; i++) {
             drawSetupButtonGradient(setupLayout.buildingButtons[i],
@@ -1816,10 +1812,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             drawSetupButtonEdges(setupLayout.difficultyButtons[i],
                     i == setup.getDifficulty());
         }
-        for (int i = 0; i < setupLayout.colorSwatches.length; i++) {
-            Rectangle swatch = setupLayout.colorSwatches[i];
-            drawSetupButtonEdges(swatch, i + 1 == setup.getPlayerColor());
-        }
         for (int i = 0; i < setupLayout.buildingButtons.length; i++) {
             Rectangle button = setupLayout.buildingButtons[i];
             drawSetupButtonEdges(button, i + 1 == setup.getStartingBuilding());
@@ -1837,33 +1829,20 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         shapes.end();
     }
 
-    private void drawSetupColorSwatch(Rectangle rectangle, Color base, boolean selected) {
-        drawSetupButtonGradient(rectangle, selected);
-        float left = rectangle.x + 5f;
-        float bottom = rectangle.y + 5f;
-        float width = rectangle.width - 10f;
-        float height = rectangle.height - 10f;
-        float cornerRadius = Math.min(6f, height * 0.14f);
-        int bands = 24;
-        for (int i = 0; i < bands; i++) {
-            float t = i / (float) (bands - 1);
-            float shade = 0.42f + 0.78f * t;
-            float highlight = Math.max(0f, 1f - Math.abs(t - 0.82f) * 3f) * 0.12f;
-            shapes.setColor(Math.min(1f, base.r * shade + highlight),
-                    Math.min(1f, base.g * shade + highlight),
-                    Math.min(1f, base.b * shade + highlight), 1f);
-            float bandHeight = height / bands;
-            float edgeDistance = Math.min(t * height, (1f - t) * height);
-            float cornerInset = 0f;
-            if (edgeDistance < cornerRadius) {
-                float remaining = cornerRadius - edgeDistance;
-                cornerInset = cornerRadius
-                        - (float) Math.sqrt(cornerRadius * cornerRadius
-                                - remaining * remaining);
-            }
-            shapes.rect(left + cornerInset, bottom + i * bandHeight,
-                    width - cornerInset * 2f, bandHeight + 0.2f);
-        }
+    private void drawSourceSetupColor(Rectangle box, int colorIndex, boolean selected) {
+        int id = SourceSetupColorIndicators.shapeId(colorIndex, selected);
+        TextureRegion art = flashAnimationAssets.getShape(id);
+        if (art == null) throw new IllegalStateException("Missing ready setup color shape " + id);
+        float scale = SourceSetupColorIndicators.scale(box.width, box.height);
+        float originX = flashAnimationAssets.getShapeOriginX(id);
+        float originY = flashAnimationAssets.getShapeOriginY(id);
+        float color = batch.getPackedColor();
+        batch.setColor(Color.WHITE);
+        batch.draw(art, box.x + (box.width - 54f * scale) / 2f + originX * scale,
+                box.y + (box.height + 55f * scale) / 2f
+                        - (originY + art.getRegionHeight()) * scale,
+                art.getRegionWidth() * scale, art.getRegionHeight() * scale);
+        batch.setPackedColor(color);
     }
 
     private void drawSetupDirectionArrow(Rectangle rectangle) {

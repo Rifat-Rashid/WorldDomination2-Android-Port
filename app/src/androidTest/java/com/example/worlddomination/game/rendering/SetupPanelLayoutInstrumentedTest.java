@@ -55,6 +55,11 @@ public final class SetupPanelLayoutInstrumentedTest {
                     assertNull("Disabled Start cannot enter a match",field("game").get(app));
                     capture(app,draw,width,height,"disabled");
                     tap(app,viewport,layout.difficultyButtons[2]);
+                    for (int color = 0; color < layout.colorSwatches.length; color++) {
+                        tap(app,viewport,layout.colorSwatches[color]);
+                        assertEquals("Each original color remains touch-selectable",
+                                color + 1, setup.getPlayerColor());
+                    }
                     tap(app,viewport,layout.colorSwatches[0]);
                     tap(app,viewport,layout.buildingButtons[1]);
                     assertEquals(2,setup.getDifficulty());
