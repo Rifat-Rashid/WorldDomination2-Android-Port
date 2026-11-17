@@ -65,6 +65,15 @@ public final class OriginalAudio {
         MASS_MEDIA_REVEAL_2("45_Massmedia 2.wav.mp3.gz"),
         MASS_MEDIA_REVEAL_3("44_Massmedia 3.wav.mp3.gz"),
         MASS_MEDIA_REVEAL_4("43_Massmedia 4.wav.mp3.gz"),
+        RESOURCES_REVEAL("80_building_Resource.wav.mp3.gz"),
+        PRODUCTION_REVEAL("83_building_factory.wav.mp3.gz"),
+        RESEARCH_REVEAL("77_building_tech.wav.mp3.gz"),
+        PROPAGANDA_REVEAL("81_building_Propaganda.wav.mp3.gz"),
+        DIPLOMACY_REVEAL("73_Diplomacy humans.wav.mp3.gz"),
+        AIRFIELD_REVEAL("95_building_airfield.wav.mp3.gz"),
+        SILO_REVEAL("79_building_silo.wav.mp3.gz"),
+        SUB_REVEAL("29_sub_ping.wav.mp3.gz"),
+        HATCH_REVEAL("8_unit_Suicide Hatch.wav.mp3.gz"),
         TECHNOLOGY_AMBIENT("28_Technology ambient loop.wav.mp3.gz");
 
         private final String compressedAsset;
@@ -83,6 +92,10 @@ public final class OriginalAudio {
     private final Map<Cue, Sound> sounds = new EnumMap<>(Cue.class);
     private final Map<Cue, Long> soundLifetimes = new EnumMap<>(Cue.class);
     private final SoundVoiceRegistry soundVoices = new SoundVoiceRegistry();
+    private final ActionRevealSounds.CueSink actionRevealSink = this::playBattleActionCue;
+    private Sound[] battleActionSamples = new Sound[16];
+    private long[] battleActionIds = new long[16];
+    private int battleActionCount;
     private final SatelliteAudioPlayback satellitePlayback;
     private final AircraftAudioPlayback aircraftPlayback;
     private final AntiDefenseAudioPlayback antiDefensePlayback = new AntiDefenseAudioPlayback(
@@ -169,6 +182,15 @@ public final class OriginalAudio {
         preload(Cue.MASS_MEDIA_REVEAL_2);
         preload(Cue.MASS_MEDIA_REVEAL_3);
         preload(Cue.MASS_MEDIA_REVEAL_4);
+        preload(Cue.RESOURCES_REVEAL);
+        preload(Cue.PRODUCTION_REVEAL);
+        preload(Cue.RESEARCH_REVEAL);
+        preload(Cue.PROPAGANDA_REVEAL);
+        preload(Cue.DIPLOMACY_REVEAL);
+        preload(Cue.AIRFIELD_REVEAL);
+        preload(Cue.SILO_REVEAL);
+        preload(Cue.SUB_REVEAL);
+        preload(Cue.HATCH_REVEAL);
         preload(Cue.TECHNOLOGY_AMBIENT);
         play(Cue.STARTUP);
         if (theme != null && musicEnabled) {
@@ -245,6 +267,43 @@ public final class OriginalAudio {
 
     /** View.initiate_AB_interval stops these voices when its label pass is exhausted. */
     public void finishBattleAmbient() { battleAmbient.stopAll(); }
+
+    /** A new private battle owns only the reveal voices it started. */
+    public void beginBattleActionSounds() { finishBattleActionSounds(); }
+
+    /** Called at each action-building label, with the private religion draw already resolved. */
+    public void playActionReveal(GameState.Action action, String[] physicalSlots,
+                                 int mediaVariant) {
+        if (!soundEnabled) return;
+        ActionRevealSounds.play(action, physicalSlots, mediaVariant, actionRevealSink);
+    }
+
+    /** Stop each retained id, without stopping another owner's voice of the same sample. */
+    public void finishBattleActionSounds() {
+        for (int i = 0; i < battleActionCount; i++) {
+            battleActionSamples[i].stop(battleActionIds[i]);
+            soundVoices.forget(battleActionSamples[i], battleActionIds[i]);
+            battleActionSamples[i] = null;
+        }
+        battleActionCount = 0;
+    }
+
+    private void playBattleActionCue(Cue cue) {
+        Sound sound = sounds.get(cue);
+        if (sound == null) sound = loadSound(cue);
+        if (sound == null) return;
+        long id = sound.play(outputMuted ? 0f : 1f, 1f, 0f);
+        if (id < 0) return;
+        soundVoices.register(sound, id, 1f, 0f, false,
+                soundLifetimes.getOrDefault(cue, Long.MAX_VALUE));
+        if (battleActionCount == battleActionSamples.length) {
+            int nextLength = battleActionSamples.length * 2;
+            battleActionSamples = java.util.Arrays.copyOf(battleActionSamples, nextLength);
+            battleActionIds = java.util.Arrays.copyOf(battleActionIds, nextLength);
+        }
+        battleActionSamples[battleActionCount] = sound;
+        battleActionIds[battleActionCount++] = id;
+    }
 
     public void play(Cue cue) {
         play(cue, sourceUiPan(cue));
@@ -366,6 +425,7 @@ public final class OriginalAudio {
     }
 
     public void dispose() {
+        finishBattleActionSounds();
         satellitePlayback.dispose();
         aircraftPlayback.dispose();
         antiDefensePlayback.dispose();

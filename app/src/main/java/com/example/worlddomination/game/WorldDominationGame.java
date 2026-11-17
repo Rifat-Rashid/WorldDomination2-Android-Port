@@ -125,6 +125,7 @@ import com.example.worlddomination.game.ui.SetupScreenLayout;
 import com.example.worlddomination.game.ui.TechnologyScreenLayout;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Collections;
 
@@ -238,6 +239,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private final List<BattleAnimationSequence> battleAnimations = new ArrayList<>();
     private final List<FlashActionBuildingAnimation> actionBuildingAnimations =
             new ArrayList<>();
+    private final String[] actionSoundSlotFrames = new String[10];
     private final TurnPlaybackSequence turnPlaybackSequence = new TurnPlaybackSequence();
     private final SourceBattleRecordClock battleRecordClock = new SourceBattleRecordClock();
     private final SourceBattleInterfaceFrames battleInterfaceFrames = new SourceBattleInterfaceFrames();
@@ -877,8 +879,13 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             turnActionDisplay.reveal(revealedAction, game.getLastTurnActionBuildings());
             int mediaVariant = battleActionFrames.onActionRevealed(
                     revealedAction, audio.isSoundEnabled());
-            OriginalAudio.Cue mediaCue = OriginalAudio.massMediaRevealCue(mediaVariant);
-            if (mediaCue != null) audio.play(mediaCue);
+            Arrays.fill(actionSoundSlotFrames, null);
+            for (FlashActionBuildingAnimation building : actionBuildingAnimations) {
+                // Keep the occupied physical slot's authored label, not a later
+                // combat frame override or an overwritten all-turn record.
+                actionSoundSlotFrames[building.playerId * 2 + building.slot - 1] = building.frameName;
+            }
+            audio.playActionReveal(revealedAction, actionSoundSlotFrames, mediaVariant);
         } else if (!turnPlaybackSequence.isWaitingForActionLabels()) {
             turnActionDisplay.hide();
         }
@@ -1330,6 +1337,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     /** The phone adapter releases playback at the endBattle handoff. */
     private void finishBattlePresentation() {
         audio.finishBattleAmbient();
+        audio.finishBattleActionSounds();
         audio.finishSatelliteAudio();
         audio.finishAircraftAudio();
         audio.finishAntiDefenseAudio();
@@ -1598,6 +1606,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                     game.createOutcomePresentationRandomCopy());
             modalOpen = false;
             audio.finishBattleAmbient();
+            audio.finishBattleActionSounds();
         }
     }
 
@@ -3872,6 +3881,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 ? new GameSetup(System.nanoTime()) : setup.createNextSetup();
         stopScoreCounterSound();
         audio.finishBattleAmbient();
+        audio.finishBattleActionSounds();
         outcomeSequence.reset();
         disposeEndgameResources();
         outcomePersonalBestText = "";
@@ -5111,6 +5121,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         // original_gameplay.refresh -> View.update_flags recreates the child clips.
         flagRenderer.beginBattle();
         audio.beginBattleAmbient();
+        audio.beginBattleActionSounds();
         queueActionBuildingAnimations();
         audio.play(OriginalAudio.Cue.ACTION_ACCEPT);
         battlePresentationRecords = game.getLastTurnBattleRecords();

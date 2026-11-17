@@ -111,6 +111,9 @@ jobs:
           - id: source-anti-defense-callbacks
             check: Source defense callback cadence and host autoplay
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.SourceAntiDefensePlaybackTest"'
+          - id: source-action-reveal-audio
+            check: Source action reveal sound order and battle ownership
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.audio.ActionRevealSoundsTest" --tests "com.example.worlddomination.game.rendering.ActionRevealSlotParityTest"'
           - id: source-battle-ambient
             check: Source battle ambient slots, finite repeats, and mute ownership
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.audio.BattleAmbientPlaybackTest" --tests "com.example.worlddomination.game.audio.PhoneToolbarAudioTest"'
@@ -657,6 +660,9 @@ jobs:
           - id: source-ui-action-audio
             check: Source interface sound gain and panning
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.audio.SourceUiActionAudioTest"'
+          - id: flash-asset-transfer-tests
+            check: Exact pixel transfer and compressed Flash asset reads
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.ArgbPixelTransferTest" --tests "com.example.worlddomination.game.assets.CompressedFlashAssetReadTest"'
           - id: original-ui-manifest-tests
             check: Original UI asset manifest tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.OriginalUiAssetManifestTest"'

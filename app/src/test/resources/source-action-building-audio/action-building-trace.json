@@ -1,0 +1,2519 @@
+{
+  "scope": "Recovered battle presentation, guarded read-only source; Recorder captures starts, not acoustic output.",
+  "sourceSha256": {
+    "wd2/battle_playback.py": "9aa8c82295b1977897cea2a60afbb6569e0d31e14bb9725267e422c7b9167901",
+    "wd2/menu_audio.py": "dd103543e0f5abb5dfca5b93749e81b896175090a3b1c4c4d38c016a433bd36b",
+    "wd2/generated/View.py": "2de8afd493f28e36c3a94afa96b80795d685b8b023b12dc9d9ed634692c3accf",
+    "wd2/generated/Presenter_interface.py": "ac502ef9e94a205f5027fc0598c3deb2fa1913aa1dfc6f0d5ca4ca12d1d95afd",
+    "wd2/generated/Sub_model.py": "48d0936200815ea3fa088b9b1ea721655a804fc309e586f2875b6fde4ed7329e",
+    "wd2/generated/Presenter.py": "eb8aad7305c870b157a3199b7d8213edb22f4fd35d169395cee3db95b12c08b9",
+    "wd2/generated/Tools.py": "622ee4f9e8ad9466bcb30da74ab2bdabb091ffd1a06d0df01376a770e4b879e6",
+    "wd2/game.py": "b3ff34d109ed9048d42bd05ee46fa5dee1b1c02e088e903bee7942d0ef9a07be",
+    "wd2/runtime.py": "bf58b6cf0cddae89c5efd153713df03751eacf72d0e5c836413bc19a8752b30b",
+    "assets/runtime/scene.json.gz": "7213f06fac4e887050ad89e0d3c9a67f47789096d559af8e08333991f7616629"
+  },
+  "legal": [
+    {
+      "name": "resources_production",
+      "seed": 7,
+      "orders": [
+        {
+          "action": "resources"
+        },
+        {
+          "action": "production",
+          "category": "soldier",
+          "percent": 20
+        }
+      ],
+      "lastTick": 180,
+      "finished": true,
+      "sourceBuildingStarts": [
+        {
+          "tick": 38,
+          "op": "start",
+          "cue": "building_Resource.wav",
+          "symbol": 80,
+          "volume": 100,
+          "pan": 0,
+          "loops": 1
+        },
+        {
+          "tick": 76,
+          "op": "start",
+          "cue": "building_factory.wav",
+          "symbol": 83,
+          "volume": 100,
+          "pan": 0,
+          "loops": 1
+        }
+      ],
+      "missingLinkages": [],
+      "sourceAllTurnBuildings": [
+        {
+          "player": 0,
+          "frame": "factory"
+        },
+        {
+          "player": 1,
+          "frame": "factory"
+        },
+        {
+          "player": 2,
+          "frame": "factory"
+        },
+        {
+          "player": 0,
+          "frame": "resources"
+        },
+        {
+          "player": 1,
+          "frame": "resources"
+        },
+        {
+          "player": 2,
+          "frame": "resources"
+        }
+      ],
+      "positions": {
+        "indexOrder": [
+          {
+            "index": 0,
+            "player": 0,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab0_2"
+          },
+          {
+            "index": 1,
+            "player": 0,
+            "building": "factory",
+            "action": "production",
+            "clipName": "ab0_1"
+          },
+          {
+            "index": 2,
+            "player": 1,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab1_2"
+          },
+          {
+            "index": 3,
+            "player": 1,
+            "building": "factory",
+            "action": "production",
+            "clipName": "ab1_1"
+          },
+          {
+            "index": 4,
+            "player": 2,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab2_2"
+          },
+          {
+            "index": 5,
+            "player": 2,
+            "building": "factory",
+            "action": "production",
+            "clipName": "ab2_1"
+          },
+          {
+            "index": 6,
+            "player": 3,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 7,
+            "player": 3,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 8,
+            "player": 4,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 9,
+            "player": 4,
+            "building": null,
+            "action": null,
+            "clipName": null
+          }
+        ],
+        "scanOrder": [
+          {
+            "index": 9,
+            "player": 4,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 8,
+            "player": 4,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 7,
+            "player": 3,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 6,
+            "player": 3,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 5,
+            "player": 2,
+            "building": "factory",
+            "action": "production",
+            "clipName": "ab2_1"
+          },
+          {
+            "index": 4,
+            "player": 2,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab2_2"
+          },
+          {
+            "index": 3,
+            "player": 1,
+            "building": "factory",
+            "action": "production",
+            "clipName": "ab1_1"
+          },
+          {
+            "index": 2,
+            "player": 1,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab1_2"
+          },
+          {
+            "index": 1,
+            "player": 0,
+            "building": "factory",
+            "action": "production",
+            "clipName": "ab0_1"
+          },
+          {
+            "index": 0,
+            "player": 0,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab0_2"
+          }
+        ]
+      },
+      "religionPredictions": [],
+      "canonicalStateUnchanged": true,
+      "canonicalRandomUnchanged": true,
+      "privateRandomBefore": "9f8e73fc178339a8ce575c6584e7122fdcd3582df9e809b41092cbc018d7a098",
+      "privateRandomAfter": "e4912620ad83ac4b5c731b715adaddc39353664e7a1dbdad8f24c7969297c312"
+    },
+    {
+      "name": "research_resources",
+      "seed": 7,
+      "orders": [
+        {
+          "action": "research",
+          "tech": "soldier2"
+        },
+        {
+          "action": "resources"
+        }
+      ],
+      "lastTick": 218,
+      "finished": true,
+      "sourceBuildingStarts": [
+        {
+          "tick": 38,
+          "op": "start",
+          "cue": "building_Resource.wav",
+          "symbol": 80,
+          "volume": 100,
+          "pan": 0,
+          "loops": 1
+        },
+        {
+          "tick": 76,
+          "op": "start",
+          "cue": "building_factory.wav",
+          "symbol": 83,
+          "volume": 100,
+          "pan": 0,
+          "loops": 1
+        },
+        {
+          "tick": 115,
+          "op": "start",
+          "cue": "building_tech.wav",
+          "symbol": 77,
+          "volume": 100,
+          "pan": 0,
+          "loops": 1
+        }
+      ],
+      "missingLinkages": [],
+      "sourceAllTurnBuildings": [
+        {
+          "player": 0,
+          "frame": "tech"
+        },
+        {
+          "player": 1,
+          "frame": "factory"
+        },
+        {
+          "player": 2,
+          "frame": "factory"
+        },
+        {
+          "player": 0,
+          "frame": "resources"
+        },
+        {
+          "player": 1,
+          "frame": "resources"
+        },
+        {
+          "player": 2,
+          "frame": "resources"
+        }
+      ],
+      "positions": {
+        "indexOrder": [
+          {
+            "index": 0,
+            "player": 0,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab0_2"
+          },
+          {
+            "index": 1,
+            "player": 0,
+            "building": "tech",
+            "action": "research",
+            "clipName": "ab0_1"
+          },
+          {
+            "index": 2,
+            "player": 1,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab1_2"
+          },
+          {
+            "index": 3,
+            "player": 1,
+            "building": "factory",
+            "action": "production",
+            "clipName": "ab1_1"
+          },
+          {
+            "index": 4,
+            "player": 2,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab2_2"
+          },
+          {
+            "index": 5,
+            "player": 2,
+            "building": "factory",
+            "action": "production",
+            "clipName": "ab2_1"
+          },
+          {
+            "index": 6,
+            "player": 3,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 7,
+            "player": 3,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 8,
+            "player": 4,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 9,
+            "player": 4,
+            "building": null,
+            "action": null,
+            "clipName": null
+          }
+        ],
+        "scanOrder": [
+          {
+            "index": 9,
+            "player": 4,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 8,
+            "player": 4,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 7,
+            "player": 3,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 6,
+            "player": 3,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 5,
+            "player": 2,
+            "building": "factory",
+            "action": "production",
+            "clipName": "ab2_1"
+          },
+          {
+            "index": 4,
+            "player": 2,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab2_2"
+          },
+          {
+            "index": 3,
+            "player": 1,
+            "building": "factory",
+            "action": "production",
+            "clipName": "ab1_1"
+          },
+          {
+            "index": 2,
+            "player": 1,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab1_2"
+          },
+          {
+            "index": 1,
+            "player": 0,
+            "building": "tech",
+            "action": "research",
+            "clipName": "ab0_1"
+          },
+          {
+            "index": 0,
+            "player": 0,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab0_2"
+          }
+        ]
+      },
+      "religionPredictions": [],
+      "canonicalStateUnchanged": true,
+      "canonicalRandomUnchanged": true,
+      "privateRandomBefore": "991c2829e301411f81427ee421b512b2a5602969e9720886b4ad47fcb0fc702c",
+      "privateRandomAfter": "5f606126da62296b64bd34505a0952a55afa053a4f2c5c5e0b0586cbdd91d750"
+    },
+    {
+      "name": "propaganda_resources",
+      "seed": 7,
+      "orders": [
+        {
+          "action": "propaganda",
+          "target": 1,
+          "city": 0
+        },
+        {
+          "action": "resources"
+        }
+      ],
+      "lastTick": 219,
+      "finished": true,
+      "sourceBuildingStarts": [
+        {
+          "tick": 38,
+          "op": "start",
+          "cue": "building_Resource.wav",
+          "symbol": 80,
+          "volume": 100,
+          "pan": 0,
+          "loops": 1
+        },
+        {
+          "tick": 76,
+          "op": "start",
+          "cue": "building_factory.wav",
+          "symbol": 83,
+          "volume": 100,
+          "pan": 0,
+          "loops": 1
+        },
+        {
+          "tick": 115,
+          "op": "start",
+          "cue": "building_Propaganda.wav",
+          "symbol": 81,
+          "volume": 100,
+          "pan": 0,
+          "loops": 1
+        }
+      ],
+      "missingLinkages": [],
+      "sourceAllTurnBuildings": [
+        {
+          "player": 1,
+          "frame": "factory"
+        },
+        {
+          "player": 2,
+          "frame": "factory"
+        },
+        {
+          "player": 0,
+          "frame": "propaganda"
+        },
+        {
+          "player": 0,
+          "frame": "resources"
+        },
+        {
+          "player": 1,
+          "frame": "resources"
+        },
+        {
+          "player": 2,
+          "frame": "resources"
+        },
+        {
+          "player": 0,
+          "frame": "propaganda_2"
+        }
+      ],
+      "positions": {
+        "indexOrder": [
+          {
+            "index": 0,
+            "player": 0,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab0_2"
+          },
+          {
+            "index": 1,
+            "player": 0,
+            "building": "propaganda",
+            "action": "propaganda",
+            "clipName": "ab0_1"
+          },
+          {
+            "index": 2,
+            "player": 1,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab1_2"
+          },
+          {
+            "index": 3,
+            "player": 1,
+            "building": "factory",
+            "action": "production",
+            "clipName": "ab1_1"
+          },
+          {
+            "index": 4,
+            "player": 2,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab2_2"
+          },
+          {
+            "index": 5,
+            "player": 2,
+            "building": "factory",
+            "action": "production",
+            "clipName": "ab2_1"
+          },
+          {
+            "index": 6,
+            "player": 3,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 7,
+            "player": 3,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 8,
+            "player": 4,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 9,
+            "player": 4,
+            "building": null,
+            "action": null,
+            "clipName": null
+          }
+        ],
+        "scanOrder": [
+          {
+            "index": 9,
+            "player": 4,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 8,
+            "player": 4,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 7,
+            "player": 3,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 6,
+            "player": 3,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 5,
+            "player": 2,
+            "building": "factory",
+            "action": "production",
+            "clipName": "ab2_1"
+          },
+          {
+            "index": 4,
+            "player": 2,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab2_2"
+          },
+          {
+            "index": 3,
+            "player": 1,
+            "building": "factory",
+            "action": "production",
+            "clipName": "ab1_1"
+          },
+          {
+            "index": 2,
+            "player": 1,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab1_2"
+          },
+          {
+            "index": 1,
+            "player": 0,
+            "building": "propaganda",
+            "action": "propaganda",
+            "clipName": "ab0_1"
+          },
+          {
+            "index": 0,
+            "player": 0,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab0_2"
+          }
+        ]
+      },
+      "religionPredictions": [],
+      "canonicalStateUnchanged": true,
+      "canonicalRandomUnchanged": true,
+      "privateRandomBefore": "2fb289d1ec7796bb3a1c232e1cf33a168e5b990a8cfc7f537ebfbd2fd0712eb5",
+      "privateRandomAfter": "12335aafe188e79cf9cfd04bd85d4ad6c7e67fb5f012281b41336dab2fc28207"
+    },
+    {
+      "name": "diplomacy_resources",
+      "seed": 7,
+      "orders": [
+        {
+          "action": "diplomacy",
+          "target": 1,
+          "diplomacy": 0
+        },
+        {
+          "action": "resources"
+        }
+      ],
+      "lastTick": 219,
+      "finished": true,
+      "sourceBuildingStarts": [
+        {
+          "tick": 38,
+          "op": "start",
+          "cue": "building_Resource.wav",
+          "symbol": 80,
+          "volume": 100,
+          "pan": 0,
+          "loops": 1
+        },
+        {
+          "tick": 76,
+          "op": "start",
+          "cue": "building_factory.wav",
+          "symbol": 83,
+          "volume": 100,
+          "pan": 0,
+          "loops": 1
+        },
+        {
+          "tick": 115,
+          "op": "start",
+          "cue": "Diplomacy humans.wav",
+          "symbol": 73,
+          "volume": 100,
+          "pan": 0,
+          "loops": 1
+        }
+      ],
+      "missingLinkages": [],
+      "sourceAllTurnBuildings": [
+        {
+          "player": 1,
+          "frame": "factory"
+        },
+        {
+          "player": 2,
+          "frame": "factory"
+        },
+        {
+          "player": 0,
+          "frame": "diplomacy"
+        },
+        {
+          "player": 0,
+          "frame": "resources"
+        },
+        {
+          "player": 1,
+          "frame": "resources"
+        },
+        {
+          "player": 2,
+          "frame": "resources"
+        },
+        {
+          "player": 0,
+          "frame": "diplomacy"
+        }
+      ],
+      "positions": {
+        "indexOrder": [
+          {
+            "index": 0,
+            "player": 0,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab0_2"
+          },
+          {
+            "index": 1,
+            "player": 0,
+            "building": "diplomacy",
+            "action": "diplomacy",
+            "clipName": "ab0_1"
+          },
+          {
+            "index": 2,
+            "player": 1,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab1_2"
+          },
+          {
+            "index": 3,
+            "player": 1,
+            "building": "factory",
+            "action": "production",
+            "clipName": "ab1_1"
+          },
+          {
+            "index": 4,
+            "player": 2,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab2_2"
+          },
+          {
+            "index": 5,
+            "player": 2,
+            "building": "factory",
+            "action": "production",
+            "clipName": "ab2_1"
+          },
+          {
+            "index": 6,
+            "player": 3,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 7,
+            "player": 3,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 8,
+            "player": 4,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 9,
+            "player": 4,
+            "building": null,
+            "action": null,
+            "clipName": null
+          }
+        ],
+        "scanOrder": [
+          {
+            "index": 9,
+            "player": 4,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 8,
+            "player": 4,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 7,
+            "player": 3,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 6,
+            "player": 3,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 5,
+            "player": 2,
+            "building": "factory",
+            "action": "production",
+            "clipName": "ab2_1"
+          },
+          {
+            "index": 4,
+            "player": 2,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab2_2"
+          },
+          {
+            "index": 3,
+            "player": 1,
+            "building": "factory",
+            "action": "production",
+            "clipName": "ab1_1"
+          },
+          {
+            "index": 2,
+            "player": 1,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab1_2"
+          },
+          {
+            "index": 1,
+            "player": 0,
+            "building": "diplomacy",
+            "action": "diplomacy",
+            "clipName": "ab0_1"
+          },
+          {
+            "index": 0,
+            "player": 0,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab0_2"
+          }
+        ]
+      },
+      "religionPredictions": [],
+      "canonicalStateUnchanged": true,
+      "canonicalRandomUnchanged": true,
+      "privateRandomBefore": "ac52242c60cd7bea32f50b6d0436875a4955f0daf45c3825495e91f21e80c4a9",
+      "privateRandomAfter": "4482dd1b09abd57fca8eab374fa1b6073729a31044a2b3d07e416a44196d6709"
+    },
+    {
+      "name": "religion_resources",
+      "seed": 7,
+      "orders": [
+        {
+          "action": "religion"
+        },
+        {
+          "action": "resources"
+        }
+      ],
+      "lastTick": 219,
+      "finished": true,
+      "sourceBuildingStarts": [
+        {
+          "tick": 38,
+          "op": "start",
+          "cue": "building_Resource.wav",
+          "symbol": 80,
+          "volume": 100,
+          "pan": 0,
+          "loops": 1
+        },
+        {
+          "tick": 76,
+          "op": "start",
+          "cue": "building_factory.wav",
+          "symbol": 83,
+          "volume": 100,
+          "pan": 0,
+          "loops": 1
+        },
+        {
+          "tick": 115,
+          "op": "start",
+          "cue": "Massmedia 4.wav",
+          "symbol": 43,
+          "volume": 100,
+          "pan": 0,
+          "loops": 1
+        }
+      ],
+      "missingLinkages": [],
+      "sourceAllTurnBuildings": [
+        {
+          "player": 1,
+          "frame": "factory"
+        },
+        {
+          "player": 2,
+          "frame": "factory"
+        },
+        {
+          "player": 0,
+          "frame": "resources"
+        },
+        {
+          "player": 1,
+          "frame": "resources"
+        },
+        {
+          "player": 2,
+          "frame": "resources"
+        },
+        {
+          "player": 0,
+          "frame": "religion"
+        }
+      ],
+      "positions": {
+        "indexOrder": [
+          {
+            "index": 0,
+            "player": 0,
+            "building": "religion",
+            "action": "religion",
+            "clipName": "ab0_2"
+          },
+          {
+            "index": 1,
+            "player": 0,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab0_1"
+          },
+          {
+            "index": 2,
+            "player": 1,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab1_2"
+          },
+          {
+            "index": 3,
+            "player": 1,
+            "building": "factory",
+            "action": "production",
+            "clipName": "ab1_1"
+          },
+          {
+            "index": 4,
+            "player": 2,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab2_2"
+          },
+          {
+            "index": 5,
+            "player": 2,
+            "building": "factory",
+            "action": "production",
+            "clipName": "ab2_1"
+          },
+          {
+            "index": 6,
+            "player": 3,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 7,
+            "player": 3,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 8,
+            "player": 4,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 9,
+            "player": 4,
+            "building": null,
+            "action": null,
+            "clipName": null
+          }
+        ],
+        "scanOrder": [
+          {
+            "index": 9,
+            "player": 4,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 8,
+            "player": 4,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 7,
+            "player": 3,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 6,
+            "player": 3,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 5,
+            "player": 2,
+            "building": "factory",
+            "action": "production",
+            "clipName": "ab2_1"
+          },
+          {
+            "index": 4,
+            "player": 2,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab2_2"
+          },
+          {
+            "index": 3,
+            "player": 1,
+            "building": "factory",
+            "action": "production",
+            "clipName": "ab1_1"
+          },
+          {
+            "index": 2,
+            "player": 1,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab1_2"
+          },
+          {
+            "index": 1,
+            "player": 0,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab0_1"
+          },
+          {
+            "index": 0,
+            "player": 0,
+            "building": "religion",
+            "action": "religion",
+            "clipName": "ab0_2"
+          }
+        ]
+      },
+      "religionPredictions": [
+        {
+          "tick": 115,
+          "predictedNextDraw": 4,
+          "actualVariant": 4,
+          "matches": true
+        }
+      ],
+      "canonicalStateUnchanged": true,
+      "canonicalRandomUnchanged": true,
+      "privateRandomBefore": "9f8e73fc178339a8ce575c6584e7122fdcd3582df9e809b41092cbc018d7a098",
+      "privateRandomAfter": "ece87cd07d6292dcf9189505eb74b262c79ef5afe99baa98e8e0e074558cfdd5"
+    },
+    {
+      "name": "attack_hatch",
+      "seed": 7,
+      "orders": [
+        {
+          "action": "attack",
+          "weapon": "soldier4",
+          "target": 1,
+          "city": 0
+        },
+        {
+          "action": "resources"
+        }
+      ],
+      "lastTick": 307,
+      "finished": true,
+      "sourceBuildingStarts": [
+        {
+          "tick": 38,
+          "op": "start",
+          "cue": "building_Resource.wav",
+          "symbol": 80,
+          "volume": 100,
+          "pan": 0,
+          "loops": 1
+        },
+        {
+          "tick": 76,
+          "op": "start",
+          "cue": "building_factory.wav",
+          "symbol": 83,
+          "volume": 100,
+          "pan": 0,
+          "loops": 1
+        },
+        {
+          "tick": 115,
+          "op": "start",
+          "cue": "unit_Suicide Hatch.wav",
+          "symbol": 8,
+          "volume": 100,
+          "pan": 0,
+          "loops": 1
+        }
+      ],
+      "missingLinkages": [],
+      "sourceAllTurnBuildings": [
+        {
+          "player": 0,
+          "frame": "hatch"
+        },
+        {
+          "player": 1,
+          "frame": "factory"
+        },
+        {
+          "player": 2,
+          "frame": "factory"
+        },
+        {
+          "player": 0,
+          "frame": "resources"
+        },
+        {
+          "player": 1,
+          "frame": "resources"
+        },
+        {
+          "player": 2,
+          "frame": "resources"
+        }
+      ],
+      "positions": {
+        "indexOrder": [
+          {
+            "index": 0,
+            "player": 0,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab0_2"
+          },
+          {
+            "index": 1,
+            "player": 0,
+            "building": "hatch",
+            "action": "attack",
+            "clipName": "ab0_1"
+          },
+          {
+            "index": 2,
+            "player": 1,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab1_2"
+          },
+          {
+            "index": 3,
+            "player": 1,
+            "building": "factory",
+            "action": "production",
+            "clipName": "ab1_1"
+          },
+          {
+            "index": 4,
+            "player": 2,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab2_2"
+          },
+          {
+            "index": 5,
+            "player": 2,
+            "building": "factory",
+            "action": "production",
+            "clipName": "ab2_1"
+          },
+          {
+            "index": 6,
+            "player": 3,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 7,
+            "player": 3,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 8,
+            "player": 4,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 9,
+            "player": 4,
+            "building": null,
+            "action": null,
+            "clipName": null
+          }
+        ],
+        "scanOrder": [
+          {
+            "index": 9,
+            "player": 4,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 8,
+            "player": 4,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 7,
+            "player": 3,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 6,
+            "player": 3,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 5,
+            "player": 2,
+            "building": "factory",
+            "action": "production",
+            "clipName": "ab2_1"
+          },
+          {
+            "index": 4,
+            "player": 2,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab2_2"
+          },
+          {
+            "index": 3,
+            "player": 1,
+            "building": "factory",
+            "action": "production",
+            "clipName": "ab1_1"
+          },
+          {
+            "index": 2,
+            "player": 1,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab1_2"
+          },
+          {
+            "index": 1,
+            "player": 0,
+            "building": "hatch",
+            "action": "attack",
+            "clipName": "ab0_1"
+          },
+          {
+            "index": 0,
+            "player": 0,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab0_2"
+          }
+        ]
+      },
+      "religionPredictions": [],
+      "canonicalStateUnchanged": true,
+      "canonicalRandomUnchanged": true,
+      "privateRandomBefore": "52f01a391fad96e732f421d6d9c8f806ce795799c8b758137335778cfb1219ff",
+      "privateRandomAfter": "12335aafe188e79cf9cfd04bd85d4ad6c7e67fb5f012281b41336dab2fc28207"
+    },
+    {
+      "name": "prepared_airfield",
+      "seed": 7,
+      "orders": [
+        {
+          "action": "preAttack",
+          "weapon": "plane1"
+        },
+        {
+          "action": "resources"
+        }
+      ],
+      "lastTick": 218,
+      "finished": true,
+      "sourceBuildingStarts": [
+        {
+          "tick": 38,
+          "op": "start",
+          "cue": "building_Resource.wav",
+          "symbol": 80,
+          "volume": 100,
+          "pan": 0,
+          "loops": 1
+        },
+        {
+          "tick": 76,
+          "op": "start",
+          "cue": "building_factory.wav",
+          "symbol": 83,
+          "volume": 100,
+          "pan": 0,
+          "loops": 1
+        },
+        {
+          "tick": 115,
+          "op": "start",
+          "cue": "building_airfield.wav",
+          "symbol": 95,
+          "volume": 100,
+          "pan": 0,
+          "loops": 1
+        }
+      ],
+      "missingLinkages": [],
+      "sourceAllTurnBuildings": [
+        {
+          "player": 1,
+          "frame": "factory"
+        },
+        {
+          "player": 2,
+          "frame": "factory"
+        },
+        {
+          "player": 0,
+          "frame": "airfield"
+        },
+        {
+          "player": 0,
+          "frame": "resources"
+        },
+        {
+          "player": 1,
+          "frame": "resources"
+        },
+        {
+          "player": 2,
+          "frame": "resources"
+        }
+      ],
+      "positions": {
+        "indexOrder": [
+          {
+            "index": 0,
+            "player": 0,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab0_2"
+          },
+          {
+            "index": 1,
+            "player": 0,
+            "building": "airfield",
+            "action": "preAttack",
+            "clipName": "ab0_1"
+          },
+          {
+            "index": 2,
+            "player": 1,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab1_2"
+          },
+          {
+            "index": 3,
+            "player": 1,
+            "building": "factory",
+            "action": "production",
+            "clipName": "ab1_1"
+          },
+          {
+            "index": 4,
+            "player": 2,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab2_2"
+          },
+          {
+            "index": 5,
+            "player": 2,
+            "building": "factory",
+            "action": "production",
+            "clipName": "ab2_1"
+          },
+          {
+            "index": 6,
+            "player": 3,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 7,
+            "player": 3,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 8,
+            "player": 4,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 9,
+            "player": 4,
+            "building": null,
+            "action": null,
+            "clipName": null
+          }
+        ],
+        "scanOrder": [
+          {
+            "index": 9,
+            "player": 4,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 8,
+            "player": 4,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 7,
+            "player": 3,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 6,
+            "player": 3,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 5,
+            "player": 2,
+            "building": "factory",
+            "action": "production",
+            "clipName": "ab2_1"
+          },
+          {
+            "index": 4,
+            "player": 2,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab2_2"
+          },
+          {
+            "index": 3,
+            "player": 1,
+            "building": "factory",
+            "action": "production",
+            "clipName": "ab1_1"
+          },
+          {
+            "index": 2,
+            "player": 1,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab1_2"
+          },
+          {
+            "index": 1,
+            "player": 0,
+            "building": "airfield",
+            "action": "preAttack",
+            "clipName": "ab0_1"
+          },
+          {
+            "index": 0,
+            "player": 0,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab0_2"
+          }
+        ]
+      },
+      "religionPredictions": [],
+      "canonicalStateUnchanged": true,
+      "canonicalRandomUnchanged": true,
+      "privateRandomBefore": "ac52242c60cd7bea32f50b6d0436875a4955f0daf45c3825495e91f21e80c4a9",
+      "privateRandomAfter": "4482dd1b09abd57fca8eab374fa1b6073729a31044a2b3d07e416a44196d6709"
+    },
+    {
+      "name": "prepared_silo",
+      "seed": 7,
+      "orders": [
+        {
+          "action": "preAttack",
+          "weapon": "rocket1"
+        },
+        {
+          "action": "resources"
+        }
+      ],
+      "lastTick": 218,
+      "finished": true,
+      "sourceBuildingStarts": [
+        {
+          "tick": 38,
+          "op": "start",
+          "cue": "building_Resource.wav",
+          "symbol": 80,
+          "volume": 100,
+          "pan": 0,
+          "loops": 1
+        },
+        {
+          "tick": 76,
+          "op": "start",
+          "cue": "building_factory.wav",
+          "symbol": 83,
+          "volume": 100,
+          "pan": 0,
+          "loops": 1
+        },
+        {
+          "tick": 115,
+          "op": "start",
+          "cue": "building_silo.wav",
+          "symbol": 79,
+          "volume": 100,
+          "pan": 0,
+          "loops": 1
+        }
+      ],
+      "missingLinkages": [],
+      "sourceAllTurnBuildings": [
+        {
+          "player": 1,
+          "frame": "factory"
+        },
+        {
+          "player": 2,
+          "frame": "factory"
+        },
+        {
+          "player": 0,
+          "frame": "silo"
+        },
+        {
+          "player": 0,
+          "frame": "resources"
+        },
+        {
+          "player": 1,
+          "frame": "resources"
+        },
+        {
+          "player": 2,
+          "frame": "resources"
+        }
+      ],
+      "positions": {
+        "indexOrder": [
+          {
+            "index": 0,
+            "player": 0,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab0_2"
+          },
+          {
+            "index": 1,
+            "player": 0,
+            "building": "silo",
+            "action": "preAttack",
+            "clipName": "ab0_1"
+          },
+          {
+            "index": 2,
+            "player": 1,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab1_2"
+          },
+          {
+            "index": 3,
+            "player": 1,
+            "building": "factory",
+            "action": "production",
+            "clipName": "ab1_1"
+          },
+          {
+            "index": 4,
+            "player": 2,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab2_2"
+          },
+          {
+            "index": 5,
+            "player": 2,
+            "building": "factory",
+            "action": "production",
+            "clipName": "ab2_1"
+          },
+          {
+            "index": 6,
+            "player": 3,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 7,
+            "player": 3,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 8,
+            "player": 4,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 9,
+            "player": 4,
+            "building": null,
+            "action": null,
+            "clipName": null
+          }
+        ],
+        "scanOrder": [
+          {
+            "index": 9,
+            "player": 4,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 8,
+            "player": 4,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 7,
+            "player": 3,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 6,
+            "player": 3,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 5,
+            "player": 2,
+            "building": "factory",
+            "action": "production",
+            "clipName": "ab2_1"
+          },
+          {
+            "index": 4,
+            "player": 2,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab2_2"
+          },
+          {
+            "index": 3,
+            "player": 1,
+            "building": "factory",
+            "action": "production",
+            "clipName": "ab1_1"
+          },
+          {
+            "index": 2,
+            "player": 1,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab1_2"
+          },
+          {
+            "index": 1,
+            "player": 0,
+            "building": "silo",
+            "action": "preAttack",
+            "clipName": "ab0_1"
+          },
+          {
+            "index": 0,
+            "player": 0,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab0_2"
+          }
+        ]
+      },
+      "religionPredictions": [],
+      "canonicalStateUnchanged": true,
+      "canonicalRandomUnchanged": true,
+      "privateRandomBefore": "ac52242c60cd7bea32f50b6d0436875a4955f0daf45c3825495e91f21e80c4a9",
+      "privateRandomAfter": "4482dd1b09abd57fca8eab374fa1b6073729a31044a2b3d07e416a44196d6709"
+    },
+    {
+      "name": "prepared_sub",
+      "seed": 7,
+      "orders": [
+        {
+          "action": "preAttack",
+          "weapon": "sub"
+        },
+        {
+          "action": "resources"
+        }
+      ],
+      "lastTick": 219,
+      "finished": true,
+      "sourceBuildingStarts": [
+        {
+          "tick": 38,
+          "op": "start",
+          "cue": "building_Resource.wav",
+          "symbol": 80,
+          "volume": 100,
+          "pan": 0,
+          "loops": 1
+        },
+        {
+          "tick": 76,
+          "op": "start",
+          "cue": "building_factory.wav",
+          "symbol": 83,
+          "volume": 100,
+          "pan": 0,
+          "loops": 1
+        },
+        {
+          "tick": 115,
+          "op": "start",
+          "cue": "sub_ping.wav",
+          "symbol": 29,
+          "volume": 100,
+          "pan": 0,
+          "loops": 1
+        }
+      ],
+      "missingLinkages": [],
+      "sourceAllTurnBuildings": [
+        {
+          "player": 0,
+          "frame": "sub"
+        },
+        {
+          "player": 1,
+          "frame": "factory"
+        },
+        {
+          "player": 2,
+          "frame": "factory"
+        },
+        {
+          "player": 0,
+          "frame": "sub"
+        },
+        {
+          "player": 0,
+          "frame": "resources"
+        },
+        {
+          "player": 1,
+          "frame": "resources"
+        },
+        {
+          "player": 2,
+          "frame": "resources"
+        },
+        {
+          "player": 0,
+          "frame": "sub"
+        }
+      ],
+      "positions": {
+        "indexOrder": [
+          {
+            "index": 0,
+            "player": 0,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab0_2"
+          },
+          {
+            "index": 1,
+            "player": 0,
+            "building": "sub",
+            "action": "preAttack",
+            "clipName": "ab0_1"
+          },
+          {
+            "index": 2,
+            "player": 1,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab1_2"
+          },
+          {
+            "index": 3,
+            "player": 1,
+            "building": "factory",
+            "action": "production",
+            "clipName": "ab1_1"
+          },
+          {
+            "index": 4,
+            "player": 2,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab2_2"
+          },
+          {
+            "index": 5,
+            "player": 2,
+            "building": "factory",
+            "action": "production",
+            "clipName": "ab2_1"
+          },
+          {
+            "index": 6,
+            "player": 3,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 7,
+            "player": 3,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 8,
+            "player": 4,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 9,
+            "player": 4,
+            "building": null,
+            "action": null,
+            "clipName": null
+          }
+        ],
+        "scanOrder": [
+          {
+            "index": 9,
+            "player": 4,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 8,
+            "player": 4,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 7,
+            "player": 3,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 6,
+            "player": 3,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 5,
+            "player": 2,
+            "building": "factory",
+            "action": "production",
+            "clipName": "ab2_1"
+          },
+          {
+            "index": 4,
+            "player": 2,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab2_2"
+          },
+          {
+            "index": 3,
+            "player": 1,
+            "building": "factory",
+            "action": "production",
+            "clipName": "ab1_1"
+          },
+          {
+            "index": 2,
+            "player": 1,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab1_2"
+          },
+          {
+            "index": 1,
+            "player": 0,
+            "building": "sub",
+            "action": "preAttack",
+            "clipName": "ab0_1"
+          },
+          {
+            "index": 0,
+            "player": 0,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab0_2"
+          }
+        ]
+      },
+      "religionPredictions": [],
+      "canonicalStateUnchanged": true,
+      "canonicalRandomUnchanged": true,
+      "privateRandomBefore": "ac52242c60cd7bea32f50b6d0436875a4955f0daf45c3825495e91f21e80c4a9",
+      "privateRandomAfter": "4482dd1b09abd57fca8eab374fa1b6073729a31044a2b3d07e416a44196d6709"
+    },
+    {
+      "name": "prepared_space",
+      "seed": 7,
+      "orders": [
+        {
+          "action": "preAttack",
+          "weapon": "space"
+        },
+        {
+          "action": "resources"
+        }
+      ],
+      "lastTick": 218,
+      "finished": true,
+      "sourceBuildingStarts": [
+        {
+          "tick": 38,
+          "op": "start",
+          "cue": "building_Resource.wav",
+          "symbol": 80,
+          "volume": 100,
+          "pan": 0,
+          "loops": 1
+        },
+        {
+          "tick": 76,
+          "op": "start",
+          "cue": "building_factory.wav",
+          "symbol": 83,
+          "volume": 100,
+          "pan": 0,
+          "loops": 1
+        }
+      ],
+      "missingLinkages": [
+        {
+          "event": "missing_linkage",
+          "linkage": "building_space_launch_2.wav"
+        }
+      ],
+      "sourceAllTurnBuildings": [
+        {
+          "player": 1,
+          "frame": "factory"
+        },
+        {
+          "player": 2,
+          "frame": "factory"
+        },
+        {
+          "player": 0,
+          "frame": "space"
+        },
+        {
+          "player": 0,
+          "frame": "resources"
+        },
+        {
+          "player": 1,
+          "frame": "resources"
+        },
+        {
+          "player": 2,
+          "frame": "resources"
+        }
+      ],
+      "positions": {
+        "indexOrder": [
+          {
+            "index": 0,
+            "player": 0,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab0_2"
+          },
+          {
+            "index": 1,
+            "player": 0,
+            "building": "space",
+            "action": "preAttack",
+            "clipName": "ab0_1"
+          },
+          {
+            "index": 2,
+            "player": 1,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab1_2"
+          },
+          {
+            "index": 3,
+            "player": 1,
+            "building": "factory",
+            "action": "production",
+            "clipName": "ab1_1"
+          },
+          {
+            "index": 4,
+            "player": 2,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab2_2"
+          },
+          {
+            "index": 5,
+            "player": 2,
+            "building": "factory",
+            "action": "production",
+            "clipName": "ab2_1"
+          },
+          {
+            "index": 6,
+            "player": 3,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 7,
+            "player": 3,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 8,
+            "player": 4,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 9,
+            "player": 4,
+            "building": null,
+            "action": null,
+            "clipName": null
+          }
+        ],
+        "scanOrder": [
+          {
+            "index": 9,
+            "player": 4,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 8,
+            "player": 4,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 7,
+            "player": 3,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 6,
+            "player": 3,
+            "building": null,
+            "action": null,
+            "clipName": null
+          },
+          {
+            "index": 5,
+            "player": 2,
+            "building": "factory",
+            "action": "production",
+            "clipName": "ab2_1"
+          },
+          {
+            "index": 4,
+            "player": 2,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab2_2"
+          },
+          {
+            "index": 3,
+            "player": 1,
+            "building": "factory",
+            "action": "production",
+            "clipName": "ab1_1"
+          },
+          {
+            "index": 2,
+            "player": 1,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab1_2"
+          },
+          {
+            "index": 1,
+            "player": 0,
+            "building": "space",
+            "action": "preAttack",
+            "clipName": "ab0_1"
+          },
+          {
+            "index": 0,
+            "player": 0,
+            "building": "resources",
+            "action": "resources",
+            "clipName": "ab0_2"
+          }
+        ]
+      },
+      "religionPredictions": [],
+      "canonicalStateUnchanged": true,
+      "canonicalRandomUnchanged": true,
+      "privateRandomBefore": "ac52242c60cd7bea32f50b6d0436875a4955f0daf45c3825495e91f21e80c4a9",
+      "privateRandomAfter": "989349e0c24195e40af57d538ae6b9c4894a4452b824316d21ce9922c12b1ea4"
+    }
+  ],
+  "boundary": {
+    "mapping": [
+      {
+        "trigger": "production",
+        "cue": "building_factory.wav"
+      },
+      {
+        "trigger": "religion",
+        "cue": null
+      },
+      {
+        "trigger": "diplomacy",
+        "cue": "Diplomacy humans.wav"
+      },
+      {
+        "trigger": "silo",
+        "cue": "building_silo.wav"
+      },
+      {
+        "trigger": "airfield",
+        "cue": "building_airfield.wav"
+      },
+      {
+        "trigger": "propaganda",
+        "cue": "building_Propaganda.wav"
+      },
+      {
+        "trigger": "resources",
+        "cue": "building_Resource.wav"
+      },
+      {
+        "trigger": "ambient_resources",
+        "cue": "Resources ambient loop.wav"
+      },
+      {
+        "trigger": "space",
+        "cue": "building_space_launch_2.wav"
+      },
+      {
+        "trigger": "research",
+        "cue": "building_tech.wav"
+      },
+      {
+        "trigger": "helipad",
+        "cue": "building_helipad.wav"
+      },
+      {
+        "trigger": "base",
+        "cue": "troops_marching_001.wav"
+      },
+      {
+        "trigger": "sub",
+        "cue": "sub_ping.wav"
+      },
+      {
+        "trigger": "base",
+        "cue": "building_base.wav"
+      },
+      {
+        "trigger": "hatch",
+        "cue": "unit_Suicide Hatch.wav"
+      },
+      {
+        "trigger": "--",
+        "cue": "--"
+      }
+    ],
+    "actionNames": [
+      "resources",
+      "production",
+      "research",
+      "religion",
+      "preAttack",
+      "attack",
+      "defense",
+      "propaganda",
+      "diplomacy"
+    ],
+    "physicalFrameAliases": [
+      {
+        "frame": "resources",
+        "action": "resources"
+      },
+      {
+        "frame": "factory",
+        "action": "production"
+      },
+      {
+        "frame": "tech",
+        "action": "research"
+      },
+      {
+        "frame": "technology",
+        "action": "research"
+      },
+      {
+        "frame": "religion",
+        "action": "religion"
+      },
+      {
+        "frame": "sub",
+        "action": "preAttack"
+      },
+      {
+        "frame": "space",
+        "action": "preAttack"
+      },
+      {
+        "frame": "ship",
+        "action": "preAttack"
+      },
+      {
+        "frame": "base",
+        "action": "attack"
+      },
+      {
+        "frame": "helipad",
+        "action": "attack"
+      },
+      {
+        "frame": "____",
+        "action": "attack"
+      },
+      {
+        "frame": "hatch",
+        "action": "attack"
+      },
+      {
+        "frame": "propaganda",
+        "action": "propaganda"
+      },
+      {
+        "frame": "diplomacy",
+        "action": "diplomacy"
+      },
+      {
+        "frame": "antiAir_still",
+        "action": "defense"
+      },
+      {
+        "frame": "antiRocket_still",
+        "action": "defense"
+      },
+      {
+        "frame": "silo",
+        "action": "preAttack"
+      },
+      {
+        "frame": "airfield",
+        "action": "preAttack"
+      }
+    ],
+    "disabled": {
+      "requests": [
+        "resources",
+        "religion",
+        "preAttack:airfield+space"
+      ],
+      "starts": [],
+      "missing": [],
+      "rngUnchanged": true
+    },
+    "baseReverseMatch": [
+      {
+        "tick": 0,
+        "op": "start",
+        "cue": "building_base.wav",
+        "symbol": 85,
+        "volume": 100,
+        "pan": 0,
+        "loops": 1
+      }
+    ],
+    "missingSpace": {
+      "starts": [],
+      "missing": [
+        {
+          "event": "missing_linkage",
+          "linkage": "building_space_launch_2.wav"
+        }
+      ]
+    },
+    "empty": [],
+    "duplicatePreAttack": {
+      "names": [
+        "silo",
+        "airfield",
+        "sub",
+        "space",
+        "silo",
+        "airfield",
+        "sub",
+        "space"
+      ],
+      "starts": [
+        {
+          "tick": 3,
+          "op": "start",
+          "cue": "sub_ping.wav",
+          "symbol": 29,
+          "volume": 100,
+          "pan": 0,
+          "loops": 1
+        },
+        {
+          "tick": 3,
+          "op": "start",
+          "cue": "building_airfield.wav",
+          "symbol": 95,
+          "volume": 100,
+          "pan": 0,
+          "loops": 1
+        },
+        {
+          "tick": 3,
+          "op": "start",
+          "cue": "building_silo.wav",
+          "symbol": 79,
+          "volume": 100,
+          "pan": 0,
+          "loops": 1
+        }
+      ],
+      "missing": [
+        {
+          "event": "missing_linkage",
+          "linkage": "building_space_launch_2.wav"
+        }
+      ]
+    },
+    "attackHatches": [
+      {
+        "tick": 4,
+        "op": "start",
+        "cue": "unit_Suicide Hatch.wav",
+        "symbol": 8,
+        "volume": 100,
+        "pan": 0,
+        "loops": 1
+      },
+      {
+        "tick": 4,
+        "op": "start",
+        "cue": "unit_Suicide Hatch.wav",
+        "symbol": 8,
+        "volume": 100,
+        "pan": 0,
+        "loops": 1
+      }
+    ],
+    "religion": {
+      "expectedVariant": 2,
+      "starts": [
+        {
+          "tick": 5,
+          "op": "start",
+          "cue": "Massmedia 2.wav",
+          "symbol": 45,
+          "volume": 100,
+          "pan": 0,
+          "loops": 1
+        }
+      ],
+      "privateRandomAdvanced": true
+    },
+    "canonicalStateUnchanged": true,
+    "canonicalRandomUnchanged": true
+  }
+}
