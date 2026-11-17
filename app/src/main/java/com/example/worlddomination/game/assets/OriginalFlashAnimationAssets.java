@@ -138,6 +138,7 @@ public final class OriginalFlashAnimationAssets implements Disposable {
     private TextureAtlas setupPortraitAtlas;
     private TextureAtlas earlyUiAtlas;
     private final Thread loaderThread;
+    private final Runnable beforePortraitPublication;
     private final Runnable afterPortraitPublication;
 
     public OriginalFlashAnimationAssets() {
@@ -146,6 +147,13 @@ public final class OriginalFlashAnimationAssets implements Disposable {
 
     /** Test hook runs on the loader thread after stage-one publication, outside its lock. */
     OriginalFlashAnimationAssets(Runnable afterPortraitPublication) {
+        this(() -> { }, afterPortraitPublication);
+    }
+
+    /** Test hooks run on the loader thread outside the publication lock. */
+    OriginalFlashAnimationAssets(Runnable beforePortraitPublication, Runnable afterPortraitPublication) {
+        this.beforePortraitPublication = java.util.Objects.requireNonNull(
+                beforePortraitPublication, "beforePortraitPublication");
         this.afterPortraitPublication = java.util.Objects.requireNonNull(
                 afterPortraitPublication, "afterPortraitPublication");
         loaderThread = new Thread(this::loadInBackground, "wd2-flash-assets");
@@ -293,6 +301,7 @@ public final class OriginalFlashAnimationAssets implements Disposable {
                     portraits, OriginalFlashAnimationAssets::hasPackagedShape);
             Map<Integer, ShapeOrigin> loadedShapeOrigins = new LinkedHashMap<>();
             packShapes(portraitPacker, loadedPortraitIds, loadedShapeOrigins);
+            beforePortraitPublication.run();
             synchronized (loadLock) {
                 if (disposed) return;
                 timelines = Collections.singletonMap(LEADER_PORTRAITS_TIMELINE, portraits);
@@ -432,6 +441,7 @@ public final class OriginalFlashAnimationAssets implements Disposable {
                     loadFailure = error;
                 }
             }
+            Gdx.graphics.requestRendering();
         } finally {
             if (!portraitTransferred) {
                 portraitPacker.dispose();

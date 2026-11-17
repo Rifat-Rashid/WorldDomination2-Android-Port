@@ -432,6 +432,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private boolean showSetupMessage;
     private boolean satelliteFlightCuePlayed;
     private boolean splashPointerDown;
+    private boolean splashContinuePending;
 
     public WorldDominationGame() {
         for (int i = 0; i < navRows.length; i++) {
@@ -659,6 +660,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         if (flashAnimationAssets != null) {
             flashAnimationAssets.update();
+            if (splashContinuePending && flashAnimationAssets.areSetupPortraitsLoaded()) {
+                splashContinuePending = false;
+                splashState.dismiss();
+            }
             preparePendingBattleAnimations();
         }
         if (cityRenderer != null) {
@@ -1763,13 +1768,13 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             Rectangle card = setupLayout.leaderCards[i];
             boolean selected = selectedIds.contains(leaderId);
             if (selected) batch.setColor(1f, 1f, 1f, SetupScreenLayout.SELECTED_LEADER_ALPHA);
-            drawSetupLeaderPortrait(leaderId, card.x + 3f, card.y + 3f,
+            drawSourceSetupPortrait(leaderId, card.x + 3f, card.y + 3f,
                     card.width - 6f, card.height - 6f);
             if (selected) batch.setColor(Color.WHITE);
         }
         for (int i = 0; i < selectedIds.size(); i++) {
             Rectangle slot = setupLayout.opponentSlots[i];
-            drawSetupLeaderPortrait(selectedIds.get(i), slot.x + 3f, slot.y + 3f,
+            drawSourceSetupPortrait(selectedIds.get(i), slot.x + 3f, slot.y + 3f,
                     slot.width - 6f, slot.height - 6f);
             if (flashAnimationAssets != null && flashAnimationAssets.areSetupPortraitsLoaded()) {
                 com.badlogic.gdx.graphics.g2d.TextureRegion removeIcon = flashAnimationAssets.getShape(
@@ -1953,6 +1958,28 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         font.getData().setScale(targetHeight / Math.max(font.getLineHeight(), 1f));
         font.draw(batch, text, x, baselineY);
         font.getData().setScale(oldScale);
+    }
+
+    /** Setup cards use the same original portrait timeline for every leader. */
+    private void drawSourceSetupPortrait(int leaderId, float x, float y,
+                                         float width, float height) {
+        if (leaderId < 0) return;
+        if (flashAnimationAssets != null && flashAnimationAssets.areSetupPortraitsLoaded()) {
+            FlashAnimationTimeline faces = flashAnimationAssets.getTimeline(
+                    OriginalFlashAnimationAssets.LEADER_PORTRAITS_TIMELINE);
+            GameSetup.Leader leader = GameSetup.leader(leaderId);
+            FlashAnimationTimeline.Frame frame = faces == null ? null
+                    : faces.getFrame(leader.portraitFrame - 1);
+            if (frame != null) {
+                com.badlogic.gdx.graphics.g2d.TextureRegion region =
+                        flashAnimationAssets.getShape(frame.shapeId);
+                if (region != null) {
+                    drawContained(region, x, y, width, height);
+                    return;
+                }
+            }
+        }
+        drawSetupLeaderPortrait(leaderId, x, y, width, height);
     }
 
     private void drawSetupLeaderPortrait(int leaderId, float x, float y,
@@ -4582,6 +4609,13 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                         .readString("UTF-8"));
     }
 
+    private void requestSplashContinue() {
+        if (!splashState.isVisible()) return;
+        splashContinuePending = true;
+        startFlashAssetLoading();
+        Gdx.graphics.requestRendering();
+    }
+
     private void initializePreparedAttackSelection() {
         String preparedCarrier = game.getPreparedCarrierName(0);
         if (preparedCarrier == null) {
@@ -5643,8 +5677,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         if (game == null) {
             if (splashState.isVisible()) {
-                splashState.dismiss();
-                startFlashAssetLoading();
+                requestSplashContinue();
                 return true;
             }
             if (showExitPromptSeconds > 0f) {
@@ -5759,9 +5792,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         if (splashPointerDown) {
             splashPointerDown = false;
-            splashState.dismiss();
-            startFlashAssetLoading();
-            Gdx.graphics.requestRendering();
+            requestSplashContinue();
             return true;
         }
         if (splashState.isVisible()) {

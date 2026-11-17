@@ -90,7 +90,9 @@
     "com.example.worlddomination.game.rendering.OriginalBattlefieldFrameInstrumentedTest",
     "com.example.worlddomination.game.rendering.HudTextStabilityInstrumentedTest",
     "com.example.worlddomination.game.rendering.SourceNavigationGradientInstrumentedTest",
-    "com.example.worlddomination.game.rendering.CenteredTextLayoutInstrumentedTest"
+    "com.example.worlddomination.game.rendering.CenteredTextLayoutInstrumentedTest",
+    "com.example.worlddomination.game.assets.SetupPortraitReadinessInstrumentedTest",
+    "com.example.worlddomination.game.rendering.SourceSetupPortraitRenderingInstrumentedTest"
   ],
   "groups": [
     {
@@ -189,7 +191,9 @@
         "com.example.worlddomination.game.rendering.SourceProductionSliderBudgetInstrumentedTest",
         "com.example.worlddomination.game.rendering.SourceProductionFooterInstrumentedTest",
         "com.example.worlddomination.game.rendering.SourceNavigationGradientInstrumentedTest",
-        "com.example.worlddomination.game.rendering.CenteredTextLayoutInstrumentedTest"
+        "com.example.worlddomination.game.rendering.CenteredTextLayoutInstrumentedTest",
+        "com.example.worlddomination.game.assets.SetupPortraitReadinessInstrumentedTest",
+        "com.example.worlddomination.game.rendering.SourceSetupPortraitRenderingInstrumentedTest"
       ],
       "evidence": [
         "beta-ui-evidence"
@@ -732,6 +736,18 @@
     [
       "com.example.worlddomination.game.rendering.CenteredTextLayoutInstrumentedTest",
       "centeredTextReusesLayoutAndMatchesLegacyPixels"
+    ],
+    [
+      "com.example.worlddomination.game.assets.SetupPortraitReadinessInstrumentedTest",
+      "tapWaitsForPortraitUpload"
+    ],
+    [
+      "com.example.worlddomination.game.assets.SetupPortraitReadinessInstrumentedTest",
+      "backWaitsForPortraitUpload"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.SourceSetupPortraitRenderingInstrumentedTest",
+      "allSetupCardsUseSourcePortraitsAndKeepSelectionAlpha"
     ]
   ]
 }
