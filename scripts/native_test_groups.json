@@ -109,7 +109,8 @@
     "com.example.worlddomination.game.rendering.SourceSetupEnemyArtInstrumentedTest",
     "com.example.worlddomination.game.audio.PhoneToolbarAudioInstrumentedTest",
     "com.example.worlddomination.game.rendering.BattleAmbientInstrumentedTest",
-    "com.example.worlddomination.platform.audio.SourceAndroidAudioInstrumentedTest"
+    "com.example.worlddomination.platform.audio.SourceAndroidAudioInstrumentedTest",
+    "com.example.worlddomination.game.rendering.ActionRevealAudioInstrumentedTest"
   ],
   "groups": [
     {
@@ -164,7 +165,8 @@
         "com.example.worlddomination.game.rendering.HudTextStabilityInstrumentedTest",
         "com.example.worlddomination.game.audio.PhoneToolbarAudioInstrumentedTest",
         "com.example.worlddomination.game.rendering.BattleAmbientInstrumentedTest",
-        "com.example.worlddomination.platform.audio.SourceAndroidAudioInstrumentedTest"
+        "com.example.worlddomination.platform.audio.SourceAndroidAudioInstrumentedTest",
+        "com.example.worlddomination.game.rendering.ActionRevealAudioInstrumentedTest"
       ],
       "evidence": [
         "beta-ui-evidence",
@@ -882,6 +884,10 @@
     [
       "com.example.worlddomination.platform.audio.SourceAndroidAudioInstrumentedTest",
       "finiteRepeatsUseRealAndroidSoundPoolAndKeepOpaqueStreamStable"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.ActionRevealAudioInstrumentedTest",
+      "worldRevealsSourceOneShotsAndClosesOnlyBattleVoices"
     ],
     [
       "com.example.worlddomination.game.assets.BitmapPixmapTransferInstrumentedTest",
