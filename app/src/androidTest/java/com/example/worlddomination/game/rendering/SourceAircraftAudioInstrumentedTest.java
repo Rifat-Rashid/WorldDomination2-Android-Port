@@ -31,6 +31,7 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
@@ -47,6 +48,44 @@ public final class SourceAircraftAudioInstrumentedTest {
 
     @Test public void legalSuccessfulShipFirstPlaneFadesBeforeHandoff() throws Exception {
         compare("ship_success", true, 2);
+    }
+
+    @Test public void productionOriginalAudioPreservesSourceGainFadeMuteAndCleanup()
+            throws Exception {
+        SourceBattleCleanupInstrumentedTest.runInGame(app -> {
+            // Use World's initialized OriginalAudio, not a playback constructed
+            // by this test with an independently chosen gain.
+            OriginalAudio audio = (OriginalAudio) field(WorldDominationGame.class, "audio").get(app);
+            assertFalse("isolated World begins with audible output", audio.isOutputMuted());
+            AircraftAudioPlayback.Owner owner = audio.createAircraftAudio(
+                    AircraftAudioPlayback.Kind.FIGHTER);
+            try {
+                assertTrue("production owner starts the original takeoff", owner.requestTakeoff());
+                Music takeoff = (Music) field(owner.getClass(), "takeoff").get(owner);
+                Music flight = (Music) field(owner.getClass(), "flight").get(owner);
+                assertNotNull(takeoff);
+                assertNotNull(flight);
+                assertEquals("source takeoff gain is 100%", 1f, takeoff.getVolume(), .001f);
+                assertEquals("paired flight retains source gain", 1f, flight.getVolume(), .001f);
+                owner.setSourcePanPercent(-35);
+                owner.setSourceVolumePercent(98); // First source flyOff step.
+                assertEquals("source fade is 100 to 98, not 80 to 78.4",
+                        .98f, takeoff.getVolume(), .001f);
+                assertEquals(.98f, flight.getVolume(), .001f);
+                assertTrue(audio.toggleOutputMuted());
+                assertEquals(0f, takeoff.getVolume(), .001f);
+                assertEquals(0f, flight.getVolume(), .001f);
+                assertFalse(audio.toggleOutputMuted());
+                assertEquals(.98f, takeoff.getVolume(), .001f);
+                assertEquals(.98f, flight.getVolume(), .001f);
+            } finally {
+                audio.finishAircraftAudio();
+                if (audio.isOutputMuted()) audio.toggleOutputMuted();
+            }
+            assertNull("battle finish releases takeoff", field(owner.getClass(), "takeoff").get(owner));
+            assertNull("battle finish releases flight", field(owner.getClass(), "flight").get(owner));
+            assertFalse("closed owner cannot restart a finished battle", owner.requestTakeoff());
+        });
     }
 
     private static void compare(String family, boolean ship, int target) throws Exception {
@@ -70,7 +109,7 @@ public final class SourceAircraftAudioInstrumentedTest {
             OriginalAudio original = (OriginalAudio) audioField.get(app);
             RecordingFactory factory = new RecordingFactory();
             AircraftAudioPlayback ownerAudio = new AircraftAudioPlayback(
-                    factory::make, .8f, Runnable::run);
+                    factory::make, 1f, Runnable::run);
             SatelliteAudioPlayback satellite = new SatelliteAudioPlayback(
                     cue -> null, .8f);
             Constructor<OriginalAudio> constructor = OriginalAudio.class
@@ -136,7 +175,7 @@ public final class SourceAircraftAudioInstrumentedTest {
                                 && changed.getBoolean("unitSoundSameObject")) {
                             assertNotNull("flight exists on changed row", flight);
                             assertEquals(family + " source volume t" + tick,
-                                    .8f * changed.getFloat("soundVolume") / 100f,
+                                    changed.getFloat("soundVolume") / 100f,
                                     flight.volume, .001f);
                             assertEquals(family + " source pan t" + tick,
                                     changed.getFloat("soundPan") / 100f,

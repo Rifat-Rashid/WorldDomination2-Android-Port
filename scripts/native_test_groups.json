@@ -514,6 +514,10 @@
       "legalInterceptedShipFirstPlaneStopsItsOwnSound"
     ],
     [
+      "com.example.worlddomination.game.rendering.SourceAircraftAudioInstrumentedTest",
+      "productionOriginalAudioPreservesSourceGainFadeMuteAndCleanup"
+    ],
+    [
       "com.example.worlddomination.game.rendering.SourceBomberPlaybackInstrumentedTest",
       "legalSuccessRetainsBodyAfterWrapperUntilSourceCleanup"
     ],
