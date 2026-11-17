@@ -32,6 +32,20 @@ HELP_EVIDENCE = {"source-help-live-overview.png"} | {
 }
 
 
+SETUP_PANELS = "com.example.worlddomination.game.rendering.SourceSetupPanelsInstrumentedTest"
+SETUP_LAYOUT = "com.example.worlddomination.game.rendering.SetupPanelLayoutInstrumentedTest"
+SETUP_PANELS_EVIDENCE = {
+    f"source-setup-panels-{size}{variant}.png"
+    for size in ("square", "wide")
+    for variant in ("", "-expected", "-stretched")
+}
+SETUP_LAYOUT_EVIDENCE = {
+    f"source-setup-full-{size}-{state}.png"
+    for size in ("800x600", "1194x552")
+    for state in ("disabled", "enabled")
+}
+
+
 def load_manifest(path: Path = MANIFEST) -> dict:
     data = json.loads(path.read_text(encoding="utf-8"))
     required = data.get("requiredClasses")
@@ -169,10 +183,16 @@ def verify_group_artifact(manifest: dict, group: dict, artifact: Path) -> tuple[
             raise ValueError(f"Empty required evidence folder: {folder}")
         for image in images:
             _png_header(image)
-        if evidence == "beta-ui-evidence" and HELP in group["classes"]:
-            missing = HELP_EVIDENCE - {image.name for image in images}
-            if missing:
-                raise ValueError(f"Missing required Help screenshots: {sorted(missing)}")
+        if evidence == "beta-ui-evidence":
+            names = {image.name for image in images}
+            for selected_class, required, label in (
+                    (HELP, HELP_EVIDENCE, "Help"),
+                    (SETUP_PANELS, SETUP_PANELS_EVIDENCE, "setup panels"),
+                    (SETUP_LAYOUT, SETUP_LAYOUT_EVIDENCE, "setup layout")):
+                if selected_class in group["classes"]:
+                    missing = required - names
+                    if missing:
+                        raise ValueError(f"Missing required {label} screenshots: {sorted(missing)}")
         png_count += len(images)
     return executed, reports, png_count
 

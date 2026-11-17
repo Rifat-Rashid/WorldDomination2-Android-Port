@@ -40,6 +40,7 @@ import com.example.worlddomination.game.assets.OriginalFlashAnimationAssets;
 import com.example.worlddomination.game.assets.OriginalSplashAssets;
 import com.example.worlddomination.game.assets.OriginalUiAssets;
 import com.example.worlddomination.game.rendering.OriginalBattlefieldFrame;
+import com.example.worlddomination.game.rendering.SourceSetupPanelRenderer;
 import com.example.worlddomination.game.persistence.LibGdxScorePreferenceBackend;
 import com.example.worlddomination.game.persistence.PersonalBestStore;
 import com.example.worlddomination.game.rendering.BattleAnimationSequence;
@@ -369,6 +370,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private TechnologyArtworkAssets technologyArtwork;
     private OriginalUiAssets uiAssets;
     private OriginalBattlefieldFrame battlefieldFrameRenderer;
+    private SourceSetupPanelRenderer setupPanelRenderer;
     private OriginalSplashAssets splashAssets;
     private OriginalCityAssets cityAssets;
     private OriginalFlashAnimationAssets flashAnimationAssets;
@@ -495,6 +497,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         font.setColor(Color.WHITE);
         uiAssets = new OriginalUiAssets();
         battlefieldFrameRenderer = new OriginalBattlefieldFrame(uiAssets.battlefieldFrame);
+        setupPanelRenderer = new SourceSetupPanelRenderer();
         splashAssets = new OriginalSplashAssets();
         cityAssets = new OriginalCityAssets(true);
         Preferences scorePreferences = Gdx.app.getPreferences("world_domination_2_scores");
@@ -1634,24 +1637,23 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         batch.setColor(Color.WHITE);
         batch.end();
 
+        batch.setProjectionMatrix(camera.combined);
+        batch.begin();
+        setupPanelRenderer.draw(batch, setupLayout.difficultyPanel, SourceSetupPanelRenderer.Plate.DIFFICULTY);
+        setupPanelRenderer.draw(batch, setupLayout.playerStylePanel, SourceSetupPanelRenderer.Plate.STYLE);
+        setupPanelRenderer.draw(batch, setupLayout.enemiesPanel, SourceSetupPanelRenderer.Plate.ENEMIES);
+        setupPanelRenderer.draw(batch, setupLayout.startPanel, SourceSetupPanelRenderer.Plate.START);
+        batch.end();
+
         shapes.setProjectionMatrix(camera.combined);
         shapes.begin(ShapeRenderer.ShapeType.Filled);
-        drawPanelFill(setupLayout.difficultyPanel);
-        drawPanelFill(setupLayout.playerStylePanel);
-        drawPanelFill(setupLayout.enemiesPanel);
         drawPanelFill(setupLayout.leaderCarouselPanel);
-        drawPanelFill(setupLayout.startPanel);
         java.util.List<Integer> selectedIds = setup.getSelectedOpponentIds();
         shapes.end();
 
-        batch.setProjectionMatrix(camera.combined);
         batch.begin();
-        drawPanelTexture(setupLayout.difficultyPanel);
-        drawPanelTexture(setupLayout.playerStylePanel);
-        drawPanelTexture(setupLayout.enemiesPanel);
         drawPanelTexture(setupLayout.leaderCarouselPanel,
                 0.72f, 0.79f, 0.82f, 0.78f);
-        drawPanelTexture(setupLayout.startPanel);
         batch.end();
 
         batch.begin();
@@ -1801,11 +1803,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         batch.end();
 
         shapes.begin(ShapeRenderer.ShapeType.Line);
-        drawSetupPanelEdges(setupLayout.difficultyPanel);
-        drawSetupPanelEdges(setupLayout.playerStylePanel);
-        drawSetupPanelEdges(setupLayout.enemiesPanel);
         drawSetupPanelEdges(setupLayout.leaderCarouselPanel);
-        drawSetupPanelEdges(setupLayout.startPanel);
         drawSetupButtonEdges(setupLayout.leaderDescription, false);
         shapes.setColor(PANEL_EDGE);
         shapes.line(setupLayout.playerStylePanel.x
@@ -5993,6 +5991,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         satelliteBattleAnimations.clear();
         pendingBattleAnimations.clear();
         audio.dispose();
+        if (setupPanelRenderer != null) setupPanelRenderer.dispose();
         if (splashAssets != null) {
             splashAssets.dispose();
         }

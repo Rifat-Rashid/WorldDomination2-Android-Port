@@ -93,7 +93,9 @@
     "com.example.worlddomination.game.rendering.SourceNavigationGradientInstrumentedTest",
     "com.example.worlddomination.game.rendering.CenteredTextLayoutInstrumentedTest",
     "com.example.worlddomination.game.assets.SetupPortraitReadinessInstrumentedTest",
-    "com.example.worlddomination.game.rendering.SourceSetupPortraitRenderingInstrumentedTest"
+    "com.example.worlddomination.game.rendering.SourceSetupPortraitRenderingInstrumentedTest",
+    "com.example.worlddomination.game.rendering.SourceSetupPanelsInstrumentedTest",
+    "com.example.worlddomination.game.rendering.SetupPanelLayoutInstrumentedTest"
   ],
   "groups": [
     {
@@ -195,7 +197,9 @@
         "com.example.worlddomination.game.rendering.SourceNavigationGradientInstrumentedTest",
         "com.example.worlddomination.game.rendering.CenteredTextLayoutInstrumentedTest",
         "com.example.worlddomination.game.assets.SetupPortraitReadinessInstrumentedTest",
-        "com.example.worlddomination.game.rendering.SourceSetupPortraitRenderingInstrumentedTest"
+        "com.example.worlddomination.game.rendering.SourceSetupPortraitRenderingInstrumentedTest",
+        "com.example.worlddomination.game.rendering.SourceSetupPanelsInstrumentedTest",
+        "com.example.worlddomination.game.rendering.SetupPanelLayoutInstrumentedTest"
       ],
       "evidence": [
         "beta-ui-evidence"
@@ -754,6 +758,14 @@
     [
       "com.example.worlddomination.game.rendering.FlashBattleContextRecoveryInstrumentedTest",
       "liveRocketAndBattleArtworkSurviveEglLoss"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.SourceSetupPanelsInstrumentedTest",
+      "sourceCornersAndUniformInteriorAtBothSizes"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.SetupPanelLayoutInstrumentedTest",
+      "fullSetupKeepsControlsAlignedWithSourcePanels"
     ]
   ]
 }
