@@ -22,6 +22,11 @@ public final class OriginalUiAssets implements Disposable {
     public final TextureRegion informationPanel;
     private final Texture[] equipmentCardTextures = new Texture[8];
     public final TextureRegion[] equipmentCards = new TextureRegion[8];
+    private final Texture[] scoreTextures = new Texture[8];
+    public final TextureRegion scoreBacking;
+    public final TextureRegion scoreWindow;
+    public final TextureRegion[] scoreDots = new TextureRegion[5];
+    public final TextureRegion scoreTitle;
     private final Texture productionModalTexture;
     private final Texture neutralButtonTexture;
     private final Texture propagandaFrameTexture;
@@ -84,6 +89,18 @@ public final class OriginalUiAssets implements Disposable {
             equipmentCardTextures[group] = texture;
             equipmentCards[group] = new TextureRegion(texture);
         }
+        String[] scoreNames = {"backing", "window", "dot-1", "dot-2", "dot-3", "dot-4", "dot-5", "title"};
+        for (int index = 0; index < scoreNames.length; index++) {
+            Texture texture = new Texture(Gdx.files.internal(
+                    "original/ui/score-panel/" + scoreNames[index] + ".png"), true);
+            texture.setFilter(TextureFilter.MipMapLinearLinear, TextureFilter.Linear);
+            scoreTextures[index] = texture;
+        }
+        scoreBacking = new TextureRegion(scoreTextures[0]);
+        scoreWindow = new TextureRegion(scoreTextures[1]);
+        for (int index = 0; index < scoreDots.length; index++)
+            scoreDots[index] = new TextureRegion(scoreTextures[index + 2]);
+        scoreTitle = new TextureRegion(scoreTextures[7]);
         productionModalTexture = new Texture(
                 Gdx.files.internal("original/ui/production-modal.png"), true);
         productionModalTexture.setFilter(TextureFilter.Linear, TextureFilter.Linear);
@@ -156,6 +173,7 @@ public final class OriginalUiAssets implements Disposable {
         navigationPanelTexture.dispose();
         informationPanelTexture.dispose();
         for (Texture texture : equipmentCardTextures) texture.dispose();
+        for (Texture texture : scoreTextures) texture.dispose();
         productionModalTexture.dispose();
         propagandaFrameTexture.dispose();
         propagandaStrengthFont.dispose();

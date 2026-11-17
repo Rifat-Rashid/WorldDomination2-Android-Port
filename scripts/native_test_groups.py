@@ -129,6 +129,16 @@ EQUIPMENT_CARDS_EVIDENCE = {
                     "world-top", "world-bottom", "world-missing",
                     "resized", "source-corners", "split-fasteners")
 }
+SCORE_PANEL = (
+    "com.example.worlddomination.game.rendering.SourceScorePanelInstrumentedTest")
+SCORE_PANEL_EVIDENCE = {
+    f"source-score-panel-native-{variant}.png"
+    for variant in ("actual", "expected", "missing-window", "wrong-dots",
+                    "missing-title")
+} | {
+    f"source-score-panel-responsive-{size}-{value}.png"
+    for size in ("800x600", "1194x552") for value in ("zero", "wide")
+} | {"source-score-panel-world.png", "source-score-panel-world-missing.png"}
 
 
 def load_manifest(path: Path = MANIFEST) -> dict:
@@ -282,7 +292,8 @@ def verify_group_artifact(manifest: dict, group: dict, artifact: Path) -> tuple[
                     (NAVIGATION_PANEL, NAVIGATION_PANEL_EVIDENCE, "navigation panel"),
                     (INFORMATION_PANEL, INFORMATION_PANEL_EVIDENCE, "information panel"),
                     (STATISTIC_BARS, STATISTIC_BARS_EVIDENCE, "statistic bars"),
-                    (EQUIPMENT_CARDS, EQUIPMENT_CARDS_EVIDENCE, "equipment cards")):
+                    (EQUIPMENT_CARDS, EQUIPMENT_CARDS_EVIDENCE, "equipment cards"),
+                    (SCORE_PANEL, SCORE_PANEL_EVIDENCE, "score panel")):
                 if selected_class in group["classes"]:
                     missing = required - names
                     if missing:
