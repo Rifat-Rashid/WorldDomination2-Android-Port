@@ -9,6 +9,7 @@
     "com.example.worlddomination.testing.GameActivityScenarioInstrumentedTest",
     "com.example.worlddomination.game.assets.EarlySetupPortraitsInstrumentedTest",
     "com.example.worlddomination.game.rendering.FlashAtlasContextRecoveryInstrumentedTest",
+    "com.example.worlddomination.game.rendering.FlashBattleContextRecoveryInstrumentedTest",
     "com.example.worlddomination.game.rendering.SourceCityOrderMarkersInstrumentedTest",
     "com.example.worlddomination.game.rendering.SourceActionInstructionsInstrumentedTest",
     "com.example.worlddomination.game.rendering.StockControlsInstrumentedTest",
@@ -101,6 +102,7 @@
         "com.example.worlddomination.testing.GameActivityScenarioInstrumentedTest",
         "com.example.worlddomination.game.assets.EarlySetupPortraitsInstrumentedTest",
         "com.example.worlddomination.game.rendering.FlashAtlasContextRecoveryInstrumentedTest",
+        "com.example.worlddomination.game.rendering.FlashBattleContextRecoveryInstrumentedTest",
         "com.example.worlddomination.game.rendering.SourceCityOrderMarkersInstrumentedTest",
         "com.example.worlddomination.game.rendering.SetupEnemySelectionInstrumentedTest",
         "com.example.worlddomination.game.rendering.FlashStencilMasksInstrumentedTest",
@@ -748,6 +750,10 @@
     [
       "com.example.worlddomination.game.rendering.SourceSetupPortraitRenderingInstrumentedTest",
       "allSetupCardsUseSourcePortraitsAndKeepSelectionAlpha"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.FlashBattleContextRecoveryInstrumentedTest",
+      "liveRocketAndBattleArtworkSurviveEglLoss"
     ]
   ]
 }
