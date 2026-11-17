@@ -1658,8 +1658,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         batch.end();
 
         batch.begin();
-        for (Rectangle button : setupLayout.difficultyButtons) {
-            drawOriginalButton(button);
+        for (int i = 0; i < setupLayout.difficultyButtons.length; i++) {
+            drawSourceSetupButton(setupLayout.difficultyButtons[i], i == setup.getDifficulty());
         }
         for (int i = 0; i < setupLayout.colorSwatches.length; i++) {
             drawSourceSetupColor(setupLayout.colorSwatches[i], i, i + 1 == setup.getPlayerColor());
@@ -1675,18 +1675,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         drawOriginalButton(setupLayout.leaderPrevious);
         drawOriginalButton(setupLayout.leaderNext);
-        drawOriginalButton(setupLayout.startButton);
+        drawSourceSetupButton(setupLayout.startButton, setup.canStart());
         batch.end();
 
         shapes.begin(ShapeRenderer.ShapeType.Filled);
-        for (int i = 0; i < setupLayout.difficultyButtons.length; i++) {
-            Rectangle button = setupLayout.difficultyButtons[i];
-            if (i == setup.getDifficulty()) {
-                drawSetupOrangeGradient(button);
-            } else {
-                drawSetupButtonGradient(button, false);
-            }
-        }
         for (int i = 0; i < setupLayout.buildingButtons.length; i++) {
             drawSetupButtonGradient(setupLayout.buildingButtons[i],
                     i + 1 == setup.getStartingBuilding());
@@ -1715,7 +1707,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         drawSetupButtonGradient(setupLayout.leaderNext, false);
         drawSetupCarouselArrow(setupLayout.leaderPrevious, -1f);
         drawSetupCarouselArrow(setupLayout.leaderNext, 1f);
-        drawSetupButtonGradient(setupLayout.startButton, setup.canStart());
         shapes.end();
 
         batch.begin();
@@ -1808,10 +1799,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 setupLayout.playerStylePanel.x
                         + setupLayout.playerStylePanel.width * 0.52f,
                 setupLayout.playerStylePanel.y + setupLayout.playerStylePanel.height * 0.73f);
-        for (int i = 0; i < setupLayout.difficultyButtons.length; i++) {
-            drawSetupButtonEdges(setupLayout.difficultyButtons[i],
-                    i == setup.getDifficulty());
-        }
         for (int i = 0; i < setupLayout.buildingButtons.length; i++) {
             Rectangle button = setupLayout.buildingButtons[i];
             drawSetupButtonEdges(button, i + 1 == setup.getStartingBuilding());
@@ -1825,7 +1812,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         for (Rectangle slot : setupLayout.opponentSlots) {
             drawSetupButtonEdges(slot, false);
         }
-        drawSetupButtonEdges(setupLayout.startButton, setup.canStart());
         shapes.end();
     }
 
@@ -1842,6 +1828,20 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 box.y + (box.height + 55f * scale) / 2f
                         - (originY + art.getRegionHeight()) * scale,
                 art.getRegionWidth() * scale, art.getRegionHeight() * scale);
+        batch.setPackedColor(color);
+    }
+
+    /** 4586 retains two 4486 children stopped on their empty first frame. */
+    private void drawSourceSetupButton(Rectangle box, boolean active) {
+        int shape = active ? 4582 : 4580;
+        TextureRegion art = flashAnimationAssets.getShape(shape);
+        if (art == null) throw new IllegalStateException("Missing setup button shape " + shape);
+        float scale = Math.min(box.width / 135f, box.height / 28f);
+        float color = batch.getPackedColor();
+        batch.setColor(Color.WHITE);
+        batch.draw(art, box.x + (box.width - 135f * scale) / 2f,
+                box.y + (box.height - 28f * scale) / 2f,
+                135f * scale, 28f * scale);
         batch.setPackedColor(color);
     }
 
@@ -1886,24 +1886,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         shapes.setColor(0.12f, 0.21f, 0.25f, 1f);
         shapes.rect(rectangle.x + 2f, rectangle.y + rectangle.height - 2f,
                 rectangle.width - 4f, 1f);
-    }
-
-    private void drawSetupOrangeGradient(Rectangle rectangle) {
-        float left = rectangle.x + 3f;
-        float bottom = rectangle.y + 3f;
-        float width = rectangle.width - 6f;
-        float height = rectangle.height - 6f;
-        int bands = 20;
-        for (int i = 0; i < bands; i++) {
-            float t = i / (float) (bands - 1);
-            shapes.setColor(0.82f + 0.18f * t,
-                    0.24f + 0.46f * t, 0.025f + 0.055f * t, 1f);
-            float bandHeight = height / bands;
-            shapes.rect(left, bottom + i * bandHeight, width, bandHeight + 0.25f);
-        }
-        shapes.setColor(1f, 0.84f, 0.57f, 1f);
-        shapes.rect(rectangle.x + 6f, rectangle.y + rectangle.height - 5f,
-                rectangle.width - 12f, 1f);
     }
 
     private void drawSetupButtonGradient(Rectangle rectangle, boolean selected) {

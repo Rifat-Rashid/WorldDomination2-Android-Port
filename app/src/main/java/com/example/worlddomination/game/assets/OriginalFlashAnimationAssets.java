@@ -312,6 +312,10 @@ public final class OriginalFlashAnimationAssets implements Disposable {
                     loadedPortraitIds.add(id);
                 }
             }
+            for (int id : new int[] {4580, 4582}) {
+                if (!cachedShape.test(id)) throw new IllegalStateException("Missing setup button shape " + id);
+                loadedPortraitIds.add(id);
+            }
             Map<Integer, ShapeOrigin> loadedShapeOrigins = new LinkedHashMap<>();
             packShapes(portraitPacker, loadedPortraitIds, loadedShapeOrigins);
             beforePortraitPublication.run();
