@@ -106,7 +106,9 @@
     "com.example.worlddomination.game.rendering.SourceSetupCarouselInstrumentedTest",
     "com.example.worlddomination.game.rendering.SourceSetupBuildingsInstrumentedTest",
     "com.example.worlddomination.game.rendering.SourceSetupEnemyArtInstrumentedTest",
-    "com.example.worlddomination.game.audio.PhoneToolbarAudioInstrumentedTest"
+    "com.example.worlddomination.game.audio.PhoneToolbarAudioInstrumentedTest",
+    "com.example.worlddomination.game.rendering.BattleAmbientInstrumentedTest",
+    "com.example.worlddomination.platform.audio.SourceAndroidAudioInstrumentedTest"
   ],
   "groups": [
     {
@@ -158,7 +160,9 @@
         "com.example.worlddomination.game.rendering.SourceEndgameScoreClockInstrumentedTest",
         "com.example.worlddomination.game.rendering.OriginalBattlefieldFrameInstrumentedTest",
         "com.example.worlddomination.game.rendering.HudTextStabilityInstrumentedTest",
-        "com.example.worlddomination.game.audio.PhoneToolbarAudioInstrumentedTest"
+        "com.example.worlddomination.game.audio.PhoneToolbarAudioInstrumentedTest",
+        "com.example.worlddomination.game.rendering.BattleAmbientInstrumentedTest",
+        "com.example.worlddomination.platform.audio.SourceAndroidAudioInstrumentedTest"
       ],
       "evidence": [
         "beta-ui-evidence",
@@ -868,6 +872,14 @@
     [
       "com.example.worlddomination.game.audio.PhoneToolbarAudioInstrumentedTest",
       "worldToolbarMuteAndGearPreserveGameAndTheme"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.BattleAmbientInstrumentedTest",
+      "battleOwnsBuildingAmbienceThroughLabelPassAndFreshBattle"
+    ],
+    [
+      "com.example.worlddomination.platform.audio.SourceAndroidAudioInstrumentedTest",
+      "finiteRepeatsUseRealAndroidSoundPoolAndKeepOpaqueStreamStable"
     ]
   ]
 }

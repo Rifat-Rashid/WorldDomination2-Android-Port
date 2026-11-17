@@ -1,0 +1,615 @@
+{
+  "scope": "Actual recovered methods with instrumented non-playing backend; boundary calls are synthetic, legal queue trace is independent. No device audio or mixer eviction claim.",
+  "sourceSha256": {
+    "wd2/battle_playback.py": "9aa8c82295b1977897cea2a60afbb6569e0d31e14bb9725267e422c7b9167901",
+    "wd2/menu_audio.py": "dd103543e0f5abb5dfca5b93749e81b896175090a3b1c4c4d38c016a433bd36b",
+    "wd2/generated/View.py": "2de8afd493f28e36c3a94afa96b80795d685b8b023b12dc9d9ed634692c3accf",
+    "wd2/generated/Presenter_interface.py": "ac502ef9e94a205f5027fc0598c3deb2fa1913aa1dfc6f0d5ca4ca12d1d95afd",
+    "wd2/generated/Presenter.py": "eb8aad7305c870b157a3199b7d8213edb22f4fd35d169395cee3db95b12c08b9",
+    "wd2/generated/Sub_model.py": "48d0936200815ea3fa088b9b1ea721655a804fc309e586f2875b6fde4ed7329e",
+    "wd2/generated/Model.py": "13c46e8768bf975f8f7559436dbe34f647e3b73c80b7472163822d6741cb7824",
+    "wd2/setup_menu.py": "5633326451e768a84a14bde04e452043ba7fac2617a4c71b7b36dcd0495f0c4a"
+  },
+  "legal": {
+    "queue": [
+      "resources",
+      "production soldier 20%"
+    ],
+    "seed": 7,
+    "lastTick": 180,
+    "finished": true,
+    "events": [
+      {
+        "op": "start",
+        "tick": -1,
+        "cue": "Resources ambient loop.wav",
+        "symbol": 35,
+        "loops": 9999,
+        "volume": 100,
+        "owner": "ambient_sound_1"
+      },
+      {
+        "op": "volume",
+        "tick": -1,
+        "cue": "Resources ambient loop.wav",
+        "symbol": 35,
+        "loops": 9999,
+        "owner": "ambient_sound_1",
+        "volume": 21,
+        "pan": 0
+      },
+      {
+        "op": "start",
+        "tick": -1,
+        "cue": "Resources ambient loop.wav",
+        "symbol": 35,
+        "loops": 9999,
+        "volume": 100,
+        "owner": "ambient_sound_2"
+      },
+      {
+        "op": "volume",
+        "tick": -1,
+        "cue": "Resources ambient loop.wav",
+        "symbol": 35,
+        "loops": 9999,
+        "owner": "ambient_sound_2",
+        "volume": 21,
+        "pan": 0
+      },
+      {
+        "op": "start",
+        "tick": -1,
+        "cue": "Resources ambient loop.wav",
+        "symbol": 35,
+        "loops": 9999,
+        "volume": 100,
+        "owner": "ambient_sound_3"
+      },
+      {
+        "op": "volume",
+        "tick": -1,
+        "cue": "Resources ambient loop.wav",
+        "symbol": 35,
+        "loops": 9999,
+        "owner": "ambient_sound_3",
+        "volume": 21,
+        "pan": 0
+      },
+      {
+        "op": "start",
+        "tick": 38,
+        "cue": "building_Resource.wav",
+        "symbol": 80,
+        "loops": 1,
+        "volume": 100,
+        "owner": "sound0"
+      },
+      {
+        "op": "start",
+        "tick": 76,
+        "cue": "building_factory.wav",
+        "symbol": 83,
+        "loops": 1,
+        "volume": 100,
+        "owner": "sound1"
+      },
+      {
+        "op": "stop",
+        "tick": 115,
+        "cue": "Resources ambient loop.wav",
+        "symbol": 35,
+        "loops": 9999,
+        "owner": "ambient_sound_1"
+      },
+      {
+        "op": "stop",
+        "tick": 115,
+        "cue": "Resources ambient loop.wav",
+        "symbol": 35,
+        "loops": 9999,
+        "owner": "ambient_sound_2"
+      },
+      {
+        "op": "stop",
+        "tick": 115,
+        "cue": "Resources ambient loop.wav",
+        "symbol": 35,
+        "loops": 9999,
+        "owner": "ambient_sound_3"
+      },
+      {
+        "op": "stop",
+        "tick": 180,
+        "cue": "building_Resource.wav",
+        "symbol": 80,
+        "loops": 1,
+        "owner": "sound0"
+      },
+      {
+        "op": "stop",
+        "tick": 180,
+        "cue": "building_factory.wav",
+        "symbol": 83,
+        "loops": 1,
+        "owner": "sound1"
+      }
+    ]
+  },
+  "boundaryInitial": {
+    "index": 4,
+    "slots": [
+      {
+        "index": 1,
+        "cue": "Resources ambient loop.wav"
+      },
+      {
+        "index": 2,
+        "cue": "Resources ambient loop.wav"
+      },
+      {
+        "index": 3,
+        "cue": "Resources ambient loop.wav"
+      }
+    ],
+    "mapping": [
+      {
+        "frame": "resources",
+        "cue": "Resources ambient loop.wav"
+      },
+      {
+        "frame": "production",
+        "cue": "Production Ambient loop.wav"
+      },
+      {
+        "frame": "diplomacy",
+        "cue": "Ambience Diplomacy.wav"
+      },
+      {
+        "frame": "defense",
+        "cue": "Defence.wav"
+      },
+      {
+        "frame": "religion",
+        "cue": "Massmedia ambient loop.wav"
+      },
+      {
+        "frame": "research",
+        "cue": "Technology ambient loop.wav"
+      },
+      {
+        "frame": "game",
+        "cue": "General ambient.wav"
+      }
+    ]
+  },
+  "disabledRequest": {
+    "frame": "defense",
+    "indexBefore": 4,
+    "indexAfter": 4,
+    "eventsAdded": 0
+  },
+  "boundary": [
+    {
+      "op": "start",
+      "tick": 0,
+      "cue": "Resources ambient loop.wav",
+      "symbol": 35,
+      "loops": 9999,
+      "volume": 100,
+      "owner": "ambient_sound_4"
+    },
+    {
+      "op": "volume",
+      "tick": 0,
+      "cue": "Resources ambient loop.wav",
+      "symbol": 35,
+      "loops": 9999,
+      "owner": "ambient_sound_4",
+      "volume": 21,
+      "pan": 0
+    },
+    {
+      "op": "slot_index_after",
+      "tick": 0,
+      "index": 5
+    },
+    {
+      "op": "start",
+      "tick": 1,
+      "cue": "Resources ambient loop.wav",
+      "symbol": 35,
+      "loops": 9999,
+      "volume": 100,
+      "owner": "ambient_sound_5"
+    },
+    {
+      "op": "volume",
+      "tick": 1,
+      "cue": "Resources ambient loop.wav",
+      "symbol": 35,
+      "loops": 9999,
+      "owner": "ambient_sound_5",
+      "volume": 21,
+      "pan": 0
+    },
+    {
+      "op": "slot_index_after",
+      "tick": 1,
+      "index": 6
+    },
+    {
+      "op": "start",
+      "tick": 2,
+      "cue": "Resources ambient loop.wav",
+      "symbol": 35,
+      "loops": 9999,
+      "volume": 100,
+      "owner": "ambient_sound_6"
+    },
+    {
+      "op": "volume",
+      "tick": 2,
+      "cue": "Resources ambient loop.wav",
+      "symbol": 35,
+      "loops": 9999,
+      "owner": "ambient_sound_6",
+      "volume": 21,
+      "pan": 0
+    },
+    {
+      "op": "slot_index_after",
+      "tick": 2,
+      "index": 7
+    },
+    {
+      "op": "start",
+      "tick": 3,
+      "cue": "Resources ambient loop.wav",
+      "symbol": 35,
+      "loops": 9999,
+      "volume": 100,
+      "owner": "ambient_sound_7"
+    },
+    {
+      "op": "volume",
+      "tick": 3,
+      "cue": "Resources ambient loop.wav",
+      "symbol": 35,
+      "loops": 9999,
+      "owner": "ambient_sound_7",
+      "volume": 21,
+      "pan": 0
+    },
+    {
+      "op": "slot_index_after",
+      "tick": 3,
+      "index": 8
+    },
+    {
+      "op": "start",
+      "tick": 4,
+      "cue": "Resources ambient loop.wav",
+      "symbol": 35,
+      "loops": 9999,
+      "volume": 100,
+      "owner": "ambient_sound_8"
+    },
+    {
+      "op": "volume",
+      "tick": 4,
+      "cue": "Resources ambient loop.wav",
+      "symbol": 35,
+      "loops": 9999,
+      "owner": "ambient_sound_8",
+      "volume": 21,
+      "pan": 0
+    },
+    {
+      "op": "slot_index_after",
+      "tick": 4,
+      "index": 9
+    },
+    {
+      "op": "start",
+      "tick": 5,
+      "cue": "Resources ambient loop.wav",
+      "symbol": 35,
+      "loops": 9999,
+      "volume": 100,
+      "owner": "ambient_sound_9"
+    },
+    {
+      "op": "volume",
+      "tick": 5,
+      "cue": "Resources ambient loop.wav",
+      "symbol": 35,
+      "loops": 9999,
+      "owner": "ambient_sound_9",
+      "volume": 21,
+      "pan": 0
+    },
+    {
+      "op": "slot_index_after",
+      "tick": 5,
+      "index": 10
+    },
+    {
+      "op": "start",
+      "tick": 6,
+      "cue": "Resources ambient loop.wav",
+      "symbol": 35,
+      "loops": 9999,
+      "volume": 100,
+      "owner": "ambient_sound_10"
+    },
+    {
+      "op": "volume",
+      "tick": 6,
+      "cue": "Resources ambient loop.wav",
+      "symbol": 35,
+      "loops": 9999,
+      "owner": "ambient_sound_10",
+      "volume": 21,
+      "pan": 0
+    },
+    {
+      "op": "slot_index_after",
+      "tick": 6,
+      "index": 1
+    },
+    {
+      "op": "stop",
+      "tick": 7,
+      "cue": "Resources ambient loop.wav",
+      "symbol": 35,
+      "loops": 9999,
+      "owner": "ambient_sound_1"
+    },
+    {
+      "op": "start",
+      "tick": 7,
+      "cue": "Resources ambient loop.wav",
+      "symbol": 35,
+      "loops": 9999,
+      "volume": 100,
+      "owner": "ambient_sound_1"
+    },
+    {
+      "op": "volume",
+      "tick": 7,
+      "cue": "Resources ambient loop.wav",
+      "symbol": 35,
+      "loops": 9999,
+      "owner": "ambient_sound_1",
+      "volume": 21,
+      "pan": 0
+    },
+    {
+      "op": "slot_index_after",
+      "tick": 7,
+      "index": 2
+    },
+    {
+      "op": "stop",
+      "tick": 8,
+      "cue": "Resources ambient loop.wav",
+      "symbol": 35,
+      "loops": 9999,
+      "owner": "ambient_sound_2"
+    },
+    {
+      "op": "start",
+      "tick": 8,
+      "cue": "Resources ambient loop.wav",
+      "symbol": 35,
+      "loops": 9999,
+      "volume": 100,
+      "owner": "ambient_sound_2"
+    },
+    {
+      "op": "volume",
+      "tick": 8,
+      "cue": "Resources ambient loop.wav",
+      "symbol": 35,
+      "loops": 9999,
+      "owner": "ambient_sound_2",
+      "volume": 21,
+      "pan": 0
+    },
+    {
+      "op": "slot_index_after",
+      "tick": 8,
+      "index": 3
+    },
+    {
+      "op": "stop",
+      "tick": 9,
+      "cue": "Resources ambient loop.wav",
+      "symbol": 35,
+      "loops": 9999,
+      "owner": "ambient_sound_3"
+    },
+    {
+      "op": "start",
+      "tick": 9,
+      "cue": "Resources ambient loop.wav",
+      "symbol": 35,
+      "loops": 9999,
+      "volume": 100,
+      "owner": "ambient_sound_3"
+    },
+    {
+      "op": "volume",
+      "tick": 9,
+      "cue": "Resources ambient loop.wav",
+      "symbol": 35,
+      "loops": 9999,
+      "owner": "ambient_sound_3",
+      "volume": 21,
+      "pan": 0
+    },
+    {
+      "op": "slot_index_after",
+      "tick": 9,
+      "index": 4
+    },
+    {
+      "op": "stop",
+      "tick": 10,
+      "cue": "Resources ambient loop.wav",
+      "symbol": 35,
+      "loops": 9999,
+      "owner": "ambient_sound_4"
+    },
+    {
+      "op": "start",
+      "tick": 10,
+      "cue": "Resources ambient loop.wav",
+      "symbol": 35,
+      "loops": 9999,
+      "volume": 100,
+      "owner": "ambient_sound_4"
+    },
+    {
+      "op": "volume",
+      "tick": 10,
+      "cue": "Resources ambient loop.wav",
+      "symbol": 35,
+      "loops": 9999,
+      "owner": "ambient_sound_4",
+      "volume": 21,
+      "pan": 0
+    },
+    {
+      "op": "slot_index_after",
+      "tick": 10,
+      "index": 5
+    },
+    {
+      "op": "stop",
+      "tick": 11,
+      "cue": "Resources ambient loop.wav",
+      "symbol": 35,
+      "loops": 9999,
+      "owner": "ambient_sound_5"
+    },
+    {
+      "op": "start",
+      "tick": 11,
+      "cue": "Production Ambient loop.wav",
+      "symbol": 41,
+      "loops": 9999,
+      "volume": 100,
+      "owner": "ambient_sound_5"
+    },
+    {
+      "op": "volume",
+      "tick": 11,
+      "cue": "Production Ambient loop.wav",
+      "symbol": 41,
+      "loops": 9999,
+      "owner": "ambient_sound_5",
+      "volume": 21,
+      "pan": 0
+    },
+    {
+      "op": "slot_index_after",
+      "tick": 11,
+      "index": 6
+    },
+    {
+      "op": "stop",
+      "tick": 20,
+      "cue": "Resources ambient loop.wav",
+      "symbol": 35,
+      "loops": 9999,
+      "owner": "ambient_sound_1"
+    },
+    {
+      "op": "stop",
+      "tick": 20,
+      "cue": "Resources ambient loop.wav",
+      "symbol": 35,
+      "loops": 9999,
+      "owner": "ambient_sound_2"
+    },
+    {
+      "op": "stop",
+      "tick": 20,
+      "cue": "Resources ambient loop.wav",
+      "symbol": 35,
+      "loops": 9999,
+      "owner": "ambient_sound_3"
+    },
+    {
+      "op": "stop",
+      "tick": 20,
+      "cue": "Resources ambient loop.wav",
+      "symbol": 35,
+      "loops": 9999,
+      "owner": "ambient_sound_4"
+    },
+    {
+      "op": "stop",
+      "tick": 20,
+      "cue": "Production Ambient loop.wav",
+      "symbol": 41,
+      "loops": 9999,
+      "owner": "ambient_sound_5"
+    },
+    {
+      "op": "stop",
+      "tick": 20,
+      "cue": "Resources ambient loop.wav",
+      "symbol": 35,
+      "loops": 9999,
+      "owner": "ambient_sound_6"
+    },
+    {
+      "op": "stop",
+      "tick": 20,
+      "cue": "Resources ambient loop.wav",
+      "symbol": 35,
+      "loops": 9999,
+      "owner": "ambient_sound_7"
+    },
+    {
+      "op": "stop",
+      "tick": 20,
+      "cue": "Resources ambient loop.wav",
+      "symbol": 35,
+      "loops": 9999,
+      "owner": "ambient_sound_8"
+    },
+    {
+      "op": "stop",
+      "tick": 20,
+      "cue": "Resources ambient loop.wav",
+      "symbol": 35,
+      "loops": 9999,
+      "owner": "ambient_sound_9"
+    },
+    {
+      "op": "stop",
+      "tick": 20,
+      "cue": "Resources ambient loop.wav",
+      "symbol": 35,
+      "loops": 9999,
+      "owner": "ambient_sound_10"
+    }
+  ],
+  "backendMutePoll": {
+    "initialGain": [
+      0.2,
+      0.4
+    ],
+    "mutedGain": [
+      0.0,
+      0
+    ],
+    "completionsWhileMuted": 1,
+    "remainingSlots": 0,
+    "scope": "actual PygameMenuAudio with fake mixer; no device output"
+  }
+}

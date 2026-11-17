@@ -111,6 +111,12 @@ jobs:
           - id: source-anti-defense-callbacks
             check: Source defense callback cadence and host autoplay
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.SourceAntiDefensePlaybackTest"'
+          - id: source-battle-ambient
+            check: Source battle ambient slots, finite repeats, and mute ownership
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.audio.BattleAmbientPlaybackTest" --tests "com.example.worlddomination.game.audio.PhoneToolbarAudioTest"'
+          - id: android-finite-sound-backend
+            check: Android finite sound loading, handle lifetime, and pause races
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.platform.audio.SourceAndroidSoundTest"'
           - id: source-anti-defense-audio
             check: Source defense finite sound groups and lifecycle
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.audio.AntiDefenseAudioPlaybackTest"'
