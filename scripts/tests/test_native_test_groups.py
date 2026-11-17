@@ -226,9 +226,13 @@ class NativeGroupTests(unittest.TestCase):
         self.fixture()
         a = self.root / "android-native-a-results/reports/androidTests/beta-ui-evidence"
         b = self.root / "android-native-b-results/reports/androidTests/beta-ui-evidence"
-        source = next(a.glob("*.png"))
-        target = next(b.glob("*.png"))
-        target.rename(b / source.name)
+        # Add a duplicate without removing any mandatory screenshot. Choosing
+        # and renaming a glob result depended on filesystem iteration order and
+        # could trigger the missing-evidence check before duplicate detection.
+        source = a / "a-beta-ui-evidence-proof.png"
+        self.assertTrue(source.is_file())
+        self.assertFalse((b / source.name).exists())
+        shutil.copy2(source, b / source.name)
         with self.assertRaisesRegex(ValueError, "Duplicate native PNG basename"):
             groups.verify_artifacts(self.manifest, self.root)
 
