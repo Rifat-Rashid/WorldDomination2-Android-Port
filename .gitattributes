@@ -67,3 +67,4 @@ app/src/test/resources/source-spy-campaign-*.json -text whitespace=cr-at-eol
 
 # Source endgame host-frame captures retain their checksum on each host.
 app/src/test/resources/source-endgame-clock/*.json -text whitespace=cr-at-eol
+app/src/test/resources/parity/defeated-flag-credit.json -text whitespace=cr-at-eol

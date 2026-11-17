@@ -31,8 +31,8 @@ public final class BattlefieldFlagState {
                 || game.getPlayerState(owner).getPlayerColor() == 0) {
             return -1;
         }
-        // Do not walk an ownership chain here. Model.killPlayer transfers credit;
-        // the source view reads the resulting lastAttackedBy_num directly.
+        // Do not walk an ownership chain. The source view reads lastAttackedBy_num
+        // directly, and killPlayer's differently cased write does not transfer it.
         return owner;
     }
 

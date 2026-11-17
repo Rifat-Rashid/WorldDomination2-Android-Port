@@ -333,6 +333,9 @@ jobs:
           - id: source-endgame-clock
             check: Source endgame random ownership and score clock
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.SourceOutcomeRandomSnapshotTest" --tests "com.example.worlddomination.game.ui.SourceEndgameScoreClockTest"'
+          - id: source-defeated-flag-credit
+            check: Source defeated flag attribution and score credit
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.SourceDefeatedFlagCreditTest"'
           - id: source-legal-victory-campaign
             check: Legal combat campaign through source victory
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.SourceLegalVictoryCampaignTest"'

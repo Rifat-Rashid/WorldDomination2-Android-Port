@@ -103,7 +103,7 @@ public final class BattlefieldFlagStateTest {
     }
 
     @Test
-    public void eliminatingAConquerorUpdatesAllOfItsPreviouslyCreditedFlags() {
+    public void eliminatingAConquerorPreservesItsPreviouslyCreditedFlags() {
         GameState game = new GameState(1, 214L, false);
         GameState.PlayerState conqueror = game.getPlayerState(1);
         GameState.PlayerState defeated = game.getPlayerState(2);
@@ -128,9 +128,9 @@ public final class BattlefieldFlagStateTest {
 
         assertFalse(conqueror.alive);
         assertEquals(0, BattlefieldFlagState.ownerPlayerId(game, conqueror.id));
-        assertEquals(0, BattlefieldFlagState.ownerPlayerId(game, defeated.id));
-        assertEquals(game.getHuman().getPlayerColor(), BattlefieldFlagState.color(game, defeated.id));
-        assertEquals(game.getHuman().getReligionCode(), BattlefieldFlagState.religion(game, defeated.id));
+        assertEquals(conqueror.id, BattlefieldFlagState.ownerPlayerId(game, defeated.id));
+        assertEquals(conqueror.getPlayerColor(), BattlefieldFlagState.color(game, defeated.id));
+        assertEquals(conqueror.getReligionCode(), BattlefieldFlagState.religion(game, defeated.id));
     }
 
     @Test
