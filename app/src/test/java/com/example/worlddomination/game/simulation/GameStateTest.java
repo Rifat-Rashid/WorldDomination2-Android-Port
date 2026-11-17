@@ -1402,9 +1402,10 @@ public final class GameStateTest {
         assertEquals(human.score, breakdown.getBaseScore());
         assertTrue(breakdown.getBaseScore() > 125L);
         assertEquals(1, breakdown.getSatelliteCount());
-        assertEquals(4, breakdown.getFlagBonusCount());
+        // No other nation's undefined source attribution counts as human credit.
+        assertEquals(0, breakdown.getFlagBonusCount());
         assertEquals(breakdown.getBaseScore() * 2L
-                        + FinalScoreBreakdown.calculateFlagBonusPoints(4),
+                        + FinalScoreBreakdown.calculateFlagBonusPoints(0),
                 state.getFinalScore());
     }
 
@@ -1448,7 +1449,7 @@ public final class GameStateTest {
     }
 
     @Test
-    public void eliminatingNationTransfersItsFlagCreditToItsAttacker() {
+    public void eliminatingNationPreservesItsPriorVictimsFlagCredit() {
         GameState state = new GameState(1, 214L, false);
         GameState.PlayerState target = state.getPlayerState(1);
         GameState.PlayerState previouslyDefeated = state.getPlayerState(2);
@@ -1479,8 +1480,8 @@ public final class GameStateTest {
         assertFalse(target.alive);
         assertEquals(0, target.populationMillions);
         assertEquals(0, target.getCities().get(1).populationMillions);
-        assertEquals(0, previouslyDefeated.getLastAttackedByPlayerId());
-        assertEquals(5, state.getFinalScoreBreakdown().getFlagBonusCount());
+        assertEquals(target.id, previouslyDefeated.getLastAttackedByPlayerId());
+        assertEquals(1, state.getFinalScoreBreakdown().getFlagBonusCount());
     }
 
     @Test

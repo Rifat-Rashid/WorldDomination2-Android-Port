@@ -239,6 +239,9 @@ public final class SourceEndgameInstrumentedTest {
                                 sequence.getScoreText());
                         assertEquals(state.getFinalScore(), backend.best);
                         assertEquals(2, state.getFinalScoreBreakdown().getSatelliteCount());
+                        // Only the explicitly credited rival counts; the untouched
+                        // human's undefined source attacker must not add a flag.
+                        assertEquals(1, state.getFinalScoreBreakdown().getFlagBonusCount());
                         assertFalse(sequence.getSatelliteBonusText().isEmpty());
                         assertFalse(sequence.getFlagBonusText().isEmpty());
                         render(app);

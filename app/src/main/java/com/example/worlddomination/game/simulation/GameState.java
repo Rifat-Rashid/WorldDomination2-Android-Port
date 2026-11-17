@@ -316,7 +316,8 @@ public final class GameState {
         public int spyReadiness = 25;
         public boolean alive = true;
         int satellitesUsed;
-        int lastAttackedByPlayerId;
+        // The source field is undefined until combat records an attacker.
+        int lastAttackedByPlayerId = -1;
         int lastAttackedByCasualties;
         private final double[] regardToward = new double[5];
         private final int[] ceasefireTurns = new int[5];
@@ -4538,19 +4539,15 @@ public final class GameState {
         addMessage(getHuman(), "Victory. All rival nations have fallen.");
     }
 
-    /** Matches Model.killPlayer cleanup and transfers flags from its prior victims. */
+    /** Matches Model.killPlayer cleanup without changing prior victims' flag credit. */
     private void eliminatePlayer(PlayerState eliminated) {
         addMessage(eliminated, "Nation " + eliminated.id + " has been eliminated.");
         for (CityState city : eliminated.cities) {
             city.setPopulationMillions(0);
             city.bioloaded = false;
         }
-        for (PlayerState defeated : players) {
-            if (!defeated.alive
-                    && defeated.lastAttackedByPlayerId == eliminated.id) {
-                defeated.lastAttackedByPlayerId = eliminated.lastAttackedByPlayerId;
-            }
-        }
+        // Model.killPlayer writes lastattackedby_num, a separate unused field.
+        // Flags and endgame score still read the original lastAttackedBy_num.
         eliminated.populationMillions = 0;
         eliminated.alive = false;
     }

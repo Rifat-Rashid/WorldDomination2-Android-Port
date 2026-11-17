@@ -1,0 +1,461 @@
+{
+  "scope": "synthetic source callbacks; actual constructed fields, manually assigned prior attribution and optional simultaneous zero populations; View endgame invoked through lifecycle",
+  "results": [
+    {
+      "case": "prior_ai",
+      "initial": {
+        "rngNext": 0.8050278270130223,
+        "players": [
+          {
+            "id": 0,
+            "alive": true,
+            "camelIsUndefined": true,
+            "camel": null,
+            "lowerIsUndefined": true,
+            "lower": null
+          },
+          {
+            "id": 1,
+            "alive": true,
+            "camelIsUndefined": true,
+            "camel": null,
+            "lowerIsUndefined": true,
+            "lower": null
+          },
+          {
+            "id": 2,
+            "alive": true,
+            "camelIsUndefined": true,
+            "camel": null,
+            "lowerIsUndefined": true,
+            "lower": null
+          }
+        ]
+      },
+      "before": {
+        "rngNext": 0.8050278270130223,
+        "players": [
+          {
+            "id": 0,
+            "alive": true,
+            "camelIsUndefined": true,
+            "camel": null,
+            "lowerIsUndefined": true,
+            "lower": null
+          },
+          {
+            "id": 1,
+            "alive": true,
+            "camelIsUndefined": false,
+            "camel": 0,
+            "lowerIsUndefined": true,
+            "lower": null
+          },
+          {
+            "id": 2,
+            "alive": true,
+            "camelIsUndefined": false,
+            "camel": 1,
+            "lowerIsUndefined": true,
+            "lower": null
+          }
+        ]
+      },
+      "afterFirst": {
+        "rngNext": 0.8050278270130223,
+        "players": [
+          {
+            "id": 0,
+            "alive": true,
+            "camelIsUndefined": true,
+            "camel": null,
+            "lowerIsUndefined": true,
+            "lower": null
+          },
+          {
+            "id": 1,
+            "alive": true,
+            "camelIsUndefined": false,
+            "camel": 0,
+            "lowerIsUndefined": true,
+            "lower": null
+          },
+          {
+            "id": 2,
+            "alive": false,
+            "camelIsUndefined": false,
+            "camel": 1,
+            "lowerIsUndefined": true,
+            "lower": null
+          }
+        ]
+      },
+      "after": {
+        "rngNext": 0.8050278270130223,
+        "players": [
+          {
+            "id": 0,
+            "alive": true,
+            "camelIsUndefined": true,
+            "camel": null,
+            "lowerIsUndefined": true,
+            "lower": null
+          },
+          {
+            "id": 1,
+            "alive": false,
+            "camelIsUndefined": false,
+            "camel": 0,
+            "lowerIsUndefined": true,
+            "lower": null
+          },
+          {
+            "id": 2,
+            "alive": false,
+            "camelIsUndefined": false,
+            "camel": 1,
+            "lowerIsUndefined": false,
+            "lower": 0
+          }
+        ]
+      },
+      "sourceViewFlagBonus": 1,
+      "status": "win"
+    },
+    {
+      "case": "prior_human",
+      "initial": {
+        "rngNext": 0.8050278270130223,
+        "players": [
+          {
+            "id": 0,
+            "alive": true,
+            "camelIsUndefined": true,
+            "camel": null,
+            "lowerIsUndefined": true,
+            "lower": null
+          },
+          {
+            "id": 1,
+            "alive": true,
+            "camelIsUndefined": true,
+            "camel": null,
+            "lowerIsUndefined": true,
+            "lower": null
+          },
+          {
+            "id": 2,
+            "alive": true,
+            "camelIsUndefined": true,
+            "camel": null,
+            "lowerIsUndefined": true,
+            "lower": null
+          }
+        ]
+      },
+      "before": {
+        "rngNext": 0.8050278270130223,
+        "players": [
+          {
+            "id": 0,
+            "alive": true,
+            "camelIsUndefined": true,
+            "camel": null,
+            "lowerIsUndefined": true,
+            "lower": null
+          },
+          {
+            "id": 1,
+            "alive": true,
+            "camelIsUndefined": false,
+            "camel": 0,
+            "lowerIsUndefined": true,
+            "lower": null
+          },
+          {
+            "id": 2,
+            "alive": true,
+            "camelIsUndefined": false,
+            "camel": 0,
+            "lowerIsUndefined": true,
+            "lower": null
+          }
+        ]
+      },
+      "afterFirst": {
+        "rngNext": 0.8050278270130223,
+        "players": [
+          {
+            "id": 0,
+            "alive": true,
+            "camelIsUndefined": true,
+            "camel": null,
+            "lowerIsUndefined": true,
+            "lower": null
+          },
+          {
+            "id": 1,
+            "alive": true,
+            "camelIsUndefined": false,
+            "camel": 0,
+            "lowerIsUndefined": true,
+            "lower": null
+          },
+          {
+            "id": 2,
+            "alive": false,
+            "camelIsUndefined": false,
+            "camel": 0,
+            "lowerIsUndefined": true,
+            "lower": null
+          }
+        ]
+      },
+      "after": {
+        "rngNext": 0.8050278270130223,
+        "players": [
+          {
+            "id": 0,
+            "alive": true,
+            "camelIsUndefined": true,
+            "camel": null,
+            "lowerIsUndefined": true,
+            "lower": null
+          },
+          {
+            "id": 1,
+            "alive": false,
+            "camelIsUndefined": false,
+            "camel": 0,
+            "lowerIsUndefined": true,
+            "lower": null
+          },
+          {
+            "id": 2,
+            "alive": false,
+            "camelIsUndefined": false,
+            "camel": 0,
+            "lowerIsUndefined": true,
+            "lower": null
+          }
+        ]
+      },
+      "sourceViewFlagBonus": 2,
+      "status": "win"
+    },
+    {
+      "case": "same_phase",
+      "initial": {
+        "rngNext": 0.8050278270130223,
+        "players": [
+          {
+            "id": 0,
+            "alive": true,
+            "camelIsUndefined": true,
+            "camel": null,
+            "lowerIsUndefined": true,
+            "lower": null
+          },
+          {
+            "id": 1,
+            "alive": true,
+            "camelIsUndefined": true,
+            "camel": null,
+            "lowerIsUndefined": true,
+            "lower": null
+          },
+          {
+            "id": 2,
+            "alive": true,
+            "camelIsUndefined": true,
+            "camel": null,
+            "lowerIsUndefined": true,
+            "lower": null
+          }
+        ]
+      },
+      "before": {
+        "rngNext": 0.8050278270130223,
+        "players": [
+          {
+            "id": 0,
+            "alive": true,
+            "camelIsUndefined": true,
+            "camel": null,
+            "lowerIsUndefined": true,
+            "lower": null
+          },
+          {
+            "id": 1,
+            "alive": true,
+            "camelIsUndefined": false,
+            "camel": 0,
+            "lowerIsUndefined": true,
+            "lower": null
+          },
+          {
+            "id": 2,
+            "alive": true,
+            "camelIsUndefined": false,
+            "camel": 1,
+            "lowerIsUndefined": true,
+            "lower": null
+          }
+        ]
+      },
+      "afterFirst": null,
+      "after": {
+        "rngNext": 0.8050278270130223,
+        "players": [
+          {
+            "id": 0,
+            "alive": true,
+            "camelIsUndefined": true,
+            "camel": null,
+            "lowerIsUndefined": true,
+            "lower": null
+          },
+          {
+            "id": 1,
+            "alive": false,
+            "camelIsUndefined": false,
+            "camel": 0,
+            "lowerIsUndefined": true,
+            "lower": null
+          },
+          {
+            "id": 2,
+            "alive": false,
+            "camelIsUndefined": false,
+            "camel": 1,
+            "lowerIsUndefined": false,
+            "lower": 0
+          }
+        ]
+      },
+      "sourceViewFlagBonus": 1,
+      "status": "win"
+    },
+    {
+      "case": "unattributed",
+      "initial": {
+        "rngNext": 0.8050278270130223,
+        "players": [
+          {
+            "id": 0,
+            "alive": true,
+            "camelIsUndefined": true,
+            "camel": null,
+            "lowerIsUndefined": true,
+            "lower": null
+          },
+          {
+            "id": 1,
+            "alive": true,
+            "camelIsUndefined": true,
+            "camel": null,
+            "lowerIsUndefined": true,
+            "lower": null
+          },
+          {
+            "id": 2,
+            "alive": true,
+            "camelIsUndefined": true,
+            "camel": null,
+            "lowerIsUndefined": true,
+            "lower": null
+          }
+        ]
+      },
+      "before": {
+        "rngNext": 0.8050278270130223,
+        "players": [
+          {
+            "id": 0,
+            "alive": true,
+            "camelIsUndefined": true,
+            "camel": null,
+            "lowerIsUndefined": true,
+            "lower": null
+          },
+          {
+            "id": 1,
+            "alive": true,
+            "camelIsUndefined": true,
+            "camel": null,
+            "lowerIsUndefined": true,
+            "lower": null
+          },
+          {
+            "id": 2,
+            "alive": true,
+            "camelIsUndefined": true,
+            "camel": null,
+            "lowerIsUndefined": true,
+            "lower": null
+          }
+        ]
+      },
+      "afterFirst": {
+        "rngNext": 0.8050278270130223,
+        "players": [
+          {
+            "id": 0,
+            "alive": true,
+            "camelIsUndefined": true,
+            "camel": null,
+            "lowerIsUndefined": true,
+            "lower": null
+          },
+          {
+            "id": 1,
+            "alive": true,
+            "camelIsUndefined": true,
+            "camel": null,
+            "lowerIsUndefined": true,
+            "lower": null
+          },
+          {
+            "id": 2,
+            "alive": false,
+            "camelIsUndefined": true,
+            "camel": null,
+            "lowerIsUndefined": true,
+            "lower": null
+          }
+        ]
+      },
+      "after": {
+        "rngNext": 0.8050278270130223,
+        "players": [
+          {
+            "id": 0,
+            "alive": true,
+            "camelIsUndefined": true,
+            "camel": null,
+            "lowerIsUndefined": true,
+            "lower": null
+          },
+          {
+            "id": 1,
+            "alive": false,
+            "camelIsUndefined": true,
+            "camel": null,
+            "lowerIsUndefined": true,
+            "lower": null
+          },
+          {
+            "id": 2,
+            "alive": false,
+            "camelIsUndefined": true,
+            "camel": null,
+            "lowerIsUndefined": true,
+            "lower": null
+          }
+        ]
+      },
+      "sourceViewFlagBonus": 0,
+      "status": "win"
+    }
+  ]
+}
