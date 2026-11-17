@@ -660,6 +660,9 @@ jobs:
           - id: source-ui-action-audio
             check: Source interface sound gain and panning
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.audio.SourceUiActionAudioTest"'
+          - id: source-theme-completion
+            check: Source theme gain and completion restart
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.audio.SourceThemeCompletionTest"'
           - id: flash-asset-transfer-tests
             check: Exact pixel transfer and compressed Flash asset reads
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.ArgbPixelTransferTest" --tests "com.example.worlddomination.game.assets.CompressedFlashAssetReadTest"'

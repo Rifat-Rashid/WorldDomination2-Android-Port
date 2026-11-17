@@ -25,7 +25,7 @@ public final class PhoneToolbarAudioTest {
         assertFalse(f.audio.toggleOutputMuted());
         f.sound.assertVoice(first, -.75f, .8f);
         f.sound.assertVoice(second, .25f, .8f);
-        assertEquals(.55f, f.theme.volume, 0f);
+        assertEquals(1f, f.theme.volume, 0f);
         assertEquals(2, f.sound.starts);
         assertEquals(0, f.sound.stops + f.sound.pauses + f.sound.resumes);
         assertEquals(0, f.theme.starts + f.theme.stops + f.theme.pauses);
@@ -56,7 +56,7 @@ public final class PhoneToolbarAudioTest {
         assertEquals(-1L, f.audio.playInstance(OriginalAudio.Cue.WARROCKET, 0f));
         assertEquals(-1L, f.audio.loop(OriginalAudio.Cue.WARROCKET));
         f.sound.assertVoice(existing, .4f, .8f);
-        assertEquals(.55f, f.theme.volume, 0f);
+        assertEquals(1f, f.theme.volume, 0f);
         assertFalse(f.audio.isOutputMuted());
         assertEquals(0, f.sound.stops);
         f.audio.toggleOutputMuted();
@@ -116,7 +116,7 @@ public final class PhoneToolbarAudioTest {
         assertEquals(0f, f.theme.volume, 0f);
         assertFalse(f.audio.isSoundEnabled());
         f.audio.toggleOutputMuted();
-        assertEquals(.55f, f.theme.volume, 0f);
+        assertEquals(1f, f.theme.volume, 0f);
         f.sound.assertVoice(id, .6f, .8f);
     }
 
@@ -212,10 +212,14 @@ public final class PhoneToolbarAudioTest {
     }
 
     private static final class Fixture {
-        final OriginalAudio audio = new OriginalAudio();
+        final OriginalAudio audio;
         final FakeSound sound = new FakeSound();
-        final FakeMusic theme = new FakeMusic();
+        FakeMusic theme = new FakeMusic();
         @SuppressWarnings("unchecked") Fixture() throws Exception {
+            audio = new OriginalAudio(() -> {
+                theme = new FakeMusic();
+                return theme;
+            });
             Map<OriginalAudio.Cue, Sound> sounds =
                     (Map<OriginalAudio.Cue, Sound>) field(audio, "sounds");
             sounds.put(OriginalAudio.Cue.WARROCKET, sound);
@@ -224,6 +228,10 @@ public final class PhoneToolbarAudioTest {
             Field f = OriginalAudio.class.getDeclaredField("theme");
             f.setAccessible(true);
             f.set(audio, theme);
+            // The fixture injects a Music that is already playing, as initialize does.
+            f = OriginalAudio.class.getDeclaredField("themeActive");
+            f.setAccessible(true);
+            f.setBoolean(audio, true);
         }
     }
 
@@ -270,7 +278,7 @@ public final class PhoneToolbarAudioTest {
     }
 
     private static final class FakeMusic implements Music {
-        float volume = .55f;
+        float volume = 1f;
         boolean playing = true, looping;
         int starts, stops, pauses;
         public void play() { starts++; playing = true; }

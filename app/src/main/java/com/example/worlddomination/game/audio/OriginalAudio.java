@@ -12,6 +12,7 @@ import java.io.OutputStream;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 /** Plays the original Flash-exported MP3 assets through libGDX's Android audio backend. */
 public final class OriginalAudio {
@@ -85,7 +86,7 @@ public final class OriginalAudio {
 
     private static final String INTERNAL_ROOT = "original/runtime/audio/";
     private static final String CACHE_ROOT = "worlddomination/audio/";
-    private static final float MUSIC_VOLUME = 0.55f;
+    private static final float SOURCE_THEME_VOLUME = 1f;
     private static final float EFFECT_VOLUME = 0.8f;
     private static final float SOURCE_UI_VOLUME = 1f;
 
@@ -101,17 +102,29 @@ public final class OriginalAudio {
     private final AntiDefenseAudioPlayback antiDefensePlayback = new AntiDefenseAudioPlayback(
             this::loadAntiDefenseMusic, EFFECT_VOLUME, OriginalAudio::dispatchAircraftResume);
     private Music theme;
+    private Supplier<Music> themeFactory = () -> loadMusic(Cue.THEME);
     private final BattleAmbientPlayback battleAmbient = new BattleAmbientPlayback(this::loadAmbientSound);
     private boolean soundEnabled = true;
     private boolean musicEnabled = true;
     private boolean outputMuted;
     private boolean resumeMusicAfterPause;
+    private boolean themeActive;
+    private boolean themeCompletionPending;
+    private boolean lifecyclePaused;
+    private boolean disposed;
+    private long themeGeneration;
     private boolean initialized;
 
     public OriginalAudio() {
         satellitePlayback = new SatelliteAudioPlayback(this::loadMusic, EFFECT_VOLUME);
         aircraftPlayback = new AircraftAudioPlayback(this::loadMusic, EFFECT_VOLUME,
                 OriginalAudio::dispatchAircraftResume);
+    }
+
+    /** Allows tests to supply distinct owners without loading an Android asset. */
+    OriginalAudio(Supplier<Music> themeFactory) {
+        this();
+        this.themeFactory = Objects.requireNonNull(themeFactory, "themeFactory");
     }
 
     OriginalAudio(SatelliteAudioPlayback satellitePlayback) {
@@ -136,8 +149,9 @@ public final class OriginalAudio {
         if (initialized) {
             return;
         }
+        disposed = false;
         initialized = true;
-        theme = loadMusic(Cue.THEME);
+        theme = themeFactory.get();
         preload(Cue.STARTUP);
         preload(Cue.ACTION_SWITCH);
         preload(Cue.ACTION_SWITCH_OFF);
@@ -194,9 +208,13 @@ public final class OriginalAudio {
         preload(Cue.TECHNOLOGY_AMBIENT);
         play(Cue.STARTUP);
         if (theme != null && musicEnabled) {
-            theme.setLooping(true);
-            theme.setVolume(outputMuted ? 0f : MUSIC_VOLUME);
-            theme.play();
+            if (lifecyclePaused) {
+                themeActive = true;
+                resumeMusicAfterPause = true;
+                themeCompletionPending = true;
+            } else {
+                startThemeFromBeginning();
+            }
         }
     }
 
@@ -215,13 +233,26 @@ public final class OriginalAudio {
     /** Toggles the original theme track without changing sound effects or ambience. */
     public boolean toggleMusic() {
         musicEnabled = !musicEnabled;
-        if (theme != null) {
-            if (musicEnabled) {
-                theme.setLooping(true);
-                theme.setVolume(outputMuted ? 0f : MUSIC_VOLUME);
-                theme.play();
-            } else {
-                theme.stop();
+        if (musicEnabled) {
+            // AndroidMusic resolves its listener when a queued completion runs. A
+            // fresh owner prevents an old session's event reaching this session.
+            if (!disposed && theme == null) theme = themeFactory.get();
+            if (theme != null) {
+                themeActive = true;
+                if (lifecyclePaused) {
+                    resumeMusicAfterPause = true;
+                    themeCompletionPending = true;
+                } else {
+                    startThemeFromBeginning();
+                }
+            }
+        } else {
+            invalidateThemeCompletion();
+            if (theme != null) {
+                Music oldOwner = theme;
+                theme = null;
+                oldOwner.stop();
+                oldOwner.dispose();
             }
         }
         return musicEnabled;
@@ -241,7 +272,7 @@ public final class OriginalAudio {
     public boolean toggleOutputMuted() {
         outputMuted = !outputMuted;
         soundVoices.setMuted(outputMuted);
-        if (theme != null) theme.setVolume(outputMuted ? 0f : MUSIC_VOLUME);
+        if (theme != null) theme.setVolume(outputMuted ? 0f : SOURCE_THEME_VOLUME);
         satellitePlayback.setOutputMuted(outputMuted);
         aircraftPlayback.setOutputMuted(outputMuted);
         antiDefensePlayback.setOutputMuted(outputMuted);
@@ -257,6 +288,39 @@ public final class OriginalAudio {
 
     public boolean isMusicEnabled() {
         return musicEnabled;
+    }
+
+    /** Source Sound.start(0,1) restarts only after actual playback completion. */
+    private void startThemeFromBeginning() {
+        if (theme == null || !musicEnabled || disposed) return;
+        themeActive = true;
+        themeCompletionPending = false;
+        long generation = ++themeGeneration;
+        Music owner = theme;
+        owner.setLooping(false);
+        owner.setVolume(outputMuted ? 0f : SOURCE_THEME_VOLUME);
+        owner.setOnCompletionListener(completed -> themeCompleted(owner, generation));
+        owner.setPosition(0f);
+        owner.play();
+    }
+
+    private void themeCompleted(Music owner, long generation) {
+        if (disposed || !musicEnabled || owner != theme || generation != themeGeneration
+                || !themeActive || owner.isPlaying()) return;
+        if (lifecyclePaused) {
+            themeCompletionPending = true;
+            resumeMusicAfterPause = true;
+        } else {
+            startThemeFromBeginning();
+        }
+    }
+
+    private void invalidateThemeCompletion() {
+        ++themeGeneration;
+        themeActive = false;
+        themeCompletionPending = false;
+        resumeMusicAfterPause = false;
+        if (theme != null) theme.setOnCompletionListener(null);
     }
 
     /** The phone adapter constructs a fresh ambient slot ring for each private battle. */
@@ -404,8 +468,11 @@ public final class OriginalAudio {
         aircraftPlayback.pause();
         antiDefensePlayback.pause();
         battleAmbient.pause();
-        resumeMusicAfterPause = musicEnabled && theme != null && theme.isPlaying();
-        if (resumeMusicAfterPause) {
+        if (lifecyclePaused) return;
+        lifecyclePaused = true;
+        // Android's backend can autoPause Music before ApplicationListener.pause.
+        resumeMusicAfterPause = musicEnabled && theme != null && themeActive;
+        if (resumeMusicAfterPause && theme.isPlaying()) {
             theme.pause();
         }
         soundVoices.pause();
@@ -416,8 +483,11 @@ public final class OriginalAudio {
         aircraftPlayback.resume();
         antiDefensePlayback.resume();
         battleAmbient.resume();
-        if (resumeMusicAfterPause && musicEnabled && theme != null) {
-            theme.play();
+        if (!lifecyclePaused) return;
+        lifecyclePaused = false;
+        if (resumeMusicAfterPause && musicEnabled && theme != null && themeActive) {
+            if (themeCompletionPending) startThemeFromBeginning();
+            else theme.play(); // Resume at the paused position, without seeking.
         }
         // The sound option cannot suppress resumption of previously active voices.
         soundVoices.resume();
@@ -425,6 +495,9 @@ public final class OriginalAudio {
     }
 
     public void dispose() {
+        disposed = true;
+        invalidateThemeCompletion();
+        lifecyclePaused = false;
         finishBattleActionSounds();
         satellitePlayback.dispose();
         aircraftPlayback.dispose();
