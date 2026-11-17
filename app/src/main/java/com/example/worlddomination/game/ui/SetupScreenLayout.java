@@ -99,8 +99,8 @@ public final class SetupScreenLayout {
                 enemiesPanel.width * 0.15f, slotHeight * 0.26f);
 
         leaderCarouselPanel.set(enemiesPanel.x + enemiesPanel.width * 0.07f,
-                enemiesPanel.y,
-                enemiesPanel.width * 0.86f, enemiesPanel.height * 0.585f);
+                enemiesPanel.y + enemiesPanel.height * 0.085f,
+                enemiesPanel.width * 0.86f, enemiesPanel.height * 0.50f);
         float arrowWidth = enemiesPanel.width * 0.028f;
         float carouselInset = enemiesPanel.width * 0.018f;
         float cardGap = enemiesPanel.width * 0.012f;
@@ -121,9 +121,9 @@ public final class SetupScreenLayout {
                         + leaderCards[leaderCards.length - 1].width + cardGap,
                 carouselArrowY, arrowWidth, carouselArrowHeight);
         leaderDescription.set(leaderCarouselPanel.x + carouselInset,
-                enemiesPanel.y + enemiesPanel.height * 0.04f,
+                enemiesPanel.y + enemiesPanel.height * 0.11f,
                 leaderCarouselPanel.width - 2f * carouselInset,
-                enemiesPanel.height * 0.163f);
+                enemiesPanel.height * 0.09f);
 
         startButton.set(startPanel.x + startPanel.width * 0.75f,
                 startPanel.y + startPanel.height * 0.13f,

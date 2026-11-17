@@ -57,8 +57,9 @@ public final class SetupScreenLayoutTest {
         assertTrue("Opponent cards sit above the portrait carousel",
                 layout.opponentSlots[0].y
                         > layout.leaderCarouselPanel.y + layout.leaderCarouselPanel.height);
-        assertEquals("Carousel frame aligns with the enemy panel footer",
-                layout.enemiesPanel.y, layout.leaderCarouselPanel.y, 0.001f);
+        assertTrue("Carousel leaves the original enemy panel footer visible",
+                layout.leaderCarouselPanel.y > layout.enemiesPanel.y
+                        + layout.enemiesPanel.height * 0.08f);
         assertTrue("The name bar remains within the carousel frame",
                 layout.leaderDescription.x >= layout.leaderCarouselPanel.x
                         && layout.leaderDescription.x + layout.leaderDescription.width
@@ -69,6 +70,28 @@ public final class SetupScreenLayoutTest {
         assertTrue("The name bar stays below the portrait cards",
                 layout.leaderDescription.y + layout.leaderDescription.height
                         < layout.leaderCards[0].y);
+    }
+
+    @Test
+    public void carouselPreservesAuthoredFooterWithoutCoveringCardsOrDescription() {
+        for (float[] size : new float[][]{{800, 600}, {896, 414}, {1194, 552}, {2424, 1080}}) {
+            SetupScreenLayout layout = new SetupScreenLayout();
+            layout.update(size[0], size[1], 0, 0, 0, 0);
+            Rectangle carousel = layout.leaderCarouselPanel;
+            assertTrue(layout.enemiesPanel.contains(carousel));
+            // Shape 5813 places its carousel about 28px above the 330px enemy
+            // plate bottom. Keep that visible footer in the responsive layout.
+            assertEquals(28f / 330f,
+                    (carousel.y - layout.enemiesPanel.y) / layout.enemiesPanel.height, .001f);
+            assertTrue(carousel.contains(layout.leaderDescription));
+            assertTrue("Description must remain readable at the smallest phone size",
+                    layout.leaderDescription.height >= 17f);
+            assertTrue(layout.leaderDescription.y + layout.leaderDescription.height
+                    < layout.leaderCards[0].y);
+            for (Rectangle card : layout.leaderCards) assertTrue(carousel.contains(card));
+            assertTrue(carousel.contains(layout.leaderPrevious));
+            assertTrue(carousel.contains(layout.leaderNext));
+        }
     }
 
     @Test

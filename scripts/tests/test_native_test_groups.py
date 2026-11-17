@@ -86,13 +86,18 @@ class NativeGroupTests(unittest.TestCase):
                 image = folder / f"{group_id}-{evidence}-proof.png"
                 image.write_bytes(b"not png" if tamper == (group_id, "bad-png")
                                   and evidence == group["evidence"][0] else PNG)
-                if evidence == "beta-ui-evidence" and groups.HELP in group["classes"]:
-                    for name in groups.HELP_EVIDENCE:
-                        (folder / name).write_bytes(PNG)
+                if evidence == "beta-ui-evidence":
+                    for selected, required in (
+                            (groups.HELP, groups.HELP_EVIDENCE),
+                            (groups.SETUP_PANELS, groups.SETUP_PANELS_EVIDENCE),
+                            (groups.SETUP_LAYOUT, groups.SETUP_LAYOUT_EVIDENCE)):
+                        if selected in group["classes"]:
+                            for name in required:
+                                (folder / name).write_bytes(PNG)
 
     def test_manifest_is_exact_closed_inventory_and_both_groups_make_beta(self):
-        self.assertEqual(88, len(self.manifest["requiredClasses"]))
-        self.assertEqual(138, len(self.manifest["expectedCases"]))
+        self.assertEqual(90, len(self.manifest["requiredClasses"]))
+        self.assertEqual(140, len(self.manifest["expectedCases"]))
         self.assertEqual({"a", "b"}, {g["id"] for g in self.manifest["groups"]})
         self.assertEqual({"beta-ui-evidence", "propaganda-evidence"},
                          {e for g in self.manifest["groups"] for e in g["evidence"]})
@@ -144,9 +149,9 @@ class NativeGroupTests(unittest.TestCase):
     def test_downloaded_groups_require_exact_junit_sets_and_valid_png_headers(self):
         self.fixture()
         result = groups.verify_artifacts(self.manifest, self.root)
-        self.assertEqual(88, sum(row["classes"] for row in result.values()))
-        self.assertEqual(138, sum(row["executed"] for row in result.values()))
-        self.assertEqual(28, sum(row["requiredPngs"] for row in result.values()))
+        self.assertEqual(90, sum(row["classes"] for row in result.values()))
+        self.assertEqual(140, sum(row["executed"] for row in result.values()))
+        self.assertEqual(38, sum(row["requiredPngs"] for row in result.values()))
 
     def test_missing_help_screenshots_cannot_pass_using_other_test_images(self):
         self.fixture()
@@ -156,6 +161,22 @@ class NativeGroupTests(unittest.TestCase):
         (folder / "source-help-help_index-800x600-actual.png").unlink()
         with self.assertRaisesRegex(ValueError, "Missing required Help screenshots"):
             groups.verify_artifacts(self.manifest, self.root)
+
+    def test_missing_setup_screenshots_cannot_pass_using_other_test_images(self):
+        self.fixture()
+        self.assertEqual(6, len(groups.SETUP_PANELS_EVIDENCE))
+        self.assertEqual(4, len(groups.SETUP_LAYOUT_EVIDENCE))
+        for selected, filename, label in (
+                (groups.SETUP_PANELS, "source-setup-panels-wide-stretched.png", "setup panels"),
+                (groups.SETUP_LAYOUT, "source-setup-full-1194x552-enabled.png", "setup layout")):
+            group = next(g for g in self.manifest["groups"] if selected in g["classes"])
+            folder = self.root / ("android-native-" + group["id"] + "-results") / "reports/androidTests/beta-ui-evidence"
+            missing = folder / filename
+            missing.unlink()
+            with self.subTest(selected=selected), self.assertRaisesRegex(
+                    ValueError, "Missing required " + label + " screenshots"):
+                groups.verify_artifacts(self.manifest, self.root)
+            missing.write_bytes(PNG)
 
     def test_tampered_junit_skips_and_failed_cases_rejected(self):
         for defect in ("omit-class", "omit-method", "skip", "summary-skip", "fail",
