@@ -1,0 +1,112 @@
+{
+  "rows": [
+    {
+      "label": "setup",
+      "option": true,
+      "playing": true,
+      "volume": 100,
+      "pan": 0,
+      "loops": 1,
+      "events": [
+        {
+          "event": "start",
+          "linkage": "WDTheme.wav",
+          "loops": 1,
+          "volume": 100,
+          "pan": 0
+        }
+      ]
+    },
+    {
+      "label": "first_complete",
+      "option": true,
+      "playing": true,
+      "volume": 100,
+      "pan": 0,
+      "loops": 1,
+      "events": [
+        {
+          "event": "complete",
+          "linkage": "WDTheme.wav"
+        },
+        {
+          "event": "start",
+          "linkage": "WDTheme.wav",
+          "loops": 1,
+          "volume": 100,
+          "pan": 0
+        }
+      ]
+    },
+    {
+      "label": "second_complete",
+      "option": true,
+      "playing": true,
+      "volume": 100,
+      "pan": 0,
+      "loops": 1,
+      "events": [
+        {
+          "event": "complete",
+          "linkage": "WDTheme.wav"
+        },
+        {
+          "event": "start",
+          "linkage": "WDTheme.wav",
+          "loops": 1,
+          "volume": 100,
+          "pan": 0
+        }
+      ]
+    },
+    {
+      "label": "off",
+      "option": false,
+      "playing": false,
+      "volume": 100,
+      "pan": 0,
+      "loops": 1,
+      "events": [
+        {
+          "event": "stop",
+          "linkage": "WDTheme.wav"
+        }
+      ]
+    },
+    {
+      "label": "late_complete_after_off",
+      "option": false,
+      "playing": false,
+      "volume": 100,
+      "pan": 0,
+      "loops": 1,
+      "events": []
+    },
+    {
+      "label": "on",
+      "option": true,
+      "playing": true,
+      "volume": 100,
+      "pan": 0,
+      "loops": 1,
+      "events": [
+        {
+          "event": "start",
+          "linkage": "WDTheme.wav",
+          "loops": 1,
+          "volume": 100,
+          "pan": 0
+        }
+      ]
+    },
+    {
+      "label": "new_game",
+      "option": true,
+      "playing": true,
+      "volume": 100,
+      "pan": 0,
+      "loops": 1,
+      "events": []
+    }
+  ]
+}

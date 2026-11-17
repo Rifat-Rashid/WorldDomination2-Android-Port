@@ -110,7 +110,8 @@
     "com.example.worlddomination.game.audio.PhoneToolbarAudioInstrumentedTest",
     "com.example.worlddomination.game.rendering.BattleAmbientInstrumentedTest",
     "com.example.worlddomination.platform.audio.SourceAndroidAudioInstrumentedTest",
-    "com.example.worlddomination.game.rendering.ActionRevealAudioInstrumentedTest"
+    "com.example.worlddomination.game.rendering.ActionRevealAudioInstrumentedTest",
+    "com.example.worlddomination.game.audio.ThemeCompletionInstrumentedTest"
   ],
   "groups": [
     {
@@ -166,7 +167,8 @@
         "com.example.worlddomination.game.audio.PhoneToolbarAudioInstrumentedTest",
         "com.example.worlddomination.game.rendering.BattleAmbientInstrumentedTest",
         "com.example.worlddomination.platform.audio.SourceAndroidAudioInstrumentedTest",
-        "com.example.worlddomination.game.rendering.ActionRevealAudioInstrumentedTest"
+        "com.example.worlddomination.game.rendering.ActionRevealAudioInstrumentedTest",
+        "com.example.worlddomination.game.audio.ThemeCompletionInstrumentedTest"
       ],
       "evidence": [
         "beta-ui-evidence",
@@ -896,6 +898,10 @@
     [
       "com.example.worlddomination.game.assets.BitmapPixmapTransferInstrumentedTest",
       "exactTransferForPackagedOriginalBitmap"
+    ],
+    [
+      "com.example.worlddomination.game.audio.ThemeCompletionInstrumentedTest",
+      "originalThemeCompletesRepeatsAndSurvivesAndroidLifecycle"
     ]
   ]
 }
