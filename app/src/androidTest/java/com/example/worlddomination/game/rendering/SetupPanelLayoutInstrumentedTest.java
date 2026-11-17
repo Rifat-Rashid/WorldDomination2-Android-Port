@@ -61,6 +61,11 @@ public final class SetupPanelLayoutInstrumentedTest {
                                 color + 1, setup.getPlayerColor());
                     }
                     tap(app,viewport,layout.colorSwatches[0]);
+                    for (int building = 0; building < layout.buildingButtons.length; building++) {
+                        tap(app, viewport, layout.buildingButtons[building]);
+                        assertEquals("Every source building remains selectable", building + 1,
+                                setup.getStartingBuilding());
+                    }
                     tap(app,viewport,layout.buildingButtons[1]);
                     assertEquals(2,setup.getDifficulty());
                     assertEquals(1,setup.getPlayerColor());

@@ -42,6 +42,7 @@ import com.example.worlddomination.game.assets.OriginalUiAssets;
 import com.example.worlddomination.game.rendering.OriginalBattlefieldFrame;
 import com.example.worlddomination.game.rendering.SourceSetupPanelRenderer;
 import com.example.worlddomination.game.rendering.SourceSetupColorIndicators;
+import com.example.worlddomination.game.rendering.SourceSetupBuildingIndicators;
 import com.example.worlddomination.game.persistence.LibGdxScorePreferenceBackend;
 import com.example.worlddomination.game.persistence.PersonalBestStore;
 import com.example.worlddomination.game.rendering.BattleAnimationSequence;
@@ -145,7 +146,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             new Color(0.72f, 0.69f, 0.04f, 1f),
             new Color(0.02f, 0.78f, 0.13f, 1f)
     };
-    private static final String[] SETUP_BUILDING_RELIGIONS = {"bhu", "chr", "com", "jew", "mus"};
     private static final int GESTURE_NONE = 0;
     private static final int GESTURE_NAV = 1;
     private static final int GESTURE_EQUIPMENT = 2;
@@ -1662,8 +1662,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         for (int i = 0; i < setupLayout.colorSwatches.length; i++) {
             drawSourceSetupColor(setupLayout.colorSwatches[i], i, i + 1 == setup.getPlayerColor());
         }
-        for (Rectangle button : setupLayout.buildingButtons) {
-            drawOriginalButton(button);
+        for (int i = 0; i < setupLayout.buildingButtons.length; i++) {
+            drawSourceSetupBuilding(setupLayout.buildingButtons[i], i, i + 1 == setup.getStartingBuilding());
         }
         for (Rectangle button : setupLayout.opponentSlots) {
             drawOriginalButton(button);
@@ -1672,10 +1672,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         batch.end();
 
         shapes.begin(ShapeRenderer.ShapeType.Filled);
-        for (int i = 0; i < setupLayout.buildingButtons.length; i++) {
-            drawSetupButtonGradient(setupLayout.buildingButtons[i],
-                    i + 1 == setup.getStartingBuilding());
-        }
         for (int i = 0; i < setupLayout.opponentSlots.length; i++) {
             Rectangle slot = setupLayout.opponentSlots[i];
             boolean occupied = i < selectedIds.size();
@@ -1720,15 +1716,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 setupLayout.playerStylePanel.x + setupLayout.playerStylePanel.width * 0.76f,
                 setupLayout.playerStylePanel.y + setupLayout.playerStylePanel.height * 0.76f,
                 10f);
-        for (int i = 0; i < setupLayout.buildingButtons.length; i++) {
-            OriginalCityAssets.Frame building = cityAssets.getFrame(
-                    SETUP_BUILDING_RELIGIONS[i], 6);
-            Rectangle button = setupLayout.buildingButtons[i];
-            if (building != null) {
-                drawContained(building.region, button.x + 4f, button.y + 8f,
-                        button.width - 8f, button.height - 12f);
-            }
-        }
 
         drawSetupText("ENEMIES", setupLayout.enemiesPanel.x + 18f,
                 setupLayout.enemiesPanel.y + setupLayout.enemiesPanel.height - 12f, 11f);
@@ -1782,10 +1769,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 setupLayout.playerStylePanel.x
                         + setupLayout.playerStylePanel.width * 0.52f,
                 setupLayout.playerStylePanel.y + setupLayout.playerStylePanel.height * 0.73f);
-        for (int i = 0; i < setupLayout.buildingButtons.length; i++) {
-            Rectangle button = setupLayout.buildingButtons[i];
-            drawSetupButtonEdges(button, i + 1 == setup.getStartingBuilding());
-        }
         for (Rectangle slot : setupLayout.opponentSlots) {
             drawSetupButtonEdges(slot, false);
         }
@@ -1801,6 +1784,23 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         batch.draw(art, target.x + (target.width - 12f * scale) / 2f,
                 target.y + (target.height - 44f * scale) / 2f, 12f * scale, 44f * scale);
         batch.setPackedColor(old);
+    }
+
+    private void drawSourceSetupBuilding(Rectangle box, int index, boolean selected) {
+        int id = SourceSetupBuildingIndicators.shapeId(index, selected);
+        TextureRegion art = flashAnimationAssets.getShape(id);
+        if (art == null) throw new IllegalStateException("Missing ready setup building shape " + id);
+        float scale = SourceSetupBuildingIndicators.scale(box.width, box.height);
+        float originX = flashAnimationAssets.getShapeOriginX(id);
+        float originY = flashAnimationAssets.getShapeOriginY(id);
+        float color = batch.getPackedColor();
+        batch.setColor(Color.WHITE);
+        batch.draw(art, box.x + (box.width - 53f * scale) / 2f + (originX + 3f) * scale,
+                box.y + (box.height + 55.5f * scale) / 2f
+                        - (originY + SourceSetupBuildingIndicators.parentOffsetY(index)
+                                + 4.5f + art.getRegionHeight()) * scale,
+                art.getRegionWidth() * scale, art.getRegionHeight() * scale);
+        batch.setPackedColor(color);
     }
 
     private void drawSourceSetupColor(Rectangle box, int colorIndex, boolean selected) {
