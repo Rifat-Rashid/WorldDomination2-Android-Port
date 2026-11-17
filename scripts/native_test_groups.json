@@ -97,7 +97,8 @@
     "com.example.worlddomination.game.rendering.SourceSetupPanelsInstrumentedTest",
     "com.example.worlddomination.game.rendering.SetupPanelLayoutInstrumentedTest",
     "com.example.worlddomination.game.rendering.SourceSetupColorsInstrumentedTest",
-    "com.example.worlddomination.game.rendering.SourceSetupButtonsInstrumentedTest"
+    "com.example.worlddomination.game.rendering.SourceSetupButtonsInstrumentedTest",
+    "com.example.worlddomination.game.rendering.SourceSetupCarouselInstrumentedTest"
   ],
   "groups": [
     {
@@ -203,7 +204,8 @@
         "com.example.worlddomination.game.rendering.SourceSetupPanelsInstrumentedTest",
         "com.example.worlddomination.game.rendering.SetupPanelLayoutInstrumentedTest",
         "com.example.worlddomination.game.rendering.SourceSetupColorsInstrumentedTest",
-        "com.example.worlddomination.game.rendering.SourceSetupButtonsInstrumentedTest"
+        "com.example.worlddomination.game.rendering.SourceSetupButtonsInstrumentedTest",
+        "com.example.worlddomination.game.rendering.SourceSetupCarouselInstrumentedTest"
       ],
       "evidence": [
         "beta-ui-evidence"
@@ -778,6 +780,10 @@
     [
       "com.example.worlddomination.game.rendering.SourceSetupButtonsInstrumentedTest",
       "earlySourceFramesUseRegistrationAtBothSizes"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.SourceSetupCarouselInstrumentedTest",
+      "cropAndArrowsMatchSourceAtBothSizes"
     ]
   ]
 }

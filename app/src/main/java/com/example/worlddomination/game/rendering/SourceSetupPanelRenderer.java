@@ -19,12 +19,24 @@ public final class SourceSetupPanelRenderer implements Disposable {
     private final Texture texture;
     private final TextureRegion[][] pieces = new TextureRegion[Plate.values().length][8];
     private final TextureRegion body;
+    private final TextureRegion[] carouselFrame = new TextureRegion[9];
+    private final TextureRegion[] carouselInset = new TextureRegion[9];
+    private final TextureRegion[] carouselWells = new TextureRegion[6];
     private final float[] vertices = new float[20];
 
     public SourceSetupPanelRenderer() {
         texture = new Texture(Gdx.files.internal("original/ui/setup-panel-source-5813.png"));
         texture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
         body = new TextureRegion(texture, BODY_X, BODY_Y, BODY_WIDTH, BODY_HEIGHT);
+        // 5813: light frame (147..635,319..499), clear metal at y414;
+        // six wells (173+74*i,339,64,70), description inset (176,428,430,49).
+        // 25px side caps retain the complete rods/fasteners without crossing
+        // into the first or last well (the wells start at x=173 and end at 607).
+        initNine(carouselFrame, 147, 319, 488, 180, 25, 12);
+        carouselFrame[4] = new TextureRegion(texture, 250, 414, 300, 10);
+        for (int i = 0; i < carouselWells.length; i++)
+            carouselWells[i] = new TextureRegion(texture, 173 + 74 * i, 339, 64, 70);
+        initNine(carouselInset, 176, 428, 430, 49, 10, 10);
         for (int p = 0; p < pieces.length; p++) {
             int top = TOP[p], bottom = BOTTOM[p], th = TOP_CAP[p], bh = BOTTOM_CAP[p];
             int mid = bottom - top - th - bh;
@@ -37,6 +49,47 @@ public final class SourceSetupPanelRenderer implements Disposable {
             pieces[p][5] = new TextureRegion(texture, 115, bottom - bh, 28, bh);
             pieces[p][6] = new TextureRegion(texture, 300, bottom - bh, 300, bh);
             pieces[p][7] = new TextureRegion(texture, 637, bottom - bh, 28, bh);
+        }
+    }
+
+    /** Compose the authored light panel without stretching its baked wells. */
+    public void drawCarousel(SpriteBatch batch, Rectangle bounds, Rectangle[] wells, Rectangle inset) {
+        float color = batch.getPackedColor();
+        batch.setColor(Color.WHITE);
+        drawNine(batch, carouselFrame, bounds, 25f, 12f);
+        for (int i = 0; i < carouselWells.length; i++) {
+            Rectangle well = wells[i];
+            float scale = Math.min(well.width / 64f, well.height / 70f);
+            batch.draw(carouselWells[i], well.x + (well.width - 64f * scale) / 2f,
+                    well.y + (well.height - 70f * scale) / 2f, 64f * scale, 70f * scale);
+        }
+        drawNine(batch, carouselInset, inset, 10f, 10f);
+        batch.setPackedColor(color);
+    }
+
+    private void initNine(TextureRegion[] parts, int x, int y, int width, int height,
+                          int side, int cap) {
+        int[] xs = {x, x + side, x + width - side};
+        int[] ys = {y, y + cap, y + height - cap};
+        int[] widths = {side, width - 2 * side, side};
+        int[] heights = {cap, height - 2 * cap, cap};
+        for (int row = 0; row < 3; row++)
+            for (int col = 0; col < 3; col++)
+                parts[row * 3 + col] = new TextureRegion(texture, xs[col], ys[row], widths[col], heights[row]);
+    }
+
+    private void drawNine(SpriteBatch batch, TextureRegion[] parts, Rectangle bounds,
+                          float side, float cap) {
+        float scale = Math.min(1f, Math.min(bounds.width / (2f * side), bounds.height / (2f * cap)));
+        float edgeX = side * scale, edgeY = cap * scale;
+        for (int row = 0; row < 3; row++) {
+            float y = row == 0 ? bounds.y + bounds.height - edgeY : row == 1 ? bounds.y + edgeY : bounds.y;
+            float h = row == 1 ? bounds.height - 2f * edgeY : edgeY;
+            for (int col = 0; col < 3; col++) {
+                float x = col == 0 ? bounds.x : col == 1 ? bounds.x + edgeX : bounds.x + bounds.width - edgeX;
+                float w = col == 1 ? bounds.width - 2f * edgeX : edgeX;
+                if (w > 0f && h > 0f) batch.draw(parts[row * 3 + col], x, y, w, h);
+            }
         }
     }
 

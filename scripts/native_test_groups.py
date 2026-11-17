@@ -39,6 +39,12 @@ SETUP_BUTTONS_EVIDENCE = {
     for size in ("800x600", "1194x552")
     for variant in ("actual", "expected", "wrong")
 }
+SETUP_CAROUSEL = "com.example.worlddomination.game.rendering.SourceSetupCarouselInstrumentedTest"
+SETUP_CAROUSEL_EVIDENCE = {
+    f"source-setup-carousel-{size}-{variant}.png"
+    for size in ("800x600", "1194x552")
+    for variant in ("actual", "expected", "wrong")
+}
 SETUP_COLORS = "com.example.worlddomination.game.rendering.SourceSetupColorsInstrumentedTest"
 SETUP_COLORS_EVIDENCE = {
     f"source-setup-colors-{size}-{variant}.png"
@@ -202,7 +208,8 @@ def verify_group_artifact(manifest: dict, group: dict, artifact: Path) -> tuple[
                     (SETUP_PANELS, SETUP_PANELS_EVIDENCE, "setup panels"),
                     (SETUP_LAYOUT, SETUP_LAYOUT_EVIDENCE, "setup layout"),
                     (SETUP_COLORS, SETUP_COLORS_EVIDENCE, "setup colors"),
-                    (SETUP_BUTTONS, SETUP_BUTTONS_EVIDENCE, "setup buttons")):
+                    (SETUP_BUTTONS, SETUP_BUTTONS_EVIDENCE, "setup buttons"),
+                    (SETUP_CAROUSEL, SETUP_CAROUSEL_EVIDENCE, "setup carousel")):
                 if selected_class in group["classes"]:
                     missing = required - names
                     if missing:
