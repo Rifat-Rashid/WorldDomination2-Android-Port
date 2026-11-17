@@ -331,7 +331,18 @@ public final class SourceEndgameInstrumentedTest {
     private static void awaitFlashAssets(OriginalFlashAnimationAssets assets) throws Exception {
         long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(45);
         while (!assets.update() && System.nanoTime() < deadline) Thread.sleep(5);
-        assertTrue("Battle atlas loads before playback", assets.isLoaded());
+        if (!assets.isLoaded()) {
+            Thread loader = (Thread) field(OriginalFlashAnimationAssets.class, "loaderThread").get(assets);
+            StringBuilder detail = new StringBuilder("Battle atlas loads before playback; loader=")
+                    .append(loader.getState()).append(" alive=").append(loader.isAlive());
+            for (String name : new String[] {"setupPortraitsLoaded", "earlyUiLoaded", "sourceReady",
+                    "pendingPacker", "loadFailure", "disposed"}) {
+                detail.append(' ').append(name).append('=')
+                        .append(field(OriginalFlashAnimationAssets.class, name).get(assets));
+            }
+            for (StackTraceElement frame : loader.getStackTrace()) detail.append("\n  ").append(frame);
+            fail(detail.toString());
+        }
     }
 
     private static void awaitAssets(OriginalEndgameAssets assets) throws Exception {
