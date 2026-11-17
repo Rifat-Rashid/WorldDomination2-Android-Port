@@ -24,7 +24,7 @@ import java.lang.reflect.Field;
 import java.io.File;
 import static org.junit.Assert.*;
 
-/** Independent shape/stencil oracle for symbol 798's ordinary silo rocket. */
+/** Independent shape/stencil oracle for symbol 798's silo and submarine rockets. */
 @RunWith(AndroidJUnit4.class)
 public final class SourceSiloRocketRenderingInstrumentedTest {
     // Paint captures: late-compat-rocket-seed0-turn22-target1-city2-paint,
@@ -61,6 +61,8 @@ public final class SourceSiloRocketRenderingInstrumentedTest {
                 for (int[] size : new int[][]{{800,600},{1194,552}}) {
                     for (int frame : new int[]{1,3}) {
                         verify(renderer, assets, batch, mask, tint, caller,
+                                size[0], size[1], frame);
+                        verifySubmarine(renderer, assets, batch, mask, tint, caller,
                                 size[0], size[1], frame);
                     }
                 }
@@ -133,6 +135,75 @@ public final class SourceSiloRocketRenderingInstrumentedTest {
         } finally { buffer.dispose(); }
     }
 
+    private static void verifySubmarine(FlashBattleUnitRenderer renderer,
+            OriginalFlashAnimationAssets assets, SpriteBatch batch, ShaderProgram mask,
+            ShaderProgram tint, ShaderProgram caller, int width, int height, int frame)
+            throws Exception {
+        // Actual source private submarine playback changes frames at ticks 513/514:
+        // the new depth-4 tint clip is uncolored and outside depth-1's clipDepth 3.
+        // Normalize its pose here to isolate the authored layer/parent-scale contract.
+        Rectangle bounds = new Rectangle(0, 0, width, height);
+        FlashBattleRoutes.RocketStrike route = FlashBattleRoutes.createSubmarineRocketStrike(0, 1, 2);
+        FlashRocketAnimation animation = FlashRocketAnimation.forSourceSubmarine(route,
+                "explosion003", OriginalAudio.Cue.EXPLOSION_SMALL3, new ReferenceRandom(0), 5);
+        SourceRocketPlayback playback = animation.getSourcePlayback();
+        assertEquals("submarine parent y scale", .5d, playback.getParentScaleY(), 0d);
+        float y = frame == 1 ? 356.25f : 126.75f;
+        field(SourceRocketPlayback.class, "renderX").setDouble(playback, X);
+        field(SourceRocketPlayback.class, "renderY").setDouble(playback, y);
+        field(SourceRocketPlayback.class, "rotation").setDouble(playback, ANGLE);
+        field(SourceRocketPlayback.class, "sourceFrame").setInt(playback, frame);
+        SourceRocketDisplayDepths depths = new SourceRocketDisplayDepths(
+                new BattlefieldDisplayState(), animation, 0,
+                (FlashAnimationTimeline) null, new SourceStoppedClipQueue());
+        FrameBuffer buffer = new FrameBuffer(Pixmap.Format.RGBA8888, width, height, false, true);
+        try {
+            batch.setProjectionMatrix(new Matrix4().setToOrtho2D(0, 0, width, height));
+            byte[] actual = render(buffer, batch, width, height, () -> {
+                batch.setShader(caller); batch.setColor(.31f,.47f,.69f,.61f);
+                float color = batch.getPackedColor();
+                renderer.drawSourceRocketRole(batch, bounds, depths.binding(),
+                        BattlefieldDisplayState.Kind.UNIT_BODY, 0);
+                assertSame(caller, batch.getShader());
+                assertEquals(color, batch.getPackedColor(), 0f);
+            });
+            byte[] expected = render(buffer, batch, width, height, () ->
+                    oracle(batch, assets, bounds, route, mask, tint, frame, y, .5f, false, false));
+            byte[] wrongHeight = render(buffer, batch, width, height, () ->
+                    oracle(batch, assets, bounds, route, mask, tint, frame, y, 1f, false, false));
+            byte[] missing = render(buffer, batch, width, height, () -> { });
+            byte[] missingOutside = frame == 3 ? render(buffer, batch, width, height, () ->
+                    oracle(batch, assets, bounds, route, mask, tint, frame, y, .5f, false, true)) : null;
+            String prefix = "source-submarine-rocket-" + width + "x" + height + "-frame" + frame + "-";
+            evidence(prefix + "actual.png", actual, width, height);
+            evidence(prefix + "expected.png", expected, width, height);
+            evidence(prefix + "fullheight.png", wrongHeight, width, height);
+            evidence(prefix + "missing.png", missing, width, height);
+            if (missingOutside != null) evidence(prefix + "missing-outside-layer.png", missingOutside, width, height);
+            int painted = 0, heightDiff = 0, outsideDiff = 0;
+            for (int i = 0; i < expected.length; i += 4) {
+                boolean paintedPixel = false, heightPixel = false, outsidePixel = false;
+                for (int c = 0; c < 4; c++) {
+                    assertEquals("submarine frame " + frame + " pixel " + i/4 + " channel " + c,
+                            expected[i+c] & 255, actual[i+c] & 255);
+                    paintedPixel |= expected[i+c] != missing[i+c];
+                    heightPixel |= expected[i+c] != wrongHeight[i+c];
+                    if (missingOutside != null) outsidePixel |= expected[i+c] != missingOutside[i+c];
+                }
+                if (paintedPixel) painted++;
+                if (heightPixel) heightDiff++;
+                if (outsidePixel) outsideDiff++;
+            }
+            // At phone scale the half-height frame-1 mask exposes only 17 pixels
+            // on the Pixel 10. Require nonempty source coverage; exact RGBA above
+            // and the missing/full-height controls enforce the actual geometry.
+            assertTrue("submarine body paints at " + width + "x" + height, painted > 0);
+            assertTrue("full-height control differs", heightDiff > 0);
+            if (frame == 3) assertTrue("missing frame-3 outside layer differs", outsideDiff > 0);
+            assertEquals(GL20.GL_NO_ERROR, Gdx.gl.glGetError());
+        } finally { buffer.dispose(); }
+    }
+
     private static void verifySmoke(FlashBattleUnitRenderer renderer,
             OriginalFlashAnimationAssets assets, SpriteBatch batch, FrameBuffer buffer,
             ShaderProgram caller, Rectangle bounds, FlashBattleRoutes.RocketStrike route,
@@ -189,6 +260,13 @@ public final class SourceSiloRocketRenderingInstrumentedTest {
                                FlashBattleRoutes.RocketStrike route, ShaderProgram mask,
                                ShaderProgram tint, int frame, float y, float height,
                                boolean wrongTint) {
+        oracle(b, a, bounds, route, mask, tint, frame, y, height, wrongTint, false);
+    }
+
+    private static void oracle(SpriteBatch b, OriginalFlashAnimationAssets a, Rectangle bounds,
+                               FlashBattleRoutes.RocketStrike route, ShaderProgram mask,
+                               ShaderProgram tint, int frame, float y, float height,
+                               boolean wrongTint, boolean omitOutsideLayer) {
         b.flush(); Gdx.gl.glEnable(GL20.GL_STENCIL_TEST); Gdx.gl.glStencilMask(0xff);
         Gdx.gl.glClearStencil(0); Gdx.gl.glClear(GL20.GL_STENCIL_BUFFER_BIT);
         Gdx.gl.glStencilFunc(GL20.GL_ALWAYS, 1, 0xff);
@@ -205,7 +283,7 @@ public final class SourceSiloRocketRenderingInstrumentedTest {
             leaf(b,a,bounds,route,794,y,height,1f,-22.05f,-5.55f);
         }
         b.flush(); Gdx.gl.glDisable(GL20.GL_STENCIL_TEST); Gdx.gl.glStencilMask(0xff);
-        if (frame == 3) {
+        if (frame == 3 && !omitOutsideLayer) {
             b.setShader(wrongTint ? tint : null);
             leaf(b,a,bounds,route,794,y,height,1f,-22.05f,-5.55f);
         }
