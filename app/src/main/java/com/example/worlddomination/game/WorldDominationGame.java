@@ -11,6 +11,7 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.example.worlddomination.game.rendering.ResourceMenuRenderer;
 import com.example.worlddomination.game.rendering.SourceHelpRenderer;
+import com.example.worlddomination.game.rendering.SourceNavigationGradient;
 import com.example.worlddomination.game.ui.SourceHelpState;
 import com.example.worlddomination.game.rendering.MessagePanelRenderer;
 import com.example.worlddomination.game.ui.MessagePanelLayout;
@@ -2322,7 +2323,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         for (int i = 0; i < ACTIONS.length; i++) {
             Rectangle row = navRows[i];
             if (row.y + row.height >= navViewport.y && row.y <= top) {
-                drawButtonGradient(row, game.getSelectedAction() == ACTIONS[i]);
+                SourceNavigationGradient.draw(
+                        shapes, row, game.getSelectedAction() == ACTIONS[i]);
             }
         }
         shapes.end();

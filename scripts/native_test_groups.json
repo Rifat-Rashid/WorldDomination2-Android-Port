@@ -88,7 +88,8 @@
     "com.example.worlddomination.game.simulation.SourceLegalVictoryCampaignInstrumentedTest",
     "com.example.worlddomination.game.rendering.SourceEndgameScoreClockInstrumentedTest",
     "com.example.worlddomination.game.rendering.OriginalBattlefieldFrameInstrumentedTest",
-    "com.example.worlddomination.game.rendering.HudTextStabilityInstrumentedTest"
+    "com.example.worlddomination.game.rendering.HudTextStabilityInstrumentedTest",
+    "com.example.worlddomination.game.rendering.SourceNavigationGradientInstrumentedTest"
   ],
   "groups": [
     {
@@ -185,7 +186,8 @@
         "com.example.worlddomination.game.rendering.SourceAircraftSmokeBirthInstrumentedTest",
         "com.example.worlddomination.game.rendering.SourcePreparedRocketSlotTwoInstrumentedTest",
         "com.example.worlddomination.game.rendering.SourceProductionSliderBudgetInstrumentedTest",
-        "com.example.worlddomination.game.rendering.SourceProductionFooterInstrumentedTest"
+        "com.example.worlddomination.game.rendering.SourceProductionFooterInstrumentedTest",
+        "com.example.worlddomination.game.rendering.SourceNavigationGradientInstrumentedTest"
       ],
       "evidence": [
         "beta-ui-evidence"
@@ -716,6 +718,14 @@
     [
       "com.example.worlddomination.game.rendering.HudTextStabilityInstrumentedTest",
       "repeatedFrozenWorldPaintsKeepEveryHudPixelStable"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.SourceNavigationGradientInstrumentedTest",
+      "gradientMatchesPhoneColorsAndRespectsClip"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.SourceNavigationGradientInstrumentedTest",
+      "worldNavigationTouchSelectsSourceGradientRow"
     ]
   ]
 }
