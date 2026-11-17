@@ -22,12 +22,26 @@ public final class SourceSetupPanelRenderer implements Disposable {
     private final TextureRegion[] carouselFrame = new TextureRegion[9];
     private final TextureRegion[] carouselInset = new TextureRegion[9];
     private final TextureRegion[] carouselWells = new TextureRegion[6];
+    private final TextureRegion[] opponentWells = new TextureRegion[4];
+    private final TextureRegion opponentArrow;
+    private final TextureRegion[] arrowMargin = new TextureRegion[8];
     private final float[] vertices = new float[20];
 
     public SourceSetupPanelRenderer() {
         texture = new Texture(Gdx.files.internal("original/ui/setup-panel-source-5813.png"));
         texture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
         body = new TextureRegion(texture, BODY_X, BODY_Y, BODY_WIDTH, BODY_HEIGHT);
+        for (int i = 0; i < 4; i++)
+            opponentWells[i] = new TextureRegion(texture, 320 + 74 * i, 226, 64, 70);
+        opponentArrow = new TextureRegion(texture, 205, 234, 100, 53);
+        // Surrounding source background, ending before the adjacent well/text.
+        int[][] margin = {{190,220,15,14}, {205,220,100,14}, {305,220,15,14},
+                {190,234,15,53}, {305,234,15,53},
+                {190,287,15,14}, {205,287,100,14}, {305,287,15,14}};
+        for (int i = 0; i < margin.length; i++) {
+            int[] m = margin[i];
+            arrowMargin[i] = new TextureRegion(texture, m[0], m[1], m[2], m[3]);
+        }
         // 5813: light frame (147..635,319..499), clear metal at y414;
         // six wells (173+74*i,339,64,70), description inset (176,428,430,49).
         // 25px side caps retain the complete rods/fasteners without crossing
@@ -64,6 +78,31 @@ public final class SourceSetupPanelRenderer implements Disposable {
                     well.y + (well.height - 70f * scale) / 2f, 64f * scale, 70f * scale);
         }
         drawNine(batch, carouselInset, inset, 10f, 10f);
+        batch.setPackedColor(color);
+    }
+
+    /** The four wells and arrow are distinct regions of the authored background. */
+    public void drawOpponents(SpriteBatch batch, Rectangle[] wells, Rectangle arrow) {
+        float color = batch.getPackedColor();
+        batch.setColor(Color.WHITE);
+        float scale = arrow.width / 100f;
+        float side = 15f * scale, cap = 14f * scale;
+        float left = arrow.x - side, right = arrow.x + arrow.width;
+        float bottom = arrow.y - cap, top = arrow.y + arrow.height;
+        float fade = 15f * scale;
+        faded(batch, arrowMargin[0], left, top, side, cap, -1, 1, fade);
+        faded(batch, arrowMargin[1], arrow.x, top, arrow.width, cap, 0, 1, fade);
+        faded(batch, arrowMargin[2], right, top, side, cap, 1, 1, fade);
+        faded(batch, arrowMargin[3], left, arrow.y, side, arrow.height, -1, 0, fade);
+        faded(batch, arrowMargin[4], right, arrow.y, side, arrow.height, 1, 0, fade);
+        faded(batch, arrowMargin[5], left, bottom, side, cap, -1, -1, fade);
+        faded(batch, arrowMargin[6], arrow.x, bottom, arrow.width, cap, 0, -1, fade);
+        faded(batch, arrowMargin[7], right, bottom, side, cap, 1, -1, fade);
+        batch.draw(opponentArrow, arrow.x, arrow.y, arrow.width, arrow.height);
+        for (int i = 0; i < opponentWells.length; i++) {
+            Rectangle well = wells[i];
+            batch.draw(opponentWells[i], well.x, well.y, well.width, well.height);
+        }
         batch.setPackedColor(color);
     }
 

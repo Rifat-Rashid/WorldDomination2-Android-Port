@@ -99,7 +99,8 @@
     "com.example.worlddomination.game.rendering.SourceSetupColorsInstrumentedTest",
     "com.example.worlddomination.game.rendering.SourceSetupButtonsInstrumentedTest",
     "com.example.worlddomination.game.rendering.SourceSetupCarouselInstrumentedTest",
-    "com.example.worlddomination.game.rendering.SourceSetupBuildingsInstrumentedTest"
+    "com.example.worlddomination.game.rendering.SourceSetupBuildingsInstrumentedTest",
+    "com.example.worlddomination.game.rendering.SourceSetupEnemyArtInstrumentedTest"
   ],
   "groups": [
     {
@@ -207,7 +208,8 @@
         "com.example.worlddomination.game.rendering.SourceSetupColorsInstrumentedTest",
         "com.example.worlddomination.game.rendering.SourceSetupButtonsInstrumentedTest",
         "com.example.worlddomination.game.rendering.SourceSetupCarouselInstrumentedTest",
-        "com.example.worlddomination.game.rendering.SourceSetupBuildingsInstrumentedTest"
+        "com.example.worlddomination.game.rendering.SourceSetupBuildingsInstrumentedTest",
+        "com.example.worlddomination.game.rendering.SourceSetupEnemyArtInstrumentedTest"
       ],
       "evidence": [
         "beta-ui-evidence"
@@ -790,6 +792,14 @@
     [
       "com.example.worlddomination.game.rendering.SourceSetupBuildingsInstrumentedTest",
       "earlyBuildingsMatchOriginalFramesAtBothSizes"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.SourceSetupEnemyArtInstrumentedTest",
+      "originalFourWellsAndArrowAtBothSizes"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.SourceSetupEnemyArtInstrumentedTest",
+      "portraitAndCancelUseIndependentSourceRegistrationAndOpacity"
     ]
   ]
 }

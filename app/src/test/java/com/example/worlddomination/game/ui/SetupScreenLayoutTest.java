@@ -1,6 +1,14 @@
 package com.example.worlddomination.game.ui;
 
 import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.utils.JsonReader;
+import com.badlogic.gdx.utils.JsonValue;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.zip.GZIPInputStream;
 
 import org.junit.Test;
 
@@ -21,6 +29,111 @@ public final class SetupScreenLayoutTest {
                 assertTrue(icon.y > card.y + card.height * .6f);
                 assertEquals(17.3f / 17.1f, icon.width / icon.height, .0001f);
             }
+        }
+    }
+
+    @Test
+    public void selectedEnemyLeavesShareTheSourceTransform() {
+        float[] portraitX = {-2.3f, -.75f, -2.3f, -1.85f};
+        float[] portraitY = {-3f, -3f, -3.5f, -3.5f};
+        float[] cancelX = {48.25f, 49.25f, 47.25f, 48.25f};
+        for (float[] size : new float[][]{{800, 600}, {1194, 552}}) {
+            SetupScreenLayout layout = new SetupScreenLayout();
+            layout.update(size[0], size[1], 0, 0, 0, 0);
+            for (int i = 0; i < 4; i++) {
+                Rectangle w = layout.opponentWells[i], p = layout.opponentPortraits[i];
+                Rectangle x = layout.opponentRemoveIcons[i];
+                float scale = w.width / 64f;
+                assertEquals(70f * scale, w.height, .0001f);
+                assertEquals(portraitX[i], (p.x - w.x) / scale, .001f);
+                assertEquals(portraitY[i], (w.y + w.height - p.y - p.height) / scale, .001f);
+                assertEquals(70f * scale, p.width, .0001f);
+                assertEquals(75f * scale, p.height, .0001f);
+                assertEquals(cancelX[i], (x.x - w.x) / scale, .001f);
+                assertEquals(.35f, (w.y + w.height - x.y - x.height) / scale, .001f);
+                assertTrue(layout.opponentSlots[i].contains(x));
+            }
+            assertEquals(100f / 53f, layout.opponentArrow.width / layout.opponentArrow.height, .0001f);
+        }
+    }
+
+    @Test
+    public void selectedEnemyRegistrationIsAnchoredInPackagedScene() throws Exception {
+        Path base=Paths.get("src/main/assets/original/runtime");
+        JsonValue root;
+        try (GZIPInputStream in=new GZIPInputStream(Files.newInputStream(base.resolve("scene.json.gz")))) {
+            root=new JsonReader().parse(new InputStreamReader(in,StandardCharsets.UTF_8));
+        }
+        JsonValue gameMenu=named(symbol(root,0),"gameMenu");
+        assertEquals(5882,gameMenu.getInt("character_id"));
+        assertMatrix(gameMenu.get("matrix"),-112f,-29f);
+        JsonValue setup=symbol(root,5882);
+        JsonValue alive=named(symbol(root,3205),"aliveMC");
+        assertEquals(3191,alive.getInt("character_id"));
+        assertMatrix(alive.get("matrix"),-34f,-38f);
+        JsonValue portraitFrames=symbol(root,3191).get("timeline").get("frames");
+        JsonValue first=portraitFrames.get(0).get(0).get("values");
+        assertEquals(3150,first.getInt("character_id")); assertMatrix(first.get("matrix"),0f,0f);
+        assertTrue(portraitFrames.get(19).get(0).getBoolean("remove"));
+        JsonValue cancelFrames=symbol(root,5826).get("timeline").get("frames");
+        assertEquals(0,cancelFrames.get(0).size);
+        JsonValue cancelLeaf=cancelFrames.get(1).get(0).get("values");
+        assertEquals(5825,cancelLeaf.getInt("character_id"));
+        assertMatrix(cancelLeaf.get("matrix"),0f,0f);
+        String portraitSvg=readSvg(base,3150), cancelSvg=readSvg(base,5825);
+        assertTrue(portraitSvg.contains("width=\"70.0px\""));
+        assertTrue(portraitSvg.contains("height=\"75.0px\""));
+        assertTrue(cancelSvg.contains("width=\"17.3px\""));
+        assertTrue(cancelSvg.contains("height=\"17.1px\""));
+        assertTrue(cancelSvg.contains("-3.3, -0.1)"));
+        float[] wells={320,394,468,542};
+        SetupScreenLayout layout=new SetupScreenLayout();
+        layout.update(1194,552,0,0,0,0);
+        for (int i=0;i<4;i++) {
+            JsonValue leader=named(setup,"leaderScrn"+(i+1));
+            JsonValue cancel=named(setup,"btnCancel"+(i+1));
+            assertEquals(3205,leader.getInt("character_id"));
+            assertEquals(5826,cancel.getInt("character_id"));
+            JsonValue lm=leader.get("matrix"), cm=cancel.get("matrix");
+            assertMatrix(lm,lm.getFloat("tx"),lm.getFloat("ty"));
+            assertMatrix(cm,cm.getFloat("tx"),cm.getFloat("ty"));
+            JsonValue mult=cancel.get("color").get("mult");
+            for (int c=0;c<3;c++) assertEquals(1f,mult.get(c).asFloat(),0f);
+            assertEquals((i==0?166f:143f)/256f,mult.get(3).asFloat(),0f);
+            JsonValue add=cancel.get("color").get("add");
+            for (int c=0;c<4;c++) assertEquals(0,add.get(c).asInt());
+            Rectangle well=layout.opponentWells[i], portrait=layout.opponentPortraits[i], icon=layout.opponentRemoveIcons[i];
+            float scale=well.width/64f;
+            float sourcePortraitX=lm.getFloat("tx")-112f-34f-wells[i];
+            float sourcePortraitY=lm.getFloat("ty")-29f-38f-226f;
+            assertEquals(sourcePortraitX,(portrait.x-well.x)/scale,.001f);
+            assertEquals(sourcePortraitY,(well.y+well.height-portrait.y-portrait.height)/scale,.001f);
+            float sourceCancelX=cm.getFloat("tx")-112f+3.3f-wells[i];
+            float sourceCancelY=cm.getFloat("ty")-29f+.1f-226f;
+            assertEquals(sourceCancelX,(icon.x-well.x)/scale,.001f);
+            assertEquals(sourceCancelY,(well.y+well.height-icon.y-icon.height)/scale,.001f);
+        }
+    }
+
+    private static JsonValue symbol(JsonValue root,int id) {
+        for (JsonValue item:root.get("symbols")) if(item.getInt("id")==id) return item;
+        throw new AssertionError("Missing scene symbol "+id);
+    }
+    private static JsonValue named(JsonValue symbol,String name) {
+        for(JsonValue frame:symbol.get("timeline").get("frames")) for(JsonValue op:frame) {
+            JsonValue value=op.get("values");
+            if(name.equals(value.getString("name",""))) return value;
+        }
+        throw new AssertionError("Missing scene child "+name);
+    }
+    private static void assertMatrix(JsonValue m,float x,float y) {
+        assertEquals(1f,m.getFloat("a"),0f); assertEquals(0f,m.getFloat("b"),0f);
+        assertEquals(0f,m.getFloat("c"),0f); assertEquals(1f,m.getFloat("d"),0f);
+        assertEquals(x,m.getFloat("tx"),.0001f); assertEquals(y,m.getFloat("ty"),.0001f);
+    }
+    private static String readSvg(Path base,int shape) throws Exception {
+        try(GZIPInputStream in=new GZIPInputStream(Files.newInputStream(base.resolve("shapes/"+shape+".svgz")))) {
+            return new String(in.readAllBytes(),StandardCharsets.UTF_8);
         }
     }
 
