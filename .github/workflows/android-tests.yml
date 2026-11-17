@@ -330,6 +330,9 @@ jobs:
           - id: source-empty-carrier-random
             check: Empty carrier selection preserves source random stream
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.SourceEmptyCarrierRandomTest"'
+          - id: source-endgame-clock
+            check: Source endgame random ownership and score clock
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.SourceOutcomeRandomSnapshotTest" --tests "com.example.worlddomination.game.ui.SourceEndgameScoreClockTest"'
           - id: source-legal-victory-campaign
             check: Legal combat campaign through source victory
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.SourceLegalVictoryCampaignTest"'

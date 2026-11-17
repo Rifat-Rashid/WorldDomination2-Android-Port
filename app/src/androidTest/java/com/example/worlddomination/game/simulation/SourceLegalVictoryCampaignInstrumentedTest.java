@@ -80,6 +80,9 @@ public final class SourceLegalVictoryCampaignInstrumentedTest {
         }
         assertEquals(GameState.MatchStatus.VICTORY, game.getMatchStatus());
         assertEquals(31, game.getTurn());
+        // The captured source endgame credits one flag, not unused native slots.
+        assertEquals(1, game.getFinalScoreBreakdown().getFlagBonusCount());
+        assertEquals(250_000L, game.getFinalScore());
     }
 
     private static void assertState(GameState game, JsonValue state) {

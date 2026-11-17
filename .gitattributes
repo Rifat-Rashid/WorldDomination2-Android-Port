@@ -64,3 +64,6 @@ app/src/test/resources/source-spy-stock-level*.json -text whitespace=cr-at-eol
 
 # Legal source spy campaign and provenance preserve their capture bytes.
 app/src/test/resources/source-spy-campaign-*.json -text whitespace=cr-at-eol
+
+# Source endgame host-frame captures retain their checksum on each host.
+app/src/test/resources/source-endgame-clock/*.json -text whitespace=cr-at-eol

@@ -262,7 +262,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private final List<FlashSatelliteAnimation> satelliteBattleAnimations = new ArrayList<>();
     private final List<PendingBattleAnimation> pendingBattleAnimations = new ArrayList<>();
     private final MatchOutcomeSequence outcomeSequence =
-            new MatchOutcomeSequence(System.nanoTime());
+            new MatchOutcomeSequence();
     private long scoreCounterSoundId = -1L;
     private final ExtendViewport viewport = new ExtendViewport(BASE_WIDTH, BASE_HEIGHT, 1400f, 800f);
     private final OrthographicCamera camera = new OrthographicCamera();
@@ -1561,7 +1561,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 outcomePersonalBestText = MatchOutcomePresentation.personalBestLine(
                         game.getFinalScore());
             }
-            outcomeSequence.begin(game.getMatchStatus(), game.getFinalScoreBreakdown());
+            outcomeSequence.begin(game.getMatchStatus(), game.getFinalScoreBreakdown(),
+                    game.createOutcomePresentationRandomCopy());
             modalOpen = false;
             audio.stopAmbient();
         }
