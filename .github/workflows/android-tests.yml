@@ -708,6 +708,9 @@ jobs:
     steps:
       - name: Check out source
         uses: actions/checkout@v5
+        with:
+          sparse-checkout: scripts/verify_test_partition.py
+          sparse-checkout-cone-mode: false
 
       - name: Download this run's executed reports
         uses: actions/download-artifact@v7
