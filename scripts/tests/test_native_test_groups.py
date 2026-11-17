@@ -109,7 +109,7 @@ class NativeGroupTests(unittest.TestCase):
 
     def test_manifest_is_exact_closed_inventory_and_both_groups_make_beta(self):
         self.assertEqual(107, len(self.manifest["requiredClasses"]))
-        self.assertEqual(168, len(self.manifest["expectedCases"]))
+        self.assertEqual(169, len(self.manifest["expectedCases"]))
         self.assertEqual({"a", "b"}, {g["id"] for g in self.manifest["groups"]})
         self.assertEqual({"beta-ui-evidence", "propaganda-evidence"},
                          {e for g in self.manifest["groups"] for e in g["evidence"]})
@@ -142,6 +142,24 @@ class NativeGroupTests(unittest.TestCase):
                           "exactTransferForPackagedOriginalBitmap"},
                          {method for selected, method in self.manifest["expectedCases"]
                           if selected == name})
+
+    def test_production_aircraft_gain_is_required_in_its_selected_group(self):
+        name = "com.example.worlddomination.game.rendering.SourceAircraftAudioInstrumentedTest"
+        method = "productionOriginalAudioPreservesSourceGainFadeMuteAndCleanup"
+        self.assertIn(name, groups.group_by_id(self.manifest, "b")["classes"])
+        self.assertIn([name, method], self.manifest["expectedCases"])
+        self.fixture()
+        report = (self.root / "android-native-b-results"
+                  / "outputs/androidTest-results/connected/debug/TEST-device.xml")
+        tree = ET.parse(report)
+        suite = next(s for s in tree.iter("testsuite") if s.get("name") == name)
+        case = next(c for c in suite.findall("testcase") if c.get("name") == method)
+        suite.remove(case)
+        suite.set("tests", str(int(suite.get("tests")) - 1))
+        tree.getroot().set("tests", str(int(tree.getroot().get("tests")) - 1))
+        tree.write(report)
+        with self.assertRaisesRegex(ValueError, "JUnit method mismatch"):
+            groups.verify_artifacts(self.manifest, self.root)
 
     def test_missing_duplicate_and_unselected_classes_rejected(self):
         data = copy.deepcopy(self.manifest)
@@ -187,7 +205,7 @@ class NativeGroupTests(unittest.TestCase):
         self.fixture()
         result = groups.verify_artifacts(self.manifest, self.root)
         self.assertEqual(107, sum(row["classes"] for row in result.values()))
-        self.assertEqual(168, sum(row["executed"] for row in result.values()))
+        self.assertEqual(169, sum(row["executed"] for row in result.values()))
         self.assertEqual(158, sum(row["requiredPngs"] for row in result.values()))
 
     def test_missing_phone_toolbar_audio_screenshots_are_rejected(self):

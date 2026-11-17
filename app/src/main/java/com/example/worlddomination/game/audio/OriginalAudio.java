@@ -89,6 +89,7 @@ public final class OriginalAudio {
     private static final float SOURCE_THEME_VOLUME = 1f;
     private static final float SOURCE_SATELLITE_VOLUME = 1f;
     private static final float EFFECT_VOLUME = 0.8f;
+    private static final float SOURCE_AIRCRAFT_VOLUME = 1f;
     private static final float SOURCE_UI_VOLUME = 1f;
 
     private final Map<Cue, Sound> sounds = new EnumMap<>(Cue.class);
@@ -118,7 +119,7 @@ public final class OriginalAudio {
 
     public OriginalAudio() {
         satellitePlayback = new SatelliteAudioPlayback(this::loadMusic, SOURCE_SATELLITE_VOLUME);
-        aircraftPlayback = new AircraftAudioPlayback(this::loadMusic, EFFECT_VOLUME,
+        aircraftPlayback = new AircraftAudioPlayback(this::loadMusic, SOURCE_AIRCRAFT_VOLUME,
                 OriginalAudio::dispatchAircraftResume);
     }
 
@@ -130,7 +131,7 @@ public final class OriginalAudio {
 
     OriginalAudio(SatelliteAudioPlayback satellitePlayback) {
         this.satellitePlayback = Objects.requireNonNull(satellitePlayback, "satellitePlayback");
-        aircraftPlayback = new AircraftAudioPlayback(this::loadMusic, EFFECT_VOLUME,
+        aircraftPlayback = new AircraftAudioPlayback(this::loadMusic, SOURCE_AIRCRAFT_VOLUME,
                 OriginalAudio::dispatchAircraftResume);
     }
 
