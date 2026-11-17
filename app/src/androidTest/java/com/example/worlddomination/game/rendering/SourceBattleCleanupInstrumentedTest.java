@@ -476,8 +476,36 @@ public final class SourceBattleCleanupInstrumentedTest {
                     splash.getClass().getMethod("dismiss").invoke(splash);
                     OriginalFlashAnimationAssets assets = (OriginalFlashAnimationAssets)
                             field(WorldDominationGame.class, "flashAnimationAssets").get(app);
-                    long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(45);
-                    while (!assets.update() && System.nanoTime() < deadline) Thread.sleep(5);
+                    long waitStarted = System.nanoTime();
+                    long deadline = waitStarted + TimeUnit.SECONDS.toNanos(45);
+                    Thread loader = (Thread) field(OriginalFlashAnimationAssets.class,
+                            "loaderThread").get(assets);
+                    Map<String, Integer> samples = new HashMap<>();
+                    long nextSample = waitStarted;
+                    int sampleCount = 0;
+                    try {
+                        while (!assets.update() && System.nanoTime() < deadline) {
+                            long now = System.nanoTime();
+                            if (now >= nextSample && sampleCount < 180) {
+                                String key = loaderStackKey(loader);
+                                samples.put(key, samples.getOrDefault(key, 0) + 1);
+                                sampleCount++;
+                                nextSample = now + TimeUnit.MILLISECONDS.toNanos(250);
+                            }
+                            Thread.sleep(5);
+                        }
+                    } finally {
+                        long elapsedMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - waitStarted);
+                        android.util.Log.i("WD2AssetWait", "elapsedMs=" + elapsedMs
+                                + " samples=" + sampleCount + " loaded=" + assets.isLoaded());
+                        for (Map.Entry<String, Integer> sample : samples.entrySet()) {
+                            android.util.Log.i("WD2AssetWait", sample.getValue() + " x " + sample.getKey());
+                        }
+                    }
+                    if (!assets.isLoaded()) {
+                        long elapsedMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - waitStarted);
+                        fail("Authored battle assets ready; " + assetDiagnostics(assets, elapsedMs));
+                    }
                     assertTrue("Authored battle assets ready", assets.isLoaded());
                     check.run(app);
                 } catch (Throwable error) {
@@ -487,6 +515,59 @@ public final class SourceBattleCleanupInstrumentedTest {
             assertTrue("Source battle cleanup timed out", done.await(150, TimeUnit.SECONDS));
             if (failure.get() != null) throw new AssertionError("Source battle cleanup", failure.get());
         }
+    }
+
+    /** Snapshot at most three top frames and the first asset-loader caller without locking it. */
+    private static String loaderStackKey(Thread loader) {
+        StackTraceElement[] stack = loader.getStackTrace();
+        StringBuilder key = new StringBuilder(loader.getState().toString());
+        for (int i = 0; i < Math.min(3, stack.length); i++) {
+            key.append(" | ").append(stack[i].getClassName()).append('.')
+                    .append(stack[i].getMethodName());
+        }
+        for (StackTraceElement frame : stack) {
+            if (frame.getClassName().equals(OriginalFlashAnimationAssets.class.getName())) {
+                key.append(" | loader:").append(frame.getMethodName())
+                        .append(':').append(frame.getLineNumber());
+                break;
+            }
+        }
+        return key.toString();
+    }
+
+    /** Best-effort snapshot: avoid taking the loader lock when reporting a possible stall. */
+    private static String assetDiagnostics(OriginalFlashAnimationAssets assets, long elapsedMs) {
+        StringBuilder result = new StringBuilder("elapsedMs=").append(elapsedMs)
+                .append("; unlocked snapshot (nonvolatile fields may be stale)");
+        String[] names = {"setupPortraitsLoaded", "setupPortraitSourceReady",
+                "pendingSetupPortraitPacker", "earlyUiLoaded", "earlyUiSourceReady",
+                "pendingEarlyUiPacker", "loaded", "sourceReady", "pendingPacker",
+                "loadFailure", "disposed"};
+        for (String name : names) {
+            result.append("\n").append(name).append("=");
+            try {
+                Object value = field(OriginalFlashAnimationAssets.class, name).get(assets);
+                if (name.startsWith("pending")) result.append(value == null ? "null" : "present");
+                else result.append(value);
+            } catch (Exception error) {
+                result.append("<unavailable: ").append(error).append(">");
+            }
+        }
+        try {
+            Thread loader = (Thread) field(OriginalFlashAnimationAssets.class, "loaderThread").get(assets);
+            result.append("\nloader name=").append(loader.getName())
+                    .append(" state=").append(loader.getState())
+                    .append(" priority=").append(loader.getPriority())
+                    .append(" alive=").append(loader.isAlive());
+            for (StackTraceElement frame : loader.getStackTrace()) result.append("\n  at ").append(frame);
+        } catch (Exception error) {
+            result.append("\nloader unavailable: ").append(error);
+        }
+        result.append("\nGL thread=").append(Thread.currentThread().getName());
+        for (StackTraceElement frame : Thread.currentThread().getStackTrace()) {
+            result.append("\n  at ").append(frame);
+        }
+        return result.toString();
     }
 
     private static GameState newGame() throws Exception {

@@ -1082,24 +1082,28 @@ public final class OriginalFlashAnimationAssets implements Disposable {
         int width = bitmap.getWidth();
         int height = bitmap.getHeight();
         Pixmap pixmap = new Pixmap(width, height, Pixmap.Format.RGBA8888);
-        int[] argbPixels = new int[width * height];
-        bitmap.getPixels(argbPixels, 0, width, 0, 0, width, height);
-        ByteBuffer rgbaPixels = pixmap.getPixels();
-        for (int argb : argbPixels) {
-            rgbaPixels.put((byte) (argb >>> 16));
-            rgbaPixels.put((byte) (argb >>> 8));
-            rgbaPixels.put((byte) argb);
-            rgbaPixels.put((byte) (argb >>> 24));
+        try {
+            int[] argbPixels = new int[width * height];
+            bitmap.getPixels(argbPixels, 0, width, 0, 0, width, height);
+            ByteBuffer rgbaPixels = pixmap.getPixels();
+            ArgbPixelTransfer.intoRgba8888(argbPixels, rgbaPixels);
+            rgbaPixels.position(0);
+            return pixmap;
+        } catch (RuntimeException | Error error) {
+            pixmap.dispose();
+            throw error;
         }
-        rgbaPixels.position(0);
-        return pixmap;
     }
 
     static String readCompressedUtf8(String path) {
-        String unpackedPath = path.substring(0, path.length() - 3);
-        FileHandle unpackedAsset = Gdx.files.internal(unpackedPath);
-        if (unpackedAsset.exists()) {
-            return unpackedAsset.readString("UTF-8");
+        // The three-character sidecar suffix applies to .gz metadata only.
+        // A .svgz path would otherwise probe a nonexistent .s file for every shape.
+        if (path.endsWith(".gz")) {
+            String unpackedPath = path.substring(0, path.length() - 3);
+            FileHandle unpackedAsset = Gdx.files.internal(unpackedPath);
+            if (unpackedAsset.exists()) {
+                return unpackedAsset.readString("UTF-8");
+            }
         }
         try (InputStream asset = Gdx.files.internal(path).read();
              InputStream gzip = new GZIPInputStream(asset);
