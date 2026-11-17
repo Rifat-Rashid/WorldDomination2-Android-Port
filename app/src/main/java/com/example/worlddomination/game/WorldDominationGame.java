@@ -107,6 +107,7 @@ import com.example.worlddomination.game.ui.EconomyWarningText;
 import com.example.worlddomination.game.rendering.SourceActionMenuRenderer;
 import com.example.worlddomination.game.ui.BattlefieldCityLayout;
 import com.example.worlddomination.game.ui.InformationPanelLayout;
+import com.example.worlddomination.game.ui.SourceStatisticBar;
 import com.example.worlddomination.game.ui.MatchOutcomePresentation;
 import com.example.worlddomination.game.ui.MatchOutcomeSequence;
 import com.example.worlddomination.game.ui.MessageHistoryScrollState;
@@ -2931,7 +2932,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     private void drawStatisticsBars() {
         float x = infoPanel.x + infoPanel.width * 0.47f;
-        float width = infoPanel.width * 0.47f;
+        double width = infoPanel.width * 0.47d;
         GameState.PlayerState human = game.getHuman();
         int activePopulation = 0;
         for (int playerId = 0; playerId < 5; playerId++) {
@@ -2952,18 +2953,18 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 human.spyReadiness);
     }
 
-    private void drawInformationBar(float x, float y, float width, int statistic) {
-        int value = Math.max(0, Math.min(100, statistic));
-        shapes.setColor(0.02f, 0.055f, 0.07f, 1f);
-        shapes.rect(x, y, width, InformationPanelLayout.BAR_HEIGHT);
-        float filledWidth = width * value / 100f;
-        for (int band = 0; band < 8; band++) {
-            float segmentLeft = x + filledWidth * band / 8f;
-            float segmentWidth = filledWidth / 8f + 0.2f;
-            float blend = band / 7f;
-            shapes.setColor(1f, 0.19f + blend * 0.68f,
-                    0.02f + blend * 0.01f, 1f);
-            shapes.rect(segmentLeft, y, segmentWidth, InformationPanelLayout.BAR_HEIGHT);
+    private void drawInformationBar(float x, float y, double width, int statistic) {
+        // Pygame truncates the positive logical coordinates and track width;
+        // the separately rounded fill can extend one column past that track.
+        int left = (int) x;
+        int bottom = (int) y;
+        shapes.setColor(SourceStatisticBar.TRACK_RED / 255f,
+                SourceStatisticBar.TRACK_GREEN / 255f, SourceStatisticBar.TRACK_BLUE / 255f, 1f);
+        shapes.rect(left, bottom, (int) width, InformationPanelLayout.BAR_HEIGHT);
+        int columns = SourceStatisticBar.filledColumns(width, statistic);
+        for (int column = 0; column < columns; column++) {
+            shapes.setColor(1f, SourceStatisticBar.greenAt(width, column) / 255f, 0f, 1f);
+            shapes.rect(left + column, bottom, 1f, InformationPanelLayout.BAR_HEIGHT);
         }
     }
 
