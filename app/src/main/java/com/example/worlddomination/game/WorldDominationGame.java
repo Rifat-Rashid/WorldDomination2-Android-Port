@@ -2751,10 +2751,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         setScissor(instructionViewport);
         String instruction = sourceActionInstruction.getText();
         if (instruction == null) {
-            float textBaseline = instructionViewport.y + instructionViewport.height - 3f
-                    + messageHistoryScroll.getFirstVisibleLine() * messageLineHeight;
-            messagePanelRenderer.getFont().draw(batch, messageHistoryLayout,
-                    instructionViewport.x, textBaseline);
+            messagePanelRenderer.drawHistory(batch, messageHistoryLayout, instructionViewport,
+                    messageHistoryScroll.getFirstVisibleLine());
         } else {
             if (!instruction.equals(laidOutInstruction)
                     || Math.abs(instructionViewport.width - instructionLayoutWidth) > 0.01f) {
@@ -4152,8 +4150,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         messageHistoryLayout.setText(messageFont, cachedMessageText, MessagePanelRenderer.TEXT_COLOR,
                 messageViewport.width, Align.left, true);
         messageLineHeight = Math.max(1f, messageFont.getLineHeight());
-        int visibleLines = Math.max(1,
-                (int) Math.floor(messageViewport.height / messageLineHeight));
+        int visibleLines = MessagePanelLayout.visibleLineCount(messageViewport.height, messageLineHeight);
         int totalLines = Math.max(1,
                 Math.round(messageHistoryLayout.height / messageLineHeight));
         messageHistoryScroll.setLineRange(totalLines, visibleLines, contentChanged);
