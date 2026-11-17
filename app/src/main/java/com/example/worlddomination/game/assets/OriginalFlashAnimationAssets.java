@@ -3,6 +3,7 @@ package com.example.worlddomination.game.assets;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.RectF;
 import android.util.Base64;
 
 import com.caverock.androidsvg.SVG;
@@ -309,6 +310,14 @@ public final class OriginalFlashAnimationAssets implements Disposable {
                     int id = com.example.worlddomination.game.rendering.SourceSetupColorIndicators
                             .shapeId(color, state != 0);
                     if (!cachedShape.test(id)) throw new IllegalStateException("Missing setup color shape " + id);
+                    loadedPortraitIds.add(id);
+                }
+            }
+            for (int building = 0; building < 5; building++) {
+                for (int state = 0; state < 2; state++) {
+                    int id = com.example.worlddomination.game.rendering.SourceSetupBuildingIndicators
+                            .shapeId(building, state != 0);
+                    if (!cachedShape.test(id)) throw new IllegalStateException("Missing setup building shape " + id);
                     loadedPortraitIds.add(id);
                 }
             }
@@ -955,6 +964,7 @@ public final class OriginalFlashAnimationAssets implements Disposable {
                 ? SHAPE_PATH : TEXT_PATH;
         String svg = readCompressedUtf8(path + shapeId + ".svgz");
         parseRegistrationOrigin(svg, origin);
+        if (isSetupBuildingShape(shapeId)) return decodeSetupBuildingShape(svg, shapeId);
         int dataStart = svg.indexOf(WEBP_PREFIX);
         if (dataStart < 0) {
             return decodeVectorShape(svg, shapeId);
@@ -974,6 +984,65 @@ public final class OriginalFlashAnimationAssets implements Disposable {
             return copyBitmapToPixmap(bitmap);
         } finally {
             bitmap.recycle();
+        }
+    }
+
+    // These ten source SVGs each contain a background and an independent icon
+    // pattern. The generic embedded-WebP path handles only one image.
+    private static boolean isSetupBuildingShape(int id) {
+        switch (id) {
+            case 5844: case 5845: case 5836: case 5837: case 5840:
+            case 5841: case 5831: case 5833: case 5848: case 5849: return true;
+            default: return false;
+        }
+    }
+
+    private static Pixmap decodeSetupBuildingShape(String svg, int id) {
+        // Icon pattern positions are relative to the SVG's raster origin;
+        // the image dimensions and path bounds come from the authored SVG.
+        final float[] spec;
+        switch (id) {
+            case 5844: spec = new float[]{.5f,2.2f,.75f,.75f,31.5f,28.5f}; break;
+            case 5845: spec = new float[]{6.6f,6.45f,1f,1f,42f,38f}; break;
+            case 5836: spec = new float[]{5.5f,2f,.7514f,.7513f,26.3f,29.3f}; break;
+            case 5837: spec = new float[]{10.1f,6.1f,1f,1f,35f,39f}; break;
+            case 5840: spec = new float[]{5.5f,2f,.75f,.75f,27f,30f}; break;
+            case 5841: spec = new float[]{12.5f,6.5f,1f,1f,36f,40f}; break;
+            case 5831: spec = new float[]{4.25f,2.7f,.75f,.75f,27.75f,31.5f}; break;
+            case 5833: spec = new float[]{9.1f,6.45f,1f,1f,37f,42f}; break;
+            case 5848: spec = new float[]{5.25f,2.8f,.75f,.75f,28.5f,29.25f}; break;
+            case 5849: spec = new float[]{10.5f,5.95f,1f,1f,38f,39f}; break;
+            default: throw new IllegalArgumentException("Not a setup building shape " + id);
+        }
+        Bitmap background = null, icon = null, composed = null;
+        try {
+            int start = svg.indexOf(WEBP_PREFIX);
+            if (start < 0) throw new IllegalStateException("Missing setup background " + id);
+            int end = svg.indexOf('"', start + WEBP_PREFIX.length());
+            if (end < 0) throw new IllegalStateException("Malformed setup background " + id);
+            byte[] bytes = Base64.decode(svg.substring(start + WEBP_PREFIX.length(), end), Base64.NO_WRAP);
+            background = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+            start = svg.indexOf(WEBP_PREFIX, end);
+            if (start < 0) throw new IllegalStateException("Missing setup icon " + id);
+            end = svg.indexOf('"', start + WEBP_PREFIX.length());
+            if (end < 0 || svg.indexOf(WEBP_PREFIX, end) >= 0)
+                throw new IllegalStateException("Unexpected setup image count " + id);
+            bytes = Base64.decode(svg.substring(start + WEBP_PREFIX.length(), end), Base64.NO_WRAP);
+            icon = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+            if (background == null || icon == null) throw new IllegalStateException("Invalid setup image " + id);
+            composed = Bitmap.createBitmap(background.getWidth(), background.getHeight(), Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(composed);
+            canvas.drawBitmap(background, 0f, 0f, null);
+            canvas.save();
+            canvas.clipRect(spec[0], spec[1], spec[0] + spec[4], spec[1] + spec[5]);
+            canvas.drawBitmap(icon, null, new RectF(spec[0], spec[1],
+                    spec[0] + icon.getWidth() * spec[2], spec[1] + icon.getHeight() * spec[3]), null);
+            canvas.restore();
+            return copyBitmapToPixmap(composed);
+        } finally {
+            if (background != null) background.recycle();
+            if (icon != null) icon.recycle();
+            if (composed != null) composed.recycle();
         }
     }
 
