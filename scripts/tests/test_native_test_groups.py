@@ -102,14 +102,15 @@ class NativeGroupTests(unittest.TestCase):
                             (groups.EQUIPMENT_CARDS, groups.EQUIPMENT_CARDS_EVIDENCE),
                             (groups.SCORE_PANEL, groups.SCORE_PANEL_EVIDENCE),
                             (groups.PHONE_TOOLBAR_AUDIO, groups.PHONE_TOOLBAR_AUDIO_EVIDENCE),
-                            (groups.MESSAGE_WHOLE_LINES, groups.MESSAGE_WHOLE_LINES_EVIDENCE)):
+                            (groups.MESSAGE_WHOLE_LINES, groups.MESSAGE_WHOLE_LINES_EVIDENCE),
+                            (groups.PHONE_PANELS, groups.PHONE_PANELS_EVIDENCE)):
                         if selected in group["classes"]:
                             for name in required:
                                 (folder / name).write_bytes(PNG)
 
     def test_manifest_is_exact_closed_inventory_and_both_groups_make_beta(self):
-        self.assertEqual(107, len(self.manifest["requiredClasses"]))
-        self.assertEqual(169, len(self.manifest["expectedCases"]))
+        self.assertEqual(108, len(self.manifest["requiredClasses"]))
+        self.assertEqual(171, len(self.manifest["expectedCases"]))
         self.assertEqual({"a", "b"}, {g["id"] for g in self.manifest["groups"]})
         self.assertEqual({"beta-ui-evidence", "propaganda-evidence"},
                          {e for g in self.manifest["groups"] for e in g["evidence"]})
@@ -134,6 +135,37 @@ class NativeGroupTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "message whole lines screenshots"):
                 groups.verify_artifacts(self.manifest, self.root)
             path.write_bytes(original)
+
+    def test_phone_panel_cases_and_all_screenshots_are_required(self):
+        name = groups.PHONE_PANELS
+        self.assertIn(name, groups.group_by_id(self.manifest, "a")["classes"])
+        methods = {"sourcePanelsMatchIndependentCapturesAtIntegerSize",
+                   "liveWorldPanelArtStaysInsideItsBoundsAtBothAspectRatios"}
+        self.assertEqual(methods, {method for selected, method in self.manifest["expectedCases"]
+                                   if selected == name})
+        self.assertEqual(8, len(groups.PHONE_PANELS_EVIDENCE))
+        self.fixture()
+        report = (self.root / "android-native-a-results"
+                  / "outputs/androidTest-results/connected/debug/TEST-device.xml")
+        original = report.read_bytes()
+        for method in sorted(methods):
+            tree = ET.fromstring(original)
+            suite = next(s for s in tree.iter("testsuite") if s.get("name") == name)
+            case = next(c for c in suite.findall("testcase") if c.get("name") == method)
+            suite.remove(case)
+            suite.set("tests", str(int(suite.get("tests")) - 1))
+            tree.set("tests", str(int(tree.get("tests")) - 1))
+            report.write_bytes(ET.tostring(tree))
+            with self.subTest(method=method), self.assertRaisesRegex(ValueError, "JUnit method mismatch"):
+                groups.verify_artifacts(self.manifest, self.root)
+            report.write_bytes(original)
+        folder = self.root / "android-native-a-results/reports/androidTests/beta-ui-evidence"
+        for filename in sorted(groups.PHONE_PANELS_EVIDENCE):
+            image = folder / filename
+            image.unlink()
+            with self.subTest(image=filename), self.assertRaisesRegex(ValueError, "Missing required phone panels screenshots"):
+                groups.verify_artifacts(self.manifest, self.root)
+            image.write_bytes(PNG)
 
     def test_bitmap_pixmap_transfer_is_selected_in_group_a_with_both_cases(self):
         name = "com.example.worlddomination.game.assets.BitmapPixmapTransferInstrumentedTest"
@@ -204,9 +236,9 @@ class NativeGroupTests(unittest.TestCase):
     def test_downloaded_groups_require_exact_junit_sets_and_valid_png_headers(self):
         self.fixture()
         result = groups.verify_artifacts(self.manifest, self.root)
-        self.assertEqual(107, sum(row["classes"] for row in result.values()))
-        self.assertEqual(169, sum(row["executed"] for row in result.values()))
-        self.assertEqual(158, sum(row["requiredPngs"] for row in result.values()))
+        self.assertEqual(108, sum(row["classes"] for row in result.values()))
+        self.assertEqual(171, sum(row["executed"] for row in result.values()))
+        self.assertEqual(166, sum(row["requiredPngs"] for row in result.values()))
 
     def test_missing_phone_toolbar_audio_screenshots_are_rejected(self):
         self.fixture()

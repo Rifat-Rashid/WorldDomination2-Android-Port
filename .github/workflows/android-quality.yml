@@ -114,3 +114,16 @@ jobs:
           python-version: "3.x"
       - name: Check cached label-free chrome
         run: python3 -m unittest discover -s scripts/tests -p "test_neutral_button_art.py" -v
+
+  source-phone-panel-layers:
+    name: Source phone panel layers match independent captures
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+      - name: Install artwork pixel decoder
+        run: python3 -m pip install Pillow
+      - name: Verify source panel layer composition
+        run: python3 -B -m unittest scripts.tests.test_source_phone_panel_layers -v

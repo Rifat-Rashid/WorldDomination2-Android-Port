@@ -17,6 +17,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.FrameBuffer;
 import com.badlogic.gdx.math.Matrix4;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.example.worlddomination.MainActivity;
 import com.example.worlddomination.testing.GameActivityScenario;
@@ -108,6 +109,12 @@ public final class FlashBattleContextRecoveryInstrumentedTest {
                     State result = new State(app, game, assets, rocket, core, fixed, trail,
                             EGL14.eglGetCurrentDisplay(), EGL14.eglGetCurrentContext());
                     result.pixels = render(new TextureRegion[]{trail}, "source-battle-context-before.png");
+                    result.panel = (SourcePhonePanel) field(WorldDominationGame.class,
+                            "phonePanelRenderer").get(app);
+                    assertNotNull("World owns phone panel renderer", result.panel);
+                    result.panelPixels = renderPanel(result.panel);
+                    result.panelBuffer = cachedPanelBuffer(result.panel);
+                    assertNotNull("Panel cache is populated before EGL loss", result.panelBuffer);
                     result.initialPose = result.pose();
                     Gdx.app.addLifecycleListener(result.listener);
                     registered[0] = result;
@@ -149,6 +156,14 @@ public final class FlashBattleContextRecoveryInstrumentedTest {
                     assertEquals("Canonical RNG unchanged", before.canonical, before.game.createPresentationRandomCopy().nextDouble(), 0d);
                     assertSame(before.trail, before.assets.getShape(OriginalFlashAnimationAssets.ROCKET_TRAIL_SHAPE_ID));
                     assertArrayEquals("Battle atlas pixels restored", before.pixels, render(new TextureRegion[]{before.trail}, "source-battle-context-after.png"));
+                    assertSame("World retains panel renderer", before.panel,
+                            field(WorldDominationGame.class, "phonePanelRenderer").get(before.app));
+                    assertArrayEquals("Phone panel pixels restored after EGL loss",
+                            before.panelPixels, renderPanel(before.panel));
+                    FrameBuffer restoredPanel = cachedPanelBuffer(before.panel);
+                    assertNotNull("Panel cache repopulated after EGL loss", restoredPanel);
+                    assertNotSame("Panel render target is recreated after pause",
+                            before.panelBuffer, restoredPanel);
                     assertEquals(GL20.GL_NO_ERROR, Gdx.gl.glGetError());
                     double x = before.core.getX(), y = before.core.getY();
                     before.fixed.invoke(before.app, 1f / 24f);
@@ -205,6 +220,9 @@ public final class FlashBattleContextRecoveryInstrumentedTest {
         final CountDownLatch firstRenderObserved = new CountDownLatch(1);
         final AtomicReference<Throwable> observerFailure = new AtomicReference<>();
         byte[] pixels;
+        SourcePhonePanel panel;
+        byte[] panelPixels;
+        FrameBuffer panelBuffer;
         String initialPose;
         String beforeFirstRenderPose;
         String afterFirstRenderPose;
@@ -285,6 +303,41 @@ public final class FlashBattleContextRecoveryInstrumentedTest {
         assertTrue("Flash atlas GL task timed out", done.await(180, TimeUnit.SECONDS));
         if (failure.get() != null) throw new AssertionError("Flash atlas GL task", failure.get());
         return result.get();
+    }
+
+    private static FrameBuffer cachedPanelBuffer(SourcePhonePanel panel) throws Exception {
+        Method find = SourcePhonePanel.class.getDeclaredMethod("find", int.class, int.class);
+        find.setAccessible(true);
+        int index = (Integer) find.invoke(panel, 255, 62);
+        if (index < 0) return null;
+        FrameBuffer[] buffers = (FrameBuffer[]) field(SourcePhonePanel.class, "buffers").get(panel);
+        return buffers[index];
+    }
+
+    /** Render the actual World-owned cache at integral source size without extra PNG evidence. */
+    private static byte[] renderPanel(SourcePhonePanel panel) {
+        panel.prepare(255, 62);
+        FrameBuffer buffer = new FrameBuffer(Pixmap.Format.RGBA8888, 280, 80, false);
+        SpriteBatch batch = new SpriteBatch();
+        try {
+            batch.setProjectionMatrix(new Matrix4().setToOrtho2D(0, 0, 280, 80));
+            buffer.begin();
+            Gdx.gl.glDisable(GL20.GL_SCISSOR_TEST);
+            Gdx.gl.glClearColor(0, 0, 0, 0);
+            Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+            batch.begin();
+            panel.draw(batch, new Rectangle(10, 9, 255, 62));
+            batch.end();
+            byte[] pixels = ScreenUtils.getFrameBufferPixels(0, 0, 280, 80, true);
+            buffer.end();
+            int visible = 0;
+            for (int i = 3; i < pixels.length; i += 4) if (pixels[i] != 0) visible++;
+            assertTrue("Cached panel rendered visible pixels", visible > 10000);
+            return pixels;
+        } finally {
+            batch.dispose();
+            buffer.dispose();
+        }
     }
 
     private static File evidenceDirectory() {

@@ -148,6 +148,16 @@ MESSAGE_WHOLE_LINES_EVIDENCE = {
     for variant in ("actual", "expected", "unrestricted")
 }
 
+PHONE_PANELS = "com.example.worlddomination.game.rendering.SourcePhonePanelInstrumentedTest"
+PHONE_PANELS_EVIDENCE = {
+    f"source-phone-panels-{variant}.png"
+    for variant in ("actual", "expected", "missing-tile", "square-outline")
+} | {
+    f"source-phone-panels-{kind}-{size}.png"
+    for kind in ("world", "world-missing")
+    for size in ("800x600", "1194x552")
+}
+
 
 PHONE_TOOLBAR_AUDIO = "com.example.worlddomination.game.audio.PhoneToolbarAudioInstrumentedTest"
 PHONE_TOOLBAR_AUDIO_EVIDENCE = {
@@ -310,7 +320,8 @@ def verify_group_artifact(manifest: dict, group: dict, artifact: Path) -> tuple[
                     (EQUIPMENT_CARDS, EQUIPMENT_CARDS_EVIDENCE, "equipment cards"),
                     (SCORE_PANEL, SCORE_PANEL_EVIDENCE, "score panel"),
                     (PHONE_TOOLBAR_AUDIO, PHONE_TOOLBAR_AUDIO_EVIDENCE, "phone toolbar audio"),
-                    (MESSAGE_WHOLE_LINES, MESSAGE_WHOLE_LINES_EVIDENCE, "message whole lines")):
+                    (MESSAGE_WHOLE_LINES, MESSAGE_WHOLE_LINES_EVIDENCE, "message whole lines"),
+                    (PHONE_PANELS, PHONE_PANELS_EVIDENCE, "phone panels")):
                 if selected_class in group["classes"]:
                     missing = required - names
                     if missing:
