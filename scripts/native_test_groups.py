@@ -44,6 +44,12 @@ SETUP_CAROUSEL_EVIDENCE = {
     f"source-setup-carousel-{size}-{variant}.png"
     for size in ("800x600", "1194x552")
     for variant in ("actual", "expected", "wrong")
+} | {
+    f"source-setup-carousel-responsive-{size}.png"
+    for size in ("800x600", "1194x552")
+} | {
+    f"source-setup-carousel-native-mesh-{variant}.png"
+    for variant in ("actual", "expected")
 }
 SETUP_BUILDINGS = "com.example.worlddomination.game.rendering.SourceSetupBuildingsInstrumentedTest"
 SETUP_BUILDINGS_EVIDENCE = {

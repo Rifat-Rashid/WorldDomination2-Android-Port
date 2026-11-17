@@ -443,7 +443,7 @@ jobs:
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.*"'
           - id: setup-screen-layout-tests
             check: Setup screen responsive layout
-            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.SetupScreenLayoutTest"'
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.SetupScreenLayoutTest" --tests "com.example.worlddomination.game.rendering.SourceCarouselMeshTest"'
           - id: setup-leader-selection-tests
             check: Setup leader selection behavior
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameSetupTest.selectingCarouselLeaderChangesCandidateWithoutChangingOpponentRoster" --tests "com.example.worlddomination.game.simulation.GameSetupTest.selectingCarouselLeaderRejectsIdsOutsideOriginalRoster"'
