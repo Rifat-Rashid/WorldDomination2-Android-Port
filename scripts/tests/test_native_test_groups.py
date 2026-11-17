@@ -101,14 +101,15 @@ class NativeGroupTests(unittest.TestCase):
                             (groups.STATISTIC_BARS, groups.STATISTIC_BARS_EVIDENCE),
                             (groups.EQUIPMENT_CARDS, groups.EQUIPMENT_CARDS_EVIDENCE),
                             (groups.SCORE_PANEL, groups.SCORE_PANEL_EVIDENCE),
-                            (groups.PHONE_TOOLBAR_AUDIO, groups.PHONE_TOOLBAR_AUDIO_EVIDENCE)):
+                            (groups.PHONE_TOOLBAR_AUDIO, groups.PHONE_TOOLBAR_AUDIO_EVIDENCE),
+                            (groups.MESSAGE_WHOLE_LINES, groups.MESSAGE_WHOLE_LINES_EVIDENCE)):
                         if selected in group["classes"]:
                             for name in required:
                                 (folder / name).write_bytes(PNG)
 
     def test_manifest_is_exact_closed_inventory_and_both_groups_make_beta(self):
-        self.assertEqual(106, len(self.manifest["requiredClasses"]))
-        self.assertEqual(166, len(self.manifest["expectedCases"]))
+        self.assertEqual(107, len(self.manifest["requiredClasses"]))
+        self.assertEqual(168, len(self.manifest["expectedCases"]))
         self.assertEqual({"a", "b"}, {g["id"] for g in self.manifest["groups"]})
         self.assertEqual({"beta-ui-evidence", "propaganda-evidence"},
                          {e for g in self.manifest["groups"] for e in g["evidence"]})
@@ -116,6 +117,23 @@ class NativeGroupTests(unittest.TestCase):
                          {c for g in self.manifest["groups"] for c in g["classes"]})
         self.assertEqual(set(self.manifest["requiredClasses"]),
                          {name for name, _ in self.manifest["expectedCases"]})
+
+    def test_message_whole_line_cases_and_screenshots_are_required(self):
+        name = groups.MESSAGE_WHOLE_LINES
+        self.assertIn(name, groups.group_by_id(self.manifest, "a")["classes"])
+        self.assertEqual({"completeRowsMatchIndependentVisibleTextAtBothSizes",
+                          "liveWorldRetainsFullHistoryAndReachableLastRow"},
+                         {method for selected, method in self.manifest["expectedCases"]
+                          if selected == name})
+        self.fixture()
+        folder = self.root / "android-native-a-results" / "reports/androidTests/beta-ui-evidence"
+        for filename in groups.MESSAGE_WHOLE_LINES_EVIDENCE:
+            path = folder / filename
+            original = path.read_bytes()
+            path.unlink()
+            with self.assertRaisesRegex(ValueError, "message whole lines screenshots"):
+                groups.verify_artifacts(self.manifest, self.root)
+            path.write_bytes(original)
 
     def test_bitmap_pixmap_transfer_is_selected_in_group_a_with_both_cases(self):
         name = "com.example.worlddomination.game.assets.BitmapPixmapTransferInstrumentedTest"
@@ -168,9 +186,9 @@ class NativeGroupTests(unittest.TestCase):
     def test_downloaded_groups_require_exact_junit_sets_and_valid_png_headers(self):
         self.fixture()
         result = groups.verify_artifacts(self.manifest, self.root)
-        self.assertEqual(106, sum(row["classes"] for row in result.values()))
-        self.assertEqual(166, sum(row["executed"] for row in result.values()))
-        self.assertEqual(152, sum(row["requiredPngs"] for row in result.values()))
+        self.assertEqual(107, sum(row["classes"] for row in result.values()))
+        self.assertEqual(168, sum(row["executed"] for row in result.values()))
+        self.assertEqual(158, sum(row["requiredPngs"] for row in result.values()))
 
     def test_missing_phone_toolbar_audio_screenshots_are_rejected(self):
         self.fixture()

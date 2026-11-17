@@ -111,7 +111,8 @@
     "com.example.worlddomination.game.rendering.BattleAmbientInstrumentedTest",
     "com.example.worlddomination.platform.audio.SourceAndroidAudioInstrumentedTest",
     "com.example.worlddomination.game.rendering.ActionRevealAudioInstrumentedTest",
-    "com.example.worlddomination.game.audio.ThemeCompletionInstrumentedTest"
+    "com.example.worlddomination.game.audio.ThemeCompletionInstrumentedTest",
+    "com.example.worlddomination.game.rendering.MessageWholeLineInstrumentedTest"
   ],
   "groups": [
     {
@@ -168,7 +169,8 @@
         "com.example.worlddomination.game.rendering.BattleAmbientInstrumentedTest",
         "com.example.worlddomination.platform.audio.SourceAndroidAudioInstrumentedTest",
         "com.example.worlddomination.game.rendering.ActionRevealAudioInstrumentedTest",
-        "com.example.worlddomination.game.audio.ThemeCompletionInstrumentedTest"
+        "com.example.worlddomination.game.audio.ThemeCompletionInstrumentedTest",
+        "com.example.worlddomination.game.rendering.MessageWholeLineInstrumentedTest"
       ],
       "evidence": [
         "beta-ui-evidence",
@@ -902,6 +904,14 @@
     [
       "com.example.worlddomination.game.audio.ThemeCompletionInstrumentedTest",
       "originalThemeCompletesRepeatsAndSurvivesAndroidLifecycle"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.MessageWholeLineInstrumentedTest",
+      "completeRowsMatchIndependentVisibleTextAtBothSizes"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.MessageWholeLineInstrumentedTest",
+      "liveWorldRetainsFullHistoryAndReachableLastRow"
     ]
   ]
 }

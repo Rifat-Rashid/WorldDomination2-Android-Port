@@ -4,10 +4,12 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.NinePatch;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.Disposable;
+import com.example.worlddomination.game.ui.MessagePanelLayout;
 
 /** Original phone HUD's recessed message well and readable Arial message typography. */
 public final class MessagePanelRenderer implements Disposable {
@@ -30,6 +32,31 @@ public final class MessagePanelRenderer implements Disposable {
     }
 
     public BitmapFont getFont() { return font; }
+
+    /** Draw complete wrapped rows while retaining the original scrollable history.
+     * The caller still clips horizontally to the recessed well. Drawing the full
+     * layout through that scissor exposes part of the next row in its spare pixels.
+     */
+    public void drawHistory(SpriteBatch batch, GlyphLayout layout, Rectangle viewport,
+                            int firstVisibleLine) {
+        float lineHeight = Math.max(1f, font.getLineHeight());
+        int firstLine = Math.max(0, firstVisibleLine);
+        int endLine = firstLine + MessagePanelLayout.visibleLineCount(viewport.height, lineHeight);
+        int firstGlyph = 0;
+        int endGlyph = 0;
+        for (int i = 0; i < layout.runs.size; i++) {
+            GlyphLayout.GlyphRun run = layout.runs.get(i);
+            // Wrapped runs share the same pitch as explicit newlines; empty rows
+            // retain their y offset even though they have no glyphs in the cache.
+            int line = Math.round(-run.y / lineHeight);
+            if (line < firstLine) firstGlyph += run.glyphs.size;
+            if (line < endLine) endGlyph += run.glyphs.size;
+        }
+        if (endGlyph <= firstGlyph) return;
+        font.getCache().setText(layout, viewport.x,
+                viewport.y + viewport.height - 3f + firstLine * lineHeight);
+        font.getCache().draw(batch, firstGlyph, endGlyph);
+    }
 
     public void drawBackground(SpriteBatch batch, Rectangle panel) {
         batch.setColor(Color.WHITE);
