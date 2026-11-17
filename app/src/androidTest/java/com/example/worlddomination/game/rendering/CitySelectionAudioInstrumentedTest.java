@@ -57,7 +57,15 @@ public final class CitySelectionAudioInstrumentedTest {
                     AtomicInteger plays = new AtomicInteger();
                     Sound recording = (Sound) Proxy.newProxyInstance(Sound.class.getClassLoader(),
                             new Class<?>[]{Sound.class}, (proxy, method, args) -> {
-                                if ("play".equals(method.getName())) plays.incrementAndGet();
+                                if ("play".equals(method.getName())) {
+                                    assertNotNull(args);
+                                    assertEquals("Source click uses the three-argument start", 3,
+                                            args.length);
+                                    assertEquals("Source UI gain", 1f, (Float) args[0], 0f);
+                                    assertEquals("Source pitch", 1f, (Float) args[1], 0f);
+                                    assertEquals("Centered city click", 0f, (Float) args[2], 0f);
+                                    plays.incrementAndGet();
+                                }
                                 if (method.getReturnType() == long.class) return 1L;
                                 if (method.getReturnType() == boolean.class) return false;
                                 return null;
