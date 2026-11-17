@@ -12,6 +12,7 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.example.worlddomination.game.rendering.ResourceMenuRenderer;
 import com.example.worlddomination.game.rendering.SourceHelpRenderer;
 import com.example.worlddomination.game.rendering.SourceNavigationGradient;
+import com.example.worlddomination.game.rendering.SourceNavigationPanel;
 import com.example.worlddomination.game.ui.SourceHelpState;
 import com.example.worlddomination.game.rendering.MessagePanelRenderer;
 import com.example.worlddomination.game.ui.MessagePanelLayout;
@@ -363,6 +364,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private final SourceActionInstruction sourceActionInstruction = new SourceActionInstruction();
     private final SourceActionMenuRenderer.PortraitDrawer menuPortraitDrawer = this::drawSetupLeaderPortrait;
     private MessagePanelRenderer messagePanelRenderer;
+    private SourceNavigationPanel navigationPanelRenderer;
     private OriginalActionTubeAssets actionTubeAssets;
     private final ActionSlotAnimation actionSlotAnimation = new ActionSlotAnimation();
     private final ConfirmTurnAnimation confirmTurnAnimation = new ConfirmTurnAnimation();
@@ -497,6 +499,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         centerUiRenderer.setTechnologyArtwork(technologyArtwork);
         font.setColor(Color.WHITE);
         uiAssets = new OriginalUiAssets();
+        navigationPanelRenderer = new SourceNavigationPanel(uiAssets.navigationPanel);
         battlefieldFrameRenderer = new OriginalBattlefieldFrame(uiAssets.battlefieldFrame);
         setupPanelRenderer = new SourceSetupPanelRenderer();
         splashAssets = new OriginalSplashAssets();
@@ -1901,7 +1904,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         drawPanelFill(rightPanel);
         drawPanelFill(logoPanel);
         drawPanelFill(centerHeader);
-        drawPanelFill(navPanel);
         drawPanelFill(infoPanel);
         drawPanelFill(toolbarPanel);
         drawPanelFill(stockPanel);
@@ -1920,7 +1922,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         drawPanelTexture(rightPanel);
         drawPanelTexture(logoPanel);
         drawPanelTexture(centerHeader);
-        drawPanelTexture(navPanel);
         drawPanelTexture(infoPanel);
         drawPanelTexture(toolbarPanel);
         drawPanelTexture(stockPanel);
@@ -1970,7 +1971,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         drawPanelEdges(rightPanel);
         drawPanelEdges(logoPanel);
         drawPanelEdges(centerHeader);
-        drawPanelEdges(navPanel);
         drawPanelEdges(infoPanel);
         drawPanelEdges(toolbarPanel);
         drawPanelEdges(stockPanel);
@@ -1984,6 +1984,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
+        navigationPanelRenderer.draw(batch, navPanel);
         drawOriginalButton(helpButton);
         drawOriginalButton(muteButton);
         batch.end();
