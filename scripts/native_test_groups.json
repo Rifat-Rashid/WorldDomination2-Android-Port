@@ -87,7 +87,8 @@
     "com.example.worlddomination.game.simulation.SourceLegalAcceptedDiplomacyCampaignInstrumentedTest",
     "com.example.worlddomination.game.simulation.SourceLegalVictoryCampaignInstrumentedTest",
     "com.example.worlddomination.game.rendering.SourceEndgameScoreClockInstrumentedTest",
-    "com.example.worlddomination.game.rendering.OriginalBattlefieldFrameInstrumentedTest"
+    "com.example.worlddomination.game.rendering.OriginalBattlefieldFrameInstrumentedTest",
+    "com.example.worlddomination.game.rendering.HudTextStabilityInstrumentedTest"
   ],
   "groups": [
     {
@@ -136,7 +137,8 @@
         "com.example.worlddomination.game.simulation.SourceLegalAcceptedDiplomacyCampaignInstrumentedTest",
         "com.example.worlddomination.game.simulation.SourceLegalVictoryCampaignInstrumentedTest",
         "com.example.worlddomination.game.rendering.SourceEndgameScoreClockInstrumentedTest",
-        "com.example.worlddomination.game.rendering.OriginalBattlefieldFrameInstrumentedTest"
+        "com.example.worlddomination.game.rendering.OriginalBattlefieldFrameInstrumentedTest",
+        "com.example.worlddomination.game.rendering.HudTextStabilityInstrumentedTest"
       ],
       "evidence": [
         "beta-ui-evidence",
@@ -710,6 +712,10 @@
     [
       "com.example.worlddomination.game.rendering.OriginalBattlefieldFrameInstrumentedTest",
       "authoredFramePreservesSourceCornersAndWorldMapGeometry"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.HudTextStabilityInstrumentedTest",
+      "repeatedFrozenWorldPaintsKeepEveryHudPixelStable"
     ]
   ]
 }
