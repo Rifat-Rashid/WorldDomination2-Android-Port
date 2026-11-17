@@ -95,14 +95,15 @@ class NativeGroupTests(unittest.TestCase):
                             (groups.SETUP_BUTTONS, groups.SETUP_BUTTONS_EVIDENCE),
                             (groups.SETUP_CAROUSEL, groups.SETUP_CAROUSEL_EVIDENCE),
                             (groups.SETUP_BUILDINGS, groups.SETUP_BUILDINGS_EVIDENCE),
-                            (groups.SETUP_ENEMIES, groups.SETUP_ENEMIES_EVIDENCE)):
+                            (groups.SETUP_ENEMIES, groups.SETUP_ENEMIES_EVIDENCE),
+                            (groups.NAVIGATION_PANEL, groups.NAVIGATION_PANEL_EVIDENCE)):
                         if selected in group["classes"]:
                             for name in required:
                                 (folder / name).write_bytes(PNG)
 
     def test_manifest_is_exact_closed_inventory_and_both_groups_make_beta(self):
-        self.assertEqual(95, len(self.manifest["requiredClasses"]))
-        self.assertEqual(147, len(self.manifest["expectedCases"]))
+        self.assertEqual(96, len(self.manifest["requiredClasses"]))
+        self.assertEqual(149, len(self.manifest["expectedCases"]))
         self.assertEqual({"a", "b"}, {g["id"] for g in self.manifest["groups"]})
         self.assertEqual({"beta-ui-evidence", "propaganda-evidence"},
                          {e for g in self.manifest["groups"] for e in g["evidence"]})
@@ -154,9 +155,24 @@ class NativeGroupTests(unittest.TestCase):
     def test_downloaded_groups_require_exact_junit_sets_and_valid_png_headers(self):
         self.fixture()
         result = groups.verify_artifacts(self.manifest, self.root)
-        self.assertEqual(95, sum(row["classes"] for row in result.values()))
-        self.assertEqual(147, sum(row["executed"] for row in result.values()))
-        self.assertEqual(106, sum(row["requiredPngs"] for row in result.values()))
+        self.assertEqual(96, sum(row["classes"] for row in result.values()))
+        self.assertEqual(149, sum(row["executed"] for row in result.values()))
+        self.assertEqual(113, sum(row["requiredPngs"] for row in result.values()))
+
+    def test_missing_navigation_panel_screenshots_are_rejected(self):
+        self.fixture()
+        self.assertEqual(7, len(groups.NAVIGATION_PANEL_EVIDENCE))
+        group = next(g for g in self.manifest["groups"]
+                     if groups.NAVIGATION_PANEL in g["classes"])
+        folder = (self.root / ("android-native-" + group["id"] + "-results")
+                  / "reports/androidTests/beta-ui-evidence")
+        for name in sorted(groups.NAVIGATION_PANEL_EVIDENCE):
+            image = folder / name
+            image.unlink()
+            with self.subTest(image=name), self.assertRaisesRegex(
+                    ValueError, "Missing required navigation panel screenshots"):
+                groups.verify_artifacts(self.manifest, self.root)
+            image.write_bytes(PNG)
 
     def test_missing_help_screenshots_cannot_pass_using_other_test_images(self):
         self.fixture()

@@ -16,6 +16,8 @@ public final class OriginalUiAssets implements Disposable {
     private final Texture battleMapTexture;
     private final Texture battlefieldFrameTexture;
     public final TextureRegion battlefieldFrame;
+    private final Texture navigationPanelTexture;
+    public final TextureRegion navigationPanel;
     private final Texture productionModalTexture;
     private final Texture neutralButtonTexture;
     private final Texture propagandaFrameTexture;
@@ -61,6 +63,10 @@ public final class OriginalUiAssets implements Disposable {
                 Gdx.files.internal("original/ui/battlefield-frame.png"), true);
         battlefieldFrameTexture.setFilter(TextureFilter.MipMapLinearLinear, TextureFilter.Linear);
         battlefieldFrame = new TextureRegion(battlefieldFrameTexture);
+        navigationPanelTexture = new Texture(
+                Gdx.files.internal("original/ui/navigation-panel.png"), true);
+        navigationPanelTexture.setFilter(TextureFilter.MipMapLinearLinear, TextureFilter.Linear);
+        navigationPanel = new TextureRegion(navigationPanelTexture);
         productionModalTexture = new Texture(
                 Gdx.files.internal("original/ui/production-modal.png"), true);
         productionModalTexture.setFilter(TextureFilter.Linear, TextureFilter.Linear);
@@ -130,6 +136,7 @@ public final class OriginalUiAssets implements Disposable {
         logoTexture.dispose();
         battleMapTexture.dispose();
         battlefieldFrameTexture.dispose();
+        navigationPanelTexture.dispose();
         productionModalTexture.dispose();
         propagandaFrameTexture.dispose();
         propagandaStrengthFont.dispose();

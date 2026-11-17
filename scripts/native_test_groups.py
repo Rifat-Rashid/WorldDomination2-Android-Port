@@ -90,6 +90,16 @@ SETUP_LAYOUT_EVIDENCE = {
     for size in ("800x600", "1194x552")
     for state in ("disabled", "enabled")
 }
+NAVIGATION_PANEL = (
+    "com.example.worlddomination.game.rendering.SourceNavigationPanelInstrumentedTest")
+NAVIGATION_PANEL_EVIDENCE = {
+    f"source-navigation-panel-native-{variant}.png"
+    for variant in ("actual", "expected", "missing-art")
+} | {
+    f"source-navigation-panel-responsive-{size}.png"
+    for size in ("800x600", "1194x552")
+} | {"source-navigation-panel-world.png",
+     "source-navigation-panel-world-missing.png"}
 
 
 def load_manifest(path: Path = MANIFEST) -> dict:
@@ -239,7 +249,8 @@ def verify_group_artifact(manifest: dict, group: dict, artifact: Path) -> tuple[
                     (SETUP_BUTTONS, SETUP_BUTTONS_EVIDENCE, "setup buttons"),
                     (SETUP_CAROUSEL, SETUP_CAROUSEL_EVIDENCE, "setup carousel"),
                     (SETUP_BUILDINGS, SETUP_BUILDINGS_EVIDENCE, "setup buildings"),
-                    (SETUP_ENEMIES, SETUP_ENEMIES_EVIDENCE, "setup enemies")):
+                    (SETUP_ENEMIES, SETUP_ENEMIES_EVIDENCE, "setup enemies"),
+                    (NAVIGATION_PANEL, NAVIGATION_PANEL_EVIDENCE, "navigation panel")):
                 if selected_class in group["classes"]:
                     missing = required - names
                     if missing:
