@@ -14,18 +14,19 @@
 
 ## Screenshots
 
-The current Android build includes the game setup flow and the five-island battlefield. Select either image to view it at full size.
+Choose your rivals, then manage the five-island battlefield. These are captures from the current Android QA build.
 
 <p align="center">
-  <a href="docs/screenshots/character-selection.png">
-    <img src="docs/screenshots/character-selection.png" width="49%" alt="Character selection: choose difficulty, player color, building style, and opponents">
-  </a>
-  <a href="docs/screenshots/gameplay.png">
-    <img src="docs/screenshots/gameplay.png" width="49%" alt="Gameplay: five-island battlefield between the navigation, status, and equipment panels">
-  </a>
+  <a href="docs/images/setup-qa61.png"><img src="docs/images/setup-phone.svg" width="760" alt="Landscape Android phone showing the game setup and selected rivals"></a><br>
+  <strong>Choose your rivals</strong>
 </p>
 
-<p align="center"><strong>Character selection</strong> · <strong>Gameplay</strong></p>
+<p align="center">
+  <a href="docs/images/battlefield-qa61.png"><img src="docs/images/battlefield-phone.svg" width="760" alt="Landscape Android phone showing the five-island battlefield and game controls"></a><br>
+  <strong>Plan your next move</strong>
+</p>
+
+Select either image to view the original capture at full size.
 
 ## About
 
@@ -81,7 +82,7 @@ The debug APK is written to `app/build/outputs/apk/debug/app-debug.apk`. GitHub 
 | `app/src/main/java/com/example/worlddomination/game/ui/` | Screen layout and interaction behavior |
 | `app/src/main/assets/original/` | Packaged original artwork and runtime assets |
 | `app/src/test/` | Deterministic gameplay and presentation support tests |
-| `docs/screenshots/` | Character selection and gameplay captures shown above |
+| `docs/images/` | Phone-framed previews and original Android QA captures |
 
 The Python implementation is kept as a read-only behavioral reference. For current progress and known parity gaps, see the pull requests and project issues.
 
