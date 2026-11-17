@@ -43,18 +43,49 @@ public final class SatelliteAudioPlayback {
     /** Starts a previously unused laser; its completion starts its own attack cue. */
     public synchronized boolean play() {
         if (!prepared || disposed || paused || !soundEnabled) return false;
+        Owner owner = claim();
+        return owner != null && owner.playLaser();
+    }
+
+    /** Reserves one battle-owned pair, even if its later laser start is suppressed. */
+    public synchronized Owner claim() {
+        if (!prepared || disposed) return null;
         Voice voice;
         if (nextVoice < voices.size()) {
             voice = voices.get(nextVoice++);
         } else {
             voice = createVoice();
-            if (voice == null) return false;
+            if (voice == null) return null;
             voices.add(voice);
             nextVoice++;
         }
-        voice.used = true;
-        voice.laser.play();
-        return true;
+        return new Owner(voice);
+    }
+
+    /** Stable per-satellite controls; stale owners become inert after battle cleanup. */
+    public final class Owner {
+        private final Voice voice;
+
+        private Owner(Voice voice) { this.voice = voice; }
+
+        public boolean playLaser() {
+            synchronized (SatelliteAudioPlayback.this) {
+                if (!prepared || disposed || paused || !soundEnabled
+                        || voice.closed || voice.used) return false;
+                voice.used = true;
+                voice.laser.play();
+                return true;
+            }
+        }
+
+        public void setPan(float pan) {
+            if (!Float.isFinite(pan)) return;
+            synchronized (SatelliteAudioPlayback.this) {
+                if (voice.closed || disposed) return;
+                voice.pan = Math.max(-1f, Math.min(1f, pan));
+                voice.setVolume(audibleVolume());
+            }
+        }
     }
 
     /** Source option gates new reveals; existing chains keep their volume and callbacks. */
@@ -150,6 +181,7 @@ public final class SatelliteAudioPlayback {
         private boolean laserComplete;
         private boolean attackStarted;
         private boolean attackComplete;
+        private float pan;
 
         Voice(Music laser, Music attack) {
             this.laser = laser;
@@ -157,8 +189,8 @@ public final class SatelliteAudioPlayback {
         }
 
         void setVolume(float value) {
-            laser.setVolume(value);
-            attack.setVolume(value);
+            laser.setPan(pan, value);
+            attack.setPan(pan, value);
         }
 
         void laserFinished() {

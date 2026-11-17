@@ -663,6 +663,9 @@ jobs:
           - id: source-theme-completion
             check: Source theme gain and completion restart
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.audio.SourceThemeCompletionTest"'
+          - id: source-satellite-audio-pan
+            check: Source satellite gain and per-owner stereo
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.audio.SatelliteAudioPanTest" --tests "com.example.worlddomination.game.rendering.FlashSatelliteSourceTraceTest"'
           - id: flash-asset-transfer-tests
             check: Exact pixel transfer and compressed Flash asset reads
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.ArgbPixelTransferTest" --tests "com.example.worlddomination.game.assets.CompressedFlashAssetReadTest"'
