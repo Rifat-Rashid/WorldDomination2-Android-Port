@@ -50,6 +50,9 @@ public final class SourceEndgameInstrumentedTest {
                 WorldDominationGame app = (WorldDominationGame) Gdx.app.getApplicationListener();
                 Object original = null;
                 try {
+                    invoke(app, "initializeGameplayAssets");
+                    Object splash = field(WorldDominationGame.class, "splashState").get(app);
+                    splash.getClass().getMethod("dismiss").invoke(splash);
                     original = field(WorldDominationGame.class, "personalBestStore").get(app);
                     ScorePreferenceBackend failedDisk = new ScorePreferenceBackend() {
                         @Override public long getLong(String key, long fallback) { return 0; }
@@ -69,6 +72,17 @@ public final class SourceEndgameInstrumentedTest {
                     assertEquals(MatchOutcomeSequence.Phase.BEFORE_ENDGAME, sequence.getPhase());
                     assertEquals("PERSONAL BEST NOT SAVED",
                             field(WorldDominationGame.class, "outcomePersonalBestText").get(app));
+                    awaitAssets((OriginalEndgameAssets)
+                            field(WorldDominationGame.class, "endgameAssets").get(app));
+                    for (int i = 0; i < 2500 && !sequence.isComplete(); i++) {
+                        invoke(app, "advanceOutcomeSequence");
+                    }
+                    assertTrue("Unsaved score must still finish its presentation", sequence.isComplete());
+                    render(app);
+                    capture("source-endgame-unsaved-score.png");
+                    tapSource(app, 553f, 465f);
+                    assertNull("New Game remains usable after a failed save",
+                            field(WorldDominationGame.class, "game").get(app));
                 } catch (Throwable error) {
                     failure.set(error);
                 } finally {

@@ -109,7 +109,8 @@ class NativeGroupTests(unittest.TestCase):
                             (groups.PHONE_PANELS, groups.PHONE_PANELS_EVIDENCE),
                             (groups.RESOURCE_MODAL_CONTEXT,
                              groups.RESOURCE_MODAL_CONTEXT_EVIDENCE),
-                            (groups.TECHNOLOGY_FIELDS, groups.TECHNOLOGY_FIELDS_EVIDENCE)):
+                            (groups.TECHNOLOGY_FIELDS, groups.TECHNOLOGY_FIELDS_EVIDENCE),
+                            (groups.ENDGAME_FAILURE, groups.ENDGAME_FAILURE_EVIDENCE)):
                         if selected in group["classes"]:
                             for name in required:
                                 (folder / name).write_bytes(PNG)
@@ -322,7 +323,16 @@ class NativeGroupTests(unittest.TestCase):
         result = groups.verify_artifacts(self.manifest, self.root)
         self.assertEqual(110, sum(row["classes"] for row in result.values()))
         self.assertEqual(176, sum(row["executed"] for row in result.values()))
-        self.assertEqual(187, sum(row["requiredPngs"] for row in result.values()))
+        self.assertEqual(188, sum(row["requiredPngs"] for row in result.values()))
+
+    def test_unsaved_score_requires_actual_endgame_capture(self):
+        self.fixture()
+        selected = next(g for g in self.manifest["groups"] if groups.ENDGAME_FAILURE in g["classes"])
+        image = (self.root / ("android-native-" + selected["id"] + "-results")
+                 / "reports/androidTests/beta-ui-evidence/source-endgame-unsaved-score.png")
+        image.unlink()
+        with self.assertRaisesRegex(ValueError, "Missing required unsaved score screenshots"):
+            groups.verify_artifacts(self.manifest, self.root)
 
     def test_missing_zero_budget_action_menu_capture_is_rejected(self):
         self.fixture()
