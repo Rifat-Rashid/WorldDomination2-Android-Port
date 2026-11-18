@@ -17,6 +17,7 @@ import com.example.worlddomination.game.simulation.GameState;
 import com.example.worlddomination.game.simulation.WeaponCatalog;
 import com.example.worlddomination.game.ui.SourceActionMenuState;
 import com.example.worlddomination.game.ui.MassMediaText;
+import com.example.worlddomination.game.ui.SourceBudgetText;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -97,7 +98,7 @@ public final class SourceActionMenuRenderer implements Disposable {
     private String value(JsonValue field, GameState game, SourceActionMenuState state,
                          GameState.DiplomacyProposal proposal) {
         String name = field.getString("name");
-        if ("textFunds".equals(name)) return "Budget: " + funds + ".000.000";
+        if ("textFunds".equals(name)) return SourceBudgetText.displayTextFunds(funds);
         if (key.startsWith("religion-")) {
             if ("text1".equals(name)) return MassMediaText.population(game.getHuman().populationMillions);
             if ("text2".equals(name)) return opinion + "%";

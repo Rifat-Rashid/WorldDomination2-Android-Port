@@ -17,7 +17,7 @@ public final class ResourceMenuText {
         int nextIncome = state.getResourceIncomeMillions();
         if (budget != nextBudget) {
             budget = nextBudget;
-            budgetText = "Budget: " + millions(budget);
+            budgetText = SourceBudgetText.displayTextFunds(budget);
         }
         if (population != nextPopulation) {
             population = nextPopulation;
