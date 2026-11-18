@@ -301,9 +301,19 @@ public final class OpponentAI {
                     markPlannedUse(decision, plannedWeaponUse);
                 }
                 if (attackSlot == 0 && companion != null && decisions.size() < 2) {
+                    // A ready ship stages an "attack" in the second slot. The
+                    // source rejects that staged action before advancing to
+                    // this ranked companion, so its initial retry is already
+                    // spent. New carrier preparation still starts directly
+                    // with the ranked companion and retains its two attempts.
+                    Decision firstOrder = attackPlan.get(0);
+                    boolean rejectedShipCompanion = firstOrder.action
+                            == GameState.Action.PREPARED_ATTACK
+                            && !firstOrder.prepareCarrier
+                            && "ship".equals(firstOrder.weaponName);
                     Decision secondOrder = planRankedAction(state, player, companion,
                             random, 2, plannedWeaponUse);
-                    if (secondOrder == null) {
+                    if (secondOrder == null && !rejectedShipCompanion) {
                         // Model.doTurn retries the initial second-slot candidate
                         // before advancing its score cursor to a lower-ranked action.
                         secondOrder = planRankedAction(state, player, companion,

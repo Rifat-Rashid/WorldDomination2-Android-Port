@@ -119,7 +119,7 @@ class NativeGroupTests(unittest.TestCase):
 
     def test_manifest_is_exact_closed_inventory_and_both_groups_make_beta(self):
         self.assertEqual(112, len(self.manifest["requiredClasses"]))
-        self.assertEqual(180, len(self.manifest["expectedCases"]))
+        self.assertEqual(181, len(self.manifest["expectedCases"]))
         self.assertEqual({"a", "b"}, {g["id"] for g in self.manifest["groups"]})
         self.assertEqual({"beta-ui-evidence", "propaganda-evidence"},
                          {e for g in self.manifest["groups"] for e in g["evidence"]})
@@ -324,7 +324,7 @@ class NativeGroupTests(unittest.TestCase):
         self.fixture()
         result = groups.verify_artifacts(self.manifest, self.root)
         self.assertEqual(112, sum(row["classes"] for row in result.values()))
-        self.assertEqual(180, sum(row["executed"] for row in result.values()))
+        self.assertEqual(181, sum(row["executed"] for row in result.values()))
         self.assertEqual(198, sum(row["requiredPngs"] for row in result.values()))
 
     def test_unsaved_score_requires_actual_endgame_capture(self):
@@ -576,6 +576,27 @@ class NativeGroupTests(unittest.TestCase):
             with self.subTest(method=method), self.assertRaisesRegex(ValueError, "JUnit method mismatch"):
                 groups.verify_artifacts(self.manifest, self.root)
             xml.write_bytes(original)
+
+    def test_seed29_easy_ship_retry_campaign_case_is_required(self):
+        self.fixture()
+        name = "com.example.worlddomination.game.simulation.SourceLegalEasyCampaignInstrumentedTest"
+        method = "seed29EasyShipRetryCampaignMatchesEveryCapturedState"
+        self.assertEqual(1, sum(selected == name and case == method
+                                for selected, case in self.manifest["expectedCases"]))
+        group = next(g for g in self.manifest["groups"] if name in g["classes"])
+        xml = (self.root / ("android-native-" + group["id"] + "-results")
+               / "outputs/androidTest-results/connected/debug/TEST-device.xml")
+        original = xml.read_bytes()
+        tree = ET.parse(xml)
+        suite = next(s for s in tree.getroot().findall("testsuite") if s.get("name") == name)
+        case = next(c for c in suite.findall("testcase") if c.get("name") == method)
+        suite.remove(case)
+        suite.set("tests", str(int(suite.get("tests")) - 1))
+        tree.getroot().set("tests", str(int(tree.getroot().get("tests")) - 1))
+        tree.write(xml)
+        with self.assertRaisesRegex(ValueError, "JUnit method mismatch"):
+            groups.verify_artifacts(self.manifest, self.root)
+        xml.write_bytes(original)
 
     def test_tampered_junit_skips_and_failed_cases_rejected(self):
         for defect in ("omit-class", "omit-method", "skip", "summary-skip", "fail",

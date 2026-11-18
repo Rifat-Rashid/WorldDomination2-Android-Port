@@ -345,6 +345,9 @@ jobs:
           - id: source-multi-seed-campaigns
             check: Source campaign relations and simultaneous battle results
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.SourceMultiSeedCampaignTest"'
+          - id: source-leader-campaigns
+            check: All-leader campaigns and ready ship companion retries
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.SourceLeaderCampaignTest"'
           - id: source-accepted-incoming-campaigns
             check: Incoming offers and insufficient funds match 100 source turns
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.SourceAcceptedIncomingCampaignTest"'
