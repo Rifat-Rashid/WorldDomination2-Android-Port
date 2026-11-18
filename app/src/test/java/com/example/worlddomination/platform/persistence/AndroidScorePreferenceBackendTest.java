@@ -56,9 +56,53 @@ public final class AndroidScorePreferenceBackendTest {
         assertEquals(1000, store.getBestScore());
     }
 
+    @Test public void recreatedBackendKeepsConfirmedBestAfterFailedCommit() {
+        FakePreferences fake = new FakePreferences();
+        PersonalBestStore first = new PersonalBestStore(new AndroidScorePreferenceBackend(fake.preferences));
+        assertTrue(first.recordFinalScore(900));
+        fake.succeeds = false;
+        assertThrows(ScorePersistenceException.class, () -> first.recordFinalScore(3000));
+        assertEquals(Long.valueOf(3000), fake.memory.get("personal_best_score_v1"));
+        assertEquals(Long.valueOf(900), fake.disk.get("personal_best_score_v1"));
+
+        // Android reuses the same cached preferences when recreating the Activity.
+        PersonalBestStore recreated = new PersonalBestStore(
+                new AndroidScorePreferenceBackend(fake.preferences));
+        assertEquals(900, recreated.getBestScore());
+        fake.succeeds = true;
+        assertTrue(recreated.recordFinalScore(1000));
+        assertEquals(Long.valueOf(1000), fake.disk.get("personal_best_score_v1"));
+        assertEquals(1000, recreated.getBestScore());
+        assertEquals("The previous backend observes the confirmed retry", 1000, first.getBestScore());
+        assertEquals(3, fake.commits);
+    }
+
+    @Test public void recreatedBackendCanRetryPendingWriteWithoutAffectingAnotherStore() {
+        FakePreferences failed = new FakePreferences();
+        AndroidScorePreferenceBackend original = new AndroidScorePreferenceBackend(failed.preferences);
+        original.putLong("best", 3000);
+        failed.succeeds = false;
+        assertThrows(ScorePersistenceException.class, original::flush);
+
+        FakePreferences separate = new FakePreferences();
+        AndroidScorePreferenceBackend other = new AndroidScorePreferenceBackend(separate.preferences);
+        assertEquals(0, other.getLong("best", 0));
+        other.putLong("best", 800);
+        other.flush();
+        assertEquals(0, original.getLong("best", 0));
+
+        failed.succeeds = true;
+        new AndroidScorePreferenceBackend(failed.preferences).flush();
+        assertEquals(Long.valueOf(3000), failed.disk.get("best"));
+        assertEquals(3000, original.getLong("best", 0));
+        assertEquals(800, other.getLong("best", 0));
+        assertEquals(Long.valueOf(800), separate.disk.get("best"));
+    }
+
     /** Fail on unexpected methods, especially asynchronous apply(). */
     private static final class FakePreferences {
         final Map<String, Long> memory = new HashMap<>();
+        final Map<String, Long> disk = new HashMap<>();
         final Map<String, Long> pending = new HashMap<>();
         boolean succeeds = true;
         int commits;
@@ -70,6 +114,7 @@ public final class AndroidScorePreferenceBackendTest {
                         case "commit":
                             commits++;
                             memory.putAll(pending);
+                            if (succeeds) disk.putAll(pending);
                             pending.clear();
                             return succeeds;
                         default: throw new AssertionError("Unexpected editor call: " + method);
@@ -79,6 +124,8 @@ public final class AndroidScorePreferenceBackendTest {
                 getClass().getClassLoader(), new Class<?>[]{SharedPreferences.class},
                 (proxy, method, args) -> {
                     switch (method.getName()) {
+                        case "hashCode": return System.identityHashCode(proxy);
+                        case "equals": return proxy == args[0];
                         case "edit": return editor;
                         case "getLong": return memory.getOrDefault((String) args[0], (Long) args[1]);
                         case "contains": return memory.containsKey(args[0]);
