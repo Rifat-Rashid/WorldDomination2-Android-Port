@@ -303,6 +303,12 @@ public final class OpponentAI {
                 if (attackSlot == 0 && companion != null && decisions.size() < 2) {
                     Decision secondOrder = planRankedAction(state, player, companion,
                             random, 2, plannedWeaponUse);
+                    if (secondOrder == null) {
+                        // Model.doTurn retries the initial second-slot candidate
+                        // before advancing its score cursor to a lower-ranked action.
+                        secondOrder = planRankedAction(state, player, companion,
+                                random, 2, plannedWeaponUse);
+                    }
                     if (secondOrder != null) {
                         decisions.add(secondOrder);
                         reserve(player, secondOrder);
