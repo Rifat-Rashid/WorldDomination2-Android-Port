@@ -78,6 +78,77 @@ public final class SourceLegalEasyCampaignInstrumentedTest {
         // for diagnosis rather than being misrepresented as canonical state.
     }
 
+    @Test public void seed29EasyShipRetryCampaignMatchesEveryCapturedState() throws Exception {
+        // Android's asset merger expands .gz source fixtures and strips the suffix.
+        final String fixture = "source-leader-campaigns.json";
+        final String expectedHash = "acb4bcb73336384ce4193f26e97339324fd71f7bf4b493c24c3373f59d2b9ddf";
+        byte[] bytes;
+        try (InputStream stream = InstrumentationRegistry.getInstrumentation()
+                .getContext().getAssets().open(fixture);
+             ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+            byte[] buffer = new byte[8192];
+            int count;
+            while ((count = stream.read(buffer)) != -1) output.write(buffer, 0, count);
+            bytes = output.toByteArray();
+        }
+        byte[] digest = MessageDigest.getInstance("SHA-256").digest(bytes);
+        StringBuilder hash = new StringBuilder();
+        for (byte b : digest) hash.append(String.format(java.util.Locale.US, "%02x", b & 0xff));
+        assertEquals("source leader campaign fixture bytes", expectedHash, hash.toString());
+
+        JsonValue matrix = new JsonReader().parse(new String(bytes, StandardCharsets.UTF_8));
+        JsonValue capture = null;
+        for (JsonValue candidate : matrix.get("campaigns")) {
+            JsonValue setup = candidate.get("setup");
+            if (setup.getInt("seed") == 29 && setup.getInt("difficulty") == 0) {
+                assertNull("unique seed 29 easy campaign", capture);
+                capture = candidate;
+            }
+        }
+        assertNotNull("seed 29 easy campaign", capture);
+        JsonValue opponents = capture.get("setup").get("opponents");
+        assertEquals(4, opponents.size);
+        int[] expectedOpponents = {4, 5, 6, 7};
+        GameSetup setup = new GameSetup(29L);
+        setup.setDifficulty(0);
+        for (int i = 0; i < expectedOpponents.length; i++) {
+            assertEquals("source opponent slot " + i, expectedOpponents[i], opponents.getInt(i));
+            assertTrue("select opponent " + expectedOpponents[i], setup.toggleOpponent(expectedOpponents[i]));
+        }
+        GameState game = new GameState(setup);
+        assertState(game, capture.get("initial"));
+        JsonValue turns = capture.get("turns");
+        assertEquals("all legal source turns", 30, turns.size);
+        for (JsonValue turn : turns) {
+            int number = turn.getInt("turn");
+            assertEquals("source turn order", game.getTurn() + 1, number);
+            JsonValue queued = turn.get("humanQueuedActions");
+            assertEquals("two source actions turn " + number, 2, queued.size);
+            assertEquals("first source action turn " + number, "resources", queued.getString(0));
+            assertEquals("second source action turn " + number, "religion", queued.getString(1));
+            for (JsonValue rejected : turn.get("offersRejected")) {
+                GameState.DiplomacyProposal proposal = game.getPendingHumanDiplomacyProposal();
+                assertNotNull("turn " + number + " expected pending offer", proposal);
+                JsonValue expected = rejected.get("sourceProposal");
+                assertEquals("proposer turn " + number, expected.getInt("_leader"), proposal.proposerId);
+                assertEquals("option turn " + number, expected.getInt("_option"), proposal.optionIndex);
+                assertEquals("RNG before rejection turn " + number,
+                        rejected.getDouble("rngBefore"), game.createPresentationRandomCopy().nextDouble(), 0d);
+                assertTrue("reject pending offer turn " + number, game.respondToDiplomacyProposal(false));
+            }
+            assertNull("unexpected pending offer turn " + number, game.getPendingHumanDiplomacyProposal());
+            game.selectAction(GameState.Action.RESOURCES);
+            assertTrue("resources turn " + number, game.acceptSelectedAction());
+            game.selectAction(GameState.Action.MASS_MEDIA);
+            assertTrue("mass media turn " + number, game.acceptSelectedAction());
+            game.confirmTurn();
+            assertState(game, turn.get("state"));
+        }
+        assertEquals("ship retry turn included", 30, game.getTurn());
+        assertEquals(GameState.MatchStatus.ONGOING, game.getMatchStatus());
+        assertEquals("source human score", capture.get("terminal").getLong("humanScore"), game.getHuman().score);
+    }
+
     private static void assertState(GameState game, JsonValue state) {
         int turn = state.getInt("turn");
         String where = "turn " + turn + " ";

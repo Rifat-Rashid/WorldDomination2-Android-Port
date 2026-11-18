@@ -768,6 +768,10 @@
       "easyFourOpponentCampaignMatchesEveryCapturedState"
     ],
     [
+      "com.example.worlddomination.game.simulation.SourceLegalEasyCampaignInstrumentedTest",
+      "seed29EasyShipRetryCampaignMatchesEveryCapturedState"
+    ],
+    [
       "com.example.worlddomination.game.simulation.SourceLegalAcceptedDiplomacyCampaignInstrumentedTest",
       "acceptedDiplomacyCampaignMatchesEveryCapturedState"
     ],
