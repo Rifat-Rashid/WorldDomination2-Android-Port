@@ -149,6 +149,11 @@ public final class SetupScreenLayout {
         return Math.floorMod(listStart + visibleIndex, leaderCount);
     }
 
+    /** The source right arrow visits the duplicate first page at start 19 before resetting. */
+    public static int nextLeaderStart(int listStart, int leaderCount) {
+        return listStart > leaderCount - 1 ? 0 : listStart + 1;
+    }
+
     private static Rectangle[] rectangles(int count) {
         Rectangle[] result = new Rectangle[count];
         for (int i = 0; i < count; i++) {
