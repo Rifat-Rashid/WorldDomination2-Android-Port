@@ -117,7 +117,8 @@
     "com.example.worlddomination.game.rendering.ResourceModalContextRecoveryInstrumentedTest",
     "com.example.worlddomination.game.persistence.PersonalBestPersistenceInstrumentedTest",
     "com.example.worlddomination.platform.graphics.SerializedAndroidGraphicsInstrumentedTest",
-    "com.example.worlddomination.game.rendering.SourceLegalTerminalPlaybackInstrumentedTest"
+    "com.example.worlddomination.game.rendering.SourceLegalTerminalPlaybackInstrumentedTest",
+    "com.example.worlddomination.game.rendering.SafeAreaViewportInstrumentedTest"
   ],
   "groups": [
     {
@@ -178,7 +179,8 @@
         "com.example.worlddomination.game.rendering.MessageWholeLineInstrumentedTest",
         "com.example.worlddomination.game.rendering.SourcePhonePanelInstrumentedTest",
         "com.example.worlddomination.game.rendering.ResourceModalContextRecoveryInstrumentedTest",
-        "com.example.worlddomination.platform.graphics.SerializedAndroidGraphicsInstrumentedTest"
+        "com.example.worlddomination.platform.graphics.SerializedAndroidGraphicsInstrumentedTest",
+        "com.example.worlddomination.game.rendering.SafeAreaViewportInstrumentedTest"
       ],
       "evidence": [
         "beta-ui-evidence",
@@ -974,6 +976,14 @@
     [
       "com.example.worlddomination.game.rendering.SourceLegalTerminalPlaybackInstrumentedTest",
       "legalTwentyNineTurnDefeatPlaysThroughScoreAndNewGame"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.SafeAreaViewportInstrumentedTest",
+      "surfacePixelInsetsTrackResizeAndLetterboxWithoutDensityConversion"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.SafeAreaViewportInstrumentedTest",
+      "actualWindowCutoutIsTranslatedIntoTheGlSurfaceBeforeProjection"
     ]
   ]
 }

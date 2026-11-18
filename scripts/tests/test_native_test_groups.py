@@ -109,6 +109,7 @@ class NativeGroupTests(unittest.TestCase):
                             (groups.PHONE_TOOLBAR_AUDIO, groups.PHONE_TOOLBAR_AUDIO_EVIDENCE),
                             (groups.MESSAGE_WHOLE_LINES, groups.MESSAGE_WHOLE_LINES_EVIDENCE),
                             (groups.PHONE_PANELS, groups.PHONE_PANELS_EVIDENCE),
+                            (groups.SAFE_AREA, groups.SAFE_AREA_EVIDENCE),
                             (groups.RESOURCE_MODAL_CONTEXT,
                              groups.RESOURCE_MODAL_CONTEXT_EVIDENCE),
                             (groups.TECHNOLOGY_FIELDS, groups.TECHNOLOGY_FIELDS_EVIDENCE),
@@ -118,8 +119,8 @@ class NativeGroupTests(unittest.TestCase):
                                 (folder / name).write_bytes(PNG)
 
     def test_manifest_is_exact_closed_inventory_and_both_groups_make_beta(self):
-        self.assertEqual(112, len(self.manifest["requiredClasses"]))
-        self.assertEqual(181, len(self.manifest["expectedCases"]))
+        self.assertEqual(113, len(self.manifest["requiredClasses"]))
+        self.assertEqual(183, len(self.manifest["expectedCases"]))
         self.assertEqual({"a", "b"}, {g["id"] for g in self.manifest["groups"]})
         self.assertEqual({"beta-ui-evidence", "propaganda-evidence"},
                          {e for g in self.manifest["groups"] for e in g["evidence"]})
@@ -280,6 +281,18 @@ class NativeGroupTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "JUnit method mismatch"):
             groups.verify_artifacts(self.manifest, self.root)
 
+    def test_safe_area_requires_both_rendered_scenes(self):
+        self.fixture()
+        self.assertIn(groups.SAFE_AREA, groups.group_by_id(self.manifest, "a")["classes"])
+        folder = self.root / "android-native-a-results/reports/androidTests/beta-ui-evidence"
+        for filename in sorted(groups.SAFE_AREA_EVIDENCE):
+            image = folder / filename
+            image.unlink()
+            with self.subTest(image=filename), self.assertRaisesRegex(
+                    ValueError, "Missing required safe area viewport screenshots"):
+                groups.verify_artifacts(self.manifest, self.root)
+            image.write_bytes(PNG)
+
     def test_missing_duplicate_and_unselected_classes_rejected(self):
         data = copy.deepcopy(self.manifest)
         removable = next(name for name in data["groups"][0]["classes"]
@@ -323,9 +336,9 @@ class NativeGroupTests(unittest.TestCase):
     def test_downloaded_groups_require_exact_junit_sets_and_valid_png_headers(self):
         self.fixture()
         result = groups.verify_artifacts(self.manifest, self.root)
-        self.assertEqual(112, sum(row["classes"] for row in result.values()))
-        self.assertEqual(181, sum(row["executed"] for row in result.values()))
-        self.assertEqual(198, sum(row["requiredPngs"] for row in result.values()))
+        self.assertEqual(113, sum(row["classes"] for row in result.values()))
+        self.assertEqual(183, sum(row["executed"] for row in result.values()))
+        self.assertEqual(200, sum(row["requiredPngs"] for row in result.values()))
 
     def test_unsaved_score_requires_actual_endgame_capture(self):
         self.fixture()
