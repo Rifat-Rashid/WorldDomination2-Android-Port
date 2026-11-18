@@ -21,7 +21,7 @@ import static org.junit.Assert.*;
 public final class SourceLegalRocketReselectionTest {
     private static final String FIXTURE = "/source-legal-rocket-reselection.json";
     private static final String FIXTURE_SHA256 =
-            "c66c76e66aded719a9b70e6be6b60d2465ab50ebd1ff7db48831c5ee2a877de9";
+            "5979cfd25440535cdd2cfb93b0ea6c17f9f84a472e6f77b7bc061b59b8136cc8";
 
     @Test public void legalRocketLaunchCanBeRemovedAndReacceptedWithoutChangingOutcome()
             throws Exception {

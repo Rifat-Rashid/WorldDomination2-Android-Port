@@ -20,7 +20,7 @@ import static org.junit.Assert.*;
 public final class PreparedLaunchRegardTest {
     private static final String FIXTURE = "/source-prepared-launch-regard.json";
     private static final String FIXTURE_SHA256 =
-            "11f9784cf983512f59cf6e16611e5ee1cc84abe23d1f1258bb09e47c69279c3f";
+            "8ae783f03f57559a768e5752c4ed8c810b903db529df2be2a48947136bcbc89b";
 
     @Test public void rocketImpactAndInterceptionSettleSourceHumanAndAiRegard()
             throws Exception {
