@@ -183,6 +183,9 @@ jobs:
           - id: source-action-slot-parity
             check: Original fixed action slots and Skip Action parity
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.SourceActionSlotParityTest" --tests "com.example.worlddomination.game.ui.ActionSlotAnimationTest"'
+          - id: prepared-ship-tube-cancel
+            check: Prepared ship occupied tube cancellation and replacement
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.SourcePreparedShipTubeCancelTest"'
           - id: technology-color-transform
             check: Original Technology color transforms and selected-list fields
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashCenterColorTest"'

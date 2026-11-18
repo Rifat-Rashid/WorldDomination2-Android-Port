@@ -89,6 +89,7 @@ class NativeGroupTests(unittest.TestCase):
                 if evidence == "beta-ui-evidence":
                     for selected, required in (
                             (groups.ACTION_MENUS, groups.ACTION_MENUS_EVIDENCE),
+                            (groups.ACTION_MENUS, groups.PREPARED_SHIP_TUBE_EVIDENCE),
                             (groups.HELP, groups.HELP_EVIDENCE),
                             (groups.SETUP_PANELS, groups.SETUP_PANELS_EVIDENCE),
                             (groups.SETUP_LAYOUT, groups.SETUP_LAYOUT_EVIDENCE),
@@ -321,7 +322,7 @@ class NativeGroupTests(unittest.TestCase):
         result = groups.verify_artifacts(self.manifest, self.root)
         self.assertEqual(109, sum(row["classes"] for row in result.values()))
         self.assertEqual(173, sum(row["executed"] for row in result.values()))
-        self.assertEqual(183, sum(row["requiredPngs"] for row in result.values()))
+        self.assertEqual(184, sum(row["requiredPngs"] for row in result.values()))
 
     def test_missing_zero_budget_action_menu_capture_is_rejected(self):
         self.fixture()
@@ -332,6 +333,17 @@ class NativeGroupTests(unittest.TestCase):
         missing = folder / "source-diplomacy-zero-budget.png"
         missing.unlink()
         with self.assertRaisesRegex(ValueError, "Missing required action menu zero budget screenshots"):
+            groups.verify_artifacts(self.manifest, self.root)
+
+    def test_missing_prepared_ship_tube_reselection_capture_is_rejected(self):
+        self.fixture()
+        group = next(g for g in self.manifest["groups"]
+                     if groups.ACTION_MENUS in g["classes"])
+        folder = (self.root / ("android-native-" + group["id"] + "-results")
+                  / "reports/androidTests/beta-ui-evidence")
+        missing = folder / "source-ship-tube-reselected.png"
+        missing.unlink()
+        with self.assertRaisesRegex(ValueError, "Missing required prepared ship tube reselection screenshots"):
             groups.verify_artifacts(self.manifest, self.root)
 
     def test_missing_phone_toolbar_audio_screenshots_are_rejected(self):
