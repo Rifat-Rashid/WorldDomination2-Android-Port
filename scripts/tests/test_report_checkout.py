@@ -77,15 +77,17 @@ class ReportCheckoutTest(unittest.TestCase):
         self.assertRegex(self.matrix, r'(?m)^    needs: full-suite$')
         self.assertRegex(self.matrix, r'(?m)^    if: always\(\)$')
         tasks = re.findall(r'(?m)^            task: (.+)$', self.matrix)
-        self.assertEqual(210, len(tasks))
+        self.assertEqual(211, len(tasks))
         filters = [pattern for task in tasks for pattern in selectors(task.strip().strip("'"))]
-        self.assertEqual(435, len(filters))
+        self.assertEqual(436, len(filters))
         self.assertEqual(1, filters.count(
             'com.example.worlddomination.game.simulation.SourcePlannedDiplomacyTest'))
         self.assertEqual(1, filters.count(
             'com.example.worlddomination.game.simulation.NegativeBudgetActionAcceptanceTest'))
         self.assertEqual(1, filters.count(
             'com.example.worlddomination.game.simulation.SourceMultiSeedCampaignTest'))
+        self.assertEqual(1, filters.count(
+            'com.example.worlddomination.game.simulation.SourceAcceptedIncomingCampaignTest'))
         self.assertEqual(1, filters.count(
             'com.example.worlddomination.game.ai.SourceCompanionTargetRetryTest'))
         downloaded = step(self.matrix, "Download this run's executed reports")
