@@ -114,7 +114,8 @@
     "com.example.worlddomination.game.audio.ThemeCompletionInstrumentedTest",
     "com.example.worlddomination.game.rendering.MessageWholeLineInstrumentedTest",
     "com.example.worlddomination.game.rendering.SourcePhonePanelInstrumentedTest",
-    "com.example.worlddomination.game.rendering.ResourceModalContextRecoveryInstrumentedTest"
+    "com.example.worlddomination.game.rendering.ResourceModalContextRecoveryInstrumentedTest",
+    "com.example.worlddomination.platform.graphics.SerializedAndroidGraphicsInstrumentedTest"
   ],
   "groups": [
     {
@@ -174,7 +175,8 @@
         "com.example.worlddomination.game.audio.ThemeCompletionInstrumentedTest",
         "com.example.worlddomination.game.rendering.MessageWholeLineInstrumentedTest",
         "com.example.worlddomination.game.rendering.SourcePhonePanelInstrumentedTest",
-        "com.example.worlddomination.game.rendering.ResourceModalContextRecoveryInstrumentedTest"
+        "com.example.worlddomination.game.rendering.ResourceModalContextRecoveryInstrumentedTest",
+        "com.example.worlddomination.platform.graphics.SerializedAndroidGraphicsInstrumentedTest"
       ],
       "evidence": [
         "beta-ui-evidence",
@@ -940,6 +942,10 @@
     [
       "com.example.worlddomination.game.rendering.ResourceModalContextRecoveryInstrumentedTest",
       "resourceModalRestoresAfterEglContextLoss"
+    ],
+    [
+      "com.example.worlddomination.platform.graphics.SerializedAndroidGraphicsInstrumentedTest",
+      "finishingCacheClearWaitsForFramebufferDisposalInPause"
     ]
   ]
 }
