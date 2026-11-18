@@ -2414,7 +2414,9 @@ public final class GameState {
                 && selectedDiplomacyOption < 3) {
             reserved = DIPLOMACY_AMOUNT[selectedDiplomacyOption];
         }
-        if (reserved > getHuman().turnMoneyMillions) {
+        // Source free/stock actions do not compare their zero cost with a
+        // negative balance left by previously accepted diplomacy payments.
+        if (reserved != 0 && reserved > getHuman().turnMoneyMillions) {
             addMessage("The selected action exceeds the remaining budget.");
             return false;
         }
