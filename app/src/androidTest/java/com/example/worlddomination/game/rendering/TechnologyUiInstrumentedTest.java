@@ -7,7 +7,14 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.PixmapIO;
+import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.TextureData;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.glutils.FrameBuffer;
+import com.badlogic.gdx.graphics.glutils.ShaderProgram;
+import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.ScreenUtils;
@@ -83,6 +90,7 @@ public final class TechnologyUiInstrumentedTest {
                     tap(app, cards[available]);
                     assertTrue(game.isResearchTechnologySelected(technology));
                     capture(app, "source-technology-original-selected.png");
+                    assertMinifiedSelectedTextRetainsWhiteInk(app);
                     int funds = game.getTurnMoneyMillions();
                     tap(app, (Rectangle) field("modalAccept").get(app));
                     assertEquals(GameState.Action.RESEARCH, game.getQueuedAction(0));
@@ -93,6 +101,101 @@ public final class TechnologyUiInstrumentedTest {
             }));
             assertTrue("Original research UI timed out", done.await(60, TimeUnit.SECONDS));
             if (failure.get() != null) throw new AssertionError("Original research UI", failure.get());
+        }
+    }
+
+    /** The source's selected row is light on navy even at a 640x320 back buffer. */
+    private static void assertMinifiedSelectedTextRetainsWhiteInk(WorldDominationGame app)
+            throws Exception {
+        BitmapFont font = (BitmapFont) field("font").get(app);
+        Texture texture = font.getRegion().getTexture();
+        assertTrue("Source UI font must survive Android GL context recreation",
+                texture.isManaged());
+        float oldScaleX = font.getScaleX();
+        float oldScaleY = font.getScaleY();
+        Color oldColor = new Color(font.getColor());
+        boolean oldIntegerPositions = font.usesIntegerPositions();
+        SpriteBatch batch = new SpriteBatch();
+        FrameBuffer buffer = new FrameBuffer(Pixmap.Format.RGBA8888, 256, 64, false);
+        ShaderProgram alphaOnly = new ShaderProgram(
+                "attribute vec4 a_position; attribute vec4 a_color; attribute vec2 a_texCoord0;"
+                        + "uniform mat4 u_projTrans; varying vec4 v_color; varying vec2 v_texCoords;"
+                        + "void main(){v_color=a_color;v_color.a*=255.0/254.0;"
+                        + "v_texCoords=a_texCoord0;gl_Position=u_projTrans*a_position;}",
+                "#ifdef GL_ES\nprecision mediump float;\n#endif\n"
+                        + "varying vec4 v_color; varying vec2 v_texCoords;"
+                        + "uniform sampler2D u_texture;"
+                        + "void main(){float coverage=texture2D(u_texture,v_texCoords).a;"
+                        + "gl_FragColor=vec4(v_color.rgb,coverage*v_color.a);}");
+        try {
+            assertTrue("Alpha-only source glyph oracle compiles: " + alphaOnly.getLog(),
+                    alphaOnly.isCompiled());
+            batch.setProjectionMatrix(new Matrix4().setToOrtho2D(0, 0, 256, 64));
+            // Seven rendered pixels approximate the source row at the CI 640x320 size.
+            font.getData().setScale(7f / 18f);
+            font.setColor(Color.WHITE);
+            font.setUseIntegerPositions(false);
+            int ordinaryPeak = renderTextPeak(buffer, batch, font, null);
+            int alphaOnlyPeak = renderTextPeak(buffer, batch, font, alphaOnly);
+            assertTrue("Alpha-only glyph oracle must contain visible ink: " + alphaOnlyPeak,
+                    alphaOnlyPeak >= 150);
+            assertTrue("Mipped glyph RGB must retain source-white ink; normal="
+                            + ordinaryPeak + ", alpha-only=" + alphaOnlyPeak,
+                    ordinaryPeak >= alphaOnlyPeak - 12);
+            assertOriginalCoverage(texture);
+            texture.load(texture.getTextureData());
+            assertEquals("Managed reload preserves the corrected glyph pixels", ordinaryPeak,
+                    renderTextPeak(buffer, batch, font, null));
+        } finally {
+            font.getData().setScale(oldScaleX, oldScaleY);
+            font.setColor(oldColor);
+            font.setUseIntegerPositions(oldIntegerPositions);
+            alphaOnly.dispose();
+            buffer.dispose();
+            batch.dispose();
+            Gdx.gl.glViewport(0, 0, Gdx.graphics.getBackBufferWidth(),
+                    Gdx.graphics.getBackBufferHeight());
+        }
+    }
+
+    private static void assertOriginalCoverage(Texture texture) {
+        TextureData data = texture.getTextureData();
+        data.prepare();
+        Pixmap prepared = data.consumePixmap();
+        Pixmap original = new Pixmap(Gdx.files.internal("original/ui/fonts/resource-arial-48.png"));
+        try {
+            assertEquals(original.getWidth(), prepared.getWidth());
+            assertEquals(original.getHeight(), prepared.getHeight());
+            for (int y = 0; y < original.getHeight(); y++) {
+                for (int x = 0; x < original.getWidth(); x++) {
+                    assertEquals("Glyph alpha must remain byte-identical to the packaged source",
+                            original.getPixel(x, y) & 255, prepared.getPixel(x, y) & 255);
+                }
+            }
+        } finally {
+            original.dispose();
+            prepared.dispose();
+        }
+    }
+
+    private static int renderTextPeak(FrameBuffer buffer, SpriteBatch batch,
+                                      BitmapFont font, ShaderProgram shader) {
+        buffer.begin();
+        try {
+            Gdx.gl.glClearColor(0f, 36f / 255f, 60f / 255f, 1f);
+            Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+            batch.setShader(shader);
+            batch.begin();
+            font.draw(batch, "ROCKET (25 MEG)  10.000.000", 8.25f, 35.5f);
+            batch.end();
+            byte[] pixels = ScreenUtils.getFrameBufferPixels(0, 0, 256, 64, true);
+            int peak = 0;
+            for (int index = 0; index < pixels.length; index += 4)
+                peak = Math.max(peak, pixels[index] & 255);
+            return peak;
+        } finally {
+            if (batch.isDrawing()) batch.end();
+            buffer.end();
         }
     }
     private static void tap(WorldDominationGame app, Rectangle bounds) throws Exception {
