@@ -19,8 +19,12 @@ import com.badlogic.gdx.utils.ScreenUtils;
 import com.example.worlddomination.game.WorldDominationGame;
 import com.example.worlddomination.game.assets.OriginalUiAssets;
 import com.example.worlddomination.game.simulation.GameState;
+import com.example.worlddomination.game.simulation.GameSetup;
 import com.example.worlddomination.game.ui.SourceActionMenuState;
 import java.io.File;
+import java.io.InputStream;
+import java.lang.reflect.Field;
+import com.badlogic.gdx.utils.JsonValue;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import static org.junit.Assert.*;
@@ -99,7 +103,143 @@ public final class MassMediaValueLayoutInstrumentedTest {
                 sourceArt.dispose();
                 batch.dispose();
             }
+            assertMuslimSourceDialog(renderer, ui, controls);
         });
+    }
+
+    private static void assertMuslimSourceDialog(SourceActionMenuRenderer renderer,
+                                                 OriginalUiAssets ui, TurnControlRenderer controls)
+            throws Exception {
+        GameSetup setup = new GameSetup(0L);
+        setup.setStartingBuilding(5);
+        setup.toggleOpponent(0);
+        GameState game = new GameState(setup);
+        game.selectAction(GameState.Action.MASS_MEDIA);
+        SourceActionMenuState state = new SourceActionMenuState();
+        state.begin(game);
+        assertEquals("religion-mus", state.getKey());
+        assertEquals(450, game.getHuman().populationMillions);
+        assertEquals(20, game.getMassMediaPreviewGain());
+        SpriteBatch batch = new SpriteBatch();
+        Texture oracle = sourceModal();
+        GameState wrong = new GameState(1, 0L);
+        wrong.selectAction(GameState.Action.MASS_MEDIA);
+        SourceActionMenuState wrongState = new SourceActionMenuState();
+        wrongState.begin(wrong);
+        assertEquals("religion-chr", wrongState.getKey());
+        try {
+            for (int[] dimensions : new int[][]{{800, 600}, {1194, 552}}) {
+                int width = dimensions[0], height = dimensions[1];
+                Rectangle container = width == 800 ? new Rectangle(205, 135, 365, 275)
+                        : new Rectangle(372, 106, 450, 339);
+                Rectangle fit = SourceActionMenuRenderer.fit(container, new Rectangle());
+                FrameBuffer buffer = new FrameBuffer(Pixmap.Format.RGBA8888, width, height, false);
+                try {
+                    batch.setProjectionMatrix(new Matrix4().setToOrtho2D(0, 0, width, height));
+                    byte[] actual = renderCurrent(buffer, batch, renderer, container, game, state, ui, controls);
+                    assertEquals("Source presenter rounds population times 0.1", "45.000.000",
+                            renderedText(renderer, "text1"));
+                    assertEquals("65%", renderedText(renderer, "text2"));
+                    assertEquals("+20 %", renderedText(renderer, "text3"));
+                    assertWhiteFieldBounds(actual, width, height, fit,
+                            290, 64, 344, 79, 297, 68, 342, 75);
+                    assertWhiteFieldBounds(actual, width, height, fit,
+                            310, 79, 342, 94, 322, 83, 341, 90);
+                    Ink value = valueInk(actual, width, height, fit, 149.75f);
+                    assertTrue("Muslim caption and value remain separated", value.top >= 150.75f);
+                    assertTrue("Source value size", value.width >= 41f && value.width <= 54f);
+                    assertTrue("Source value right alignment", value.right >= 336f && value.right <= 343f);
+                    byte[] expected = renderOracle(buffer, batch, oracle, fit);
+                    byte[] otherReligion = renderCurrent(buffer, batch, renderer, container,
+                            wrong, wrongState, ui, controls);
+                    save(actual, width, height, "source-mass-media-mus-" + width + ".png");
+                    save(expected, width, height, "source-mass-media-mus-oracle-" + width + ".png");
+                    save(otherReligion, width, height, "source-mass-media-wrong-religion-" + width + ".png");
+                    double actualError = artworkError(actual, expected, width, height, fit);
+                    double wrongError = artworkError(otherReligion, expected, width, height, fit);
+                    assertTrue("Independent source Muslim artwork error: " + actualError, actualError < 12);
+                    assertTrue("Wrong religion must fail the same oracle: " + wrongError, wrongError > 12);
+                    assertTrue("Source oracle discriminates religion artwork", wrongError > actualError * 3);
+                } finally { buffer.dispose(); }
+            }
+        } finally { oracle.dispose(); batch.dispose(); }
+    }
+
+    private static String renderedText(SourceActionMenuRenderer renderer, String name) throws Exception {
+        Field fields = SourceActionMenuRenderer.class.getDeclaredField("fields");
+        fields.setAccessible(true);
+        for (Object field : (Object[]) fields.get(renderer)) {
+            Field source = field.getClass().getDeclaredField("source"); source.setAccessible(true);
+            if (!name.equals(((JsonValue) source.get(field)).getString("name"))) continue;
+            Field glyph = field.getClass().getDeclaredField("glyph"); glyph.setAccessible(true);
+            StringBuilder text = new StringBuilder();
+            for (GlyphLayout.GlyphRun run : ((GlyphLayout) glyph.get(field)).runs)
+                for (BitmapFont.Glyph character : run.glyphs) text.append((char) character.id);
+            return text.toString();
+        }
+        throw new AssertionError("Missing rendered source field " + name);
+    }
+
+    private static Texture sourceModal() throws Exception {
+        try (InputStream input = InstrumentationRegistry.getInstrumentation().getContext().getAssets()
+                .open("source-mass-media/mus-modal.png")) {
+            byte[] bytes = input.readAllBytes();
+            Pixmap pixmap = new Pixmap(bytes, 0, bytes.length);
+            try {
+                Texture texture = new Texture(pixmap);
+                texture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
+                return texture;
+            } finally { pixmap.dispose(); }
+        }
+    }
+
+    private static byte[] renderOracle(FrameBuffer buffer, SpriteBatch batch, Texture oracle, Rectangle fit) {
+        buffer.begin();
+        try {
+            Gdx.gl.glClearColor(0, 0, 0, 0); Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+            batch.setTransformMatrix(new Matrix4()); batch.setColor(Color.WHITE);
+            batch.begin(); batch.draw(oracle, fit.x, fit.y, fit.width, fit.height); batch.end();
+            return ScreenUtils.getFrameBufferPixels(0, 0, buffer.getWidth(), buffer.getHeight(), true);
+        } finally { if (batch.isDrawing()) batch.end(); buffer.end(); }
+    }
+
+    private static double artworkError(byte[] actual, byte[] expected, int width, int height, Rectangle fit) {
+        float scale = fit.width / 365f;
+        float top = height - fit.y - fit.height;
+        long error = 0, channels = 0;
+        // Whole source MC1 building and shadow; excludes the independent dynamic fields.
+        for (int y = (int) Math.ceil(top + 35 * scale); y < top + 240 * scale; y++)
+            for (int x = (int) Math.ceil(fit.x + 20 * scale); x < fit.x + 210 * scale; x++) {
+                int pixel = (y * width + x) * 4;
+                for (int channel = 0; channel < 3; channel++) {
+                    error += Math.abs((actual[pixel + channel] & 255) - (expected[pixel + channel] & 255));
+                    channels++;
+                }
+            }
+        return error / (double) channels;
+    }
+
+    private static void assertWhiteFieldBounds(byte[] pixels, int width, int height, Rectangle fit,
+            float left, float top, float right, float bottom,
+            float expectedLeft, float expectedTop, float expectedRight, float expectedBottom) {
+        float scale = fit.width / 365f, modalTop = height - fit.y - fit.height;
+        int minX = width, minY = height, maxX = -1, maxY = -1;
+        for (int y = (int) Math.ceil(modalTop + top * scale); y < modalTop + bottom * scale; y++)
+            for (int x = (int) Math.ceil(fit.x + left * scale); x < fit.x + right * scale; x++) {
+                int offset = (y * width + x) * 4;
+                if ((pixels[offset] & 255) > 120 && (pixels[offset + 1] & 255) > 120
+                        && (pixels[offset + 2] & 255) > 120) {
+                    minX = Math.min(minX, x); minY = Math.min(minY, y);
+                    maxX = Math.max(maxX, x + 1); maxY = Math.max(maxY, y + 1);
+                }
+            }
+        assertTrue("Source dynamic field ink is visible", maxX >= 0);
+        // Independent source stage field ink, translated from its (205,135) crop.
+        float tolerance = Math.max(2f, 2f * scale);
+        assertEquals("Source field left", fit.x + expectedLeft * scale, minX, tolerance);
+        assertEquals("Source field top", modalTop + expectedTop * scale, minY, tolerance);
+        assertEquals("Source field right", fit.x + expectedRight * scale, maxX, tolerance);
+        assertEquals("Source field bottom", modalTop + expectedBottom * scale, maxY, tolerance);
     }
 
     private static byte[] renderCurrent(FrameBuffer buffer, SpriteBatch batch,

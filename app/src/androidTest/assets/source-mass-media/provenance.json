@@ -1,0 +1,32 @@
+{
+  "provenance": {
+    "source_files_sha256": {
+      "assets/runtime/scene.json.gz": "7213f06fac4e887050ad89e0d3c9a67f47789096d559af8e08333991f7616629",
+      "wd2/setup_menu.py": "5633326451e768a84a14bde04e452043ba7fac2617a4c71b7b36dcd0495f0c4a",
+      "wd2/generated/Sub_Presenter_interface.py": "bdb6675220507323b784b4867af0d3f80b4366935f353903b12c2d052d714bd7",
+      "wd2/iphone_ui.py": "1146ccec8049db82a1fe1ca5d5c68dae6311c7ce92dc07369d7a390721badf7e",
+      "wd2/menu_renderer.py": "07f2f2f992560e4f46ba3eefcd1350d7896c0a010a7ac82a373c046449f7e9a8"
+    },
+    "execution": "python -B from external cwd; write-deny audit hook before source imports"
+  },
+  "setup": {
+    "seed": 0,
+    "building": 5,
+    "leader": 0,
+    "action_callback": "btn4"
+  },
+  "crop": [
+    205,
+    135,
+    570,
+    410
+  ],
+  "artworkRegion": [
+    20,
+    35,
+    210,
+    240
+  ],
+  "sha256": "5a5480973436f1767289663f5fdb9601854eefe8a95cb482638563afec76a545",
+  "description": "Independent source callback render. Artwork region compared; native value uses actual phone adapter size16 and offset7. No packaged Android pixels used as oracle."
+}

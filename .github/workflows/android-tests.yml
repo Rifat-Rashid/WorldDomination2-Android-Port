@@ -489,6 +489,9 @@ jobs:
           - id: resource-dialog-live-text-tests
             check: Resource dialog live source values and budget
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.ResourceMenuTextTest"'
+          - id: mass-media-source-population-tests
+            check: Mass Media source population display and rounding
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.MassMediaTextTest"'
           - id: resource-dialog-clarity-assets-tests
             check: Resource dialog high resolution art and font coverage
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.OriginalUiAssetManifestTest.resourceDialogUsesHighResolutionArtAndSeparateScalableText"'

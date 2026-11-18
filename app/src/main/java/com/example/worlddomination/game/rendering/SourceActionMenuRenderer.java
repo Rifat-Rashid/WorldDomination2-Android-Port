@@ -16,6 +16,7 @@ import com.badlogic.gdx.utils.JsonValue;
 import com.example.worlddomination.game.simulation.GameState;
 import com.example.worlddomination.game.simulation.WeaponCatalog;
 import com.example.worlddomination.game.ui.SourceActionMenuState;
+import com.example.worlddomination.game.ui.MassMediaText;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -98,7 +99,7 @@ public final class SourceActionMenuRenderer implements Disposable {
         String name = field.getString("name");
         if ("textFunds".equals(name)) return "Budget: " + funds + ".000.000";
         if (key.startsWith("religion-")) {
-            if ("text1".equals(name)) return game.getHuman().populationMillions + ".000.000";
+            if ("text1".equals(name)) return MassMediaText.population(game.getHuman().populationMillions);
             if ("text2".equals(name)) return opinion + "%";
             if ("text3".equals(name)) return "+" + game.getMassMediaPreviewGain() + " %";
         }

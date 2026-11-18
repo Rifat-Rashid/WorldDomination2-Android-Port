@@ -101,6 +101,7 @@ class NativeGroupTests(unittest.TestCase):
                             (groups.STATISTIC_BARS, groups.STATISTIC_BARS_EVIDENCE),
                             (groups.EQUIPMENT_CARDS, groups.EQUIPMENT_CARDS_EVIDENCE),
                             (groups.SCORE_PANEL, groups.SCORE_PANEL_EVIDENCE),
+                            (groups.MASS_MEDIA_FIELDS, groups.MASS_MEDIA_FIELDS_EVIDENCE),
                             (groups.PHONE_TOOLBAR_AUDIO, groups.PHONE_TOOLBAR_AUDIO_EVIDENCE),
                             (groups.MESSAGE_WHOLE_LINES, groups.MESSAGE_WHOLE_LINES_EVIDENCE),
                             (groups.PHONE_PANELS, groups.PHONE_PANELS_EVIDENCE),
@@ -243,6 +244,20 @@ class NativeGroupTests(unittest.TestCase):
                 groups.verify_artifacts(self.manifest, self.root)
             image.write_bytes(PNG)
 
+    def test_mass_media_fields_require_source_oracle_and_wrong_religion_controls(self):
+        self.fixture()
+        self.assertEqual({f"source-mass-media-{variant}-{width}.png"
+                          for variant in ("value", "value-old-control", "mus", "mus-oracle", "wrong-religion")
+                          for width in (800, 1194)}, groups.MASS_MEDIA_FIELDS_EVIDENCE)
+        folder = self.root / "android-native-b-results/reports/androidTests/beta-ui-evidence"
+        for filename in sorted(groups.MASS_MEDIA_FIELDS_EVIDENCE):
+            image = folder / filename
+            image.unlink()
+            with self.subTest(image=filename), self.assertRaisesRegex(
+                    ValueError, "Missing required Mass Media source fields screenshots"):
+                groups.verify_artifacts(self.manifest, self.root)
+            image.write_bytes(PNG)
+
     def test_biological_idle_handoff_case_is_required(self):
         name = "com.example.worlddomination.game.rendering.SourceBiologicalPlaybackInstrumentedTest"
         method = "legalSubmarineIdleAndNextConfirmKeepCanonicalCloudsAbsent"
@@ -305,7 +320,7 @@ class NativeGroupTests(unittest.TestCase):
         result = groups.verify_artifacts(self.manifest, self.root)
         self.assertEqual(109, sum(row["classes"] for row in result.values()))
         self.assertEqual(173, sum(row["executed"] for row in result.values()))
-        self.assertEqual(172, sum(row["requiredPngs"] for row in result.values()))
+        self.assertEqual(182, sum(row["requiredPngs"] for row in result.values()))
 
     def test_missing_phone_toolbar_audio_screenshots_are_rejected(self):
         self.fixture()
