@@ -1654,7 +1654,9 @@ public final class GameState {
         }
         PlayerState proposer = players[proposerPlayerId];
         PlayerState target = players[targetPlayerId];
-        if (!proposer.alive || !target.alive || proposer.hasCeasefireWith(targetPlayerId)) {
+        // Presenter.updatePlayerVars_2 applies already-planned proposal records
+        // even when an earlier accepted answer established a ceasefire this turn.
+        if (!proposer.alive || !target.alive) {
             return false;
         }
         return recordDiplomacyProposal(proposer, target, optionIndex);
