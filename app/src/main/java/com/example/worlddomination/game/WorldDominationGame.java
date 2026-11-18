@@ -3041,20 +3041,14 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     }
 
     private void drawSettingsGear() {
-        shapes.begin(ShapeRenderer.ShapeType.Line);
-        shapes.setColor(TITLE_TEXT);
-        float cx = settingsButton.x + settingsButton.width / 2f;
-        float cy = settingsButton.y + settingsButton.height / 2f;
-        shapes.circle(cx, cy, 6.5f, 16);
-        shapes.circle(cx, cy, 2.6f, 12);
-        for (int i = 0; i < 8; i++) {
-            float angle = (float) (Math.PI * i / 4f);
-            shapes.line(cx + (float) Math.cos(angle) * 6f,
-                    cy + (float) Math.sin(angle) * 6f,
-                    cx + (float) Math.cos(angle) * 9f,
-                    cy + (float) Math.sin(angle) * 9f);
-        }
-        shapes.end();
+        batch.setProjectionMatrix(camera.combined);
+        float oldColor = batch.getPackedColor();
+        batch.begin();
+        batch.setColor(com.badlogic.gdx.graphics.Color.WHITE);
+        batch.draw(uiAssets.phoneGear, settingsButton.x,
+                settingsButton.y + settingsButton.height - 23f, 23f, 23f);
+        batch.end();
+        batch.setPackedColor(oldColor);
     }
 
     private void drawActionModal() {

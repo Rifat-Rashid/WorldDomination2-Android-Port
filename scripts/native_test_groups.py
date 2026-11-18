@@ -186,7 +186,7 @@ TECHNOLOGY_FIELDS_EVIDENCE = {
 PHONE_TOOLBAR_AUDIO = "com.example.worlddomination.game.audio.PhoneToolbarAudioInstrumentedTest"
 PHONE_TOOLBAR_AUDIO_EVIDENCE = {
     f"phone-toolbar-{variant}.png"
-    for variant in ("before", "muted", "restored", "gear")
+    for variant in ("before", "muted", "restored", "gear", "gear-silhouette")
 }
 
 

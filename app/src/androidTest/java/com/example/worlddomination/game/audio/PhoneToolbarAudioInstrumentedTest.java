@@ -1,18 +1,28 @@
 package com.example.worlddomination.game.audio;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.audio.Music;
+import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.PixmapIO;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.glutils.FrameBuffer;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.example.worlddomination.MainActivity;
 import com.example.worlddomination.game.WorldDominationGame;
+import com.example.worlddomination.game.assets.OriginalUiAssets;
 import com.example.worlddomination.game.simulation.GameState;
 import com.example.worlddomination.testing.GameActivityScenario;
 
@@ -20,6 +30,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.File;
+import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -89,6 +100,7 @@ public final class PhoneToolbarAudioInstrumentedTest {
                     assertTrue(theme.isPlaying());
                     byte[] gearImage = capture(app, mute, "phone-toolbar-gear.png");
                     assertArrayEquals("Gear does not change the mute label", restored, gearImage);
+                    verifyGearMatchesSource(app, gear);
                     assertEquals(turn, game.getTurn());
                     assertEquals(money, game.getTurnMoneyMillions());
                     assertEquals(queued, game.getQueuedActionCount());
@@ -174,5 +186,110 @@ public final class PhoneToolbarAudioInstrumentedTest {
         } finally {
             frame.dispose();
         }
+    }
+
+    /** Compare the actual gear draw against an independently generated 23px phone oracle. */
+    private static void verifyGearMatchesSource(WorldDominationGame app, Rectangle gear)
+            throws Exception {
+        OriginalUiAssets assets = (OriginalUiAssets) field(app, "uiAssets");
+        assertTrue("Gear uses a managed file texture",
+                assets.phoneGear.getTexture().isManaged());
+        OrthographicCamera camera = (OrthographicCamera) field(app, "camera");
+        SpriteBatch batch = (SpriteBatch) field(app, "batch");
+        ShapeRenderer shapes = (ShapeRenderer) field(app, "shapes");
+        float oldWidth = camera.viewportWidth, oldHeight = camera.viewportHeight;
+        float oldZoom = camera.zoom;
+        Vector3 oldPosition = new Vector3(camera.position);
+        Rectangle oldGear = new Rectangle(gear);
+        float oldBatchColor = batch.getPackedColor();
+        com.badlogic.gdx.graphics.Color oldShapeColor = new com.badlogic.gdx.graphics.Color(shapes.getColor());
+        FrameBuffer buffer = new FrameBuffer(Pixmap.Format.RGBA8888, 23, 23, false);
+        byte[] actual;
+        byte[] thinWire;
+        try {
+            camera.setToOrtho(false, 23, 23);
+            gear.set(0, 0, 23, 23);
+            batch.setColor(.35f, .55f, .75f, 1f);
+            int tintBits = Float.floatToRawIntBits(batch.getPackedColor());
+            buffer.begin();
+            try {
+                Gdx.gl.glClearColor(0f, 0f, 0f, 1f);
+                Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+                invoke(app, "drawSettingsGear");
+                assertEquals("Gear draw restores the caller's batch tint", tintBits,
+                        Float.floatToRawIntBits(batch.getPackedColor()));
+                actual = ScreenUtils.getFrameBufferPixels(0, 0, 23, 23, true);
+                Pixmap image = new Pixmap(23, 23, Pixmap.Format.RGBA8888);
+                try {
+                    image.getPixels().put(actual);
+                    File directory = InstrumentationRegistry.getInstrumentation()
+                            .getTargetContext().getExternalFilesDir("beta-ui-evidence");
+                    assertNotNull(directory);
+                    PixmapIO.writePNG(Gdx.files.absolute(new File(directory,
+                            "phone-toolbar-gear-silhouette.png").getAbsolutePath()), image);
+                } finally {
+                    image.dispose();
+                }
+                Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+                shapes.setProjectionMatrix(camera.combined);
+                shapes.begin(ShapeRenderer.ShapeType.Line);
+                shapes.setColor(225f / 255f, 233f / 255f, 235f / 255f, 1f);
+                shapes.circle(11.5f, 11.5f, 6.5f, 16);
+                shapes.circle(11.5f, 11.5f, 2.6f, 12);
+                for (int i = 0; i < 8; i++) {
+                    float angle = (float) (Math.PI * i / 4f);
+                    shapes.line(11.5f + (float) Math.cos(angle) * 6f,
+                            11.5f + (float) Math.sin(angle) * 6f,
+                            11.5f + (float) Math.cos(angle) * 9f,
+                            11.5f + (float) Math.sin(angle) * 9f);
+                }
+                shapes.end();
+                thinWire = ScreenUtils.getFrameBufferPixels(0, 0, 23, 23, true);
+            } finally {
+                buffer.end();
+            }
+        } finally {
+            buffer.dispose();
+            batch.setPackedColor(oldBatchColor);
+            shapes.setColor(oldShapeColor);
+            gear.set(oldGear);
+            camera.setToOrtho(false, oldWidth, oldHeight);
+            camera.position.set(oldPosition);
+            camera.zoom = oldZoom;
+            camera.update();
+        }
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inPremultiplied = false;
+        Bitmap source;
+        try (InputStream stream = InstrumentationRegistry.getInstrumentation()
+                .getContext().getAssets().open("source-phone-gear-23.png")) {
+            source = BitmapFactory.decodeStream(stream, null, options);
+        }
+        assertNotNull(source);
+        try {
+            assertEquals(23, source.getWidth());
+            assertEquals(23, source.getHeight());
+            double actualError = gearErrorAgainstSource(actual, source);
+            double thinError = gearErrorAgainstSource(thinWire, source);
+            assertTrue("Source silhouette beats thin wire: actual=" + actualError
+                            + " thin=" + thinError,
+                    actualError < 25d && actualError * 2d < thinError);
+        } finally {
+            source.recycle();
+        }
+    }
+
+    private static double gearErrorAgainstSource(byte[] pixels, Bitmap source) {
+        long error = 0;
+        for (int y = 0; y < 23; y++) for (int x = 0; x < 23; x++) {
+            int sourcePixel = source.getPixel(x, y);
+            int alpha = sourcePixel >>> 24;
+            int offset = (y * 23 + x) * 4;
+            for (int channel = 0; channel < 3; channel++) {
+                int expected = (((sourcePixel >>> (16 - channel * 8)) & 255) * alpha + 127) / 255;
+                error += Math.abs((pixels[offset + channel] & 255) - expected);
+            }
+        }
+        return error / (23d * 23d * 3d);
     }
 }

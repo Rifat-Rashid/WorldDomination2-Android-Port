@@ -31,6 +31,7 @@ public final class OriginalUiAssets implements Disposable {
     public final TextureRegion scoreTitle;
     private final Texture productionModalTexture;
     private final Texture neutralButtonTexture;
+    private final Texture phoneGearTexture;
     private final Texture propagandaFrameTexture;
     private final Texture[] stockControlTextures = new Texture[4];
     public final TextureRegion propagandaFrame;
@@ -52,6 +53,7 @@ public final class OriginalUiAssets implements Disposable {
     public final TextureRegion stockCounter;
     public final TextureRegion[] stockSwitches = new TextureRegion[3];
     public final TextureRegion[] actionControls = new TextureRegion[3];
+    public final TextureRegion phoneGear;
 
     public OriginalUiAssets() {
         String[] phonePanelNames = {"interior-tile", "chrome-42", "chrome-43"};
@@ -70,6 +72,9 @@ public final class OriginalUiAssets implements Disposable {
                 Gdx.files.internal("original/ui/neutral-button.png"), true);
         neutralButtonTexture.setFilter(TextureFilter.MipMapLinearLinear, TextureFilter.Linear);
         button = new TextureRegion(neutralButtonTexture);
+        phoneGearTexture = new Texture(Gdx.files.internal("original/ui/phone-gear-96.png"), true);
+        phoneGearTexture.setFilter(TextureFilter.MipMapLinearLinear, TextureFilter.Linear);
+        phoneGear = new TextureRegion(phoneGearTexture);
         logoTexture = new Texture(Gdx.files.internal("original/ui/logo-mark.png"), true);
         logoTexture.setFilter(TextureFilter.Linear, TextureFilter.Linear);
         logo = new TextureRegion(logoTexture);
@@ -189,6 +194,7 @@ public final class OriginalUiAssets implements Disposable {
         propagandaStrengthFont.dispose();
         metalPanel.dispose();
         neutralButtonTexture.dispose();
+        phoneGearTexture.dispose();
         for (Texture texture : stockControlTextures) texture.dispose();
     }
 }
