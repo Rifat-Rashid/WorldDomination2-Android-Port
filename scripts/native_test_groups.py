@@ -148,6 +148,13 @@ MESSAGE_WHOLE_LINES_EVIDENCE = {
     for variant in ("actual", "expected", "unrestricted")
 }
 
+MASS_MEDIA_FIELDS = "com.example.worlddomination.game.rendering.MassMediaValueLayoutInstrumentedTest"
+MASS_MEDIA_FIELDS_EVIDENCE = {
+    f"source-mass-media-{variant}-{width}.png"
+    for variant in ("value", "value-old-control", "mus", "mus-oracle", "wrong-religion")
+    for width in (800, 1194)
+}
+
 PHONE_PANELS = "com.example.worlddomination.game.rendering.SourcePhonePanelInstrumentedTest"
 PHONE_PANELS_EVIDENCE = {
     f"source-phone-panels-{variant}.png"
@@ -333,6 +340,7 @@ def verify_group_artifact(manifest: dict, group: dict, artifact: Path) -> tuple[
                     (STATISTIC_BARS, STATISTIC_BARS_EVIDENCE, "statistic bars"),
                     (EQUIPMENT_CARDS, EQUIPMENT_CARDS_EVIDENCE, "equipment cards"),
                     (SCORE_PANEL, SCORE_PANEL_EVIDENCE, "score panel"),
+                    (MASS_MEDIA_FIELDS, MASS_MEDIA_FIELDS_EVIDENCE, "Mass Media source fields"),
                     (PHONE_TOOLBAR_AUDIO, PHONE_TOOLBAR_AUDIO_EVIDENCE, "phone toolbar audio"),
                     (MESSAGE_WHOLE_LINES, MESSAGE_WHOLE_LINES_EVIDENCE, "message whole lines"),
                     (PHONE_PANELS, PHONE_PANELS_EVIDENCE, "phone panels"),

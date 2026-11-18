@@ -1,0 +1,70 @@
+{
+  "provenance": {
+    "source_files_sha256": {
+      "assets/runtime/scene.json.gz": "7213f06fac4e887050ad89e0d3c9a67f47789096d559af8e08333991f7616629",
+      "wd2/setup_menu.py": "5633326451e768a84a14bde04e452043ba7fac2617a4c71b7b36dcd0495f0c4a",
+      "wd2/generated/Sub_Presenter_interface.py": "bdb6675220507323b784b4867af0d3f80b4366935f353903b12c2d052d714bd7",
+      "wd2/iphone_ui.py": "1146ccec8049db82a1fe1ca5d5c68dae6311c7ce92dc07369d7a390721badf7e",
+      "wd2/menu_renderer.py": "07f2f2f992560e4f46ba3eefcd1350d7896c0a010a7ac82a373c046449f7e9a8"
+    },
+    "execution": "python -B from external cwd; write-deny audit hook before source imports"
+  },
+  "method": "Diagnostic city-population injection; assert derived human.population equals each input; call actual Sub_Presenter_interface getter; restore all five original city populations (total 450).",
+  "samples": [
+    {
+      "population": 0,
+      "observed_population": 0,
+      "display_population": "0.000.000"
+    },
+    {
+      "population": 4,
+      "observed_population": 4,
+      "display_population": "0.000.000"
+    },
+    {
+      "population": 5,
+      "observed_population": 5,
+      "display_population": "1.000.000"
+    },
+    {
+      "population": 14,
+      "observed_population": 14,
+      "display_population": "1.000.000"
+    },
+    {
+      "population": 15,
+      "observed_population": 15,
+      "display_population": "2.000.000"
+    },
+    {
+      "population": 44,
+      "observed_population": 44,
+      "display_population": "4.000.000"
+    },
+    {
+      "population": 45,
+      "observed_population": 45,
+      "display_population": "5.000.000"
+    },
+    {
+      "population": 449,
+      "observed_population": 449,
+      "display_population": "45.000.000"
+    },
+    {
+      "population": 450,
+      "observed_population": 450,
+      "display_population": "45.000.000"
+    },
+    {
+      "population": 455,
+      "observed_population": 455,
+      "display_population": "46.000.000"
+    },
+    {
+      "population": 500,
+      "observed_population": 500,
+      "display_population": "50.000.000"
+    }
+  ]
+}
