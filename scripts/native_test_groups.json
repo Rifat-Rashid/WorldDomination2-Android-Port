@@ -115,6 +115,7 @@
     "com.example.worlddomination.game.rendering.MessageWholeLineInstrumentedTest",
     "com.example.worlddomination.game.rendering.SourcePhonePanelInstrumentedTest",
     "com.example.worlddomination.game.rendering.ResourceModalContextRecoveryInstrumentedTest",
+    "com.example.worlddomination.game.persistence.PersonalBestPersistenceInstrumentedTest",
     "com.example.worlddomination.platform.graphics.SerializedAndroidGraphicsInstrumentedTest"
   ],
   "groups": [
@@ -239,7 +240,8 @@
         "com.example.worlddomination.game.rendering.SourceSetupButtonsInstrumentedTest",
         "com.example.worlddomination.game.rendering.SourceSetupCarouselInstrumentedTest",
         "com.example.worlddomination.game.rendering.SourceSetupBuildingsInstrumentedTest",
-        "com.example.worlddomination.game.rendering.SourceSetupEnemyArtInstrumentedTest"
+        "com.example.worlddomination.game.rendering.SourceSetupEnemyArtInstrumentedTest",
+        "com.example.worlddomination.game.persistence.PersonalBestPersistenceInstrumentedTest"
       ],
       "evidence": [
         "beta-ui-evidence"
@@ -274,10 +276,6 @@
     [
       "com.example.worlddomination.game.rendering.StockControlsInstrumentedTest",
       "groupedArtworkMatchesCurrentRowOrder"
-    ],
-    [
-      "com.example.worlddomination.game.rendering.StockControlsInstrumentedTest",
-      "preparedRocketQueueAndTubeRemovalPreserveSpareCarrierCounter"
     ],
     [
       "com.example.worlddomination.game.rendering.SetupEnemySelectionInstrumentedTest",
@@ -946,6 +944,18 @@
     [
       "com.example.worlddomination.game.rendering.ResourceModalContextRecoveryInstrumentedTest",
       "resourceModalRestoresAfterEglContextLoss"
+    ],
+    [
+      "com.example.worlddomination.game.persistence.PersonalBestPersistenceInstrumentedTest",
+      "realAndroidPreferencesRetainOnlyImprovedScores"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.SourceEndgameInstrumentedTest",
+      "scoreWriteFailureStillStartsEndgameWithoutClaimingSavedBest"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.StockControlsInstrumentedTest",
+      "preparedRocketQueueAndTubeRemovalPreserveSpareCarrierCounter"
     ],
     [
       "com.example.worlddomination.platform.graphics.SerializedAndroidGraphicsInstrumentedTest",

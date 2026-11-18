@@ -193,6 +193,9 @@ PHONE_TOOLBAR_AUDIO_EVIDENCE = {
     for variant in ("before", "muted", "restored", "gear", "gear-silhouette")
 }
 
+ENDGAME_FAILURE = "com.example.worlddomination.game.rendering.SourceEndgameInstrumentedTest"
+ENDGAME_FAILURE_EVIDENCE = {"source-endgame-unsaved-score.png"}
+
 
 def load_manifest(path: Path = MANIFEST) -> dict:
     data = json.loads(path.read_text(encoding="utf-8"))
@@ -356,7 +359,8 @@ def verify_group_artifact(manifest: dict, group: dict, artifact: Path) -> tuple[
                     (PHONE_PANELS, PHONE_PANELS_EVIDENCE, "phone panels"),
                     (RESOURCE_MODAL_CONTEXT, RESOURCE_MODAL_CONTEXT_EVIDENCE,
                      "resource modal context recovery"),
-                    (TECHNOLOGY_FIELDS, TECHNOLOGY_FIELDS_EVIDENCE, "technology fields")):
+                    (TECHNOLOGY_FIELDS, TECHNOLOGY_FIELDS_EVIDENCE, "technology fields"),
+                    (ENDGAME_FAILURE, ENDGAME_FAILURE_EVIDENCE, "unsaved score")):
                 if selected_class in group["classes"]:
                     missing = required - names
                     if missing:

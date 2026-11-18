@@ -110,14 +110,15 @@ class NativeGroupTests(unittest.TestCase):
                             (groups.PHONE_PANELS, groups.PHONE_PANELS_EVIDENCE),
                             (groups.RESOURCE_MODAL_CONTEXT,
                              groups.RESOURCE_MODAL_CONTEXT_EVIDENCE),
-                            (groups.TECHNOLOGY_FIELDS, groups.TECHNOLOGY_FIELDS_EVIDENCE)):
+                            (groups.TECHNOLOGY_FIELDS, groups.TECHNOLOGY_FIELDS_EVIDENCE),
+                            (groups.ENDGAME_FAILURE, groups.ENDGAME_FAILURE_EVIDENCE)):
                         if selected in group["classes"]:
                             for name in required:
                                 (folder / name).write_bytes(PNG)
 
     def test_manifest_is_exact_closed_inventory_and_both_groups_make_beta(self):
-        self.assertEqual(110, len(self.manifest["requiredClasses"]))
-        self.assertEqual(176, len(self.manifest["expectedCases"]))
+        self.assertEqual(111, len(self.manifest["requiredClasses"]))
+        self.assertEqual(178, len(self.manifest["expectedCases"]))
         self.assertEqual({"a", "b"}, {g["id"] for g in self.manifest["groups"]})
         self.assertEqual({"beta-ui-evidence", "propaganda-evidence"},
                          {e for g in self.manifest["groups"] for e in g["evidence"]})
@@ -321,9 +322,18 @@ class NativeGroupTests(unittest.TestCase):
     def test_downloaded_groups_require_exact_junit_sets_and_valid_png_headers(self):
         self.fixture()
         result = groups.verify_artifacts(self.manifest, self.root)
-        self.assertEqual(110, sum(row["classes"] for row in result.values()))
-        self.assertEqual(176, sum(row["executed"] for row in result.values()))
-        self.assertEqual(189, sum(row["requiredPngs"] for row in result.values()))
+        self.assertEqual(111, sum(row["classes"] for row in result.values()))
+        self.assertEqual(178, sum(row["executed"] for row in result.values()))
+        self.assertEqual(190, sum(row["requiredPngs"] for row in result.values()))
+
+    def test_unsaved_score_requires_actual_endgame_capture(self):
+        self.fixture()
+        selected = next(g for g in self.manifest["groups"] if groups.ENDGAME_FAILURE in g["classes"])
+        image = (self.root / ("android-native-" + selected["id"] + "-results")
+                 / "reports/androidTests/beta-ui-evidence/source-endgame-unsaved-score.png")
+        image.unlink()
+        with self.assertRaisesRegex(ValueError, "Missing required unsaved score screenshots"):
+            groups.verify_artifacts(self.manifest, self.root)
 
     def test_prepared_stock_counts_require_accept_and_removal_screenshots(self):
         self.fixture()

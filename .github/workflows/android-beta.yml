@@ -118,6 +118,7 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
           script: |
             bash scripts/run_android_native_tests.sh '${{ steps.inventory.outputs.classes }}' ${{ steps.inventory.outputs.evidence }}
+            if [ '${{ matrix.group }}' = b ]; then python3 scripts/run_score_persistence_probe.py; fi
       - name: Preserve this Android group's results and screenshots
         if: always()
         uses: actions/upload-artifact@v6
@@ -127,6 +128,25 @@ jobs:
             app/build/reports/androidTests/
             app/build/outputs/androidTest-results/
           if-no-files-found: error
+
+  score-persistence:
+    name: Personal best survives Android process restarts
+    needs: native-shards
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v7
+        with:
+          name: android-native-b-results
+          path: score-artifacts
+      - name: Require all four separate-process persistence phases
+        env:
+          NATIVE_RESULT: ${{ needs.native-shards.result }}
+        run: |
+          test "$NATIVE_RESULT" = success
+          python3 scripts/run_score_persistence_probe.py --verify score-artifacts/reports/androidTests/score-persistence.json
 
   native-mask-tests:
     # Keep the existing required check; it succeeds only after both groups pass.

@@ -21,6 +21,7 @@ import com.example.worlddomination.game.assets.OriginalEndgameAssets;
 import com.example.worlddomination.game.assets.OriginalFlashAnimationAssets;
 import com.example.worlddomination.game.persistence.PersonalBestStore;
 import com.example.worlddomination.game.persistence.ScorePreferenceBackend;
+import com.example.worlddomination.game.persistence.ScorePersistenceException;
 import com.example.worlddomination.game.simulation.CityState;
 import com.example.worlddomination.game.simulation.GameSetup;
 import com.example.worlddomination.game.simulation.GameState;
@@ -41,6 +42,65 @@ import static org.junit.Assert.*;
 /** Exercises actual terminal turns, authored endgame art, score, and touch handoff. */
 @RunWith(AndroidJUnit4.class)
 public final class SourceEndgameInstrumentedTest {
+    @Test public void scoreWriteFailureStillStartsEndgameWithoutClaimingSavedBest() throws Exception {
+        try (GameActivityScenario scenario = GameActivityScenario.launch(MainActivity.class)) {
+            CountDownLatch done = new CountDownLatch(1);
+            AtomicReference<Throwable> failure = new AtomicReference<>();
+            scenario.onActivity(activity -> Gdx.app.postRunnable(() -> {
+                WorldDominationGame app = (WorldDominationGame) Gdx.app.getApplicationListener();
+                Object original = null;
+                try {
+                    invoke(app, "initializeGameplayAssets");
+                    Object splash = field(WorldDominationGame.class, "splashState").get(app);
+                    splash.getClass().getMethod("dismiss").invoke(splash);
+                    original = field(WorldDominationGame.class, "personalBestStore").get(app);
+                    ScorePreferenceBackend failedDisk = new ScorePreferenceBackend() {
+                        @Override public long getLong(String key, long fallback) { return 0; }
+                        @Override public void putLong(String key, long value) { }
+                        @Override public void flush() {
+                            throw new ScorePersistenceException("Injected disk failure");
+                        }
+                    };
+                    field(WorldDominationGame.class, "personalBestStore")
+                            .set(app, new PersonalBestStore(failedDisk));
+                    GameState state = terminalState(GameState.MatchStatus.VICTORY);
+                    assertTrue("The test must attempt a score write", state.getFinalScore() > 0);
+                    field(WorldDominationGame.class, "game").set(app, state);
+                    invoke(app, "synchronizeOutcomeSequence");
+                    MatchOutcomeSequence sequence = (MatchOutcomeSequence)
+                            field(WorldDominationGame.class, "outcomeSequence").get(app);
+                    assertEquals(MatchOutcomeSequence.Phase.BEFORE_ENDGAME, sequence.getPhase());
+                    assertEquals("PERSONAL BEST NOT SAVED",
+                            field(WorldDominationGame.class, "outcomePersonalBestText").get(app));
+                    awaitAssets((OriginalEndgameAssets)
+                            field(WorldDominationGame.class, "endgameAssets").get(app));
+                    for (int i = 0; i < 2500 && !sequence.isComplete(); i++) {
+                        invoke(app, "advanceOutcomeSequence");
+                    }
+                    assertTrue("Unsaved score must still finish its presentation", sequence.isComplete());
+                    render(app);
+                    capture("source-endgame-unsaved-score.png");
+                    tapSource(app, 553f, 465f);
+                    assertNull("New Game remains usable after a failed save",
+                            field(WorldDominationGame.class, "game").get(app));
+                } catch (Throwable error) {
+                    failure.set(error);
+                } finally {
+                    try {
+                        field(WorldDominationGame.class, "personalBestStore").set(app, original);
+                        field(WorldDominationGame.class, "game").set(app, null);
+                        invoke(app, "synchronizeOutcomeSequence");
+                    } catch (Throwable error) {
+                        if (failure.get() == null) failure.set(error);
+                    }
+                    done.countDown();
+                }
+            }));
+            assertTrue("Failed-save endgame work timed out", done.await(60, TimeUnit.SECONDS));
+            if (failure.get() != null) throw new AssertionError("Failed-save endgame", failure.get());
+        }
+    }
+
     @Test public void victoryDrawsOriginalIntroAndFrozenScoreThenNewGame() throws Exception {
         exercise(GameState.MatchStatus.VICTORY);
     }

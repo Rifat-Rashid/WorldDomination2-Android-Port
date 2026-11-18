@@ -4,7 +4,6 @@ import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
-import com.badlogic.gdx.Preferences;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
@@ -50,7 +49,8 @@ import com.example.worlddomination.game.rendering.SourcePhonePanel;
 import com.example.worlddomination.game.rendering.SourceSetupPanelRenderer;
 import com.example.worlddomination.game.rendering.SourceSetupColorIndicators;
 import com.example.worlddomination.game.rendering.SourceSetupBuildingIndicators;
-import com.example.worlddomination.game.persistence.LibGdxScorePreferenceBackend;
+import com.example.worlddomination.game.persistence.ScorePreferenceBackend;
+import com.example.worlddomination.game.persistence.ScorePersistenceException;
 import com.example.worlddomination.game.persistence.PersonalBestStore;
 import com.example.worlddomination.game.rendering.BattleAnimationSequence;
 import com.example.worlddomination.game.rendering.BattleExplosionRenderer;
@@ -458,7 +458,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private boolean splashPointerDown;
     private boolean splashContinuePending;
 
-    public WorldDominationGame() {
+    public WorldDominationGame(ScorePreferenceBackend scoreBackend) {
+        personalBestStore = new PersonalBestStore(scoreBackend);
         for (int i = 0; i < navRows.length; i++) {
             navRows[i] = new Rectangle();
         }
@@ -539,9 +540,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         setupPanelRenderer = new SourceSetupPanelRenderer();
         splashAssets = new OriginalSplashAssets();
         cityAssets = new OriginalCityAssets(true);
-        Preferences scorePreferences = Gdx.app.getPreferences("world_domination_2_scores");
-        personalBestStore = new PersonalBestStore(
-                new LibGdxScorePreferenceBackend(scorePreferences));
         audio.initialize();
         setup = new GameSetup(System.nanoTime());
         Gdx.input.setInputProcessor(this);
@@ -1620,9 +1618,14 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 endgameRenderer.start();
             }
             if (personalBestStore != null) {
-                personalBestStore.recordFinalScore(game.getFinalScore());
-                outcomePersonalBestText = MatchOutcomePresentation.personalBestLine(
-                        personalBestStore.getBestScore());
+                try {
+                    personalBestStore.recordFinalScore(game.getFinalScore());
+                    outcomePersonalBestText = MatchOutcomePresentation.personalBestLine(
+                            personalBestStore.getBestScore());
+                } catch (ScorePersistenceException error) {
+                    Gdx.app.error("Personal best", "Completed match score could not be saved", error);
+                    outcomePersonalBestText = "PERSONAL BEST NOT SAVED";
+                }
             } else {
                 outcomePersonalBestText = MatchOutcomePresentation.personalBestLine(
                         game.getFinalScore());
