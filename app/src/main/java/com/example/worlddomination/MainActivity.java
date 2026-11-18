@@ -14,6 +14,7 @@ import com.badlogic.gdx.backends.android.AndroidAudio;
 import com.badlogic.gdx.backends.android.AndroidGraphics;
 import com.badlogic.gdx.backends.android.surfaceview.FillResolutionStrategy;
 import com.example.worlddomination.game.WorldDominationGame;
+import com.example.worlddomination.game.ui.SafeAreaInsets;
 import com.example.worlddomination.platform.audio.SourceAndroidAudio;
 import com.example.worlddomination.platform.persistence.AndroidScorePreferenceBackend;
 import com.example.worlddomination.platform.graphics.SerializedAndroidGraphics;
@@ -77,19 +78,36 @@ public final class MainActivity extends AndroidApplication {
         }
         View decor = getWindow().getDecorView();
         decor.setOnApplyWindowInsetsListener((view, insets) -> {
-            DisplayCutout cutout = insets.getDisplayCutout();
-            if (cutout != null) {
-                float density = getResources().getDisplayMetrics().density;
-                game.setSafeAreaInsets(cutout.getSafeInsetLeft() / density,
-                        cutout.getSafeInsetTop() / density,
-                        cutout.getSafeInsetRight() / density,
-                        cutout.getSafeInsetBottom() / density);
-            } else {
-                game.setSafeAreaInsets(0f, 0f, 0f, 0f);
-            }
+            applyCutoutInsets(view, insets);
             return view.onApplyWindowInsets(insets);
         });
+        // Insets can arrive before the GL view is laid out, or before it moves
+        // into an already-inset window. Recompute after either layout changes.
+        graphics.getView().addOnLayoutChangeListener(
+                (view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
+                    WindowInsets insets = decor.getRootWindowInsets();
+                    if (insets != null) applyCutoutInsets(decor, insets);
+                });
         decor.requestApplyInsets();
+    }
+
+    @android.annotation.TargetApi(Build.VERSION_CODES.P)
+    private void applyCutoutInsets(View decor, WindowInsets insets) {
+        View surface = graphics.getView();
+        if (decor.getWidth() <= 0 || decor.getHeight() <= 0
+                || surface.getWidth() <= 0 || surface.getHeight() <= 0) return;
+        DisplayCutout cutout = insets.getDisplayCutout();
+        SafeAreaInsets windowInsets = cutout == null ? SafeAreaInsets.NONE
+                : new SafeAreaInsets(cutout.getSafeInsetLeft(), cutout.getSafeInsetTop(),
+                        cutout.getSafeInsetRight(), cutout.getSafeInsetBottom());
+        int[] decorPosition = new int[2];
+        int[] surfacePosition = new int[2];
+        decor.getLocationInWindow(decorPosition);
+        surface.getLocationInWindow(surfacePosition);
+        SafeAreaInsets pixels = windowInsets.relativeTo(decor.getWidth(), decor.getHeight(),
+                surfacePosition[0] - decorPosition[0], surfacePosition[1] - decorPosition[1],
+                surface.getWidth(), surface.getHeight());
+        game.setSafeAreaInsetsPixels(pixels.left, pixels.top, pixels.right, pixels.bottom);
     }
 
     @Override

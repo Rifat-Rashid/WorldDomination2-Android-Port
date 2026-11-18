@@ -17,6 +17,11 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public final class SetupScreenLayoutTest {
+    @Test public void wideCutoutKeepsEverySetupControlInsideTheSafeArea() {
+        assertLayout(896, 672, 224, 36, 48, 24);
+        assertLayout(1194, 552, 280, 12, 24, 8);
+    }
+
     @Test
     public void removalArtworkKeepsSourceAspectRatioInsideEveryOccupiedCard() {
         for (float[] size : new float[][]{{800, 600}, {1194, 552}, {2424, 1080}}) {

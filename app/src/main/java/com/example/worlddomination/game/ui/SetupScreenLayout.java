@@ -34,7 +34,13 @@ public final class SetupScreenLayout {
     /** Lays out the mockup's top difficulty row, split player style, rival picker and footer. */
     public void update(float width, float height, float safeLeft, float safeTop,
                        float safeRight, float safeBottom) {
-        float left = 2f;
+        // The reference layout leaves a 13% margin beside its main panels. Keep
+        // that placement for normal cutouts; move only when the margin cannot
+        // contain the exclusion. Increasing the left offset reduces contentWidth.
+        float originalContentWidth = Math.max(1f, width - Math.max(0f, safeRight) - 6f);
+        float insetOverflow = Math.max(0f, Math.max(0f, safeLeft)
+                - originalContentWidth * 0.13f);
+        float left = 2f + insetOverflow / 0.87f;
         float bottom = Math.max(0f, safeBottom) + 2f;
         float contentWidth = Math.max(1f, width - left - Math.max(0f, safeRight) - 4f);
         float contentHeight = Math.max(1f, height - bottom - Math.max(0f, safeTop) - 4f);

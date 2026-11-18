@@ -120,6 +120,7 @@ import com.example.worlddomination.game.ui.NavigationPanelLayout;
 import com.example.worlddomination.game.ui.PreparedShipStrikeSelection;
 import com.example.worlddomination.game.ui.ProductionScreenLayout;
 import com.example.worlddomination.game.ui.ScrollPaneState;
+import com.example.worlddomination.game.ui.SafeAreaInsets;
 import com.example.worlddomination.game.ui.PanelGestureVelocity;
 import com.example.worlddomination.game.ui.SplashScreenLayout;
 import com.example.worlddomination.game.ui.SplashScreenState;
@@ -410,11 +411,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private float worldWidth;
     private float worldHeight;
     private float topBarY;
-    private volatile float pendingSafeLeft;
-    private volatile float pendingSafeTop;
-    private volatile float pendingSafeRight;
-    private volatile float pendingSafeBottom;
-    private volatile boolean safeAreaChanged;
+    // Publish all four edges together; a newer UI update stays pending during layout.
+    private volatile SafeAreaInsets pendingSafeInsets = SafeAreaInsets.NONE;
+    private SafeAreaInsets appliedSafeInsets;
     private float safeLeft;
     private float safeTop;
     private float safeRight;
@@ -558,11 +557,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     private void layout(int width, int height) {
         if (phonePanelRenderer != null) phonePanelRenderer.invalidate();
-        safeLeft = pendingSafeLeft;
-        safeTop = pendingSafeTop;
-        safeRight = pendingSafeRight;
-        safeBottom = pendingSafeBottom;
-        safeAreaChanged = false;
+        SafeAreaInsets pixelInsets = pendingSafeInsets;
         viewport.update(width, height, true);
         camera.setToOrtho(false, viewport.getWorldWidth(), viewport.getWorldHeight());
         viewport.setCamera(camera);
@@ -570,6 +565,16 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         camera.update();
         worldWidth = viewport.getWorldWidth();
         worldHeight = viewport.getWorldHeight();
+        SafeAreaInsets worldInsets = pixelInsets.relativeTo(
+                width, height, viewport.getScreenX(),
+                height - viewport.getScreenY() - viewport.getScreenHeight(),
+                viewport.getScreenWidth(), viewport.getScreenHeight()).toWorld(
+                worldWidth, worldHeight, viewport.getScreenWidth(), viewport.getScreenHeight());
+        safeLeft = worldInsets.left;
+        safeTop = worldInsets.top;
+        safeRight = worldInsets.right;
+        safeBottom = worldInsets.bottom;
+        appliedSafeInsets = pixelInsets;
         SplashScreenLayout.fit(worldWidth, worldHeight, splashBounds);
 
         float contentX = safeLeft + 4f;
@@ -693,7 +698,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     @Override
     public void render() {
         renderingFrame = true;
-        if (safeAreaChanged) {
+        if (pendingSafeInsets != appliedSafeInsets) {
             layout(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         }
         if (flashAnimationAssets != null) {
@@ -1664,13 +1669,11 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
     }
 
-    /** Safe insets arrive from the Android UI thread and are applied on the game thread. */
-    public void setSafeAreaInsets(float left, float top, float right, float bottom) {
-        pendingSafeLeft = Math.max(0f, left);
-        pendingSafeTop = Math.max(0f, top);
-        pendingSafeRight = Math.max(0f, right);
-        pendingSafeBottom = Math.max(0f, bottom);
-        safeAreaChanged = true;
+    /** GL-surface pixel insets arrive on the UI thread; layout projects them to world units. */
+    public void setSafeAreaInsetsPixels(float left, float top, float right, float bottom) {
+        SafeAreaInsets pixels = new SafeAreaInsets(left, top, right, bottom);
+        if (pixels.sameAs(pendingSafeInsets)) return;
+        pendingSafeInsets = pixels;
         Gdx.graphics.requestRendering();
     }
 

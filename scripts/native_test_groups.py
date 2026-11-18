@@ -22,6 +22,8 @@ BETA_PRODUCERS = {
     "com.example.worlddomination.game.assets.EarlySetupPortraitsInstrumentedTest",
     "com.example.worlddomination.game.rendering.SourceAirfieldDefenseRenderingInstrumentedTest",
 }
+SAFE_AREA = "com.example.worlddomination.game.rendering.SafeAreaViewportInstrumentedTest"
+SAFE_AREA_EVIDENCE = {"safe-area-setup-800x600.png", "safe-area-game-2424x1080.png"}
 PROPAGANDA = "com.example.worlddomination.game.ui.PropagandaUiInstrumentedTest"
 ACTION_MENUS = "com.example.worlddomination.game.rendering.SourceActionMenusInstrumentedTest"
 ACTION_MENUS_EVIDENCE = {"source-diplomacy-zero-budget.png"}
@@ -364,6 +366,7 @@ def verify_group_artifact(manifest: dict, group: dict, artifact: Path) -> tuple[
                     (PHONE_TOOLBAR_AUDIO, PHONE_TOOLBAR_AUDIO_EVIDENCE, "phone toolbar audio"),
                     (MESSAGE_WHOLE_LINES, MESSAGE_WHOLE_LINES_EVIDENCE, "message whole lines"),
                     (PHONE_PANELS, PHONE_PANELS_EVIDENCE, "phone panels"),
+                    (SAFE_AREA, SAFE_AREA_EVIDENCE, "safe area viewport"),
                     (RESOURCE_MODAL_CONTEXT, RESOURCE_MODAL_CONTEXT_EVIDENCE,
                      "resource modal context recovery"),
                     (TECHNOLOGY_FIELDS, TECHNOLOGY_FIELDS_EVIDENCE, "technology fields"),
