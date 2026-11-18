@@ -336,6 +336,9 @@ jobs:
           - id: source-legal-easy-campaign
             check: Easy four-opponent campaign through 60 source turns
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.SourceLegalEasyCampaignTest"'
+          - id: source-multi-seed-campaigns
+            check: Source campaign relations and simultaneous battle results
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.SourceMultiSeedCampaignTest"'
           - id: source-accepted-diplomacy-campaign
             check: Easy campaign with accepted diplomacy through 60 source turns
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.SourceLegalAcceptedDiplomacyCampaignTest"'
