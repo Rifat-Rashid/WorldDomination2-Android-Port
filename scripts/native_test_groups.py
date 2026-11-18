@@ -27,6 +27,12 @@ ACTION_MENUS = "com.example.worlddomination.game.rendering.SourceActionMenusInst
 ACTION_MENUS_EVIDENCE = {"source-diplomacy-zero-budget.png"}
 PREPARED_SHIP_TUBE_EVIDENCE = {"source-ship-tube-reselected.png"}
 STOCK_CONTROLS = "com.example.worlddomination.game.rendering.StockControlsInstrumentedTest"
+LEGAL_TERMINAL = "com.example.worlddomination.game.rendering.SourceLegalTerminalPlaybackInstrumentedTest"
+LEGAL_TERMINAL_EVIDENCE = {
+    f"legal-terminal-{outcome}-{phase}.png"
+    for outcome in ("victory", "defeat")
+    for phase in ("terminal-battle", "intro", "score-complete", "new-game")
+}
 PREPARED_STOCK_EVIDENCE = {
     "stock-prepared-launch-accepted.png", "stock-prepared-launch-removed.png"
 }
@@ -340,6 +346,7 @@ def verify_group_artifact(manifest: dict, group: dict, artifact: Path) -> tuple[
                     (ACTION_MENUS, ACTION_MENUS_EVIDENCE, "action menu zero budget"),
                     (ACTION_MENUS, PREPARED_SHIP_TUBE_EVIDENCE, "prepared ship tube reselection"),
                     (STOCK_CONTROLS, PREPARED_STOCK_EVIDENCE, "prepared stock counts"),
+                    (LEGAL_TERMINAL, LEGAL_TERMINAL_EVIDENCE, "legal terminal playback"),
                     (HELP, HELP_EVIDENCE, "Help"),
                     (SETUP_PANELS, SETUP_PANELS_EVIDENCE, "setup panels"),
                     (SETUP_LAYOUT, SETUP_LAYOUT_EVIDENCE, "setup layout"),
