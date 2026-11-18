@@ -148,6 +148,7 @@ public final class ResourceModalContextRecoveryInstrumentedTest {
         assertEquals("Resources selected by navigation touch", GameState.Action.RESOURCES, game.getSelectedAction());
         assertTrue("Resources modal open", field("modalOpen").getBoolean(app));
         assertEquals("No action accepted for this recovery test", 0, game.getQueuedActionCount());
+        assertEquals("Single centered zero is the score visibility fixture", 0L, game.getHuman().score);
         app.render();
     }
 
@@ -279,12 +280,48 @@ public final class ResourceModalContextRecoveryInstrumentedTest {
             this.name = name; this.x = x; this.y = y; this.width = width; this.height = height; this.rgba = rgba;
         }
         void assertVisible() {
+            if ("HUD score".equals(name)) {
+                // At 640x320 the centered zero has no fully white texel.
+                // Compare its strokes with the same row of the inset backing,
+                // away from the chrome and outside this fixture's single digit.
+                assertTrue("HUD score has visible stroke contrast", scoreInkPixels() > 3);
+                byte[] absent = rgba.clone();
+                for (int row = 0; row < height; row++) {
+                    int backing = (row * width + width / 4) * 4;
+                    for (int column = width / 3; column < 2 * width / 3; column++) {
+                        System.arraycopy(rgba, backing, absent, (row * width + column) * 4, 4);
+                    }
+                }
+                assertEquals("Removing score ink fails the visibility predicate", 0,
+                        new Crop(name, x, y, width, height, absent).scoreInkPixels());
+                return;
+            }
             int white = 0;
             for (int i = 0; i < rgba.length; i += 4) {
                 if ((rgba[i] & 255) > 220 && (rgba[i + 1] & 255) > 220
                         && (rgba[i + 2] & 255) > 220 && (rgba[i + 3] & 255) > 220) white++;
             }
             assertTrue(name + " contains visible white glyph ink, count=" + white, white > 12);
+        }
+
+        private int scoreInkPixels() {
+            int ink = 0;
+            for (int row = 0; row < height; row++) {
+                int left = (row * width + width / 4) * 4;
+                int right = (row * width + 3 * width / 4) * 4;
+                int backing = 0;
+                for (int channel = 0; channel < 3; channel++) {
+                    backing = Math.max(backing, Math.max(rgba[left + channel] & 255,
+                            rgba[right + channel] & 255));
+                }
+                for (int column = width / 3; column < 2 * width / 3; column++) {
+                    int pixel = (row * width + column) * 4;
+                    if ((rgba[pixel] & 255) > backing + 32
+                            && (rgba[pixel + 1] & 255) > backing + 32
+                            && (rgba[pixel + 2] & 255) > backing + 32) ink++;
+                }
+            }
+            return ink;
         }
     }
 
