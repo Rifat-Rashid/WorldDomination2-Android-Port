@@ -90,6 +90,7 @@ class NativeGroupTests(unittest.TestCase):
                     for selected, required in (
                             (groups.ACTION_MENUS, groups.ACTION_MENUS_EVIDENCE),
                             (groups.ACTION_MENUS, groups.PREPARED_SHIP_TUBE_EVIDENCE),
+                            (groups.STOCK_CONTROLS, groups.PREPARED_STOCK_EVIDENCE),
                             (groups.HELP, groups.HELP_EVIDENCE),
                             (groups.SETUP_PANELS, groups.SETUP_PANELS_EVIDENCE),
                             (groups.SETUP_LAYOUT, groups.SETUP_LAYOUT_EVIDENCE),
@@ -116,7 +117,7 @@ class NativeGroupTests(unittest.TestCase):
 
     def test_manifest_is_exact_closed_inventory_and_both_groups_make_beta(self):
         self.assertEqual(109, len(self.manifest["requiredClasses"]))
-        self.assertEqual(174, len(self.manifest["expectedCases"]))
+        self.assertEqual(175, len(self.manifest["expectedCases"]))
         self.assertEqual({"a", "b"}, {g["id"] for g in self.manifest["groups"]})
         self.assertEqual({"beta-ui-evidence", "propaganda-evidence"},
                          {e for g in self.manifest["groups"] for e in g["evidence"]})
@@ -321,8 +322,22 @@ class NativeGroupTests(unittest.TestCase):
         self.fixture()
         result = groups.verify_artifacts(self.manifest, self.root)
         self.assertEqual(109, sum(row["classes"] for row in result.values()))
-        self.assertEqual(174, sum(row["executed"] for row in result.values()))
-        self.assertEqual(187, sum(row["requiredPngs"] for row in result.values()))
+        self.assertEqual(175, sum(row["executed"] for row in result.values()))
+        self.assertEqual(189, sum(row["requiredPngs"] for row in result.values()))
+
+    def test_prepared_stock_counts_require_accept_and_removal_screenshots(self):
+        self.fixture()
+        group = next(g for g in self.manifest["groups"]
+                     if groups.STOCK_CONTROLS in g["classes"])
+        folder = (self.root / ("android-native-" + group["id"] + "-results")
+                  / "reports/androidTests/beta-ui-evidence")
+        for name in groups.PREPARED_STOCK_EVIDENCE:
+            image = folder / name
+            image.unlink()
+            with self.subTest(image=name), self.assertRaisesRegex(
+                    ValueError, "Missing required prepared stock counts screenshots"):
+                groups.verify_artifacts(self.manifest, self.root)
+            image.write_bytes(PNG)
 
     def test_missing_zero_budget_action_menu_capture_is_rejected(self):
         self.fixture()
