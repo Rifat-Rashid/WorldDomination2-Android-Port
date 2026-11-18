@@ -13,6 +13,7 @@ import com.badlogic.gdx.backends.android.AndroidApplicationConfiguration;
 import com.badlogic.gdx.backends.android.AndroidAudio;
 import com.example.worlddomination.game.WorldDominationGame;
 import com.example.worlddomination.platform.audio.SourceAndroidAudio;
+import com.example.worlddomination.platform.persistence.AndroidScorePreferenceBackend;
 
 /** Android-only landscape launcher for the libGDX game. */
 public final class MainActivity extends AndroidApplication {
@@ -27,7 +28,8 @@ public final class MainActivity extends AndroidApplication {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        game = new WorldDominationGame();
+        game = new WorldDominationGame(new AndroidScorePreferenceBackend(
+                getSharedPreferences("world_domination_2_scores", Context.MODE_PRIVATE)));
 
         AndroidApplicationConfiguration configuration = new AndroidApplicationConfiguration();
         configuration.useImmersiveMode = true;

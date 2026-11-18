@@ -114,7 +114,8 @@
     "com.example.worlddomination.game.audio.ThemeCompletionInstrumentedTest",
     "com.example.worlddomination.game.rendering.MessageWholeLineInstrumentedTest",
     "com.example.worlddomination.game.rendering.SourcePhonePanelInstrumentedTest",
-    "com.example.worlddomination.game.rendering.ResourceModalContextRecoveryInstrumentedTest"
+    "com.example.worlddomination.game.rendering.ResourceModalContextRecoveryInstrumentedTest",
+    "com.example.worlddomination.game.persistence.PersonalBestPersistenceInstrumentedTest"
   ],
   "groups": [
     {
@@ -237,7 +238,8 @@
         "com.example.worlddomination.game.rendering.SourceSetupButtonsInstrumentedTest",
         "com.example.worlddomination.game.rendering.SourceSetupCarouselInstrumentedTest",
         "com.example.worlddomination.game.rendering.SourceSetupBuildingsInstrumentedTest",
-        "com.example.worlddomination.game.rendering.SourceSetupEnemyArtInstrumentedTest"
+        "com.example.worlddomination.game.rendering.SourceSetupEnemyArtInstrumentedTest",
+        "com.example.worlddomination.game.persistence.PersonalBestPersistenceInstrumentedTest"
       ],
       "evidence": [
         "beta-ui-evidence"
@@ -940,6 +942,14 @@
     [
       "com.example.worlddomination.game.rendering.ResourceModalContextRecoveryInstrumentedTest",
       "resourceModalRestoresAfterEglContextLoss"
+    ],
+    [
+      "com.example.worlddomination.game.persistence.PersonalBestPersistenceInstrumentedTest",
+      "realAndroidPreferencesRetainOnlyImprovedScores"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.SourceEndgameInstrumentedTest",
+      "scoreWriteFailureStillStartsEndgameWithoutClaimingSavedBest"
     ]
   ]
 }

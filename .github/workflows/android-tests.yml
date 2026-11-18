@@ -299,7 +299,7 @@ jobs:
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.FinalScoreBreakdownTest"'
           - id: offline-high-score-tests
             check: Offline high score persistence
-            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.persistence.PersonalBestStoreTest"'
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.persistence.PersonalBestStoreTest" --tests "com.example.worlddomination.platform.persistence.AndroidScorePreferenceBackendTest"'
           - id: resources-economy-tests
             check: Resources and mass media economy tests
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.normalResourcesAndMassMediaResolveOneTurn" --tests "com.example.worlddomination.game.simulation.GameStateTest.massMediaTurnKeepsSourceResourceSummaryWithoutInfluenceMessage" --tests "com.example.worlddomination.game.simulation.GameStateTest.resourcesAndMassMediaAddTheirSourceHighscoreWeights" --tests "com.example.worlddomination.game.simulation.GameStateTest.resourceYieldUsesDifficultyDividerAndSourceRounding" --tests "com.example.worlddomination.game.simulation.GameStateTest.zeroHighscoreMultiplierDefaultsToOneLikeTheSource"'
