@@ -322,7 +322,7 @@ class NativeGroupTests(unittest.TestCase):
         result = groups.verify_artifacts(self.manifest, self.root)
         self.assertEqual(109, sum(row["classes"] for row in result.values()))
         self.assertEqual(173, sum(row["executed"] for row in result.values()))
-        self.assertEqual(186, sum(row["requiredPngs"] for row in result.values()))
+        self.assertEqual(187, sum(row["requiredPngs"] for row in result.values()))
 
     def test_missing_zero_budget_action_menu_capture_is_rejected(self):
         self.fixture()
@@ -348,7 +348,7 @@ class NativeGroupTests(unittest.TestCase):
 
     def test_missing_phone_toolbar_audio_screenshots_are_rejected(self):
         self.fixture()
-        self.assertEqual(4, len(groups.PHONE_TOOLBAR_AUDIO_EVIDENCE))
+        self.assertEqual(5, len(groups.PHONE_TOOLBAR_AUDIO_EVIDENCE))
         group = next(g for g in self.manifest["groups"]
                      if groups.PHONE_TOOLBAR_AUDIO in g["classes"])
         folder = (self.root / ("android-native-" + group["id"] + "-results")
