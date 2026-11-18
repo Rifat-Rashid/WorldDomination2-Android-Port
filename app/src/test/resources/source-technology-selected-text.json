@@ -1,0 +1,433 @@
+{
+  "provenance": {
+    "capture": "analysis/action-dialog-audit-current/technology_wrap_probe.py",
+    "source_files_sha256": {
+      "wd2/menu_renderer.py": "07f2f2f992560e4f46ba3eefcd1350d7896c0a010a7ac82a373c046449f7e9a8",
+      "wd2/generated/TextFormats.py": "3ff36064974a1a09760440456558fb96988d954d03e61482d8f5894ae0eb4ea5",
+      "wd2/generated/View_interface.py": "b165a31a560b29d503dc02c406a9f07898f1b2424fad23ec024ed33d05cd0f1f",
+      "wd2/generated/Presenter_interface.py": "ac502ef9e94a205f5027fc0598c3deb2fa1913aa1dfc6f0d5ca4ca12d1d95afd",
+      "wd2/generated/TechTree.py": "4d608cefc4e6d4630c2c191c08120b02d0f007bb297df389b0be92d86320a748"
+    },
+    "decoded_font_path": "assets/runtime/fonts/1_Arial_Arial.ttf.gz",
+    "decoded_font_sha256": "76a7eba97fae0078517945c76e01c8351ddf408611e4342b7b371a27ca5ffd33",
+    "source_text_format_size": 10,
+    "name_field_wrap_width": 93,
+    "name_visible_lines": 6,
+    "name_line_spacing": 12
+  },
+  "technologies": [
+    {
+      "key": "rocket1",
+      "pretty": "ROCKET (10 MEG)",
+      "source_advance": 87.75,
+      "lines": [
+        "ROCKET (10 MEG)"
+      ]
+    },
+    {
+      "key": "rocket2",
+      "pretty": "ROCKET (25 MEG)",
+      "source_advance": 87.75,
+      "lines": [
+        "ROCKET (25 MEG)"
+      ]
+    },
+    {
+      "key": "rocket3",
+      "pretty": "ROCKET (50 MEG)",
+      "source_advance": 87.75,
+      "lines": [
+        "ROCKET (50 MEG)"
+      ]
+    },
+    {
+      "key": "rocket4",
+      "pretty": "ROCKET (95 MEG)",
+      "source_advance": 87.75,
+      "lines": [
+        "ROCKET (95 MEG)"
+      ]
+    },
+    {
+      "key": "warhead1",
+      "pretty": "WARHEAD (10 MEG)",
+      "source_advance": 97.25,
+      "lines": [
+        "WARHEAD (10",
+        "MEG)"
+      ]
+    },
+    {
+      "key": "warhead2",
+      "pretty": "WARHEAD (25 MEG)",
+      "source_advance": 97.25,
+      "lines": [
+        "WARHEAD (25",
+        "MEG)"
+      ]
+    },
+    {
+      "key": "warhead3",
+      "pretty": "WARHEAD (50 MEG)",
+      "source_advance": 97.25,
+      "lines": [
+        "WARHEAD (50",
+        "MEG)"
+      ]
+    },
+    {
+      "key": "warhead4",
+      "pretty": "WARHEAD (95 MEG)",
+      "source_advance": 97.25,
+      "lines": [
+        "WARHEAD (95",
+        "MEG)"
+      ]
+    },
+    {
+      "key": "bioload1",
+      "pretty": "BIOLOAD (10 MEG)",
+      "source_advance": 90.5,
+      "lines": [
+        "BIOLOAD (10 MEG)"
+      ]
+    },
+    {
+      "key": "bioload2",
+      "pretty": "BIOLOAD (25 MEG)",
+      "source_advance": 90.5,
+      "lines": [
+        "BIOLOAD (25 MEG)"
+      ]
+    },
+    {
+      "key": "bioload3",
+      "pretty": "BIOLOAD (50 MEG)",
+      "source_advance": 90.5,
+      "lines": [
+        "BIOLOAD (50 MEG)"
+      ]
+    },
+    {
+      "key": "bioload4",
+      "pretty": "BIOLOAD (95 MEG)",
+      "source_advance": 90.5,
+      "lines": [
+        "BIOLOAD (95 MEG)"
+      ]
+    },
+    {
+      "key": "soldier1",
+      "pretty": "SOLDIER",
+      "source_advance": 43.75,
+      "lines": [
+        "SOLDIER"
+      ]
+    },
+    {
+      "key": "soldier2",
+      "pretty": "SEALS",
+      "source_advance": 32.5,
+      "lines": [
+        "SEALS"
+      ]
+    },
+    {
+      "key": "soldier3",
+      "pretty": "TANK",
+      "source_advance": 27.0,
+      "lines": [
+        "TANK"
+      ]
+    },
+    {
+      "key": "soldier4",
+      "pretty": "SPECIAL",
+      "source_advance": 42.25,
+      "lines": [
+        "SPECIAL"
+      ]
+    },
+    {
+      "key": "spy1",
+      "pretty": "SPY (LEVEL 1)",
+      "source_advance": 68.5,
+      "lines": [
+        "SPY (LEVEL 1)"
+      ]
+    },
+    {
+      "key": "spy2",
+      "pretty": "SPY (LEVEL 2)",
+      "source_advance": 68.5,
+      "lines": [
+        "SPY (LEVEL 2)"
+      ]
+    },
+    {
+      "key": "spy3",
+      "pretty": "SPY (LEVEL 3)",
+      "source_advance": 68.5,
+      "lines": [
+        "SPY (LEVEL 3)"
+      ]
+    },
+    {
+      "key": "spy4",
+      "pretty": "SPY (LEVEL 4)",
+      "source_advance": 68.5,
+      "lines": [
+        "SPY (LEVEL 4)"
+      ]
+    },
+    {
+      "key": "plane1",
+      "pretty": "FIGHTER",
+      "source_advance": 43.75,
+      "lines": [
+        "FIGHTER"
+      ]
+    },
+    {
+      "key": "plane2",
+      "pretty": "BOMBER",
+      "source_advance": 43.5,
+      "lines": [
+        "BOMBER"
+      ]
+    },
+    {
+      "key": "sub",
+      "pretty": "SUBMARINE",
+      "source_advance": 59.75,
+      "lines": [
+        "SUBMARINE"
+      ]
+    },
+    {
+      "key": "ship",
+      "pretty": "AIRCRAFT CARRIER",
+      "source_advance": 97.0,
+      "lines": [
+        "AIRCRAFT",
+        "CARRIER"
+      ]
+    },
+    {
+      "key": "space",
+      "pretty": "SPACE ROCKET",
+      "source_advance": 78.5,
+      "lines": [
+        "SPACE ROCKET"
+      ]
+    },
+    {
+      "key": "antiAir",
+      "pretty": "ANTI AIR",
+      "source_advance": 42.25,
+      "lines": [
+        "ANTI AIR"
+      ]
+    },
+    {
+      "key": "antiRocket",
+      "pretty": "ANTI ROCKET",
+      "source_advance": 67.5,
+      "lines": [
+        "ANTI ROCKET"
+      ]
+    },
+    {
+      "key": "specialLoad",
+      "pretty": "SATELLITE",
+      "source_advance": 53.25,
+      "lines": [
+        "SATELLITE"
+      ]
+    }
+  ],
+  "source_ink_rows_stage": {
+    "one": {
+      "txt1": [
+        [
+          337,
+          279,
+          424,
+          289
+        ]
+      ],
+      "txt2": [
+        [
+          508,
+          280,
+          557,
+          287
+        ]
+      ],
+      "txt3": [
+        [
+          436,
+          362,
+          557,
+          370
+        ]
+      ]
+    },
+    "two": {
+      "txt1": [
+        [
+          337,
+          279,
+          424,
+          289
+        ],
+        [
+          337,
+          291,
+          380,
+          299
+        ]
+      ],
+      "txt2": [
+        [
+          508,
+          280,
+          557,
+          287
+        ],
+        [
+          508,
+          292,
+          557,
+          299
+        ]
+      ],
+      "txt3": [
+        [
+          436,
+          362,
+          557,
+          370
+        ]
+      ]
+    },
+    "warhead": {
+      "txt1": [
+        [
+          336,
+          279,
+          405,
+          289
+        ],
+        [
+          337,
+          291,
+          363,
+          301
+        ]
+      ],
+      "txt2": [
+        [
+          508,
+          280,
+          557,
+          287
+        ]
+      ],
+      "txt3": [
+        [
+          436,
+          362,
+          557,
+          370
+        ]
+      ]
+    },
+    "six": {
+      "txt1": [
+        [
+          337,
+          279,
+          424,
+          289
+        ],
+        [
+          336,
+          291,
+          405,
+          301
+        ],
+        [
+          337,
+          303,
+          363,
+          313
+        ],
+        [
+          337,
+          315,
+          427,
+          325
+        ],
+        [
+          337,
+          327,
+          369,
+          335
+        ],
+        [
+          337,
+          339,
+          405,
+          349
+        ]
+      ],
+      "txt2": [
+        [
+          508,
+          280,
+          557,
+          287
+        ],
+        [
+          508,
+          292,
+          557,
+          299
+        ],
+        [
+          508,
+          304,
+          557,
+          311
+        ],
+        [
+          508,
+          316,
+          557,
+          323
+        ],
+        [
+          508,
+          328,
+          557,
+          335
+        ],
+        [
+          508,
+          340,
+          557,
+          347
+        ]
+      ],
+      "txt3": [
+        [
+          436,
+          362,
+          557,
+          370
+        ]
+      ]
+    }
+  }
+}

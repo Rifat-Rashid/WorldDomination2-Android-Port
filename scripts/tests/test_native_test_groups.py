@@ -105,7 +105,8 @@ class NativeGroupTests(unittest.TestCase):
                             (groups.MESSAGE_WHOLE_LINES, groups.MESSAGE_WHOLE_LINES_EVIDENCE),
                             (groups.PHONE_PANELS, groups.PHONE_PANELS_EVIDENCE),
                             (groups.RESOURCE_MODAL_CONTEXT,
-                             groups.RESOURCE_MODAL_CONTEXT_EVIDENCE)):
+                             groups.RESOURCE_MODAL_CONTEXT_EVIDENCE),
+                            (groups.TECHNOLOGY_FIELDS, groups.TECHNOLOGY_FIELDS_EVIDENCE)):
                         if selected in group["classes"]:
                             for name in required:
                                 (folder / name).write_bytes(PNG)
@@ -227,6 +228,21 @@ class NativeGroupTests(unittest.TestCase):
                 groups.verify_artifacts(self.manifest, self.root)
             image.write_bytes(PNG)
 
+    def test_technology_fields_require_selected_wrapped_and_clipped_screenshots(self):
+        self.fixture()
+        self.assertEqual({"source-technology-original-empty.png",
+                          "source-technology-original-selected.png",
+                          "source-technology-wrapped-name.png",
+                          "source-technology-six-selected.png"}, groups.TECHNOLOGY_FIELDS_EVIDENCE)
+        folder = self.root / "android-native-b-results/reports/androidTests/beta-ui-evidence"
+        for filename in sorted(groups.TECHNOLOGY_FIELDS_EVIDENCE):
+            image = folder / filename
+            image.unlink()
+            with self.subTest(image=filename), self.assertRaisesRegex(
+                    ValueError, "Missing required technology fields screenshots"):
+                groups.verify_artifacts(self.manifest, self.root)
+            image.write_bytes(PNG)
+
     def test_biological_idle_handoff_case_is_required(self):
         name = "com.example.worlddomination.game.rendering.SourceBiologicalPlaybackInstrumentedTest"
         method = "legalSubmarineIdleAndNextConfirmKeepCanonicalCloudsAbsent"
@@ -289,7 +305,7 @@ class NativeGroupTests(unittest.TestCase):
         result = groups.verify_artifacts(self.manifest, self.root)
         self.assertEqual(109, sum(row["classes"] for row in result.values()))
         self.assertEqual(173, sum(row["executed"] for row in result.values()))
-        self.assertEqual(168, sum(row["requiredPngs"] for row in result.values()))
+        self.assertEqual(172, sum(row["requiredPngs"] for row in result.values()))
 
     def test_missing_phone_toolbar_audio_screenshots_are_rejected(self):
         self.fixture()
