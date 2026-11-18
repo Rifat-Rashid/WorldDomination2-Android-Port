@@ -322,7 +322,7 @@ class NativeGroupTests(unittest.TestCase):
         result = groups.verify_artifacts(self.manifest, self.root)
         self.assertEqual(109, sum(row["classes"] for row in result.values()))
         self.assertEqual(173, sum(row["executed"] for row in result.values()))
-        self.assertEqual(184, sum(row["requiredPngs"] for row in result.values()))
+        self.assertEqual(186, sum(row["requiredPngs"] for row in result.values()))
 
     def test_missing_zero_budget_action_menu_capture_is_rejected(self):
         self.fixture()
@@ -448,10 +448,12 @@ class NativeGroupTests(unittest.TestCase):
     def test_missing_setup_screenshots_cannot_pass_using_other_test_images(self):
         self.fixture()
         self.assertEqual(6, len(groups.SETUP_PANELS_EVIDENCE))
-        self.assertEqual(4, len(groups.SETUP_LAYOUT_EVIDENCE))
+        self.assertEqual(6, len(groups.SETUP_LAYOUT_EVIDENCE))
         for selected, filename, label in (
                 (groups.SETUP_PANELS, "source-setup-panels-wide-stretched.png", "setup panels"),
-                (groups.SETUP_LAYOUT, "source-setup-full-1194x552-enabled.png", "setup layout")):
+                (groups.SETUP_LAYOUT, "source-setup-full-1194x552-enabled.png", "setup layout"),
+                (groups.SETUP_LAYOUT, "source-setup-full-1194x552-leader-name.png", "setup layout"),
+                (groups.SETUP_LAYOUT, "source-setup-full-800x600-leader-name.png", "setup layout")):
             group = next(g for g in self.manifest["groups"] if selected in g["classes"])
             folder = self.root / ("android-native-" + group["id"] + "-results") / "reports/androidTests/beta-ui-evidence"
             missing = folder / filename

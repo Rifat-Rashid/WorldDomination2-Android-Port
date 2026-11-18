@@ -91,7 +91,7 @@ SETUP_PANELS_EVIDENCE = {
 SETUP_LAYOUT_EVIDENCE = {
     f"source-setup-full-{size}-{state}.png"
     for size in ("800x600", "1194x552")
-    for state in ("disabled", "enabled")
+    for state in ("disabled", "enabled", "leader-name")
 }
 NAVIGATION_PANEL = (
     "com.example.worlddomination.game.rendering.SourceNavigationPanelInstrumentedTest")

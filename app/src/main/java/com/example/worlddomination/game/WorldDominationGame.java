@@ -453,6 +453,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private String selectedEquipment = "";
     private String setupMessage = "SELECT ONE TO FOUR OPPONENTS TO BEGIN";
     private boolean showSetupMessage;
+    private String setupLeaderName = "";
     private boolean satelliteFlightCuePlayed;
     private boolean splashPointerDown;
     private boolean splashContinuePending;
@@ -1768,11 +1769,26 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         for (int i = 0; i < selectedIds.size(); i++) {
             drawSourceSelectedEnemy(i, selectedIds.get(i));
         }
-        font.setColor(showSetupMessage ? GOLD : TITLE_TEXT);
-        drawCentered(showSetupMessage ? setupMessage : "",
-                setupLayout.leaderDescription.x + setupLayout.leaderDescription.width / 2f,
-                setupLayout.leaderDescription.y + setupLayout.leaderDescription.height / 2f + 2f,
-                10f);
+        if (!setupLeaderName.isEmpty()) {
+            // Source EditText 5824: centered green Arial at 12 points. The cached
+            // Arial atlas is authored at 48 points; line height is not font size.
+            font.setColor(0f, 0.8f, 0f, 1f);
+            float previousScale = font.getScaleX();
+            font.getData().setScale(previousScale * (12f / 48f) / font.getData().scaleX);
+            glyphLayout.setText(font, setupLeaderName);
+            font.draw(batch, glyphLayout,
+                    setupLayout.leaderDescription.x
+                            + (setupLayout.leaderDescription.width - glyphLayout.width) / 2f,
+                    setupLayout.leaderDescription.y
+                            + (setupLayout.leaderDescription.height + glyphLayout.height) / 2f);
+            font.getData().setScale(previousScale);
+        } else {
+            font.setColor(showSetupMessage ? GOLD : TITLE_TEXT);
+            drawCentered(showSetupMessage ? setupMessage : "",
+                    setupLayout.leaderDescription.x + setupLayout.leaderDescription.width / 2f,
+                    setupLayout.leaderDescription.y + setupLayout.leaderDescription.height / 2f + 2f,
+                    10f);
+        }
 
         font.setColor(TITLE_TEXT);
         drawSetupText("START", setupLayout.startPanel.x + 14f,
@@ -3898,6 +3914,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         outcomePersonalBestText = "";
         setup = nextSetup;
         setupLeaderListStart = 0;
+        setupLeaderName = "";
         setupMessage = "SELECT ONE TO FOUR OPPONENTS TO BEGIN";
         showSetupMessage = false;
         modalOpen = false;
@@ -4361,7 +4378,25 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
     }
 
+    /** Source portrait onRollOver writes leaderText; onRollOut clears it. */
+    private void updateSetupLeaderName(float x, float y) {
+        String name = "";
+        for (int i = 0; i < setupLayout.leaderCards.length; i++) {
+            if (setupLayout.leaderCards[i].contains(x, y)) {
+                int id = SetupScreenLayout.leaderIdAt(setupLeaderListStart, i,
+                        GameSetup.leaders().size());
+                name = GameSetup.leader(id).name;
+                break;
+            }
+        }
+        if (!name.equals(setupLeaderName)) {
+            setupLeaderName = name;
+            Gdx.graphics.requestRendering();
+        }
+    }
+
     private void activateSetupAt(float x, float y) {
+        updateSetupLeaderName(x, y);
         for (int i = 0; i < setupLayout.difficultyButtons.length; i++) {
             if (setupLayout.difficultyButtons[i].contains(x, y)) {
                 setup.setDifficulty(i);
@@ -4400,22 +4435,17 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 int leaderId = SetupScreenLayout.leaderIdAt(setupLeaderListStart, i,
                         GameSetup.leaders().size());
                 setup.selectCandidateLeader(leaderId);
-                if (setup.getSelectedOpponentIds().contains(leaderId)) {
-                    setupMessage = "TAP A SELECTED PORTRAIT ABOVE TO REMOVE IT";
-                } else if (setup.toggleOpponent(leaderId)) {
-                    setupMessage = "RIVAL ADDED TO THE MATCH";
-                } else {
-                    setupMessage = "THE SOURCE ALLOWS UP TO FOUR RIVALS";
+                if (!setup.getSelectedOpponentIds().contains(leaderId)) {
+                    setup.toggleOpponent(leaderId);
                 }
-                showSetupMessage = true;
+                showSetupMessage = false;
                 return;
             }
         }
         for (int i = 0; i < setupLayout.opponentSlots.length; i++) {
             if (setupLayout.opponentSlots[i].contains(x, y)) {
                 if (setup.removeOpponentAt(i)) {
-                    setupMessage = "RIVAL REMOVED FROM THE MATCH";
-                    showSetupMessage = true;
+                    showSetupMessage = false;
                 }
                 return;
             }
@@ -5629,6 +5659,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             return true;
         }
         unproject(screenX, screenY);
+        if (game == null) updateSetupLeaderName(pointer.x, pointer.y);
         pointerStartX = pointer.x;
         pointerStartY = pointer.y;
         lastPointerY = pointer.y;
@@ -5691,6 +5722,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             return true;
         }
         unproject(screenX, screenY);
+        if (game == null) updateSetupLeaderName(pointer.x, pointer.y);
         float distance = (float) Math.hypot(pointer.x - pointerStartX, pointer.y - pointerStartY);
         if (gestureArea == GESTURE_PRODUCTION) {
             if (productionGestureSlider >= 0 && (dragging || distance >= TAP_SLOP)) {
@@ -5705,7 +5737,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             } else if (gestureArea == GESTURE_EQUIPMENT) {
                 equipmentScroll.endGesture(gestureVelocityY);
             }
-        } else if (distance < TAP_SLOP) {
+        } else if (!dragging && distance < TAP_SLOP) {
             activateAt(pointer.x, pointer.y);
         }
         gestureArea = GESTURE_NONE;
@@ -5741,7 +5773,18 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         if (ignorePlaybackTouchUntilUp || isTurnInputBlocked()) {
             return true;
         }
-        if (pointerIndex != 0 || gestureArea == GESTURE_NONE) {
+        if (pointerIndex != 0) {
+            return false;
+        }
+        if (game == null) {
+            unproject(screenX, screenY);
+            updateSetupLeaderName(pointer.x, pointer.y);
+            if (Math.hypot(pointer.x - pointerStartX, pointer.y - pointerStartY) > TAP_SLOP) {
+                dragging = true;
+            }
+            return true;
+        }
+        if (gestureArea == GESTURE_NONE) {
             return false;
         }
         unproject(screenX, screenY);
@@ -5936,5 +5979,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     @Override public boolean keyUp(int keycode) { return false; }
     @Override public boolean keyTyped(char character) { return false; }
-    @Override public boolean mouseMoved(int screenX, int screenY) { return false; }
+    @Override public boolean mouseMoved(int screenX, int screenY) {
+        if (game != null || splashState.isVisible()) return false;
+        unproject(screenX, screenY);
+        updateSetupLeaderName(pointer.x, pointer.y);
+        return true;
+    }
 }
