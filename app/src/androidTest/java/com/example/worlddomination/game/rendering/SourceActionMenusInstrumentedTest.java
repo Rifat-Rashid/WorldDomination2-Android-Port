@@ -108,10 +108,83 @@ public final class SourceActionMenusInstrumentedTest {
                     state.selectAction(GameState.Action.RESOURCES); assertTrue(state.acceptSelectedAction());
                     state.confirmTurn();
                     while (state.getPendingHumanDiplomacyProposal() != null) assertTrue(state.respondToDiplomacyProposal(false));
+                    begin(app, GameState.Action.RESOURCES);
+                    Rectangle resourceAccept = (Rectangle) field("modalAccept").get(app);
+                    tap(app, resourceAccept.x + resourceAccept.width / 2,
+                            resourceAccept.y + resourceAccept.height / 2);
+                    assertEquals(GameState.Action.RESOURCES, state.getQueuedAction(0));
+                    assertNull(state.getQueuedAction(1));
+                    int shipTurnFunds = state.getHuman().moneyMillions;
+                    int shipTurnBudget = state.getHuman().turnMoneyMillions;
+                    // Match the source callback diagnostic's injection boundaries;
+                    // this exercises UI settlement, not legal stock acquisition.
+                    stock(state, "warhead1", 2);
                     begin(app, GameState.Action.PREPARED_ATTACK); equipment(app, "warhead1"); cityTap(app, 1, 0);
                     assertEquals("ship1-1", menu(app).getKey()); assertTrue(menu(app).isAcceptVisible());
                     capture(app, "source-ship-one-payload.png");
-                    accept(app, state, GameState.Action.PREPARED_ATTACK);
+                    sourceTap(app, 307, 258);
+                    assertEquals(GameState.Action.RESOURCES, state.getQueuedAction(0));
+                    assertEquals(GameState.Action.PREPARED_ATTACK, state.getQueuedAction(1));
+                    assertEquals(1, state.getQueuedShipStrikeCount(1));
+                    assertEquals(1, state.getQueuedShipStrikePlayer(1, 0));
+                    assertEquals(0, state.getQueuedShipStrikeCity(1, 0));
+                    assertEquals(1, state.getAvailableWeaponStock(0, "warhead1"));
+                    assertEquals("ship", state.getPreparedCarrierName(0));
+                    assertEquals(0, state.getWeaponStock(0, "ship"));
+                    assertEquals(2, state.getWeaponStock(0, "warhead1"));
+                    assertEquals(shipTurnFunds, state.getHuman().moneyMillions);
+                    assertEquals(shipTurnBudget, state.getHuman().turnMoneyMillions);
+
+                    // Use the real viewport/tube hit path, not removeQueuedAction.
+                    render(app);
+                    Rectangle secondTube = ((Rectangle[]) field("actionSlots").get(app))[1];
+                    tap(app, secondTube.x + secondTube.width / 2,
+                            secondTube.y + secondTube.height / 2);
+                    assertEquals(1, state.getQueuedActionCount());
+                    assertEquals(GameState.Action.RESOURCES, state.getQueuedAction(0));
+                    assertNull(state.getQueuedAction(1));
+                    assertEquals(1, state.getNextActionSlot());
+                    assertEquals("ship", state.getPreparedCarrierName(0));
+                    assertEquals(0, state.getWeaponStock(0, "ship"));
+                    assertEquals(0, state.getSelectedShipStrikeCount());
+                    assertEquals(0, state.getQueuedShipStrikeCount(1));
+                    assertEquals(2, state.getWeaponStock(0, "warhead1"));
+                    assertEquals(2, state.getAvailableWeaponStock(0, "warhead1"));
+                    assertEquals(shipTurnFunds, state.getHuman().moneyMillions);
+                    assertEquals(shipTurnBudget, state.getHuman().turnMoneyMillions);
+
+                    begin(app, GameState.Action.PREPARED_ATTACK);
+                    stock(state, "warhead2", 1);
+                    equipment(app, "warhead2"); cityTap(app, 2, 0);
+                    assertEquals("ship1-1", menu(app).getKey());
+                    assertTrue(menu(app).isAcceptVisible());
+                    assertEquals(2, state.getSelectedShipTargetPlayerId());
+                    sourceTap(app, 307, 258);
+                    assertEquals(2, state.getQueuedActionCount());
+                    assertEquals(GameState.Action.RESOURCES, state.getQueuedAction(0));
+                    assertEquals(GameState.Action.PREPARED_ATTACK, state.getQueuedAction(1));
+                    assertEquals(1, state.getQueuedShipStrikeCount(1));
+                    assertEquals(2, state.getQueuedShipStrikePlayer(1, 0));
+                    assertEquals(0, state.getQueuedShipStrikeCity(1, 0));
+                    assertEquals("ship", state.getPreparedCarrierName(0));
+                    assertEquals(0, state.getWeaponStock(0, "ship"));
+                    assertEquals(2, state.getAvailableWeaponStock(0, "warhead1"));
+                    assertEquals(1, state.getWeaponStock(0, "warhead2"));
+                    assertEquals(0, state.getAvailableWeaponStock(0, "warhead2"));
+                    assertEquals(shipTurnFunds, state.getHuman().moneyMillions);
+                    assertEquals(shipTurnBudget, state.getHuman().turnMoneyMillions);
+                    // Let the real presentation clock reveal both accepted labels.
+                    Method tick = WorldDominationGame.class.getDeclaredMethod("fixedUpdate", float.class);
+                    tick.setAccessible(true);
+                    for (int frame = 0; frame < 11; frame++) tick.invoke(app, 1f / 24f);
+                    com.example.worlddomination.game.ui.ActionSlotAnimation tubes =
+                            (com.example.worlddomination.game.ui.ActionSlotAnimation)
+                                    field("actionSlotAnimation").get(app);
+                    assertEquals(GameState.Action.RESOURCES, tubes.getDisplayedAction(0));
+                    assertEquals(GameState.Action.PREPARED_ATTACK, tubes.getDisplayedAction(1));
+                    assertEquals(1f, tubes.getLabelAlpha(0), 0f);
+                    assertEquals(1f, tubes.getLabelAlpha(1), 0f);
+                    capture(app, "source-ship-tube-reselected.png");
 
                     state = fresh(app); begin(app, GameState.Action.DIPLOMACY);
                     state.getHuman().turnMoneyMillions = 0;

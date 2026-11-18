@@ -1,0 +1,499 @@
+{
+  "setup": {
+    "seed": 3,
+    "selected_opponents": [
+      0,
+      1
+    ],
+    "diagnostic_stock": {
+      "ship": 1,
+      "warhead1": 2,
+      "warhead2": 1
+    },
+    "diagnostic_stock_injection_stages": [
+      {
+        "weapon": "ship",
+        "in_stock": 1,
+        "when": "before initial ship stock-button selection on turn 0"
+      },
+      {
+        "weapon": "warhead1",
+        "in_stock": 2,
+        "when": "after Resources accepted in turn-1 slot 1, before first target"
+      },
+      {
+        "weapon": "warhead2",
+        "in_stock": 1,
+        "when": "after occupied tube 2 removal and prepared-action reopen, before replacement target"
+      }
+    ],
+    "source_weapon_ids": {
+      "warhead1": 4,
+      "warhead2": 5
+    },
+    "selection": "actual original stock buttons, map clicks, accept and tube callbacks",
+    "first_city_id": 5,
+    "replacement_city_id": 10
+  },
+  "rows": [
+    {
+      "step": "ship_selected_for_preparation",
+      "turn": 0,
+      "funds": 65,
+      "pre_attack_status": "inactive",
+      "prepared_weapon": null,
+      "selected_action": "preAttack",
+      "selected_carrier": null,
+      "selected_payload": "ship",
+      "model_ship_strikes": [],
+      "city_ship_count": {
+        "enemy1_city0": 0,
+        "enemy2_city0": 0
+      },
+      "slots": [
+        {
+          "action": null,
+          "carrier": null,
+          "payload": null,
+          "ship_strikes": []
+        },
+        {
+          "action": null,
+          "carrier": null,
+          "payload": null,
+          "ship_strikes": []
+        }
+      ],
+      "stock": {
+        "ship": {
+          "in_stock": 1,
+          "in_use": 1
+        },
+        "warhead1": {
+          "in_stock": 1,
+          "in_use": 0
+        },
+        "warhead2": {
+          "in_stock": 0,
+          "in_use": 0
+        }
+      }
+    },
+    {
+      "step": "ship_preparation_accepted_slot1",
+      "turn": 0,
+      "funds": 65,
+      "pre_attack_status": "inactive",
+      "prepared_weapon": null,
+      "selected_action": null,
+      "selected_carrier": null,
+      "selected_payload": null,
+      "model_ship_strikes": [],
+      "city_ship_count": {
+        "enemy1_city0": 0,
+        "enemy2_city0": 0
+      },
+      "slots": [
+        {
+          "action": "preAttack",
+          "carrier": "ship",
+          "payload": null,
+          "ship_strikes": []
+        },
+        {
+          "action": null,
+          "carrier": null,
+          "payload": null,
+          "ship_strikes": []
+        }
+      ],
+      "stock": {
+        "ship": {
+          "in_stock": 1,
+          "in_use": 1
+        },
+        "warhead1": {
+          "in_stock": 1,
+          "in_use": 0
+        },
+        "warhead2": {
+          "in_stock": 0,
+          "in_use": 0
+        }
+      }
+    },
+    {
+      "step": "resources_accepted_slot2",
+      "turn": 0,
+      "funds": 65,
+      "pre_attack_status": "inactive",
+      "prepared_weapon": null,
+      "selected_action": null,
+      "selected_carrier": null,
+      "selected_payload": null,
+      "model_ship_strikes": [],
+      "city_ship_count": {
+        "enemy1_city0": 0,
+        "enemy2_city0": 0
+      },
+      "slots": [
+        {
+          "action": "preAttack",
+          "carrier": "ship",
+          "payload": null,
+          "ship_strikes": []
+        },
+        {
+          "action": "resources",
+          "carrier": null,
+          "payload": null,
+          "ship_strikes": []
+        }
+      ],
+      "stock": {
+        "ship": {
+          "in_stock": 1,
+          "in_use": 1
+        },
+        "warhead1": {
+          "in_stock": 1,
+          "in_use": 0
+        },
+        "warhead2": {
+          "in_stock": 0,
+          "in_use": 0
+        }
+      }
+    },
+    {
+      "step": "next_turn_ready",
+      "turn": 1,
+      "funds": 106,
+      "pre_attack_status": "ready",
+      "prepared_weapon": "ship",
+      "selected_action": null,
+      "selected_carrier": "ship",
+      "selected_payload": null,
+      "model_ship_strikes": [],
+      "city_ship_count": {
+        "enemy1_city0": 0,
+        "enemy2_city0": 0
+      },
+      "slots": [
+        {
+          "action": null,
+          "carrier": null,
+          "payload": null,
+          "ship_strikes": []
+        },
+        {
+          "action": null,
+          "carrier": null,
+          "payload": null,
+          "ship_strikes": []
+        }
+      ],
+      "stock": {
+        "ship": {
+          "in_stock": 0,
+          "in_use": 0
+        },
+        "warhead1": {
+          "in_stock": 1,
+          "in_use": 0
+        },
+        "warhead2": {
+          "in_stock": 0,
+          "in_use": 0
+        }
+      }
+    },
+    {
+      "step": "resources_accepted_slot1",
+      "turn": 1,
+      "funds": 106,
+      "pre_attack_status": "ready",
+      "prepared_weapon": "ship",
+      "selected_action": null,
+      "selected_carrier": "ship",
+      "selected_payload": null,
+      "model_ship_strikes": [],
+      "city_ship_count": {
+        "enemy1_city0": 0,
+        "enemy2_city0": 0
+      },
+      "slots": [
+        {
+          "action": "resources",
+          "carrier": null,
+          "payload": null,
+          "ship_strikes": []
+        },
+        {
+          "action": null,
+          "carrier": null,
+          "payload": null,
+          "ship_strikes": []
+        }
+      ],
+      "stock": {
+        "ship": {
+          "in_stock": 0,
+          "in_use": 0
+        },
+        "warhead1": {
+          "in_stock": 1,
+          "in_use": 0
+        },
+        "warhead2": {
+          "in_stock": 0,
+          "in_use": 0
+        }
+      }
+    },
+    {
+      "step": "first_ship_target_selected",
+      "turn": 1,
+      "funds": 106,
+      "pre_attack_status": "ready",
+      "prepared_weapon": "ship",
+      "selected_action": "preAttack",
+      "selected_carrier": "ship",
+      "selected_payload": null,
+      "model_ship_strikes": [
+        {
+          "city_id": 5,
+          "weapon_id": 4
+        }
+      ],
+      "city_ship_count": {
+        "enemy1_city0": 1,
+        "enemy2_city0": 0
+      },
+      "slots": [
+        {
+          "action": "resources",
+          "carrier": null,
+          "payload": null,
+          "ship_strikes": []
+        },
+        {
+          "action": null,
+          "carrier": null,
+          "payload": null,
+          "ship_strikes": []
+        }
+      ],
+      "stock": {
+        "ship": {
+          "in_stock": 0,
+          "in_use": 0
+        },
+        "warhead1": {
+          "in_stock": 2,
+          "in_use": 1
+        },
+        "warhead2": {
+          "in_stock": 0,
+          "in_use": 0
+        }
+      }
+    },
+    {
+      "step": "first_ship_payload_accepted_slot2",
+      "turn": 1,
+      "funds": 106,
+      "pre_attack_status": "ready",
+      "prepared_weapon": "ship",
+      "selected_action": null,
+      "selected_carrier": "ship",
+      "selected_payload": null,
+      "model_ship_strikes": [],
+      "city_ship_count": {
+        "enemy1_city0": 1,
+        "enemy2_city0": 0
+      },
+      "slots": [
+        {
+          "action": "resources",
+          "carrier": null,
+          "payload": null,
+          "ship_strikes": []
+        },
+        {
+          "action": "preAttack",
+          "carrier": "ship",
+          "payload": null,
+          "ship_strikes": [
+            {
+              "city_id": 5,
+              "weapon_id": 4
+            }
+          ]
+        }
+      ],
+      "stock": {
+        "ship": {
+          "in_stock": 0,
+          "in_use": 0
+        },
+        "warhead1": {
+          "in_stock": 2,
+          "in_use": 1
+        },
+        "warhead2": {
+          "in_stock": 0,
+          "in_use": 0
+        }
+      }
+    },
+    {
+      "step": "occupied_tube2_removed",
+      "turn": 1,
+      "funds": 106,
+      "pre_attack_status": "ready",
+      "prepared_weapon": "ship",
+      "selected_action": null,
+      "selected_carrier": "ship",
+      "selected_payload": null,
+      "model_ship_strikes": [],
+      "city_ship_count": {
+        "enemy1_city0": 0,
+        "enemy2_city0": 0
+      },
+      "slots": [
+        {
+          "action": "resources",
+          "carrier": null,
+          "payload": null,
+          "ship_strikes": []
+        },
+        {
+          "action": null,
+          "carrier": null,
+          "payload": null,
+          "ship_strikes": []
+        }
+      ],
+      "stock": {
+        "ship": {
+          "in_stock": 0,
+          "in_use": 0
+        },
+        "warhead1": {
+          "in_stock": 2,
+          "in_use": 0
+        },
+        "warhead2": {
+          "in_stock": 0,
+          "in_use": 0
+        }
+      }
+    },
+    {
+      "step": "replacement_target_selected",
+      "turn": 1,
+      "funds": 106,
+      "pre_attack_status": "ready",
+      "prepared_weapon": "ship",
+      "selected_action": "preAttack",
+      "selected_carrier": "ship",
+      "selected_payload": null,
+      "model_ship_strikes": [
+        {
+          "city_id": 10,
+          "weapon_id": 5
+        }
+      ],
+      "city_ship_count": {
+        "enemy1_city0": 0,
+        "enemy2_city0": 1
+      },
+      "slots": [
+        {
+          "action": "resources",
+          "carrier": null,
+          "payload": null,
+          "ship_strikes": []
+        },
+        {
+          "action": null,
+          "carrier": null,
+          "payload": null,
+          "ship_strikes": []
+        }
+      ],
+      "stock": {
+        "ship": {
+          "in_stock": 0,
+          "in_use": 0
+        },
+        "warhead1": {
+          "in_stock": 2,
+          "in_use": 0
+        },
+        "warhead2": {
+          "in_stock": 1,
+          "in_use": 1
+        }
+      }
+    },
+    {
+      "step": "replacement_payload_accepted_slot2",
+      "turn": 1,
+      "funds": 106,
+      "pre_attack_status": "ready",
+      "prepared_weapon": "ship",
+      "selected_action": null,
+      "selected_carrier": "ship",
+      "selected_payload": null,
+      "model_ship_strikes": [],
+      "city_ship_count": {
+        "enemy1_city0": 0,
+        "enemy2_city0": 1
+      },
+      "slots": [
+        {
+          "action": "resources",
+          "carrier": null,
+          "payload": null,
+          "ship_strikes": []
+        },
+        {
+          "action": "preAttack",
+          "carrier": "ship",
+          "payload": null,
+          "ship_strikes": [
+            {
+              "city_id": 10,
+              "weapon_id": 5
+            }
+          ]
+        }
+      ],
+      "stock": {
+        "ship": {
+          "in_stock": 0,
+          "in_use": 0
+        },
+        "warhead1": {
+          "in_stock": 2,
+          "in_use": 0
+        },
+        "warhead2": {
+          "in_stock": 1,
+          "in_use": 1
+        }
+      }
+    }
+  ],
+  "source_files_sha256": {
+    "wd2/action_entry.py": "a662f645d9047d7109bc0db95c7137b08e24e1248e644ec64e237cf666345c37",
+    "wd2/generated/Presenter_interface.py": "ac502ef9e94a205f5027fc0598c3deb2fa1913aa1dfc6f0d5ca4ca12d1d95afd",
+    "wd2/generated/Presenter.py": "eb8aad7305c870b157a3199b7d8213edb22f4fd35d169395cee3db95b12c08b9",
+    "wd2/generated/Sub_model.py": "48d0936200815ea3fa088b9b1ea721655a804fc309e586f2875b6fde4ed7329e",
+    "wd2/generated/Player.py": "3672a235acd58e30ec5f81b35d3193366c887af464da7e90c71e454d783c26a5",
+    "wd2/setup_menu.py": "5633326451e768a84a14bde04e452043ba7fac2617a4c71b7b36dcd0495f0c4a"
+  },
+  "execution": "python -B from external cwd; write-deny audit hook before source imports"
+}
