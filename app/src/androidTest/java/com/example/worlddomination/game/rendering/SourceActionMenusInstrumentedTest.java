@@ -6,9 +6,12 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.PixmapIO;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.ScreenUtils;
+import com.badlogic.gdx.utils.JsonValue;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.example.worlddomination.MainActivity;
 import com.example.worlddomination.game.WorldDominationGame;
@@ -112,6 +115,15 @@ public final class SourceActionMenusInstrumentedTest {
 
                     state = fresh(app); begin(app, GameState.Action.DIPLOMACY);
                     state.getHuman().turnMoneyMillions = 0;
+                    render(app);
+                    assertEquals("Budget: $ 0", renderedActionText(app, "textFunds"));
+                    assertEquals(0, state.getHuman().turnMoneyMillions);
+                    capture(app, "source-diplomacy-zero-budget.png");
+                    state.getHuman().turnMoneyMillions = -10;
+                    render(app);
+                    assertEquals("Budget: $ 0", renderedActionText(app, "textFunds"));
+                    assertEquals(-10, state.getHuman().turnMoneyMillions);
+                    state.getHuman().turnMoneyMillions = 0;
                     sourceTap(app, 50, 80); sourceTap(app, 70, 169);
                     assertEquals("diplomacy_error", menu(app).getKey()); assertFalse(menu(app).hasOption());
                     capture(app, "source-diplomacy-unaffordable-option.png");
@@ -167,6 +179,25 @@ public final class SourceActionMenusInstrumentedTest {
     }
     private static SourceActionMenuState menu(WorldDominationGame app) throws Exception {
         return (SourceActionMenuState) field("sourceActionMenu").get(app);
+    }
+    private static String renderedActionText(WorldDominationGame app, String name) throws Exception {
+        SourceActionMenuRenderer renderer = (SourceActionMenuRenderer)
+                field("sourceActionMenuRenderer").get(app);
+        Field fields = SourceActionMenuRenderer.class.getDeclaredField("fields");
+        fields.setAccessible(true);
+        for (Object item : (Object[]) fields.get(renderer)) {
+            Field source = item.getClass().getDeclaredField("source");
+            source.setAccessible(true);
+            if (!name.equals(((JsonValue) source.get(item)).getString("name"))) continue;
+            Field glyph = item.getClass().getDeclaredField("glyph");
+            glyph.setAccessible(true);
+            StringBuilder result = new StringBuilder();
+            for (GlyphLayout.GlyphRun run : ((GlyphLayout) glyph.get(item)).runs)
+                for (BitmapFont.Glyph character : run.glyphs)
+                    result.append((char) character.id);
+            return result.toString();
+        }
+        throw new AssertionError("Missing rendered source field " + name);
     }
     private static void begin(WorldDominationGame app, GameState.Action action) throws Exception {
         ScrollPaneState scroll = (ScrollPaneState) field("navigationScroll").get(app);

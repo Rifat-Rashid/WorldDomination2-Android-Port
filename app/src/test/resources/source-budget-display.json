@@ -1,0 +1,44 @@
+{
+  "samples": [
+    {
+      "funds": 0,
+      "display_turnMoney": "$ 0",
+      "display_textFunds": "Budget: $ 0"
+    },
+    {
+      "funds": 1,
+      "display_turnMoney": "1.000.000",
+      "display_textFunds": "Budget: 1.000.000"
+    },
+    {
+      "funds": 65,
+      "display_turnMoney": "65.000.000",
+      "display_textFunds": "Budget: 65.000.000"
+    },
+    {
+      "funds": -1,
+      "display_turnMoney": "$ 0",
+      "display_textFunds": "Budget: $ 0"
+    },
+    {
+      "funds": -10,
+      "display_turnMoney": "$ 0",
+      "display_textFunds": "Budget: $ 0"
+    }
+  ],
+  "zero_dialog": {
+    "action": "resources",
+    "field_text": "Budget: $ 0",
+    "field_id": 3299,
+    "method": "SetupMenu seed 0, building 5, leader 0, btn1 actual Resources callback at turnMoney=0"
+  },
+  "provenance": {
+    "source_files_sha256": {
+      "wd2/generated/Sub_model.py": "48d0936200815ea3fa088b9b1ea721655a804fc309e586f2875b6fde4ed7329e",
+      "wd2/generated/Sub_Presenter_interface.py": "bdb6675220507323b784b4867af0d3f80b4366935f353903b12c2d052d714bd7",
+      "wd2/setup_menu.py": "5633326451e768a84a14bde04e452043ba7fac2617a4c71b7b36dcd0495f0c4a",
+      "wd2/original_gameplay.py": "e1162e40e608101c2427679cb5d1d86aa9c724ad9c36ea342a766b565139a59c"
+    },
+    "execution": "python -B from external cwd; write-deny audit hook before source imports"
+  }
+}

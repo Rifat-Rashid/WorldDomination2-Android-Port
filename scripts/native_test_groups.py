@@ -23,6 +23,8 @@ BETA_PRODUCERS = {
     "com.example.worlddomination.game.rendering.SourceAirfieldDefenseRenderingInstrumentedTest",
 }
 PROPAGANDA = "com.example.worlddomination.game.ui.PropagandaUiInstrumentedTest"
+ACTION_MENUS = "com.example.worlddomination.game.rendering.SourceActionMenusInstrumentedTest"
+ACTION_MENUS_EVIDENCE = {"source-diplomacy-zero-budget.png"}
 HELP = "com.example.worlddomination.game.rendering.SourceHelpInstrumentedTest"
 HELP_EVIDENCE = {"source-help-live-overview.png"} | {
     f"source-help-{page}-{size}-{variant}.png"
@@ -327,6 +329,7 @@ def verify_group_artifact(manifest: dict, group: dict, artifact: Path) -> tuple[
         if evidence == "beta-ui-evidence":
             names = {image.name for image in images}
             for selected_class, required, label in (
+                    (ACTION_MENUS, ACTION_MENUS_EVIDENCE, "action menu zero budget"),
                     (HELP, HELP_EVIDENCE, "Help"),
                     (SETUP_PANELS, SETUP_PANELS_EVIDENCE, "setup panels"),
                     (SETUP_LAYOUT, SETUP_LAYOUT_EVIDENCE, "setup layout"),

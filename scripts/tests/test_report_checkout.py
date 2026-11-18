@@ -77,11 +77,13 @@ class ReportCheckoutTest(unittest.TestCase):
         self.assertRegex(self.matrix, r'(?m)^    needs: full-suite$')
         self.assertRegex(self.matrix, r'(?m)^    if: always\(\)$')
         tasks = re.findall(r'(?m)^            task: (.+)$', self.matrix)
-        self.assertEqual(212, len(tasks))
+        self.assertEqual(213, len(tasks))
         filters = [pattern for task in tasks for pattern in selectors(task.strip().strip("'"))]
-        self.assertEqual(437, len(filters))
+        self.assertEqual(438, len(filters))
         self.assertEqual(1, filters.count(
             'com.example.worlddomination.game.ui.MassMediaTextTest'))
+        self.assertEqual(1, filters.count(
+            'com.example.worlddomination.game.ui.SourceBudgetTextTest'))
         self.assertEqual(1, filters.count(
             'com.example.worlddomination.game.simulation.SourcePlannedDiplomacyTest'))
         self.assertEqual(1, filters.count(
