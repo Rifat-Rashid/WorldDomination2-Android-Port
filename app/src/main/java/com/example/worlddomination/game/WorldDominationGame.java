@@ -125,6 +125,7 @@ import com.example.worlddomination.game.ui.SplashScreenLayout;
 import com.example.worlddomination.game.ui.SplashScreenState;
 import com.example.worlddomination.game.ui.SetupScreenLayout;
 import com.example.worlddomination.game.ui.TechnologyScreenLayout;
+import com.example.worlddomination.game.ui.TechnologySelectionTextLayout;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -368,6 +369,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private SpriteBatch batch;
     private ShapeRenderer shapes;
     private BitmapFont font;
+    private TechnologySelectionTextLayout researchTextLayout;
     private ResourceMenuRenderer resourceMenuRenderer;
     private SourceHelpRenderer helpRenderer;
     private final SourceHelpState helpState = new SourceHelpState();
@@ -512,6 +514,15 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         actionTubeAssets = new OriginalActionTubeAssets();
         turnControlRenderer = new TurnControlRenderer();
         font = new HighResolutionBitmapFont();
+        font.getData().setScale(TechnologyScreenLayout.SELECTED_TEXT_LINE_HEIGHT / font.getLineHeight());
+        researchTextLayout = new TechnologySelectionTextLayout(text -> {
+            float advance = 0f;
+            for (int index = 0; index < text.length(); index++) {
+                advance += font.getData().getGlyph(text.charAt(index)).xadvance * font.getData().scaleX;
+            }
+            return advance;
+        });
+        font.getData().setScale(1f);
         technologyArtwork = new TechnologyArtworkAssets();
         centerUiRenderer.setTechnologyArtwork(technologyArtwork);
         font.setColor(Color.WHITE);
@@ -3422,26 +3433,38 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
 
         int row = 0;
+        int nameRow = 0;
         for (TechnologyCatalog.Definition definition : TechnologyCatalog.all()) {
             String technology = definition.name;
             if (!game.isResearchTechnologySelected(technology)) {
                 continue;
             }
-            drawSourceText(game.getTechnologyLabel(technology),
-                    TechnologyScreenLayout.SELECTED_NAMES_X,
-                    TechnologyScreenLayout.selectedNamesTextTop() + row * 12f,
-                    10f, TITLE_TEXT);
-            drawSourceTextRight(sourceMillions(game.getTechnologyCost(technology)),
-                    TechnologyScreenLayout.SELECTED_COSTS_RIGHT,
-                    TechnologyScreenLayout.selectedCostsTextTop() + row * 12f,
-                    10f, Color.WHITE);
+            // The two authored fields wrap and limit their lines independently.
+            java.util.List<String> nameLines = researchTextLayout.nameLines(technology);
+            for (int lineIndex = 0; lineIndex < nameLines.size(); lineIndex++) {
+                if (nameRow < TechnologySelectionTextLayout.VISIBLE_LINES) {
+                    drawSourceText(nameLines.get(lineIndex), TechnologyScreenLayout.SELECTED_NAMES_X,
+                            TechnologyScreenLayout.selectedNamesTextTop()
+                                    + nameRow * TechnologySelectionTextLayout.LINE_SPACING,
+                            TechnologyScreenLayout.SELECTED_TEXT_LINE_HEIGHT, Color.WHITE);
+                }
+                nameRow++;
+            }
+            if (row < TechnologySelectionTextLayout.VISIBLE_LINES) {
+                drawSourceTextRight(sourceMillions(game.getTechnologyCost(technology)),
+                        TechnologyScreenLayout.SELECTED_COSTS_RIGHT,
+                        TechnologyScreenLayout.selectedCostsTextTop()
+                                + row * TechnologySelectionTextLayout.LINE_SPACING,
+                        TechnologyScreenLayout.SELECTED_TEXT_LINE_HEIGHT, Color.WHITE);
+            }
             row++;
         }
         if (row > 0) {
             drawSourceTextRight("estimated total: "
                             + sourceMillions(game.getSelectedResearchCostMillions()),
                     TechnologyScreenLayout.ESTIMATED_TOTAL_RIGHT,
-                    TechnologyScreenLayout.estimatedTotalTextTop(), 10f,
+                    TechnologyScreenLayout.estimatedTotalTextTop(),
+                    TechnologyScreenLayout.SELECTED_TEXT_LINE_HEIGHT,
                     RESEARCH_TOTAL_TEXT);
         }
     }

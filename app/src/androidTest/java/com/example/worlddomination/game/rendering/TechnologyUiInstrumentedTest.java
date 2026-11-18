@@ -90,6 +90,7 @@ public final class TechnologyUiInstrumentedTest {
                     tap(app, cards[available]);
                     assertTrue(game.isResearchTechnologySelected(technology));
                     capture(app, "source-technology-original-selected.png");
+                    assertSourceResearchFields(app, game, choices, cards, available);
                     assertMinifiedSelectedTextRetainsWhiteInk(app);
                     int funds = game.getTurnMoneyMillions();
                     tap(app, (Rectangle) field("modalAccept").get(app));
@@ -102,6 +103,118 @@ public final class TechnologyUiInstrumentedTest {
             assertTrue("Original research UI timed out", done.await(60, TimeUnit.SECONDS));
             if (failure.get() != null) throw new AssertionError("Original research UI", failure.get());
         }
+    }
+
+    private static void assertSourceResearchFields(WorldDominationGame app, GameState game,
+                                                   String[] choices, Rectangle[] cards,
+                                                   int first) throws Exception {
+        Rectangle modal = (Rectangle) field("modal").get(app);
+        // Independent Python callback captures, measured on its 800x600 stage.
+        assertInk(app, modal, 334.45f, 277, 431, 291, true, 337, 279, 424, 289);
+        assertInk(app, modal, 500, 278, 558, 291, true, 508, 280, 557, 287);
+        assertInk(app, modal, 400, 360, 558, 373, false, 436, 362, 557, 370);
+
+        tap(app, cards[first]);
+        int warhead = -1;
+        for (int i = 0; i < choices.length; i++) {
+            if ("warhead2".equals(choices[i])) warhead = i;
+        }
+        assertTrue("Seeded source warhead is available", warhead >= 0);
+        tap(app, cards[warhead]);
+        render(app);
+        assertInk(app, modal, 334.45f, 277, 431, 290, true, 336, 279, 405, 289);
+        assertInk(app, modal, 334.45f, 290, 431, 303, true, 337, 291, 363, 301);
+        assertInk(app, modal, 500, 278, 558, 291, true, 508, 280, 557, 287);
+        assertNoWhiteInk(app, modal, 500, 291, 558, 303);
+        capture(app, "source-technology-wrapped-name.png");
+
+        for (int i = 0; i < choices.length; i++) {
+            if (choices[i] != null && game.isResearchAvailable(choices[i])
+                    && game.getTechnologyCost(choices[i]) == 10
+                    && !game.isResearchTechnologySelected(choices[i])) tap(app, cards[i]);
+        }
+        assertEquals("Six affordable source choices", 60, game.getSelectedResearchCostMillions());
+        render(app);
+        assertNoWhiteInk(app, modal, 334.45f, 350, 431, 357);
+        // Costs remain one row per selected technology, independently of name wrapping.
+        assertInk(app, modal, 500, 338, 558, 351, true, 508, 340, 557, 347);
+        capture(app, "source-technology-six-selected.png");
+        for (int i = 0; i < choices.length; i++) {
+            if (choices[i] != null && game.isResearchTechnologySelected(choices[i])) tap(app, cards[i]);
+        }
+        tap(app, cards[first]);
+        assertEquals(10, game.getSelectedResearchCostMillions());
+    }
+
+    private static Vector2 sourcePoint(WorldDominationGame app, Rectangle modal, float x, float y)
+            throws Exception {
+        return ((Viewport) field("viewport").get(app)).project(new Vector2(
+                modal.x + (x - 205f) * modal.width / 365f,
+                modal.y + modal.height - (y - 135f) * modal.height / 275f));
+    }
+
+    private static int[] inkBounds(WorldDominationGame app, Rectangle modal,
+                                    float left, float top, float right, float bottom,
+                                    boolean white) throws Exception {
+        Vector2 a = sourcePoint(app, modal, left, top);
+        Vector2 b = sourcePoint(app, modal, right, bottom);
+        int x = (int) Math.ceil(a.x), y = (int) Math.ceil(b.y);
+        int width = (int) Math.floor(b.x) - x, height = (int) Math.floor(a.y) - y;
+        Pixmap pixels = ScreenUtils.getFrameBufferPixmap(x, y, width, height);
+        // The total's ROI includes the navy area above its white strip. Subtract
+        // the captured empty menu so that backing pixels cannot count as glyphs.
+        File directory = InstrumentationRegistry.getInstrumentation().getTargetContext()
+                .getExternalFilesDir("beta-ui-evidence");
+        Pixmap empty = white ? null : new Pixmap(Gdx.files.absolute(
+                new File(directory, "source-technology-original-empty.png").getAbsolutePath()));
+        int minX = Integer.MAX_VALUE, minY = Integer.MAX_VALUE, maxX = -1, maxY = -1;
+        try {
+            for (int py = 0; py < height; py++) for (int px = 0; px < width; px++) {
+                int color = pixels.getPixel(px, py);
+                int red = color >>> 24 & 255, green = color >>> 16 & 255, blue = color >>> 8 & 255;
+                boolean ink = white ? red > 90 && green > 90 && blue > 90
+                        : red < 180 && blue > red + 10;
+                if (ink && empty != null) {
+                    int background = empty.getPixel(x + px, empty.getHeight() - 1 - y - py);
+                    int difference = Math.abs(red - (background >>> 24 & 255))
+                            + Math.abs(green - (background >>> 16 & 255))
+                            + Math.abs(blue - (background >>> 8 & 255));
+                    ink = difference > 30;
+                }
+                if (ink) {
+                    minX = Math.min(minX, x + px); maxX = Math.max(maxX, x + px + 1);
+                    minY = Math.min(minY, y + py); maxY = Math.max(maxY, y + py + 1);
+                }
+            }
+        } finally {
+            pixels.dispose();
+            if (empty != null) empty.dispose();
+        }
+        return maxX < 0 ? null : new int[]{minX, maxY, maxX, minY};
+    }
+
+    private static void assertInk(WorldDominationGame app, Rectangle modal,
+                                  float left, float top, float right, float bottom, boolean white,
+                                  float inkLeft, float inkTop, float inkRight, float inkBottom)
+            throws Exception {
+        int[] actual = inkBounds(app, modal, left, top, right, bottom, white);
+        assertNotNull("Source field contains visible glyphs", actual);
+        Vector2 a = sourcePoint(app, modal, inkLeft, inkTop);
+        Vector2 b = sourcePoint(app, modal, inkRight, inkBottom);
+        Vector2 unit = sourcePoint(app, modal, inkLeft + 2, inkTop + 2);
+        float toleranceX = Math.max(2f, Math.abs(unit.x - a.x));
+        float toleranceY = Math.max(2f, Math.abs(unit.y - a.y));
+        assertEquals("Source ink left", a.x, actual[0], toleranceX);
+        assertEquals("Source ink top", a.y, actual[1], toleranceY);
+        assertEquals("Source ink right", b.x, actual[2], toleranceX);
+        assertEquals("Source ink bottom", b.y, actual[3], toleranceY);
+    }
+
+    private static void assertNoWhiteInk(WorldDominationGame app, Rectangle modal,
+                                         float left, float top, float right, float bottom)
+            throws Exception {
+        assertNull("Source field discards lines beyond its visible count",
+                inkBounds(app, modal, left, top, right, bottom, true));
     }
 
     /** The source's selected row is light on navy even at a 640x320 back buffer. */

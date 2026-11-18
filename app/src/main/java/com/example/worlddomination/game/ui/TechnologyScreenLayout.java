@@ -27,6 +27,9 @@ public final class TechnologyScreenLayout {
     private static final float FLASH_TEXT_BASELINE_OFFSET = 5f;
 
     public static final float SELECTED_NAMES_X = 136.4f + SOURCE_ORIGIN_X;
+    // Source TextFormat uses Arial size 10. The 48-pixel atlas has a 55-pixel
+    // line box; the legacy text helpers accept line height, not font face size.
+    public static final float SELECTED_TEXT_LINE_HEIGHT = 10f * 55f / 48f;
     public static final float SELECTED_COSTS_X = 232.8f + SOURCE_ORIGIN_X;
     public static final float SELECTED_NAMES_FIELD_Y = 141.5f;
     public static final float SELECTED_COSTS_FIELD_Y = 142f;

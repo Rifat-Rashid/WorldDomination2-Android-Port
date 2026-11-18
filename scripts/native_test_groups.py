@@ -166,6 +166,12 @@ RESOURCE_MODAL_CONTEXT_EVIDENCE = {
     "resource-modal-context-after.png",
 }
 
+TECHNOLOGY_FIELDS = "com.example.worlddomination.game.rendering.TechnologyUiInstrumentedTest"
+TECHNOLOGY_FIELDS_EVIDENCE = {
+    "source-technology-original-empty.png", "source-technology-original-selected.png",
+    "source-technology-wrapped-name.png", "source-technology-six-selected.png",
+}
+
 
 PHONE_TOOLBAR_AUDIO = "com.example.worlddomination.game.audio.PhoneToolbarAudioInstrumentedTest"
 PHONE_TOOLBAR_AUDIO_EVIDENCE = {
@@ -331,7 +337,8 @@ def verify_group_artifact(manifest: dict, group: dict, artifact: Path) -> tuple[
                     (MESSAGE_WHOLE_LINES, MESSAGE_WHOLE_LINES_EVIDENCE, "message whole lines"),
                     (PHONE_PANELS, PHONE_PANELS_EVIDENCE, "phone panels"),
                     (RESOURCE_MODAL_CONTEXT, RESOURCE_MODAL_CONTEXT_EVIDENCE,
-                     "resource modal context recovery")):
+                     "resource modal context recovery"),
+                    (TECHNOLOGY_FIELDS, TECHNOLOGY_FIELDS_EVIDENCE, "technology fields")):
                 if selected_class in group["classes"]:
                     missing = required - names
                     if missing:
