@@ -159,6 +159,14 @@ PHONE_PANELS_EVIDENCE = {
 }
 
 
+RESOURCE_MODAL_CONTEXT = (
+    "com.example.worlddomination.game.rendering.ResourceModalContextRecoveryInstrumentedTest")
+RESOURCE_MODAL_CONTEXT_EVIDENCE = {
+    "resource-modal-context-before.png",
+    "resource-modal-context-after.png",
+}
+
+
 PHONE_TOOLBAR_AUDIO = "com.example.worlddomination.game.audio.PhoneToolbarAudioInstrumentedTest"
 PHONE_TOOLBAR_AUDIO_EVIDENCE = {
     f"phone-toolbar-{variant}.png"
@@ -321,7 +329,9 @@ def verify_group_artifact(manifest: dict, group: dict, artifact: Path) -> tuple[
                     (SCORE_PANEL, SCORE_PANEL_EVIDENCE, "score panel"),
                     (PHONE_TOOLBAR_AUDIO, PHONE_TOOLBAR_AUDIO_EVIDENCE, "phone toolbar audio"),
                     (MESSAGE_WHOLE_LINES, MESSAGE_WHOLE_LINES_EVIDENCE, "message whole lines"),
-                    (PHONE_PANELS, PHONE_PANELS_EVIDENCE, "phone panels")):
+                    (PHONE_PANELS, PHONE_PANELS_EVIDENCE, "phone panels"),
+                    (RESOURCE_MODAL_CONTEXT, RESOURCE_MODAL_CONTEXT_EVIDENCE,
+                     "resource modal context recovery")):
                 if selected_class in group["classes"]:
                     missing = required - names
                     if missing:

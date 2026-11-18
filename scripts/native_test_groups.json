@@ -113,7 +113,8 @@
     "com.example.worlddomination.game.rendering.ActionRevealAudioInstrumentedTest",
     "com.example.worlddomination.game.audio.ThemeCompletionInstrumentedTest",
     "com.example.worlddomination.game.rendering.MessageWholeLineInstrumentedTest",
-    "com.example.worlddomination.game.rendering.SourcePhonePanelInstrumentedTest"
+    "com.example.worlddomination.game.rendering.SourcePhonePanelInstrumentedTest",
+    "com.example.worlddomination.game.rendering.ResourceModalContextRecoveryInstrumentedTest"
   ],
   "groups": [
     {
@@ -172,7 +173,8 @@
         "com.example.worlddomination.game.rendering.ActionRevealAudioInstrumentedTest",
         "com.example.worlddomination.game.audio.ThemeCompletionInstrumentedTest",
         "com.example.worlddomination.game.rendering.MessageWholeLineInstrumentedTest",
-        "com.example.worlddomination.game.rendering.SourcePhonePanelInstrumentedTest"
+        "com.example.worlddomination.game.rendering.SourcePhonePanelInstrumentedTest",
+        "com.example.worlddomination.game.rendering.ResourceModalContextRecoveryInstrumentedTest"
       ],
       "evidence": [
         "beta-ui-evidence",
@@ -930,6 +932,10 @@
     [
       "com.example.worlddomination.game.rendering.SourcePhonePanelInstrumentedTest",
       "liveWorldPanelArtStaysInsideItsBoundsAtBothAspectRatios"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.ResourceModalContextRecoveryInstrumentedTest",
+      "resourceModalRestoresAfterEglContextLoss"
     ]
   ]
 }
