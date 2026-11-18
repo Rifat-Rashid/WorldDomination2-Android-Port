@@ -2837,10 +2837,6 @@ public final class GameState {
         // Model.doTurn plans every AI action before Sub_presenter.turnResults
         // advances readiness, relations, religion, and offer cooldowns.
         updateTurnUpkeep();
-        for (AiDiplomacyResponse response : diplomacyResponses) {
-            resolveDiplomacyResponse(response.target, response.proposal,
-                    response.accepted, false);
-        }
         clearPreviousBiologicalEffects();
         long[] spyMoneyBases = new long[players.length];
         Map<Integer, Map<String, Integer>> spyWeaponStockBases = new LinkedHashMap<>();
@@ -2960,7 +2956,9 @@ public final class GameState {
             // Presenter.updatePlayerVars_2 reduces battle stock after city
             // elimination checks; that phase does not run after human defeat.
             for (WeaponState used : battleStockUses) {
-                used.inStock = Math.max(0, used.inStock - 1);
+                // Source reduceWeaponByID subtracts even when a simultaneous
+                // spy stole this already-committed payload during settlement.
+                used.inStock--;
             }
             for (PlayerState player : players) {
                 player.satellitesUsed += battleSatelliteLaunches[player.id];
@@ -2998,6 +2996,16 @@ public final class GameState {
             }
             if (actor.human) {
                 settleHumanDiplomacyResponses();
+            }
+            // The source appends AI answers before that player's action
+            // records, then visits the results backward. Settle answers after
+            // these actions, so they cannot change an earlier observer reaction
+            // or retroactively protect a queued attack with a new ceasefire.
+            for (AiDiplomacyResponse response : diplomacyResponses) {
+                if (response.target == actor) {
+                    resolveDiplomacyResponse(response.target, response.proposal,
+                            response.accepted, false);
+                }
             }
         }
         for (int playerIndex = 0; humanSurvivedBattle
@@ -3490,6 +3498,10 @@ public final class GameState {
             resolveSpyAttack(attacker, defender, weapon, turnOrders,
                     spyMoneyBases[defender.id], spyWeaponStockBases.get(defender.id),
                     spyOutcomes);
+            // Presenter processes spy missions as zero-casualty battle results.
+            // They still trigger the special-person diplomatic penalty.
+            order.battleRegardLoss = 0;
+            order.hasBattleRegardResult = true;
             battleStockUses.add(weapon);
             order.actionBuildingResolved = true;
             lastTurnSpyMissions.add(new SpyMissionEvent(attacker.id, defender.id,

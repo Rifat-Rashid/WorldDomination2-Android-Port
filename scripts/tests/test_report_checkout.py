@@ -77,8 +77,11 @@ class ReportCheckoutTest(unittest.TestCase):
         self.assertRegex(self.matrix, r'(?m)^    needs: full-suite$')
         self.assertRegex(self.matrix, r'(?m)^    if: always\(\)$')
         tasks = re.findall(r'(?m)^            task: (.+)$', self.matrix)
-        self.assertEqual(206, len(tasks))
-        self.assertEqual(431, sum(len(selectors(task.strip().strip("'"))) for task in tasks))
+        self.assertEqual(207, len(tasks))
+        filters = [pattern for task in tasks for pattern in selectors(task.strip().strip("'"))]
+        self.assertEqual(432, len(filters))
+        self.assertEqual(1, filters.count(
+            'com.example.worlddomination.game.simulation.SourceMultiSeedCampaignTest'))
         downloaded = step(self.matrix, "Download this run's executed reports")
         self.assertIn('uses: actions/download-artifact@v7', downloaded)
         self.assertIn('name: executed-debug-junit', downloaded)
