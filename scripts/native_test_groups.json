@@ -270,6 +270,10 @@
       "equipmentRowShowsThreeSourceSwitchFramesAndPreviewCount"
     ],
     [
+      "com.example.worlddomination.game.rendering.StockControlsInstrumentedTest",
+      "groupedArtworkMatchesCurrentRowOrder"
+    ],
+    [
       "com.example.worlddomination.game.rendering.SetupEnemySelectionInstrumentedTest",
       "selectedRivalsDimOnlyTheirCardsAndUpperIconsRemoveThem"
     ],
