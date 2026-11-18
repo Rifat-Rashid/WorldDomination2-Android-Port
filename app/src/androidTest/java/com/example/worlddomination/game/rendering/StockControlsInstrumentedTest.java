@@ -23,6 +23,16 @@ import java.io.File;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.glutils.FrameBuffer;
+import com.badlogic.gdx.math.Matrix4;
+import com.badlogic.gdx.utils.BufferUtils;
+import com.example.worlddomination.game.assets.OriginalUiAssets;
+import java.nio.IntBuffer;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import static org.junit.Assert.*;
@@ -91,6 +101,202 @@ public final class StockControlsInstrumentedTest {
         }
     }
 
+    @Test public void groupedArtworkMatchesCurrentRowOrder() throws Exception {
+        try (GameActivityScenario scenario = GameActivityScenario.launch(MainActivity.class)) {
+            CountDownLatch done = new CountDownLatch(1);
+            AtomicReference<Throwable> failure = new AtomicReference<>();
+            scenario.onActivity(activity -> Gdx.app.postRunnable(() -> {
+                try {
+                    WorldDominationGame app = (WorldDominationGame) Gdx.app.getApplicationListener();
+                    Method initialize = app.getClass().getDeclaredMethod("initializeGameplayAssets");
+                    initialize.setAccessible(true);
+                    initialize.invoke(app);
+                    GameState game = new GameState(1, 17L);
+                    game.getHuman().getWeapons().get("soldier1").active = true;
+                    game.getHuman().getWeapons().get("soldier1").inStock = 3;
+                    field("game").set(app, game);
+                    SourceActionMenuState menu = (SourceActionMenuState) field("sourceActionMenu").get(app);
+                    ScrollPaneState scroll = (ScrollPaneState) field("equipmentScroll").get(app);
+                    render(app);
+                    Rectangle viewport = (Rectangle) field("equipmentViewport").get(app);
+                    Rectangle[] rows = (Rectangle[]) field("equipmentRows").get(app);
+                    String[] names = (String[]) field("EQUIPMENT_WEAPON_NAMES").get(null);
+                    OriginalUiAssets assets = (OriginalUiAssets) field("uiAssets").get(app);
+                    SpriteBatch batch = (SpriteBatch) field("batch").get(app);
+                    Matrix4 projection = ((com.badlogic.gdx.graphics.OrthographicCamera)
+                            field("camera").get(app)).combined;
+                    Method candidate = app.getClass().getDeclaredMethod("drawStockControlArtwork");
+                    candidate.setAccessible(true);
+                    int width = Gdx.graphics.getBackBufferWidth();
+                    int height = Gdx.graphics.getBackBufferHeight();
+                    FrameBuffer framebuffer = new FrameBuffer(Pixmap.Format.RGBA8888,
+                            width, height, false);
+                    try {
+                        // Four viewport positions include a fractional clip boundary.
+                        float[] offsets = {0f, scroll.getLimit() * 0.5f,
+                                Math.min(scroll.getLimit(), scroll.getLimit() * 0.5f + 0.375f),
+                                scroll.getLimit()};
+                        int comparisons = 0;
+                        int maxVisible = 0;
+                        Set<Integer> visibleStates = new HashSet<>();
+                        for (int selection = 0; selection < 3; selection++) {
+                            if (selection == 1) {
+                                game.selectAction(GameState.Action.ATTACK);
+                                menu.begin(game);
+                            } else if (selection == 2) {
+                                assertTrue(menu.chooseEquipment(game, "soldier1"));
+                            }
+                            for (float offset : offsets) {
+                                scroll.moveBy(offset - scroll.getOffset());
+                                render(app); // Establish original row geometry and viewport.
+                                int visible = assertDisjointAndCount(rows, viewport, names);
+                                for (int rowIndex = 0; rowIndex < names.length; rowIndex++) {
+                                    Rectangle row = rows[rowIndex];
+                                    if (names[rowIndex] != null && row.y + row.height >= viewport.y
+                                            && row.y <= viewport.y + viewport.height) {
+                                        visibleStates.add(SourceStockControlState.state(
+                                                game, menu, names[rowIndex]));
+                                    }
+                                }
+                                maxVisible = Math.max(maxVisible, visible);
+                                if (visible == 0) continue;
+                                Result original = paint(framebuffer, app, batch, projection,
+                                        rows, viewport, names, assets, game, menu, null, false);
+                                Result grouped = paint(framebuffer, app, batch, projection,
+                                        rows, viewport, names, assets, game, menu, candidate, false);
+                                assertArrayEquals("selection=" + selection + " offset=" + offset,
+                                        original.rgba, grouped.rgba);
+                                assertEquals(Float.floatToRawIntBits(original.packedColor),
+                                        Float.floatToRawIntBits(grouped.packedColor));
+                                assertTrue(original.scissorEnabled);
+                                assertTrue(grouped.scissorEnabled);
+                                assertEquals(0, original.glError);
+                                assertEquals(0, grouped.glError);
+                                assertTrue("No stock artwork pixels", original.inkPixels > 0);
+                                if (visible >= 3) {
+                                    assertTrue("Current row loop should switch textures repeatedly",
+                                            original.renderCalls == 2 * visible);
+                                    assertTrue("Grouped switches + counter should use <=4 flushes",
+                                            grouped.renderCalls <= 4
+                                                    && grouped.renderCalls < original.renderCalls);
+                                }
+                                if (comparisons == 0) {
+                                    Result shifted = paint(framebuffer, app, batch, projection,
+                                            rows, viewport, names, assets, game, menu, null, true);
+                                    assertFalse("Shifted switch negative control",
+                                            Arrays.equals(original.rgba, shifted.rgba));
+                                }
+                                comparisons++;
+                            }
+                        }
+                        assertEquals(12, comparisons);
+                        assertTrue(maxVisible >= 3);
+                        assertEquals(new HashSet<>(Arrays.asList(
+                                SourceStockControlState.UNAVAILABLE, SourceStockControlState.ELIGIBLE,
+                                SourceStockControlState.SELECTED, SourceStockControlState.INACTIVE)),
+                                visibleStates);
+                    } finally {
+                        framebuffer.dispose();
+                    }
+                } catch (Throwable error) { failure.set(error); }
+                finally { done.countDown(); }
+            }));
+            assertTrue(done.await(45, TimeUnit.SECONDS));
+            if (failure.get() != null) throw new AssertionError("Stock grouping regression", failure.get());
+        }
+    }
+
+    private static Result paint(FrameBuffer fbo, WorldDominationGame app, SpriteBatch batch,
+            Matrix4 projection, Rectangle[] rows, Rectangle viewport, String[] names,
+            OriginalUiAssets assets, GameState game, SourceActionMenuState menu,
+            Method candidate, boolean shifted) throws Exception {
+        boolean oldScissor = Gdx.gl.glIsEnabled(GL20.GL_SCISSOR_TEST);
+        IntBuffer oldBox = BufferUtils.newIntBuffer(4);
+        Gdx.gl.glGetIntegerv(GL20.GL_SCISSOR_BOX, oldBox);
+        float oldColor = batch.getPackedColor();
+        Matrix4 oldProjection = new Matrix4(batch.getProjectionMatrix());
+        int width = fbo.getWidth(), height = fbo.getHeight();
+        fbo.begin();
+        try {
+            Gdx.gl.glDisable(GL20.GL_SCISSOR_TEST);
+            Gdx.gl.glClearColor(0f, 0f, 0f, 0f);
+            Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+            // Matches WorldDominationGame.setScissor for its current viewport.
+            com.badlogic.gdx.utils.viewport.Viewport gameViewport =
+                    (com.badlogic.gdx.utils.viewport.Viewport) field("viewport").get(app);
+            float sx = gameViewport.getScreenWidth() / (float) field("worldWidth").getFloat(app);
+            float sy = gameViewport.getScreenHeight() / (float) field("worldHeight").getFloat(app);
+            Gdx.gl.glEnable(GL20.GL_SCISSOR_TEST);
+            Gdx.gl.glScissor(gameViewport.getScreenX() + Math.round(viewport.x * sx),
+                    gameViewport.getScreenY() + Math.round(viewport.y * sy),
+                    Math.round(viewport.width * sx), Math.round(viewport.height * sy));
+            batch.setProjectionMatrix(projection);
+            batch.setColor(Color.WHITE);
+            int callsBefore = batch.totalRenderCalls;
+            batch.begin();
+            if (candidate != null) candidate.invoke(app);
+            else drawOriginalRowOrder(batch, rows, viewport, names, assets, game, menu, shifted);
+            batch.end();
+            int calls = batch.totalRenderCalls - callsBefore;
+            byte[] rgba = ScreenUtils.getFrameBufferPixels(0, 0, width, height, false);
+            int ink = 0;
+            for (int i = 3; i < rgba.length; i += 4) if (rgba[i] != 0) ink++;
+            int error = Gdx.gl.glGetError();
+            return new Result(rgba, ink, calls, batch.getPackedColor(),
+                    Gdx.gl.glIsEnabled(GL20.GL_SCISSOR_TEST), error);
+        } finally {
+            batch.setProjectionMatrix(oldProjection);
+            batch.setPackedColor(oldColor);
+            fbo.end();
+            if (oldScissor) Gdx.gl.glEnable(GL20.GL_SCISSOR_TEST);
+            else Gdx.gl.glDisable(GL20.GL_SCISSOR_TEST);
+            Gdx.gl.glScissor(oldBox.get(0), oldBox.get(1), oldBox.get(2), oldBox.get(3));
+        }
+    }
+
+    // Intentionally retained from the pre-refactor WorldDominationGame loop.
+    private static void drawOriginalRowOrder(SpriteBatch batch, Rectangle[] rows,
+            Rectangle viewport, String[] names, OriginalUiAssets assets, GameState game,
+            SourceActionMenuState menu, boolean shiftSwitch) {
+        for (int rowIndex = 0; rowIndex < names.length; rowIndex++) {
+            if (names[rowIndex] == null) continue;
+            Rectangle row = rows[rowIndex];
+            if (row.y + row.height < viewport.y || row.y > viewport.y + viewport.height) continue;
+            float controlHeight = Math.min(19f, row.height - 5f);
+            float controlY = row.y + (row.height - controlHeight) / 2f;
+            float counterWidth = controlHeight * 32f / 26f;
+            float switchWidth = controlHeight * 30f / 26f;
+            float counterX = row.x + row.width - counterWidth - switchWidth - 5f;
+            int state = SourceStockControlState.state(game, menu, names[rowIndex]);
+            batch.draw(assets.stockSwitches[SourceStockControlState.switchIndex(state)],
+                    counterX + counterWidth + 2f + (shiftSwitch ? 1f : 0f),
+                    controlY, switchWidth, controlHeight);
+            batch.draw(assets.stockCounter, counterX, controlY, counterWidth, controlHeight);
+        }
+    }
+
+    private static int assertDisjointAndCount(Rectangle[] rows, Rectangle viewport,
+            String[] names) {
+        Rectangle[] controls = new Rectangle[names.length * 2];
+        int count = 0;
+        for (int i = 0; i < names.length; i++) {
+            if (names[i] == null) continue;
+            Rectangle row = rows[i];
+            if (row.y + row.height < viewport.y || row.y > viewport.y + viewport.height) continue;
+            float h = Math.min(19f, row.height - 5f);
+            float y = row.y + (row.height - h) / 2f;
+            float cw = h * 32f / 26f, sw = h * 30f / 26f;
+            float x = row.x + row.width - cw - sw - 5f;
+            controls[count++] = new Rectangle(x, y, cw, h);
+            controls[count++] = new Rectangle(x + cw + 2f, y, sw, h);
+        }
+        for (int i = 0; i < count; i++) for (int j = i + 1; j < count; j++)
+            assertFalse("Overlapping stock controls " + i + "/" + j,
+                    controls[i].overlaps(controls[j]));
+        return count / 2;
+    }
+
+
     private static long hash(WorldDominationGame app, float x, float y, float w, float h)
             throws Exception {
         Viewport viewport = (Viewport) field("viewport").get(app);
@@ -130,5 +336,20 @@ public final class StockControlsInstrumentedTest {
 
     private static void render(WorldDominationGame app) throws Exception {
         field("skipNextFrameDelta").setBoolean(app, true); app.render();
+    }
+    private static final class Result {
+        final byte[] rgba;
+        final int inkPixels, renderCalls, glError;
+        final float packedColor;
+        final boolean scissorEnabled;
+        Result(byte[] rgba, int inkPixels, int renderCalls, float packedColor,
+                boolean scissorEnabled, int glError) {
+            this.rgba = rgba;
+            this.inkPixels = inkPixels;
+            this.renderCalls = renderCalls;
+            this.packedColor = packedColor;
+            this.scissorEnabled = scissorEnabled;
+            this.glError = glError;
+        }
     }
 }
