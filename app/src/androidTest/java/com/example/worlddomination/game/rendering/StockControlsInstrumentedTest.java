@@ -40,6 +40,109 @@ import static org.junit.Assert.*;
 /** Captures the real equipment row in each native stock state. */
 @RunWith(AndroidJUnit4.class)
 public final class StockControlsInstrumentedTest {
+    @Test public void preparedRocketQueueAndTubeRemovalPreserveSpareCarrierCounter() throws Exception {
+        try (GameActivityScenario scenario = GameActivityScenario.launch(MainActivity.class)) {
+            CountDownLatch done = new CountDownLatch(1);
+            AtomicReference<Throwable> failure = new AtomicReference<>();
+            scenario.onActivity(activity -> Gdx.app.postRunnable(() -> {
+                try {
+                    WorldDominationGame app = (WorldDominationGame) Gdx.app.getApplicationListener();
+                    Method initialize = app.getClass().getDeclaredMethod("initializeGameplayAssets");
+                    initialize.setAccessible(true);
+                    initialize.invoke(app);
+                    // Injected stock fixture, not a replay of the legal source campaign.
+                    // Counts match source-legal-rocket-reselection.json: after_turn8,
+                    // turn9_accepted, turn9_removed and turn9_reaccepted checkpoints.
+                    java.lang.reflect.Constructor<GameState> fixtureConstructor =
+                            GameState.class.getDeclaredConstructor(int.class, long.class, boolean.class);
+                    fixtureConstructor.setAccessible(true);
+                    GameState game = fixtureConstructor.newInstance(1, 52L, false);
+                    game.getHuman().getWeapons().get("rocket1").active = true;
+                    game.getHuman().getWeapons().get("rocket1").inStock = 2;
+                    game.getHuman().getWeapons().get("warhead1").active = true;
+                    game.getHuman().getWeapons().get("warhead1").inStock = 2;
+                    game.selectAction(GameState.Action.PREPARED_ATTACK);
+                    assertTrue(game.configurePreparedCarrier("rocket1"));
+                    assertTrue(game.acceptSelectedAction());
+                    game.selectAction(GameState.Action.RESOURCES);
+                    assertTrue(game.acceptSelectedAction());
+                    game.confirmTurn();
+                    assertEquals("rocket1", game.getPreparedCarrierName(0));
+                    assertEquals(1, game.getWeaponStock(0, "rocket1"));
+                    field("game").set(app, game);
+                    SourceActionMenuState menu = (SourceActionMenuState) field("sourceActionMenu").get(app);
+                    long[] before = renderedPreparedStock(app, game, menu, 2);
+
+                    acceptReadyRocket(game, menu);
+                    long[] accepted = renderedPreparedStock(app, game, menu, 1);
+                    capture("stock-prepared-launch-accepted.png");
+                    assertEquals("Spare rocket counter must not change", before[0], accepted[0]);
+                    assertNotEquals("Payload counter must show its queued reservation", before[1], accepted[1]);
+
+                    Method activate = app.getClass().getDeclaredMethod("activateActionSlot", int.class);
+                    activate.setAccessible(true);
+                    activate.invoke(app, 0); // Actual occupied tube UI handler, including selection cleanup.
+                    assertNull(game.getQueuedAction(0));
+                    assertEquals("rocket1", game.getPreparedCarrierName(0));
+                    long[] removed = renderedPreparedStock(app, game, menu, 2);
+                    capture("stock-prepared-launch-removed.png");
+                    assertArrayEquals("Tube removal must restore the original count pixels", before, removed);
+
+                    acceptReadyRocket(game, menu);
+                    assertArrayEquals("Reaccepting must reproduce both count regions", accepted,
+                            renderedPreparedStock(app, game, menu, 1));
+                    assertEquals(GL20.GL_NO_ERROR, Gdx.gl.glGetError());
+                } catch (Throwable error) { failure.set(error); }
+                finally { done.countDown(); }
+            }));
+            assertTrue(done.await(45, TimeUnit.SECONDS));
+            if (failure.get() != null) throw new AssertionError("Prepared stock counter regression", failure.get());
+        }
+    }
+
+    private static void acceptReadyRocket(GameState game, SourceActionMenuState menu) {
+        game.selectAction(GameState.Action.PREPARED_ATTACK);
+        menu.begin(game);
+        assertTrue(menu.chooseEquipment(game, "warhead1"));
+        assertTrue(menu.chooseCity(game, 2, 0));
+        assertTrue(menu.accept(game));
+        assertNull(game.getSelectedAction()); // Only compare committed counts, not selection previews.
+    }
+
+    private static long[] renderedPreparedStock(WorldDominationGame app, GameState game,
+            SourceActionMenuState menu, int payloadCount) throws Exception {
+        assertNull(game.getSelectedAction());
+        assertEquals(1, game.getWeaponStock(0, "rocket1"));
+        assertEquals(2, game.getWeaponStock(0, "warhead1"));
+        assertEquals(1, game.getAvailableWeaponStock(0, "rocket1"));
+        assertEquals(payloadCount, game.getAvailableWeaponStock(0, "warhead1"));
+        render(app);
+        Rectangle viewport = (Rectangle) field("equipmentViewport").get(app);
+        Rectangle[] rows = (Rectangle[]) field("equipmentRows").get(app);
+        String[] names = (String[]) field("EQUIPMENT_WEAPON_NAMES").get(null);
+        ScrollPaneState scroll = (ScrollPaneState) field("equipmentScroll").get(app);
+        String[] weapons = {"rocket1", "warhead1"};
+        long[] pixels = new long[weapons.length];
+        for (int weapon = 0; weapon < weapons.length; weapon++) {
+            int index = Arrays.asList(names).indexOf(weapons[weapon]);
+            assertTrue(index >= 0);
+            Rectangle row = rows[index];
+            scroll.moveBy(viewport.y + viewport.height / 2f - (row.y + row.height / 2f));
+            render(app);
+            assertTrue("Count row must be fully visible: " + weapons[weapon],
+                    viewport.contains(row));
+            assertEquals(weapon == 0 ? 1 : payloadCount,
+                    SourceStockControlState.displayedCount(game, menu, weapons[weapon]));
+            float height = Math.min(19f, row.height - 5f);
+            float cw = height * 32f / 26f, sw = height * 30f / 26f;
+            float cx = row.x + row.width - cw - sw - 5f;
+            float cy = row.y + (row.height - height) / 2f;
+            pixels[weapon] = hash(app, cx + cw * 0.30f, cy + height * 0.20f,
+                    cw * 0.4f, height * 0.6f);
+        }
+        return pixels;
+    }
+
     @Test public void equipmentRowShowsThreeSourceSwitchFramesAndPreviewCount() throws Exception {
         try (GameActivityScenario scenario = GameActivityScenario.launch(MainActivity.class)) {
             CountDownLatch done = new CountDownLatch(1);

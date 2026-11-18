@@ -1,0 +1,617 @@
+{
+  "difficulty": 1,
+  "rows": [
+    {
+      "actor": "human",
+      "attackArray": "empty ASArray",
+      "carrier": "rocket1",
+      "inputCasualties": 14,
+      "interceptedFlag": false,
+      "regardAfter": [
+        25,
+        25
+      ],
+      "regardBefore": [
+        65,
+        65
+      ],
+      "regardDelta": [
+        -40,
+        -40
+      ],
+      "resultCasualties": 14
+    },
+    {
+      "actor": "human",
+      "attackArray": "empty ASArray",
+      "carrier": "rocket1",
+      "inputCasualties": 15,
+      "interceptedFlag": false,
+      "regardAfter": [
+        25,
+        25
+      ],
+      "regardBefore": [
+        65,
+        65
+      ],
+      "regardDelta": [
+        -40,
+        -40
+      ],
+      "resultCasualties": 15
+    },
+    {
+      "actor": "human",
+      "attackArray": "empty ASArray",
+      "carrier": "rocket1",
+      "inputCasualties": 0,
+      "interceptedFlag": true,
+      "regardAfter": [
+        25,
+        25
+      ],
+      "regardBefore": [
+        65,
+        65
+      ],
+      "regardDelta": [
+        -40,
+        -40
+      ],
+      "resultCasualties": 0
+    },
+    {
+      "actor": "human",
+      "attackArray": "empty ASArray",
+      "carrier": "plane1",
+      "inputCasualties": 14,
+      "interceptedFlag": false,
+      "regardAfter": [
+        25,
+        25
+      ],
+      "regardBefore": [
+        65,
+        65
+      ],
+      "regardDelta": [
+        -40,
+        -40
+      ],
+      "resultCasualties": 14
+    },
+    {
+      "actor": "human",
+      "attackArray": "empty ASArray",
+      "carrier": "plane1",
+      "inputCasualties": 15,
+      "interceptedFlag": false,
+      "regardAfter": [
+        25,
+        25
+      ],
+      "regardBefore": [
+        65,
+        65
+      ],
+      "regardDelta": [
+        -40,
+        -40
+      ],
+      "resultCasualties": 15
+    },
+    {
+      "actor": "human",
+      "attackArray": "empty ASArray",
+      "carrier": "plane1",
+      "inputCasualties": 0,
+      "interceptedFlag": true,
+      "regardAfter": [
+        25,
+        25
+      ],
+      "regardBefore": [
+        65,
+        65
+      ],
+      "regardDelta": [
+        -40,
+        -40
+      ],
+      "resultCasualties": 0
+    },
+    {
+      "actor": "human",
+      "attackArray": "empty ASArray",
+      "carrier": "sub",
+      "inputCasualties": 14,
+      "interceptedFlag": false,
+      "regardAfter": [
+        25,
+        25
+      ],
+      "regardBefore": [
+        65,
+        65
+      ],
+      "regardDelta": [
+        -40,
+        -40
+      ],
+      "resultCasualties": 14
+    },
+    {
+      "actor": "human",
+      "attackArray": "empty ASArray",
+      "carrier": "sub",
+      "inputCasualties": 15,
+      "interceptedFlag": false,
+      "regardAfter": [
+        25,
+        25
+      ],
+      "regardBefore": [
+        65,
+        65
+      ],
+      "regardDelta": [
+        -40,
+        -40
+      ],
+      "resultCasualties": 15
+    },
+    {
+      "actor": "human",
+      "attackArray": "empty ASArray",
+      "carrier": "sub",
+      "inputCasualties": 0,
+      "interceptedFlag": true,
+      "regardAfter": [
+        25,
+        25
+      ],
+      "regardBefore": [
+        65,
+        65
+      ],
+      "regardDelta": [
+        -40,
+        -40
+      ],
+      "resultCasualties": 0
+    },
+    {
+      "actor": "human",
+      "attackArray": "empty ASArray",
+      "carrier": "space",
+      "inputCasualties": 14,
+      "interceptedFlag": false,
+      "regardAfter": [
+        25,
+        25
+      ],
+      "regardBefore": [
+        65,
+        65
+      ],
+      "regardDelta": [
+        -40,
+        -40
+      ],
+      "resultCasualties": 14
+    },
+    {
+      "actor": "human",
+      "attackArray": "empty ASArray",
+      "carrier": "space",
+      "inputCasualties": 15,
+      "interceptedFlag": false,
+      "regardAfter": [
+        25,
+        25
+      ],
+      "regardBefore": [
+        65,
+        65
+      ],
+      "regardDelta": [
+        -40,
+        -40
+      ],
+      "resultCasualties": 15
+    },
+    {
+      "actor": "human",
+      "attackArray": "empty ASArray",
+      "carrier": "space",
+      "inputCasualties": 0,
+      "interceptedFlag": true,
+      "regardAfter": [
+        25,
+        25
+      ],
+      "regardBefore": [
+        65,
+        65
+      ],
+      "regardDelta": [
+        -40,
+        -40
+      ],
+      "resultCasualties": 0
+    },
+    {
+      "actor": "human",
+      "attackArray": "three city/weapon entries",
+      "carrier": "ship",
+      "inputCasualties": 14,
+      "interceptedFlag": false,
+      "regardAfter": [
+        25,
+        25
+      ],
+      "regardBefore": [
+        65,
+        65
+      ],
+      "regardDelta": [
+        -40,
+        -40
+      ],
+      "resultCasualties": 14
+    },
+    {
+      "actor": "human",
+      "attackArray": "three city/weapon entries",
+      "carrier": "ship",
+      "inputCasualties": 15,
+      "interceptedFlag": false,
+      "regardAfter": [
+        25,
+        25
+      ],
+      "regardBefore": [
+        65,
+        65
+      ],
+      "regardDelta": [
+        -40,
+        -40
+      ],
+      "resultCasualties": 15
+    },
+    {
+      "actor": "human",
+      "attackArray": "three city/weapon entries",
+      "carrier": "ship",
+      "inputCasualties": 0,
+      "interceptedFlag": true,
+      "regardAfter": [
+        25,
+        25
+      ],
+      "regardBefore": [
+        65,
+        65
+      ],
+      "regardDelta": [
+        -40,
+        -40
+      ],
+      "resultCasualties": 0
+    },
+    {
+      "actor": "AI",
+      "attackArray": "undefined",
+      "carrier": "rocket1",
+      "inputCasualties": 14,
+      "interceptedFlag": false,
+      "regardAfter": [
+        51,
+        51
+      ],
+      "regardBefore": [
+        65,
+        65
+      ],
+      "regardDelta": [
+        -14,
+        -14
+      ],
+      "resultCasualties": 14
+    },
+    {
+      "actor": "AI",
+      "attackArray": "undefined",
+      "carrier": "rocket1",
+      "inputCasualties": 15,
+      "interceptedFlag": false,
+      "regardAfter": [
+        50,
+        50
+      ],
+      "regardBefore": [
+        65,
+        65
+      ],
+      "regardDelta": [
+        -15,
+        -15
+      ],
+      "resultCasualties": 15
+    },
+    {
+      "actor": "AI",
+      "attackArray": "undefined",
+      "carrier": "rocket1",
+      "inputCasualties": 0,
+      "interceptedFlag": true,
+      "regardAfter": [
+        65,
+        65
+      ],
+      "regardBefore": [
+        65,
+        65
+      ],
+      "regardDelta": [
+        0,
+        0
+      ],
+      "resultCasualties": 0
+    },
+    {
+      "actor": "AI",
+      "attackArray": "undefined",
+      "carrier": "plane1",
+      "inputCasualties": 14,
+      "interceptedFlag": false,
+      "regardAfter": [
+        51,
+        51
+      ],
+      "regardBefore": [
+        65,
+        65
+      ],
+      "regardDelta": [
+        -14,
+        -14
+      ],
+      "resultCasualties": 14
+    },
+    {
+      "actor": "AI",
+      "attackArray": "undefined",
+      "carrier": "plane1",
+      "inputCasualties": 15,
+      "interceptedFlag": false,
+      "regardAfter": [
+        50,
+        50
+      ],
+      "regardBefore": [
+        65,
+        65
+      ],
+      "regardDelta": [
+        -15,
+        -15
+      ],
+      "resultCasualties": 15
+    },
+    {
+      "actor": "AI",
+      "attackArray": "undefined",
+      "carrier": "plane1",
+      "inputCasualties": 0,
+      "interceptedFlag": true,
+      "regardAfter": [
+        65,
+        65
+      ],
+      "regardBefore": [
+        65,
+        65
+      ],
+      "regardDelta": [
+        0,
+        0
+      ],
+      "resultCasualties": 0
+    },
+    {
+      "actor": "AI",
+      "attackArray": "undefined",
+      "carrier": "sub",
+      "inputCasualties": 14,
+      "interceptedFlag": false,
+      "regardAfter": [
+        51,
+        51
+      ],
+      "regardBefore": [
+        65,
+        65
+      ],
+      "regardDelta": [
+        -14,
+        -14
+      ],
+      "resultCasualties": 14
+    },
+    {
+      "actor": "AI",
+      "attackArray": "undefined",
+      "carrier": "sub",
+      "inputCasualties": 15,
+      "interceptedFlag": false,
+      "regardAfter": [
+        50,
+        50
+      ],
+      "regardBefore": [
+        65,
+        65
+      ],
+      "regardDelta": [
+        -15,
+        -15
+      ],
+      "resultCasualties": 15
+    },
+    {
+      "actor": "AI",
+      "attackArray": "undefined",
+      "carrier": "sub",
+      "inputCasualties": 0,
+      "interceptedFlag": true,
+      "regardAfter": [
+        65,
+        65
+      ],
+      "regardBefore": [
+        65,
+        65
+      ],
+      "regardDelta": [
+        0,
+        0
+      ],
+      "resultCasualties": 0
+    },
+    {
+      "actor": "AI",
+      "attackArray": "undefined",
+      "carrier": "space",
+      "inputCasualties": 14,
+      "interceptedFlag": false,
+      "regardAfter": [
+        51,
+        51
+      ],
+      "regardBefore": [
+        65,
+        65
+      ],
+      "regardDelta": [
+        -14,
+        -14
+      ],
+      "resultCasualties": 14
+    },
+    {
+      "actor": "AI",
+      "attackArray": "undefined",
+      "carrier": "space",
+      "inputCasualties": 15,
+      "interceptedFlag": false,
+      "regardAfter": [
+        50,
+        50
+      ],
+      "regardBefore": [
+        65,
+        65
+      ],
+      "regardDelta": [
+        -15,
+        -15
+      ],
+      "resultCasualties": 15
+    },
+    {
+      "actor": "AI",
+      "attackArray": "undefined",
+      "carrier": "space",
+      "inputCasualties": 0,
+      "interceptedFlag": true,
+      "regardAfter": [
+        65,
+        65
+      ],
+      "regardBefore": [
+        65,
+        65
+      ],
+      "regardDelta": [
+        0,
+        0
+      ],
+      "resultCasualties": 0
+    },
+    {
+      "actor": "AI",
+      "attackArray": "three city/weapon entries",
+      "carrier": "ship",
+      "inputCasualties": 14,
+      "interceptedFlag": false,
+      "regardAfter": [
+        25,
+        25
+      ],
+      "regardBefore": [
+        65,
+        65
+      ],
+      "regardDelta": [
+        -40,
+        -40
+      ],
+      "resultCasualties": 14
+    },
+    {
+      "actor": "AI",
+      "attackArray": "three city/weapon entries",
+      "carrier": "ship",
+      "inputCasualties": 15,
+      "interceptedFlag": false,
+      "regardAfter": [
+        25,
+        25
+      ],
+      "regardBefore": [
+        65,
+        65
+      ],
+      "regardDelta": [
+        -40,
+        -40
+      ],
+      "resultCasualties": 15
+    },
+    {
+      "actor": "AI",
+      "attackArray": "three city/weapon entries",
+      "carrier": "ship",
+      "inputCasualties": 0,
+      "interceptedFlag": true,
+      "regardAfter": [
+        25,
+        25
+      ],
+      "regardBefore": [
+        65,
+        65
+      ],
+      "regardDelta": [
+        -40,
+        -40
+      ],
+      "resultCasualties": 0
+    }
+  ],
+  "scope": "Diagnostic injected source turn-result records passed to actual Presenter.updatePlayerVars_2; not legal acquisition, defense resolution, or full-turn RNG proof",
+  "seed": 3,
+  "sources": {
+    "wd2/game.py": "b3ff34d109ed9048d42bd05ee46fa5dee1b1c02e088e903bee7942d0ef9a07be",
+    "wd2/generated/Model.py": "13c46e8768bf975f8f7559436dbe34f647e3b73c80b7472163822d6741cb7824",
+    "wd2/generated/Presenter.py": "eb8aad7305c870b157a3199b7d8213edb22f4fd35d169395cee3db95b12c08b9",
+    "wd2/generated/Sub_model.py": "48d0936200815ea3fa088b9b1ea721655a804fc309e586f2875b6fde4ed7329e",
+    "wd2/generated/Sub_presenter.py": "bc430ada2d55929127927089fe8f3d06e51213dede5838e3c12ef9bc61e8fa14",
+    "wd2/generated/TurnAction.py": "169c4d6f8959668931d66e29378168afd64bfe1572c827baf602c856d3ef82a2",
+    "wd2/runtime.py": "bf58b6cf0cddae89c5efd153713df03751eacf72d0e5c836413bc19a8752b30b"
+  },
+  "status": "complete"
+}

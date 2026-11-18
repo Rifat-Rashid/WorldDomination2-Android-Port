@@ -2251,7 +2251,7 @@ public final class GameState {
                 continue;
             }
             if ((order.action == Action.ATTACK || order.action == Action.DEFENSE
-                    || order.action == Action.PREPARED_ATTACK)
+                    || (order.action == Action.PREPARED_ATTACK && order.prepareCarrier))
                     && weapon.definition.name.equals(order.weaponName)) {
                 reserved++;
             }
@@ -3910,7 +3910,7 @@ public final class GameState {
         if (intercepted) {
             // Source still emits a zero-casualty battle result. Its update2
             // callback applies special-leader hostility even after interception.
-            order.battleRegardLoss = 0;
+            order.battleRegardLoss = attacker.human ? 40 : 0;
             order.hasBattleRegardResult = true;
             lastTurnCombatEvents.add(new CombatEvent(CombatEventType.STRIKE_INTERCEPTED,
                     attacker.id, defender.id, city.index, carrier.definition.name,
@@ -3932,7 +3932,10 @@ public final class GameState {
                 counterDefense == null ? -1 : counterDefense.actionBuildingSlot,
                 -1, order.battleStartNum, order.payloadName.startsWith("bioload")));
         recordLargestBattle(attacker, defender, casualties);
-        order.battleRegardLoss = casualties;
+        // Human orders retain an empty source ship_attack_arr. The presenter's
+        // missing three casualty entries produce its 40-point regard fallback.
+        // AI non-ship orders leave that array undefined and use actual casualties.
+        order.battleRegardLoss = attacker.human ? 40 : casualties;
         order.hasBattleRegardResult = true;
         if (rolledCasualties > 0) {
             addToHighscore(attacker, 1, casualties);

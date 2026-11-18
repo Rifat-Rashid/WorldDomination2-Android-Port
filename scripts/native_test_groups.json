@@ -276,6 +276,10 @@
       "groupedArtworkMatchesCurrentRowOrder"
     ],
     [
+      "com.example.worlddomination.game.rendering.StockControlsInstrumentedTest",
+      "preparedRocketQueueAndTubeRemovalPreserveSpareCarrierCounter"
+    ],
+    [
       "com.example.worlddomination.game.rendering.SetupEnemySelectionInstrumentedTest",
       "selectedRivalsDimOnlyTheirCardsAndUpperIconsRemoveThem"
     ],
