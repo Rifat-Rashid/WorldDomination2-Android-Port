@@ -1,0 +1,134 @@
+{
+  "sourceSummarySha256": "eef17b582adc6565aefcf5c80f8a7e77610f2f118d7cc79cc9adc5f75aa49f02",
+  "scope": "Unmodified independent live source fields, original full raster dimensions; advances independently read with BASIC layout from source TTF",
+  "fixtures": [
+    {
+      "name": "trump-blurred",
+      "file": "source-dynamic-trump-blurred-field4x.png",
+      "sha256": "189dab4bf262f514eb6204f33c9f7a4efcbf43838280a828100e2cd834552676",
+      "fontStem": "hidden-font-command-120",
+      "width": 1272,
+      "height": 152,
+      "bounds": [
+        482,
+        16,
+        786,
+        124
+      ],
+      "rows": [
+        [
+          16,
+          124
+        ]
+      ],
+      "lines": [
+        "trump"
+      ],
+      "advances": [
+        307.0
+      ]
+    },
+    {
+      "name": "bush-blurred",
+      "file": "source-dynamic-bush-blurred-field4x.png",
+      "sha256": "f10c3b073b866dc6f082db56f51ec248526ef13f6c9e1d56ed3d5d73ad310c2a",
+      "fontStem": "hidden-font-command-120",
+      "width": 1272,
+      "height": 152,
+      "bounds": [
+        374,
+        16,
+        899,
+        104
+      ],
+      "rows": [
+        [
+          16,
+          104
+        ]
+      ],
+      "lines": [
+        "I am Bush"
+      ],
+      "advances": [
+        540.0
+      ]
+    },
+    {
+      "name": "2dawgz-warning-body",
+      "file": "source-dynamic-2dawgz-warning-body-field4x.png",
+      "sha256": "0f77c2ab325d7f354d4e4c03146e401d0cd371a0761eb0fb9af5ee1abcf0a706",
+      "fontStem": "hidden-font-warning-40",
+      "width": 564,
+      "height": 228,
+      "bounds": [
+        42,
+        16,
+        518,
+        100
+      ],
+      "rows": [
+        [
+          16,
+          52
+        ],
+        [
+          64,
+          100
+        ]
+      ],
+      "lines": [
+        "## 2 dawgz / 2 pirates. No",
+        "ninja's. ##"
+      ],
+      "advances": [
+        480.0,
+        189.0
+      ]
+    },
+    {
+      "name": "fc1-warning-body",
+      "file": "source-dynamic-fc1-warning-body-field4x.png",
+      "sha256": "a37bd3e56456d788206226a24521c855b1c3b848b2b3fe0186c9523025f51829",
+      "fontStem": "hidden-font-warning-40",
+      "width": 564,
+      "height": 228,
+      "bounds": [
+        17,
+        16,
+        545,
+        196
+      ],
+      "rows": [
+        [
+          16,
+          52
+        ],
+        [
+          64,
+          100
+        ],
+        [
+          112,
+          148
+        ],
+        [
+          160,
+          196
+        ]
+      ],
+      "lines": [
+        "## It is only after you've lost",
+        "everything, that you are free",
+        "to do anything... ## ~Chuck",
+        "Palahniuk, Fight Club,"
+      ],
+      "advances": [
+        527.0,
+        530.0,
+        514.0,
+        415.0
+      ]
+    }
+  ]
+}

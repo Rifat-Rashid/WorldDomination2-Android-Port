@@ -77,9 +77,30 @@ class ReportCheckoutTest(unittest.TestCase):
         self.assertRegex(self.matrix, r'(?m)^    needs: full-suite$')
         self.assertRegex(self.matrix, r'(?m)^    if: always\(\)$')
         tasks = re.findall(r'(?m)^            task: (.+)$', self.matrix)
-        self.assertEqual(216, len(tasks))
+        self.assertEqual(217, len(tasks))
         filters = [pattern for task in tasks for pattern in selectors(task.strip().strip("'"))]
-        self.assertEqual(444, len(filters))
+        self.assertEqual(458, len(filters))
+        hidden_classes = {
+            'com.example.worlddomination.game.ui.SourceHiddenHelpStateTest',
+            'com.example.worlddomination.game.ui.SourceHiddenHelpTypographyTest',
+            'com.example.worlddomination.game.simulation.SourceHiddenCommandsTest',
+            'com.example.worlddomination.game.simulation.SourceHiddenCommandGameIsolationTest',
+            'com.example.worlddomination.game.assets.SourceHiddenHelpAssetsTest',
+            'com.example.worlddomination.game.assets.SourceHiddenCreatureTimelineTest',
+            'com.example.worlddomination.game.rendering.SourceHiddenBattleEffectsTest',
+            'com.example.worlddomination.game.rendering.SourceHiddenHelpRendererTest',
+            'com.example.worlddomination.game.rendering.SourceHiddenCityExplosionTest',
+            'com.example.worlddomination.game.rendering.SourceDustCleanupTest',
+            'com.example.worlddomination.game.rendering.SourceDiscoBattleActionFramesTest',
+            'com.example.worlddomination.game.rendering.SourceDiscoAutoplayTest',
+            'com.example.worlddomination.game.rendering.SourceDiscoActionBuildingTest',
+            'com.example.worlddomination.game.ui.MatchOutcomeSequenceTest',
+        }
+        hidden_task = next(task for task in tasks if 'SourceHiddenHelpStateTest' in task)
+        self.assertEqual(hidden_classes, set(selectors(hidden_task.strip().strip("'"))))
+        for name in (hidden_classes - {'com.example.worlddomination.game.ui.MatchOutcomeSequenceTest'}) | {
+                'com.example.worlddomination.game.rendering.SourceCityImpactStateTest'}:
+            self.assertEqual(1, filters.count(name), name)
         self.assertEqual(1, filters.count(
             'com.example.worlddomination.game.simulation.SourcePreparedShipTubeCancelTest'))
         self.assertEqual(1, filters.count(

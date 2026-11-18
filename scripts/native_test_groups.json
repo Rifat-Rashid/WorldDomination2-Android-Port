@@ -118,7 +118,11 @@
     "com.example.worlddomination.game.persistence.PersonalBestPersistenceInstrumentedTest",
     "com.example.worlddomination.platform.graphics.SerializedAndroidGraphicsInstrumentedTest",
     "com.example.worlddomination.game.rendering.SourceLegalTerminalPlaybackInstrumentedTest",
-    "com.example.worlddomination.game.rendering.SafeAreaViewportInstrumentedTest"
+    "com.example.worlddomination.game.rendering.SafeAreaViewportInstrumentedTest",
+    "com.example.worlddomination.game.rendering.SourceHiddenHelpInstrumentedTest",
+    "com.example.worlddomination.game.rendering.SourceHiddenHelpTypographyInstrumentedTest",
+    "com.example.worlddomination.game.rendering.SourceHiddenHelpContextRecoveryInstrumentedTest",
+    "com.example.worlddomination.game.rendering.SourceHiddenOutcomeInstrumentedTest"
   ],
   "groups": [
     {
@@ -180,7 +184,11 @@
         "com.example.worlddomination.game.rendering.SourcePhonePanelInstrumentedTest",
         "com.example.worlddomination.game.rendering.ResourceModalContextRecoveryInstrumentedTest",
         "com.example.worlddomination.platform.graphics.SerializedAndroidGraphicsInstrumentedTest",
-        "com.example.worlddomination.game.rendering.SafeAreaViewportInstrumentedTest"
+        "com.example.worlddomination.game.rendering.SafeAreaViewportInstrumentedTest",
+        "com.example.worlddomination.game.rendering.SourceHiddenHelpInstrumentedTest",
+        "com.example.worlddomination.game.rendering.SourceHiddenHelpTypographyInstrumentedTest",
+        "com.example.worlddomination.game.rendering.SourceHiddenHelpContextRecoveryInstrumentedTest",
+        "com.example.worlddomination.game.rendering.SourceHiddenOutcomeInstrumentedTest"
       ],
       "evidence": [
         "beta-ui-evidence",
@@ -984,6 +992,30 @@
     [
       "com.example.worlddomination.game.rendering.SafeAreaViewportInstrumentedTest",
       "actualWindowCutoutIsTranslatedIntoTheGlSurfaceBeforeProjection"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.SourceHiddenHelpInstrumentedTest",
+      "hiddenInputMessagesAndMatchResetPreserveGameplay"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.SourceHiddenHelpInstrumentedTest",
+      "privateCreaturesAndExplosionTimersLeaveCanonicalTurnIntact"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.SourceHiddenHelpInstrumentedTest",
+      "combinedExplosionCommandsKeepSourceTimerOverwriteAndChildDepths"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.SourceHiddenHelpTypographyInstrumentedTest",
+      "sourceDynamicFieldsMatchAuthoredFontsAndRejectResourceArial"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.SourceHiddenHelpContextRecoveryInstrumentedTest",
+      "authoredCommandGlyphsRestoreOnFirstFrameAfterForcedEglLoss"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.SourceHiddenOutcomeInstrumentedTest",
+      "cheatedVictoryShowsAuthoredScoreWithoutSavingPersonalBest"
     ]
   ]
 }

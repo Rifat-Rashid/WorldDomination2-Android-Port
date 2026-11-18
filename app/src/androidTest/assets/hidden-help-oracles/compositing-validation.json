@@ -1,0 +1,53 @@
+{
+  "method": "Independent source gzipTTF/Pillow BASIC per-character raster at ls baseline; source center floor; top16/48line step. Saturated-add vs integer UNORM over: src + floor((dst*(255-src)+127)/255). Neither native atlas nor device pixels used to derive expected data.",
+  "fields": [
+    {
+      "field": "trump-blurred",
+      "sourceFont": "4439_Arial_30pt_st.ttf.gz",
+      "sourceFontPackedSha256": "0e14112ba602fce43e0062c9eaf195d3960dced455f414f4cfff2310cfc09236",
+      "sourceFontTtfSha256": "65b4697329429a8a73fee6bab5ae71cc340693ca954521d949bfb1a33c291bc7",
+      "sourceFrozenPngSha256": "189dab4bf262f514eb6204f33c9f7a4efcbf43838280a828100e2cd834552676",
+      "frozenAlphaSha256": "3d0a7ef95fd3210636260b9c83cc53aa0cca857ed94a7ffe2ee075903e45e90f",
+      "saturatedAddAlphaSha256": "3d0a7ef95fd3210636260b9c83cc53aa0cca857ed94a7ffe2ee075903e45e90f",
+      "unormAlphaOverSha256": "3d0a7ef95fd3210636260b9c83cc53aa0cca857ed94a7ffe2ee075903e45e90f",
+      "differingPixels": 0,
+      "overlapCorrectionPositions": []
+    },
+    {
+      "field": "bush-blurred",
+      "sourceFont": "4439_Arial_30pt_st.ttf.gz",
+      "sourceFontPackedSha256": "0e14112ba602fce43e0062c9eaf195d3960dced455f414f4cfff2310cfc09236",
+      "sourceFontTtfSha256": "65b4697329429a8a73fee6bab5ae71cc340693ca954521d949bfb1a33c291bc7",
+      "sourceFrozenPngSha256": "f10c3b073b866dc6f082db56f51ec248526ef13f6c9e1d56ed3d5d73ad310c2a",
+      "frozenAlphaSha256": "aa166191c13f3843e1b214168740f356eadada64871b130e8aefa52859e8c060",
+      "saturatedAddAlphaSha256": "aa166191c13f3843e1b214168740f356eadada64871b130e8aefa52859e8c060",
+      "unormAlphaOverSha256": "aa166191c13f3843e1b214168740f356eadada64871b130e8aefa52859e8c060",
+      "differingPixels": 0,
+      "overlapCorrectionPositions": []
+    },
+    {
+      "field": "2dawgz-warning-body",
+      "sourceFont": "3322_Arial_10pt_st.ttf.gz",
+      "sourceFontPackedSha256": "04feb1f1c5e8b050b5eba2c388cf92c3091caec7388a0588e74652e2a08b43dc",
+      "sourceFontTtfSha256": "80d79b8fb856c088214cc2dc986600a0a6079b26e88339af4d2b9766de3ba707",
+      "sourceFrozenPngSha256": "0f77c2ab325d7f354d4e4c03146e401d0cd371a0761eb0fb9af5ee1abcf0a706",
+      "frozenAlphaSha256": "1fcc7f4a5865016d819bdbe34ac0c8e7d829eccb998b20e00130678f6afb4e98",
+      "saturatedAddAlphaSha256": "1fcc7f4a5865016d819bdbe34ac0c8e7d829eccb998b20e00130678f6afb4e98",
+      "unormAlphaOverSha256": "1fcc7f4a5865016d819bdbe34ac0c8e7d829eccb998b20e00130678f6afb4e98",
+      "differingPixels": 0,
+      "overlapCorrectionPositions": []
+    },
+    {
+      "field": "fc1-warning-body",
+      "sourceFont": "3322_Arial_10pt_st.ttf.gz",
+      "sourceFontPackedSha256": "04feb1f1c5e8b050b5eba2c388cf92c3091caec7388a0588e74652e2a08b43dc",
+      "sourceFontTtfSha256": "80d79b8fb856c088214cc2dc986600a0a6079b26e88339af4d2b9766de3ba707",
+      "sourceFrozenPngSha256": "a37bd3e56456d788206226a24521c855b1c3b848b2b3fe0186c9523025f51829",
+      "frozenAlphaSha256": "615c026aef60b439702eca0bd7ea7137ccec1933438a1bdbd78eeaf32e8d9d66",
+      "saturatedAddAlphaSha256": "615c026aef60b439702eca0bd7ea7137ccec1933438a1bdbd78eeaf32e8d9d66",
+      "unormAlphaOverSha256": "615c026aef60b439702eca0bd7ea7137ccec1933438a1bdbd78eeaf32e8d9d66",
+      "differingPixels": 0,
+      "overlapCorrectionPositions": []
+    }
+  ]
+}
