@@ -2504,6 +2504,33 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 attackCityNext.y + attackCityNext.height / 2f + 3f, 8f);
     }
 
+    /** Controls occupy disjoint row rectangles; group textures without changing artwork or clipping. */
+    private void drawStockControlArtwork() {
+        for (int texture = 0; texture <= uiAssets.stockSwitches.length; texture++) {
+            boolean counter = texture == uiAssets.stockSwitches.length;
+            for (int rowIndex = 0; rowIndex < EQUIPMENT_ROWS.length; rowIndex++) {
+                if (isEquipmentHeading(rowIndex)) continue;
+                Rectangle row = equipmentRows[rowIndex];
+                if (row.y + row.height < equipmentViewport.y
+                        || row.y > equipmentViewport.y + equipmentViewport.height) continue;
+                if (!counter && SourceStockControlState.switchIndex(
+                        SourceStockControlState.state(game, sourceActionMenu,
+                                equipmentWeaponName(rowIndex))) != texture) continue;
+                float controlHeight = Math.min(19f, row.height - 5f);
+                float controlY = row.y + (row.height - controlHeight) / 2f;
+                float counterWidth = controlHeight * 32f / 26f;
+                float switchWidth = controlHeight * 30f / 26f;
+                float counterX = row.x + row.width - counterWidth - switchWidth - 5f;
+                if (counter) {
+                    batch.draw(uiAssets.stockCounter, counterX, controlY, counterWidth, controlHeight);
+                } else {
+                    batch.draw(uiAssets.stockSwitches[texture], counterX + counterWidth + 2f,
+                            controlY, switchWidth, controlHeight);
+                }
+            }
+        }
+    }
+
     private void drawEquipmentRows() {
         setScissor(equipmentViewport);
         float top = equipmentViewport.y + equipmentViewport.height
@@ -2555,26 +2582,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 equipmentCardsRenderer.draw(batch, group, card);
             }
         }
-        for (int rowIndex = 0; rowIndex < EQUIPMENT_ROWS.length; rowIndex++) {
-            if (isEquipmentHeading(rowIndex)) {
-                continue;
-            }
-            Rectangle row = equipmentRows[rowIndex];
-            if (row.y + row.height < equipmentViewport.y
-                    || row.y > equipmentViewport.y + equipmentViewport.height) {
-                continue;
-            }
-            float controlHeight = Math.min(19f, row.height - 5f);
-            float controlY = row.y + (row.height - controlHeight) / 2f;
-            float counterWidth = controlHeight * 32f / 26f;
-            float switchWidth = controlHeight * 30f / 26f;
-            float counterX = row.x + row.width - counterWidth - switchWidth - 5f;
-            int stockState = SourceStockControlState.state(game, sourceActionMenu,
-                    equipmentWeaponName(rowIndex));
-            batch.draw(uiAssets.stockSwitches[SourceStockControlState.switchIndex(stockState)],
-                    counterX + counterWidth + 2f, controlY, switchWidth, controlHeight);
-            batch.draw(uiAssets.stockCounter, counterX, controlY, counterWidth, controlHeight);
-        }
+        drawStockControlArtwork();
         batch.end();
 
         batch.begin();
