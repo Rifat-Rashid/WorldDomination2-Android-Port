@@ -4425,7 +4425,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             return;
         }
         if (setupLayout.leaderNext.contains(x, y)) {
-            setupLeaderListStart = Math.floorMod(setupLeaderListStart + 1,
+            setupLeaderListStart = SetupScreenLayout.nextLeaderStart(setupLeaderListStart,
                     GameSetup.leaders().size());
             showSetupMessage = false;
             return;

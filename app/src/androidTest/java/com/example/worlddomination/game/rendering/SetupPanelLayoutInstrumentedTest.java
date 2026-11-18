@@ -88,6 +88,12 @@ public final class SetupPanelLayoutInstrumentedTest {
                     tap(app, viewport, layout.leaderPrevious);
                     assertEquals(GameSetup.leaders().size() - 1, field("setupLeaderListStart").getInt(app));
                     tap(app, viewport, layout.leaderNext);
+                    assertEquals(GameSetup.leaders().size(), field("setupLeaderListStart").getInt(app));
+                    tap(app, viewport, layout.leaderPrevious);
+                    assertEquals(GameSetup.leaders().size() - 1, field("setupLeaderListStart").getInt(app));
+                    tap(app, viewport, layout.leaderNext);
+                    assertEquals(GameSetup.leaders().size(), field("setupLeaderListStart").getInt(app));
+                    tap(app, viewport, layout.leaderNext);
                     assertEquals(0, field("setupLeaderListStart").getInt(app));
                     tap(app,viewport,layout.leaderCards[4]);
                     tap(app,viewport,layout.leaderCards[0]);
@@ -144,6 +150,12 @@ public final class SetupPanelLayoutInstrumentedTest {
             if (id == 4) capture(app, draw, width, height, "leader-name");
         }
         // Wrap by the real arrow, then exercise capacity and duplicate feedback.
+        tap(app, viewport, layout.leaderNext);
+        assertEquals(19, field("setupLeaderListStart").getInt(app));
+        Vector2 repeatedFirst = screen(viewport, layout.leaderCards[0]);
+        app.mouseMoved((int) repeatedFirst.x, (int) repeatedFirst.y);
+        assertEquals("source repeated page still identifies the first leader",
+                SOURCE_NAMES[0], field("setupLeaderName").get(app));
         tap(app, viewport, layout.leaderNext);
         assertEquals(0, field("setupLeaderListStart").getInt(app));
         GameSetup full = new GameSetup(0L);

@@ -251,6 +251,17 @@ public final class SetupScreenLayoutTest {
     }
 
     @Test
+    public void sourceRightArrowVisitsDuplicateFirstPageBeforeReset() {
+        assertEquals(1, SetupScreenLayout.nextLeaderStart(0, 19));
+        assertEquals(19, SetupScreenLayout.nextLeaderStart(18, 19));
+        assertEquals(0, SetupScreenLayout.nextLeaderStart(19, 19));
+        for (int card = 0; card < SetupScreenLayout.VISIBLE_LEADERS; card++) {
+            assertEquals(card, SetupScreenLayout.leaderIdAt(0, card, 19));
+            assertEquals(card, SetupScreenLayout.leaderIdAt(19, card, 19));
+        }
+    }
+
+    @Test
     public void leaderCarouselRejectsInvalidVisibleIndicesAndEmptyRosters() {
         org.junit.Assert.assertThrows(IllegalArgumentException.class,
                 () -> SetupScreenLayout.leaderIdAt(0, -1, 19));
