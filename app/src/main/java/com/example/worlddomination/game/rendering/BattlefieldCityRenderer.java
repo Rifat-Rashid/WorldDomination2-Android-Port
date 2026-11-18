@@ -69,6 +69,10 @@ public final class BattlefieldCityRenderer {
     private List<List<CityDust>> sourceDust = canonicalState.sourceDust;
     private int[] sourceDustNames = canonicalState.sourceDustNames;
     private int[] nextChildDepth = canonicalState.nextChildDepth;
+    private int[] hiddenExplosionFrames = canonicalState.hiddenExplosionFrames;
+    private int[] hiddenExplosionDepths = canonicalState.hiddenExplosionDepths;
+    private boolean[] hiddenDestroyedCities = canonicalState.hiddenDestroyedCities;
+    private List<CityDust> dustCleanupQueue = canonicalState.dustCleanupQueue;
     private final Rectangle[] hitBounds = new Rectangle[CITY_COUNT];
     private final boolean[] hitVisible = new boolean[CITY_COUNT];
     private final Rectangle drawBounds = new Rectangle();
@@ -101,10 +105,16 @@ public final class BattlefieldCityRenderer {
         final List<List<CityDust>> sourceDust = new ArrayList<>(CITY_COUNT);
         final int[] sourceDustNames = new int[CITY_COUNT];
         final int[] nextChildDepth = new int[CITY_COUNT];
+        final int[] hiddenExplosionFrames = new int[CITY_COUNT];
+        final int[] hiddenExplosionDepths = new int[CITY_COUNT];
+        final boolean[] hiddenDestroyedCities = new boolean[CITY_COUNT];
+        final List<CityDust> dustCleanupQueue = new ArrayList<>();
 
         PresentationState() {
             Arrays.fill(sourceDustNames, -1);
             Arrays.fill(nextChildDepth, Integer.MIN_VALUE);
+            Arrays.fill(hiddenExplosionFrames, -1);
+            Arrays.fill(hiddenExplosionDepths, -1);
             for (int address = 0; address < CITY_COUNT; address++) {
                 citySequences[address] = new CityShrinkSequence();
                 propagandaSequences[address] = new CityPropagandaBeamSequence();
@@ -123,6 +133,10 @@ public final class BattlefieldCityRenderer {
         sourceDust = state.sourceDust;
         sourceDustNames = state.sourceDustNames;
         nextChildDepth = state.nextChildDepth;
+        hiddenExplosionFrames = state.hiddenExplosionFrames;
+        hiddenExplosionDepths = state.hiddenExplosionDepths;
+        hiddenDestroyedCities = state.hiddenDestroyedCities;
+        dustCleanupQueue = state.dustCleanupQueue;
     }
 
     private void resetActive(GameState game, boolean snapshotFrames) {
@@ -337,11 +351,26 @@ public final class BattlefieldCityRenderer {
                                      ReferenceRandom presentationRandom) {
         SourceCityImpactState.Transition transition =
                 sourceImpacts[address].apply(casualties, presentationRandom);
+        applySourceTransition(address, transition);
+    }
+
+    /** Original hidden timer: attach boom BEFORE scheduling the city's death fade.
+     * This updates only isolated presentation state and its private random stream. */
+    public void destroySourceHiddenCity(GameState game, int address, ReferenceRandom random) {
+        if (!isBattleActive()) throw new IllegalStateException("No isolated battle city state");
+        beginSourceTankCity(game, address);
+        hiddenExplosionDepths[address] = allocateChildDepth(game, address);
+        hiddenExplosionFrames[address] = 0;
+        hiddenDestroyedCities[address] = true;
+        applySourceTransition(address, sourceImpacts[address].destroyHidden(random));
+    }
+
+    private void applySourceTransition(int address, SourceCityImpactState.Transition transition) {
         if (transition == null) return;
         citySequences[address].target(transition.targetFrame);
         trackedTargets[address] = transition.targetFrame;
         sourceDustNames[address] = transition.randomName;
-        sourceDust.get(address).add(new CityDust());
+        sourceDust.get(address).add(new CityDust(address));
     }
 
     /** The host snapshots physical city traversal before any Unit swaps depths. */
@@ -387,17 +416,31 @@ public final class BattlefieldCityRenderer {
             List<CityDust> dust = sourceDust.get(address);
             for (int index = 0; index < dust.size(); index++) {
                 CityDust child = dust.get(index);
-                if (child.depth < 0) child.depth = allocateChildDepth(game, address);
+                if (child.depth < 0) {
+                    child.depth = allocateChildDepth(game, address);
+                    dustCleanupQueue.add(child);
+                }
             }
             sequence.tick();
-            if (sequence.getFrameNumber() != previousFrame) {
-                // Seeking a city frame detaches its dust and cloud containers.
+            if (sequence.getFrameNumber() != previousFrame
+                    && (!hiddenDestroyedCities[address]
+                    || sequence.getFrameNumber() < previousFrame)) {
+                // MovieClip.goto_frame rebuilds on backward seeks only. Death
+                // seeks retain hidden boom/dust on their observed forward path.
+                // Other battle paths retain their separately validated policy.
                 dust.clear();
                 bioloadCloudRenderer.detachSourceCloud(address);
+                hiddenExplosionFrames[address] = -1;
+                hiddenExplosionDepths[address] = -1;
                 nextChildDepth[address] = Integer.MIN_VALUE;
             } else {
-                for (int index = 0; index < dust.size(); index++) dust.get(index).frame++;
+                for (int index = 0; index < dust.size(); index++) {
+                    CityDust child = dust.get(index);
+                    if (!hiddenDestroyedCities[address] || child.frame < 49) child.frame++;
+                }
             }
+            if (hiddenExplosionFrames[address] >= 0 && hiddenExplosionFrames[address] < 90)
+                hiddenExplosionFrames[address]++;
         }
         bioloadCloudRenderer.tickSourceCity(address);
     }
@@ -415,16 +458,23 @@ public final class BattlefieldCityRenderer {
 
     private void clearSourceImpacts() {
         clearCapturedCityFrame();
+        dustCleanupQueue.clear();
         for (int address = 0; address < CITY_COUNT; address++) {
             sourceImpacts[address] = null;
             sourceDust.get(address).clear();
             sourceDustNames[address] = -1;
             nextChildDepth[address] = Integer.MIN_VALUE;
+            hiddenExplosionFrames[address] = -1;
+            hiddenExplosionDepths[address] = -1;
+            hiddenDestroyedCities[address] = false;
         }
     }
 
     public int getSourceCityFrame(int address) { return citySequences[address].getFrameNumber(); }
     public int getSourceCityAlpha(int address) { return citySequences[address].getSourceAlpha(); }
+    /** Zero-based frame; -1 means no attached hidden boom. Source stops at frame91. */
+    public int getHiddenExplosionFrame(int address) { return hiddenExplosionFrames[address]; }
+    public int getHiddenExplosionDepth(int address) { return hiddenExplosionDepths[address]; }
     public int getCityDustName(int address) { return sourceDustNames[address]; }
     public int getCityDustFrame(int address) {
         List<CityDust> dust = sourceDust.get(address);
@@ -447,7 +497,24 @@ public final class BattlefieldCityRenderer {
         return dust.isEmpty() ? -1 : dust.get(dust.size() - 1).depth;
     }
 
-    private static final class CityDust { int frame = -1; int depth = -1; }
+    /** Presenter.allUnitsDone splices while incrementing its forward index: it
+     * removes alternating queued references, including detached ones, and checks
+     * the index>20 cap AFTER removal. Boom is not registered in this queue. */
+    public void removeSourceDustAtAllUnitsDone() {
+        if (!isBattleActive()) throw new IllegalStateException("No isolated battle city state");
+        for (int index = 0; index < dustCleanupQueue.size(); index++) {
+            CityDust child = dustCleanupQueue.remove(index);
+            sourceDust.get(child.address).remove(child);
+            if (index > 20) break;
+        }
+    }
+
+    private static final class CityDust {
+        final int address;
+        int frame = -1;
+        int depth = -1;
+        CityDust(int address) { this.address = address; }
+    }
 
     public boolean isAnimating() {
         if (bioloadCloudRenderer.isAnimating()) {
@@ -540,13 +607,46 @@ public final class BattlefieldCityRenderer {
         drawPropagandaBeams(batch, mapBounds, owner, playerId, cityIndex,
                 cityAddress, sequence.getAlpha());
         int cloudDepth = bioloadCloudRenderer.isSourceAttached(cityAddress)
-                ? bioloadCloudRenderer.getSourceDepth(cityAddress) : Integer.MIN_VALUE;
+                ? bioloadCloudRenderer.getSourceDepth(cityAddress) : Integer.MAX_VALUE;
+        int boomDepth = hiddenExplosionFrames[cityAddress] >= 0
+                ? hiddenExplosionDepths[cityAddress] : Integer.MAX_VALUE;
+        float alpha = sequence.getAlpha() / 100f;
         drawSourceCityDust(batch, mapBounds, playerId, cityIndex, cityAddress,
-                sequence.getAlpha() / 100f, Integer.MIN_VALUE, cloudDepth);
+                alpha, Integer.MIN_VALUE, Math.min(cloudDepth, boomDepth));
+        if (boomDepth < cloudDepth) {
+            drawHiddenExplosion(batch, mapBounds, playerId, cityIndex, cityAddress, alpha);
+            drawSourceCityDust(batch, mapBounds, playerId, cityIndex, cityAddress,
+                    alpha, boomDepth, cloudDepth);
+        }
         bioloadCloudRenderer.drawCity(batch, mapBounds, playerId, cityIndex,
                 sequence.getSourceAlpha() / 100f, cityAssets.getArtworkScale());
+        if (cloudDepth < boomDepth) {
+            drawSourceCityDust(batch, mapBounds, playerId, cityIndex, cityAddress,
+                    alpha, cloudDepth, boomDepth);
+            drawHiddenExplosion(batch, mapBounds, playerId, cityIndex, cityAddress, alpha);
+        }
         drawSourceCityDust(batch, mapBounds, playerId, cityIndex, cityAddress,
-                sequence.getAlpha() / 100f, cloudDepth, Integer.MAX_VALUE);
+                alpha, Math.max(cloudDepth, boomDepth), Integer.MAX_VALUE);
+    }
+
+    private void drawHiddenExplosion(SpriteBatch batch, Rectangle bounds, int playerId,
+                                     int cityIndex, int address, float alpha) {
+        int frame = hiddenExplosionFrames[address];
+        if (frame < 0 || alpha <= 0 || flashAssets == null || !flashAssets.isLoaded()) return;
+        FlashAnimationTimeline timeline = flashAssets.getTimeline("explosion_warhead_4");
+        if (timeline == null) throw new IllegalStateException("Missing source hidden explosion");
+        ShaderProgram shader = batch.getShader();
+        float color = batch.getPackedColor();
+        try {
+            batch.setShader(null);
+            beamTransforms[0].setIdentity();
+            beamTransforms[1].setIdentity();
+            drawBeamFrame(batch, bounds, timeline.getFrame(frame), playerId, cityIndex,
+                    frame, 1f, alpha, null, 1);
+        } finally {
+            batch.setShader(shader);
+            batch.setPackedColor(color);
+        }
     }
 
     private void drawSourceCityDust(SpriteBatch batch, Rectangle bounds,

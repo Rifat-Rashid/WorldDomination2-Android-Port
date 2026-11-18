@@ -10,6 +10,7 @@ public final class FlashActionBuildingAnimation {
     public static final int RESOURCE_PUMP_SYMBOL_ID = 5334;
     public static final int TECHNOLOGY_LIGHT_SYMBOL_ID = 3707;
     public static final int FACTORY_SMOKE_SYMBOL_ID = 3996;
+    public static final int DISCO_SYMBOL_ID = 4084;
     public static final int ACTION_SELECTION_SYMBOL_ID = 5277;
     public static final int ACTION_SELECTION_FRAME_COUNT = 30;
 
@@ -17,6 +18,8 @@ public final class FlashActionBuildingAnimation {
     public final GameState.Action action;
     public final int slot;
     public final String frameName;
+    /** Canonical player's authored religion, independent of a private disco pose. */
+    public final String sourceReligionCode;
     public final String religionCode;
     public final int sequenceIndex;
 
@@ -39,6 +42,13 @@ public final class FlashActionBuildingAnimation {
     /** A gotoAndStop to the same building frame preserves its nested movie clips. */
     public FlashActionBuildingAnimation(GameState.ActionBuildingEvent event,
                                         FlashActionBuildingAnimation previous) {
+        this(event, previous, false);
+    }
+
+    /** View.showSingleBuilding overrides only the private religion clip's pose. */
+    public FlashActionBuildingAnimation(GameState.ActionBuildingEvent event,
+                                        FlashActionBuildingAnimation previous,
+                                        boolean disco) {
         if (event == null || event.playerId < 0 || event.playerId > 4
                 || event.action == null || event.slot < 1 || event.slot > 2
                 || event.frameName == null || event.frameName.isEmpty()
@@ -50,11 +60,14 @@ public final class FlashActionBuildingAnimation {
         action = event.action;
         slot = event.slot;
         frameName = event.frameName;
-        religionCode = event.religionCode;
+        sourceReligionCode = event.religionCode;
+        religionCode = disco && "religion".equals(frameName) ? "disco" : event.religionCode;
         sequenceIndex = event.sequenceIndex;
         if (previous != null && previous.playerId == playerId && previous.slot == slot
                 && previous.frameName.equals(frameName)
-                && previous.religionCode.equals(religionCode)) {
+                && previous.sourceReligionCode.equals(sourceReligionCode)
+                && previous.religionCode.equals(religionCode)
+                && !(disco && "religion".equals(frameName))) {
             playbackTicks = previous.playbackTicks;
             factorySmokeFrame = previous.factorySmokeFrame;
             factorySmokePlaying = previous.factorySmokePlaying;
@@ -97,7 +110,9 @@ public final class FlashActionBuildingAnimation {
         if (frameCount <= 0) {
             throw new IllegalArgumentException("A nested clip must have frames");
         }
-        if (symbolId == RESOURCE_PUMP_SYMBOL_ID || symbolId == TECHNOLOGY_LIGHT_SYMBOL_ID) {
+        if (symbolId == RESOURCE_PUMP_SYMBOL_ID || symbolId == TECHNOLOGY_LIGHT_SYMBOL_ID
+                || (symbolId == DISCO_SYMBOL_ID && "religion".equals(frameName)
+                && "disco".equals(religionCode))) {
             return (int) (playbackTicks % frameCount);
         }
         if (symbolId == ACTION_SELECTION_SYMBOL_ID) {
@@ -150,9 +165,10 @@ public final class FlashActionBuildingAnimation {
         sourceAntiFrameOneBased = 0;
     }
 
-    /** Autoplaying pump and research lights continue after their parent fade finishes. */
+    /** Autoplaying pump, research lights and disco continue after their parent fade. */
     public boolean isAnimating() {
         return !isFadeComplete() || "resources".equals(frameName) || "tech".equals(frameName)
+                || ("religion".equals(frameName) && "disco".equals(religionCode))
                 || factorySmokePlaying || selectionPlaying || flameCharacterId != 0
                 || sourceAntiCharacterId != 0;
     }

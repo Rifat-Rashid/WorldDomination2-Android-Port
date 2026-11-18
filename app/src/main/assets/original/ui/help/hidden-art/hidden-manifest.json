@@ -1,0 +1,184 @@
+{
+  "crop": [
+    205,
+    135,
+    365,
+    275
+  ],
+  "scale": 3,
+  "frame": 135,
+  "capturedCommandText": "",
+  "asset": "hidden-cheat-frame135.png",
+  "width": 1095,
+  "height": 825,
+  "sha256": "df16f460b289cdf15589b6eaeddd7fba92a859c89246aeb087525a65100b28cd",
+  "commandInput": {
+    "bounds": [
+      -2.0,
+      316.0,
+      -2.0,
+      35.5
+    ],
+    "font": 4439,
+    "size": 30.0,
+    "color": [
+      255,
+      120,
+      0,
+      255
+    ],
+    "align": 2,
+    "word_wrap": false,
+    "multiline": false,
+    "editable": true,
+    "password": false,
+    "max_length": 0,
+    "variable": "",
+    "initial_text": "...",
+    "characterId": 4441,
+    "stageBounds": [
+      227.05,
+      291.05,
+      317.99999999999994,
+      37.5
+    ],
+    "cropBounds": [
+      22.05000000000001,
+      156.05,
+      317.99999999999994,
+      37.5
+    ],
+    "sourceFontFile": "assets/runtime/fonts/4439_Arial_30pt_st.ttf.gz"
+  },
+  "passwordInput": {
+    "bounds": [
+      31.7,
+      211.15,
+      -2.0,
+      19.9
+    ],
+    "font": 1,
+    "size": 16.0,
+    "color": [
+      0,
+      0,
+      0,
+      255
+    ],
+    "align": 0,
+    "word_wrap": false,
+    "multiline": false,
+    "editable": true,
+    "password": false,
+    "max_length": 0,
+    "variable": "",
+    "initial_text": "World Domination II help",
+    "characterId": 4123,
+    "stageBounds": [
+      223.15,
+      139.05,
+      179.45000000000002,
+      21.900000000000006
+    ],
+    "cropBounds": [
+      18.150000000000006,
+      4.050000000000011,
+      179.45000000000002,
+      21.900000000000006
+    ],
+    "sourceFontFile": "assets/runtime/fonts/1_Arial_Arial.ttf.gz"
+  },
+  "submitStageBounds": [
+    361,
+    383.45,
+    55,
+    24
+  ],
+  "submitCropBounds": [
+    156,
+    248.45,
+    55,
+    24
+  ],
+  "textPainting": {
+    "paddingLeft": 2,
+    "visualTopOffset": 4,
+    "lineStep": "fontSize+2",
+    "clip": "source field rectangle; ceil source width/height before rasterizing",
+    "alignment": "0=left,1=right,2=center; center anchors at ceil(width)/2",
+    "caret": "source adapter caret uses left padding + prefix advance even for centered command input"
+  },
+  "warning": {
+    "asset": "original/ui/help/hidden-art/hidden-warning-frame7.png",
+    "sha256": "0f076f7113312fab0c7630e59599b002cca64d9fa9889ead670ab31a1521dec5",
+    "fields": [
+      {
+        "name": "error_window/header",
+        "id": 3321,
+        "bounds": [
+          99.95000000000002,
+          70.05,
+          49.19999999999999,
+          14.299999999999997
+        ],
+        "size": 9.0,
+        "align": 0,
+        "wrap": false,
+        "multiline": false,
+        "color": [
+          255,
+          255,
+          255,
+          255
+        ],
+        "text": "Warning  "
+      },
+      {
+        "name": "error_window/text1",
+        "id": 3323,
+        "bounds": [
+          107.05000000000001,
+          91.05,
+          140.4,
+          56.8
+        ],
+        "size": 10.0,
+        "align": 2,
+        "wrap": true,
+        "multiline": true,
+        "color": [
+          255,
+          255,
+          255,
+          255
+        ],
+        "text": "Some error \n"
+      }
+    ],
+    "controls": [
+      {
+        "name": "error_window/btnOK",
+        "bounds": [
+          160.2174,
+          152.2174,
+          36.5897,
+          15.9664
+        ]
+      }
+    ],
+    "staticHeaderBaked": true,
+    "capturedDynamicBody": ""
+  },
+  "independentSourceScreenshotSha256": "8dfc9c6d65ede393344958e172c1f0c6336ac573f24258dfb34be2162a86c27c",
+  "source1xCropExact": true,
+  "provenance": {
+    "scriptSha256": "023396b2c4f03a174754d2d4d9d84c865e63ea210e13af473353440b18bee650",
+    "referenceWriteDenyHook": true,
+    "sourceFiles": {
+      "wd2/menu_renderer.py": "07f2f2f992560e4f46ba3eefcd1350d7896c0a010a7ac82a373c046449f7e9a8",
+      "wd2/generated/Presenter_interface.py": "ac502ef9e94a205f5027fc0598c3deb2fa1913aa1dfc6f0d5ca4ca12d1d95afd",
+      "wd2/generated/Sub_Presenter_interface.py": "bdb6675220507323b784b4867af0d3f80b4366935f353903b12c2d052d714bd7",
+      "assets/runtime/scene.json.gz": "7213f06fac4e887050ad89e0d3c9a67f47789096d559af8e08333991f7616629"
+    }
+  }
+}

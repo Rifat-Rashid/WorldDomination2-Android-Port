@@ -1,0 +1,552 @@
+{
+  "provenance": {
+    "scope": "original callbacks; legal seed0 Medium initial snapshot; normal ticker disabled to isolate hidden timers; no canonical mutation",
+    "rawCaptureSha256": "9c39ca22c75a4a8d7d5918c0f5a94e4738fc12fa302a98f6987a71f6eab57c93",
+    "sourceSha256": {
+      "wd2/generated/Presenter.py": "eb8aad7305c870b157a3199b7d8213edb22f4fd35d169395cee3db95b12c08b9",
+      "wd2/generated/View.py": "2de8afd493f28e36c3a94afa96b80795d685b8b023b12dc9d9ed634692c3accf",
+      "wd2/generated/City.py": "8615ae27566455056a75b2ba6932014bba32bca19e8dfc19142bd52ce17bbc59",
+      "wd2/generated/script_355.py": "74f0728389bc564f201b37a2fdfb0c7940d02aeea33a8347e3e2364aff0d78cc",
+      "wd2/generated/script_356.py": "82f1e3713fcd941acdbc018d1e28f4e0d30e630b389f88c83e3d744b20bbe46e",
+      "wd2/presentation_clock.py": "5f2564ca11a6b568f55478fe861bac7402e31c3cae2888e230b9ca86ef57ff08",
+      "wd2/movieclip_host.py": "a489c5f3b33a1fdac4448afd07f4ca63aa32d676440dc573805ab11fb4002765",
+      "assets/runtime/scene.json.gz": "7213f06fac4e887050ad89e0d3c9a67f47789096d559af8e08333991f7616629"
+    }
+  },
+  "enemyCities": [
+    24,
+    23,
+    22,
+    21,
+    20,
+    19,
+    18,
+    17,
+    16,
+    15,
+    14,
+    13,
+    12,
+    11,
+    10,
+    9,
+    8,
+    7,
+    6,
+    5
+  ],
+  "humanCities": [
+    4,
+    3,
+    2,
+    1,
+    0
+  ],
+  "creatures": [
+    {
+      "tick": 0,
+      "orca": 1,
+      "nessy": 1,
+      "orcaPlaying": true,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 1,
+      "orca": 2,
+      "nessy": 2,
+      "orcaPlaying": true,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 2,
+      "orca": 3,
+      "nessy": 3,
+      "orcaPlaying": true,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 3,
+      "orca": 4,
+      "nessy": 4,
+      "orcaPlaying": true,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 4,
+      "orca": 5,
+      "nessy": 5,
+      "orcaPlaying": true,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 5,
+      "orca": 6,
+      "nessy": 6,
+      "orcaPlaying": true,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 6,
+      "orca": 7,
+      "nessy": 7,
+      "orcaPlaying": true,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 7,
+      "orca": 8,
+      "nessy": 8,
+      "orcaPlaying": true,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 8,
+      "orca": 9,
+      "nessy": 9,
+      "orcaPlaying": true,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 9,
+      "orca": 10,
+      "nessy": 10,
+      "orcaPlaying": true,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 10,
+      "orca": 11,
+      "nessy": 11,
+      "orcaPlaying": true,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 11,
+      "orca": 12,
+      "nessy": 12,
+      "orcaPlaying": true,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 12,
+      "orca": 13,
+      "nessy": 13,
+      "orcaPlaying": true,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 13,
+      "orca": 14,
+      "nessy": 14,
+      "orcaPlaying": true,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 14,
+      "orca": 15,
+      "nessy": 15,
+      "orcaPlaying": true,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 15,
+      "orca": 16,
+      "nessy": 16,
+      "orcaPlaying": true,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 16,
+      "orca": 17,
+      "nessy": 17,
+      "orcaPlaying": true,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 17,
+      "orca": 18,
+      "nessy": 18,
+      "orcaPlaying": true,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 18,
+      "orca": 19,
+      "nessy": 19,
+      "orcaPlaying": true,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 19,
+      "orca": 20,
+      "nessy": 20,
+      "orcaPlaying": true,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 20,
+      "orca": 21,
+      "nessy": 21,
+      "orcaPlaying": true,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 21,
+      "orca": 22,
+      "nessy": 22,
+      "orcaPlaying": true,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 22,
+      "orca": 23,
+      "nessy": 23,
+      "orcaPlaying": true,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 23,
+      "orca": 24,
+      "nessy": 24,
+      "orcaPlaying": true,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 24,
+      "orca": 25,
+      "nessy": 25,
+      "orcaPlaying": true,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 25,
+      "orca": 26,
+      "nessy": 26,
+      "orcaPlaying": true,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 26,
+      "orca": 27,
+      "nessy": 27,
+      "orcaPlaying": true,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 27,
+      "orca": 28,
+      "nessy": 28,
+      "orcaPlaying": true,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 28,
+      "orca": 29,
+      "nessy": 29,
+      "orcaPlaying": true,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 29,
+      "orca": 30,
+      "nessy": 30,
+      "orcaPlaying": true,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 30,
+      "orca": 31,
+      "nessy": 31,
+      "orcaPlaying": true,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 31,
+      "orca": 32,
+      "nessy": 32,
+      "orcaPlaying": true,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 32,
+      "orca": 33,
+      "nessy": 33,
+      "orcaPlaying": true,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 33,
+      "orca": 34,
+      "nessy": 34,
+      "orcaPlaying": true,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 34,
+      "orca": 35,
+      "nessy": 35,
+      "orcaPlaying": true,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 35,
+      "orca": 36,
+      "nessy": 36,
+      "orcaPlaying": true,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 36,
+      "orca": 37,
+      "nessy": 37,
+      "orcaPlaying": true,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 37,
+      "orca": 38,
+      "nessy": 38,
+      "orcaPlaying": true,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 38,
+      "orca": 39,
+      "nessy": 39,
+      "orcaPlaying": true,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 39,
+      "orca": 40,
+      "nessy": 40,
+      "orcaPlaying": true,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 40,
+      "orca": 41,
+      "nessy": 41,
+      "orcaPlaying": true,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 41,
+      "orca": 42,
+      "nessy": 42,
+      "orcaPlaying": true,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 42,
+      "orca": 43,
+      "nessy": 43,
+      "orcaPlaying": true,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 43,
+      "orca": 44,
+      "nessy": 44,
+      "orcaPlaying": true,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 44,
+      "orca": 45,
+      "nessy": 45,
+      "orcaPlaying": true,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 45,
+      "orca": 1,
+      "nessy": 46,
+      "orcaPlaying": false,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 46,
+      "orca": 1,
+      "nessy": 47,
+      "orcaPlaying": false,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 47,
+      "orca": 1,
+      "nessy": 48,
+      "orcaPlaying": false,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 48,
+      "orca": 1,
+      "nessy": 49,
+      "orcaPlaying": false,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 49,
+      "orca": 1,
+      "nessy": 50,
+      "orcaPlaying": false,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 50,
+      "orca": 1,
+      "nessy": 51,
+      "orcaPlaying": false,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 51,
+      "orca": 1,
+      "nessy": 52,
+      "orcaPlaying": false,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 52,
+      "orca": 1,
+      "nessy": 53,
+      "orcaPlaying": false,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 53,
+      "orca": 1,
+      "nessy": 54,
+      "orcaPlaying": false,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 54,
+      "orca": 1,
+      "nessy": 55,
+      "orcaPlaying": false,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 55,
+      "orca": 1,
+      "nessy": 56,
+      "orcaPlaying": false,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 56,
+      "orca": 1,
+      "nessy": 57,
+      "orcaPlaying": false,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 57,
+      "orca": 1,
+      "nessy": 58,
+      "orcaPlaying": false,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 58,
+      "orca": 1,
+      "nessy": 59,
+      "orcaPlaying": false,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 59,
+      "orca": 1,
+      "nessy": 60,
+      "orcaPlaying": false,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 60,
+      "orca": 1,
+      "nessy": 61,
+      "orcaPlaying": false,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 61,
+      "orca": 1,
+      "nessy": 62,
+      "orcaPlaying": false,
+      "nessyPlaying": true
+    },
+    {
+      "tick": 62,
+      "orca": 1,
+      "nessy": 1,
+      "orcaPlaying": false,
+      "nessyPlaying": false
+    },
+    {
+      "tick": 63,
+      "orca": 1,
+      "nessy": 1,
+      "orcaPlaying": false,
+      "nessyPlaying": false
+    },
+    {
+      "tick": 64,
+      "orca": 1,
+      "nessy": 1,
+      "orcaPlaying": false,
+      "nessyPlaying": false
+    },
+    {
+      "tick": 65,
+      "orca": 1,
+      "nessy": 1,
+      "orcaPlaying": false,
+      "nessyPlaying": false
+    }
+  ],
+  "kill_all": [
+    "36:city:24",
+    "72:city:23",
+    "108:city:22",
+    "144:city:21",
+    "180:city:20",
+    "216:city:19",
+    "252:city:18",
+    "288:city:17",
+    "324:city:16",
+    "360:city:15",
+    "396:city:14",
+    "432:city:13",
+    "468:city:12",
+    "504:city:11",
+    "540:city:10",
+    "576:city:9",
+    "612:city:8",
+    "648:city:7",
+    "684:city:6",
+    "720:city:5",
+    "756:stopTicker",
+    "816:allUnitsDone",
+    "817:endBattle"
+  ],
+  "bush": [
+    "36:city:4",
+    "72:city:3",
+    "108:city:2",
+    "144:city:1",
+    "180:city:0"
+  ],
+  "both": [
+    "36:city:4",
+    "36:city:3",
+    "72:city:2",
+    "72:city:1",
+    "108:city:0",
+    "144:stopTicker",
+    "180:stopTicker",
+    "204:allUnitsDone",
+    "205:endBattle"
+  ]
+}

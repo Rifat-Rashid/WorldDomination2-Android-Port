@@ -10,6 +10,14 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.example.worlddomination.game.rendering.ResourceMenuRenderer;
 import com.example.worlddomination.game.rendering.SourceHelpRenderer;
+import com.example.worlddomination.game.rendering.SourceHiddenHelpRenderer;
+import com.example.worlddomination.game.rendering.SourceHiddenBattleEffects;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.Pixmap;
+import com.example.worlddomination.game.ui.SourceHiddenHelpTypography;
+import com.badlogic.gdx.math.Matrix4;
+import com.badlogic.gdx.utils.BufferUtils;
+import java.nio.IntBuffer;
 import com.example.worlddomination.game.rendering.SourceNavigationGradient;
 import com.example.worlddomination.game.rendering.SourceNavigationPanel;
 import com.example.worlddomination.game.rendering.SourceInformationPanel;
@@ -100,6 +108,7 @@ import com.example.worlddomination.game.rendering.SourceEndgameRenderer;
 import com.example.worlddomination.game.assets.OriginalEndgameAssets;
 import com.example.worlddomination.game.simulation.GameSetup;
 import com.example.worlddomination.game.simulation.GameState;
+import com.example.worlddomination.game.simulation.SourceHiddenCommands;
 import com.example.worlddomination.game.simulation.CityState;
 import com.example.worlddomination.game.simulation.ReferenceRandom;
 import com.example.worlddomination.game.simulation.TechnologyCatalog;
@@ -252,6 +261,24 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private final SourceBattleUnitPlayback sourceUnitPlayback = new SourceBattleUnitPlayback();
     private ReferenceRandom battlePresentationRandom;
     private final SourceBattleTicker battleTicker = new SourceBattleTicker();
+    private final SourceHiddenBattleEffects hiddenBattleEffects = new SourceHiddenBattleEffects();
+    private final SourceHiddenBattleEffects.Listener hiddenBattleListener =
+            new SourceHiddenBattleEffects.Listener() {
+                @Override public void explodeCity(int address) {
+                    cityRenderer.destroySourceHiddenCity(game, address, battlePresentationRandom);
+                }
+                @Override public void stopBattleTicker() { battleTicker.reset(); }
+                @Override public void allUnitsDone() {
+                    sourceStoppedClips.removeAtAllUnitsDone();
+                    cityRenderer.removeSourceDustAtAllUnitsDone();
+                }
+                @Override public void endBattle() {
+                    turnPlaybackSequence.reset();
+                    finishBattlePresentation();
+                    turnActionDisplay.hide();
+                    cityRenderer.resetPropagandaPlayback();
+                }
+            };
     private List<GameState.BattlePresentationRecord> battlePresentationRecords = Collections.emptyList();
     private final List<FlashSoldierOneAnimation> soldierBattleAnimations = new ArrayList<>();
     private final List<FlashApacheMarineAnimation> apacheMarineAnimations = new ArrayList<>();
@@ -373,6 +400,23 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private TechnologySelectionTextLayout researchTextLayout;
     private ResourceMenuRenderer resourceMenuRenderer;
     private SourceHelpRenderer helpRenderer;
+    private SourceHiddenHelpRenderer hiddenHelpRenderer;
+    private BitmapFont hiddenHelpCommandFont, hiddenHelpWarningFont;
+    private TextureRegion hiddenHelpCaretPixel;
+    private long sourcePresentationTicks;
+    private final GlyphLayout hiddenHelpCommandGlyph = new GlyphLayout();
+    private final GlyphLayout[] hiddenHelpWarningGlyphs = {
+            new GlyphLayout(), new GlyphLayout(), new GlyphLayout(), new GlyphLayout()};
+    private final Rectangle hiddenHelpFit = new Rectangle();
+    private final Rectangle hiddenHelpClip = new Rectangle();
+    private final Rectangle hiddenHelpHit = new Rectangle();
+    private final Matrix4 hiddenHelpSavedTransform = new Matrix4();
+    private final Matrix4 hiddenHelpTextTransform = new Matrix4();
+    private final IntBuffer hiddenHelpScissorBox = BufferUtils.newIntBuffer(4);
+    private final Color hiddenHelpCommandColor = new Color(SourceHiddenHelpRenderer.COMMAND_RGBA);
+    private String hiddenHelpCachedCommand, hiddenHelpCachedWarning;
+    private int hiddenHelpWarningLines;
+    private boolean hiddenHelpKeyboardVisible;
     private final SourceHelpState helpState = new SourceHelpState();
     private SourceActionMenuRenderer sourceActionMenuRenderer;
     private final SourceActionMenuState sourceActionMenu = new SourceActionMenuState();
@@ -510,6 +554,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         shapes = new ShapeRenderer();
         resourceMenuRenderer = new ResourceMenuRenderer();
         helpRenderer = new SourceHelpRenderer();
+        hiddenHelpRenderer = new SourceHiddenHelpRenderer();
         sourceActionMenuRenderer = new SourceActionMenuRenderer();
         messagePanelRenderer = new MessagePanelRenderer();
         actionTubeAssets = new OriginalActionTubeAssets();
@@ -770,13 +815,27 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         batch.setColor(Color.WHITE);
         font.setColor(Color.WHITE);
         if (helpState.isVisible()) {
-            helpRenderer.prepare(helpState.getTopic());
+            boolean hiddenCommand = helpState.isCommandVisible();
+            boolean warning = helpState.getCommandMessage() != null;
+            if (hiddenCommand) {
+                hiddenHelpRenderer.prepare();
+                prepareHiddenHelpText();
+            } else helpRenderer.prepare(helpState.getTopic());
             batch.begin();
-            helpRenderer.draw(batch, mapBounds);
-            helpMapButton.set(mapBounds.x + mapBounds.width - 52f,
-                    mapBounds.y + mapBounds.height - 24f, 50f, 22f);
-            drawOriginalButton(helpMapButton);
-            drawCentered("MAP", helpMapButton.x + 25f, helpMapButton.y + 14f, 8f);
+            if (hiddenCommand) {
+                helpMapButton.set(0, 0, 0, 0);
+                if (warning) hiddenHelpRenderer.drawWarning(batch, mapBounds);
+                else hiddenHelpRenderer.draw(batch, mapBounds);
+                drawHiddenHelpText(warning);
+            } else {
+                helpRenderer.draw(batch, mapBounds);
+                helpMapButton.set(mapBounds.x + mapBounds.width - 52f,
+                        mapBounds.y + mapBounds.height - 24f, 50f, 22f);
+                drawOriginalButton(helpMapButton);
+                drawCentered("MAP", helpMapButton.x + 25f, helpMapButton.y + 14f, 8f);
+                // The secret password field is hit-testable but lies behind the
+                // source orange header. Do not paint its glyphs over the flat art.
+            }
             batch.end();
         } else {
             batch.begin();
@@ -788,6 +847,186 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             }
             batch.end();
         }
+    }
+
+    /** The source dynamic text rasterizes these recovered fonts at four times stage size. */
+    private static BitmapFont loadHiddenHelpFont(String stem) {
+        String path = "original/ui/help/hidden-art/" + stem;
+        BitmapFont.BitmapFontData data = new BitmapFont.BitmapFontData(Gdx.files.internal(path + ".fnt"), false);
+        // Preserve the atlas's white RGB and coverage without a lossy Pixmap conversion.
+        Texture texture = new Texture(Gdx.files.internal(path + ".png"), Pixmap.Format.RGBA8888, false);
+        try {
+            texture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
+            BitmapFont result = new BitmapFont(data, new TextureRegion(texture), false);
+            result.setOwnsTexture(true);
+            result.setUseIntegerPositions(false);
+            result.getData().setScale(.25f);
+            return result;
+        } catch (RuntimeException failure) {
+            texture.dispose();
+            throw failure;
+        }
+    }
+
+    private void prepareHiddenHelpText() {
+        if (hiddenHelpCommandFont == null) {
+            hiddenHelpCommandFont = loadHiddenHelpFont("hidden-font-command-120");
+            BitmapFont.Glyph bar = hiddenHelpCommandFont.getData().getGlyph('|');
+            hiddenHelpCaretPixel = new TextureRegion(hiddenHelpCommandFont.getRegion().getTexture(),
+                    bar.srcX + bar.width / 2, bar.srcY + bar.height / 2, 1, 1);
+        }
+        if (hiddenHelpWarningFont == null) hiddenHelpWarningFont = loadHiddenHelpFont("hidden-font-warning-40");
+        String command = helpState.getInputText();
+        if (!command.equals(hiddenHelpCachedCommand)) {
+            SourceHiddenHelpTypography.layout(hiddenHelpCommandGlyph, hiddenHelpCommandFont,
+                    command, hiddenHelpCommandColor);
+            hiddenHelpCachedCommand = command;
+        }
+        String message = helpState.getCommandMessage();
+        if (message != null && !message.equals(hiddenHelpCachedWarning)) {
+            hiddenHelpWarningLines = 0;
+            for (String paragraph : message.split("\n", -1)) {
+                String line = "";
+                for (String word : paragraph.split("\\s+")) {
+                    if (word.isEmpty()) continue;
+                    String candidate = line.isEmpty() ? word : line + " " + word;
+                    if (!line.isEmpty() && SourceHiddenHelpTypography.advance(
+                            hiddenHelpWarningFont.getData(), candidate) > 137f) {
+                        cacheHiddenHelpWarningLine(line);
+                        line = word;
+                    } else line = candidate;
+                }
+                cacheHiddenHelpWarningLine(line);
+            }
+            hiddenHelpCachedWarning = message;
+        }
+    }
+
+    private void cacheHiddenHelpWarningLine(String line) {
+        if (hiddenHelpWarningLines < hiddenHelpWarningGlyphs.length) {
+            SourceHiddenHelpTypography.layout(hiddenHelpWarningGlyphs[hiddenHelpWarningLines++],
+                    hiddenHelpWarningFont, line, Color.WHITE);
+        }
+    }
+
+    private void drawHiddenHelpText(boolean warning) {
+        SourceHiddenHelpRenderer.fit(mapBounds, hiddenHelpFit);
+        float scale = hiddenHelpFit.width / SourceHiddenHelpRenderer.SOURCE_WIDTH;
+        hiddenHelpSavedTransform.set(batch.getTransformMatrix());
+        hiddenHelpTextTransform.set(hiddenHelpSavedTransform)
+                .translate(hiddenHelpFit.x, hiddenHelpFit.y + hiddenHelpFit.height, 0)
+                .scale(scale, scale, 1);
+        batch.setTransformMatrix(hiddenHelpTextTransform);
+        try {
+            if (warning) {
+                // The authored static Warning header is already in frame7 artwork.
+                SourceHiddenHelpRenderer.warningTextClipBounds(mapBounds, hiddenHelpClip);
+                for (int i = 0; i < hiddenHelpWarningLines; i++) {
+                    GlyphLayout glyph = hiddenHelpWarningGlyphs[i];
+                    drawHiddenHelpGlyph(hiddenHelpWarningFont, glyph,
+                            107.05f + SourceHiddenHelpTypography.centeredOffset(141f, glyph.width), -(95.05f + i * 12f));
+                }
+            } else {
+                SourceHiddenHelpRenderer.commandTextClipBounds(mapBounds, hiddenHelpClip);
+                drawHiddenHelpGlyph(hiddenHelpCommandFont, hiddenHelpCommandGlyph,
+                        22.05f + SourceHiddenHelpTypography.centeredOffset(318f, hiddenHelpCommandGlyph.width), -160.05f);
+                if (helpState.isInputFocused() && SourceHiddenHelpTypography.caretVisible(sourcePresentationTicks)) {
+                    // Source's caret uses its left gutter even though the text is centered.
+                    float prefix = 0;
+                    BitmapFont.BitmapFontData data = hiddenHelpCommandFont.getData();
+                    String text = helpState.getInputText();
+                    for (int i = 0; i < helpState.getCaret(); i++) {
+                        BitmapFont.Glyph glyph = data.getGlyph(text.charAt(i));
+                        if (glyph != null) prefix += glyph.xadvance * data.scaleX;
+                    }
+                    float color = batch.getPackedColor();
+                    beginHiddenHelpScissor();
+                    try {
+                        batch.setColor(hiddenHelpCommandColor);
+                        // Pillow draws the inclusive end point of its 4x vertical line.
+                        batch.draw(hiddenHelpCaretPixel, 22.05f + 2f + prefix - .25f, -191.3f, 1f, 32.25f);
+                        batch.flush();
+                    } finally {
+                        batch.setPackedColor(color);
+                        endHiddenHelpScissor();
+                    }
+                }
+            }
+        } finally { batch.setTransformMatrix(hiddenHelpSavedTransform); }
+    }
+
+    private boolean hiddenHelpPreviousScissor;
+    private void beginHiddenHelpScissor() {
+        batch.flush();
+        hiddenHelpPreviousScissor = Gdx.gl.glIsEnabled(GL20.GL_SCISSOR_TEST);
+        if (hiddenHelpPreviousScissor) {
+            hiddenHelpScissorBox.clear();
+            Gdx.gl.glGetIntegerv(GL20.GL_SCISSOR_BOX, hiddenHelpScissorBox);
+        }
+        setScissor(hiddenHelpClip);
+    }
+    private void endHiddenHelpScissor() {
+        if (hiddenHelpPreviousScissor) Gdx.gl.glScissor(hiddenHelpScissorBox.get(0), hiddenHelpScissorBox.get(1),
+                hiddenHelpScissorBox.get(2), hiddenHelpScissorBox.get(3));
+        else Gdx.gl.glDisable(GL20.GL_SCISSOR_TEST);
+    }
+    /** BitmapFont's cap anchor is corrected to the source line's actual visual top. */
+    private void drawHiddenHelpGlyph(BitmapFont textFont, GlyphLayout glyph, float x, float visualTop) {
+        beginHiddenHelpScissor();
+        try {
+            textFont.draw(batch, glyph, x, visualTop - SourceHiddenHelpTypography.topOffset(textFont.getData(), glyph));
+            batch.flush();
+        } finally { endHiddenHelpScissor(); }
+    }
+
+    private void blurHiddenHelpInput() {
+        helpState.blurInput();
+        if (hiddenHelpKeyboardVisible && Gdx.input != null)
+            Gdx.input.setOnscreenKeyboardVisible(false);
+        hiddenHelpKeyboardVisible = false;
+    }
+
+    private boolean activateHiddenHelp(float x, float y) {
+        if (helpState.getCommandMessage() != null) {
+            if (SourceHiddenHelpRenderer.warningOkBounds(mapBounds, hiddenHelpHit).contains(x, y)) {
+                blurHiddenHelpInput();
+                helpState.dismissCommandMessage();
+            }
+            return true;
+        }
+        if (helpState.hasInputField()) {
+            if (helpState.isCommandVisible()) SourceHiddenHelpRenderer.commandBounds(mapBounds, hiddenHelpHit);
+            else SourceHiddenHelpRenderer.passwordBounds(mapBounds, hiddenHelpHit);
+            if (hiddenHelpHit.contains(x, y)) {
+                if (helpState.focusInput()) {
+                    Gdx.input.setOnscreenKeyboardVisible(true, Input.OnscreenKeyboardType.Default);
+                    hiddenHelpKeyboardVisible = true;
+                }
+                return true;
+            }
+        }
+        if (SourceHiddenHelpRenderer.buttonBounds(mapBounds, hiddenHelpHit).contains(x, y)) {
+            if (helpState.isCommandVisible()) {
+                String input = helpState.getInputText();
+                blurHiddenHelpInput();
+                SourceHiddenCommands.Submission submitted = game.getHiddenCommands().submit(input);
+                if (submitted.recognized) audio.play(OriginalAudio.Cue.UNIT_SELECT);
+                if (submitted.message != null) helpState.showCommandMessage(submitted.message);
+                else closeHelpSelection();
+                return true;
+            }
+            if ("help_index".equals(helpState.getTopic())) {
+                blurHiddenHelpInput();
+                helpState.activate("btnIndex_c");
+                return true;
+            }
+        }
+        if (helpState.isCommandVisible()) {
+            blurHiddenHelpInput();
+            return true;
+        }
+        blurHiddenHelpInput();
+        return false;
     }
 
     private boolean hasActivePresentation() {
@@ -803,7 +1042,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         if (flashAnimationAssets != null && !flashAnimationAssets.isLoaded()) {
             return true;
         }
-        if (confirmTurnAnimation.isAnimating() || turnActionDisplay.isAnimating()
+        if (helpState.isInputFocused() || confirmTurnAnimation.isAnimating() || turnActionDisplay.isAnimating()
                 || actionSlotAnimation.isAnimating()
                 || (cityRenderer != null && cityRenderer.isAnimating())
                 || !battleAnimations.isEmpty()
@@ -836,10 +1075,12 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     }
 
     private void fixedUpdate(float seconds) {
+        sourcePresentationTicks++;
         ReferenceRandom frameRandom = battlePresentationRandom;
         boolean sourceFrameReady = frameRandom == null
                 || (flashAnimationAssets != null && flashAnimationAssets.isLoaded());
         if (frameRandom != null && sourceFrameReady) {
+            if (hiddenBattleEffects.isActive()) hiddenBattleEffects.advanceTimelines();
             battleActionFrames.captureFrameOrder(battlefieldDisplay);
             if (cityRenderer != null) cityRenderer.captureSourceCityFrame(battlefieldDisplay);
         }
@@ -869,6 +1110,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 defense.advanceHostFrame();
             for (SourceRocketDefenseController defense : sourceRocketDefenseControllers)
                 defense.advanceHostFrame();
+            // Source interval callbacks dispatch after every retained clip's frame.
+            if (hiddenBattleEffects.isActive()) hiddenBattleEffects.dispatchIntervals(hiddenBattleListener);
         }
         advanceOutcomeSequence();
     }
@@ -925,12 +1168,15 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 && turnPlaybackSequence.getPhase() == TurnPlaybackSequence.Phase.CLEANUP_HANDOFF) {
             // Presenter.allUnitsDone detaches stopped clips before endBattle.
             sourceStoppedClips.removeAtAllUnitsDone();
+            if (cityRenderer != null) cityRenderer.removeSourceDustAtAllUnitsDone();
         }
-        SourceBattleTicker.FrameDecision tickerDecision = SourceBattleTicker.FrameDecision.ADVANCE;
+        SourceBattleTicker.FrameDecision tickerDecision = !battleTicker.isRunning()
+                && hiddenBattleEffects.suppressesNormalTickerCompletion()
+                ? SourceBattleTicker.FrameDecision.SUPPRESS : SourceBattleTicker.FrameDecision.ADVANCE;
         if (battleTicker.isRunning()) {
             // f_37 checks live units before movement, even during action labels.
-            // The native inputs do not activate the source's kill_all cheat.
-            tickerDecision = battleTicker.advanceFrame(hasSourceBattleEntries(), false);
+            tickerDecision = battleTicker.advanceFrame(hasSourceBattleEntries(),
+                    hiddenBattleEffects.suppressesNormalTickerCompletion());
             if (tickerDecision == SourceBattleTicker.FrameDecision.CLEANUP) {
                 // advance() already ran: this newly created timer starts next frame.
                 turnPlaybackSequence.completeBattlePlayback();
@@ -1363,6 +1609,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     /** The phone adapter releases playback at the endBattle handoff. */
     private void finishBattlePresentation() {
+        hiddenBattleEffects.finish();
         audio.finishBattleAmbient();
         audio.finishBattleActionSounds();
         audio.finishSatelliteAudio();
@@ -1579,7 +1826,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                     actionBuildingAnimations.remove(index);
                 }
             }
-            actionBuildingAnimations.add(new FlashActionBuildingAnimation(event, reused));
+            actionBuildingAnimations.add(new FlashActionBuildingAnimation(event, reused,
+                    game.getHiddenCommands().isActive(SourceHiddenCommands.Flag.DISCO)));
             audio.startBuildingAmbient(event.frameName);
         }
         turnActionDisplay.reset();
@@ -1622,7 +1870,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                         endgameContentBounds.width, endgameContentBounds.height);
                 endgameRenderer.start();
             }
-            if (personalBestStore != null) {
+            if (game.getHiddenCommands().isScoreCorrupt()) {
+                // Lifecycle's isolated endgame displays zero; canonical score stays intact.
+                outcomePersonalBestText = "";
+            } else if (personalBestStore != null) {
                 try {
                     personalBestStore.recordFinalScore(game.getFinalScore());
                     outcomePersonalBestText = MatchOutcomePresentation.personalBestLine(
@@ -1636,7 +1887,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                         game.getFinalScore());
             }
             outcomeSequence.begin(game.getMatchStatus(), game.getFinalScoreBreakdown(),
-                    game.createOutcomePresentationRandomCopy());
+                    game.createOutcomePresentationRandomCopy(), game.getHiddenCommands().isScoreCorrupt());
             modalOpen = false;
             audio.finishBattleAmbient();
             audio.finishBattleActionSounds();
@@ -2069,6 +2320,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         for (int i = 0; i < clips.size(); i++) {
             BattlefieldDisplayState.Item item = clips.entryAt(i).getValue();
             switch (item.kind) {
+                case AUTHORED:
+                    battleUnitRenderer.drawHiddenCreature(batch, mapBounds, item.name, hiddenBattleEffects);
+                    break;
                 case CITY:
                     cityRenderer.drawCityBody(batch, mapBounds, game,
                             sourceActionMenu.getSelectedEquipment(), item.index);
@@ -3908,7 +4162,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     }
 
     private void beginNewGameSetup() {
-        helpState.close();
+        blurHiddenHelpInput();
+        helpState.resetMatch();
         audio.finishSatelliteAudio();
         audio.finishAircraftAudio();
         audio.finishAntiDefenseAudio();
@@ -3937,6 +4192,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         sourceStoppedClips.reset();
         battlePresentationRandom = null;
         battleTicker.reset();
+        hiddenBattleEffects.finish();
         battlePresentationRecords = Collections.emptyList();
         laidOutInstruction = null;
         battleAnimations.clear();
@@ -4462,6 +4718,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             if (setup.canStart()) {
                 initializeGameplayAssets();
                 game = new GameState(setup);
+                blurHiddenHelpInput();
+                helpState.resetMatch();
                 sourceActionInstruction.resetWelcome();
                 laidOutInstruction = null;
                 actionSlotAnimation.reset();
@@ -4479,6 +4737,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 sourceStoppedClips.reset();
                 battlePresentationRandom = null;
                 battleTicker.reset();
+                hiddenBattleEffects.finish();
                 battlePresentationRecords = Collections.emptyList();
                 soldierBattleAnimations.clear();
                 apacheMarineAnimations.clear();
@@ -4831,6 +5090,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     }
 
     private void closeHelpSelection() {
+        blurHiddenHelpInput();
         helpState.close();
         game.cancelSelection();
         sourceActionMenu.clearEconomyWarning();
@@ -4865,6 +5125,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         if (helpButton.contains(x, y)) {
             // The reference replaces the center view without cancelling an
             // unaccepted action or touching already reserved turn orders.
+            blurHiddenHelpInput();
             helpState.open();
             return;
         }
@@ -4893,8 +5154,11 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 }
                 if (!turnControl) {
                     if (helpState.isVisible()) {
-                        if (helpMapButton.contains(x, y)) helpState.hide();
-                        else helpState.activate(helpRenderer.controlAt(mapBounds, x, y));
+                        if (activateHiddenHelp(x, y)) return;
+                        if (helpMapButton.contains(x, y)) {
+                            blurHiddenHelpInput();
+                            helpState.hide();
+                        } else helpState.activate(helpRenderer.controlAt(mapBounds, x, y));
                     } else if (actionFooterButtons[0].contains(x, y)) {
                         helpState.show();
                     } else if (actionFooterButtons[1].contains(x, y)) {
@@ -5176,6 +5440,13 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     private void confirmTurnAndPreparePlayback() {
         game.confirmTurn();
+        SourceHiddenCommands hidden = game.getHiddenCommands();
+        hiddenBattleEffects.begin(hidden.isActive(SourceHiddenCommands.Flag.ORCA),
+                hidden.isActive(SourceHiddenCommands.Flag.NESSY),
+                hidden.isActive(SourceHiddenCommands.Flag.KILL_ALL),
+                hidden.isActive(SourceHiddenCommands.Flag.BUSH),
+                game.getBattlePresentationPopulatedCities(false),
+                game.getBattlePresentationPopulatedCities(true));
         // A fresh isolated battle root has a fresh anti-defense child timeline.
         audio.finishAntiDefenseAudio();
         clearSourceAirDefenses();
@@ -5502,7 +5773,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             if (owner != null) satelliteAudioOwners.put(satellite, owner);
         }
         battleActionFrames.begin(actionBuildingAnimations,
-                game.getLastTurnActionBuildings(), presentationRandom);
+                game.getLastTurnActionBuildings(), presentationRandom,
+                game.getHiddenCommands().isActive(SourceHiddenCommands.Flag.DISCO));
     }
 
     private boolean selectMapTargetCity(GameState.Action action, float x, float y) {
@@ -5644,6 +5916,21 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     @Override
     public boolean keyDown(int keycode) {
+        if (game != null && !isTurnInputBlocked() && helpState.isInputFocused()) {
+            if (keycode == Input.Keys.ENTER || keycode == Input.Keys.ESCAPE || keycode == Input.Keys.BACK) {
+                blurHiddenHelpInput();
+                Gdx.graphics.requestRendering();
+                return true;
+            }
+            int caret = helpState.getCaret();
+            if (keycode == Input.Keys.LEFT) helpState.moveCaret(caret - 1);
+            else if (keycode == Input.Keys.RIGHT) helpState.moveCaret(caret + 1);
+            else if (keycode == Input.Keys.HOME) helpState.moveCaret(0);
+            else if (keycode == Input.Keys.END) helpState.moveCaret(helpState.getInputText().length());
+            else return false; // Character edits, including deletion, occur only in keyTyped.
+            Gdx.graphics.requestRendering();
+            return true;
+        }
         boolean handled = keycode == Input.Keys.BACK && handleBack();
         if (handled) {
             Gdx.graphics.requestRendering();
@@ -5868,6 +6155,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     @Override
     public void pause() {
         accumulator = 0f;
+        blurHiddenHelpInput();
         // Release regenerable targets while the old GL context is still current.
         // Android restores managed FBOs before our resume callback runs.
         if (phonePanelRenderer != null) phonePanelRenderer.invalidate();
@@ -5899,6 +6187,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     @Override
     public void dispose() {
+        blurHiddenHelpInput();
         disposeEndgameResources();
         battlefieldDisplay.clear();
         displayGame = null;
@@ -5909,6 +6198,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         sourceStoppedClips.reset();
         battlePresentationRandom = null;
         battleTicker.reset();
+        hiddenBattleEffects.finish();
         battlePresentationRecords = Collections.emptyList();
         battleAnimations.clear();
         sourceUnitPlayback.reset();
@@ -5961,6 +6251,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         if (sourceActionMenuRenderer != null) sourceActionMenuRenderer.dispose();
         if (helpRenderer != null) helpRenderer.dispose();
+        if (hiddenHelpRenderer != null) hiddenHelpRenderer.dispose();
+        if (hiddenHelpCommandFont != null) hiddenHelpCommandFont.dispose();
+        if (hiddenHelpWarningFont != null) hiddenHelpWarningFont.dispose();
         if (resourceMenuRenderer != null) {
             resourceMenuRenderer.dispose();
         }
@@ -5986,7 +6279,13 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     }
 
     @Override public boolean keyUp(int keycode) { return false; }
-    @Override public boolean keyTyped(char character) { return false; }
+    @Override public boolean keyTyped(char character) {
+        if (game == null || isTurnInputBlocked() || !helpState.isInputFocused()) return false;
+        if (character == '\r' || character == '\n') blurHiddenHelpInput();
+        else helpState.type(character);
+        Gdx.graphics.requestRendering();
+        return true;
+    }
     @Override public boolean mouseMoved(int screenX, int screenY) {
         if (game != null || splashState.isVisible()) return false;
         unproject(screenX, screenY);

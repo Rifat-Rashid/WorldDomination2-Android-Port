@@ -25,10 +25,12 @@ public final class SourceCityImpactState {
     private int targetFrame;
     private int previousFrame;
     private int deathFrame;
+    private int privatePopulation;
 
     /** Starts at BattlePlayback's snapshot before canonical casualty settlement. */
     public SourceCityImpactState(int snapshotPopulation, int initialArtworkFrame) {
         this.snapshotPopulation = snapshotPopulation;
+        privatePopulation = snapshotPopulation;
         targetFrame = initialArtworkFrame;
         previousFrame = initialArtworkFrame;
         if (snapshotPopulation <= 0 && initialArtworkFrame > NORMAL_FRAMES) {
@@ -46,6 +48,7 @@ public final class SourceCityImpactState {
             deathFrame = (previousFrame == 0 ? targetFrame : previousFrame)
                     + DEATH_FRAME_OFFSET;
             targetFrame = deathFrame;
+            privatePopulation = 0;
             return transition(presentationRandom);
         }
 
@@ -74,4 +77,14 @@ public final class SourceCityImpactState {
     public double getCumulativeCasualties() {
         return cumulativeCasualties;
     }
+
+    /** Presenter.explode_all_iteration passes city.population, not its remaining
+     * snapshot-minus-casualties value. Only lethal City callbacks zero that field. */
+    public Transition destroyHidden(ReferenceRandom presentationRandom) {
+        Transition transition = apply(privatePopulation, presentationRandom);
+        privatePopulation = 0;
+        return transition;
+    }
+
+    public int getPrivatePopulation() { return privatePopulation; }
 }

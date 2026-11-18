@@ -10,6 +10,24 @@ import static org.junit.Assert.assertNull;
 
 public final class SourceCityImpactStateTest {
     @Test
+    public void hiddenDestroyAfterDamageUsesPopulationFieldAndDoesNotReplayDeathRng() {
+        SourceCityImpactState city = new SourceCityImpactState(154, 6);
+        ReferenceRandom random = new ReferenceRandom(0);
+        for (int i = 0; i < 73; i++) random.nextDouble();
+        assertNull(city.apply(10, random));
+        assertEquals(154, city.getPrivatePopulation());
+        SourceCityImpactState.Transition death = city.destroyHidden(random);
+        assertEquals(15, death.targetFrame);
+        assertEquals(69099, death.randomName); // Independent original callback trace.
+        assertEquals(164.0, city.getCumulativeCasualties(), 0.0);
+        assertEquals(0, city.getPrivatePopulation());
+        ReferenceRandom confirmed = random.copy();
+        assertNull(city.destroyHidden(random));
+        assertEquals(164.0, city.getCumulativeCasualties(), 0.0);
+        assertEquals(confirmed.nextDouble(), random.nextDouble(), 0.0);
+    }
+
+    @Test
     public void legalTankHitChangesCitySevenFromFrameFourToThree() {
         // Legal seed-zero soldier3 battle: the next source draw at global tick
         // 379 is Python Random(0)'s zero-based draw 272.

@@ -62,6 +62,8 @@ public final class FlashBattleUnitRenderer {
                     + "}\n";
     private final OriginalFlashAnimationAssets assets;
     private final FlashApacheMarineAnimation.Actor targetDotActor = createTargetDotActor();
+    private final FlashApacheMarineAnimation.Actor hiddenCreatureActor =
+            new FlashApacheMarineAnimation.Actor();
     private final FlashApacheMarineAnimation.Actor sourceAircraftRoleActor =
             new FlashApacheMarineAnimation.Actor();
     private final FlashStencilMasks actionBuildingMasks = new FlashStencilMasks();
@@ -85,6 +87,32 @@ public final class FlashBattleUnitRenderer {
         actor.linkage = "redDot";
         actor.visible = true;
         return actor;
+    }
+
+    /** Draw at the authored root child's occupied depth, without advancing its clock. */
+    public void drawHiddenCreature(SpriteBatch batch, Rectangle bounds,
+                                   String childName, SourceHiddenBattleEffects effects) {
+        if (!assets.isLoaded() || !effects.isActive()) return;
+        boolean orca = "orca".equals(childName);
+        if (!orca && !"nessy".equals(childName)) return;
+        hiddenCreatureActor.sourceFrame = (orca ? effects.getOrcaFrame()
+                : effects.getNessyFrame()) - 1;
+        hiddenCreatureActor.sourceX = orca ? SourceHiddenBattleEffects.ORCA_X
+                : SourceHiddenBattleEffects.NESSY_X;
+        hiddenCreatureActor.sourceY = orca ? SourceHiddenBattleEffects.ORCA_Y
+                : SourceHiddenBattleEffects.NESSY_Y;
+        // Root coordinates use the unshifted center transform, not a corner island crop.
+        hiddenCreatureActor.islandPlayerId = 0;
+        ShaderProgram previousShader = batch.getShader();
+        float previousColor = batch.getPackedColor();
+        try {
+            drawApacheClip(batch, bounds, hiddenCreatureActor, orca
+                    ? OriginalFlashAnimationAssets.HIDDEN_ORCA_TIMELINE
+                    : OriginalFlashAnimationAssets.HIDDEN_NESSY_TIMELINE, null);
+        } finally {
+            batch.setShader(previousShader);
+            batch.setPackedColor(previousColor);
+        }
     }
 
     /** Unit attaches a separate tinted dot at the battle parent's origin. */

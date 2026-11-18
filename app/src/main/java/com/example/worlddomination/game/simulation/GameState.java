@@ -778,6 +778,7 @@ public final class GameState {
     private final int difficulty;
     private final boolean opponentTurnsEnabled;
     private final PlayerState[] players = new PlayerState[5];
+    private final SourceHiddenCommands hiddenCommands = new SourceHiddenCommands();
     private final List<ActionOrder> queuedActions = new ArrayList<>(MAX_TURN_ACTIONS);
     private final List<CombatEvent> lastTurnCombatEvents = new ArrayList<>();
     private final List<BattlePresentationRecord> lastTurnBattleRecords = new ArrayList<>();
@@ -1215,6 +1216,9 @@ public final class GameState {
     public int getTurn() {
         return turn;
     }
+
+    /** Match-owned source command flags; battle presentation must take its own copy. */
+    public SourceHiddenCommands getHiddenCommands() { return hiddenCommands; }
 
     public MatchStatus getMatchStatus() {
         return matchStatus;
@@ -2791,6 +2795,25 @@ public final class GameState {
             throw new IllegalArgumentException("Invalid battle city address");
         }
         return lastTurnBattleCities[playerId * 5 + cityIndex];
+    }
+
+    /** Presenter.explode_all/self scan the snapshot's occupied cities in reverse keys. */
+    public int[] getBattlePresentationPopulatedCities(boolean human) {
+        if (!hasLastTurnBattleCities) {
+            throw new IllegalStateException("No resolved battle city presentation snapshot");
+        }
+        int[] addresses = new int[human ? 5 : 20];
+        int count = 0;
+        for (int playerId = human ? 0 : players.length - 1;
+             playerId >= (human ? 0 : 1); playerId--) {
+            if (players[playerId].getPlayerColor() == 0) continue;
+            for (int cityIndex = 4; cityIndex >= 0; cityIndex--) {
+                int address = playerId * 5 + cityIndex;
+                if (lastTurnBattleCities[address].populationMillions > 0)
+                    addresses[count++] = address;
+            }
+        }
+        return Arrays.copyOf(addresses, count);
     }
 
     /** Resolves human and opponent actions using the source turn order. */

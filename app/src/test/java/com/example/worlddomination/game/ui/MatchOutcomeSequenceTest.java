@@ -11,6 +11,50 @@ import static org.junit.Assert.assertTrue;
 
 public final class MatchOutcomeSequenceTest {
     @Test
+    public void cheatedVictoryShowsLiteralScoreAndNeverRunsScoreCallback() {
+        MatchOutcomeSequence sequence = new MatchOutcomeSequence(17L);
+        sequence.begin(GameState.MatchStatus.VICTORY,
+                FinalScoreBreakdown.calculate(500L, 2, 2), true);
+        assertTrue(sequence.isScoreCorrupt());
+        assertEquals("0", sequence.getScoreText());
+        tick(sequence, MatchOutcomeSequence.TICKS_BEFORE_ENDGAME);
+        assertTrue(sequence.isEndgameVisible());
+        tick(sequence, MatchOutcomeSequence.TICKS_BEFORE_SCORE - 1);
+        assertFalse(sequence.isScoreStarted());
+        assertEquals(MatchOutcomeSequence.EVENT_START_SCORE_COUNTER, sequence.tick());
+        assertEquals(MatchOutcomeSequence.Phase.CHEATED_SCORE, sequence.getPhase());
+        assertEquals("!!CHEATED!!", sequence.getScoreText());
+        assertEquals(0L, sequence.getScoreCount());
+        assertEquals(0L, sequence.getFinalScore());
+        assertTrue(sequence.isScoreVisible());
+        assertFalse(sequence.isAnimating());
+        assertFalse(sequence.isComplete());
+        for (int frame = 0; frame < 10_000; frame++) {
+            assertEquals(MatchOutcomeSequence.EVENT_NONE, sequence.tick());
+        }
+        assertEquals(0, sequence.getSatellitesRevealed());
+        assertEquals(0, sequence.getFlagsRevealed());
+        assertEquals("!!CHEATED!!", sequence.getScoreText());
+        sequence.reset();
+        assertFalse(sequence.isScoreCorrupt());
+        assertEquals(MatchOutcomeSequence.Phase.INACTIVE, sequence.getPhase());
+    }
+
+    @Test
+    public void cheatedDefeatStillPlaysDefeatCueAtScoreStart() {
+        MatchOutcomeSequence sequence = new MatchOutcomeSequence(17L);
+        sequence.begin(GameState.MatchStatus.DEFEAT,
+                FinalScoreBreakdown.calculate(500L, 1, 1), true);
+        tick(sequence, MatchOutcomeSequence.TICKS_BEFORE_ENDGAME);
+        tick(sequence, MatchOutcomeSequence.TICKS_BEFORE_SCORE - 1);
+        assertEquals(MatchOutcomeSequence.EVENT_START_SCORE_COUNTER
+                        | MatchOutcomeSequence.EVENT_DEFEAT,
+                sequence.tick());
+        assertEquals("!!CHEATED!!", sequence.getScoreText());
+        assertEquals(MatchOutcomeSequence.Phase.CHEATED_SCORE, sequence.getPhase());
+    }
+
+    @Test
     public void outcomeActivityEndsOnlyAfterTheScoreSequenceCompletes() {
         MatchOutcomeSequence sequence = new MatchOutcomeSequence(7L);
         assertFalse(sequence.isAnimating());

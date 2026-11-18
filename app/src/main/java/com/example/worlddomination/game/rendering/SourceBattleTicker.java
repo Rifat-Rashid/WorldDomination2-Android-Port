@@ -29,7 +29,7 @@ public final class SourceBattleTicker {
     /**
      * Increments the ticker before testing for empty active arrays or count
      * greater than 800. The source {@code kill_all} flag is a cheat switch;
-     * ordinary native playback passes false until that cheat is supported.
+     * ordinary playback passes false; hidden-command playback retains its flag.
      */
     public FrameDecision advanceFrame(boolean hasActiveUnitsOrSubs,
                                       boolean killAllCheatActive) {

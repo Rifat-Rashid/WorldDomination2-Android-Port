@@ -1,0 +1,609 @@
+{
+  "creatures": [
+    {
+      "frames": [
+        [],
+        [
+          5722
+        ],
+        [
+          5722
+        ],
+        [
+          5724
+        ],
+        [
+          5724
+        ],
+        [
+          5726
+        ],
+        [
+          5726
+        ],
+        [
+          5728
+        ],
+        [
+          5728
+        ],
+        [
+          5730
+        ],
+        [
+          5730
+        ],
+        [
+          5732
+        ],
+        [
+          5732
+        ],
+        [
+          5734
+        ],
+        [
+          5734
+        ],
+        [
+          5736
+        ],
+        [
+          5736
+        ],
+        [
+          5738
+        ],
+        [
+          5738
+        ],
+        [
+          5740
+        ],
+        [
+          5740
+        ],
+        [
+          5742
+        ],
+        [
+          5742
+        ],
+        [
+          5744
+        ],
+        [
+          5744
+        ],
+        [
+          5746
+        ],
+        [
+          5746
+        ],
+        [
+          5748
+        ],
+        [
+          5748
+        ],
+        [
+          5750
+        ],
+        [
+          5750
+        ],
+        [
+          5752
+        ],
+        [
+          5752
+        ],
+        [
+          5754
+        ],
+        [
+          5754
+        ],
+        [
+          5756
+        ],
+        [
+          5756
+        ],
+        [
+          5758
+        ],
+        [
+          5758
+        ],
+        [
+          5760
+        ],
+        [
+          5760
+        ],
+        [
+          5762
+        ],
+        [
+          5762
+        ],
+        [
+          5764
+        ],
+        [
+          5764
+        ]
+      ],
+      "leaves": [
+        {
+          "bitmapFillCount": 1,
+          "id": 5722
+        },
+        {
+          "bitmapFillCount": 1,
+          "id": 5724
+        },
+        {
+          "bitmapFillCount": 1,
+          "id": 5726
+        },
+        {
+          "bitmapFillCount": 1,
+          "id": 5728
+        },
+        {
+          "bitmapFillCount": 1,
+          "id": 5730
+        },
+        {
+          "bitmapFillCount": 1,
+          "id": 5732
+        },
+        {
+          "bitmapFillCount": 1,
+          "id": 5734
+        },
+        {
+          "bitmapFillCount": 1,
+          "id": 5736
+        },
+        {
+          "bitmapFillCount": 1,
+          "id": 5738
+        },
+        {
+          "bitmapFillCount": 1,
+          "id": 5740
+        },
+        {
+          "bitmapFillCount": 1,
+          "id": 5742
+        },
+        {
+          "bitmapFillCount": 1,
+          "id": 5744
+        },
+        {
+          "bitmapFillCount": 1,
+          "id": 5746
+        },
+        {
+          "bitmapFillCount": 1,
+          "id": 5748
+        },
+        {
+          "bitmapFillCount": 1,
+          "id": 5750
+        },
+        {
+          "bitmapFillCount": 1,
+          "id": 5752
+        },
+        {
+          "bitmapFillCount": 1,
+          "id": 5754
+        },
+        {
+          "bitmapFillCount": 1,
+          "id": 5756
+        },
+        {
+          "bitmapFillCount": 1,
+          "id": 5758
+        },
+        {
+          "bitmapFillCount": 1,
+          "id": 5760
+        },
+        {
+          "bitmapFillCount": 1,
+          "id": 5762
+        },
+        {
+          "bitmapFillCount": 1,
+          "id": 5764
+        }
+      ],
+      "name": "hiddenOrca",
+      "stopActionFramesOneBased": [
+        1
+      ],
+      "symbolId": 5765
+    },
+    {
+      "frames": [
+        [],
+        [
+          5661
+        ],
+        [
+          5661
+        ],
+        [
+          5663
+        ],
+        [
+          5663
+        ],
+        [
+          5665
+        ],
+        [
+          5665
+        ],
+        [
+          5667
+        ],
+        [
+          5667
+        ],
+        [
+          5669
+        ],
+        [
+          5669
+        ],
+        [
+          5671
+        ],
+        [
+          5671
+        ],
+        [
+          5673
+        ],
+        [
+          5673
+        ],
+        [
+          5675
+        ],
+        [
+          5675
+        ],
+        [
+          5677
+        ],
+        [
+          5677
+        ],
+        [
+          5679
+        ],
+        [
+          5679
+        ],
+        [
+          5681
+        ],
+        [
+          5681
+        ],
+        [
+          5683
+        ],
+        [
+          5683
+        ],
+        [
+          5685
+        ],
+        [
+          5685
+        ],
+        [
+          5687
+        ],
+        [
+          5687
+        ],
+        [
+          5689
+        ],
+        [
+          5689
+        ],
+        [
+          5691
+        ],
+        [
+          5691
+        ],
+        [
+          5693
+        ],
+        [
+          5693
+        ],
+        [
+          5695
+        ],
+        [
+          5695
+        ],
+        [
+          5697
+        ],
+        [
+          5697
+        ],
+        [
+          5699
+        ],
+        [
+          5699
+        ],
+        [
+          5701
+        ],
+        [
+          5701
+        ],
+        [
+          5703
+        ],
+        [
+          5703
+        ],
+        [
+          5705
+        ],
+        [
+          5705
+        ],
+        [
+          5707
+        ],
+        [
+          5707
+        ],
+        [
+          5709
+        ],
+        [
+          5709
+        ],
+        [
+          5711
+        ],
+        [
+          5711
+        ],
+        [
+          5713
+        ],
+        [
+          5713
+        ],
+        [
+          5715
+        ],
+        [
+          5715
+        ],
+        [
+          5717
+        ],
+        [
+          5717
+        ],
+        [
+          5719
+        ],
+        [
+          5719
+        ],
+        []
+      ],
+      "leaves": [
+        {
+          "bitmapFillCount": 1,
+          "id": 5661
+        },
+        {
+          "bitmapFillCount": 1,
+          "id": 5663
+        },
+        {
+          "bitmapFillCount": 1,
+          "id": 5665
+        },
+        {
+          "bitmapFillCount": 1,
+          "id": 5667
+        },
+        {
+          "bitmapFillCount": 1,
+          "id": 5669
+        },
+        {
+          "bitmapFillCount": 1,
+          "id": 5671
+        },
+        {
+          "bitmapFillCount": 1,
+          "id": 5673
+        },
+        {
+          "bitmapFillCount": 1,
+          "id": 5675
+        },
+        {
+          "bitmapFillCount": 1,
+          "id": 5677
+        },
+        {
+          "bitmapFillCount": 1,
+          "id": 5679
+        },
+        {
+          "bitmapFillCount": 1,
+          "id": 5681
+        },
+        {
+          "bitmapFillCount": 1,
+          "id": 5683
+        },
+        {
+          "bitmapFillCount": 1,
+          "id": 5685
+        },
+        {
+          "bitmapFillCount": 1,
+          "id": 5687
+        },
+        {
+          "bitmapFillCount": 1,
+          "id": 5689
+        },
+        {
+          "bitmapFillCount": 1,
+          "id": 5691
+        },
+        {
+          "bitmapFillCount": 1,
+          "id": 5693
+        },
+        {
+          "bitmapFillCount": 1,
+          "id": 5695
+        },
+        {
+          "bitmapFillCount": 1,
+          "id": 5697
+        },
+        {
+          "bitmapFillCount": 1,
+          "id": 5699
+        },
+        {
+          "bitmapFillCount": 1,
+          "id": 5701
+        },
+        {
+          "bitmapFillCount": 1,
+          "id": 5703
+        },
+        {
+          "bitmapFillCount": 1,
+          "id": 5705
+        },
+        {
+          "bitmapFillCount": 1,
+          "id": 5707
+        },
+        {
+          "bitmapFillCount": 1,
+          "id": 5709
+        },
+        {
+          "bitmapFillCount": 1,
+          "id": 5711
+        },
+        {
+          "bitmapFillCount": 1,
+          "id": 5713
+        },
+        {
+          "bitmapFillCount": 1,
+          "id": 5715
+        },
+        {
+          "bitmapFillCount": 1,
+          "id": 5717
+        },
+        {
+          "bitmapFillCount": 1,
+          "id": 5719
+        }
+      ],
+      "name": "hiddenNessy",
+      "stopActionFramesOneBased": [
+        1
+      ],
+      "symbolId": 5720
+    }
+  ],
+  "shapeOrder": [
+    5661,
+    5663,
+    5665,
+    5667,
+    5669,
+    5671,
+    5673,
+    5675,
+    5677,
+    5679,
+    5681,
+    5683,
+    5685,
+    5687,
+    5689,
+    5691,
+    5693,
+    5695,
+    5697,
+    5699,
+    5701,
+    5703,
+    5705,
+    5707,
+    5709,
+    5711,
+    5713,
+    5715,
+    5717,
+    5719,
+    5722,
+    5724,
+    5726,
+    5728,
+    5730,
+    5732,
+    5734,
+    5736,
+    5738,
+    5740,
+    5742,
+    5744,
+    5746,
+    5748,
+    5750,
+    5752,
+    5754,
+    5756,
+    5758,
+    5760,
+    5762,
+    5764
+  ],
+  "sourceSceneSha256": "7213f06fac4e887050ad89e0d3c9a67f47789096d559af8e08333991f7616629",
+  "sourceShapeBytesSha256": "3d335f74922b8d0dac1ba264bf1bf5df764cce816a71bb600bcebe7e3d7e7487",
+  "sourceStopScripts": {
+    "5720": "74f0728389bc564f201b37a2fdfb0c7940d02aeea33a8347e3e2364aff0d78cc",
+    "5765": "82f1e3713fcd941acdbc018d1e28f4e0d30e630b389f88c83e3d744b20bbe46e"
+  }
+}
