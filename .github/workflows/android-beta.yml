@@ -118,7 +118,7 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
           script: |
             bash scripts/run_android_native_tests.sh '${{ steps.inventory.outputs.classes }}' ${{ steps.inventory.outputs.evidence }}
-            if [[ '${{ matrix.group }}' == b ]]; then python3 scripts/run_score_persistence_probe.py; fi
+            if [ '${{ matrix.group }}' = b ]; then python3 scripts/run_score_persistence_probe.py; fi
       - name: Preserve this Android group's results and screenshots
         if: always()
         uses: actions/upload-artifact@v6
