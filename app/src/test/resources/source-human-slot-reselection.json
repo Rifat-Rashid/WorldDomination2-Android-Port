@@ -1,0 +1,1595 @@
+{
+  "checkpoints": [
+    {
+      "canonicalRngNext": 0.3101475693193326,
+      "inStock": {
+        "bioload1": 0,
+        "bioload2": 0,
+        "bioload3": 0,
+        "bioload4": 0,
+        "plane1": 0,
+        "plane2": 0,
+        "rocket1": 0,
+        "rocket2": 0,
+        "rocket3": 0,
+        "rocket4": 0,
+        "ship": 0,
+        "soldier1": 0,
+        "soldier2": 0,
+        "soldier3": 0,
+        "soldier4": 0,
+        "space": 0,
+        "specialLoad": 0,
+        "spy1": 1,
+        "spy2": 0,
+        "spy3": 0,
+        "spy4": 0,
+        "sub": 0,
+        "warhead1": 0,
+        "warhead2": 0,
+        "warhead3": 0,
+        "warhead4": 0
+      },
+      "inUse": {
+        "bioload1": 0,
+        "bioload2": 0,
+        "bioload3": 0,
+        "bioload4": 0,
+        "plane1": 0,
+        "plane2": 0,
+        "rocket1": 0,
+        "rocket2": 0,
+        "rocket3": 0,
+        "rocket4": 0,
+        "ship": 0,
+        "soldier1": 0,
+        "soldier2": 0,
+        "soldier3": 0,
+        "soldier4": 0,
+        "space": 0,
+        "specialLoad": 0,
+        "spy1": 0,
+        "spy2": 0,
+        "spy3": 0,
+        "spy4": 0,
+        "sub": 0,
+        "warhead1": 0,
+        "warhead2": 0,
+        "warhead3": 0,
+        "warhead4": 0
+      },
+      "label": "initial",
+      "money": 80,
+      "queue": [
+        {
+          "action": null,
+          "attackWeapon": null,
+          "targetCity": null
+        },
+        {
+          "action": null,
+          "attackWeapon": null,
+          "targetCity": null
+        }
+      ],
+      "researchMoneySpend": 0,
+      "selectedAction": null,
+      "selectedResearchCount": 0,
+      "turn": 0,
+      "turnMoney": 80
+    },
+    {
+      "canonicalRngNext": 0.3101475693193326,
+      "inStock": {
+        "bioload1": 0,
+        "bioload2": 0,
+        "bioload3": 0,
+        "bioload4": 0,
+        "plane1": 0,
+        "plane2": 0,
+        "rocket1": 0,
+        "rocket2": 0,
+        "rocket3": 0,
+        "rocket4": 0,
+        "ship": 0,
+        "soldier1": 0,
+        "soldier2": 0,
+        "soldier3": 0,
+        "soldier4": 0,
+        "space": 0,
+        "specialLoad": 0,
+        "spy1": 1,
+        "spy2": 0,
+        "spy3": 0,
+        "spy4": 0,
+        "sub": 0,
+        "warhead1": 0,
+        "warhead2": 0,
+        "warhead3": 0,
+        "warhead4": 0
+      },
+      "inUse": {
+        "bioload1": 0,
+        "bioload2": 0,
+        "bioload3": 0,
+        "bioload4": 0,
+        "plane1": 0,
+        "plane2": 0,
+        "rocket1": 0,
+        "rocket2": 0,
+        "rocket3": 0,
+        "rocket4": 0,
+        "ship": 0,
+        "soldier1": 0,
+        "soldier2": 0,
+        "soldier3": 0,
+        "soldier4": 0,
+        "space": 0,
+        "specialLoad": 0,
+        "spy1": 0,
+        "spy2": 0,
+        "spy3": 0,
+        "spy4": 0,
+        "sub": 0,
+        "warhead1": 0,
+        "warhead2": 0,
+        "warhead3": 0,
+        "warhead4": 0
+      },
+      "label": "research_selected_before_accept",
+      "money": 80,
+      "queue": [
+        {
+          "action": null,
+          "attackWeapon": null,
+          "targetCity": null
+        },
+        {
+          "action": null,
+          "attackWeapon": null,
+          "targetCity": null
+        }
+      ],
+      "researchMoneySpend": 15,
+      "selectedAction": "research",
+      "selectedResearchCount": 1,
+      "turn": 0,
+      "turnMoney": 80
+    },
+    {
+      "canonicalRngNext": 0.3101475693193326,
+      "inStock": {
+        "bioload1": 0,
+        "bioload2": 0,
+        "bioload3": 0,
+        "bioload4": 0,
+        "plane1": 0,
+        "plane2": 0,
+        "rocket1": 0,
+        "rocket2": 0,
+        "rocket3": 0,
+        "rocket4": 0,
+        "ship": 0,
+        "soldier1": 0,
+        "soldier2": 0,
+        "soldier3": 0,
+        "soldier4": 0,
+        "space": 0,
+        "specialLoad": 0,
+        "spy1": 1,
+        "spy2": 0,
+        "spy3": 0,
+        "spy4": 0,
+        "sub": 0,
+        "warhead1": 0,
+        "warhead2": 0,
+        "warhead3": 0,
+        "warhead4": 0
+      },
+      "inUse": {
+        "bioload1": 0,
+        "bioload2": 0,
+        "bioload3": 0,
+        "bioload4": 0,
+        "plane1": 0,
+        "plane2": 0,
+        "rocket1": 0,
+        "rocket2": 0,
+        "rocket3": 0,
+        "rocket4": 0,
+        "ship": 0,
+        "soldier1": 0,
+        "soldier2": 0,
+        "soldier3": 0,
+        "soldier4": 0,
+        "space": 0,
+        "specialLoad": 0,
+        "spy1": 0,
+        "spy2": 0,
+        "spy3": 0,
+        "spy4": 0,
+        "sub": 0,
+        "warhead1": 0,
+        "warhead2": 0,
+        "warhead3": 0,
+        "warhead4": 0
+      },
+      "label": "research_accepted_slot1",
+      "money": 80,
+      "queue": [
+        {
+          "action": "research",
+          "attackWeapon": null,
+          "targetCity": null
+        },
+        {
+          "action": null,
+          "attackWeapon": null,
+          "targetCity": null
+        }
+      ],
+      "researchMoneySpend": 0,
+      "selectedAction": null,
+      "selectedResearchCount": 0,
+      "turn": 0,
+      "turnMoney": 65
+    },
+    {
+      "canonicalRngNext": 0.3101475693193326,
+      "inStock": {
+        "bioload1": 0,
+        "bioload2": 0,
+        "bioload3": 0,
+        "bioload4": 0,
+        "plane1": 0,
+        "plane2": 0,
+        "rocket1": 0,
+        "rocket2": 0,
+        "rocket3": 0,
+        "rocket4": 0,
+        "ship": 0,
+        "soldier1": 0,
+        "soldier2": 0,
+        "soldier3": 0,
+        "soldier4": 0,
+        "space": 0,
+        "specialLoad": 0,
+        "spy1": 1,
+        "spy2": 0,
+        "spy3": 0,
+        "spy4": 0,
+        "sub": 0,
+        "warhead1": 0,
+        "warhead2": 0,
+        "warhead3": 0,
+        "warhead4": 0
+      },
+      "inUse": {
+        "bioload1": 0,
+        "bioload2": 0,
+        "bioload3": 0,
+        "bioload4": 0,
+        "plane1": 0,
+        "plane2": 0,
+        "rocket1": 0,
+        "rocket2": 0,
+        "rocket3": 0,
+        "rocket4": 0,
+        "ship": 0,
+        "soldier1": 0,
+        "soldier2": 0,
+        "soldier3": 0,
+        "soldier4": 0,
+        "space": 0,
+        "specialLoad": 0,
+        "spy1": 0,
+        "spy2": 0,
+        "spy3": 0,
+        "spy4": 0,
+        "sub": 0,
+        "warhead1": 0,
+        "warhead2": 0,
+        "warhead3": 0,
+        "warhead4": 0
+      },
+      "label": "production_slider_selected_before_accept",
+      "money": 80,
+      "queue": [
+        {
+          "action": "research",
+          "attackWeapon": null,
+          "targetCity": null
+        },
+        {
+          "action": null,
+          "attackWeapon": null,
+          "targetCity": null
+        }
+      ],
+      "researchMoneySpend": 0,
+      "selectedAction": "production",
+      "selectedResearchCount": 0,
+      "turn": 0,
+      "turnMoney": 65
+    },
+    {
+      "canonicalRngNext": 0.3101475693193326,
+      "inStock": {
+        "bioload1": 0,
+        "bioload2": 0,
+        "bioload3": 0,
+        "bioload4": 0,
+        "plane1": 0,
+        "plane2": 0,
+        "rocket1": 0,
+        "rocket2": 0,
+        "rocket3": 0,
+        "rocket4": 0,
+        "ship": 0,
+        "soldier1": 0,
+        "soldier2": 0,
+        "soldier3": 0,
+        "soldier4": 0,
+        "space": 0,
+        "specialLoad": 0,
+        "spy1": 1,
+        "spy2": 0,
+        "spy3": 0,
+        "spy4": 0,
+        "sub": 0,
+        "warhead1": 0,
+        "warhead2": 0,
+        "warhead3": 0,
+        "warhead4": 0
+      },
+      "inUse": {
+        "bioload1": 0,
+        "bioload2": 0,
+        "bioload3": 0,
+        "bioload4": 0,
+        "plane1": 0,
+        "plane2": 0,
+        "rocket1": 0,
+        "rocket2": 0,
+        "rocket3": 0,
+        "rocket4": 0,
+        "ship": 0,
+        "soldier1": 0,
+        "soldier2": 0,
+        "soldier3": 0,
+        "soldier4": 0,
+        "space": 0,
+        "specialLoad": 0,
+        "spy1": 0,
+        "spy2": 0,
+        "spy3": 0,
+        "spy4": 0,
+        "sub": 0,
+        "warhead1": 0,
+        "warhead2": 0,
+        "warhead3": 0,
+        "warhead4": 0
+      },
+      "label": "production_accepted_slot2",
+      "money": 80,
+      "queue": [
+        {
+          "action": "research",
+          "attackWeapon": null,
+          "targetCity": null
+        },
+        {
+          "action": "production",
+          "attackWeapon": null,
+          "targetCity": null
+        }
+      ],
+      "researchMoneySpend": 0,
+      "selectedAction": null,
+      "selectedResearchCount": 0,
+      "turn": 0,
+      "turnMoney": 0
+    },
+    {
+      "canonicalRngNext": 0.3101475693193326,
+      "inStock": {
+        "bioload1": 0,
+        "bioload2": 0,
+        "bioload3": 0,
+        "bioload4": 0,
+        "plane1": 0,
+        "plane2": 0,
+        "rocket1": 0,
+        "rocket2": 0,
+        "rocket3": 0,
+        "rocket4": 0,
+        "ship": 0,
+        "soldier1": 0,
+        "soldier2": 0,
+        "soldier3": 0,
+        "soldier4": 0,
+        "space": 0,
+        "specialLoad": 0,
+        "spy1": 1,
+        "spy2": 0,
+        "spy3": 0,
+        "spy4": 0,
+        "sub": 0,
+        "warhead1": 0,
+        "warhead2": 0,
+        "warhead3": 0,
+        "warhead4": 0
+      },
+      "inUse": {
+        "bioload1": 0,
+        "bioload2": 0,
+        "bioload3": 0,
+        "bioload4": 0,
+        "plane1": 0,
+        "plane2": 0,
+        "rocket1": 0,
+        "rocket2": 0,
+        "rocket3": 0,
+        "rocket4": 0,
+        "ship": 0,
+        "soldier1": 0,
+        "soldier2": 0,
+        "soldier3": 0,
+        "soldier4": 0,
+        "space": 0,
+        "specialLoad": 0,
+        "spy1": 0,
+        "spy2": 0,
+        "spy3": 0,
+        "spy4": 0,
+        "sub": 0,
+        "warhead1": 0,
+        "warhead2": 0,
+        "warhead3": 0,
+        "warhead4": 0
+      },
+      "label": "research_removed_slot1",
+      "money": 80,
+      "queue": [
+        {
+          "action": null,
+          "attackWeapon": null,
+          "targetCity": null
+        },
+        {
+          "action": "production",
+          "attackWeapon": null,
+          "targetCity": null
+        }
+      ],
+      "researchMoneySpend": 0,
+      "selectedAction": null,
+      "selectedResearchCount": 0,
+      "turn": 0,
+      "turnMoney": 15
+    },
+    {
+      "canonicalRngNext": 0.3101475693193326,
+      "inStock": {
+        "bioload1": 0,
+        "bioload2": 0,
+        "bioload3": 0,
+        "bioload4": 0,
+        "plane1": 0,
+        "plane2": 0,
+        "rocket1": 0,
+        "rocket2": 0,
+        "rocket3": 0,
+        "rocket4": 0,
+        "ship": 0,
+        "soldier1": 0,
+        "soldier2": 0,
+        "soldier3": 0,
+        "soldier4": 0,
+        "space": 0,
+        "specialLoad": 0,
+        "spy1": 1,
+        "spy2": 0,
+        "spy3": 0,
+        "spy4": 0,
+        "sub": 0,
+        "warhead1": 0,
+        "warhead2": 0,
+        "warhead3": 0,
+        "warhead4": 0
+      },
+      "inUse": {
+        "bioload1": 0,
+        "bioload2": 0,
+        "bioload3": 0,
+        "bioload4": 0,
+        "plane1": 0,
+        "plane2": 0,
+        "rocket1": 0,
+        "rocket2": 0,
+        "rocket3": 0,
+        "rocket4": 0,
+        "ship": 0,
+        "soldier1": 0,
+        "soldier2": 0,
+        "soldier3": 0,
+        "soldier4": 0,
+        "space": 0,
+        "specialLoad": 0,
+        "spy1": 0,
+        "spy2": 0,
+        "spy3": 0,
+        "spy4": 0,
+        "sub": 0,
+        "warhead1": 0,
+        "warhead2": 0,
+        "warhead3": 0,
+        "warhead4": 0
+      },
+      "label": "research_reselected_before_accept",
+      "money": 80,
+      "queue": [
+        {
+          "action": null,
+          "attackWeapon": null,
+          "targetCity": null
+        },
+        {
+          "action": "production",
+          "attackWeapon": null,
+          "targetCity": null
+        }
+      ],
+      "researchMoneySpend": 15,
+      "selectedAction": "research",
+      "selectedResearchCount": 1,
+      "turn": 0,
+      "turnMoney": 15
+    },
+    {
+      "canonicalRngNext": 0.3101475693193326,
+      "inStock": {
+        "bioload1": 0,
+        "bioload2": 0,
+        "bioload3": 0,
+        "bioload4": 0,
+        "plane1": 0,
+        "plane2": 0,
+        "rocket1": 0,
+        "rocket2": 0,
+        "rocket3": 0,
+        "rocket4": 0,
+        "ship": 0,
+        "soldier1": 0,
+        "soldier2": 0,
+        "soldier3": 0,
+        "soldier4": 0,
+        "space": 0,
+        "specialLoad": 0,
+        "spy1": 1,
+        "spy2": 0,
+        "spy3": 0,
+        "spy4": 0,
+        "sub": 0,
+        "warhead1": 0,
+        "warhead2": 0,
+        "warhead3": 0,
+        "warhead4": 0
+      },
+      "inUse": {
+        "bioload1": 0,
+        "bioload2": 0,
+        "bioload3": 0,
+        "bioload4": 0,
+        "plane1": 0,
+        "plane2": 0,
+        "rocket1": 0,
+        "rocket2": 0,
+        "rocket3": 0,
+        "rocket4": 0,
+        "ship": 0,
+        "soldier1": 0,
+        "soldier2": 0,
+        "soldier3": 0,
+        "soldier4": 0,
+        "space": 0,
+        "specialLoad": 0,
+        "spy1": 0,
+        "spy2": 0,
+        "spy3": 0,
+        "spy4": 0,
+        "sub": 0,
+        "warhead1": 0,
+        "warhead2": 0,
+        "warhead3": 0,
+        "warhead4": 0
+      },
+      "label": "research_reaccepted_slot1",
+      "money": 80,
+      "queue": [
+        {
+          "action": "research",
+          "attackWeapon": null,
+          "targetCity": null
+        },
+        {
+          "action": "production",
+          "attackWeapon": null,
+          "targetCity": null
+        }
+      ],
+      "researchMoneySpend": 0,
+      "selectedAction": null,
+      "selectedResearchCount": 0,
+      "turn": 0,
+      "turnMoney": 0
+    },
+    {
+      "canonicalRngNext": 0.8767703708227748,
+      "inStock": {
+        "bioload1": 0,
+        "bioload2": 0,
+        "bioload3": 0,
+        "bioload4": 0,
+        "plane1": 0,
+        "plane2": 0,
+        "rocket1": 0,
+        "rocket2": 0,
+        "rocket3": 0,
+        "rocket4": 0,
+        "ship": 0,
+        "soldier1": 5,
+        "soldier2": 1,
+        "soldier3": 2,
+        "soldier4": 0,
+        "space": 0,
+        "specialLoad": 0,
+        "spy1": 1,
+        "spy2": 0,
+        "spy3": 0,
+        "spy4": 0,
+        "sub": 0,
+        "warhead1": 0,
+        "warhead2": 0,
+        "warhead3": 0,
+        "warhead4": 0
+      },
+      "inUse": {
+        "bioload1": 0,
+        "bioload2": 0,
+        "bioload3": 0,
+        "bioload4": 0,
+        "plane1": 0,
+        "plane2": 0,
+        "rocket1": 0,
+        "rocket2": 0,
+        "rocket3": 0,
+        "rocket4": 0,
+        "ship": 0,
+        "soldier1": 0,
+        "soldier2": 0,
+        "soldier3": 0,
+        "soldier4": 0,
+        "space": 0,
+        "specialLoad": 0,
+        "spy1": 0,
+        "spy2": 0,
+        "spy3": 0,
+        "spy4": 0,
+        "sub": 0,
+        "warhead1": 0,
+        "warhead2": 0,
+        "warhead3": 0,
+        "warhead4": 0
+      },
+      "label": "turn1_confirmed",
+      "money": 0,
+      "queue": [
+        {
+          "action": null,
+          "attackWeapon": null,
+          "targetCity": null
+        },
+        {
+          "action": null,
+          "attackWeapon": null,
+          "targetCity": null
+        }
+      ],
+      "researchMoneySpend": 0,
+      "selectedAction": null,
+      "selectedResearchCount": 0,
+      "turn": 1,
+      "turnMoney": 0
+    },
+    {
+      "canonicalRngNext": 0.8767703708227748,
+      "inStock": {
+        "bioload1": 0,
+        "bioload2": 0,
+        "bioload3": 0,
+        "bioload4": 0,
+        "plane1": 0,
+        "plane2": 0,
+        "rocket1": 0,
+        "rocket2": 0,
+        "rocket3": 0,
+        "rocket4": 0,
+        "ship": 0,
+        "soldier1": 5,
+        "soldier2": 1,
+        "soldier3": 2,
+        "soldier4": 0,
+        "space": 0,
+        "specialLoad": 0,
+        "spy1": 1,
+        "spy2": 0,
+        "spy3": 0,
+        "spy4": 0,
+        "sub": 0,
+        "warhead1": 0,
+        "warhead2": 0,
+        "warhead3": 0,
+        "warhead4": 0
+      },
+      "inUse": {
+        "bioload1": 0,
+        "bioload2": 0,
+        "bioload3": 0,
+        "bioload4": 0,
+        "plane1": 0,
+        "plane2": 0,
+        "rocket1": 0,
+        "rocket2": 0,
+        "rocket3": 0,
+        "rocket4": 0,
+        "ship": 0,
+        "soldier1": 0,
+        "soldier2": 0,
+        "soldier3": 1,
+        "soldier4": 0,
+        "space": 0,
+        "specialLoad": 0,
+        "spy1": 0,
+        "spy2": 0,
+        "spy3": 0,
+        "spy4": 0,
+        "sub": 0,
+        "warhead1": 0,
+        "warhead2": 0,
+        "warhead3": 0,
+        "warhead4": 0
+      },
+      "label": "attack_selected_before_accept",
+      "money": 0,
+      "queue": [
+        {
+          "action": null,
+          "attackWeapon": null,
+          "targetCity": null
+        },
+        {
+          "action": null,
+          "attackWeapon": null,
+          "targetCity": null
+        }
+      ],
+      "researchMoneySpend": 0,
+      "selectedAction": "attack",
+      "selectedResearchCount": 0,
+      "turn": 1,
+      "turnMoney": 0
+    },
+    {
+      "canonicalRngNext": 0.8767703708227748,
+      "inStock": {
+        "bioload1": 0,
+        "bioload2": 0,
+        "bioload3": 0,
+        "bioload4": 0,
+        "plane1": 0,
+        "plane2": 0,
+        "rocket1": 0,
+        "rocket2": 0,
+        "rocket3": 0,
+        "rocket4": 0,
+        "ship": 0,
+        "soldier1": 5,
+        "soldier2": 1,
+        "soldier3": 2,
+        "soldier4": 0,
+        "space": 0,
+        "specialLoad": 0,
+        "spy1": 1,
+        "spy2": 0,
+        "spy3": 0,
+        "spy4": 0,
+        "sub": 0,
+        "warhead1": 0,
+        "warhead2": 0,
+        "warhead3": 0,
+        "warhead4": 0
+      },
+      "inUse": {
+        "bioload1": 0,
+        "bioload2": 0,
+        "bioload3": 0,
+        "bioload4": 0,
+        "plane1": 0,
+        "plane2": 0,
+        "rocket1": 0,
+        "rocket2": 0,
+        "rocket3": 0,
+        "rocket4": 0,
+        "ship": 0,
+        "soldier1": 0,
+        "soldier2": 0,
+        "soldier3": 1,
+        "soldier4": 0,
+        "space": 0,
+        "specialLoad": 0,
+        "spy1": 0,
+        "spy2": 0,
+        "spy3": 0,
+        "spy4": 0,
+        "sub": 0,
+        "warhead1": 0,
+        "warhead2": 0,
+        "warhead3": 0,
+        "warhead4": 0
+      },
+      "label": "attack_accepted_slot1",
+      "money": 0,
+      "queue": [
+        {
+          "action": "attack",
+          "attackWeapon": "soldier3",
+          "targetCity": 9
+        },
+        {
+          "action": null,
+          "attackWeapon": null,
+          "targetCity": null
+        }
+      ],
+      "researchMoneySpend": 0,
+      "selectedAction": null,
+      "selectedResearchCount": 0,
+      "turn": 1,
+      "turnMoney": 0
+    },
+    {
+      "canonicalRngNext": 0.8767703708227748,
+      "inStock": {
+        "bioload1": 0,
+        "bioload2": 0,
+        "bioload3": 0,
+        "bioload4": 0,
+        "plane1": 0,
+        "plane2": 0,
+        "rocket1": 0,
+        "rocket2": 0,
+        "rocket3": 0,
+        "rocket4": 0,
+        "ship": 0,
+        "soldier1": 5,
+        "soldier2": 1,
+        "soldier3": 2,
+        "soldier4": 0,
+        "space": 0,
+        "specialLoad": 0,
+        "spy1": 1,
+        "spy2": 0,
+        "spy3": 0,
+        "spy4": 0,
+        "sub": 0,
+        "warhead1": 0,
+        "warhead2": 0,
+        "warhead3": 0,
+        "warhead4": 0
+      },
+      "inUse": {
+        "bioload1": 0,
+        "bioload2": 0,
+        "bioload3": 0,
+        "bioload4": 0,
+        "plane1": 0,
+        "plane2": 0,
+        "rocket1": 0,
+        "rocket2": 0,
+        "rocket3": 0,
+        "rocket4": 0,
+        "ship": 0,
+        "soldier1": 0,
+        "soldier2": 0,
+        "soldier3": 1,
+        "soldier4": 0,
+        "space": 0,
+        "specialLoad": 0,
+        "spy1": 0,
+        "spy2": 0,
+        "spy3": 0,
+        "spy4": 0,
+        "sub": 0,
+        "warhead1": 0,
+        "warhead2": 0,
+        "warhead3": 0,
+        "warhead4": 0
+      },
+      "label": "resources_accepted_slot2",
+      "money": 0,
+      "queue": [
+        {
+          "action": "attack",
+          "attackWeapon": "soldier3",
+          "targetCity": 9
+        },
+        {
+          "action": "resources",
+          "attackWeapon": null,
+          "targetCity": null
+        }
+      ],
+      "researchMoneySpend": 0,
+      "selectedAction": null,
+      "selectedResearchCount": 0,
+      "turn": 1,
+      "turnMoney": 0
+    },
+    {
+      "canonicalRngNext": 0.8450775756715152,
+      "inStock": {
+        "bioload1": 0,
+        "bioload2": 0,
+        "bioload3": 0,
+        "bioload4": 0,
+        "plane1": 0,
+        "plane2": 0,
+        "rocket1": 0,
+        "rocket2": 0,
+        "rocket3": 0,
+        "rocket4": 0,
+        "ship": 0,
+        "soldier1": 5,
+        "soldier2": 1,
+        "soldier3": 1,
+        "soldier4": 0,
+        "space": 0,
+        "specialLoad": 0,
+        "spy1": 1,
+        "spy2": 0,
+        "spy3": 0,
+        "spy4": 0,
+        "sub": 0,
+        "warhead1": 0,
+        "warhead2": 0,
+        "warhead3": 0,
+        "warhead4": 0
+      },
+      "inUse": {
+        "bioload1": 0,
+        "bioload2": 0,
+        "bioload3": 0,
+        "bioload4": 0,
+        "plane1": 0,
+        "plane2": 0,
+        "rocket1": 0,
+        "rocket2": 0,
+        "rocket3": 0,
+        "rocket4": 0,
+        "ship": 0,
+        "soldier1": 0,
+        "soldier2": 0,
+        "soldier3": 0,
+        "soldier4": 0,
+        "space": 0,
+        "specialLoad": 0,
+        "spy1": 0,
+        "spy2": 0,
+        "spy3": 0,
+        "spy4": 0,
+        "sub": 0,
+        "warhead1": 0,
+        "warhead2": 0,
+        "warhead3": 0,
+        "warhead4": 0
+      },
+      "label": "turn2_confirmed",
+      "money": 56,
+      "queue": [
+        {
+          "action": null,
+          "attackWeapon": null,
+          "targetCity": null
+        },
+        {
+          "action": null,
+          "attackWeapon": null,
+          "targetCity": null
+        }
+      ],
+      "researchMoneySpend": 0,
+      "selectedAction": null,
+      "selectedResearchCount": 0,
+      "turn": 2,
+      "turnMoney": 56
+    }
+  ],
+  "initial": {
+    "canonicalRngNext": 0.3101475693193326,
+    "humanAction": null,
+    "players": [
+      {
+        "alive": true,
+        "antiStocks": {
+          "antiAir": 2,
+          "antiRocket": 2
+        },
+        "ceasefires": [
+          {
+            "_status": false,
+            "_turnsLeft": 0
+          },
+          {
+            "_status": false,
+            "_turnsLeft": 0
+          },
+          {
+            "_status": false,
+            "_turnsLeft": 0
+          },
+          {
+            "_status": false,
+            "_turnsLeft": 0
+          },
+          {
+            "_status": false,
+            "_turnsLeft": 0
+          }
+        ],
+        "cityPopulations": [
+          61,
+          118,
+          124,
+          109,
+          88
+        ],
+        "id": 0,
+        "inventedTech": [
+          "antiAir",
+          "antiRocket",
+          "bioload1",
+          "bioload2",
+          "plane1",
+          "plane2",
+          "rocket1",
+          "rocket2",
+          "soldier1",
+          "soldier2",
+          "spy1",
+          "spy2",
+          "warhead1",
+          "warhead2"
+        ],
+        "money": 80,
+        "population": 500,
+        "regard": [
+          80,
+          80,
+          80,
+          80,
+          80
+        ],
+        "religion": 80,
+        "score": 0,
+        "stocks": {
+          "bioload1": 0,
+          "bioload2": 0,
+          "bioload3": 0,
+          "bioload4": 0,
+          "plane1": 0,
+          "plane2": 0,
+          "rocket1": 0,
+          "rocket2": 0,
+          "rocket3": 0,
+          "rocket4": 0,
+          "ship": 0,
+          "soldier1": 0,
+          "soldier2": 0,
+          "soldier3": 0,
+          "soldier4": 0,
+          "space": 0,
+          "specialLoad": 0,
+          "spy1": 1,
+          "spy2": 0,
+          "spy3": 0,
+          "spy4": 0,
+          "sub": 0,
+          "warhead1": 0,
+          "warhead2": 0,
+          "warhead3": 0,
+          "warhead4": 0
+        },
+        "turnMoney": 80
+      },
+      {
+        "alive": true,
+        "antiStocks": {
+          "antiAir": 2,
+          "antiRocket": 2
+        },
+        "ceasefires": [
+          {
+            "_status": false,
+            "_turnsLeft": 0
+          },
+          {
+            "_status": false,
+            "_turnsLeft": 0
+          },
+          {
+            "_status": false,
+            "_turnsLeft": 0
+          },
+          {
+            "_status": false,
+            "_turnsLeft": 0
+          },
+          {
+            "_status": false,
+            "_turnsLeft": 0
+          }
+        ],
+        "cityPopulations": [
+          106,
+          77,
+          60,
+          95,
+          112
+        ],
+        "id": 1,
+        "inventedTech": [
+          "antiAir",
+          "antiRocket",
+          "bioload1",
+          "plane1",
+          "rocket1",
+          "soldier1",
+          "spy1",
+          "warhead1"
+        ],
+        "money": 50,
+        "population": 450,
+        "regard": [
+          50,
+          80,
+          80,
+          80,
+          80
+        ],
+        "religion": 30,
+        "score": 0,
+        "stocks": {
+          "bioload1": 0,
+          "bioload2": 0,
+          "bioload3": 0,
+          "bioload4": 0,
+          "plane1": 0,
+          "plane2": 0,
+          "rocket1": 0,
+          "rocket2": 0,
+          "rocket3": 0,
+          "rocket4": 0,
+          "ship": 0,
+          "soldier1": 0,
+          "soldier2": 0,
+          "soldier3": 0,
+          "soldier4": 0,
+          "space": 0,
+          "specialLoad": 0,
+          "spy1": 1,
+          "spy2": 0,
+          "spy3": 0,
+          "spy4": 0,
+          "sub": 0,
+          "warhead1": 0,
+          "warhead2": 0,
+          "warhead3": 0,
+          "warhead4": 0
+        },
+        "turnMoney": 50
+      }
+    ],
+    "turn": 0
+  },
+  "scope": "Legal SetupMenu/ActionEntry callbacks; slider uses source pointer bounds; city uses select_city callback; no playback or touch-hit oracle.",
+  "setup": {
+    "controls": [
+      "splashScreenMC",
+      "btn1",
+      "BTN_allLeaders_screen1"
+    ],
+    "difficulty": 0,
+    "seed": 0,
+    "selectedOpponents": [
+      0
+    ]
+  },
+  "sourceCaptureSha256": "0c82bb762f0369e13649b9bc8d57c473a63f3716f002626e8b5449813d752afc",
+  "turn1": {
+    "canonicalRngNext": 0.8767703708227748,
+    "humanAction": null,
+    "players": [
+      {
+        "alive": true,
+        "antiStocks": {
+          "antiAir": 2,
+          "antiRocket": 2
+        },
+        "ceasefires": [
+          {
+            "_status": false,
+            "_turnsLeft": 0
+          },
+          {
+            "_status": false,
+            "_turnsLeft": 0
+          },
+          {
+            "_status": false,
+            "_turnsLeft": 0
+          },
+          {
+            "_status": false,
+            "_turnsLeft": 0
+          },
+          {
+            "_status": false,
+            "_turnsLeft": 0
+          }
+        ],
+        "cityPopulations": [
+          61,
+          118,
+          124,
+          109,
+          88
+        ],
+        "id": 0,
+        "inventedTech": [
+          "antiAir",
+          "antiRocket",
+          "bioload1",
+          "bioload2",
+          "plane1",
+          "plane2",
+          "rocket1",
+          "rocket2",
+          "soldier1",
+          "soldier2",
+          "soldier3",
+          "spy1",
+          "spy2",
+          "warhead1",
+          "warhead2"
+        ],
+        "money": 0,
+        "population": 500,
+        "regard": [
+          83,
+          83,
+          83,
+          83,
+          83
+        ],
+        "religion": 70,
+        "score": 0,
+        "stocks": {
+          "bioload1": 0,
+          "bioload2": 0,
+          "bioload3": 0,
+          "bioload4": 0,
+          "plane1": 0,
+          "plane2": 0,
+          "rocket1": 0,
+          "rocket2": 0,
+          "rocket3": 0,
+          "rocket4": 0,
+          "ship": 0,
+          "soldier1": 5,
+          "soldier2": 1,
+          "soldier3": 2,
+          "soldier4": 0,
+          "space": 0,
+          "specialLoad": 0,
+          "spy1": 1,
+          "spy2": 0,
+          "spy3": 0,
+          "spy4": 0,
+          "sub": 0,
+          "warhead1": 0,
+          "warhead2": 0,
+          "warhead3": 0,
+          "warhead4": 0
+        },
+        "turnMoney": 0
+      },
+      {
+        "alive": true,
+        "antiStocks": {
+          "antiAir": 2,
+          "antiRocket": 2
+        },
+        "ceasefires": [
+          {
+            "_status": false,
+            "_turnsLeft": 0
+          },
+          {
+            "_status": false,
+            "_turnsLeft": 0
+          },
+          {
+            "_status": false,
+            "_turnsLeft": 0
+          },
+          {
+            "_status": false,
+            "_turnsLeft": 0
+          },
+          {
+            "_status": false,
+            "_turnsLeft": 0
+          }
+        ],
+        "cityPopulations": [
+          106,
+          77,
+          60,
+          95,
+          112
+        ],
+        "id": 1,
+        "inventedTech": [
+          "antiAir",
+          "antiRocket",
+          "bioload1",
+          "plane1",
+          "rocket1",
+          "soldier1",
+          "spy1",
+          "warhead1"
+        ],
+        "money": 85,
+        "population": 450,
+        "regard": [
+          53,
+          83,
+          83,
+          83,
+          83
+        ],
+        "religion": 25,
+        "score": 0,
+        "stocks": {
+          "bioload1": 0,
+          "bioload2": 0,
+          "bioload3": 0,
+          "bioload4": 0,
+          "plane1": 0,
+          "plane2": 0,
+          "rocket1": 0,
+          "rocket2": 0,
+          "rocket3": 0,
+          "rocket4": 0,
+          "ship": 0,
+          "soldier1": 3,
+          "soldier2": 0,
+          "soldier3": 0,
+          "soldier4": 0,
+          "space": 0,
+          "specialLoad": 0,
+          "spy1": 1,
+          "spy2": 0,
+          "spy3": 0,
+          "spy4": 0,
+          "sub": 0,
+          "warhead1": 0,
+          "warhead2": 0,
+          "warhead3": 0,
+          "warhead4": 0
+        },
+        "turnMoney": 85
+      }
+    ],
+    "turn": 1
+  },
+  "turn2": {
+    "canonicalRngNext": 0.8450775756715152,
+    "humanAction": null,
+    "players": [
+      {
+        "alive": true,
+        "antiStocks": {
+          "antiAir": 2,
+          "antiRocket": 2
+        },
+        "ceasefires": [
+          {
+            "_status": false,
+            "_turnsLeft": 0
+          },
+          {
+            "_status": false,
+            "_turnsLeft": 0
+          },
+          {
+            "_status": false,
+            "_turnsLeft": 0
+          },
+          {
+            "_status": false,
+            "_turnsLeft": 0
+          },
+          {
+            "_status": false,
+            "_turnsLeft": 0
+          }
+        ],
+        "cityPopulations": [
+          61,
+          118,
+          124,
+          109,
+          88
+        ],
+        "id": 0,
+        "inventedTech": [
+          "antiAir",
+          "antiRocket",
+          "bioload1",
+          "bioload2",
+          "plane1",
+          "plane2",
+          "rocket1",
+          "rocket2",
+          "soldier1",
+          "soldier2",
+          "soldier3",
+          "spy1",
+          "spy2",
+          "warhead1",
+          "warhead2"
+        ],
+        "money": 56,
+        "population": 500,
+        "regard": [
+          86,
+          65,
+          86,
+          86,
+          86
+        ],
+        "religion": 60,
+        "score": 0,
+        "stocks": {
+          "bioload1": 0,
+          "bioload2": 0,
+          "bioload3": 0,
+          "bioload4": 0,
+          "plane1": 0,
+          "plane2": 0,
+          "rocket1": 0,
+          "rocket2": 0,
+          "rocket3": 0,
+          "rocket4": 0,
+          "ship": 0,
+          "soldier1": 5,
+          "soldier2": 1,
+          "soldier3": 1,
+          "soldier4": 0,
+          "space": 0,
+          "specialLoad": 0,
+          "spy1": 1,
+          "spy2": 0,
+          "spy3": 0,
+          "spy4": 0,
+          "sub": 0,
+          "warhead1": 0,
+          "warhead2": 0,
+          "warhead3": 0,
+          "warhead4": 0
+        },
+        "turnMoney": 56
+      },
+      {
+        "alive": true,
+        "antiStocks": {
+          "antiAir": 2,
+          "antiRocket": 2
+        },
+        "ceasefires": [
+          {
+            "_status": false,
+            "_turnsLeft": 0
+          },
+          {
+            "_status": false,
+            "_turnsLeft": 0
+          },
+          {
+            "_status": false,
+            "_turnsLeft": 0
+          },
+          {
+            "_status": false,
+            "_turnsLeft": 0
+          },
+          {
+            "_status": false,
+            "_turnsLeft": 0
+          }
+        ],
+        "cityPopulations": [
+          106,
+          77,
+          60,
+          95,
+          91
+        ],
+        "id": 1,
+        "inventedTech": [
+          "antiAir",
+          "antiRocket",
+          "bioload1",
+          "plane1",
+          "rocket1",
+          "soldier1",
+          "spy1",
+          "warhead1"
+        ],
+        "money": 135,
+        "population": 429,
+        "regard": [
+          35,
+          86,
+          86,
+          86,
+          86
+        ],
+        "religion": 60,
+        "score": 0,
+        "stocks": {
+          "bioload1": 0,
+          "bioload2": 0,
+          "bioload3": 0,
+          "bioload4": 0,
+          "plane1": 0,
+          "plane2": 0,
+          "rocket1": 0,
+          "rocket2": 0,
+          "rocket3": 0,
+          "rocket4": 0,
+          "ship": 0,
+          "soldier1": 3,
+          "soldier2": 0,
+          "soldier3": 0,
+          "soldier4": 0,
+          "space": 0,
+          "specialLoad": 0,
+          "spy1": 1,
+          "spy2": 0,
+          "spy3": 0,
+          "spy4": 0,
+          "sub": 0,
+          "warhead1": 0,
+          "warhead2": 0,
+          "warhead3": 0,
+          "warhead4": 0
+        },
+        "turnMoney": 135
+      }
+    ],
+    "turn": 2
+  }
+}

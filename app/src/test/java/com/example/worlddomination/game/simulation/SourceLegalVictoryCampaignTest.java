@@ -21,16 +21,7 @@ public final class SourceLegalVictoryCampaignTest {
     private static final String SHA256 = "f4f832d6e2950078dd3f2ca111513c3cbbc9c68f9fe60e84bd7f79b18541c6f3";
 
     @Test public void legalCombatCampaignReachesSourceVictory() throws Exception {
-        byte[] bytes;
-        try (InputStream stream = getClass().getResourceAsStream(FIXTURE)) {
-            assertNotNull("source capture resource", stream);
-            bytes = stream.readAllBytes();
-        }
-        byte[] digest = MessageDigest.getInstance("SHA-256").digest(bytes);
-        StringBuilder hash = new StringBuilder();
-        for (byte b : digest) hash.append(String.format(java.util.Locale.US, "%02x", b & 0xff));
-        assertEquals("source logical capture bytes", SHA256, hash.toString());
-        JsonValue capture = new JsonReader().parse(new String(bytes, StandardCharsets.UTF_8));
+        JsonValue capture = loadCapture(FIXTURE, SHA256);
         GameSetup setup = new GameSetup(0L);
         setup.setDifficulty(0);
         assertTrue(setup.toggleOpponent(0));
@@ -74,6 +65,103 @@ public final class SourceLegalVictoryCampaignTest {
         // The captured source endgame credits one flag, not unused native slots.
         assertEquals(1, game.getFinalScoreBreakdown().getFlagBonusCount());
         assertEquals(250_000L, game.getFinalScore());
+    }
+
+    private JsonValue loadCapture(String resource, String sha256) throws Exception {
+        byte[] bytes;
+        try (InputStream stream = getClass().getResourceAsStream(resource)) {
+            assertNotNull("source capture resource", stream);
+            bytes = stream.readAllBytes();
+        }
+        byte[] digest = MessageDigest.getInstance("SHA-256").digest(bytes);
+        StringBuilder hash = new StringBuilder();
+        for (byte b : digest) hash.append(String.format(java.util.Locale.US, "%02x", b & 0xff));
+        assertEquals("source logical capture bytes", sha256, hash.toString());
+        return new JsonReader().parse(new String(bytes, StandardCharsets.UTF_8));
+    }
+
+    @Test public void reselectionPreservesProductionReservationAndSubsequentCombat() throws Exception {
+        JsonValue capture = loadCapture("/source-human-slot-reselection.json",
+                "c9a11d8331f47dab41eef687e980c3295436ca5d2620d70cca9540c2a1dda7eb");
+        GameSetup setup = new GameSetup(0L);
+        setup.setDifficulty(0);
+        assertTrue(setup.toggleOpponent(0));
+        GameState game = new GameState(setup);
+        assertState(game, capture.get("initial"));
+        assertEquals(13, capture.get("checkpoints").size);
+        for (JsonValue point : capture.get("checkpoints")) {
+            String label = point.getString("label");
+            switch (label) {
+                case "initial": break;
+                case "research_selected_before_accept":
+                case "research_reselected_before_accept":
+                    game.selectAction(GameState.Action.RESEARCH);
+                    assertTrue(label, game.selectResearchTechnology("soldier3"));
+                    break;
+                case "production_slider_selected_before_accept":
+                    game.selectAction(GameState.Action.PRODUCTION);
+                    assertTrue(label, game.configureProductionSlider("soldier", 100));
+                    assertEquals(65d, game.getProductionSliderBudgetMillions("soldier"), 0d);
+                    break;
+                case "research_removed_slot1":
+                    game.removeQueuedAction(0);
+                    game.cancelSelection(); // WorldDominationGame.activateActionSlot's full UI callback.
+                    break;
+                case "attack_selected_before_accept":
+                    game.selectAction(GameState.Action.ATTACK);
+                    assertTrue(label, game.configureAttack(1, 4, "soldier3"));
+                    break;
+                case "resources_accepted_slot2":
+                    game.selectAction(GameState.Action.RESOURCES);
+                    assertTrue(label, game.acceptSelectedAction());
+                    break;
+                case "research_accepted_slot1":
+                case "production_accepted_slot2":
+                case "research_reaccepted_slot1":
+                case "attack_accepted_slot1":
+                    assertTrue(label, game.acceptSelectedAction());
+                    break;
+                case "turn1_confirmed":
+                case "turn2_confirmed":
+                    game.confirmTurn();
+                    assertState(game, capture.get("turn" + game.getTurn()));
+                    break;
+                default: fail("unexpected checkpoint " + label);
+            }
+            assertCheckpoint(game, point);
+        }
+    }
+
+    private static void assertCheckpoint(GameState game, JsonValue point) {
+        String where = point.getString("label") + " ";
+        assertEquals(where + "turn", point.getInt("turn"), game.getTurn());
+        assertEquals(where + "money", point.getInt("money"), game.getHuman().moneyMillions);
+        assertEquals(where + "spendable budget", point.getInt("turnMoney"), game.getTurnMoneyMillions());
+        assertEquals(where + "random stream", point.getDouble("canonicalRngNext"),
+                game.createPresentationRandomCopy().nextDouble(), 0d);
+        String selected = point.getString("selectedAction", null);
+        assertEquals(where + "selection", selected == null ? null : GameState.Action.valueOf(selected.toUpperCase(java.util.Locale.ROOT)), game.getSelectedAction());
+        assertEquals(where + "research count", point.getInt("selectedResearchCount"), game.getSelectedResearchTechnologies().size());
+        assertEquals(where + "research cost", point.getInt("researchMoneySpend"), game.getSelectedResearchCostMillions());
+        int count = 0;
+        for (int slot = 0; slot < 2; slot++) {
+            JsonValue order = point.get("queue").get(slot);
+            String action = order.getString("action", null);
+            assertEquals(where + "tube " + slot, action == null ? null : GameState.Action.valueOf(action.toUpperCase(java.util.Locale.ROOT)), game.getQueuedAction(slot));
+            if (action != null) count++;
+            if ("attack".equals(action)) {
+                assertEquals(where + "weapon", order.getString("attackWeapon"), game.getQueuedWeaponName(slot));
+                assertEquals(where + "target player", 1, game.getQueuedTargetPlayer(slot));
+                assertEquals(where + "target city", order.getInt("targetCity") - 5, game.getQueuedTargetCity(slot));
+            }
+        }
+        assertEquals(where + "order count", count, game.getQueuedActionCount());
+        for (JsonValue stock : point.get("inStock")) {
+            assertEquals(where + stock.name + " stock", stock.asInt(), game.getWeaponStock(stock.name));
+            // Source inUse includes the unaccepted selection; this native getter counts queued orders only.
+            if (selected == null) assertEquals(where + stock.name + " available",
+                    stock.asInt() - point.get("inUse").getInt(stock.name), game.getAvailableWeaponStock(0, stock.name));
+        }
     }
 
     private static void assertState(GameState game, JsonValue state) {
