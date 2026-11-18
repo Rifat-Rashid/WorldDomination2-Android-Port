@@ -414,6 +414,9 @@ jobs:
           - id: human-diplomacy-response-timing
             check: Human diplomacy answers settle after source AI planning
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.HumanDiplomacyResponseTimingTest"'
+          - id: negative-budget-free-actions
+            check: Free actions preserve negative source balances
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.NegativeBudgetActionAcceptanceTest"'
           - id: diplomacy-proposal-order-tests
             check: Diplomacy proposal arrival order
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.incomingAiDemandsSpendTheRecipientBudgetInReverseArrivalOrder" --tests "com.example.worlddomination.game.simulation.GameStateTest.threeIncomingAiDemandsReserveFundsInReverseArrivalOrder" --tests "com.example.worlddomination.game.simulation.GameStateTest.humanDiplomacyQueuePresentsProposalsInArrivalOrder"'
