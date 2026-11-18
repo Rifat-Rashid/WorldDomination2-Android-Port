@@ -93,6 +93,9 @@ class NativeGroupTests(unittest.TestCase):
                             (groups.STOCK_CONTROLS, groups.PREPARED_STOCK_EVIDENCE),
                             (groups.LEGAL_TERMINAL, groups.LEGAL_TERMINAL_EVIDENCE),
                             (groups.HELP, groups.HELP_EVIDENCE),
+                            (groups.HIDDEN_HELP, groups.HIDDEN_HELP_EVIDENCE),
+                            (groups.HIDDEN_TYPOGRAPHY, groups.HIDDEN_TYPOGRAPHY_EVIDENCE),
+                            (groups.HIDDEN_CONTEXT, groups.HIDDEN_CONTEXT_EVIDENCE),
                             (groups.SETUP_PANELS, groups.SETUP_PANELS_EVIDENCE),
                             (groups.SETUP_LAYOUT, groups.SETUP_LAYOUT_EVIDENCE),
                             (groups.SETUP_COLORS, groups.SETUP_COLORS_EVIDENCE),
@@ -119,8 +122,8 @@ class NativeGroupTests(unittest.TestCase):
                                 (folder / name).write_bytes(PNG)
 
     def test_manifest_is_exact_closed_inventory_and_both_groups_make_beta(self):
-        self.assertEqual(113, len(self.manifest["requiredClasses"]))
-        self.assertEqual(183, len(self.manifest["expectedCases"]))
+        self.assertEqual(117, len(self.manifest["requiredClasses"]))
+        self.assertEqual(189, len(self.manifest["expectedCases"]))
         self.assertEqual({"a", "b"}, {g["id"] for g in self.manifest["groups"]})
         self.assertEqual({"beta-ui-evidence", "propaganda-evidence"},
                          {e for g in self.manifest["groups"] for e in g["evidence"]})
@@ -336,9 +339,9 @@ class NativeGroupTests(unittest.TestCase):
     def test_downloaded_groups_require_exact_junit_sets_and_valid_png_headers(self):
         self.fixture()
         result = groups.verify_artifacts(self.manifest, self.root)
-        self.assertEqual(113, sum(row["classes"] for row in result.values()))
-        self.assertEqual(183, sum(row["executed"] for row in result.values()))
-        self.assertEqual(200, sum(row["requiredPngs"] for row in result.values()))
+        self.assertEqual(117, sum(row["classes"] for row in result.values()))
+        self.assertEqual(189, sum(row["executed"] for row in result.values()))
+        self.assertEqual(223, sum(row["requiredPngs"] for row in result.values()))
 
     def test_unsaved_score_requires_actual_endgame_capture(self):
         self.fixture()
@@ -485,6 +488,60 @@ class NativeGroupTests(unittest.TestCase):
             image.unlink()
             with self.subTest(image=name), self.assertRaisesRegex(
                     ValueError, "Missing required navigation panel screenshots"):
+                groups.verify_artifacts(self.manifest, self.root)
+            image.write_bytes(PNG)
+
+    def test_missing_hidden_help_evidence_is_rejected(self):
+        self.fixture()
+        group = next(g for g in self.manifest["groups"] if groups.HIDDEN_HELP in g["classes"])
+        folder = (self.root / ("android-native-" + group["id"] + "-results")
+                  / "reports/androidTests/beta-ui-evidence")
+        (folder / "hidden-help-command.png").unlink()
+        with self.assertRaisesRegex(ValueError, "Missing required hidden Help screenshots"):
+            groups.verify_artifacts(self.manifest, self.root)
+
+    def test_hidden_typography_case_and_every_oracle_control_image_are_required(self):
+        name = groups.HIDDEN_TYPOGRAPHY
+        self.assertEqual(1, self.manifest["requiredClasses"].count(name))
+        self.assertEqual(1, groups.group_by_id(self.manifest, "a")["classes"].count(name))
+        self.assertEqual([[name, "sourceDynamicFieldsMatchAuthoredFontsAndRejectResourceArial"]],
+                         [pair for pair in self.manifest["expectedCases"] if pair[0] == name])
+        self.assertEqual(12, len(groups.HIDDEN_TYPOGRAPHY_EVIDENCE))
+        self.fixture()
+        folder = (self.root / "android-native-a-results/reports/androidTests/beta-ui-evidence")
+        for name in sorted(groups.HIDDEN_TYPOGRAPHY_EVIDENCE):
+            image = folder / name
+            image.unlink()
+            with self.subTest(image=name), self.assertRaisesRegex(
+                    ValueError, "Missing required hidden Help typography screenshots"):
+                groups.verify_artifacts(self.manifest, self.root)
+            image.write_bytes(PNG)
+
+    def test_cheated_outcome_case_is_required_without_inventing_screenshots(self):
+        name = groups.HIDDEN_OUTCOME
+        self.assertEqual(1, self.manifest["requiredClasses"].count(name))
+        self.assertEqual(1, groups.group_by_id(self.manifest, "a")["classes"].count(name))
+        self.assertEqual([[name, "cheatedVictoryShowsAuthoredScoreWithoutSavingPersonalBest"]],
+                         [pair for pair in self.manifest["expectedCases"] if pair[0] == name])
+        self.fixture()
+        result = groups.verify_artifacts(self.manifest, self.root)
+        self.assertEqual(223, sum(row["requiredPngs"] for row in result.values()))
+
+    def test_hidden_context_case_and_both_first_frame_images_are_required(self):
+        name = groups.HIDDEN_CONTEXT
+        self.assertEqual(1, self.manifest["requiredClasses"].count(name))
+        self.assertEqual(1, groups.group_by_id(self.manifest, "a")["classes"].count(name))
+        self.assertEqual([[name, "authoredCommandGlyphsRestoreOnFirstFrameAfterForcedEglLoss"]],
+                         [pair for pair in self.manifest["expectedCases"] if pair[0] == name])
+        self.assertEqual({"hidden-help-context-before.png", "hidden-help-context-first-resumed.png"},
+                         groups.HIDDEN_CONTEXT_EVIDENCE)
+        self.fixture()
+        folder = self.root / "android-native-a-results/reports/androidTests/beta-ui-evidence"
+        for filename in sorted(groups.HIDDEN_CONTEXT_EVIDENCE):
+            image = folder / filename
+            image.unlink()
+            with self.subTest(image=filename), self.assertRaisesRegex(
+                    ValueError, "Missing required hidden Help context recovery screenshots"):
                 groups.verify_artifacts(self.manifest, self.root)
             image.write_bytes(PNG)
 

@@ -28,6 +28,13 @@ public final class SourceBattleActionFrames {
     public void begin(List<FlashActionBuildingAnimation> all,
                       List<GameState.ActionBuildingEvent> shown,
                       ReferenceRandom presentationRandom) {
+        begin(all, shown, presentationRandom, false);
+    }
+
+    /** Disco is checked for each source showSingleBuilding callback, including overwritten slots. */
+    public void begin(List<FlashActionBuildingAnimation> all,
+                      List<GameState.ActionBuildingEvent> shown,
+                      ReferenceRandom presentationRandom, boolean disco) {
         Objects.requireNonNull(all, "all");
         Objects.requireNonNull(shown, "shown");
         random = Objects.requireNonNull(presentationRandom, "presentationRandom");
@@ -69,6 +76,16 @@ public final class SourceBattleActionFrames {
                 // DefineSprite frame 1 calls gotoAndPlay(randRange(2,110)).
                 flame.frameOneBased = 2 + random.nextInt(109);
             }
+            if (disco && characterId != 0) {
+                // View.showActionBuildingFromObj seeks the chosen religion,
+                // disco, the chosen religion again, then disco again. The
+                // second chosen child is newly attached and runs frame 1;
+                // both disco seeks detach it without a random draw.
+                random.nextInt(109);
+                if (flames[index] != null && flames[index].animation != null)
+                    flames[index].animation.clearFlameFrame();
+                flames[index] = null;
+            }
         }
         for (int index = 0; index < SLOT_COUNT; index++) {
             FlashActionBuildingAnimation animation = current[index];
@@ -76,7 +93,9 @@ public final class SourceBattleActionFrames {
             if (event != null && (animation == null
                     || animation.sequenceIndex != event.sequenceIndex
                     || !animation.frameName.equals(event.frameName)
-                    || !animation.religionCode.equals(event.religionCode))) {
+                    || !animation.sourceReligionCode.equals(event.religionCode)
+                    || !animation.religionCode.equals(disco && "religion".equals(event.frameName)
+                            ? "disco" : event.religionCode))) {
                 throw new IllegalArgumentException("Final shown action building is absent from all");
             }
             Flame flame = flames[index];

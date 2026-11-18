@@ -26,6 +26,7 @@ public final class MatchOutcomeSequence {
         SATELLITE_BONUS,
         FLAG_BONUS,
         FINISH_SCORE,
+        CHEATED_SCORE,
         COMPLETE
     }
 
@@ -45,6 +46,7 @@ public final class MatchOutcomeSequence {
     private int flagsRevealed;
     private int phaseTicks;
     private boolean scoreVisible;
+    private boolean scoreCorrupt;
 
     public MatchOutcomeSequence() {
         this(0L);
@@ -57,19 +59,30 @@ public final class MatchOutcomeSequence {
 
     public void begin(GameState.MatchStatus matchOutcome,
                       FinalScoreBreakdown breakdown) {
-        begin(matchOutcome, breakdown, initialRandom);
+        begin(matchOutcome, breakdown, initialRandom, false);
+    }
+
+    public void begin(GameState.MatchStatus matchOutcome,
+                      FinalScoreBreakdown breakdown, boolean corruptScore) {
+        begin(matchOutcome, breakdown, initialRandom, corruptScore);
     }
 
     /** Takes ownership of a copy, leaving the match-start snapshot untouched. */
     public void begin(GameState.MatchStatus matchOutcome, FinalScoreBreakdown breakdown,
                       ReferenceRandom matchStartRandom) {
+        begin(matchOutcome, breakdown, matchStartRandom, false);
+    }
+
+    public void begin(GameState.MatchStatus matchOutcome, FinalScoreBreakdown breakdown,
+                      ReferenceRandom matchStartRandom, boolean corruptScore) {
         if (!MatchOutcomePresentation.isFinished(matchOutcome) || breakdown == null) {
             reset();
             return;
         }
         outcome = matchOutcome;
+        scoreCorrupt = corruptScore;
         baseScore = breakdown.getBaseScore();
-        finalScore = breakdown.getFinalScore();
+        finalScore = corruptScore ? 0L : breakdown.getFinalScore();
         satelliteCount = breakdown.getSatelliteCount();
         flagBonusCount = breakdown.getFlagBonusCount();
         satellitesRevealed = 0;
@@ -99,8 +112,11 @@ public final class MatchOutcomeSequence {
             case INTRO:
                 if (++phaseTicks >= TICKS_BEFORE_SCORE) {
                     phaseTicks = 0;
-                    phase = Phase.BASE_SCORE;
+                    phase = scoreCorrupt ? Phase.CHEATED_SCORE : Phase.BASE_SCORE;
                     scoreVisible = true;
+                    if (scoreCorrupt) {
+                        scoreText = "!!CHEATED!!";
+                    }
                     return EVENT_START_SCORE_COUNTER
                             | (outcome == GameState.MatchStatus.DEFEAT
                             ? EVENT_DEFEAT : EVENT_NONE);
@@ -115,6 +131,10 @@ public final class MatchOutcomeSequence {
             case FINISH_SCORE:
                 // Source sequence 4 removes its callback on the following tick.
                 phase = Phase.COMPLETE;
+                return EVENT_NONE;
+            case CHEATED_SCORE:
+                // Source omits endGameMC.onEnterFrame for a corrupt score. Its
+                // looping score sound is stopped only by leaving the screen.
                 return EVENT_NONE;
             case INACTIVE:
             case COMPLETE:
@@ -229,6 +249,7 @@ public final class MatchOutcomeSequence {
         flagsRevealed = 0;
         phaseTicks = 0;
         scoreVisible = false;
+        scoreCorrupt = false;
     }
 
     public Phase getPhase() {
@@ -246,7 +267,7 @@ public final class MatchOutcomeSequence {
     public boolean isScoreStarted() {
         return phase == Phase.BASE_SCORE || phase == Phase.SATELLITE_BONUS
                 || phase == Phase.FLAG_BONUS || phase == Phase.FINISH_SCORE
-                || phase == Phase.COMPLETE;
+                || phase == Phase.CHEATED_SCORE || phase == Phase.COMPLETE;
     }
 
     public boolean isScoreVisible() {
@@ -258,7 +279,12 @@ public final class MatchOutcomeSequence {
     }
 
     public boolean isAnimating() {
-        return phase != Phase.INACTIVE && phase != Phase.COMPLETE;
+        return phase != Phase.INACTIVE && phase != Phase.CHEATED_SCORE
+                && phase != Phase.COMPLETE;
+    }
+
+    public boolean isScoreCorrupt() {
+        return scoreCorrupt;
     }
 
     public long getScoreCount() {

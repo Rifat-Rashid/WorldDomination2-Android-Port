@@ -38,6 +38,24 @@ LEGAL_TERMINAL_EVIDENCE = {
 PREPARED_STOCK_EVIDENCE = {
     "stock-prepared-launch-accepted.png", "stock-prepared-launch-removed.png"
 }
+HIDDEN_HELP = "com.example.worlddomination.game.rendering.SourceHiddenHelpInstrumentedTest"
+HIDDEN_HELP_EVIDENCE = {
+    "hidden-help-unlocked.png", "hidden-help-command.png", "hidden-help-warning.png",
+    "hidden-help-long-warning.png", "hidden-battle-creatures.png",
+    "hidden-battle-explosions.png", "hidden-battle-canonical-handoff.png",
+    "hidden-battle-combined-first.png", "hidden-battle-combined-cleanup.png",
+}
+HIDDEN_TYPOGRAPHY = "com.example.worlddomination.game.rendering.SourceHiddenHelpTypographyInstrumentedTest"
+HIDDEN_CONTEXT = "com.example.worlddomination.game.rendering.SourceHiddenHelpContextRecoveryInstrumentedTest"
+HIDDEN_OUTCOME = "com.example.worlddomination.game.rendering.SourceHiddenOutcomeInstrumentedTest"
+HIDDEN_CONTEXT_EVIDENCE = {
+    "hidden-help-context-before.png", "hidden-help-context-first-resumed.png",
+}
+HIDDEN_TYPOGRAPHY_EVIDENCE = {
+    f"hidden-typography-{field}-{variant}.png"
+    for field in ("trump-blurred", "bush-blurred", "2dawgz-warning-body", "fc1-warning-body")
+    for variant in ("expected", "actual", "wrong-arial")
+}
 HELP = "com.example.worlddomination.game.rendering.SourceHelpInstrumentedTest"
 HELP_EVIDENCE = {"source-help-live-overview.png"} | {
     f"source-help-{page}-{size}-{variant}.png"
@@ -350,6 +368,9 @@ def verify_group_artifact(manifest: dict, group: dict, artifact: Path) -> tuple[
                     (STOCK_CONTROLS, PREPARED_STOCK_EVIDENCE, "prepared stock counts"),
                     (LEGAL_TERMINAL, LEGAL_TERMINAL_EVIDENCE, "legal terminal playback"),
                     (HELP, HELP_EVIDENCE, "Help"),
+                    (HIDDEN_HELP, HIDDEN_HELP_EVIDENCE, "hidden Help"),
+                    (HIDDEN_TYPOGRAPHY, HIDDEN_TYPOGRAPHY_EVIDENCE, "hidden Help typography"),
+                    (HIDDEN_CONTEXT, HIDDEN_CONTEXT_EVIDENCE, "hidden Help context recovery"),
                     (SETUP_PANELS, SETUP_PANELS_EVIDENCE, "setup panels"),
                     (SETUP_LAYOUT, SETUP_LAYOUT_EVIDENCE, "setup layout"),
                     (SETUP_COLORS, SETUP_COLORS_EVIDENCE, "setup colors"),

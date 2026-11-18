@@ -1,0 +1,26 @@
+{
+  "provenance": {
+    "source": "wd2/generated/Sub_model.py:784,787; Sub_Presenter_interface.py:904-935; View.py:503-522",
+    "subModelSha256": "48d0936200815ea3fa088b9b1ea721655a804fc309e586f2875b6fde4ed7329e",
+    "subPresenterSha256": "bdb6675220507323b784b4867af0d3f80b4366935f353903b12c2d052d714bd7"
+  },
+  "toggles": [
+    {"input":"free willy","flag":"ORCA"},
+    {"input":"rapa nui","flag":"EASTER"},
+    {"input":"nessy","flag":"NESSY"},
+    {"input":"saturdaynight","flag":"DISCO"},
+    {"input":"psycho killer","flag":"KILL_ALL"},
+    {"input":"I am Bush","flag":"BUSH"},
+    {"input":"trump","flag":"CASH"},
+    {"input":"dexter","flag":"TECH"},
+    {"input":"gimmegimme","flag":"STOCK"}
+  ],
+  "messages": [
+    {"input":"#2dawgz","message":"## 2 dawgz / 2 pirates. No ninja's. ##"},
+    {"input":"#thenizz","message":"## dawgz 4 life, homez 4e4 ##"},
+    {"input":"#lollerskates","message":"## 2 long, 2 much ##"},
+    {"input":"#fc1","message":"## It is only after you've lost everything, that you are free to do anything... ## ~Chuck Palahniuk, Fight Club, Chapter 8 "},
+    {"input":"#sa1","message":"## 4 teh goons, humor me with your witty sarcasm. As no one seems to get. ##"},
+    {"input":"#error","message":"## get a life, you deserve it ##"}
+  ]
+}

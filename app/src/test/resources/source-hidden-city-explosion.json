@@ -1,0 +1,116 @@
+{
+  "provenance": {
+    "scope": "Original callbacks on legal seed0 Medium initial private human-city4; no forced state/RNG. Tick36 explode_self; untouched source runtime.",
+    "rawTraceSha256": "a9b77b1cfc4a5a6afdd6b7acfa5d84f6ddee3c730e3c383ecdb47feeedd541a3"
+  },
+  "rows": [
+    {
+      "tick": 36,
+      "frame": 6,
+      "alpha": 100.0,
+      "boomFrame": 1,
+      "boomDepth": 29,
+      "dustFrame": 0,
+      "dustDepth": -1
+    },
+    {
+      "tick": 37,
+      "frame": 6,
+      "alpha": 85.0,
+      "boomFrame": 2,
+      "boomDepth": 29,
+      "dustFrame": 1,
+      "dustDepth": 30
+    },
+    {
+      "tick": 43,
+      "frame": 6,
+      "alpha": -4.999999999999993,
+      "boomFrame": 8,
+      "boomDepth": 29,
+      "dustFrame": 7,
+      "dustDepth": 30
+    },
+    {
+      "tick": 44,
+      "frame": 6,
+      "alpha": -4.999999999999993,
+      "boomFrame": 9,
+      "boomDepth": 29,
+      "dustFrame": 8,
+      "dustDepth": 30
+    },
+    {
+      "tick": 45,
+      "frame": 15,
+      "alpha": -4.999999999999993,
+      "boomFrame": 10,
+      "boomDepth": 29,
+      "dustFrame": 9,
+      "dustDepth": 30
+    },
+    {
+      "tick": 46,
+      "frame": 15,
+      "alpha": 10.000000000000007,
+      "boomFrame": 11,
+      "boomDepth": 29,
+      "dustFrame": 10,
+      "dustDepth": 30
+    },
+    {
+      "tick": 52,
+      "frame": 15,
+      "alpha": 100.0,
+      "boomFrame": 17,
+      "boomDepth": 29,
+      "dustFrame": 16,
+      "dustDepth": 30
+    },
+    {
+      "tick": 90,
+      "frame": 15,
+      "alpha": 100.0,
+      "boomFrame": 55,
+      "boomDepth": 29,
+      "dustFrame": 50,
+      "dustDepth": 30
+    },
+    {
+      "tick": 125,
+      "frame": 15,
+      "alpha": 100.0,
+      "boomFrame": 90,
+      "boomDepth": 29,
+      "dustFrame": 50,
+      "dustDepth": 30
+    },
+    {
+      "tick": 126,
+      "frame": 15,
+      "alpha": 100.0,
+      "boomFrame": 91,
+      "boomDepth": 29,
+      "dustFrame": 50,
+      "dustDepth": 30
+    },
+    {
+      "tick": 127,
+      "frame": 15,
+      "alpha": 100.0,
+      "boomFrame": 91,
+      "boomDepth": 29,
+      "dustFrame": 50,
+      "dustDepth": 30
+    },
+    {
+      "tick": 150,
+      "frame": 15,
+      "alpha": 100.0,
+      "boomFrame": 91,
+      "boomDepth": 29,
+      "dustFrame": 50,
+      "dustDepth": 30
+    }
+  ]
+}

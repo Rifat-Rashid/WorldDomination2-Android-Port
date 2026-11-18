@@ -1,0 +1,41 @@
+{
+  "cases": {
+    "disco": {
+      "canonicalAfterTurnRngNext": 0.32005460467254576,
+      "finalChild": 4084,
+      "parentRngAfter": [
+        0.9675402502901433,
+        0.9675402502901433,
+        0.80317946927987,
+        0.80317946927987
+      ],
+      "parentTargets": [
+        "jew",
+        "disco",
+        "jew",
+        "disco"
+      ],
+      "privateAfterInitRngNext": 0.80317946927987,
+      "sourceFlameStartCount": 3
+    },
+    "ordinary": {
+      "canonicalAfterTurnRngNext": 0.32005460467254576,
+      "finalChild": 4015,
+      "parentRngAfter": [
+        0.9675402502901433,
+        0.9675402502901433
+      ],
+      "parentTargets": [
+        "jew",
+        "jew"
+      ],
+      "privateAfterInitRngNext": 0.9675402502901433,
+      "sourceFlameStartCount": 2
+    }
+  },
+  "provenance": {
+    "rawSourceTraceSha256": "ddc0285da2c3771306c2d73da89c55e35b7160a1a6fb8506b525314c35a84fae",
+    "sourceSceneSha256": "7213f06fac4e887050ad89e0d3c9a67f47789096d559af8e08333991f7616629",
+    "sourceView": "wd2/generated/View.py:1469-1499"
+  }
+}

@@ -58,6 +58,9 @@ public final class OriginalFlashAnimationAssets implements Disposable {
     /** Root Flash timeline containing both action-building clips for each nation. */
     public static final int ACTION_BUILDINGS_SYMBOL_ID = 5658;
     public static final String ACTION_BUILDINGS_TIMELINE = "actionBuildings";
+    /** Authored battle children have no linkage names in the SWF. */
+    public static final String HIDDEN_ORCA_TIMELINE = "hiddenOrca";
+    public static final String HIDDEN_NESSY_TIMELINE = "hiddenNessy";
     /** Original city movie clips with named propaganda overlay placements. */
     private static final int[] CITY_SYMBOL_IDS = {1337, 1363, 1388, 1414, 1441};
     /** Flash movie clip attached to each city's two propaganda beam layers. */
@@ -740,6 +743,8 @@ public final class OriginalFlashAnimationAssets implements Disposable {
         }
         result.put(LEADER_PORTRAITS_TIMELINE,
                 loadTimelineBySymbolId(scene, LEADER_PORTRAITS_SYMBOL_ID));
+        result.put(HIDDEN_ORCA_TIMELINE, loadTimelineBySymbolId(scene, 5765));
+        result.put(HIDDEN_NESSY_TIMELINE, loadTimelineBySymbolId(scene, 5720));
         return result;
     }
 
