@@ -77,9 +77,9 @@ class ReportCheckoutTest(unittest.TestCase):
         self.assertRegex(self.matrix, r'(?m)^    needs: full-suite$')
         self.assertRegex(self.matrix, r'(?m)^    if: always\(\)$')
         tasks = re.findall(r'(?m)^            task: (.+)$', self.matrix)
-        self.assertEqual(214, len(tasks))
+        self.assertEqual(215, len(tasks))
         filters = [pattern for task in tasks for pattern in selectors(task.strip().strip("'"))]
-        self.assertEqual(440, len(filters))
+        self.assertEqual(443, len(filters))
         self.assertEqual(1, filters.count(
             'com.example.worlddomination.game.simulation.SourcePreparedShipTubeCancelTest'))
         self.assertEqual(1, filters.count(

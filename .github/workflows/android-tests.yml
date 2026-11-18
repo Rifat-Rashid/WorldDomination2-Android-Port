@@ -240,6 +240,9 @@ jobs:
           - id: human-action-source-session-tests
             check: Mixed human action source session
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.HumanSourceActionSessionTest"'
+          - id: prepared-launch-source-tests
+            check: Prepared launch stock and source diplomacy
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.SourceLegalRocketReselectionTest" --tests "com.example.worlddomination.game.simulation.PreparedCarrierReservationTest" --tests "com.example.worlddomination.game.simulation.PreparedLaunchRegardTest"'
           - id: ceasefire-result-clock-tests
             check: Ceasefire zero counter and defeat timing
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameStateTest.ceasefireRemainsActiveAtZeroUntilTheFollowingResultUpdate" --tests "com.example.worlddomination.game.simulation.GameStateTest.humanDefeatSkipsTheCeasefireResultCountdown"'

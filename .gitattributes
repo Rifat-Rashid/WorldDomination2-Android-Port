@@ -1,4 +1,7 @@
 scripts/*.sh text eol=lf
+# Prepared-launch JSON fixtures pin canonical LF bytes on Windows and Linux.
+app/src/test/resources/source-legal-rocket-reselection.json text eol=lf
+app/src/test/resources/source-prepared-launch-regard.json text eol=lf
 # Preserve the checksum of the human action cancellation source fixture.
 app/src/test/resources/source-human-slot-reselection.json -text whitespace=cr-at-eol
 # Preserve the byte hashes of captured reference replay fixtures on every host.
