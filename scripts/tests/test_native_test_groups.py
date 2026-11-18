@@ -91,6 +91,7 @@ class NativeGroupTests(unittest.TestCase):
                             (groups.ACTION_MENUS, groups.ACTION_MENUS_EVIDENCE),
                             (groups.ACTION_MENUS, groups.PREPARED_SHIP_TUBE_EVIDENCE),
                             (groups.STOCK_CONTROLS, groups.PREPARED_STOCK_EVIDENCE),
+                            (groups.LEGAL_TERMINAL, groups.LEGAL_TERMINAL_EVIDENCE),
                             (groups.HELP, groups.HELP_EVIDENCE),
                             (groups.SETUP_PANELS, groups.SETUP_PANELS_EVIDENCE),
                             (groups.SETUP_LAYOUT, groups.SETUP_LAYOUT_EVIDENCE),
@@ -117,8 +118,8 @@ class NativeGroupTests(unittest.TestCase):
                                 (folder / name).write_bytes(PNG)
 
     def test_manifest_is_exact_closed_inventory_and_both_groups_make_beta(self):
-        self.assertEqual(111, len(self.manifest["requiredClasses"]))
-        self.assertEqual(178, len(self.manifest["expectedCases"]))
+        self.assertEqual(112, len(self.manifest["requiredClasses"]))
+        self.assertEqual(180, len(self.manifest["expectedCases"]))
         self.assertEqual({"a", "b"}, {g["id"] for g in self.manifest["groups"]})
         self.assertEqual({"beta-ui-evidence", "propaganda-evidence"},
                          {e for g in self.manifest["groups"] for e in g["evidence"]})
@@ -322,9 +323,9 @@ class NativeGroupTests(unittest.TestCase):
     def test_downloaded_groups_require_exact_junit_sets_and_valid_png_headers(self):
         self.fixture()
         result = groups.verify_artifacts(self.manifest, self.root)
-        self.assertEqual(111, sum(row["classes"] for row in result.values()))
-        self.assertEqual(178, sum(row["executed"] for row in result.values()))
-        self.assertEqual(190, sum(row["requiredPngs"] for row in result.values()))
+        self.assertEqual(112, sum(row["classes"] for row in result.values()))
+        self.assertEqual(180, sum(row["executed"] for row in result.values()))
+        self.assertEqual(198, sum(row["requiredPngs"] for row in result.values()))
 
     def test_unsaved_score_requires_actual_endgame_capture(self):
         self.fixture()
@@ -334,6 +335,19 @@ class NativeGroupTests(unittest.TestCase):
         image.unlink()
         with self.assertRaisesRegex(ValueError, "Missing required unsaved score screenshots"):
             groups.verify_artifacts(self.manifest, self.root)
+
+    def test_legal_terminal_campaigns_require_battle_score_and_new_game_images(self):
+        self.fixture()
+        group = next(g for g in self.manifest["groups"] if groups.LEGAL_TERMINAL in g["classes"])
+        folder = (self.root / ("android-native-" + group["id"] + "-results")
+                  / "reports/androidTests/beta-ui-evidence")
+        for name in groups.LEGAL_TERMINAL_EVIDENCE:
+            image = folder / name
+            image.unlink()
+            with self.subTest(image=name), self.assertRaisesRegex(
+                    ValueError, "Missing required legal terminal playback screenshots"):
+                groups.verify_artifacts(self.manifest, self.root)
+            image.write_bytes(PNG)
 
     def test_prepared_stock_counts_require_accept_and_removal_screenshots(self):
         self.fixture()
