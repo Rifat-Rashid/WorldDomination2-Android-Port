@@ -42,7 +42,7 @@ public final class SourceStatisticBarInstrumentedTest {
             byte[] expected = decodedPng(testAsset(FIXTURE + "expected.png"), w, h);
             ShapeRenderer shapes = (ShapeRenderer) field("shapes").get(app);
             Method draw = WorldDominationGame.class.getDeclaredMethod(
-                    "drawInformationBar", float.class, float.class, double.class, int.class);
+                    "drawInformationBar", float.class, float.class, double.class, double.class);
             draw.setAccessible(true);
             Matrix4 oldProjection = new Matrix4(shapes.getProjectionMatrix());
             FrameBuffer fb = new FrameBuffer(Pixmap.Format.RGBA8888, w, h, false);
@@ -98,7 +98,7 @@ public final class SourceStatisticBarInstrumentedTest {
         SourceBattleCleanupInstrumentedTest.runInGame(app -> {
             ShapeRenderer shapes = (ShapeRenderer) field("shapes").get(app);
             Method draw = WorldDominationGame.class.getDeclaredMethod(
-                    "drawInformationBar", float.class, float.class, double.class, int.class);
+                    "drawInformationBar", float.class, float.class, double.class, double.class);
             draw.setAccessible(true);
             Matrix4 oldProjection = new Matrix4(shapes.getProjectionMatrix());
             FrameBuffer fb = new FrameBuffer(Pixmap.Format.RGBA8888, 32, 16, false);

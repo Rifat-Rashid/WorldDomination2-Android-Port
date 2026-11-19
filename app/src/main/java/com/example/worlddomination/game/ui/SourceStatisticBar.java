@@ -11,10 +11,15 @@ public final class SourceStatisticBar {
     private SourceStatisticBar() { }
 
     /** Source rounds the filled logical-column count using Python's ties-to-even rule. */
-    public static int filledColumns(double width, int value) {
+    public static int filledColumns(double width, double value) {
         if (width <= 0d) return 0;
-        int bounded = Math.max(0, Math.min(100, value));
+        double bounded = Math.max(0d, Math.min(100d, value));
         return (int) Math.rint(width * bounded / 100d);
+    }
+
+    /** Sub_Presenter_interface divides first and keeps the fractional mask scale. */
+    public static double populationPercentage(long population, long activePopulation) {
+        return activePopulation <= 0 ? 0d : (double) population / activePopulation * 100d;
     }
 
     /** Green varies by fixed column position, regardless of the current fill. */

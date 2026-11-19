@@ -51,6 +51,13 @@ HIDDEN_OUTCOME = "com.example.worlddomination.game.rendering.SourceHiddenOutcome
 HIDDEN_CONTEXT_EVIDENCE = {
     "hidden-help-context-before.png", "hidden-help-context-first-resumed.png",
 }
+FULL_HUD = "com.example.worlddomination.game.rendering.FullHudSourceComparisonInstrumentedTest"
+FULL_HUD_EVIDENCE = {
+    f"{prefix}-{state}-{size}.png"
+    for prefix in ("full-hud", "full-hud-source")
+    for state in ("initial", "resources-help")
+    for size in ("800x600", "1194x552")
+}
 HIDDEN_TYPOGRAPHY_EVIDENCE = {
     f"hidden-typography-{field}-{variant}.png"
     for field in ("trump-blurred", "bush-blurred", "2dawgz-warning-body", "fc1-warning-body")
@@ -371,6 +378,7 @@ def verify_group_artifact(manifest: dict, group: dict, artifact: Path) -> tuple[
                     (HIDDEN_HELP, HIDDEN_HELP_EVIDENCE, "hidden Help"),
                     (HIDDEN_TYPOGRAPHY, HIDDEN_TYPOGRAPHY_EVIDENCE, "hidden Help typography"),
                     (HIDDEN_CONTEXT, HIDDEN_CONTEXT_EVIDENCE, "hidden Help context recovery"),
+                    (FULL_HUD, FULL_HUD_EVIDENCE, "full HUD source comparison"),
                     (SETUP_PANELS, SETUP_PANELS_EVIDENCE, "setup panels"),
                     (SETUP_LAYOUT, SETUP_LAYOUT_EVIDENCE, "setup layout"),
                     (SETUP_COLORS, SETUP_COLORS_EVIDENCE, "setup colors"),

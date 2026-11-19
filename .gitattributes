@@ -78,3 +78,5 @@ app/src/test/resources/parity/defeated-flag-credit.json -text whitespace=cr-at-e
 app/src/test/resources/source-hidden-*.json -text whitespace=cr-at-eol
 app/src/test/resources/source-disco-*.json -text whitespace=cr-at-eol
 app/src/test/resources/source-dust-cleanup.json -text whitespace=cr-at-eol
+app/src/test/resources/source-information-values.json -text whitespace=cr-at-eol
+app/src/androidTest/assets/source-hud-composition/source-full-hud.json -text whitespace=cr-at-eol

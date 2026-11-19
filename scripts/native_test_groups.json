@@ -122,7 +122,8 @@
     "com.example.worlddomination.game.rendering.SourceHiddenHelpInstrumentedTest",
     "com.example.worlddomination.game.rendering.SourceHiddenHelpTypographyInstrumentedTest",
     "com.example.worlddomination.game.rendering.SourceHiddenHelpContextRecoveryInstrumentedTest",
-    "com.example.worlddomination.game.rendering.SourceHiddenOutcomeInstrumentedTest"
+    "com.example.worlddomination.game.rendering.SourceHiddenOutcomeInstrumentedTest",
+    "com.example.worlddomination.game.rendering.FullHudSourceComparisonInstrumentedTest"
   ],
   "groups": [
     {
@@ -188,7 +189,8 @@
         "com.example.worlddomination.game.rendering.SourceHiddenHelpInstrumentedTest",
         "com.example.worlddomination.game.rendering.SourceHiddenHelpTypographyInstrumentedTest",
         "com.example.worlddomination.game.rendering.SourceHiddenHelpContextRecoveryInstrumentedTest",
-        "com.example.worlddomination.game.rendering.SourceHiddenOutcomeInstrumentedTest"
+        "com.example.worlddomination.game.rendering.SourceHiddenOutcomeInstrumentedTest",
+        "com.example.worlddomination.game.rendering.FullHudSourceComparisonInstrumentedTest"
       ],
       "evidence": [
         "beta-ui-evidence",
@@ -1016,6 +1018,10 @@
     [
       "com.example.worlddomination.game.rendering.SourceHiddenOutcomeInstrumentedTest",
       "cheatedVictoryShowsAuthoredScoreWithoutSavingPersonalBest"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.FullHudSourceComparisonInstrumentedTest",
+      "sourceHudValuesSurvivePhoneScalingAndHelpComposition"
     ]
   ]
 }
