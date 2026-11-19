@@ -329,7 +329,7 @@
     ],
     [
       "com.example.worlddomination.game.rendering.BattlefieldTerrainInstrumentedTest",
-      "terrainMatchesOriginalNationAndCachesOnlyPresentIslands"
+      "terrainMatchesOriginalNationAndRetainsUnusedIslandGround"
     ],
     [
       "com.example.worlddomination.game.rendering.BattlefieldCitySelectionInstrumentedTest",

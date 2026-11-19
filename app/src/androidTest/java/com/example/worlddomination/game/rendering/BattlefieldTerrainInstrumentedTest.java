@@ -32,7 +32,7 @@ import static org.junit.Assert.*;
 /** Real GLES proof of terrain styles, empty slots, retained conquest styles and texture reuse. */
 @RunWith(AndroidJUnit4.class)
 public final class BattlefieldTerrainInstrumentedTest {
-    @Test public void terrainMatchesOriginalNationAndCachesOnlyPresentIslands() throws Exception {
+    @Test public void terrainMatchesOriginalNationAndRetainsUnusedIslandGround() throws Exception {
         try (GameActivityScenario scenario = GameActivityScenario.launch(MainActivity.class)) {
             CountDownLatch done = new CountDownLatch(1);
             AtomicReference<Throwable> failure = new AtomicReference<>();
@@ -58,8 +58,11 @@ public final class BattlefieldTerrainInstrumentedTest {
                             setup.toggleOpponent(0); setup.setStartingBuilding(building);
                             GameState game = new GameState(setup, 7L);
                             terrain.prepare(game);
-                            assertEquals("Unused islands have no GPU tile", 2, terrain.getSelectedTileCount());
-                            assertNull(assets.getTile(2)); assertNull(assets.getTile(3)); assertNull(assets.getTile(4));
+                            assertEquals("Phone reference paints all five land clips", 5, terrain.getSelectedTileCount());
+                            for (int island = 2; island < 5; island++) {
+                                assertEquals("chr", assets.getTile(island).religion);
+                                assertFalse(game.getPlayerState(island).alive);
+                            }
                             assertTrue("Selected file-backed tile must be managed", assets.getTile(0).region.getTexture().isManaged());
                             if (cachedOpponent != null) assertSame("Unchanged tiles are reused", cachedOpponent, assets.getTile(1).region);
                             cachedOpponent = assets.getTile(1).region;
@@ -75,7 +78,7 @@ public final class BattlefieldTerrainInstrumentedTest {
                                     int y = Math.round(BattlefieldCityLayout.sourceY(bounds, island == 2 ? 145 : island == 3 ? 500 : 490));
                                     int pixel = image.getPixel(x, y);
                                     int r = pixel >>> 24 & 255, g = pixel >>> 16 & 255, b = pixel >>> 8 & 255;
-                                    assertTrue("Unused slot is authored ocean", b > r + 15 && b > g + 5);
+                                    assertFalse("Unused slot retains source ground, not ocean", b > r + 15 && b > g + 5);
                                 }
                                 capture(image, "source-terrain-" + width + "-building-" + building + ".png");
                             } finally { image.dispose(); }

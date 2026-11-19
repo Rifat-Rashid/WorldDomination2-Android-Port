@@ -1,8 +1,16 @@
 package com.example.worlddomination.game.simulation;
 
 import com.example.worlddomination.game.ui.BattlefieldTerrainState;
+import com.badlogic.gdx.utils.JsonReader;
+import com.badlogic.gdx.utils.JsonValue;
 import org.junit.Test;
 
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.security.MessageDigest;
+import java.util.Locale;
 import java.util.Random;
 
 import static org.junit.Assert.assertEquals;
@@ -30,13 +38,15 @@ public final class BattlefieldTerrainStateTest {
         }
     }
 
-    @Test public void oneOpponentLeavesThreeSlotsAsOcean() {
+    @Test public void oneOpponentRetainsDefaultGroundInAllUnusedSlots() {
         GameState game = new GameState(setupWithOpponent(0), 105L);
         assertTrue(BattlefieldTerrainState.isPresent(game, 0));
         assertTrue(BattlefieldTerrainState.isPresent(game, 1));
         for (int island = 2; island < BattlefieldTerrainState.ISLAND_COUNT; island++) {
-            assertFalse(BattlefieldTerrainState.isPresent(game, island));
-            assertNull(BattlefieldTerrainState.religion(game, island));
+            assertTrue(BattlefieldTerrainState.isPresent(game, island));
+            assertEquals("chr", BattlefieldTerrainState.religion(game, island));
+            assertFalse("Ground does not create an opponent", game.getPlayerState(island).alive);
+            assertEquals(0, game.getPlayerState(island).getPlayerColor());
         }
     }
 
@@ -48,6 +58,40 @@ public final class BattlefieldTerrainStateTest {
         GameState game = new GameState(setup, 107L);
         for (int island = 0; island < BattlefieldTerrainState.ISLAND_COUNT; island++) {
             assertTrue(BattlefieldTerrainState.isPresent(game, island));
+        }
+    }
+
+    @Test public void legalSourceSetupsRetainAllFiveObservedLandFrames() throws Exception {
+        JsonValue source;
+        try (InputStream input = getClass().getResourceAsStream("/source-unused-island-frames.json")) {
+            org.junit.Assert.assertNotNull(input);
+            byte[] bytes = input.readAllBytes();
+            StringBuilder hash = new StringBuilder();
+            for (byte value : MessageDigest.getInstance("SHA-256").digest(bytes)) {
+                hash.append(String.format(Locale.ROOT, "%02x", value & 255));
+            }
+            assertEquals("4c6a44436a630273ffd26aa12ec6248aadf8e0c381efce2fd325068589df5eaa", hash.toString());
+            source = new JsonReader().parse(new String(bytes, StandardCharsets.UTF_8));
+        }
+        JsonValue terrain = new JsonReader().parse(Files.readString(Paths.get(
+                "src/main/assets/original/ui/terrain/manifest.json")));
+        assertEquals(3, source.get("cases").size);
+        for (JsonValue scenario : source.get("cases")) {
+            GameSetup setup = new GameSetup(source.getLong("seed"));
+            setup.setDifficulty(source.getInt("difficulty"));
+            setup.setStartingBuilding(source.getInt("building"));
+            for (JsonValue leader : scenario.get("leaders")) assertTrue(setup.toggleOpponent(leader.asInt()));
+            GameState game = new GameState(setup, source.getLong("seed"));
+            assertEquals(5, scenario.get("lands").size);
+            for (JsonValue land : scenario.get("lands")) {
+                int island = land.getInt("mapSide");
+                assertTrue(land.getBoolean("visible"));
+                assertTrue(BattlefieldTerrainState.isPresent(game, island));
+                String religion = BattlefieldTerrainState.religion(game, island);
+                assertEquals("Observed source clip frame for island " + island,
+                        land.getInt("frame"), terrain.get("islands").get(island)
+                                .get("variants").get(religion).getInt("frame"));
+            }
         }
     }
 
