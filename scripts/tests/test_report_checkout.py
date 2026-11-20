@@ -73,13 +73,31 @@ class ReportCheckoutTest(unittest.TestCase):
         self.assertTrue(modules)
         self.assertTrue(set(modules) <= sys.stdlib_module_names)
 
+    def test_aircraft_checks_share_the_producer_and_keep_stable_names(self):
+        expected = {
+            'Carrier strike route parity',
+            'Carrier aircraft playback parity',
+            'Carrier Flash artwork and audio integrity',
+            'Airfield aircraft route and event parity',
+            'Airfield aircraft source-tick playback',
+            'Airfield aircraft Flash artwork and audio',
+            'Airfield aircraft source smoke trails',
+            'Airfield aircraft post-impact fly-off',
+            'Original aircraft trail artwork integrity',
+        }
+        names = re.findall(r'(?m)^            check: (.+)$', self.matrix)
+        self.assertTrue(expected <= set(names))
+        for name in expected:
+            self.assertEqual(1, names.count(name), name)
+        self.assertFalse((WORKFLOW.parent / 'android-carrier-playback.yml').exists())
+
     def test_matrix_still_requires_same_run_successful_producer_reports(self):
         self.assertRegex(self.matrix, r'(?m)^    needs: full-suite$')
         self.assertRegex(self.matrix, r'(?m)^    if: always\(\)$')
         tasks = re.findall(r'(?m)^            task: (.+)$', self.matrix)
-        self.assertEqual(220, len(tasks))
+        self.assertEqual(229, len(tasks))
         filters = [pattern for task in tasks for pattern in selectors(task.strip().strip("'"))]
-        self.assertEqual(464, len(filters))
+        self.assertEqual(483, len(filters))
         information_panel = 'com.example.worlddomination.game.ui.InformationPanelTextTest'
         self.assertEqual(1, filters.count(information_panel))
         task = next(task for task in tasks if information_panel in task)
