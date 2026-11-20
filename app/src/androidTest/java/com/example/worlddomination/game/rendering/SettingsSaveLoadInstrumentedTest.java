@@ -42,7 +42,7 @@ import static org.junit.Assert.assertTrue;
 /** Uses the real libGDX input path and Android's app-private replacement backend. */
 @RunWith(AndroidJUnit4.class)
 public final class SettingsSaveLoadInstrumentedTest {
-    private static final String SAVE_FILENAME = "manual-game.wd2";
+    static final String SAVE_FILENAME = "manual-game.wd2";
 
     @Test
     public void setupDisablesSaveAndLoadsAStoredMatch() throws Exception {
@@ -194,20 +194,20 @@ public final class SettingsSaveLoadInstrumentedTest {
         });
     }
 
-    private static GameState newMatch() {
+    static GameState newMatch() {
         GameSetup setup = new GameSetup(0L);
         assertTrue(setup.toggleOpponent(0));
         assertTrue(setup.toggleOpponent(1));
         return new GameState(setup);
     }
 
-    private static void installMatch(WorldDominationGame app, GameState next) throws Exception {
+    static void installMatch(WorldDominationGame app, GameState next) throws Exception {
         Method activate = WorldDominationGame.class.getDeclaredMethod("activateGame", GameState.class);
         activate.setAccessible(true);
         activate.invoke(app, next);
     }
 
-    private static GameSettingsMenu openSettings(WorldDominationGame app) throws Exception {
+    static GameSettingsMenu openSettings(WorldDominationGame app) throws Exception {
         tap(app, (Rectangle) field("settingsButton").get(app));
         GameSettingsMenu menu = (GameSettingsMenu) field("settingsMenu").get(app);
         assertTrue("Gear opens Settings", menu.isOpen());
@@ -234,7 +234,7 @@ public final class SettingsSaveLoadInstrumentedTest {
         assertNull(game.getSelectedAction());
     }
 
-    private static void tap(WorldDominationGame app, Rectangle bounds) throws Exception {
+    static void tap(WorldDominationGame app, Rectangle bounds) throws Exception {
         Vector2 point = project(app, bounds.x + bounds.width / 2f, bounds.y + bounds.height / 2f);
         int x = Math.round(point.x);
         int y = Math.round(point.y);
@@ -249,7 +249,7 @@ public final class SettingsSaveLoadInstrumentedTest {
         return screen;
     }
 
-    private static void render(WorldDominationGame app) throws Exception {
+    static void render(WorldDominationGame app) throws Exception {
         field("skipNextFrameDelta").setBoolean(app, true);
         app.render();
     }
@@ -271,14 +271,14 @@ public final class SettingsSaveLoadInstrumentedTest {
         }
     }
 
-    private static File createStoreDirectory() throws Exception {
+    static File createStoreDirectory() throws Exception {
         File directory = File.createTempFile("settings-save-test-", ".tmp", context().getCacheDir());
         assertTrue(directory.delete());
         assertTrue(directory.mkdir());
         return directory;
     }
 
-    private static void removeStoreDirectory(File directory) {
+    static void removeStoreDirectory(File directory) {
         File[] files = directory.listFiles();
         assertNotNull(files);
         for (File file : files) assertTrue(file.delete());
@@ -293,11 +293,11 @@ public final class SettingsSaveLoadInstrumentedTest {
         return SourceBattleCleanupInstrumentedTest.field(WorldDominationGame.class, name);
     }
 
-    private static GameState game(WorldDominationGame app) throws Exception {
+    static GameState game(WorldDominationGame app) throws Exception {
         return (GameState) field("game").get(app);
     }
 
-    private static void queue(GameState game, GameState.Action action) {
+    static void queue(GameState game, GameState.Action action) {
         game.selectAction(action);
         assertTrue(game.acceptSelectedAction());
     }
