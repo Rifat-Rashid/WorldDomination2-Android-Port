@@ -22,13 +22,20 @@ public final class SourceActionMenuState {
                 || action == GameState.Action.DIPLOMACY;
     }
 
-    public void begin(GameState game) {
-        action = game.getSelectedAction();
+    public void reset() {
+        action = null;
         weaponChosen = cityChosen = leaderChosen = optionChosen = cancelling = false;
-        equipment = payload = error = null;
-        game.clearBattlefieldCitySelection();
+        equipment = payload = error = key = null;
         pendingError = false;
         economyWarning = false;
+        shipStrikeCount = 0;
+        revision++;
+    }
+
+    public void begin(GameState game) {
+        reset();
+        action = game.getSelectedAction();
+        game.clearBattlefieldCitySelection();
         refresh(game);
     }
 

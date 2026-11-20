@@ -87,6 +87,12 @@ jobs:
       max-parallel: 6
       matrix:
         include:
+          - id: manual-game-save
+            check: Offline game saves preserve orders and deterministic AI continuation
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameSaveCodecTest" --tests "com.example.worlddomination.game.simulation.GameSaveContinuationTest" --tests "com.example.worlddomination.game.simulation.GameSaveValidationTest" --tests "com.example.worlddomination.game.persistence.GameSaveStoreTest"'
+          - id: settings-save-load-menu
+            check: Settings save and load controls and confirmation hitboxes
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.GameSettingsMenuTest"'
           - id: phone-funds-statistics
             check: Phone funds and fractional population statistics
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.InformationPanelTextTest"'

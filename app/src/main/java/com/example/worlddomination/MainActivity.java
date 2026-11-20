@@ -17,6 +17,7 @@ import com.example.worlddomination.game.WorldDominationGame;
 import com.example.worlddomination.game.ui.SafeAreaInsets;
 import com.example.worlddomination.platform.audio.SourceAndroidAudio;
 import com.example.worlddomination.platform.persistence.AndroidScorePreferenceBackend;
+import com.example.worlddomination.platform.persistence.AndroidGameSaveStore;
 import com.example.worlddomination.platform.graphics.SerializedAndroidGraphics;
 
 /** Android-only landscape launcher for the libGDX game. */
@@ -41,6 +42,7 @@ public final class MainActivity extends AndroidApplication {
         super.onCreate(savedInstanceState);
         game = new WorldDominationGame(new AndroidScorePreferenceBackend(
                 getSharedPreferences("world_domination_2_scores", Context.MODE_PRIVATE)));
+        game.setGameSaveStore(AndroidGameSaveStore.create(getFilesDir()));
 
         AndroidApplicationConfiguration configuration = new AndroidApplicationConfiguration();
         configuration.useImmersiveMode = true;

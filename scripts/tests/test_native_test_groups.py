@@ -97,6 +97,7 @@ class NativeGroupTests(unittest.TestCase):
                             (groups.HIDDEN_TYPOGRAPHY, groups.HIDDEN_TYPOGRAPHY_EVIDENCE),
                             (groups.HIDDEN_CONTEXT, groups.HIDDEN_CONTEXT_EVIDENCE),
                             (groups.FULL_HUD, groups.FULL_HUD_EVIDENCE),
+                            (groups.SETTINGS, groups.SETTINGS_EVIDENCE),
                             (groups.SETUP_PANELS, groups.SETUP_PANELS_EVIDENCE),
                             (groups.SETUP_LAYOUT, groups.SETUP_LAYOUT_EVIDENCE),
                             (groups.SETUP_COLORS, groups.SETUP_COLORS_EVIDENCE),
@@ -123,8 +124,8 @@ class NativeGroupTests(unittest.TestCase):
                                 (folder / name).write_bytes(PNG)
 
     def test_manifest_is_exact_closed_inventory_and_both_groups_make_beta(self):
-        self.assertEqual(118, len(self.manifest["requiredClasses"]))
-        self.assertEqual(190, len(self.manifest["expectedCases"]))
+        self.assertEqual(119, len(self.manifest["requiredClasses"]))
+        self.assertEqual(192, len(self.manifest["expectedCases"]))
         self.assertEqual({"a", "b"}, {g["id"] for g in self.manifest["groups"]})
         self.assertEqual({"beta-ui-evidence", "propaganda-evidence"},
                          {e for g in self.manifest["groups"] for e in g["evidence"]})
@@ -340,9 +341,9 @@ class NativeGroupTests(unittest.TestCase):
     def test_downloaded_groups_require_exact_junit_sets_and_valid_png_headers(self):
         self.fixture()
         result = groups.verify_artifacts(self.manifest, self.root)
-        self.assertEqual(118, sum(row["classes"] for row in result.values()))
-        self.assertEqual(190, sum(row["executed"] for row in result.values()))
-        self.assertEqual(231, sum(row["requiredPngs"] for row in result.values()))
+        self.assertEqual(119, sum(row["classes"] for row in result.values()))
+        self.assertEqual(192, sum(row["executed"] for row in result.values()))
+        self.assertEqual(233, sum(row["requiredPngs"] for row in result.values()))
 
     def test_unsaved_score_requires_actual_endgame_capture(self):
         self.fixture()
@@ -526,7 +527,7 @@ class NativeGroupTests(unittest.TestCase):
                          [pair for pair in self.manifest["expectedCases"] if pair[0] == name])
         self.fixture()
         result = groups.verify_artifacts(self.manifest, self.root)
-        self.assertEqual(231, sum(row["requiredPngs"] for row in result.values()))
+        self.assertEqual(233, sum(row["requiredPngs"] for row in result.values()))
 
     def test_full_hud_case_and_each_native_and_independent_source_capture_are_required(self):
         name = groups.FULL_HUD
@@ -549,6 +550,23 @@ class NativeGroupTests(unittest.TestCase):
             image.unlink()
             with self.subTest(image=filename), self.assertRaisesRegex(
                     ValueError, "Missing required full HUD source comparison screenshots"):
+                groups.verify_artifacts(self.manifest, self.root)
+            image.write_bytes(PNG)
+
+    def test_settings_checks_require_both_executed_cases_and_captures(self):
+        name = groups.SETTINGS
+        self.assertIn(name, groups.group_by_id(self.manifest, "a")["classes"])
+        self.assertEqual([
+            [name, "setupDisablesSaveAndLoadsAStoredMatch"],
+            [name, "gameplaySaveAndReloadConsistentlyRestoreQueuedOrdersAndRandomStream"],
+        ], [pair for pair in self.manifest["expectedCases"] if pair[0] == name])
+        self.fixture()
+        folder = self.root / "android-native-a-results/reports/androidTests/beta-ui-evidence"
+        for filename in ("settings-save-load-menu.png", "settings-save-load-confirm.png"):
+            image = folder / filename
+            image.unlink()
+            with self.subTest(image=filename), self.assertRaisesRegex(
+                    ValueError, "Missing required settings save and load screenshots"):
                 groups.verify_artifacts(self.manifest, self.root)
             image.write_bytes(PNG)
 
