@@ -1,6 +1,9 @@
 package com.example.worlddomination.game;
 
 import com.badlogic.gdx.ApplicationAdapter;
+import com.example.worlddomination.game.persistence.GameSaveStore;
+import com.example.worlddomination.game.ui.GameSettingsMenu;
+import java.io.IOException;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
@@ -241,6 +244,13 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     }
 
     private GameState game;
+    private GameSaveStore gameSaveStore;
+    private final GameSettingsMenu settingsMenu = new GameSettingsMenu();
+
+    /** Installed by the Android launcher; no platform storage enters the simulation. */
+    public void setGameSaveStore(GameSaveStore store) {
+        gameSaveStore = store;
+    }
     private GameSetup setup;
     private final SplashScreenState splashState = new SplashScreenState();
     private final Rectangle splashBounds = new Rectangle();
@@ -765,7 +775,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         synchronizeOutcomeSequence();
         if (endgameRenderer != null) endgameRenderer.update();
-        boolean discardElapsedTime = skipNextFrameDelta || !continuousRenderingEnabled;
+        boolean discardElapsedTime = skipNextFrameDelta || !continuousRenderingEnabled || settingsMenu.isOpen();
         skipNextFrameDelta = false;
         if (discardElapsedTime) {
             accumulator = 0f;
@@ -787,6 +797,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             drawOriginalSplash();
         } else if (game == null) {
             drawSetupScreen();
+            drawSettingsGear();
         } else if (MatchOutcomePresentation.isFinished(game.getMatchStatus())
                 && outcomeSequence.isEndgameVisible()) {
             drawEndgameOverlay();
@@ -803,6 +814,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 drawActionModal();
             }
         }
+        if (settingsMenu.isOpen()) drawSettingsMenu();
         if (showExitPromptSeconds > 0f) {
             drawExitPrompt();
         }
@@ -4121,6 +4133,113 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         return updated;
     }
 
+    private void drawSettingsMenu() {
+        settingsMenu.layout(mapFrame);
+        Rectangle panel = settingsMenu.panel;
+        float scale = settingsMenu.getScale();
+        if (scale == 0f) return;
+        boolean confirmation = settingsMenu.isConfirmingLoad();
+        shapes.setProjectionMatrix(camera.combined);
+        shapes.begin(ShapeRenderer.ShapeType.Filled);
+        shapes.setColor(0.28f, 0.46f, 0.54f, 1f);
+        shapes.rect(panel.x, panel.y, panel.width, panel.height);
+        shapes.setColor(0.036f, 0.081f, 0.11f, 1f);
+        shapes.rect(panel.x + scale, panel.y + scale, panel.width - 2f * scale,
+                panel.height - 2f * scale);
+        if (confirmation) {
+            drawSettingsButtonFill(settingsMenu.cancel, true, false);
+            drawSettingsButtonFill(settingsMenu.confirm, settingsMenu.canLoad(), true);
+        } else {
+            drawSettingsButtonFill(settingsMenu.save, settingsMenu.canSave(), false);
+            drawSettingsButtonFill(settingsMenu.load, settingsMenu.canLoad(), false);
+            drawSettingsButtonFill(settingsMenu.sound, true, false);
+            drawSettingsButtonFill(settingsMenu.close, true, false);
+        }
+        shapes.end();
+        batch.setProjectionMatrix(camera.combined);
+        batch.begin();
+        batch.setColor(Color.WHITE);
+        font.setColor(Color.WHITE);
+        float centerX = panel.x + panel.width / 2f;
+        float top = panel.y + panel.height;
+        drawCentered(confirmation ? "LOAD SAVED GAME?" : "SETTINGS", centerX,
+                top - 14f * scale, 19f * scale);
+        if (confirmation) {
+            if (game != null) {
+                drawCentered("This replaces your current progress.", centerX,
+                        top - 74f * scale, 14f * scale);
+            }
+            drawSettingsButtonLabel(settingsMenu.cancel, "CANCEL", true);
+            drawSettingsButtonLabel(settingsMenu.confirm, "LOAD GAME", settingsMenu.canLoad());
+        } else {
+            drawCentered(settingsMenu.getStatus(), centerX, top - 39f * scale, 11f * scale);
+            drawSettingsButtonLabel(settingsMenu.save, "SAVE GAME", settingsMenu.canSave());
+            drawSettingsButtonLabel(settingsMenu.load, "LOAD GAME", settingsMenu.canLoad());
+            drawSettingsButtonLabel(settingsMenu.sound, audio.isSoundEnabled() ? "SOUND: ON" : "SOUND: OFF", true);
+            drawSettingsButtonLabel(settingsMenu.close, "CLOSE", true);
+        }
+        font.setColor(Color.WHITE);
+        batch.end();
+    }
+
+    private void drawSettingsButtonFill(Rectangle button, boolean enabled, boolean primary) {
+        if (primary && enabled) shapes.setColor(0.16f, 0.34f, 0.42f, 1f);
+        else if (enabled) shapes.setColor(0.10f, 0.20f, 0.26f, 1f);
+        else shapes.setColor(0.07f, 0.13f, 0.17f, 1f);
+        shapes.rect(button.x, button.y, button.width, button.height);
+    }
+
+    private void drawSettingsButtonLabel(Rectangle button, String text, boolean enabled) {
+        font.setColor(enabled ? Color.WHITE : Color.GRAY);
+        float scale = settingsMenu.getScale();
+        drawCentered(text, button.x + button.width / 2f,
+                button.y + button.height / 2f + 6f * scale, 15f * scale);
+    }
+
+    private void activateSettingsAt(float x, float y) {
+        switch (settingsMenu.hit(x, y)) {
+            case SAVE:
+                try {
+                    gameSaveStore.save(game);
+                    settingsMenu.saved(game.getTurn());
+                } catch (IOException | IllegalArgumentException failure) {
+                    Gdx.app.error("Game save", "Unable to save match", failure);
+                    settingsMenu.message("Save failed. Previous save kept.");
+                }
+                break;
+            case LOAD:
+                settingsMenu.requestLoad();
+                break;
+            case CONFIRM_LOAD:
+                try {
+                    // Decode first: an invalid save must not replace the live match.
+                    GameState loaded = gameSaveStore.load();
+                    loaded.cancelSelection(); // Unaccepted menu drafts are not queued orders.
+                    resetMatchPresentation();
+                    activateGame(loaded);
+                    sourceActionMenu.reset();
+                    settingsMenu.open(true, true);
+                    settingsMenu.message("Loaded turn " + loaded.getTurn() + ".");
+                } catch (IOException | IllegalArgumentException failure) {
+                    Gdx.app.error("Game save", "Unable to load match", failure);
+                    settingsMenu.message("Cannot load this save. Game unchanged.");
+                }
+                break;
+            case SOUND:
+                audio.toggleSound();
+                break;
+            case CANCEL_LOAD:
+                settingsMenu.back();
+                break;
+            case CLOSE:
+                settingsMenu.close();
+                break;
+            default:
+                break;
+        }
+        skipNextFrameDelta = true;
+    }
+
     private void drawExitPrompt() {
         shapes.begin(ShapeRenderer.ShapeType.Filled);
         drawPanelFill(modal);
@@ -4163,24 +4282,26 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     }
 
     private void beginNewGameSetup() {
+        resetMatchPresentation();
+        setup = setup == null ? new GameSetup(System.nanoTime()) : setup.createNextSetup();
+        setupLeaderListStart = 0;
+        setupLeaderName = "";
+        setupMessage = "SELECT ONE TO FOUR OPPONENTS TO BEGIN";
+        showSetupMessage = false;
+    }
+
+    private void resetMatchPresentation() {
         blurHiddenHelpInput();
         helpState.resetMatch();
         audio.finishSatelliteAudio();
         audio.finishAircraftAudio();
         audio.finishAntiDefenseAudio();
-        GameSetup nextSetup = setup == null
-                ? new GameSetup(System.nanoTime()) : setup.createNextSetup();
         stopScoreCounterSound();
         audio.finishBattleAmbient();
         audio.finishBattleActionSounds();
         outcomeSequence.reset();
         disposeEndgameResources();
         outcomePersonalBestText = "";
-        setup = nextSetup;
-        setupLeaderListStart = 0;
-        setupLeaderName = "";
-        setupMessage = "SELECT ONE TO FOUR OPPONENTS TO BEGIN";
-        showSetupMessage = false;
         modalOpen = false;
         showExitPromptSeconds = 0f;
         accumulator = 0f;
@@ -4503,6 +4624,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     }
 
     private int pointArea(float x, float y) {
+        if (settingsMenu.isOpen()) return GESTURE_NONE;
         if (outcomeSequence.isEndgameVisible()) return GESTURE_NONE;
         if (!helpState.isOpen() && modalOpen && game != null && !sourceActionMenu.isEconomyWarning(game)
                 && game.getSelectedAction() == GameState.Action.PRODUCTION) {
@@ -4717,55 +4839,59 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         if (setupLayout.startButton.contains(x, y)) {
             if (setup.canStart()) {
-                initializeGameplayAssets();
-                game = new GameState(setup);
-                blurHiddenHelpInput();
-                helpState.resetMatch();
-                sourceActionInstruction.resetWelcome();
-                laidOutInstruction = null;
-                actionSlotAnimation.reset();
-                confirmTurnAnimation.reset();
-                turnActionDisplay.reset();
-                cityRenderer.reset(game);
-                flagRenderer.reset();
-                battleAnimations.clear();
-                sourceUnitPlayback.reset();
-                actionBuildingAnimations.clear();
-                battleActionFrames.reset();
-                turnPlaybackSequence.reset();
-                battleRecordClock.reset();
-                battleInterfaceFrames.reset();
-                sourceStoppedClips.reset();
-                battlePresentationRandom = null;
-                battleTicker.reset();
-                hiddenBattleEffects.finish();
-                battlePresentationRecords = Collections.emptyList();
-                soldierBattleAnimations.clear();
-                apacheMarineAnimations.clear();
-                chinookTankAnimations.clear();
-                suicideBomberAnimations.clear();
-                clearRocketBattleAnimations();
-                sourceRocketBindings.clear();
-                sourceInterceptedAircraftBindings.clear();
-                sourceAircraftTrails.clear();
-                submarineBattleAnimations.clear();
-                clearCarrierPlaneAnimations();
-                clearStandalonePlaneAnimations();
-                antiDefenseTrackingAnimations.clear();
-                clearSourceAirDefenses();
-                audio.finishAntiDefenseAudio();
-                satelliteBattleAnimations.clear();
-                satelliteAudioOwners.clear();
-                satelliteFlightCuePlayed = false;
-                pendingBattleAnimations.clear();
-                modalOpen = false;
-                accumulator = 0f;
-                audio.play(OriginalAudio.Cue.ACTION_ACCEPT);
+                activateGame(new GameState(setup));
             } else {
                 setupMessage = "SELECT AT LEAST ONE RIVAL BEFORE STARTING";
                 showSetupMessage = true;
             }
         }
+    }
+
+    private void activateGame(GameState nextGame) {
+        initializeGameplayAssets();
+        game = nextGame;
+        blurHiddenHelpInput();
+        helpState.resetMatch();
+        sourceActionInstruction.resetWelcome();
+        laidOutInstruction = null;
+        actionSlotAnimation.reset();
+        confirmTurnAnimation.reset();
+        turnActionDisplay.reset();
+        cityRenderer.reset(game);
+        flagRenderer.reset();
+        battleAnimations.clear();
+        sourceUnitPlayback.reset();
+        actionBuildingAnimations.clear();
+        battleActionFrames.reset();
+        turnPlaybackSequence.reset();
+        battleRecordClock.reset();
+        battleInterfaceFrames.reset();
+        sourceStoppedClips.reset();
+        battlePresentationRandom = null;
+        battleTicker.reset();
+        hiddenBattleEffects.finish();
+        battlePresentationRecords = Collections.emptyList();
+        soldierBattleAnimations.clear();
+        apacheMarineAnimations.clear();
+        chinookTankAnimations.clear();
+        suicideBomberAnimations.clear();
+        clearRocketBattleAnimations();
+        sourceRocketBindings.clear();
+        sourceInterceptedAircraftBindings.clear();
+        sourceAircraftTrails.clear();
+        submarineBattleAnimations.clear();
+        clearCarrierPlaneAnimations();
+        clearStandalonePlaneAnimations();
+        antiDefenseTrackingAnimations.clear();
+        clearSourceAirDefenses();
+        audio.finishAntiDefenseAudio();
+        satelliteBattleAnimations.clear();
+        satelliteAudioOwners.clear();
+        satelliteFlightCuePlayed = false;
+        pendingBattleAnimations.clear();
+        modalOpen = false;
+        accumulator = 0f;
+        audio.play(OriginalAudio.Cue.ACTION_ACCEPT);
     }
 
     /** Loads city textures on demand so the title and setup screens can start quickly. */
@@ -5100,6 +5226,19 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     }
 
     private void activateAt(float x, float y) {
+        if (settingsMenu.isOpen()) {
+            activateSettingsAt(x, y);
+            return;
+        }
+        if (!splashState.isVisible() && settingsButton.contains(x, y)
+                && (game == null || !MatchOutcomePresentation.isFinished(game.getMatchStatus()))) {
+            blurHiddenHelpInput();
+            showExitPromptSeconds = 0f;
+            settingsMenu.open(gameSaveStore != null && game != null && !isTurnInputBlocked(),
+                    gameSaveStore != null && gameSaveStore.hasSave());
+            settingsMenu.layout(mapFrame);
+            return;
+        }
         if (game == null) {
             activateSetupAt(x, y);
             return;
@@ -5117,10 +5256,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         if (muteButton.contains(x, y)) {
             audio.toggleOutputMuted();
-            return;
-        }
-        if (settingsButton.contains(x, y)) {
-            audio.toggleSound();
             return;
         }
         if (helpButton.contains(x, y)) {
@@ -5864,6 +5999,11 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     }
 
     private boolean handleBack() {
+        if (settingsMenu.isOpen()) {
+            settingsMenu.back();
+            skipNextFrameDelta = true;
+            return true;
+        }
         if (isTurnInputBlocked()) return true;
         if (helpState.isOpen()) {
             closeHelpSelection();
@@ -6130,7 +6270,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     @Override
     public boolean scrolled(float amountX, float amountY) {
-        if (isTurnInputBlocked()) {
+        if (settingsMenu.isOpen() || isTurnInputBlocked()) {
             return true;
         }
         unproject(Gdx.input.getX(), Gdx.input.getY());

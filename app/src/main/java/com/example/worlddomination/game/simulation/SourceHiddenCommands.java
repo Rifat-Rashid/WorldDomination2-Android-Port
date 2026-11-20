@@ -58,9 +58,14 @@ public final class SourceHiddenCommands {
 
     public SourceHiddenCommands copy() {
         SourceHiddenCommands copy = new SourceHiddenCommands();
-        copy.active.addAll(active);
-        copy.scoreCorrupt = scoreCorrupt;
+        copy.restore(active, scoreCorrupt);
         return copy;
+    }
+
+    void restore(EnumSet<Flag> flags, boolean scoreCorrupt) {
+        active.clear();
+        active.addAll(flags);
+        this.scoreCorrupt = scoreCorrupt;
     }
 
     private void toggle(Flag flag) {

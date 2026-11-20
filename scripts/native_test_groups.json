@@ -123,7 +123,8 @@
     "com.example.worlddomination.game.rendering.SourceHiddenHelpTypographyInstrumentedTest",
     "com.example.worlddomination.game.rendering.SourceHiddenHelpContextRecoveryInstrumentedTest",
     "com.example.worlddomination.game.rendering.SourceHiddenOutcomeInstrumentedTest",
-    "com.example.worlddomination.game.rendering.FullHudSourceComparisonInstrumentedTest"
+    "com.example.worlddomination.game.rendering.FullHudSourceComparisonInstrumentedTest",
+    "com.example.worlddomination.game.rendering.SettingsSaveLoadInstrumentedTest"
   ],
   "groups": [
     {
@@ -190,7 +191,8 @@
         "com.example.worlddomination.game.rendering.SourceHiddenHelpTypographyInstrumentedTest",
         "com.example.worlddomination.game.rendering.SourceHiddenHelpContextRecoveryInstrumentedTest",
         "com.example.worlddomination.game.rendering.SourceHiddenOutcomeInstrumentedTest",
-        "com.example.worlddomination.game.rendering.FullHudSourceComparisonInstrumentedTest"
+        "com.example.worlddomination.game.rendering.FullHudSourceComparisonInstrumentedTest",
+        "com.example.worlddomination.game.rendering.SettingsSaveLoadInstrumentedTest"
       ],
       "evidence": [
         "beta-ui-evidence",
@@ -1022,6 +1024,14 @@
     [
       "com.example.worlddomination.game.rendering.FullHudSourceComparisonInstrumentedTest",
       "sourceHudValuesSurvivePhoneScalingAndHelpComposition"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.SettingsSaveLoadInstrumentedTest",
+      "setupDisablesSaveAndLoadsAStoredMatch"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.SettingsSaveLoadInstrumentedTest",
+      "gameplaySaveAndReloadConsistentlyRestoreQueuedOrdersAndRandomStream"
     ]
   ]
 }

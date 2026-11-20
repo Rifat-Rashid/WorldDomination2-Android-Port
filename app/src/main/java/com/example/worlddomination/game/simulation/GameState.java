@@ -2,9 +2,14 @@ package com.example.worlddomination.game.simulation;
 
 import com.example.worlddomination.game.ai.OpponentAI;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -754,6 +759,8 @@ public final class GameState {
     private static final int[] PRODUCTION_GROUPS = {1, 2, 3, 4, 5, 6, 7, 8};
     private static final int PLAYER_STOCK_CAP = 4;
     private static final int MAX_TURN_ACTIONS = 2;
+    private static final int MAX_CHECKPOINT_MESSAGES = 65_536;
+    private static final int MAX_CHECKPOINT_DIPLOMACY_PROPOSALS = 32;
     private static final int SOURCE_SHIP_REGARD_LOSS_FALLBACK = 40;
     private static final int[][] SPY_STATISTICS = {
             {5, 20}, {7, 40}, {9, 60}, {12, 80}
@@ -950,6 +957,556 @@ public final class GameState {
         // The phone Lifecycle isolates score animation RNG at match creation.
         initialOutcomeRandom = random instanceof ReferenceRandom
                 ? ((ReferenceRandom) random).copy() : null;
+    }
+
+    private GameState(DataInput input) throws IOException {
+        difficulty = readCheckpointInt(input, 0, 2, "difficulty");
+        opponentTurnsEnabled = input.readBoolean();
+        initialPlayerCount = readCheckpointInt(input, 2, players.length, "nation count");
+        turn = readCheckpointInt(input, 0, Integer.MAX_VALUE, "turn");
+        random = ReferenceRandom.readCheckpoint(input);
+        initialOutcomeRandom = ReferenceRandom.readCheckpoint(input);
+        boolean scoreCorrupt = input.readBoolean();
+        EnumSet<SourceHiddenCommands.Flag> flags = EnumSet.noneOf(SourceHiddenCommands.Flag.class);
+        readCheckpointEnums(input, flags, SourceHiddenCommands.Flag.class,
+                SourceHiddenCommands.Flag.values().length);
+        hiddenCommands.restore(flags, scoreCorrupt);
+        boolean hasLivingOpponent = false;
+        for (int playerId = 0; playerId < players.length; playerId++) {
+            players[playerId] = readCheckpointPlayer(input, playerId);
+            hasLivingOpponent |= playerId != 0 && players[playerId].alive;
+        }
+        if (!getHuman().alive || !hasLivingOpponent) {
+            throw new IOException("Saved match is already over");
+        }
+        readCheckpointProposals(input, acceptedHumanDiplomacy, 0);
+        readCheckpointProposals(input, rejectedHumanDiplomacy, 0);
+        int orderCount = readCheckpointInt(input, 0, MAX_TURN_ACTIONS, "queued action count");
+        int previousSlot = -1;
+        for (int i = 0; i < orderCount; i++) {
+            ActionOrder order = readCheckpointOrder(input);
+            if (order.humanActionSlot <= previousSlot) {
+                throw new IOException("Invalid queued action slot order");
+            }
+            previousSlot = order.humanActionSlot;
+            queuedActions.add(order);
+        }
+        readCheckpointSelection(input);
+    }
+
+    /** Writes the platform-independent payload understood by the versioned save codec. */
+    public void writeCheckpoint(DataOutput output) throws IOException {
+        if (matchStatus != MatchStatus.ONGOING) {
+            throw new IOException("Only an ongoing match can be saved");
+        }
+        if (!(random instanceof ReferenceRandom) || initialOutcomeRandom == null) {
+            throw new IOException("This match uses an unsupported random stream");
+        }
+        output.writeInt(difficulty);
+        output.writeBoolean(opponentTurnsEnabled);
+        output.writeInt(initialPlayerCount);
+        output.writeInt(turn);
+        ((ReferenceRandom) random).writeCheckpoint(output);
+        initialOutcomeRandom.writeCheckpoint(output);
+        output.writeBoolean(hiddenCommands.isScoreCorrupt());
+        EnumSet<SourceHiddenCommands.Flag> flags = EnumSet.noneOf(SourceHiddenCommands.Flag.class);
+        for (SourceHiddenCommands.Flag flag : SourceHiddenCommands.Flag.values()) {
+            if (hiddenCommands.isActive(flag)) flags.add(flag);
+        }
+        writeCheckpointEnums(output, flags);
+        for (PlayerState player : players) writeCheckpointPlayer(output, player);
+        writeCheckpointProposals(output, acceptedHumanDiplomacy);
+        writeCheckpointProposals(output, rejectedHumanDiplomacy);
+        output.writeInt(queuedActions.size());
+        for (ActionOrder order : queuedActions) writeCheckpointOrder(output, order);
+        writeCheckpointSelection(output);
+    }
+
+    /** Reconstructs a new match directly from a validated save payload. */
+    public static GameState readCheckpoint(DataInput input) throws IOException {
+        return new GameState(input);
+    }
+
+    private static void writeCheckpointPlayer(DataOutput output, PlayerState player)
+            throws IOException {
+        output.writeInt(player.leaderId);
+        output.writeUTF(player.religionCode);
+        output.writeInt(player.playerColor);
+        output.writeBoolean(player.specialPerson);
+        output.writeBoolean(player.suicidePerson);
+        output.writeInt(player.primaryEnemyId);
+        output.writeInt(player.secondaryEnemyId);
+        output.writeInt(player.populationMillions);
+        output.writeInt(player.moneyMillions);
+        output.writeInt(player.turnMoneyMillions);
+        output.writeBoolean(player.aiTurnMoneyInvalid);
+        output.writeInt(player.religion);
+        output.writeLong(player.score);
+        output.writeInt(player.spyReadiness);
+        output.writeBoolean(player.alive);
+        output.writeInt(player.satellitesUsed);
+        output.writeInt(player.lastAttackedByPlayerId);
+        output.writeInt(player.lastAttackedByCasualties);
+        for (int other = 0; other < player.regardToward.length; other++) {
+            output.writeDouble(player.regardToward[other]);
+            output.writeInt(player.ceasefireTurns[other]);
+            output.writeBoolean(player.ceasefireAtZero[other]);
+            output.writeInt(player.diplomacyOfferedLastTurn[other]);
+        }
+        writeCheckpointProposals(output, player.pendingDiplomacyOrder);
+        for (CityState city : player.cities) {
+            output.writeInt(city.populationMillions);
+            output.writeInt(city.getDeathFrame());
+            output.writeBoolean(city.bioloaded);
+            output.writeBoolean(city.bioloadInBattle);
+        }
+        writeCheckpointEnums(output, player.lastTurnActions);
+        if (player.shortMessages.size() > MAX_CHECKPOINT_MESSAGES) {
+            throw new IOException("Too many messages in saved match");
+        }
+        writeCheckpointStrings(output, player.shortMessages);
+        writeCheckpointStrings(output, player.inventedTechnologies);
+        output.writeInt(player.weapons.size());
+        for (WeaponState weapon : player.weapons.values()) {
+            output.writeUTF(weapon.definition.name);
+            output.writeInt(weapon.inStock);
+            output.writeInt(weapon.investmentMillions);
+            output.writeBoolean(weapon.active);
+            output.writeBoolean(weapon.bioloaded);
+        }
+        writeCheckpointAmounts(output, player.desiredStock);
+        writeCheckpointEnums(output, player.bioloadedActions);
+        writeCheckpointString(output, player.preparedCarrierName);
+        output.writeInt(player.preparedLaunchSlot);
+        output.writeBoolean(player.bioloaded);
+        output.writeInt(player.turnBattleCasualties);
+        output.writeInt(player.turnBattleKills);
+        output.writeInt(player.turnResourcesGained);
+    }
+
+    private PlayerState readCheckpointPlayer(DataInput input, int playerId) throws IOException {
+        int leaderId = readCheckpointInt(input, -1, GameSetup.leaders().size() - 1, "leader");
+        String religionCode = input.readUTF();
+        if (!Arrays.asList("bhu", "chr", "com", "jew", "mus").contains(religionCode)) {
+            throw new IOException("Invalid saved nation religion");
+        }
+        int color = readCheckpointInt(input, 0, 5, "nation color");
+        if ((playerId < initialPlayerCount) != (color != 0)) {
+            throw new IOException("Invalid saved nation assignment");
+        }
+        boolean special = input.readBoolean();
+        boolean suicide = input.readBoolean();
+        int primaryEnemy = readCheckpointPlayerId(input);
+        int secondaryEnemy = readCheckpointPlayerId(input);
+        int population = input.readInt();
+        int money = input.readInt();
+        int turnMoney = input.readInt();
+        boolean budgetInvalid = input.readBoolean();
+        int religion = input.readInt();
+        PlayerState player = new PlayerState(playerId, playerId == 0, population, money,
+                religion, leaderId, religionCode, color);
+        player.specialPerson = special;
+        player.suicidePerson = suicide;
+        player.primaryEnemyId = primaryEnemy;
+        player.secondaryEnemyId = secondaryEnemy;
+        player.turnMoneyMillions = turnMoney;
+        player.aiTurnMoneyInvalid = budgetInvalid;
+        player.score = input.readLong();
+        player.spyReadiness = input.readInt();
+        player.alive = input.readBoolean();
+        if (color == 0 && player.alive) throw new IOException("Inactive nation is marked alive");
+        player.satellitesUsed = input.readInt();
+        player.lastAttackedByPlayerId = readCheckpointPlayerId(input);
+        player.lastAttackedByCasualties = input.readInt();
+        for (int other = 0; other < players.length; other++) {
+            player.regardToward[other] = readCheckpointDouble(input);
+            player.ceasefireTurns[other] = input.readInt();
+            player.ceasefireAtZero[other] = input.readBoolean();
+            player.diplomacyOfferedLastTurn[other] = input.readInt();
+        }
+        readCheckpointProposals(input, player.pendingDiplomacyOrder, playerId);
+        for (DiplomacyProposal proposal : player.pendingDiplomacyOrder) {
+            player.pendingDiplomacy[proposal.proposerId] = proposal;
+        }
+        for (int index = 0; index < 5; index++) {
+            int cityPopulation = input.readInt();
+            int deathFrame = input.readInt();
+            if (deathFrame != -1 && (deathFrame < 10 || deathFrame > 15 || cityPopulation > 0)) {
+                throw new IOException("Invalid saved city ruin frame");
+            }
+            CityState city = new CityState(playerId * 5 + index, playerId, index,
+                    cityPopulation, deathFrame);
+            city.bioloaded = input.readBoolean();
+            city.bioloadInBattle = input.readBoolean();
+            player.cities.add(city);
+        }
+        readCheckpointEnums(input, player.lastTurnActions, Action.class, MAX_TURN_ACTIONS);
+        int messages = readCheckpointInt(input, 0, MAX_CHECKPOINT_MESSAGES, "message count");
+        for (int i = 0; i < messages; i++) player.shortMessages.add(input.readUTF());
+        readCheckpointTechnologies(input, player.inventedTechnologies);
+        readCheckpointInt(input, WeaponCatalog.all().size(), WeaponCatalog.all().size(),
+                "weapon count");
+        for (WeaponCatalog.Definition definition : WeaponCatalog.all()) {
+            if (!definition.name.equals(input.readUTF())) {
+                throw new IOException("Unexpected weapon in saved inventory");
+            }
+            WeaponState weapon = new WeaponState(definition);
+            weapon.inStock = input.readInt();
+            weapon.investmentMillions = input.readInt();
+            weapon.active = input.readBoolean();
+            weapon.bioloaded = input.readBoolean();
+            player.weapons.put(definition.name, weapon);
+        }
+        readCheckpointAmounts(input, player.desiredStock, false);
+        readCheckpointEnums(input, player.bioloadedActions, Action.class, Action.values().length);
+        player.preparedCarrierName = readCheckpointWeapon(input, false);
+        if (player.preparedCarrierName != null
+                && !isCarrier(player.weapons.get(player.preparedCarrierName))) {
+            throw new IOException("Invalid saved prepared carrier");
+        }
+        player.preparedLaunchSlot = readCheckpointInt(input, -1, 2, "prepared launch slot");
+        player.bioloaded = input.readBoolean();
+        player.turnBattleCasualties = input.readInt();
+        player.turnBattleKills = input.readInt();
+        player.turnResourcesGained = input.readInt();
+        return player;
+    }
+
+    private static void writeCheckpointOrder(DataOutput output, ActionOrder order)
+            throws IOException {
+        output.writeInt(order.humanActionSlot);
+        output.writeUTF(order.action.name());
+        writeCheckpointAmounts(output, order.productionBudgets);
+        output.writeBoolean(order.sliderProductionBudgets != null);
+        if (order.sliderProductionBudgets != null) {
+            output.writeInt(order.sliderProductionBudgets.size());
+            for (Map.Entry<String, Double> entry : order.sliderProductionBudgets.entrySet()) {
+                output.writeUTF(entry.getKey());
+                output.writeDouble(entry.getValue());
+            }
+        }
+        writeCheckpointStrings(output, order.technologies);
+        output.writeInt(order.reservedMillions);
+        output.writeInt(order.targetPlayerId);
+        output.writeInt(order.targetCityIndex);
+        writeCheckpointString(output, order.weaponName);
+        writeCheckpointString(output, order.payloadName);
+        output.writeBoolean(order.prepareCarrier);
+        output.writeUTF(order.spyBuilding);
+        output.writeInt(order.diplomacyOption);
+        writeCheckpointStrikes(output, order.shipStrikes);
+    }
+
+    private ActionOrder readCheckpointOrder(DataInput input) throws IOException {
+        int slot = readCheckpointInt(input, 0, MAX_TURN_ACTIONS - 1, "queued action slot");
+        Action action = readCheckpointEnum(input.readUTF(), Action.class);
+        Map<String, Integer> production = new LinkedHashMap<>();
+        readCheckpointAmounts(input, production, true);
+        Map<String, Double> sliderProduction = null;
+        if (input.readBoolean()) {
+            sliderProduction = new LinkedHashMap<>();
+            int count = readCheckpointInt(input, 0, PRODUCTION_GROUPS.length, "slider count");
+            for (int i = 0; i < count; i++) {
+                String category = readCheckpointCategory(input);
+                if (sliderProduction.put(category, readCheckpointDouble(input)) != null) {
+                    throw new IOException("Repeated saved production category");
+                }
+            }
+        }
+        List<String> technologies = new ArrayList<>();
+        readCheckpointTechnologies(input, technologies);
+        int reservation = input.readInt();
+        int target = readCheckpointPlayerId(input);
+        int city = readCheckpointCityIndex(input);
+        String weapon = readCheckpointWeapon(input, true);
+        String payload = readCheckpointWeapon(input, false);
+        boolean prepareCarrier = input.readBoolean();
+        String spyBuilding = readCheckpointSpyBuilding(input);
+        int diplomacyOption = readCheckpointDiplomacyOption(input);
+        List<ShipStrike> strikes = new ArrayList<>();
+        readCheckpointStrikes(input, strikes);
+        ActionOrder order = new ActionOrder(0, action, production, technologies, reservation,
+                target, city, weapon, payload, prepareCarrier, spyBuilding, diplomacyOption,
+                strikes);
+        order.humanActionSlot = slot;
+        order.sliderProductionBudgets = sliderProduction;
+        validateCheckpointOrder(order);
+        return order;
+    }
+
+    private void validateCheckpointOrder(ActionOrder order) throws IOException {
+        WeaponState weapon = getHuman().weapons.get(order.weaponName);
+        String type = weapon == null ? "" : weapon.definition.type;
+        switch (order.action) {
+            case ATTACK:
+                if (order.targetPlayerId <= 0 || order.targetCityIndex < 0
+                        || !("soldier".equals(type) || "spy".equals(type))) {
+                    throw new IOException("Invalid saved direct attack");
+                }
+                break;
+            case PREPARED_ATTACK:
+                if (!isCarrier(weapon)) throw new IOException("Invalid saved strike carrier");
+                if (order.prepareCarrier) break;
+                if (order.targetPlayerId <= 0 || order.targetCityIndex < 0) {
+                    throw new IOException("Invalid saved strike target");
+                }
+                if ("ship".equals(type)) {
+                    if (order.shipStrikes.isEmpty()) throw new IOException("Missing saved ship payload");
+                    int target = order.shipStrikes.get(0).targetPlayerId;
+                    for (ShipStrike strike : order.shipStrikes) {
+                        if (strike.targetPlayerId != target || !isCompatiblePayload(weapon,
+                                getHuman().weapons.get(strike.payloadName))) {
+                            throw new IOException("Invalid saved ship payload");
+                        }
+                    }
+                } else if (!isCompatiblePayload(weapon, getHuman().weapons.get(order.payloadName))) {
+                    throw new IOException("Invalid saved strike payload");
+                }
+                break;
+            case PROPAGANDA:
+                if (order.targetPlayerId <= 0 || order.targetCityIndex < 0) {
+                    throw new IOException("Invalid saved propaganda target");
+                }
+                break;
+            case DIPLOMACY:
+                if (order.targetPlayerId <= 0) throw new IOException("Invalid saved diplomacy target");
+                break;
+            case DEFENSE:
+                if (!"anti".equals(type)) throw new IOException("Invalid saved defense weapon");
+                break;
+            case RESEARCH:
+                if (order.technologies.isEmpty()) throw new IOException("Missing saved research choice");
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void writeCheckpointSelection(DataOutput output) throws IOException {
+        writeCheckpointString(output, selectedAction == null ? null : selectedAction.name());
+        output.writeBoolean(selectedActionTargetConfirmed);
+        output.writeBoolean(propagandaCitySelected);
+        output.writeUTF(selectedProductionCategory);
+        writeCheckpointAmounts(output, selectedProductionPercentages);
+        output.writeBoolean(selectedProductionUsesSlider);
+        writeCheckpointStrings(output, selectedResearchTechnologies);
+        output.writeInt(selectedTargetPlayer);
+        output.writeInt(selectedTargetCity);
+        writeCheckpointString(output, selectedAttackWeapon);
+        writeCheckpointString(output, selectedPreparedCarrier);
+        writeCheckpointString(output, selectedPreparedPayload);
+        writeCheckpointStrikes(output, selectedShipStrikes);
+        writeCheckpointString(output, selectedDefenseWeapon);
+        output.writeUTF(selectedSpyBuilding);
+        output.writeInt(selectedDiplomacyOption);
+        output.writeInt(selectedIsland);
+        output.writeInt(selectedMapCityOwner);
+        output.writeInt(selectedMapCityIndex);
+    }
+
+    private void readCheckpointSelection(DataInput input) throws IOException {
+        String action = readCheckpointString(input);
+        selectedAction = action == null ? null : readCheckpointEnum(action, Action.class);
+        selectedActionTargetConfirmed = input.readBoolean();
+        propagandaCitySelected = input.readBoolean();
+        selectedProductionCategory = readCheckpointCategory(input);
+        readCheckpointAmounts(input, selectedProductionPercentages, true);
+        int totalPercentage = 0;
+        for (int percent : selectedProductionPercentages.values()) {
+            if (percent <= 0 || percent > 100) {
+                throw new IOException("Invalid saved production percentage");
+            }
+            totalPercentage += percent;
+        }
+        if (totalPercentage > 100) throw new IOException("Saved production exceeds 100 percent");
+        selectedProductionUsesSlider = input.readBoolean();
+        readCheckpointTechnologies(input, selectedResearchTechnologies);
+        selectedTargetPlayer = readCheckpointPlayerId(input);
+        selectedTargetCity = readCheckpointCityIndex(input);
+        selectedAttackWeapon = readCheckpointWeapon(input, true);
+        selectedPreparedCarrier = readCheckpointWeapon(input, false);
+        selectedPreparedPayload = readCheckpointWeapon(input, false);
+        readCheckpointStrikes(input, selectedShipStrikes);
+        selectedDefenseWeapon = readCheckpointWeapon(input, true);
+        selectedSpyBuilding = readCheckpointSpyBuilding(input);
+        selectedDiplomacyOption = readCheckpointDiplomacyOption(input);
+        selectedIsland = readCheckpointPlayerId(input);
+        selectedMapCityOwner = readCheckpointPlayerId(input);
+        selectedMapCityIndex = readCheckpointCityIndex(input);
+    }
+
+    private static void writeCheckpointProposals(DataOutput output, List<DiplomacyProposal> proposals)
+            throws IOException {
+        if (proposals.size() > MAX_CHECKPOINT_DIPLOMACY_PROPOSALS) {
+            throw new IOException("Too many diplomacy proposals in saved match");
+        }
+        output.writeInt(proposals.size());
+        for (DiplomacyProposal proposal : proposals) {
+            output.writeInt(proposal.proposerId);
+            output.writeInt(proposal.optionIndex);
+        }
+    }
+
+    private static void readCheckpointProposals(DataInput input, List<DiplomacyProposal> proposals,
+                                                 int receiver) throws IOException {
+        int count = readCheckpointInt(input, 0, MAX_CHECKPOINT_DIPLOMACY_PROPOSALS,
+                "diplomacy proposal count");
+        for (int i = 0; i < count; i++) {
+            int proposer = readCheckpointInt(input, 0, 4, "diplomacy proposer");
+            if (proposer == receiver) throw new IOException("Invalid saved diplomacy parties");
+            proposals.add(new DiplomacyProposal(proposer, readCheckpointDiplomacyOption(input)));
+        }
+    }
+
+    private static void writeCheckpointStrikes(DataOutput output, List<ShipStrike> strikes)
+            throws IOException {
+        output.writeInt(strikes.size());
+        for (ShipStrike strike : strikes) {
+            output.writeInt(strike.targetPlayerId);
+            output.writeInt(strike.cityIndex);
+            output.writeUTF(strike.payloadName);
+        }
+    }
+
+    private static void readCheckpointStrikes(DataInput input, List<ShipStrike> strikes)
+            throws IOException {
+        int count = readCheckpointInt(input, 0, 3, "ship strike count");
+        for (int i = 0; i < count; i++) {
+            int player = readCheckpointInt(input, 1, 4, "ship strike nation");
+            int city = readCheckpointInt(input, 0, 4, "ship strike city");
+            String payload = input.readUTF();
+            if (WeaponCatalog.byName(payload) == null) {
+                throw new IOException("Unknown saved ship payload");
+            }
+            strikes.add(new ShipStrike(player, city, payload));
+        }
+    }
+
+    private static void writeCheckpointAmounts(DataOutput output, Map<String, Integer> amounts)
+            throws IOException {
+        output.writeInt(amounts.size());
+        for (Map.Entry<String, Integer> amount : amounts.entrySet()) {
+            output.writeUTF(amount.getKey());
+            output.writeInt(amount.getValue());
+        }
+    }
+
+    private static void readCheckpointAmounts(DataInput input, Map<String, Integer> amounts,
+                                               boolean production) throws IOException {
+        int maximum = production ? PRODUCTION_GROUPS.length
+                : WeaponCatalog.all().size() + TechnologyCatalog.all().size();
+        int count = readCheckpointInt(input, 0, maximum, "amount count");
+        for (int i = 0; i < count; i++) {
+            String key = production ? readCheckpointCategory(input) : input.readUTF();
+            if (!production && WeaponCatalog.byName(key) == null
+                    && TechnologyCatalog.byName(key) == null) {
+                throw new IOException("Unknown saved stock preference");
+            }
+            if (amounts.put(key, input.readInt()) != null) {
+                throw new IOException("Repeated saved amount");
+            }
+        }
+    }
+
+    private static void writeCheckpointStrings(DataOutput output, Collection<String> values)
+            throws IOException {
+        output.writeInt(values.size());
+        for (String value : values) output.writeUTF(value);
+    }
+
+    private static void readCheckpointTechnologies(DataInput input, Collection<String> technologies)
+            throws IOException {
+        int count = readCheckpointInt(input, 0, TechnologyCatalog.all().size(), "technology count");
+        for (int i = 0; i < count; i++) {
+            String technology = input.readUTF();
+            if (TechnologyCatalog.byName(technology) == null || technologies.contains(technology)) {
+                throw new IOException("Invalid saved technology");
+            }
+            technologies.add(technology);
+        }
+    }
+
+    private static void writeCheckpointEnums(DataOutput output, Collection<? extends Enum<?>> values)
+            throws IOException {
+        output.writeInt(values.size());
+        for (Enum<?> value : values) output.writeUTF(value.name());
+    }
+
+    private static <E extends Enum<E>> void readCheckpointEnums(DataInput input, Collection<E> values,
+                                                                 Class<E> type, int maximum)
+            throws IOException {
+        int count = readCheckpointInt(input, 0, maximum, "enumeration count");
+        for (int i = 0; i < count; i++) {
+            if (!values.add(readCheckpointEnum(input.readUTF(), type))) {
+                throw new IOException("Repeated saved " + type.getSimpleName());
+            }
+        }
+    }
+
+    private static <E extends Enum<E>> E readCheckpointEnum(String name, Class<E> type)
+            throws IOException {
+        try {
+            return Enum.valueOf(type, name);
+        } catch (IllegalArgumentException invalid) {
+            throw new IOException("Unknown saved " + type.getSimpleName(), invalid);
+        }
+    }
+
+    private static void writeCheckpointString(DataOutput output, String value) throws IOException {
+        output.writeBoolean(value != null);
+        if (value != null) output.writeUTF(value);
+    }
+
+    private static String readCheckpointString(DataInput input) throws IOException {
+        return input.readBoolean() ? input.readUTF() : null;
+    }
+
+    private static String readCheckpointWeapon(DataInput input, boolean allowEmpty) throws IOException {
+        String name = readCheckpointString(input);
+        // No available attack or defense equipment is represented by an empty name in selection state.
+        if (name != null && !(allowEmpty && name.isEmpty()) && WeaponCatalog.byName(name) == null) {
+            throw new IOException("Unknown saved weapon");
+        }
+        return name;
+    }
+
+    private static String readCheckpointCategory(DataInput input) throws IOException {
+        String category = input.readUTF();
+        if (productionGroup(category) == 0) throw new IOException("Invalid saved production category");
+        return category;
+    }
+
+    private static String readCheckpointSpyBuilding(DataInput input) throws IOException {
+        String building = input.readUTF();
+        if (!Arrays.asList(SPY_BUILDINGS).contains(building)) {
+            throw new IOException("Invalid saved spy building");
+        }
+        return building;
+    }
+
+    private static int readCheckpointDiplomacyOption(DataInput input) throws IOException {
+        return readCheckpointInt(input, 0, DIPLOMACY_AMOUNT.length - 1, "diplomacy option");
+    }
+
+    private static int readCheckpointPlayerId(DataInput input) throws IOException {
+        return readCheckpointInt(input, -1, 4, "nation index");
+    }
+
+    private static int readCheckpointCityIndex(DataInput input) throws IOException {
+        return readCheckpointInt(input, -1, 4, "city index");
+    }
+
+    private static int readCheckpointInt(DataInput input, int min, int max, String name)
+            throws IOException {
+        int value = input.readInt();
+        if (value < min || value > max) throw new IOException("Invalid saved " + name);
+        return value;
+    }
+
+    private static double readCheckpointDouble(DataInput input) throws IOException {
+        double value = input.readDouble();
+        if (!Double.isFinite(value)) throw new IOException("Invalid saved numeric value");
+        return value;
     }
 
     private void initializeAiEnemies(PlayerState player) {
