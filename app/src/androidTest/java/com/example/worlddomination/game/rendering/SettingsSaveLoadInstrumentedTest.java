@@ -138,6 +138,22 @@ public final class SettingsSaveLoadInstrumentedTest {
                 current.confirmTurn();
                 assertEquals(1, current.getTurn());
                 assertEquals(0, current.getQueuedActionCount());
+
+                // Same turn, count and latest message, but a different first order.
+                GameState alternate = newMatch();
+                queue(alternate, GameState.Action.MASS_MEDIA);
+                alternate.selectAction(GameState.Action.RESEARCH);
+                assertTrue(alternate.selectResearchTechnology("soldier2"));
+                assertTrue(alternate.acceptSelectedAction());
+                assertEquals(0, alternate.getTurn());
+                GameState saved = GameSaveCodec.decode(expected);
+                assertEquals(saved.getMessages().size(), alternate.getMessages().size());
+                assertEquals(saved.getLatestMessage(), alternate.getLatestMessage());
+                installMatch(app, alternate);
+                render(app);
+                String alternateHistory = (String) field("cachedMessageText").get(app);
+                assertTrue(alternateHistory.contains(GameState.Action.MASS_MEDIA.label + " queued."));
+
                 GameSaveStore reopened = AndroidGameSaveStore.create(directory);
                 assertTrue(reopened.hasSave());
                 assertArrayEquals(expected, GameSaveCodec.encode(reopened.load()));
@@ -147,8 +163,12 @@ public final class SettingsSaveLoadInstrumentedTest {
                 tap(app, menu.confirm);
                 GameState loaded = game(app);
                 assertNotNull(loaded);
-                assertNotSame(current, loaded);
+                assertNotSame(alternate, loaded);
                 assertEquals("Loaded turn 0.", menu.getStatus());
+                render(app);
+                String loadedHistory = (String) field("cachedMessageText").get(app);
+                assertTrue(loadedHistory.contains(GameState.Action.RESOURCES.label + " queued."));
+                assertFalse(loadedHistory.contains(GameState.Action.MASS_MEDIA.label + " queued."));
                 assertEquals(GameState.Action.RESOURCES, loaded.getQueuedAction(0));
                 assertEquals(GameState.Action.RESEARCH, loaded.getQueuedAction(1));
                 assertEquals(55, loaded.getTurnMoneyMillions());

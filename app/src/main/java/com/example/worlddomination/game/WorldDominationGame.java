@@ -4850,6 +4850,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private void activateGame(GameState nextGame) {
         initializeGameplayAssets();
         game = nextGame;
+        cachedMessageCount = -1; // A different match can have the same turn and latest message.
         blurHiddenHelpInput();
         helpState.resetMatch();
         sourceActionInstruction.resetWelcome();
