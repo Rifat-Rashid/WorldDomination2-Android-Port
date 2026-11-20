@@ -561,7 +561,14 @@ class NativeGroupTests(unittest.TestCase):
         workflow = (Path(__file__).resolve().parents[2] / ".github/workflows/android-beta.yml"
                     ).read_text(encoding="utf-8")
         shard = workflow.split("  native-shards:\n", 1)[1].split("  score-persistence:\n", 1)[0]
-        self.assertIn("python3 scripts/run_manual_save_probe.py", shard)
+        # The emulator action runs each input line in its own shell.
+        probe_lines = [line.strip() for line in shard.splitlines()
+                       if "scripts/run_manual_save_probe.py" in line
+                       or "scripts/run_score_persistence_probe.py" in line]
+        self.assertEqual([
+            "if [ '${{ matrix.group }}' = a ]; then python3 scripts/run_manual_save_probe.py; "
+            "else python3 scripts/run_score_persistence_probe.py; fi",
+        ], probe_lines)
         check = workflow.split("  manual-save-persistence:\n", 1)[1].split("  native-mask-tests:\n", 1)[0]
         self.assertIn("needs: native-shards", check)
         self.assertIn("name: android-native-a-results", check)
