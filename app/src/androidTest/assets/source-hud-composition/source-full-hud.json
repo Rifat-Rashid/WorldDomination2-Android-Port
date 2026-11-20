@@ -1,0 +1,1638 @@
+{
+  "schema": "source-full-hud-v1",
+  "provenance": {
+    "reference": "C:/Users/Seize/Downloads/RealTest (read only)",
+    "execution": "python -B from external working directory; write-deny audit hook before wd2 imports",
+    "controls": [
+      "splashScreenMC",
+      "btn1",
+      "buildingBtn2",
+      "BTN_allLeaders_screen1",
+      "btn_start",
+      "btn1",
+      "btnAccept",
+      "btn_help"
+    ],
+    "presentationTicks": {
+      "initial": 24,
+      "resourcesHelp": 48
+    },
+    "noStepBetweenAspectImages": true,
+    "sourceHashes": {
+      "wd2/iphone_ui.py": "1146ccec8049db82a1fe1ca5d5c68dae6311c7ce92dc07369d7a390721badf7e",
+      "wd2/iphone_skin.py": "e02d7da51b6cdfda30ea79ab921eb51b8c33b2b31be21e3e20f19b9a1b2eb902",
+      "wd2/setup_menu.py": "5633326451e768a84a14bde04e452043ba7fac2617a4c71b7b36dcd0495f0c4a",
+      "wd2/action_entry.py": "a662f645d9047d7109bc0db95c7137b08e24e1248e644ec64e237cf666345c37",
+      "wd2/generated/Presenter_gameMenu.py": "2975ea18a4e3302a23e131c729b4f494e0561f6e3ec20b68d6ad3de366dd56be",
+      "assets/runtime/scene.json.gz": "7213f06fac4e887050ad89e0d3c9a67f47789096d559af8e08333991f7616629"
+    }
+  },
+  "initial": {
+    "state": {
+      "turn": 0,
+      "selectedAction": null,
+      "turnMoney": 80,
+      "money": 80,
+      "score": 0,
+      "technologyLevel": 35,
+      "religion": 80,
+      "humanPopulation": 500,
+      "activePopulation": 950.0,
+      "spyReadiness": 25,
+      "statMaskXScale": [
+        35.0,
+        80.0,
+        52.63157894736842,
+        25.0
+      ],
+      "centerFrame": 1,
+      "tubeFrames": [
+        1,
+        1
+      ],
+      "tubeActions": [
+        "undefined",
+        "undefined"
+      ],
+      "hostTicks": 24,
+      "setupDifficulty": 0,
+      "setupLeaders": [
+        0
+      ],
+      "setupBuilding": 2,
+      "rngStateSha256": "884b58c461006d449f31c39e913a1680e97468ee7bf1692fbdaa9aece8b9afa1"
+    },
+    "images": [
+      {
+        "file": "source-initial-original-800x600.png",
+        "sha256": "80e94999660d9ae3aea73853edd3d392092996303077305cefa5897704b801aa",
+        "size": [
+          800,
+          600
+        ],
+        "safe": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "density": 0.8928571428571429,
+        "logicalSize": [
+          896,
+          672
+        ],
+        "content": [
+          4,
+          4,
+          888,
+          664
+        ],
+        "left": [
+          4,
+          4,
+          191,
+          664
+        ],
+        "right": [
+          657,
+          4,
+          235,
+          664
+        ],
+        "center": [
+          200,
+          4,
+          452,
+          664
+        ],
+        "navPanel": [
+          4,
+          68,
+          191,
+          520
+        ],
+        "navViewport": [
+          12,
+          84,
+          175,
+          496
+        ],
+        "stock": [
+          664,
+          44,
+          221,
+          555
+        ],
+        "infoPanel": [
+          4,
+          593,
+          191,
+          75
+        ],
+        "statsInner": [
+          11,
+          605,
+          177,
+          58
+        ],
+        "statRowHeight": 11,
+        "statBars": [
+          {
+            "bar": [
+              94,
+              619,
+              86,
+              6
+            ],
+            "sourceMaskXScale": 35.0,
+            "clamped": 35.0,
+            "fillPixels": 30
+          },
+          {
+            "bar": [
+              94,
+              630,
+              86,
+              6
+            ],
+            "sourceMaskXScale": 80.0,
+            "clamped": 80.0,
+            "fillPixels": 69
+          },
+          {
+            "bar": [
+              94,
+              641,
+              86,
+              6
+            ],
+            "sourceMaskXScale": 52.63157894736842,
+            "clamped": 52.63157894736842,
+            "fillPixels": 46
+          },
+          {
+            "bar": [
+              94,
+              652,
+              86,
+              6
+            ],
+            "sourceMaskXScale": 25.0,
+            "clamped": 25.0,
+            "fillPixels": 22
+          }
+        ],
+        "toolbar": [
+          657,
+          4,
+          235,
+          34
+        ],
+        "mapFrame": [
+          200,
+          68,
+          452,
+          531
+        ],
+        "map": [
+          206,
+          74,
+          440,
+          519
+        ],
+        "messages": [
+          200,
+          604,
+          303,
+          64
+        ],
+        "score": [
+          507,
+          604,
+          145,
+          64
+        ],
+        "actions": [
+          657,
+          604,
+          235,
+          64
+        ],
+        "navigationOffset": 0.0,
+        "equipmentOffset": 0.0,
+        "detailsOpen": false,
+        "patches": [
+          {
+            "type": "Patch",
+            "source": [
+              4,
+              12,
+              174,
+              102
+            ],
+            "target": [
+              51,
+              6,
+              97,
+              57
+            ],
+            "clip": [
+              11,
+              6,
+              177,
+              57
+            ]
+          },
+          {
+            "type": "Patch",
+            "source": [
+              211,
+              18,
+              61,
+              65
+            ],
+            "target": [
+              277,
+              9,
+              43,
+              46
+            ],
+            "clip": [
+              263,
+              9,
+              71,
+              46
+            ]
+          },
+          {
+            "type": "Patch",
+            "source": [
+              278,
+              16,
+              8,
+              72
+            ],
+            "target": [
+              332,
+              20,
+              3,
+              27
+            ],
+            "clip": [
+              332,
+              15,
+              3,
+              36
+            ]
+          },
+          {
+            "type": "Patch",
+            "source": [
+              304,
+              18,
+              61,
+              65
+            ],
+            "target": [
+              361,
+              9,
+              43,
+              46
+            ],
+            "clip": [
+              347,
+              9,
+              71,
+              46
+            ]
+          },
+          {
+            "type": "Patch",
+            "source": [
+              371,
+              16,
+              8,
+              72
+            ],
+            "target": [
+              416,
+              20,
+              3,
+              27
+            ],
+            "clip": [
+              416,
+              15,
+              3,
+              36
+            ]
+          },
+          {
+            "type": "Patch",
+            "source": [
+              397,
+              18,
+              61,
+              65
+            ],
+            "target": [
+              445,
+              9,
+              43,
+              46
+            ],
+            "clip": [
+              431,
+              9,
+              71,
+              46
+            ]
+          },
+          {
+            "type": "Patch",
+            "source": [
+              464,
+              16,
+              8,
+              72
+            ],
+            "target": [
+              500,
+              20,
+              3,
+              27
+            ],
+            "clip": [
+              500,
+              15,
+              3,
+              36
+            ]
+          },
+          {
+            "type": "Patch",
+            "source": [
+              490,
+              18,
+              61,
+              65
+            ],
+            "target": [
+              529,
+              9,
+              43,
+              46
+            ],
+            "clip": [
+              515,
+              9,
+              71,
+              46
+            ]
+          },
+          {
+            "type": "Patch",
+            "source": [
+              557,
+              16,
+              8,
+              72
+            ],
+            "target": [
+              584,
+              20,
+              3,
+              27
+            ],
+            "clip": [
+              584,
+              15,
+              3,
+              36
+            ]
+          },
+          {
+            "type": "Patch",
+            "source": [
+              207,
+              95,
+              360,
+              17
+            ],
+            "target": [
+              320,
+              54,
+              212,
+              10
+            ],
+            "clip": [
+              206,
+              54,
+              440,
+              10
+            ]
+          },
+          {
+            "type": "IslandCamera"
+          }
+        ]
+      },
+      {
+        "file": "source-initial-phone-1194x552.png",
+        "sha256": "25159643773904b1cd673651741f81a8048701e7f99b6219846546759bc47349",
+        "size": [
+          1194,
+          552
+        ],
+        "safe": [
+          44,
+          0,
+          44,
+          21
+        ],
+        "density": 1.3325892857142858,
+        "logicalSize": [
+          896,
+          414
+        ],
+        "content": [
+          48,
+          4,
+          800,
+          385
+        ],
+        "left": [
+          48,
+          4,
+          172,
+          385
+        ],
+        "right": [
+          636,
+          4,
+          212,
+          385
+        ],
+        "center": [
+          225,
+          4,
+          406,
+          385
+        ],
+        "navPanel": [
+          48,
+          68,
+          172,
+          241
+        ],
+        "navViewport": [
+          56,
+          84,
+          156,
+          217
+        ],
+        "stock": [
+          643,
+          44,
+          198,
+          276
+        ],
+        "infoPanel": [
+          48,
+          314,
+          172,
+          75
+        ],
+        "statsInner": [
+          55,
+          326,
+          158,
+          58
+        ],
+        "statRowHeight": 11,
+        "statBars": [
+          {
+            "bar": [
+              129,
+              340,
+              77,
+              6
+            ],
+            "sourceMaskXScale": 35.0,
+            "clamped": 35.0,
+            "fillPixels": 27
+          },
+          {
+            "bar": [
+              129,
+              351,
+              77,
+              6
+            ],
+            "sourceMaskXScale": 80.0,
+            "clamped": 80.0,
+            "fillPixels": 62
+          },
+          {
+            "bar": [
+              129,
+              362,
+              77,
+              6
+            ],
+            "sourceMaskXScale": 52.63157894736842,
+            "clamped": 52.63157894736842,
+            "fillPixels": 41
+          },
+          {
+            "bar": [
+              129,
+              373,
+              77,
+              6
+            ],
+            "sourceMaskXScale": 25.0,
+            "clamped": 25.0,
+            "fillPixels": 19
+          }
+        ],
+        "toolbar": [
+          636,
+          4,
+          212,
+          34
+        ],
+        "mapFrame": [
+          225,
+          68,
+          406,
+          252
+        ],
+        "map": [
+          231,
+          74,
+          394,
+          240
+        ],
+        "messages": [
+          225,
+          325,
+          272,
+          64
+        ],
+        "score": [
+          501,
+          325,
+          130,
+          64
+        ],
+        "actions": [
+          636,
+          325,
+          212,
+          64
+        ],
+        "navigationOffset": 0.0,
+        "equipmentOffset": 0.0,
+        "detailsOpen": false,
+        "patches": [
+          {
+            "type": "Patch",
+            "source": [
+              4,
+              12,
+              174,
+              102
+            ],
+            "target": [
+              86,
+              6,
+              97,
+              57
+            ],
+            "clip": [
+              55,
+              6,
+              158,
+              57
+            ]
+          },
+          {
+            "type": "Patch",
+            "source": [
+              211,
+              18,
+              61,
+              65
+            ],
+            "target": [
+              279,
+              9,
+              43,
+              46
+            ],
+            "clip": [
+              265,
+              9,
+              71,
+              46
+            ]
+          },
+          {
+            "type": "Patch",
+            "source": [
+              278,
+              16,
+              8,
+              72
+            ],
+            "target": [
+              334,
+              20,
+              3,
+              27
+            ],
+            "clip": [
+              334,
+              15,
+              3,
+              36
+            ]
+          },
+          {
+            "type": "Patch",
+            "source": [
+              304,
+              18,
+              61,
+              65
+            ],
+            "target": [
+              363,
+              9,
+              43,
+              46
+            ],
+            "clip": [
+              349,
+              9,
+              71,
+              46
+            ]
+          },
+          {
+            "type": "Patch",
+            "source": [
+              371,
+              16,
+              8,
+              72
+            ],
+            "target": [
+              418,
+              20,
+              3,
+              27
+            ],
+            "clip": [
+              418,
+              15,
+              3,
+              36
+            ]
+          },
+          {
+            "type": "Patch",
+            "source": [
+              397,
+              18,
+              61,
+              65
+            ],
+            "target": [
+              447,
+              9,
+              43,
+              46
+            ],
+            "clip": [
+              433,
+              9,
+              71,
+              46
+            ]
+          },
+          {
+            "type": "Patch",
+            "source": [
+              464,
+              16,
+              8,
+              72
+            ],
+            "target": [
+              502,
+              20,
+              3,
+              27
+            ],
+            "clip": [
+              502,
+              15,
+              3,
+              36
+            ]
+          },
+          {
+            "type": "Patch",
+            "source": [
+              490,
+              18,
+              61,
+              65
+            ],
+            "target": [
+              531,
+              9,
+              43,
+              46
+            ],
+            "clip": [
+              517,
+              9,
+              71,
+              46
+            ]
+          },
+          {
+            "type": "Patch",
+            "source": [
+              557,
+              16,
+              8,
+              72
+            ],
+            "target": [
+              586,
+              20,
+              3,
+              27
+            ],
+            "clip": [
+              586,
+              15,
+              3,
+              36
+            ]
+          },
+          {
+            "type": "Patch",
+            "source": [
+              207,
+              95,
+              360,
+              17
+            ],
+            "target": [
+              322,
+              54,
+              212,
+              10
+            ],
+            "clip": [
+              231,
+              54,
+              394,
+              10
+            ]
+          },
+          {
+            "type": "IslandCamera"
+          }
+        ]
+      }
+    ]
+  },
+  "resourcesHelp": {
+    "state": {
+      "turn": 0,
+      "selectedAction": "help",
+      "turnMoney": 80,
+      "money": 80,
+      "score": 0,
+      "technologyLevel": 35,
+      "religion": 80,
+      "humanPopulation": 500,
+      "activePopulation": 950.0,
+      "spyReadiness": 25,
+      "statMaskXScale": [
+        35.0,
+        80.0,
+        52.63157894736842,
+        25.0
+      ],
+      "centerFrame": 101,
+      "tubeFrames": [
+        11,
+        10
+      ],
+      "tubeActions": [
+        "resources",
+        "undefined"
+      ],
+      "hostTicks": 48,
+      "setupDifficulty": 0,
+      "setupLeaders": [
+        0
+      ],
+      "setupBuilding": 2,
+      "rngStateSha256": "884b58c461006d449f31c39e913a1680e97468ee7bf1692fbdaa9aece8b9afa1"
+    },
+    "images": [
+      {
+        "file": "source-resources-help-original-800x600.png",
+        "sha256": "3d412f8670ab369ea4f2c40177a43fad293f25dd53e6fa4656e722d7a43fd759",
+        "size": [
+          800,
+          600
+        ],
+        "safe": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "density": 0.8928571428571429,
+        "logicalSize": [
+          896,
+          672
+        ],
+        "content": [
+          4,
+          4,
+          888,
+          664
+        ],
+        "left": [
+          4,
+          4,
+          191,
+          664
+        ],
+        "right": [
+          657,
+          4,
+          235,
+          664
+        ],
+        "center": [
+          200,
+          4,
+          452,
+          664
+        ],
+        "navPanel": [
+          4,
+          68,
+          191,
+          520
+        ],
+        "navViewport": [
+          12,
+          84,
+          175,
+          496
+        ],
+        "stock": [
+          664,
+          44,
+          221,
+          555
+        ],
+        "infoPanel": [
+          4,
+          593,
+          191,
+          75
+        ],
+        "statsInner": [
+          11,
+          605,
+          177,
+          58
+        ],
+        "statRowHeight": 11,
+        "statBars": [
+          {
+            "bar": [
+              94,
+              619,
+              86,
+              6
+            ],
+            "sourceMaskXScale": 35.0,
+            "clamped": 35.0,
+            "fillPixels": 30
+          },
+          {
+            "bar": [
+              94,
+              630,
+              86,
+              6
+            ],
+            "sourceMaskXScale": 80.0,
+            "clamped": 80.0,
+            "fillPixels": 69
+          },
+          {
+            "bar": [
+              94,
+              641,
+              86,
+              6
+            ],
+            "sourceMaskXScale": 52.63157894736842,
+            "clamped": 52.63157894736842,
+            "fillPixels": 46
+          },
+          {
+            "bar": [
+              94,
+              652,
+              86,
+              6
+            ],
+            "sourceMaskXScale": 25.0,
+            "clamped": 25.0,
+            "fillPixels": 22
+          }
+        ],
+        "toolbar": [
+          657,
+          4,
+          235,
+          34
+        ],
+        "mapFrame": [
+          200,
+          68,
+          452,
+          531
+        ],
+        "map": [
+          206,
+          74,
+          440,
+          519
+        ],
+        "messages": [
+          200,
+          604,
+          303,
+          64
+        ],
+        "score": [
+          507,
+          604,
+          145,
+          64
+        ],
+        "actions": [
+          657,
+          604,
+          235,
+          64
+        ],
+        "navigationOffset": 0.0,
+        "equipmentOffset": 0.0,
+        "detailsOpen": true,
+        "patches": [
+          {
+            "type": "Patch",
+            "source": [
+              4,
+              12,
+              174,
+              102
+            ],
+            "target": [
+              51,
+              6,
+              97,
+              57
+            ],
+            "clip": [
+              11,
+              6,
+              177,
+              57
+            ]
+          },
+          {
+            "type": "Patch",
+            "source": [
+              211,
+              18,
+              61,
+              65
+            ],
+            "target": [
+              277,
+              9,
+              43,
+              46
+            ],
+            "clip": [
+              263,
+              9,
+              71,
+              46
+            ]
+          },
+          {
+            "type": "Patch",
+            "source": [
+              278,
+              16,
+              8,
+              72
+            ],
+            "target": [
+              332,
+              20,
+              3,
+              27
+            ],
+            "clip": [
+              332,
+              15,
+              3,
+              36
+            ]
+          },
+          {
+            "type": "Patch",
+            "source": [
+              304,
+              18,
+              61,
+              65
+            ],
+            "target": [
+              361,
+              9,
+              43,
+              46
+            ],
+            "clip": [
+              347,
+              9,
+              71,
+              46
+            ]
+          },
+          {
+            "type": "Patch",
+            "source": [
+              371,
+              16,
+              8,
+              72
+            ],
+            "target": [
+              416,
+              20,
+              3,
+              27
+            ],
+            "clip": [
+              416,
+              15,
+              3,
+              36
+            ]
+          },
+          {
+            "type": "Patch",
+            "source": [
+              397,
+              18,
+              61,
+              65
+            ],
+            "target": [
+              445,
+              9,
+              43,
+              46
+            ],
+            "clip": [
+              431,
+              9,
+              71,
+              46
+            ]
+          },
+          {
+            "type": "Patch",
+            "source": [
+              464,
+              16,
+              8,
+              72
+            ],
+            "target": [
+              500,
+              20,
+              3,
+              27
+            ],
+            "clip": [
+              500,
+              15,
+              3,
+              36
+            ]
+          },
+          {
+            "type": "Patch",
+            "source": [
+              490,
+              18,
+              61,
+              65
+            ],
+            "target": [
+              529,
+              9,
+              43,
+              46
+            ],
+            "clip": [
+              515,
+              9,
+              71,
+              46
+            ]
+          },
+          {
+            "type": "Patch",
+            "source": [
+              557,
+              16,
+              8,
+              72
+            ],
+            "target": [
+              584,
+              20,
+              3,
+              27
+            ],
+            "clip": [
+              584,
+              15,
+              3,
+              36
+            ]
+          },
+          {
+            "type": "Patch",
+            "source": [
+              207,
+              95,
+              360,
+              17
+            ],
+            "target": [
+              320,
+              54,
+              212,
+              10
+            ],
+            "clip": [
+              206,
+              54,
+              440,
+              10
+            ]
+          },
+          {
+            "type": "Patch",
+            "source": [
+              205,
+              135,
+              365,
+              275
+            ],
+            "target": [
+              206,
+              167,
+              440,
+              332
+            ],
+            "clip": [
+              206,
+              74,
+              440,
+              519
+            ]
+          }
+        ]
+      },
+      {
+        "file": "source-resources-help-phone-1194x552.png",
+        "sha256": "10a9e9964e80d57ab8b57e01ca314eafca13d760b74f664a8b3c771df9325815",
+        "size": [
+          1194,
+          552
+        ],
+        "safe": [
+          44,
+          0,
+          44,
+          21
+        ],
+        "density": 1.3325892857142858,
+        "logicalSize": [
+          896,
+          414
+        ],
+        "content": [
+          48,
+          4,
+          800,
+          385
+        ],
+        "left": [
+          48,
+          4,
+          172,
+          385
+        ],
+        "right": [
+          636,
+          4,
+          212,
+          385
+        ],
+        "center": [
+          225,
+          4,
+          406,
+          385
+        ],
+        "navPanel": [
+          48,
+          68,
+          172,
+          241
+        ],
+        "navViewport": [
+          56,
+          84,
+          156,
+          217
+        ],
+        "stock": [
+          643,
+          44,
+          198,
+          276
+        ],
+        "infoPanel": [
+          48,
+          314,
+          172,
+          75
+        ],
+        "statsInner": [
+          55,
+          326,
+          158,
+          58
+        ],
+        "statRowHeight": 11,
+        "statBars": [
+          {
+            "bar": [
+              129,
+              340,
+              77,
+              6
+            ],
+            "sourceMaskXScale": 35.0,
+            "clamped": 35.0,
+            "fillPixels": 27
+          },
+          {
+            "bar": [
+              129,
+              351,
+              77,
+              6
+            ],
+            "sourceMaskXScale": 80.0,
+            "clamped": 80.0,
+            "fillPixels": 62
+          },
+          {
+            "bar": [
+              129,
+              362,
+              77,
+              6
+            ],
+            "sourceMaskXScale": 52.63157894736842,
+            "clamped": 52.63157894736842,
+            "fillPixels": 41
+          },
+          {
+            "bar": [
+              129,
+              373,
+              77,
+              6
+            ],
+            "sourceMaskXScale": 25.0,
+            "clamped": 25.0,
+            "fillPixels": 19
+          }
+        ],
+        "toolbar": [
+          636,
+          4,
+          212,
+          34
+        ],
+        "mapFrame": [
+          225,
+          68,
+          406,
+          252
+        ],
+        "map": [
+          231,
+          74,
+          394,
+          240
+        ],
+        "messages": [
+          225,
+          325,
+          272,
+          64
+        ],
+        "score": [
+          501,
+          325,
+          130,
+          64
+        ],
+        "actions": [
+          636,
+          325,
+          212,
+          64
+        ],
+        "navigationOffset": 0.0,
+        "equipmentOffset": 0.0,
+        "detailsOpen": true,
+        "patches": [
+          {
+            "type": "Patch",
+            "source": [
+              4,
+              12,
+              174,
+              102
+            ],
+            "target": [
+              86,
+              6,
+              97,
+              57
+            ],
+            "clip": [
+              55,
+              6,
+              158,
+              57
+            ]
+          },
+          {
+            "type": "Patch",
+            "source": [
+              211,
+              18,
+              61,
+              65
+            ],
+            "target": [
+              279,
+              9,
+              43,
+              46
+            ],
+            "clip": [
+              265,
+              9,
+              71,
+              46
+            ]
+          },
+          {
+            "type": "Patch",
+            "source": [
+              278,
+              16,
+              8,
+              72
+            ],
+            "target": [
+              334,
+              20,
+              3,
+              27
+            ],
+            "clip": [
+              334,
+              15,
+              3,
+              36
+            ]
+          },
+          {
+            "type": "Patch",
+            "source": [
+              304,
+              18,
+              61,
+              65
+            ],
+            "target": [
+              363,
+              9,
+              43,
+              46
+            ],
+            "clip": [
+              349,
+              9,
+              71,
+              46
+            ]
+          },
+          {
+            "type": "Patch",
+            "source": [
+              371,
+              16,
+              8,
+              72
+            ],
+            "target": [
+              418,
+              20,
+              3,
+              27
+            ],
+            "clip": [
+              418,
+              15,
+              3,
+              36
+            ]
+          },
+          {
+            "type": "Patch",
+            "source": [
+              397,
+              18,
+              61,
+              65
+            ],
+            "target": [
+              447,
+              9,
+              43,
+              46
+            ],
+            "clip": [
+              433,
+              9,
+              71,
+              46
+            ]
+          },
+          {
+            "type": "Patch",
+            "source": [
+              464,
+              16,
+              8,
+              72
+            ],
+            "target": [
+              502,
+              20,
+              3,
+              27
+            ],
+            "clip": [
+              502,
+              15,
+              3,
+              36
+            ]
+          },
+          {
+            "type": "Patch",
+            "source": [
+              490,
+              18,
+              61,
+              65
+            ],
+            "target": [
+              531,
+              9,
+              43,
+              46
+            ],
+            "clip": [
+              517,
+              9,
+              71,
+              46
+            ]
+          },
+          {
+            "type": "Patch",
+            "source": [
+              557,
+              16,
+              8,
+              72
+            ],
+            "target": [
+              586,
+              20,
+              3,
+              27
+            ],
+            "clip": [
+              586,
+              15,
+              3,
+              36
+            ]
+          },
+          {
+            "type": "Patch",
+            "source": [
+              207,
+              95,
+              360,
+              17
+            ],
+            "target": [
+              322,
+              54,
+              212,
+              10
+            ],
+            "clip": [
+              231,
+              54,
+              394,
+              10
+            ]
+          },
+          {
+            "type": "Patch",
+            "source": [
+              205,
+              135,
+              365,
+              275
+            ],
+            "target": [
+              269,
+              74,
+              319,
+              240
+            ],
+            "clip": [
+              231,
+              74,
+              394,
+              240
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -87,6 +87,9 @@ jobs:
       max-parallel: 6
       matrix:
         include:
+          - id: phone-funds-statistics
+            check: Phone funds and fractional population statistics
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.InformationPanelTextTest"'
           - id: source-hidden-help
             check: Hidden Help commands, private effects, and score disqualification
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.SourceHiddenHelpStateTest" --tests "com.example.worlddomination.game.simulation.SourceHiddenCommandsTest" --tests "com.example.worlddomination.game.rendering.SourceHiddenBattleEffectsTest" --tests "com.example.worlddomination.game.rendering.SourceHiddenHelpRendererTest" --tests "com.example.worlddomination.game.assets.SourceHiddenHelpAssetsTest" --tests "com.example.worlddomination.game.ui.MatchOutcomeSequenceTest" --tests "com.example.worlddomination.game.ui.SourceHiddenHelpTypographyTest" --tests "com.example.worlddomination.game.simulation.SourceHiddenCommandGameIsolationTest" --tests "com.example.worlddomination.game.assets.SourceHiddenCreatureTimelineTest" --tests "com.example.worlddomination.game.rendering.SourceHiddenCityExplosionTest" --tests "com.example.worlddomination.game.rendering.SourceDustCleanupTest" --tests "com.example.worlddomination.game.rendering.SourceDiscoBattleActionFramesTest" --tests "com.example.worlddomination.game.rendering.SourceDiscoAutoplayTest" --tests "com.example.worlddomination.game.rendering.SourceDiscoActionBuildingTest"'

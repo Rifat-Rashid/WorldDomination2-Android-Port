@@ -1,0 +1,233 @@
+{
+  "schema": "source-information-values-v1",
+  "scope": "Diagnostic source object mutations after legal seed-0/Easy/building-2/rival-0 setup; restored before exit; no turn action or RNG injection",
+  "execution": "python -B from external cwd; reference write-deny audit hook before wd2 imports",
+  "setupControls": [
+    "splashScreenMC",
+    "btn1",
+    "buildingBtn2",
+    "BTN_allLeaders_screen1",
+    "btn_start"
+  ],
+  "sourceHostTicks": 24,
+  "phoneOutput": [
+    1194,
+    552
+  ],
+  "phoneSafeLogical": [
+    44,
+    0,
+    44,
+    21
+  ],
+  "sourceInfoPanelLogical": [
+    48,
+    314,
+    172,
+    75
+  ],
+  "fundsLabels": [
+    {
+      "inputTurnMoneyMillions": -2147483648,
+      "observedTurnMoneyMillions": -2147483648,
+      "label": {
+        "text": "$ -2,147,483,648,000,000",
+        "rect": [
+          122,
+          326,
+          86,
+          11
+        ],
+        "size": 10
+      }
+    },
+    {
+      "inputTurnMoneyMillions": -1,
+      "observedTurnMoneyMillions": -1,
+      "label": {
+        "text": "$ -1,000,000",
+        "rect": [
+          122,
+          326,
+          86,
+          11
+        ],
+        "size": 10
+      }
+    },
+    {
+      "inputTurnMoneyMillions": 0,
+      "observedTurnMoneyMillions": 0,
+      "label": {
+        "text": "$ 0",
+        "rect": [
+          122,
+          326,
+          86,
+          11
+        ],
+        "size": 10
+      }
+    },
+    {
+      "inputTurnMoneyMillions": 1,
+      "observedTurnMoneyMillions": 1,
+      "label": {
+        "text": "$ 1,000,000",
+        "rect": [
+          122,
+          326,
+          86,
+          11
+        ],
+        "size": 10
+      }
+    },
+    {
+      "inputTurnMoneyMillions": 80,
+      "observedTurnMoneyMillions": 80,
+      "label": {
+        "text": "$ 80,000,000",
+        "rect": [
+          122,
+          326,
+          86,
+          11
+        ],
+        "size": 10
+      }
+    },
+    {
+      "inputTurnMoneyMillions": 999,
+      "observedTurnMoneyMillions": 999,
+      "label": {
+        "text": "$ 999,000,000",
+        "rect": [
+          122,
+          326,
+          86,
+          11
+        ],
+        "size": 10
+      }
+    },
+    {
+      "inputTurnMoneyMillions": 1000,
+      "observedTurnMoneyMillions": 1000,
+      "label": {
+        "text": "$ 1,000,000,000",
+        "rect": [
+          122,
+          326,
+          86,
+          11
+        ],
+        "size": 10
+      }
+    },
+    {
+      "inputTurnMoneyMillions": 2147483647,
+      "observedTurnMoneyMillions": 2147483647,
+      "label": {
+        "text": "$ 2,147,483,647,000,000",
+        "rect": [
+          122,
+          326,
+          86,
+          11
+        ],
+        "size": 10
+      }
+    }
+  ],
+  "populationMasks": [
+    {
+      "requestedHumanPopulation": 500,
+      "requestedActivePopulation": 950,
+      "observedPopulations": [
+        500,
+        450
+      ],
+      "observedActivePopulation": 950,
+      "statMaskXScale": [
+        35.0,
+        80.0,
+        52.63157894736842,
+        25.0
+      ],
+      "populationMaskXScale": 52.63157894736842
+    },
+    {
+      "requestedHumanPopulation": 1,
+      "requestedActivePopulation": 3,
+      "observedPopulations": [
+        1,
+        2
+      ],
+      "observedActivePopulation": 3,
+      "statMaskXScale": [
+        35.0,
+        80.0,
+        33.33333333333333,
+        25.0
+      ],
+      "populationMaskXScale": 33.33333333333333
+    },
+    {
+      "requestedHumanPopulation": 2,
+      "requestedActivePopulation": 3,
+      "observedPopulations": [
+        2,
+        1
+      ],
+      "observedActivePopulation": 3,
+      "statMaskXScale": [
+        35.0,
+        80.0,
+        66.66666666666666,
+        25.0
+      ],
+      "populationMaskXScale": 66.66666666666666
+    },
+    {
+      "requestedHumanPopulation": 0,
+      "requestedActivePopulation": 950,
+      "observedPopulations": [
+        0,
+        950
+      ],
+      "observedActivePopulation": 950,
+      "statMaskXScale": [
+        35.0,
+        80.0,
+        0.0,
+        25.0
+      ],
+      "populationMaskXScale": 0.0
+    },
+    {
+      "requestedHumanPopulation": 500,
+      "requestedActivePopulation": 500,
+      "observedPopulations": [
+        500,
+        0
+      ],
+      "observedActivePopulation": 500,
+      "statMaskXScale": [
+        35.0,
+        80.0,
+        100.0,
+        25.0
+      ],
+      "populationMaskXScale": 100.0
+    }
+  ],
+  "sourceHashes": {
+    "wd2/iphone_ui.py": "1146ccec8049db82a1fe1ca5d5c68dae6311c7ce92dc07369d7a390721badf7e",
+    "wd2/generated/Sub_Presenter_interface.py": "bdb6675220507323b784b4867af0d3f80b4366935f353903b12c2d052d714bd7",
+    "wd2/generated/View_interface.py": "b165a31a560b29d503dc02c406a9f07898f1b2424fad23ec024ed33d05cd0f1f",
+    "wd2/setup_menu.py": "5633326451e768a84a14bde04e452043ba7fac2617a4c71b7b36dcd0495f0c4a",
+    "assets/runtime/scene.json.gz": "7213f06fac4e887050ad89e0d3c9a67f47789096d559af8e08333991f7616629"
+  },
+  "probeSha256": "9d650b806758895cefc7e6a7514208e9d10adb4fbd9442d9bf33718d06771a97"
+}

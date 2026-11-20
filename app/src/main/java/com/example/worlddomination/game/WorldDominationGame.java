@@ -121,6 +121,7 @@ import com.example.worlddomination.game.ui.EconomyWarningText;
 import com.example.worlddomination.game.rendering.SourceActionMenuRenderer;
 import com.example.worlddomination.game.ui.BattlefieldCityLayout;
 import com.example.worlddomination.game.ui.InformationPanelLayout;
+import com.example.worlddomination.game.ui.InformationPanelText;
 import com.example.worlddomination.game.ui.SourceStatisticBar;
 import com.example.worlddomination.game.ui.MatchOutcomePresentation;
 import com.example.worlddomination.game.ui.MatchOutcomeSequence;
@@ -3168,7 +3169,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         font.getData().setScale(targetScale);
         font.setColor(TITLE_TEXT);
         drawInformationText("FUNDS", x, 0);
-        String funds = "$ " + formatMillions(human.turnMoneyMillions);
+        String funds = InformationPanelText.funds(human.turnMoneyMillions);
         float fundsX = x + width * 0.43f;
         float fundsWidth = width * 0.57f;
         glyphLayout.setText(font, funds);
@@ -3195,15 +3196,15 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         float x = infoPanel.x + infoPanel.width * 0.47f;
         double width = infoPanel.width * 0.47d;
         GameState.PlayerState human = game.getHuman();
-        int activePopulation = 0;
+        long activePopulation = 0;
         for (int playerId = 0; playerId < 5; playerId++) {
             GameState.PlayerState player = game.getPlayerState(playerId);
             if (player.alive) {
                 activePopulation += player.populationMillions;
             }
         }
-        int populationShare = activePopulation <= 0 ? 0
-                : Math.round(human.populationMillions * 100f / activePopulation);
+        double populationShare = SourceStatisticBar.populationPercentage(
+                human.populationMillions, activePopulation);
         drawInformationBar(x, InformationPanelLayout.barY(infoPanel, 1), width,
                 human.getTechnologyLevel());
         drawInformationBar(x, InformationPanelLayout.barY(infoPanel, 2), width,
@@ -3214,7 +3215,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 human.spyReadiness);
     }
 
-    private void drawInformationBar(float x, float y, double width, int statistic) {
+    private void drawInformationBar(float x, float y, double width, double statistic) {
         // Pygame truncates the positive logical coordinates and track width;
         // the separately rounded fill can extend one column past that track.
         int left = (int) x;
