@@ -1043,7 +1043,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     }
 
     private boolean hasActivePresentation() {
-        if (game == null) {
+        // Settings pauses the battlefield clock. Input and asset uploads request redraws.
+        if (game == null || settingsMenu.isOpen()) {
             return false;
         }
         if (outcomeSequence.isEndgameVisible()) {

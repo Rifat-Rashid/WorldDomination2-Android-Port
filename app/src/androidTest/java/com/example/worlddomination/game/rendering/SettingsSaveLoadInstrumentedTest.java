@@ -103,12 +103,17 @@ public final class SettingsSaveLoadInstrumentedTest {
                 GameState current = newMatch();
                 installMatch(app, current);
                 render(app);
+                assertTrue("The battlefield animates when visible", Gdx.graphics.isContinuousRendering());
                 GameSettingsMenu menu = openSettings(app);
+                render(app);
+                assertFalse("Open Settings renders only on demand", Gdx.graphics.isContinuousRendering());
                 assertTrue(menu.canSave());
                 assertFalse(menu.canLoad());
                 assertUnderlyingNavigationBlocked(app, current);
                 tap(app, menu.close);
                 assertFalse(menu.isOpen());
+                render(app);
+                assertTrue("Close resumes battlefield animation", Gdx.graphics.isContinuousRendering());
 
                 queue(current, GameState.Action.RESOURCES);
                 current.selectAction(GameState.Action.RESEARCH);
@@ -126,6 +131,7 @@ public final class SettingsSaveLoadInstrumentedTest {
                 tap(app, menu.load);
                 assertTrue(menu.isConfirmingLoad());
                 capture(app, "settings-save-load-confirm.png");
+                assertFalse("Load confirmation stays on demand", Gdx.graphics.isContinuousRendering());
                 tap(app, menu.cancel);
                 assertTrue(menu.isOpen());
                 assertFalse(menu.isConfirmingLoad());
@@ -133,6 +139,8 @@ public final class SettingsSaveLoadInstrumentedTest {
                 assertArrayEquals(expected, GameSaveCodec.encode(current));
                 assertTrue(app.keyDown(Input.Keys.BACK));
                 assertFalse(menu.isOpen());
+                render(app);
+                assertTrue("Back resumes battlefield animation", Gdx.graphics.isContinuousRendering());
 
                 // Settle a divergent match without waiting for battle presentation.
                 current.confirmTurn();
@@ -166,6 +174,7 @@ public final class SettingsSaveLoadInstrumentedTest {
                 assertNotSame(alternate, loaded);
                 assertEquals("Loaded turn 0.", menu.getStatus());
                 render(app);
+                assertFalse("Loaded match stays paused behind Settings", Gdx.graphics.isContinuousRendering());
                 String loadedHistory = (String) field("cachedMessageText").get(app);
                 assertTrue(loadedHistory.contains(GameState.Action.RESOURCES.label + " queued."));
                 assertFalse(loadedHistory.contains(GameState.Action.MASS_MEDIA.label + " queued."));
