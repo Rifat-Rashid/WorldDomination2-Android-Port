@@ -116,9 +116,10 @@ jobs:
           arch: x86_64
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          # The emulator action executes each script line as a separate shell command.
           script: |
             bash scripts/run_android_native_tests.sh '${{ steps.inventory.outputs.classes }}' ${{ steps.inventory.outputs.evidence }}
-            if [ '${{ matrix.group }}' = b ]; then python3 scripts/run_score_persistence_probe.py; fi
+            if [ '${{ matrix.group }}' = a ]; then python3 scripts/run_manual_save_probe.py; else python3 scripts/run_score_persistence_probe.py; fi
       - name: Preserve this Android group's results and screenshots
         if: always()
         uses: actions/upload-artifact@v6
@@ -147,6 +148,25 @@ jobs:
         run: |
           test "$NATIVE_RESULT" = success
           python3 scripts/run_score_persistence_probe.py --verify score-artifacts/reports/androidTests/score-persistence.json
+
+  manual-save-persistence:
+    name: Manual match survives Android process restart
+    needs: native-shards
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v7
+        with:
+          name: android-native-a-results
+          path: match-save-artifacts
+      - name: Verify save and load ran in separate processes
+        env:
+          NATIVE_RESULT: ${{ needs.native-shards.result }}
+        run: |
+          test "$NATIVE_RESULT" = success
+          python3 scripts/run_manual_save_probe.py --verify match-save-artifacts/reports/androidTests/manual-save-persistence.json
 
   native-mask-tests:
     # Keep the existing required check; it succeeds only after both groups pass.
