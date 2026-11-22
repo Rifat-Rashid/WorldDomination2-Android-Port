@@ -5,6 +5,7 @@ import com.example.worlddomination.game.persistence.GameSaveCodec;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Random;
 import java.util.zip.CRC32;
@@ -18,11 +19,43 @@ import static com.example.worlddomination.game.simulation.GameState.Action.SKIP;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 public final class GameSaveCodecTest {
+    @Test
+    public void loadsAndContinuesMatchWrittenByFirstSaveRelease() throws IOException {
+        // Written by the unmodified version-1 encoder at 2fc0863 with seed 0 and rivals 0 and 1.
+        // Turn 0 settled 50% rocket production and Resources. Turn 1 queued Resources and
+        // soldier2 research. Keep these bytes when adding writers for newer versions.
+        GameState restored;
+        try (InputStream checkpoint = getClass().getResourceAsStream("/manual-game-v1.wd2")) {
+            assertNotNull("Historical version-1 checkpoint", checkpoint);
+            restored = GameSaveCodec.decode(checkpoint.readAllBytes());
+        }
+
+        assertEquals(1, restored.getTurn());
+        assertEquals(86, restored.getHuman().moneyMillions);
+        assertEquals(76, restored.getTurnMoneyMillions());
+        assertEquals(17181L, restored.getHuman().score);
+        assertEquals(5, restored.getWeaponStock("rocket1"));
+        assertEquals(2, restored.getQueuedActionCount());
+        assertEquals(RESOURCES, restored.getQueuedAction(0));
+        assertEquals(RESEARCH, restored.getQueuedAction(1));
+        assertTrue(restored.getMessages().contains("Money returned from production: 13.000.000"));
+        assertEquals(0x1.ebc97dc31d5a8p-3, restored.createPresentationRandomCopy().nextDouble(), 0d);
+
+        restored.confirmTurn();
+        assertEquals(2, restored.getTurn());
+        assertEquals(117, restored.getHuman().moneyMillions);
+        assertEquals(33033L, restored.getHuman().score);
+        assertEquals(0, restored.getQueuedActionCount());
+        assertTrue(restored.getMessages().contains("Nation 0 invented technologies: SOLDIER2."));
+        assertEquals(0x1.8b50ed3b44d5p-5, restored.createPresentationRandomCopy().nextDouble(), 0d);
+    }
+
     @Test
     public void queuedSliderResumesSourceTurnAndBothRandomStreams() throws IOException {
         GameSetup setup = new GameSetup(0L);
