@@ -1,12 +1,18 @@
 package com.example.worlddomination.game.rendering;
 
+import android.app.UiAutomation;
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.os.ParcelFileDescriptor;
+import android.os.SystemClock;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.backends.android.AndroidGraphics;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.PixmapIO;
 import com.badlogic.gdx.math.Rectangle;
@@ -26,10 +32,13 @@ import com.example.worlddomination.platform.persistence.AndroidGameSaveStore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -97,6 +106,25 @@ public final class SettingsSaveLoadInstrumentedTest {
     @Test
     public void gameplaySaveAndReloadConsistentlyRestoreQueuedOrdersAndRandomStream()
             throws Exception {
+        UiAutomation automation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        String immersiveConfirmation = shell(automation,
+                "settings get secure immersive_mode_confirmations").trim();
+        // Fresh emulators show Android's immersive-mode tutorial over the game.
+        shell(automation, "settings put secure immersive_mode_confirmations confirmed");
+        try {
+            checkGameplaySaveAndReload(automation);
+        } finally {
+            if ("null".equals(immersiveConfirmation)) {
+                shell(automation, "settings delete secure immersive_mode_confirmations");
+            } else {
+                shell(automation, "settings put secure immersive_mode_confirmations '"
+                        + immersiveConfirmation.replace("'", "'\\''") + "'");
+            }
+        }
+    }
+
+    private void checkGameplaySaveAndReload(UiAutomation automation) throws Exception {
+        Vector2 panelSample = new Vector2();
         SourceBattleCleanupInstrumentedTest.runInGame(app -> {
             File directory = createStoreDirectory();
             GameSaveStore previous = (GameSaveStore) field("gameSaveStore").get(app);
@@ -200,11 +228,63 @@ public final class SettingsSaveLoadInstrumentedTest {
                 assertEquals("Cannot load this save. Game unchanged.", menu.getStatus());
                 assertSame(loaded, game(app));
                 assertArrayEquals(expected, GameSaveCodec.encode(loaded));
+                panelSample.set(project(app, menu.panel.x + 6f * menu.getScale(),
+                        menu.panel.y + menu.panel.height - 12f * menu.getScale()));
             } finally {
                 app.setGameSaveStore(previous);
                 removeStoreDirectory(directory);
             }
+        }, scenario -> {
+            int[] viewOrigin = new int[2];
+            scenario.onActivity(activity -> ((AndroidGraphics) activity.getGraphics())
+                    .getView().getLocationOnScreen(viewOrigin));
+            assertSystemBackDismissesSettings(automation,
+                    viewOrigin[0] + Math.round(panelSample.x),
+                    viewOrigin[1] + Math.round(panelSample.y));
+            scenario.onActivity(activity -> assertTrue("Back keeps the match in front",
+                    activity.getWindow().getDecorView().hasWindowFocus()));
         });
+    }
+
+    private static void assertSystemBackDismissesSettings(UiAutomation automation, int x, int y)
+            throws Exception {
+        assertTrue("Settings is visible before the Android Back event",
+                awaitSettingsVisible(automation, x, y, true));
+        // Another touch or a GL runnable would wake an on-demand surface and hide the regression.
+        shell(automation, "input keyevent KEYCODE_BACK");
+        assertTrue("Android Back closes Settings without another input or forced frame",
+                awaitSettingsVisible(automation, x, y, false));
+    }
+
+    private static String shell(UiAutomation automation, String command) throws Exception {
+        try (InputStream input = new ParcelFileDescriptor.AutoCloseInputStream(
+                automation.executeShellCommand(command))) {
+            ByteArrayOutputStream output = new ByteArrayOutputStream();
+            byte[] buffer = new byte[256];
+            int count;
+            while ((count = input.read(buffer)) != -1) output.write(buffer, 0, count);
+            return new String(output.toByteArray(), StandardCharsets.UTF_8);
+        }
+    }
+
+    private static boolean awaitSettingsVisible(UiAutomation automation, int x, int y,
+                                                boolean visible) {
+        long deadline = SystemClock.uptimeMillis() + 3_000L;
+        do {
+            Bitmap screen = automation.takeScreenshot();
+            assertNotNull("Android window screenshot", screen);
+            try {
+                int pixel = screen.getPixel(x, y);
+                boolean settingsBackground = Math.abs(Color.red(pixel) - 9) <= 2
+                        && Math.abs(Color.green(pixel) - 20) <= 2
+                        && Math.abs(Color.blue(pixel) - 28) <= 2;
+                if (settingsBackground == visible) return true;
+            } finally {
+                screen.recycle();
+            }
+            SystemClock.sleep(50);
+        } while (SystemClock.uptimeMillis() < deadline);
+        return false;
     }
 
     static GameState newMatch() {

@@ -465,6 +465,12 @@ public final class SourceBattleCleanupInstrumentedTest {
     interface GameCheck { void run(WorldDominationGame app) throws Exception; }
 
     static void runInGame(GameCheck check) throws Exception {
+        runInGame(check, scenario -> {});
+    }
+
+    interface ActivityCheck { void run(GameActivityScenario scenario) throws Exception; }
+
+    static void runInGame(GameCheck check, ActivityCheck afterFrame) throws Exception {
         try (GameActivityScenario scenario = GameActivityScenario.launch(MainActivity.class)) {
             CountDownLatch done = new CountDownLatch(1);
             AtomicReference<Throwable> failure = new AtomicReference<>();
@@ -514,6 +520,7 @@ public final class SourceBattleCleanupInstrumentedTest {
             }));
             assertTrue("Source battle cleanup timed out", done.await(150, TimeUnit.SECONDS));
             if (failure.get() != null) throw new AssertionError("Source battle cleanup", failure.get());
+            afterFrame.run(scenario);
         }
     }
 
