@@ -4242,6 +4242,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                     loaded.cancelSelection(); // Unaccepted menu drafts are not queued orders.
                     resetMatchPresentation();
                     activateGame(loaded);
+                    sourceActionInstruction.clear();
                     sourceActionMenu.reset();
                     settingsMenu.open(true, true);
                     settingsMenu.message("Loaded turn " + loaded.getTurn() + ".");

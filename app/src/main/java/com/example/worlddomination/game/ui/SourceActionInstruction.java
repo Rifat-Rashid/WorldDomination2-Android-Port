@@ -19,6 +19,11 @@ public final class SourceActionInstruction {
 
     public void resetWelcome() { show(WELCOME); }
 
+    public void clear() {
+        text = null;
+        ticksRemaining = 0;
+    }
+
     /** Called when the source would update center-screen content, never from draw. */
     public void onSelectionUpdate(GameState.Action action, String menuKey) {
         if (action == null || menuKey == null) return;

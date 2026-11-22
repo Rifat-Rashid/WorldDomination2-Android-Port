@@ -20,6 +20,7 @@ import com.example.worlddomination.game.simulation.GameSetup;
 import com.example.worlddomination.game.simulation.GameState;
 import com.example.worlddomination.game.ui.GameSettingsMenu;
 import com.example.worlddomination.game.ui.ScrollPaneState;
+import com.example.worlddomination.game.ui.SourceActionInstruction;
 import com.example.worlddomination.platform.persistence.AndroidGameSaveStore;
 
 import org.junit.Test;
@@ -85,6 +86,7 @@ public final class SettingsSaveLoadInstrumentedTest {
                 assertTrue(menu.canSave());
                 assertNotSame(saved, game(app));
                 assertArrayEquals(GameSaveCodec.encode(saved), GameSaveCodec.encode(game(app)));
+                assertNull("Load from setup immediately shows saved history", actionInstruction(app).getText());
             } finally {
                 app.setGameSaveStore(previous);
                 removeStoreDirectory(directory);
@@ -102,6 +104,7 @@ public final class SettingsSaveLoadInstrumentedTest {
                 app.setGameSaveStore(AndroidGameSaveStore.create(directory));
                 GameState current = newMatch();
                 installMatch(app, current);
+                assertEquals(SourceActionInstruction.WELCOME, actionInstruction(app).getText());
                 render(app);
                 assertTrue("The battlefield animates when visible", Gdx.graphics.isContinuousRendering());
                 GameSettingsMenu menu = openSettings(app);
@@ -174,6 +177,7 @@ public final class SettingsSaveLoadInstrumentedTest {
                 assertNotSame(alternate, loaded);
                 assertEquals("Loaded turn 0.", menu.getStatus());
                 render(app);
+                assertNull("Transient instructions must not cover saved history", actionInstruction(app).getText());
                 assertFalse("Loaded match stays paused behind Settings", Gdx.graphics.isContinuousRendering());
                 String loadedHistory = (String) field("cachedMessageText").get(app);
                 assertTrue(loadedHistory.contains(GameState.Action.RESOURCES.label + " queued."));
@@ -300,6 +304,10 @@ public final class SettingsSaveLoadInstrumentedTest {
 
     private static Field field(String name) throws Exception {
         return SourceBattleCleanupInstrumentedTest.field(WorldDominationGame.class, name);
+    }
+
+    private static SourceActionInstruction actionInstruction(WorldDominationGame app) throws Exception {
+        return (SourceActionInstruction) field("sourceActionInstruction").get(app);
     }
 
     static GameState game(WorldDominationGame app) throws Exception {
