@@ -11,6 +11,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -91,6 +96,48 @@ public final class GameSaveStoreTest {
         assertEquals(0, createStore(file).load().getDifficulty());
         try (Stream<Path> remainingFiles = Files.list(file.getParent())) {
             assertArrayEquals(new Path[] {file}, remainingFiles.toArray(Path[]::new));
+        }
+    }
+
+    @Test
+    public void loadsCompleteOldSaveUntilReplacementCommits() throws Exception {
+        Path file = saveFile();
+        GameState oldMatch = new GameState(0, 17L);
+        GameState newMatch = new GameState(2, 59L);
+        createStore(file).save(oldMatch);
+        byte[] oldCheckpoint = GameSaveCodec.encode(oldMatch);
+        byte[] newCheckpoint = GameSaveCodec.encode(newMatch);
+        CountDownLatch replacementReady = new CountDownLatch(1);
+        CountDownLatch allowReplacement = new CountDownLatch(1);
+        GameSaveStore writer = new GameSaveStore(file.toFile(), (temporary, destination) -> {
+            replacementReady.countDown();
+            try {
+                if (!allowReplacement.await(10, TimeUnit.SECONDS)) {
+                    throw new IOException("Timed out waiting to replace save");
+                }
+            } catch (InterruptedException error) {
+                Thread.currentThread().interrupt();
+                throw new IOException("Interrupted while waiting to replace save", error);
+            }
+            Files.move(temporary.toPath(), destination.toPath(),
+                    StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+        });
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        try {
+            Future<?> save = executor.submit(() -> {
+                writer.save(newMatch);
+                return null;
+            });
+            assertTrue("Writer reached the atomic replacement boundary",
+                    replacementReady.await(10, TimeUnit.SECONDS));
+            assertArrayEquals(oldCheckpoint, GameSaveCodec.encode(createStore(file).load()));
+            allowReplacement.countDown();
+            save.get(10, TimeUnit.SECONDS);
+            assertArrayEquals(newCheckpoint, GameSaveCodec.encode(createStore(file).load()));
+        } finally {
+            allowReplacement.countDown();
+            executor.shutdownNow();
+            assertTrue("Writer stopped", executor.awaitTermination(10, TimeUnit.SECONDS));
         }
     }
 
