@@ -20,6 +20,7 @@ import com.badlogic.gdx.graphics.Pixmap;
 import com.example.worlddomination.game.ui.SourceHiddenHelpTypography;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.utils.BufferUtils;
+import com.badlogic.gdx.utils.Timer;
 import java.nio.IntBuffer;
 import com.example.worlddomination.game.rendering.SourceNavigationGradient;
 import com.example.worlddomination.game.rendering.SourceNavigationPanel;
@@ -246,6 +247,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private GameState game;
     private GameSaveStore gameSaveStore;
     private final GameSettingsMenu settingsMenu = new GameSettingsMenu();
+    private Timer.Task settingsInputFrame;
 
     /** Installed by the Android launcher; no platform storage enters the simulation. */
     public void setGameSaveStore(GameSaveStore store) {
@@ -820,7 +822,29 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         setContinuousRendering(RenderLoopPolicy.shouldRenderContinuously(game != null,
                 showExitPromptSeconds > 0f, hasActivePresentation()));
+        scheduleSettingsInputFrame();
         renderingFrame = false;
+    }
+
+    private void scheduleSettingsInputFrame() {
+        if (!settingsMenu.isOpen()) {
+            cancelSettingsInputFrame();
+            return;
+        }
+        if (settingsInputFrame == null) {
+            settingsInputFrame = new Timer.Task() {
+                @Override public void run() {
+                    Gdx.graphics.requestRendering();
+                }
+            };
+        }
+        // Android Back can remain queued until a GL frame processes input. Bound the
+        // wait while Settings is static, without advancing the battlefield's clock.
+        if (!settingsInputFrame.isScheduled()) Timer.schedule(settingsInputFrame, 0.125f);
+    }
+
+    private void cancelSettingsInputFrame() {
+        if (settingsInputFrame != null) settingsInputFrame.cancel();
     }
 
     private void drawHelpScreen() {
@@ -1043,7 +1067,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     }
 
     private boolean hasActivePresentation() {
-        if (game == null) {
+        // Settings pauses the battlefield clock. Input and asset uploads request redraws.
+        if (game == null || settingsMenu.isOpen()) {
             return false;
         }
         if (outcomeSequence.isEndgameVisible()) {
@@ -6296,6 +6321,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     @Override
     public void pause() {
+        cancelSettingsInputFrame();
         accumulator = 0f;
         blurHiddenHelpInput();
         // Release regenerable targets while the old GL context is still current.
@@ -6329,6 +6355,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     @Override
     public void dispose() {
+        cancelSettingsInputFrame();
         blurHiddenHelpInput();
         disposeEndgameResources();
         battlefieldDisplay.clear();
