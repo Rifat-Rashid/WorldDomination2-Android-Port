@@ -59,7 +59,7 @@ jobs:
           "$sdkmanager" 'platform-tools' 'platforms;android-37.0' 'build-tools;36.0.0'
 
       - name: Assemble Android debug APK
-        run: ./gradlew --no-daemon --stacktrace :app:assembleDebug
+        run: bash scripts/gradle_rate_limit_retry.sh ./gradlew --no-daemon --stacktrace :app:assembleDebug
 
       - name: Upload debug APK for package validation
         uses: actions/upload-artifact@v6

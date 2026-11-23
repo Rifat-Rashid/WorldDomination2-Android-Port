@@ -31,7 +31,7 @@ jobs:
           set -o pipefail
           "$sdkmanager" 'platform-tools' 'platforms;android-37.0' 'build-tools;36.0.0'
       - name: Build and test the real release variant without upload credentials
-        run: ./gradlew --no-daemon --stacktrace :app:bundleRelease :app:testReleaseUnitTest :app:lintRelease
+        run: bash scripts/gradle_rate_limit_retry.sh ./gradlew --no-daemon --stacktrace :app:bundleRelease :app:testReleaseUnitTest :app:lintRelease
       - name: Verify release JUnit reports
         run: python3 scripts/verify_junit_results.py app/build/test-results/testReleaseUnitTest
       - name: Retain unsigned bundle for packaging verification
