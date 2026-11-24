@@ -4,6 +4,10 @@ import android.app.UiAutomation;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.opengl.EGL14;
+import android.opengl.EGLContext;
+import android.opengl.EGLDisplay;
+import android.opengl.GLSurfaceView;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
 
@@ -126,6 +130,8 @@ public final class SettingsSaveLoadInstrumentedTest {
 
     private void checkGameplaySaveAndReload(UiAutomation automation) throws Exception {
         Vector2 panelSample = new Vector2();
+        EGLDisplay[] display = new EGLDisplay[1];
+        EGLContext[] context = new EGLContext[1];
         SourceBattleCleanupInstrumentedTest.runInGame(app -> {
             File directory = createStoreDirectory();
             GameSaveStore previous = (GameSaveStore) field("gameSaveStore").get(app);
@@ -229,6 +235,9 @@ public final class SettingsSaveLoadInstrumentedTest {
                 assertEquals("Cannot load this save. Game unchanged.", menu.getStatus());
                 assertSame(loaded, game(app));
                 assertArrayEquals(expected, GameSaveCodec.encode(loaded));
+                display[0] = EGL14.eglGetCurrentDisplay();
+                context[0] = EGL14.eglGetCurrentContext();
+                assertTrue("Settings EGL context is queryable", contextValid(display[0], context[0]));
                 panelSample.set(project(app, menu.panel.x + 6f * menu.getScale(),
                         menu.panel.y + menu.panel.height - 12f * menu.getScale()));
             } finally {
@@ -236,17 +245,42 @@ public final class SettingsSaveLoadInstrumentedTest {
                 removeStoreDirectory(directory);
             }
         }, scenario -> {
-            scenario.moveToState(Lifecycle.State.CREATED);
-            scenario.moveToState(Lifecycle.State.RESUMED);
-            int[] viewOrigin = new int[2];
-            scenario.onActivity(activity -> ((AndroidGraphics) activity.getGraphics())
-                    .getView().getLocationOnScreen(viewOrigin));
-            assertSystemBackDismissesSettings(automation,
-                    viewOrigin[0] + Math.round(panelSample.x),
-                    viewOrigin[1] + Math.round(panelSample.y));
-            scenario.onActivity(activity -> assertTrue("Back keeps the match in front",
-                    activity.getWindow().getDecorView().hasWindowFocus()));
+            boolean[] preserve = new boolean[1];
+            scenario.onActivity(activity -> {
+                GLSurfaceView surface = (GLSurfaceView) ((AndroidGraphics) activity.getGraphics()).getView();
+                preserve[0] = surface.getPreserveEGLContextOnPause();
+                surface.setPreserveEGLContextOnPause(false);
+            });
+            try {
+                scenario.moveToState(Lifecycle.State.CREATED);
+                long deadline = SystemClock.uptimeMillis() + 5_000L;
+                while (contextValid(display[0], context[0]) && SystemClock.uptimeMillis() < deadline) {
+                    SystemClock.sleep(20);
+                }
+                assertFalse("Pause destroys the original Settings EGL context",
+                        contextValid(display[0], context[0]));
+                scenario.moveToState(Lifecycle.State.RESUMED);
+                int[] viewOrigin = new int[2];
+                scenario.onActivity(activity -> ((AndroidGraphics) activity.getGraphics())
+                        .getView().getLocationOnScreen(viewOrigin));
+                assertSystemBackDismissesSettings(automation,
+                        viewOrigin[0] + Math.round(panelSample.x),
+                        viewOrigin[1] + Math.round(panelSample.y));
+                scenario.onActivity(activity -> assertTrue("Back keeps the match in front",
+                        activity.getWindow().getDecorView().hasWindowFocus()));
+            } finally {
+                if (scenario.getState() != Lifecycle.State.DESTROYED) {
+                    scenario.moveToState(Lifecycle.State.RESUMED);
+                    scenario.onActivity(activity -> ((GLSurfaceView) ((AndroidGraphics) activity.getGraphics())
+                            .getView()).setPreserveEGLContextOnPause(preserve[0]));
+                }
+            }
         });
+    }
+
+    private static boolean contextValid(EGLDisplay display, EGLContext context) {
+        return !EGL14.EGL_NO_CONTEXT.equals(context) && EGL14.eglQueryContext(display, context,
+                EGL14.EGL_CONTEXT_CLIENT_VERSION, new int[1], 0);
     }
 
     private static void assertSystemBackDismissesSettings(UiAutomation automation, int x, int y)
