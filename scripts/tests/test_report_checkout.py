@@ -47,7 +47,7 @@ class ReportCheckoutTest(unittest.TestCase):
         self.assertRegex(checkout, r'(?m)^        uses: actions/checkout@v5$')
         self.assertNotIn('sparse-checkout:', checkout)
         self.assertEqual(1, self.producer.count('uses: actions/checkout@v5'))
-        self.assertIn('run: ./gradlew --no-daemon --stacktrace :app:testDebugUnitTest', self.producer)
+        self.assertIn('run: bash scripts/gradle_rate_limit_retry.sh ./gradlew --no-daemon --stacktrace :app:testDebugUnitTest', self.producer)
         provenance = step(self.producer, 'Record report provenance')
         for field in ("'sha': os.environ['GITHUB_SHA']",
                       "'run_id': os.environ['GITHUB_RUN_ID']",
