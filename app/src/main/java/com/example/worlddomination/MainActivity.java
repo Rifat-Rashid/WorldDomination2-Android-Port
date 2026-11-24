@@ -4,10 +4,13 @@ import android.os.Build;
 import android.os.Bundle;
 import android.content.Context;
 import android.view.DisplayCutout;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
+import android.window.OnBackInvokedDispatcher;
 
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.backends.android.AndroidApplication;
 import com.badlogic.gdx.backends.android.AndroidApplicationConfiguration;
 import com.badlogic.gdx.backends.android.AndroidAudio;
@@ -17,6 +20,7 @@ import com.example.worlddomination.game.WorldDominationGame;
 import com.example.worlddomination.game.ui.SafeAreaInsets;
 import com.example.worlddomination.platform.audio.SourceAndroidAudio;
 import com.example.worlddomination.platform.persistence.AndroidScorePreferenceBackend;
+import com.example.worlddomination.platform.persistence.AndroidGameSaveStore;
 import com.example.worlddomination.platform.graphics.SerializedAndroidGraphics;
 
 /** Android-only landscape launcher for the libGDX game. */
@@ -41,6 +45,7 @@ public final class MainActivity extends AndroidApplication {
         super.onCreate(savedInstanceState);
         game = new WorldDominationGame(new AndroidScorePreferenceBackend(
                 getSharedPreferences("world_domination_2_scores", Context.MODE_PRIVATE)));
+        game.setGameSaveStore(AndroidGameSaveStore.create(getFilesDir()));
 
         AndroidApplicationConfiguration configuration = new AndroidApplicationConfiguration();
         configuration.useImmersiveMode = true;
@@ -51,6 +56,10 @@ public final class MainActivity extends AndroidApplication {
         initialize(game, configuration);
         applyImmersiveMode();
         installCutoutInsetsListener();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
+                    OnBackInvokedDispatcher.PRIORITY_DEFAULT, this::postGameBack);
+        }
     }
 
     private void applyImmersiveMode() {
@@ -108,6 +117,19 @@ public final class MainActivity extends AndroidApplication {
                 surfacePosition[0] - decorPosition[0], surfacePosition[1] - decorPosition[1],
                 surface.getWidth(), surface.getHeight());
         game.setSafeAreaInsetsPixels(pixels.left, pixels.top, pixels.right, pixels.bottom);
+    }
+
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        if (game != null && event.getKeyCode() == KeyEvent.KEYCODE_BACK) {
+            if (event.getAction() == KeyEvent.ACTION_UP && !event.isCanceled()) postGameBack();
+            return true;
+        }
+        return super.dispatchKeyEvent(event);
+    }
+
+    private void postGameBack() {
+        postRunnable(() -> game.keyDown(Input.Keys.BACK));
     }
 
     @Override

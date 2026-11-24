@@ -1,5 +1,8 @@
 package com.example.worlddomination.game.simulation;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,12 +20,19 @@ public final class ReferenceRandom extends Random {
     private static final int UPPER_MASK = 0x80000000;
     private static final int LOWER_MASK = 0x7fffffff;
 
-    private final int[] state = new int[STATE_SIZE];
-    private int stateIndex = STATE_SIZE;
+    private final int[] state;
+    private int stateIndex;
 
     public ReferenceRandom(long seed) {
         super(0L);
+        state = new int[STATE_SIZE];
         setSeed(seed);
+    }
+
+    private ReferenceRandom(int[] state, int stateIndex) {
+        super(0L);
+        this.state = state;
+        this.stateIndex = stateIndex;
     }
 
     @Override
@@ -71,10 +81,27 @@ public final class ReferenceRandom extends Random {
 
     /** Returns an isolated copy for presentation code that must not advance game RNG. */
     public synchronized ReferenceRandom copy() {
-        ReferenceRandom copy = new ReferenceRandom(0L);
-        System.arraycopy(state, 0, copy.state, 0, STATE_SIZE);
-        copy.stateIndex = stateIndex;
-        return copy;
+        return new ReferenceRandom(state.clone(), stateIndex);
+    }
+
+    synchronized void writeCheckpoint(DataOutput output) throws IOException {
+        output.writeInt(stateIndex);
+        for (int word : state) output.writeInt(word);
+    }
+
+    static ReferenceRandom readCheckpoint(DataInput input) throws IOException {
+        int index = input.readInt();
+        if (index < 0 || index > STATE_SIZE) {
+            throw new IOException("Invalid random stream position");
+        }
+        int[] words = new int[STATE_SIZE];
+        int nonzeroBits = 0;
+        for (int i = 0; i < words.length; i++) {
+            words[i] = input.readInt();
+            nonzeroBits |= words[i];
+        }
+        if (nonzeroBits == 0) throw new IOException("Invalid empty random stream");
+        return new ReferenceRandom(words, index);
     }
 
     private void seedFromInteger(long seed) {

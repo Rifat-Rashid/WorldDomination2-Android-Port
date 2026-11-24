@@ -9,17 +9,22 @@ public final class CityState {
     public final int ownerId;
     public final int index;
     public int populationMillions;
-    private int deathFrame = -1;
+    private int deathFrame;
     /** Set only by the isolated battle city's cloud callback, not turn resolution. */
     public boolean bioloaded;
     /** Source City.bioload_in_battle: retained after a resolved payload hit. */
     public boolean bioloadInBattle;
 
     CityState(int id, int ownerId, int index, int populationMillions) {
+        this(id, ownerId, index, populationMillions, -1);
+    }
+
+    CityState(int id, int ownerId, int index, int populationMillions, int deathFrame) {
         this.id = id;
         this.ownerId = ownerId;
         this.index = index;
         this.populationMillions = populationMillions;
+        this.deathFrame = deathFrame;
     }
 
     /** Source City.size_and_frame: six building sizes across a 90M city population. */

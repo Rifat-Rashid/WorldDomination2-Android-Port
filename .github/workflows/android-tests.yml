@@ -41,7 +41,7 @@ jobs:
 
       - name: Execute the complete debug JUnit suite
         id: junit
-        run: ./gradlew --no-daemon --stacktrace :app:testDebugUnitTest
+        run: bash scripts/gradle_rate_limit_retry.sh ./gradlew --no-daemon --stacktrace :app:testDebugUnitTest
 
       - name: Record report provenance
         if: always()
@@ -87,6 +87,39 @@ jobs:
       max-parallel: 6
       matrix:
         include:
+          - id: carrier-route
+            check: Carrier strike route parity
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.createsThreeSourceCarrierPlaneRoutesForEveryPlayerAndCity" --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.carrierPlaneRouteMarksInterceptionsAndRejectsInvalidInputs" --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.separateShipRecordsResetLiteralLaunchOffsetsIncludingInterceptions" --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.shipStrikeEmitsAnImpactForEachResolvedPayload" --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.eachShipSortieUsesItsOwnSourcePayloadOrderAndLaunchOffsets"'
+          - id: carrier-playback
+            check: Carrier aircraft playback parity
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashCarrierPlaneAnimationTest"'
+          - id: carrier-assets
+            check: Carrier Flash artwork and audio integrity
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashAnimationTimelineTest.carrierAircraftUsesItsPackaged24FrameFlashTimelineAndShapes" --tests "com.example.worlddomination.game.audio.OriginalAudioTest.carrierAircraftCuesUseTheRecoveredOriginalTakeoffAndFlightSounds"'
+          - id: airfield-plane-routes
+            check: Airfield aircraft route and event parity
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.standalonePlaneRoutesMatchAirfieldOrbitAndFlashLinkagesForAllIslands" --tests "com.example.worlddomination.game.rendering.FlashBattleRoutesTest.standalonePlaneInterceptionTargetsCityAndRejectsInvalidLaunchData" --tests "com.example.worlddomination.game.simulation.GameStateCombatEventTest.resolvedPreparedAircraftAttackCarriesItsAirfieldSlotForNativePlayback"'
+          - id: airfield-plane-playback
+            check: Airfield aircraft source-tick playback
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashStandalonePlaneAnimationTest"'
+          - id: airfield-plane-artwork-audio
+            check: Airfield aircraft Flash artwork and audio
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.OriginalFlashAnimationAssetsTest.loadsOriginalStandaloneAircraftFramesTintAndShadows" --tests "com.example.worlddomination.game.audio.OriginalAudioTest.standaloneAircraftCuesUseTheRecoveredFighterAndCarrierJetSounds" --tests "com.example.worlddomination.game.rendering.FlashAffineTransformTest"'
+          - id: airfield-plane-trails
+            check: Airfield aircraft source smoke trails
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashStandalonePlaneAnimationTest.emitsSourceSizedFighterAndBomberTrailsFromOriginalTickThresholds" --tests "com.example.worlddomination.game.rendering.FlashStandalonePlaneAnimationTest.standaloneTrailRandomnessIsRepeatableAndDoesNotControlGameState"'
+          - id: airfield-plane-flyoff
+            check: Airfield aircraft post-impact fly-off
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.rendering.FlashStandalonePlaneAnimationTest.successfulBombUsesTheFlashFlyOffWindowAndRemovesItsSmoke"'
+          - id: airfield-plane-trail-art
+            check: Original aircraft trail artwork integrity
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.assets.OriginalFlashAnimationAssetsTest.standaloneAircraftTrailResolvesToOriginalPackagedSmokeShape"'
+          - id: manual-game-save
+            check: Offline game saves preserve orders and deterministic AI continuation
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.simulation.GameSaveCodecTest" --tests "com.example.worlddomination.game.simulation.GameSaveContinuationTest" --tests "com.example.worlddomination.game.simulation.GameSaveValidationTest" --tests "com.example.worlddomination.game.persistence.GameSaveStoreTest"'
+          - id: settings-save-load-menu
+            check: Settings save and load controls and confirmation hitboxes
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.GameSettingsMenuTest"'
           - id: phone-funds-statistics
             check: Phone funds and fractional population statistics
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.InformationPanelTextTest"'

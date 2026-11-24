@@ -61,6 +61,11 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    androidResources {
+        // The Android splash does not play the desktop opening video.
+        ignoreAssetsPatterns.add("<file>5911.webp")
+    }
+
     sourceSets.getByName("main").jniLibs.srcDir(generatedNativesDirectory)
     // Share deterministic source fixtures with device tests, never the game APK.
     sourceSets.getByName("androidTest").assets.srcDir("src/test/resources")

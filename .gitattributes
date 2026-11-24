@@ -1,4 +1,6 @@
 scripts/*.sh text eol=lf
+# The release bundle verifier compares this packaged manifest byte for byte.
+app/src/main/assets/generated/audio/manifest.json text eol=lf
 # Prepared-launch JSON fixtures pin canonical LF bytes on Windows and Linux.
 app/src/test/resources/source-legal-rocket-reselection.json text eol=lf
 app/src/test/resources/source-prepared-launch-regard.json text eol=lf
