@@ -51,7 +51,7 @@ jobs:
           "$sdkmanager" 'platform-tools' 'platforms;android-37.0' 'build-tools;36.0.0'
 
       - name: Run Android lint
-        run: ./gradlew --no-daemon --stacktrace :app:lintDebug
+        run: bash scripts/gradle_rate_limit_retry.sh ./gradlew --no-daemon --stacktrace :app:lintDebug
 
       - name: Upload lint reports on failure
         if: failure()
