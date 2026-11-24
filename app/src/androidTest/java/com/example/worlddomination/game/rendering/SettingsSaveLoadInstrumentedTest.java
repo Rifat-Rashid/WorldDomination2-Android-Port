@@ -7,6 +7,7 @@ import android.graphics.Color;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
 
+import androidx.lifecycle.Lifecycle;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -235,6 +236,8 @@ public final class SettingsSaveLoadInstrumentedTest {
                 removeStoreDirectory(directory);
             }
         }, scenario -> {
+            scenario.moveToState(Lifecycle.State.CREATED);
+            scenario.moveToState(Lifecycle.State.RESUMED);
             int[] viewOrigin = new int[2];
             scenario.onActivity(activity -> ((AndroidGraphics) activity.getGraphics())
                     .getView().getLocationOnScreen(viewOrigin));
