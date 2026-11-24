@@ -41,7 +41,7 @@ jobs:
 
       - name: Execute the complete debug JUnit suite
         id: junit
-        run: ./gradlew --no-daemon --stacktrace :app:testDebugUnitTest
+        run: bash scripts/gradle_rate_limit_retry.sh ./gradlew --no-daemon --stacktrace :app:testDebugUnitTest
 
       - name: Record report provenance
         if: always()
