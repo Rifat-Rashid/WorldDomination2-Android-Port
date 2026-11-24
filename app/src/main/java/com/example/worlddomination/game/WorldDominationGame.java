@@ -654,11 +654,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
         logoPanel.set(leftPanel.x, contentY + contentHeight - 62f, leftWidth, 62f);
         centerHeader.set(centerLeft, contentY + contentHeight - 62f, centerWidth, 62f);
-        float navigationPanelHeight = Math.min(contentHeight - 144f,
-                5f * (NAV_ROW_HEIGHT + NAV_ROW_GAP) + 24f);
-        navPanel.set(leftPanel.x, contentY + 86f, leftWidth, navigationPanelHeight);
-        NavigationPanelLayout.setContentBounds(navPanel, navViewport);
         infoPanel.set(leftPanel.x, contentY, leftWidth, 82f);
+        NavigationPanelLayout.setPanelBounds(logoPanel, infoPanel, navPanel);
+        NavigationPanelLayout.setContentBounds(navPanel, navViewport);
         toolbarPanel.set(rightPanel.x, rightPanel.y + rightPanel.height - 34f,
                 rightWidth, 34f);
         helpButton.set(toolbarPanel.x + 7f, toolbarPanel.y + 6f,
