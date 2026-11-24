@@ -10,6 +10,7 @@ import android.opengl.EGLDisplay;
 import android.opengl.GLSurfaceView;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
+import android.view.KeyEvent;
 
 import androidx.lifecycle.Lifecycle;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -44,6 +45,9 @@ import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -61,6 +65,7 @@ public final class SettingsSaveLoadInstrumentedTest {
 
     @Test
     public void setupDisablesSaveAndLoadsAStoredMatch() throws Exception {
+        GameSettingsMenu[] loadedMenu = new GameSettingsMenu[1];
         SourceBattleCleanupInstrumentedTest.runInGame(app -> {
             File directory = createStoreDirectory();
             GameSaveStore previous = (GameSaveStore) field("gameSaveStore").get(app);
@@ -101,10 +106,25 @@ public final class SettingsSaveLoadInstrumentedTest {
                 assertNotSame(saved, game(app));
                 assertArrayEquals(GameSaveCodec.encode(saved), GameSaveCodec.encode(game(app)));
                 assertNull("Load from setup immediately shows saved history", actionInstruction(app).getText());
+                loadedMenu[0] = menu;
             } finally {
                 app.setGameSaveStore(previous);
                 removeStoreDirectory(directory);
             }
+        }, scenario -> {
+            CountDownLatch dispatched = new CountDownLatch(1);
+            AtomicBoolean menuClosed = new AtomicBoolean();
+            scenario.onActivity(activity -> {
+                assertTrue(activity.dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BACK)));
+                assertTrue(activity.dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_BACK)));
+                activity.postRunnable(() -> {
+                    menuClosed.set(!loadedMenu[0].isOpen());
+                    dispatched.countDown();
+                });
+            });
+            assertTrue("Activity Back returns to the render thread", dispatched.await(5, TimeUnit.SECONDS));
+            assertTrue("Activity Back closes Settings", menuClosed.get());
+            assertEquals(Lifecycle.State.RESUMED, scenario.getState());
         });
     }
 
@@ -245,36 +265,25 @@ public final class SettingsSaveLoadInstrumentedTest {
                 removeStoreDirectory(directory);
             }
         }, scenario -> {
-            boolean[] preserve = new boolean[1];
-            scenario.onActivity(activity -> {
-                GLSurfaceView surface = (GLSurfaceView) ((AndroidGraphics) activity.getGraphics()).getView();
-                preserve[0] = surface.getPreserveEGLContextOnPause();
-                surface.setPreserveEGLContextOnPause(false);
-            });
-            try {
-                scenario.moveToState(Lifecycle.State.CREATED);
-                long deadline = SystemClock.uptimeMillis() + 5_000L;
-                while (contextValid(display[0], context[0]) && SystemClock.uptimeMillis() < deadline) {
-                    SystemClock.sleep(20);
-                }
-                assertFalse("Pause destroys the original Settings EGL context",
-                        contextValid(display[0], context[0]));
-                scenario.moveToState(Lifecycle.State.RESUMED);
-                int[] viewOrigin = new int[2];
-                scenario.onActivity(activity -> ((AndroidGraphics) activity.getGraphics())
-                        .getView().getLocationOnScreen(viewOrigin));
-                assertSystemBackDismissesSettings(automation,
-                        viewOrigin[0] + Math.round(panelSample.x),
-                        viewOrigin[1] + Math.round(panelSample.y));
-                scenario.onActivity(activity -> assertTrue("Back keeps the match in front",
-                        activity.getWindow().getDecorView().hasWindowFocus()));
-            } finally {
-                if (scenario.getState() != Lifecycle.State.DESTROYED) {
-                    scenario.moveToState(Lifecycle.State.RESUMED);
-                    scenario.onActivity(activity -> ((GLSurfaceView) ((AndroidGraphics) activity.getGraphics())
-                            .getView()).setPreserveEGLContextOnPause(preserve[0]));
-                }
+            // This Activity belongs to the test and is disposed by runInGame.
+            scenario.onActivity(activity -> ((GLSurfaceView) ((AndroidGraphics) activity.getGraphics())
+                    .getView()).setPreserveEGLContextOnPause(false));
+            scenario.moveToState(Lifecycle.State.CREATED);
+            long deadline = SystemClock.uptimeMillis() + 5_000L;
+            while (contextValid(display[0], context[0]) && SystemClock.uptimeMillis() < deadline) {
+                SystemClock.sleep(20);
             }
+            assertFalse("Pause destroys the original Settings EGL context",
+                    contextValid(display[0], context[0]));
+            scenario.moveToState(Lifecycle.State.RESUMED);
+            int[] viewOrigin = new int[2];
+            scenario.onActivity(activity -> ((AndroidGraphics) activity.getGraphics())
+                    .getView().getLocationOnScreen(viewOrigin));
+            assertSystemBackDismissesSettings(automation,
+                    viewOrigin[0] + Math.round(panelSample.x),
+                    viewOrigin[1] + Math.round(panelSample.y));
+            scenario.onActivity(activity -> assertTrue("Back keeps the match in front",
+                    activity.getWindow().getDecorView().hasWindowFocus()));
         });
     }
 
