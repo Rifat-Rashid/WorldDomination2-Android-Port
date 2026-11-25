@@ -38,7 +38,9 @@ def main() -> int:
     android_attr = lambda name: f"{{{ANDROID_NS}}}{name}"
     for permission in manifest.findall("uses-permission"):
         if permission.get(android_attr("name")) == "android.permission.INTERNET":
-            return fail("the offline game must not request INTERNET permission")
+            application = manifest.find("application")
+            if application is None or application.get(android_attr("usesCleartextTraffic")) != "false":
+                return fail("optional model provisioning with INTERNET requires TLS-only traffic")
 
     launcher = None
     for activity in manifest.findall("./application/activity"):
@@ -55,12 +57,17 @@ def main() -> int:
     forbidden_imports = re.compile(
         r"^\s*import\s+(?:android\.webkit\.WebView|com\.chaquo\.python|org\.python)(?:\.|;)"
     )
-    for source in (ROOT / "app" / "src" / "main" / "java").rglob("*.java"):
+    network_imports = re.compile(r"^\s*import\s+(?:java\.net|javax\.net|okhttp3|android\.net\.http)\.")
+    java_source = ROOT / "app" / "src" / "main" / "java"
+    model_provisioner = java_source / "com/example/worlddomination/platform/qwen/QwenModel.java"
+    for source in java_source.rglob("*.java"):
         for line_number, line in enumerate(source.read_text(encoding="utf-8").splitlines(), start=1):
             if forbidden_imports.search(line):
                 return fail(f"non-native runtime import in {source.relative_to(ROOT)}:{line_number}")
+            if source != model_provisioner and network_imports.search(line):
+                return fail(f"network import outside model provisioning in {source.relative_to(ROOT)}:{line_number}")
 
-    print("Verified Android-only :app target, Java 11 compatibility, offline manifest, and landscape launcher")
+    print("Verified Android-only :app target, Java 11, isolated TLS model provisioning, and landscape launcher")
     return 0
 
 

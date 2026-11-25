@@ -12,6 +12,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 
 /** Source-derived action scoring and target selection for computer nations. */
 public final class OpponentAI {
@@ -134,10 +135,16 @@ public final class OpponentAI {
      * consumes random draws, so interleaving planning here changes later scores.
      */
     public static List<Decision> planTurn(GameState state, Random random) {
+        return planTurn(state, random, Collections.emptySet());
+    }
+
+    /** Score and plan only seats that still use the source planner this turn. */
+    public static List<Decision> planTurn(GameState state, Random random,
+                                          Set<Integer> selectedSeats) {
         List<GameState.PlayerState> opponents = new ArrayList<>();
         Map<Integer, List<ScoredAction>> rankedByPlayer = new LinkedHashMap<>();
         for (GameState.PlayerState player : state.getPlayers()) {
-            if (!player.human && player.alive) {
+            if (!player.human && player.alive && !selectedSeats.contains(player.id)) {
                 opponents.add(player);
             }
         }
@@ -147,7 +154,7 @@ public final class OpponentAI {
         GameState.PlayerState[] players = state.getPlayers();
         for (int playerId = players.length - 1; playerId >= 0; playerId--) {
             GameState.PlayerState player = players[playerId];
-            if (!player.human && player.alive) {
+            if (!player.human && player.alive && !selectedSeats.contains(player.id)) {
                 rankedByPlayer.put(player.id, rankedActions(state, player, random));
             }
         }

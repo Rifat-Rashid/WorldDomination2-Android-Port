@@ -9,6 +9,7 @@ from zipfile import ZipFile, BadZipFile
 
 ANDROID = "{http://schemas.android.com/apk/res/android}"
 ABIS = ("arm64-v8a", "armeabi-v7a", "x86", "x86_64")
+QWEN_ABIS = ("arm64-v8a", "x86_64")
 GENERATED_AUDIO_FILES = (
     "anti-air-gun-eight.wav", "anti-air-rotate.wav",
     "anti-rocket-fire.wav", "manifest.json",
@@ -65,7 +66,8 @@ def verify_manifest(text, require_upload=False):
         raise ValueError("Choose the permanent Play application ID before upload")
     if any(p.get(ANDROID + "name") == "android.permission.INTERNET"
            for p in manifest.findall("uses-permission")):
-        raise ValueError("The offline game must not request INTERNET")
+        if application.get(ANDROID + "usesCleartextTraffic") != "false":
+            raise ValueError("Optional model provisioning with INTERNET requires TLS-only traffic")
 
 
 def verify_bundle(path, audio_directory, require_upload=False):
@@ -80,6 +82,13 @@ def verify_bundle(path, audio_directory, require_upload=False):
                 raise ValueError(f"Missing native library: {name}")
             if abi in ("arm64-v8a", "x86_64"):
                 verify_elf64(bundle.read(name))
+            runtime = f"base/lib/{abi}/libwd2_qwen.so"
+            if abi in QWEN_ABIS:
+                if runtime not in entries:
+                    raise ValueError(f"Missing Qwen native library: {runtime}")
+                verify_elf64(bundle.read(runtime))
+            elif runtime in entries:
+                raise ValueError(f"Qwen native library shipped for unsupported ABI: {runtime}")
         sources = sorted(audio_directory.glob("*.mp3.gz"))
         if not sources:
             raise ValueError("No original audio sources found")
@@ -106,7 +115,7 @@ def verify_bundle(path, audio_directory, require_upload=False):
                 name = f"base/assets/original/ui/terrain/island-{island}-{faith}.png"
                 if name not in entries:
                     raise ValueError(f"Original terrain variant missing from beta: {name}")
-        forbidden = (".swf", ".py", ".pyc", ".jks", ".keystore", ".aab", ".apk")
+        forbidden = (".swf", ".py", ".pyc", ".jks", ".keystore", ".aab", ".apk", ".gguf")
         for name in entries:
             if name.lower().endswith(forbidden) or "/analysis/" in name.lower():
                 raise ValueError(f"Development/reference file packaged: {name}")

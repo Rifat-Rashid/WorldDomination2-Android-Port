@@ -95,9 +95,14 @@ class ReportCheckoutTest(unittest.TestCase):
         self.assertRegex(self.matrix, r'(?m)^    needs: full-suite$')
         self.assertRegex(self.matrix, r'(?m)^    if: always\(\)$')
         tasks = re.findall(r'(?m)^            task: (.+)$', self.matrix)
-        self.assertEqual(229, len(tasks))
+        self.assertEqual(230, len(tasks))
         filters = [pattern for task in tasks for pattern in selectors(task.strip().strip("'"))]
-        self.assertEqual(483, len(filters))
+        self.assertEqual(486, len(filters))
+        for pattern in (
+                'com.example.worlddomination.game.ai.OpponentTurnPlannerTest',
+                'com.example.worlddomination.game.ai.DecisionRequestSerializationTest',
+                'com.example.worlddomination.game.simulation.TurnPlannerTest'):
+            self.assertEqual(1, filters.count(pattern), pattern)
         information_panel = 'com.example.worlddomination.game.ui.InformationPanelTextTest'
         self.assertEqual(1, filters.count(information_panel))
         task = next(task for task in tasks if information_panel in task)

@@ -1,6 +1,9 @@
 package com.example.worlddomination.game;
 
+import com.badlogic.gdx.Application;
 import com.badlogic.gdx.ApplicationAdapter;
+import com.example.worlddomination.game.ai.LocalOpponentRuntime;
+import com.example.worlddomination.game.ai.OpponentTurnPlanner;
 import com.example.worlddomination.game.persistence.GameSaveStore;
 import com.example.worlddomination.game.rendering.SettingsSaveScreenRenderer;
 import com.example.worlddomination.game.ui.GameSettingsMenu;
@@ -250,9 +253,11 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     private GameState game;
     private GameSaveStore gameSaveStore;
+    private final LocalOpponentRuntime localOpponentRuntime;
+    private OpponentTurnPlanner opponentPlanner;
     private final GameSettingsMenu settingsMenu = new GameSettingsMenu();
     private final SettingsSaveScreenRenderer settingsRenderer = new SettingsSaveScreenRenderer(settingsMenu);
-    private Timer.Task settingsInputFrame;
+    private Timer.Task idleInputFrame;
 
     /** Installed by the Android launcher; no platform storage enters the simulation. */
     public void setGameSaveStore(GameSaveStore store) {
@@ -535,7 +540,12 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private boolean splashContinuePending;
 
     public WorldDominationGame(ScorePreferenceBackend scoreBackend) {
+        this(scoreBackend, null);
+    }
+
+    public WorldDominationGame(ScorePreferenceBackend scoreBackend, LocalOpponentRuntime localOpponentRuntime) {
         personalBestStore = new PersonalBestStore(scoreBackend);
+        this.localOpponentRuntime = localOpponentRuntime;
         for (int i = 0; i < navRows.length; i++) {
             navRows[i] = new Rectangle();
         }
@@ -577,6 +587,11 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     @Override
     public void create() {
+        if (localOpponentRuntime != null) {
+            Application application = Gdx.app;
+            opponentPlanner = new OpponentTurnPlanner(localOpponentRuntime, application::postRunnable,
+                    detail -> application.log("WD2Qwen", detail));
+        }
         Gdx.graphics.setForegroundFPS(60);
         Gdx.graphics.setVSync(true);
         Gdx.graphics.setContinuousRendering(false);
@@ -798,9 +813,14 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             terrainRenderer.prepare(game);
             preparedTerrainGame = game;
         }
+        if (opponentPlanner != null && opponentPlanner.update(game, !settingsMenu.isOpen())) {
+            prepareTurnPlayback();
+            skipNextFrameDelta = true;
+        }
         synchronizeOutcomeSequence();
         if (endgameRenderer != null) endgameRenderer.update();
-        boolean discardElapsedTime = skipNextFrameDelta || !continuousRenderingEnabled || settingsMenu.isOpen();
+        boolean discardElapsedTime = skipNextFrameDelta || !continuousRenderingEnabled
+                || settingsMenu.isOpen() || isOpponentPlanning();
         skipNextFrameDelta = false;
         if (discardElapsedTime) {
             accumulator = 0f;
@@ -814,7 +834,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         } else {
             accumulator = Math.min(accumulator + frameSeconds, FIXED_STEP * 6f);
         }
-        while (accumulator >= FIXED_STEP) {
+        while (accumulator >= FIXED_STEP && !isOpponentPlanning()) {
             fixedUpdate(FIXED_STEP);
             accumulator -= FIXED_STEP;
         }
@@ -856,29 +876,28 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         setContinuousRendering(splashState.isVisible() || RenderLoopPolicy.shouldRenderContinuously(game != null,
                 showExitPromptSeconds > 0f, hasActivePresentation()));
-        scheduleSettingsInputFrame();
+        scheduleIdleInputFrame();
         renderingFrame = false;
     }
 
-    private void scheduleSettingsInputFrame() {
-        if (!settingsMenu.isOpen()) {
-            cancelSettingsInputFrame();
+    private void scheduleIdleInputFrame() {
+        if (!settingsMenu.isOpen() && !isOpponentPlanning()) {
+            cancelIdleInputFrame();
             return;
         }
-        if (settingsInputFrame == null) {
-            settingsInputFrame = new Timer.Task() {
+        if (idleInputFrame == null) {
+            idleInputFrame = new Timer.Task() {
                 @Override public void run() {
                     Gdx.graphics.requestRendering();
                 }
             };
         }
-        // Android Back can remain queued until a GL frame processes input. Bound the
-        // wait while Settings is static, without advancing the battlefield's clock.
-        if (!settingsInputFrame.isScheduled()) Timer.schedule(settingsInputFrame, 0.125f);
+        // Bound input and deadline latency while Settings or AI planning pauses the battlefield clock.
+        if (!idleInputFrame.isScheduled()) Timer.schedule(idleInputFrame, 0.125f);
     }
 
-    private void cancelSettingsInputFrame() {
-        if (settingsInputFrame != null) settingsInputFrame.cancel();
+    private void cancelIdleInputFrame() {
+        if (idleInputFrame != null) idleInputFrame.cancel();
     }
 
     private void drawHelpScreen() {
@@ -1100,8 +1119,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     }
 
     private boolean hasActivePresentation() {
-        // Settings pauses the battlefield clock. Input and asset uploads request redraws.
-        if (game == null || settingsMenu.isOpen()) {
+        if (game == null || settingsMenu.isOpen() || isOpponentPlanning()) {
             return false;
         }
         if (outcomeSequence.isEndgameVisible()) {
@@ -3107,7 +3125,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
         drawStatistics();
         boolean actionSelected = game.getSelectedAction() != null && !isTurnInputBlocked();
-        if (!showsInlineActionFooter()) drawMessageWell(actionSelected ? null : sourceActionInstruction.getText());
+        if (isOpponentPlanning()) drawMessageWell("Planning opponent moves...");
+        else if (!showsInlineActionFooter()) drawMessageWell(actionSelected ? null : sourceActionInstruction.getText());
         if (actionSelected && sourceActionInstruction.getText() != null) drawPortraitInstruction();
         font.setColor(TITLE_TEXT);
         drawScoreValue();
@@ -4230,6 +4249,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     private void drawSettingsMenu() {
         settingsMenu.layout(endgameContentBounds);
+        updateLocalModelSettings();
         settingsRenderer.draw(camera.combined, batch, shapes, font, uiAssets, splashAssets.getTexture(),
                 worldWidth, worldHeight, audio.isSoundEnabled());
     }
@@ -4242,6 +4262,11 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         settingsMenu.open(gameSaveStore != null && game != null && !isTurnInputBlocked(), occupied);
         settingsMenu.layout(endgameContentBounds);
+        updateLocalModelSettings();
+    }
+
+    private void updateLocalModelSettings() {
+        if (localOpponentRuntime != null) settingsMenu.updateLocalModel(localOpponentRuntime.snapshot());
     }
 
     private void refreshSaveDescription(int slot, boolean occupied) {
@@ -4257,6 +4282,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     }
 
     private void activateSettingsAt(float x, float y) {
+        updateLocalModelSettings();
         switch (settingsMenu.hit(x, y)) {
             case SAVE:
                 try {
@@ -4283,6 +4309,14 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 break;
             case SOUND:
                 audio.toggleSound();
+                break;
+            case QWEN:
+                boolean enabled = !settingsMenu.getLocalModel().requested;
+                if (!enabled && opponentPlanner != null) opponentPlanner.useBaseline("disabled");
+                localOpponentRuntime.setRequested(enabled);
+                break;
+            case RETRY_QWEN:
+                localOpponentRuntime.setRequested(true);
                 break;
             case CANCEL_LOAD:
                 settingsMenu.back();
@@ -4347,6 +4381,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     }
 
     private void resetMatchPresentation() {
+        if (opponentPlanner != null) opponentPlanner.abandonMatch();
         blurHiddenHelpInput();
         helpState.resetMatch();
         audio.finishSatelliteAudio();
@@ -4680,7 +4715,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     }
 
     private int pointArea(float x, float y) {
-        if (settingsMenu.isOpen()) return GESTURE_NONE;
+        if (settingsMenu.isOpen() || isOpponentPlanning()) return GESTURE_NONE;
         if (outcomeSequence.isEndgameVisible()) return GESTURE_NONE;
         if (game != null && portraitPlayerAt(x, y) > 0) return GESTURE_PORTRAIT;
         if (!helpState.isOpen() && modalOpen && game != null && !sourceActionMenu.isEconomyWarning(game)
@@ -4976,6 +5011,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     }
 
     private void activateGame(GameState nextGame) {
+        if (opponentPlanner != null) opponentPlanner.abandonMatch();
         initializeGameplayAssets();
         game = nextGame;
         cachedMessageCount = -1; // A different match can have the same turn and latest message.
@@ -5379,6 +5415,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             openSettingsMenu();
             return;
         }
+        if (isTurnInputBlocked()) return;
         if (game == null) {
             activateSetupAt(x, y);
             return;
@@ -5708,20 +5745,30 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     private boolean isTurnInputBlocked() {
         if (outcomeSequence.isEndgameVisible()) return false;
-        return confirmTurnAnimation.isPending() || turnPlaybackSequence.isBlockingInput();
+        return confirmTurnAnimation.isPending() || isOpponentPlanning() || turnPlaybackSequence.isBlockingInput();
+    }
+
+    private boolean isOpponentPlanning() {
+        return opponentPlanner != null && opponentPlanner.isPending(game);
     }
 
     private void synchronizeTurnControls() {
         if (game == null) return;
-        if (confirmTurnAnimation.synchronize(game.getQueuedActionCount(), turnPlaybackSequence.isBlockingInput())) {
+        boolean blocked = isOpponentPlanning() || turnPlaybackSequence.isBlockingInput();
+        if (confirmTurnAnimation.synchronize(game.getQueuedActionCount(), blocked)) {
             audio.play(confirmTurnAnimation.isOpening() ? OriginalAudio.Cue.CONFIRM_OPEN : OriginalAudio.Cue.CONFIRM_CLOSE);
         }
-        actionSlotAnimation.synchronize(game, turnPlaybackSequence.isBlockingInput(),
+        actionSlotAnimation.synchronize(game, blocked,
                 confirmTurnAnimation.isPending(), confirmTurnAnimation.getElapsedSeconds());
     }
 
     private void confirmTurnAndPreparePlayback() {
+        if (opponentPlanner != null && opponentPlanner.begin(game)) return;
         game.confirmTurn();
+        prepareTurnPlayback();
+    }
+
+    private void prepareTurnPlayback() {
         SourceHiddenCommands hidden = game.getHiddenCommands();
         hiddenBattleEffects.begin(hidden.isActive(SourceHiddenCommands.Flag.ORCA),
                 hidden.isActive(SourceHiddenCommands.Flag.NESSY),
@@ -6238,7 +6285,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                     : titleMenu.hit(pointer.x, pointer.y, titlePickingSlots, titleSlotLoadable);
             return true;
         }
-        if (isTurnInputBlocked()) {
+        if (isTurnInputBlocked() && !isOpponentPlanning()) {
             ignorePlaybackTouchUntilUp = true;
             gestureArea = GESTURE_NONE;
             dragging = false;
@@ -6308,7 +6355,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             dragging = false;
             return true;
         }
-        if (isTurnInputBlocked()) {
+        if (isTurnInputBlocked() && !isOpponentPlanning()) {
             gestureArea = GESTURE_NONE;
             dragging = false;
             return true;
@@ -6470,9 +6517,11 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     @Override
     public void pause() {
+        if (opponentPlanner != null) opponentPlanner.useBaseline("backgrounded");
+        if (localOpponentRuntime != null) localOpponentRuntime.setForeground(false);
         splashPointerDown = false;
         titlePressed = TitleMenuLayout.Action.NONE;
-        cancelSettingsInputFrame();
+        cancelIdleInputFrame();
         accumulator = 0f;
         blurHiddenHelpInput();
         // Release regenerable targets while the old GL context is still current.
@@ -6484,6 +6533,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     @Override
     public void resume() {
+        if (localOpponentRuntime != null) localOpponentRuntime.setForeground(true);
         titleSavesDirty = true;
         skipNextFrameDelta = true;
         accumulator = 0f;
@@ -6515,8 +6565,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     @Override
     public void dispose() {
+        if (opponentPlanner != null) opponentPlanner.close();
+        else if (localOpponentRuntime != null) localOpponentRuntime.close();
         releaseTitleGraphics();
-        cancelSettingsInputFrame();
+        cancelIdleInputFrame();
         blurHiddenHelpInput();
         disposeEndgameResources();
         battlefieldDisplay.clear();
