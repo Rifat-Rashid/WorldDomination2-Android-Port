@@ -88,21 +88,31 @@ public final class SettingsSaveLoadInstrumentedTest {
                 GameState saved = newMatch();
                 queue(saved, GameState.Action.RESOURCES);
                 saved.cancelSelection();
-                empty.save(saved);
+                empty.save(2, saved);
                 GameSaveStore reopened = AndroidGameSaveStore.create(directory);
                 app.setGameSaveStore(reopened);
                 openSettings(app);
                 assertFalse(menu.canSave());
+                assertEquals(1, menu.getSelectedSlot());
+                assertFalse(menu.canLoad());
+                tap(app, menu.load);
+                assertFalse(menu.isConfirmingLoad());
+
+                tap(app, menu.slots[1]);
+                assertEquals(2, menu.getSelectedSlot());
                 assertTrue(menu.canLoad());
                 tap(app, menu.load);
                 assertTrue(menu.isConfirmingLoad());
                 assertTrue(app.keyDown(Input.Keys.BACK));
                 assertTrue(menu.isOpen());
                 assertFalse(menu.isConfirmingLoad());
+                assertEquals(2, menu.getSelectedSlot());
                 assertNull(game(app));
+
                 tap(app, menu.load);
                 tap(app, menu.confirm);
                 assertTrue(menu.canSave());
+                assertEquals(2, menu.getSelectedSlot());
                 assertNotSame(saved, game(app));
                 assertArrayEquals(GameSaveCodec.encode(saved), GameSaveCodec.encode(game(app)));
                 assertNull("Load from setup immediately shows saved history", actionInstruction(app).getText());
@@ -150,6 +160,7 @@ public final class SettingsSaveLoadInstrumentedTest {
 
     private void checkGameplaySaveAndReload(UiAutomation automation) throws Exception {
         Vector2 panelSample = new Vector2();
+        int[] panelColor = new int[1];
         EGLDisplay[] display = new EGLDisplay[1];
         EGLContext[] context = new EGLContext[1];
         SourceBattleCleanupInstrumentedTest.runInGame(app -> {
@@ -204,6 +215,13 @@ public final class SettingsSaveLoadInstrumentedTest {
                 current.confirmTurn();
                 assertEquals(1, current.getTurn());
                 assertEquals(0, current.getQueuedActionCount());
+                byte[] secondSlot = GameSaveCodec.encode(current);
+                openSettings(app);
+                tap(app, menu.slots[1]);
+                assertFalse(menu.canLoad());
+                tap(app, menu.save);
+                assertEquals("Game saved. Turn 1.", menu.getStatus());
+                tap(app, menu.close);
 
                 // Same turn, count and latest message, but a different first order.
                 GameState alternate = newMatch();
@@ -223,8 +241,17 @@ public final class SettingsSaveLoadInstrumentedTest {
                 GameSaveStore reopened = AndroidGameSaveStore.create(directory);
                 assertTrue(reopened.hasSave());
                 assertArrayEquals(expected, GameSaveCodec.encode(reopened.load()));
+                assertArrayEquals(secondSlot, GameSaveCodec.encode(reopened.load(2)));
+                assertFalse(reopened.hasSave(3));
                 app.setGameSaveStore(reopened);
                 openSettings(app);
+                tap(app, menu.slots[1]);
+                assertTrue(menu.canLoad());
+                tap(app, menu.save);
+                assertArrayEquals(GameSaveCodec.encode(alternate), GameSaveCodec.encode(reopened.load(2)));
+                assertArrayEquals(expected, GameSaveCodec.encode(reopened.load(1)));
+                assertFalse(reopened.hasSave(3));
+                tap(app, menu.slots[0]);
                 tap(app, menu.load);
                 tap(app, menu.confirm);
                 GameState loaded = game(app);
@@ -260,6 +287,8 @@ public final class SettingsSaveLoadInstrumentedTest {
                 assertTrue("Settings EGL context is queryable", contextValid(display[0], context[0]));
                 panelSample.set(project(app, menu.panel.x + 6f * menu.getScale(),
                         menu.panel.y + menu.panel.height - 12f * menu.getScale()));
+                render(app);
+                panelColor[0] = readFramebufferColor(panelSample);
             } finally {
                 app.setGameSaveStore(previous);
                 removeStoreDirectory(directory);
@@ -281,7 +310,7 @@ public final class SettingsSaveLoadInstrumentedTest {
                     .getView().getLocationOnScreen(viewOrigin));
             assertSystemBackDismissesSettings(automation,
                     viewOrigin[0] + Math.round(panelSample.x),
-                    viewOrigin[1] + Math.round(panelSample.y));
+                    viewOrigin[1] + Math.round(panelSample.y), panelColor[0]);
             scenario.onActivity(activity -> assertTrue("Back keeps the match in front",
                     activity.getWindow().getDecorView().hasWindowFocus()));
         });
@@ -292,14 +321,23 @@ public final class SettingsSaveLoadInstrumentedTest {
                 EGL14.EGL_CONTEXT_CLIENT_VERSION, new int[1], 0);
     }
 
-    private static void assertSystemBackDismissesSettings(UiAutomation automation, int x, int y)
-            throws Exception {
+    private static int readFramebufferColor(Vector2 inputPixel) {
+        int width = Gdx.graphics.getBackBufferWidth();
+        int height = Gdx.graphics.getBackBufferHeight();
+        int x = Math.round(inputPixel.x * width / Gdx.graphics.getWidth());
+        int y = height - 1 - Math.round(inputPixel.y * height / Gdx.graphics.getHeight());
+        byte[] rgba = ScreenUtils.getFrameBufferPixels(x, y, 1, 1, false);
+        return Color.rgb(rgba[0] & 255, rgba[1] & 255, rgba[2] & 255);
+    }
+
+    private static void assertSystemBackDismissesSettings(UiAutomation automation, int x, int y,
+                                                          int panelColor) throws Exception {
         assertTrue("Settings is visible before the Android Back event",
-                awaitSettingsVisible(automation, x, y, true));
+                awaitSettingsVisible(automation, x, y, panelColor, true));
         // Another touch or a GL runnable would wake an on-demand surface and hide the regression.
         shell(automation, "input keyevent KEYCODE_BACK");
         assertTrue("Android Back closes Settings without another input or forced frame",
-                awaitSettingsVisible(automation, x, y, false));
+                awaitSettingsVisible(automation, x, y, panelColor, false));
     }
 
     private static String shell(UiAutomation automation, String command) throws Exception {
@@ -314,16 +352,16 @@ public final class SettingsSaveLoadInstrumentedTest {
     }
 
     private static boolean awaitSettingsVisible(UiAutomation automation, int x, int y,
-                                                boolean visible) {
+                                                int panelColor, boolean visible) {
         long deadline = SystemClock.uptimeMillis() + 3_000L;
         do {
             Bitmap screen = automation.takeScreenshot();
             assertNotNull("Android window screenshot", screen);
             try {
                 int pixel = screen.getPixel(x, y);
-                boolean settingsBackground = Math.abs(Color.red(pixel) - 9) <= 2
-                        && Math.abs(Color.green(pixel) - 20) <= 2
-                        && Math.abs(Color.blue(pixel) - 28) <= 2;
+                boolean settingsBackground = Math.abs(Color.red(pixel) - Color.red(panelColor)) <= 2
+                        && Math.abs(Color.green(pixel) - Color.green(panelColor)) <= 2
+                        && Math.abs(Color.blue(pixel) - Color.blue(panelColor)) <= 2;
                 if (settingsBackground == visible) return true;
             } finally {
                 screen.recycle();

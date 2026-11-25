@@ -13,10 +13,16 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import run_manual_save_probe as probe
 
 
-def transcript(phase, pid=1001, start=5000, **changes):
-    receipt = dict(phase=phase, pid=pid, processToken=f"{pid}:{start}", turn=1,
-                   queued=["RESOURCES", "RESEARCH"], funds=12, checkpointSha256="a" * 64,
-                   nextRandomBits=4_600_000_000_000_000_000)
+def slot_receipts():
+    return [dict(slot=number, turn=number, queued=["RESOURCES", "RESEARCH"], funds=11 + number,
+                 checkpointSha256=digest * 64, nextRandomBits=4_600_000_000_000_000_000 + number)
+            for number, digest in enumerate("abc", 1)]
+
+
+def transcript(phase, pid=1001, start=5000, slot_changes=None, **changes):
+    slots = slot_receipts()
+    slots[0].update(slot_changes or {})
+    receipt = dict(phase=phase, pid=pid, processToken=f"{pid}:{start}", slots=slots)
     receipt.update(changes)
     return ("INSTRUMENTATION_STATUS: wd2_match_save_receipt=" + json.dumps(receipt)
             + "\nINSTRUMENTATION_STATUS_CODE: 0\nINSTRUMENTATION_RESULT: stream=\n"
@@ -88,19 +94,30 @@ class ManualSaveProbeTest(unittest.TestCase):
 
     def test_rejects_wrong_or_invalid_receipt_fields(self):
         for changes in (dict(pid=True), dict(pid=0), dict(processToken="1002:5000"),
-                        dict(processToken="1001:-1"), dict(turn=True), dict(turn=2),
-                        dict(queued=["RESEARCH", "RESOURCES"]), dict(funds=True), dict(funds="12"),
-                        dict(nextRandomBits=0.5), dict(checkpointSha256="A" * 64)):
+                        dict(processToken="1001:-1")):
             with self.subTest(changes=changes), self.assertRaises(probe.ProbeError):
                 probe.parse_instrumentation(transcript("save", **changes), "save")
+        for changes in (dict(slot=True), dict(slot=2), dict(turn=True), dict(turn=2),
+                        dict(queued=["RESEARCH", "RESOURCES"]), dict(funds=True), dict(funds="12"),
+                        dict(nextRandomBits=0.5), dict(checkpointSha256="A" * 64),
+                        dict(checkpointSha256="b" * 64)):
+            with self.subTest(changes=changes), self.assertRaises(probe.ProbeError):
+                probe.parse_instrumentation(transcript("save", slot_changes=changes), "save")
         with self.assertRaises(probe.ProbeError):
             probe.parse_instrumentation(transcript("load"), "save")
 
+    def test_rejects_missing_duplicate_and_out_of_order_slots(self):
+        first, second, third = slot_receipts()
+        for slots in ([first, second], [first, second, second], [first, third, second]):
+            with self.subTest(slots=slots), self.assertRaises(probe.ProbeError):
+                probe.parse_instrumentation(transcript("save", slots=slots), "save")
+
     def test_rejects_reused_processes_and_mismatched_restore(self):
         for load in (transcript("load"), transcript("load", 1002, 4999),
-                     transcript("load", 1002, 5000), transcript("load", 1002, 5001, funds=13),
-                     transcript("load", 1002, 5001, checkpointSha256="b" * 64),
-                     transcript("load", 1002, 5001, nextRandomBits=2)):
+                     transcript("load", 1002, 5000),
+                     transcript("load", 1002, 5001, slot_changes={"funds": 13}),
+                     transcript("load", 1002, 5001, slot_changes={"checkpointSha256": "d" * 64}),
+                     transcript("load", 1002, 5001, slot_changes={"nextRandomBits": 2})):
             with self.subTest(load=load):
                 result = self.run_probe(load=load)
                 self.assertEqual("failed", result["status"])
