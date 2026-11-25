@@ -27,6 +27,14 @@ $entry = (Resolve-Path tools/wd2ai/server.py).Path
 codex mcp add wd2-unsloth --env "WD2_TRAINING_ROOT=$env:WD2_TRAINING_ROOT" --env "WD2_UNSLOTH_PYTHON=$env:WD2_UNSLOTH_PYTHON" -- $bridge $entry
 ```
 
+For Studio's own model, dataset, and job tools, enable its MCP endpoint in Desktop and create a Studio API key in Settings. Set `UNSLOTH_STUDIO_API_KEY` in the environment that launches Codex. Register the native endpoint separately from the WD2 game bridge. The flag expects the variable name. Restart an already running client after changing its environment.
+
+```powershell
+codex mcp add unsloth-studio --url http://127.0.0.1:8888/mcp/ --bearer-token-env-var UNSLOTH_STUDIO_API_KEY
+```
+
+Use `studio_status` to verify native access. The native endpoint has its own negotiated protocol version and tools. The WD2 bridge runs the response-masked training job asynchronously and exposes `wd2_training_status` while it runs.
+
 ## Tools
 
 | Tool | Operation |
@@ -67,7 +75,7 @@ The exporter requires 1,600 train, 200 validation and 200 test rows for a full r
 
 The pinned trainable checkpoint is Qwen/Qwen3-0.6B revision `c1899de289a04d12100db370d81485cdf75e47ca`. The input includes the official non-thinking generation prefix. Only the JSON response and EOS receive loss. Inputs beyond 2,048 tokens fail validation. The training job records its base and data hashes, visible GPU, mask example, metrics, adapter and tokenizer. With `--merge` it writes a separate standalone checkpoint ready for the pinned llama.cpp converter. The Android build accepts a development GGUF only with an exact size and checksum. See [Android runtime and provisioning](../../docs/qwen-runtime.md).
 
-The verified Windows training stack used Python 3.12, Unsloth 2026.9.14, unsloth-zoo 2026.9.9, PyTorch 2.11.0+cu130, Transformers 5.5.0, TRL 0.23.1, PEFT 0.18.1, datasets 4.3.0 and bitsandbytes 0.50.2. Install the desktop environment separately from the MCP dependencies. Large weights, private trajectories and checkpoints belong outside ordinary Git history.
+The full Windows training run used Python 3.12.0, Unsloth and unsloth-zoo 2026.11.11, PyTorch 2.11.0+cu130, Transformers 5.5.4, TRL 0.23.1, PEFT 0.18.1, datasets 4.3.0 and bitsandbytes 0.50.2. Each run records the actual interpreter packages in `run.json`. Install the desktop environment separately from the MCP dependencies. Large weights, private trajectories and checkpoints belong outside ordinary Git history.
 
 Run `export_gguf.py --run <training-run> --source <b7700-source-dir> --bin <b7700-binary-dir>` with the training interpreter to create standalone F16, Q8_0 and Q4_K_M exports and their byte counts and checksums. Use `tools/wd2play/score_choices.py` on the validation split before choosing a deployment quantization. The bundled APK option in the runtime guide makes that specific file usable offline from first launch.
 

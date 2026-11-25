@@ -92,9 +92,14 @@ if __name__ == "__main__" and len(sys.argv) == 5 and sys.argv[1] == "--worker":
     run, base, dataset = map(Path, sys.argv[2:])
     update(run, {"phase": "running", "pid": os.getpid()})
     try:
+        environment = os.environ.copy()
+        environment.setdefault("PYTHONUTF8", "1")
+        environment.setdefault("HF_HUB_OFFLINE", "1")
+        environment.setdefault("TORCHINDUCTOR_CACHE_DIR", str(run.parent / "inductor"))
+        environment.setdefault("UNSLOTH_COMPILE_LOCATION", str(run.parent / "unsloth_compile"))
         result = subprocess.run([sys.executable, str(Path(__file__).with_name("sft.py")),
                                  "--out", str(run / "model"), "--dataset", str(dataset),
-                                 "--base", str(base), "--merge"], check=False)
+                                 "--base", str(base), "--merge"], check=False, env=environment)
         update(run, {"phase": "completed" if result.returncode == 0 else "failed", "exit_code": result.returncode})
     except BaseException:
         update(run, {"phase": "failed"})
