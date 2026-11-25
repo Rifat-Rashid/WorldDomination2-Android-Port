@@ -87,6 +87,8 @@ Choose a fresh training root and keep the parent run intact. Supply the previous
 --extend-from <parent-reviewed-directory> --train-count 6400
 ```
 
+Add `--exclude-conflicting-labels` to drop new decisions when reviewers endorsed different plan meanings for the same coarsened state and menu. All competing new labels are excluded. Existing parent rows keep their original positions. The report counts exclusions under `conflicting_semantic_labels`.
+
 All original decisions keep their position, message digest, review and screenshot digest. The exporter fills additional positions from new families. Validation and test messages stay byte-identical to the parent. The expanded report records the parent's split hashes and the collected seeds. Preview and train using the usual MCP tools against the new training root. Each run trains from the pinned base for one epoch and evaluates eight checkpoints.
 
 To compare gameplay across dataset sizes, freeze a JSON manifest with purpose `prospective_gameplay` and a list of previously unused episode and seed configurations before fitting. For each comparison policy, run `tools/wd2play/compare_checkpoints.py` with the same manifest, its SHA-256, the expanded dataset report, a policy label and a unique output directory. Supply the pinned server and GGUF to evaluate a model. The harness checks for re-used collection seeds, replays the same setups for each policy and records every action, fallback and terminal outcome.

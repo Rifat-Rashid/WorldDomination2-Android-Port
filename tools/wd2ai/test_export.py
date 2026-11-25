@@ -9,10 +9,21 @@ import unittest
 from unittest.mock import patch
 
 from collect import endpoint
-from export_dataset import evidence, family_split, fingerprint, principal, sample_families
+from export_dataset import evidence, family_split, fingerprint, principal, sample_families, unambiguous_choices
 
 
 class DatasetContractTests(unittest.TestCase):
+    def test_conflicting_semantic_labels_drop_both_new_choices_and_preserve_the_parent(self):
+        def record(name, state, plan):
+            return {"audit": {"decision_id": name}, "fingerprint": (state, plan)}
+
+        rows = [record("old", "opening", "invest"), record("new", "opening", "attack"),
+                record("a", "late", "fund"), record("b", "late", "defend"),
+                record("unique", "threat", "defend")]
+        for order in (rows, list(reversed(rows))):
+            self.assertEqual({"old", "unique"},
+                             {r["audit"]["decision_id"] for r in unambiguous_choices(order, {"old"})})
+
     def test_review_role_alias_cannot_approve_own_decisions(self):
         self.assertEqual(principal("teacher-b-v2"), principal("Teacher-B-independent-review"))
         self.assertNotEqual(principal("teacher-a"), principal("teacher-b-independent-review"))

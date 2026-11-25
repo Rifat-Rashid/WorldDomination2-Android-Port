@@ -88,6 +88,16 @@ def sample_families(rows, limit):
         limit -= 1
 
 
+def unambiguous_choices(choices, retained):
+    """Keep frozen parent rows, and exclude all new conflicting labels regardless of file order."""
+    labels = defaultdict(set)
+    for row in choices:
+        state, selected = row["fingerprint"]
+        labels[state].add(selected)
+    return [row for row in choices if row["audit"]["decision_id"] in retained
+            or len(labels[row["fingerprint"][0]]) == 1]
+
+
 def export(args):
     from transformers import AutoTokenizer
     parent_report, frozen = (frozen_decisions(args.extend_from) if args.extend_from else
@@ -176,10 +186,14 @@ def export(args):
                                  "episode": cfg["episode"], "decision_id": row["decision_id"],
                                  "raw_sha256": identity(row), "row_sha256": hashlib.sha256(encoded.encode()).hexdigest(),
                                  "review": review, "screenshot_sha256": proof["screenshot_sha256"]}
-            eligible[split].append({"encoded": encoded, "length": len(tokens["input_ids"]), "turn": row["turn"],
+            eligible[split].append({"encoded": encoded, "fingerprint": fp, "length": len(tokens["input_ids"]), "turn": row["turn"],
                                     "actions": [a["action"] for a in plans[selected]], "difficulty": cfg["difficulty"],
                                     "teacher": cfg["teacher"], "audit": provenance})
     for split, choices in eligible.items():
+        if args.exclude_conflicting_labels:
+            filtered = unambiguous_choices(choices, retained)
+            rejected["conflicting_semantic_labels"] += len(choices) - len(filtered)
+            choices = filtered
         by_id = {x["audit"]["decision_id"]: x for x in choices}
         originals = []
         for prior in frozen[split]:
@@ -236,5 +250,7 @@ if __name__ == "__main__":
         parser.add_argument("--" + arg, required=True, type=Path)
     parser.add_argument("--extend-from", type=Path, help="Preserve all certified parent decisions and holdout splits")
     parser.add_argument("--train-count", type=int, default=ORIGINAL_COUNTS["train"])
+    parser.add_argument("--exclude-conflicting-labels", action="store_true",
+                        help="Exclude new decisions with conflicting targets on the same coarsened state and menu")
     parser.add_argument("--partial", action="store_true", help="Export available evidence without claiming the quota")
     export(parser.parse_args())
