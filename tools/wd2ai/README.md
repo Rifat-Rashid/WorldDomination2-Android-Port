@@ -77,6 +77,20 @@ The pinned trainable checkpoint is Qwen/Qwen3-0.6B revision `c1899de289a04d12100
 
 The full Windows training run used Python 3.12.0, Unsloth and unsloth-zoo 2026.11.11, PyTorch 2.11.0+cu130, Transformers 5.5.4, TRL 0.23.1, PEFT 0.18.1, datasets 4.3.0 and bitsandbytes 0.50.2. Each run records the actual interpreter packages in `run.json`. Install the desktop environment separately from the MCP dependencies. Large weights, private trajectories and checkpoints belong outside ordinary Git history.
 
+### Generate a simulation-labeled expansion
+
+The offline teacher plays through the same Java rules engine. It screens legal pairs on a one-turn branch and scores the four highest candidates on two matched three-turn branches. The original Java policy controls the focal actor after the branch's first turn. Its score considers population, eliminating the human opponent, cash, influence, troops and technology. Simulation-state access and branch scores remain in the evidence files. Training receives only the deployment observation and selected plan ID.
+
+```powershell
+& tools/wd2play/play.ps1 -Command build
+python tools/wd2ai/rollout_corpus.py generate --start 420000 --games 108 --jobs 7 --pilot --out <pilot-directory>
+python tools/wd2ai/rollout_corpus.py generate --start 500000 --games 5400 --jobs 9 --out <shard-directory>
+python tools/wd2ai/rollout_corpus.py export --parent <certified-corpus> --shards <shard-directory> --reserved <prospective-manifest> --out <fresh-output-directory> --target 200000
+& $py tools/wd2ai/sft.py --base <pinned-base> --dataset <fresh-output-directory> --out <model-directory> --train-batch 8 --gradient-steps 4 --length-bucketing --merge
+```
+
+Pilot games compare the teacher and Java on matched setups. Keep pilot and prospective seeds separate from collection. The exporter checks legal choices, score margins, terminal evidence, transcript completeness and semantic duplication. The Java worker independently verifies each trajectory through replay. Newly automated labels lack individual Android and independent manual review. Existing certified rows and both original holdouts retain their bytes and provenance. The fine-tuning worker stores token batches in a disk-backed Arrow dataset and retains the latest and best checkpoints within its save limit.
+
 Run `export_gguf.py --run <training-run> --source <b7700-source-dir> --bin <b7700-binary-dir>` with the training interpreter to create standalone F16, Q8_0 and Q4_K_M exports and their byte counts and checksums. Use `tools/wd2play/score_choices.py` on the validation split before choosing a deployment quantization. The bundled APK option in the runtime guide makes that specific file usable offline from first launch.
 
 ### Extend a completed experiment

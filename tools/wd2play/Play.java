@@ -338,6 +338,20 @@ public final class Play {
         Session(String episode, String family, long seed, int difficulty, int focal, String policy,
                 String human, String preference, String leaders, String teacher, int maxTurns,
                 String commit, int version, String sourceHash) {
+            this(episode, family, seed, difficulty, focal, policy, human, preference, leaders,
+                    teacher, maxTurns, commit, version, sourceHash, null);
+        }
+
+        Session(Session original, GameState fork) {
+            this(original.episode, original.family, original.seed, original.difficulty, original.focal,
+                    original.policy, original.human, original.preference, original.leaders,
+                    original.teacher, original.maxTurns, original.commit, original.version,
+                    original.sourceHash, fork);
+        }
+
+        private Session(String episode, String family, long seed, int difficulty, int focal, String policy,
+                        String human, String preference, String leaders, String teacher, int maxTurns,
+                        String commit, int version, String sourceHash, GameState fork) {
             this.episode = episode;
             this.family = family;
             this.seed = seed;
@@ -352,6 +366,11 @@ public final class Play {
             this.commit = commit;
             this.version = version;
             this.sourceHash = sourceHash;
+            if (fork != null) {
+                simulation = null;
+                game = fork;
+                return;
+            }
             GameSetup setup = new GameSetup(seed);
             setup.setDifficulty(difficulty);
             for (String leader : leaders.split(",")) {
@@ -428,33 +447,15 @@ public final class Play {
         }
 
         String advance(String selectedId, String reason, boolean externalFocal) {
-            if (done()) throw new IllegalStateException("Episode is over");
-            boolean continuation = focalDead();
-            prepare();
-            DecisionRequest previous = request;
-            TurnPlan selected = previous == null ? null : previous.selectId(selectedId);
-            if (!continuation && externalFocal && selected == null) {
-                throw new IllegalArgumentException("Unknown plan ID " + selectedId);
-            }
-            Map<Integer, TurnPlan> assignments = new LinkedHashMap<>();
-            Map<Integer, String> stochasticChoices = new LinkedHashMap<>();
-            if (selected != null) assignments.put(focal, selected);
-            if (!continuation && "stochastic".equals(policy)) {
-                for (PlayerState actor : game.getPlayers()) {
-                    if (actor.human || !actor.alive || actor.id == focal) continue;
-                    DecisionRequest rival = DecisionRequest.capture(game, actor.id, "stochastic", version);
-                    String choice = selectPolicy(rival, "stochastic");
-                    assignments.put(actor.id, rival.selectId(choice));
-                    stochasticChoices.put(actor.id, choice);
-                }
-            }
-
             int turn = game.getTurn();
             String decision = decisionId();
-            if (!game.finishOpponentPlanning(assignments).equals(assignments.keySet())) {
-                throw new IllegalStateException("A replay plan became illegal before settlement");
+            DecisionRequest previous = request;
+            if (!done()) {
+                prepare();
+                previous = request;
             }
-            request = null;
+            boolean continuation = focalDead();
+            Map<Integer, String> stochasticChoices = resolveTurn(selectedId, externalFocal);
             String rowType = continuation ? "continuation" : (isEvaluation() ? "evaluation" : "decision");
             Map<String, Object> row = fields("type", rowType,
                     "schema", SCHEMA, "episode", episode, "family", family, "decision_id", decision,
@@ -476,6 +477,35 @@ public final class Play {
             row.put("system", DecisionRequest.SYSTEM);
             row.put("user", previous.user);
             return withCandidates(row, previous);
+        }
+
+        Map<Integer, String> resolveTurn(String selectedId, boolean externalFocal) {
+            if (done()) throw new IllegalStateException("Episode is over");
+            boolean continuation = focalDead();
+            prepare();
+            DecisionRequest previous = request;
+            TurnPlan selected = previous == null ? null : previous.selectId(selectedId);
+            if (!continuation && externalFocal && selected == null) {
+                throw new IllegalArgumentException("Unknown plan ID " + selectedId);
+            }
+            Map<Integer, TurnPlan> assignments = new LinkedHashMap<>();
+            Map<Integer, String> stochasticChoices = new LinkedHashMap<>();
+            if (selected != null) assignments.put(focal, selected);
+            if (!continuation && "stochastic".equals(policy)) {
+                for (PlayerState actor : game.getPlayers()) {
+                    if (actor.human || !actor.alive || actor.id == focal) continue;
+                    DecisionRequest rival = DecisionRequest.capture(game, actor.id, "stochastic", version);
+                    String choice = selectPolicy(rival, "stochastic");
+                    assignments.put(actor.id, rival.selectId(choice));
+                    stochasticChoices.put(actor.id, choice);
+                }
+            }
+
+            if (!game.finishOpponentPlanning(assignments).equals(assignments.keySet())) {
+                throw new IllegalStateException("A replay plan became illegal before settlement");
+            }
+            request = null;
+            return stochasticChoices;
         }
 
         Map<String, Object> committedOrders() {
