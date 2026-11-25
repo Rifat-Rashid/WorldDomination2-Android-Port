@@ -97,14 +97,24 @@ public final class PhoneToolbarAudioInstrumentedTest {
                     GameSettingsMenu settings = (GameSettingsMenu) field(app, "settingsMenu");
                     assertTrue("Gear opens Settings", settings.isOpen());
                     assertTrue("Opening Settings keeps sound enabled", audio.isSoundEnabled());
+                    byte[] soundOnLabel = capture(app, settings.sound, null);
                     tap(app, settings.sound);
                     assertFalse("Settings Sound changes the sound option", audio.isSoundEnabled());
                     assertTrue("Settings Sound leaves music enabled", audio.isMusicEnabled());
                     assertFalse(audio.isOutputMuted());
                     assertEquals("Settings Sound leaves theme gain alone", themeVolume, theme.getVolume(), 0.0001f);
                     assertTrue(theme.isPlaying());
-                    byte[] gearImage = capture(app, mute, "phone-toolbar-gear.png");
-                    assertArrayEquals("Settings Sound does not change the mute label", restored, gearImage);
+                    byte[] soundOffLabel = capture(app, settings.sound, "phone-toolbar-gear.png");
+                    assertFalse("Settings Sound changes its own label", Arrays.equals(soundOnLabel, soundOffLabel));
+                    tap(app, settings.close);
+                    assertFalse(settings.isOpen());
+                    assertFalse("Sound stays off after closing Settings", audio.isSoundEnabled());
+                    assertArrayEquals("Settings Sound does not change the mute label",
+                            restored, capture(app, mute, null));
+
+                    tap(app, gear);
+                    assertTrue(settings.isOpen());
+                    assertFalse(audio.isSoundEnabled());
                     tap(app, settings.sound);
                     assertTrue("Settings Sound can turn effects back on", audio.isSoundEnabled());
                     tap(app, settings.close);
@@ -171,11 +181,13 @@ public final class PhoneToolbarAudioInstrumentedTest {
         int w = Gdx.graphics.getBackBufferWidth(), h = Gdx.graphics.getBackBufferHeight();
         Pixmap frame = new Pixmap(w, h, Pixmap.Format.RGBA8888);
         frame.getPixels().put(ScreenUtils.getFrameBufferPixels(0, 0, w, h, true));
-        File directory = InstrumentationRegistry.getInstrumentation().getTargetContext()
-                .getExternalFilesDir("beta-ui-evidence");
-        assertNotNull(directory);
         try {
-            PixmapIO.writePNG(Gdx.files.absolute(new File(directory, filename).getAbsolutePath()), frame);
+            if (filename != null) {
+                File directory = InstrumentationRegistry.getInstrumentation().getTargetContext()
+                        .getExternalFilesDir("beta-ui-evidence");
+                assertNotNull(directory);
+                PixmapIO.writePNG(Gdx.files.absolute(new File(directory, filename).getAbsolutePath()), frame);
+            }
             Viewport viewport = (Viewport) field(app, "viewport");
             Vector2 lo = viewport.project(new Vector2(bounds.x + bounds.width * .16f,
                     bounds.y + bounds.height * .25f));
