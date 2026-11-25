@@ -1,6 +1,7 @@
 package com.example.worlddomination.game.ui;
 
 import com.badlogic.gdx.math.Rectangle;
+import com.example.worlddomination.game.ai.LocalOpponentRuntime;
 import com.example.worlddomination.game.ui.GameSettingsMenu.Command;
 
 import org.junit.Test;
@@ -49,6 +50,8 @@ public final class GameSettingsMenuTest {
         assertEquals(Command.CONFIRM_LOAD, hit(menu, menu.confirm));
         assertEquals(Command.CANCEL_LOAD, hit(menu, menu.cancel));
         assertEquals(Command.NONE, hit(menu, menu.sound));
+        assertEquals(Command.NONE, hit(menu, menu.qwen));
+        assertEquals(Command.NONE, hit(menu, menu.retryQwen));
         assertEquals(Command.NONE, hit(menu, menu.close));
 
         menu.back();
@@ -120,6 +123,7 @@ public final class GameSettingsMenuTest {
         assertAuthoredPosition(menu, menu.save, 350f, 45f, 145f, 40f);
         assertAuthoredPosition(menu, menu.load, 507f, 45f, 145f, 40f);
         assertAuthoredPosition(menu, menu.sound, 350f, 6f, 145f, 30f);
+        assertAuthoredPosition(menu, menu.qwen, 507f, 6f, 268f, 30f);
         assertAuthoredPosition(menu, menu.close, 738f, 310f, 52f, 36f);
         assertEquals(menu.save, menu.confirm);
         assertEquals(menu.load, menu.cancel);
@@ -145,13 +149,34 @@ public final class GameSettingsMenuTest {
             assertEquals(expectedScale, menu.getScale(), 0.0001f);
             assertDisjointInside(menu.panel,
                     menu.slots[0], menu.slots[1], menu.slots[2],
-                    menu.save, menu.load, menu.sound, menu.close);
+                    menu.save, menu.load, menu.sound, menu.qwen, menu.retryQwen, menu.close);
             assertDisjointInside(menu.panel, menu.cancel, menu.confirm);
             assertEquals(Command.LOAD, hit(menu, menu.load));
             menu.requestLoad();
             assertEquals(Command.CONFIRM_LOAD, hit(menu, menu.confirm));
             menu.back();
         }
+    }
+
+    @Test
+    public void localAiRequiresRuntimeSupportAndExposesAnExplicitRetry() {
+        GameSettingsMenu menu = createMenu();
+        menu.open(true, true);
+        assertEquals(Command.NONE, hit(menu, menu.qwen));
+
+        menu.updateLocalModel(new LocalOpponentRuntime.Snapshot(true, false,
+                LocalOpponentRuntime.Stage.OFF, -1f, "", ""));
+        assertEquals(Command.QWEN, hit(menu, menu.qwen));
+        assertFalse(menu.getLocalModel().requested);
+        assertEquals(Command.NONE, hit(menu, menu.retryQwen));
+
+        menu.updateLocalModel(new LocalOpponentRuntime.Snapshot(true, true,
+                LocalOpponentRuntime.Stage.ERROR, -1f, "Model missing", ""));
+        assertTrue(menu.getLocalModel().requested);
+        assertEquals(Command.RETRY_QWEN, hit(menu, menu.retryQwen));
+        menu.requestLoad();
+        assertEquals(Command.NONE, hit(menu, menu.qwen));
+        assertEquals(Command.NONE, hit(menu, menu.retryQwen));
     }
 
     @Test

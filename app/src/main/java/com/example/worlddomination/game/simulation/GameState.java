@@ -793,6 +793,11 @@ public final class GameState {
     // Presenter.updatePlayerVars_2 applies their results on the next turn.
     private final List<DiplomacyProposal> acceptedHumanDiplomacy = new ArrayList<>();
     private final List<DiplomacyProposal> rejectedHumanDiplomacy = new ArrayList<>();
+    private List<AiDiplomacyResponse> pendingAiDiplomacyResponses;
+    private List<List<Action>> pendingPreviousActions = Collections.emptyList();
+    private List<CombatEvent> pendingPreviousCombat = Collections.emptyList();
+    private List<List<TurnPlan.Order>> lastCommittedOrders = Collections.emptyList();
+    final Object planIdentity = new Object();
     private ReferenceRandom lastTurnBattleRandom;
     private final BattleCitySnapshot[] lastTurnBattleCities = new BattleCitySnapshot[25];
     private boolean hasLastTurnBattleCities;
@@ -996,6 +1001,9 @@ public final class GameState {
 
     /** Writes the platform-independent payload understood by the versioned save codec. */
     public void writeCheckpoint(DataOutput output) throws IOException {
+        if (isOpponentPlanningPending()) {
+            throw new IOException("Cannot save while confirming a turn");
+        }
         if (matchStatus != MatchStatus.ONGOING) {
             throw new IOException("Only an ongoing match can be saved");
         }
@@ -2702,7 +2710,7 @@ public final class GameState {
                 && getAvailableDefenseWeapons(0).contains(selectedDefenseWeapon);
     }
 
-    private static boolean isCarrier(WeaponState weapon) {
+    static boolean isCarrier(WeaponState weapon) {
         if (weapon == null) {
             return false;
         }
@@ -2711,7 +2719,7 @@ public final class GameState {
                 || "ship".equals(type) || "space".equals(type);
     }
 
-    private static boolean isCompatiblePayload(WeaponState carrier, WeaponState payload) {
+    static boolean isCompatiblePayload(WeaponState carrier, WeaponState payload) {
         if (!isCarrier(carrier) || payload == null) {
             return false;
         }
@@ -3375,8 +3383,32 @@ public final class GameState {
 
     /** Resolves human and opponent actions using the source turn order. */
     public void confirmTurn() {
+        beginOpponentPlanning(false);
+        finishOpponentPlanning(Collections.emptyMap());
+    }
+
+    public boolean isOpponentPlanningPending() {
+        return pendingAiDiplomacyResponses != null;
+    }
+
+    /** Enters the source planning boundary after reserving pending diplomacy demands. */
+    public void beginOpponentPlanning() {
+        beginOpponentPlanning(true);
+    }
+
+    private void beginOpponentPlanning(boolean captureMemory) {
+        if (isOpponentPlanningPending() || matchStatus != MatchStatus.ONGOING) {
+            throw new IllegalStateException("Cannot begin opponent planning now");
+        }
         if (queuedActions.size() != MAX_TURN_ACTIONS) {
             throw new IllegalStateException("Choose two actions before confirming the turn");
+        }
+        if (captureMemory) {
+            pendingPreviousActions = new ArrayList<>(players.length);
+            for (PlayerState actor : players) {
+                pendingPreviousActions.add(new ArrayList<>(actor.lastTurnActions));
+            }
+            pendingPreviousCombat = new ArrayList<>(lastTurnCombatEvents);
         }
         // The Flash clears every player's shortMSG_arr before presenting results.
         for (PlayerState player : players) {
@@ -3397,24 +3429,97 @@ public final class GameState {
             player.lastAttackedByCasualties = 0;
         }
         initializeAiTurnMoney();
-        List<AiDiplomacyResponse> diplomacyResponses = resolvePendingAiDiplomacy();
+        pendingAiDiplomacyResponses = resolvePendingAiDiplomacy();
+    }
+
+    public List<Action> getPriorOwnActions(int playerId) {
+        return pendingPreviousActions.isEmpty() ? playerById(playerId).getLastTurnActions()
+                : Collections.unmodifiableList(pendingPreviousActions.get(playerId));
+    }
+
+    public List<CombatEvent> getPriorKnownCombat(int playerId) {
+        List<CombatEvent> visible = new ArrayList<>();
+        List<CombatEvent> previous = isOpponentPlanningPending() ? pendingPreviousCombat
+                : lastTurnCombatEvents;
+        for (CombatEvent combat : previous) {
+            if (combat.attackerPlayerId == playerId || combat.defenderPlayerId == playerId) {
+                visible.add(combat);
+            }
+        }
+        return Collections.unmodifiableList(visible);
+    }
+
+    /** Audit of settled orders for headless replay. Do not use in policy inputs. */
+    public List<TurnPlan.Order> getLastCommittedOrders(int playerId) {
+        return lastCommittedOrders.isEmpty() ? Collections.emptyList()
+                : Collections.unmodifiableList(lastCommittedOrders.get(playerId));
+    }
+
+    /** Applies a complete optional plan per actor, filling other seats with the source AI. */
+    public Set<Integer> finishOpponentPlanning(Map<Integer, TurnPlan> selectedPlans) {
+        if (!isOpponentPlanningPending()) {
+            throw new IllegalStateException("No opponent planning is pending");
+        }
+        List<AiDiplomacyResponse> diplomacyResponses = pendingAiDiplomacyResponses;
+        boolean captureOrders = !pendingPreviousActions.isEmpty();
+        Map<Integer, TurnPlan> acceptedPlans = new LinkedHashMap<>();
+        if (opponentTurnsEnabled) {
+            for (int playerId = 1; playerId < players.length; playerId++) {
+                TurnPlan plan = selectedPlans.get(playerId);
+                if (TurnPlanner.isLegal(this, playerId, plan)) {
+                    acceptedPlans.put(playerId, plan);
+                }
+            }
+        }
+        pendingAiDiplomacyResponses = null;
+        pendingPreviousActions = Collections.emptyList();
+        pendingPreviousCombat = Collections.emptyList();
         List<ActionOrder> turnOrders = new ArrayList<>(players.length * MAX_TURN_ACTIONS);
         turnOrders.addAll(queuedActions);
         for (ActionOrder order : queuedActions) {
             getHuman().lastTurnActions.add(order.action);
         }
         if (opponentTurnsEnabled) {
-            for (OpponentAI.Decision decision : OpponentAI.planTurn(this, random)) {
-                PlayerState player = playerById(decision.playerId);
-                turnOrders.add(new ActionOrder(player.id, decision.action,
-                        decision.productionBudgets, decision.technologies,
-                        decision.reservedMillions, decision.targetPlayerId,
-                        decision.targetCityIndex, decision.weaponName,
-                        decision.payloadName, decision.prepareCarrier,
-                        decision.spyBuilding == null ? "spyCenter" : decision.spyBuilding,
-                        decision.diplomacyOption, decision.shipStrikes));
-                player.lastTurnActions.add(decision.action);
+            List<OpponentAI.Decision> baseline = OpponentAI.planTurn(this, random,
+                    acceptedPlans.keySet());
+            for (int playerId = 1; playerId < players.length; playerId++) {
+                PlayerState player = players[playerId];
+                TurnPlan selected = acceptedPlans.get(playerId);
+                if (selected != null) {
+                    for (TurnPlan.Order order : selected.orders) {
+                        turnOrders.add(toActionOrder(playerId, order));
+                        player.turnMoneyMillions -= order.reservedMillions;
+                        if (order.action == Action.PRODUCTION) player.invalidateAiTurnMoney();
+                        player.lastTurnActions.add(order.action);
+                    }
+                    continue;
+                }
+                for (OpponentAI.Decision decision : baseline) {
+                    if (decision.playerId != playerId) continue;
+                    turnOrders.add(new ActionOrder(player.id, decision.action,
+                            decision.productionBudgets, decision.technologies,
+                            decision.reservedMillions, decision.targetPlayerId,
+                            decision.targetCityIndex, decision.weaponName,
+                            decision.payloadName, decision.prepareCarrier,
+                            decision.spyBuilding == null ? "spyCenter" : decision.spyBuilding,
+                            decision.diplomacyOption, decision.shipStrikes));
+                    player.lastTurnActions.add(decision.action);
+                }
             }
+        }
+        if (captureOrders) {
+            List<List<TurnPlan.Order>> capturedOrders = new ArrayList<>(players.length);
+            for (PlayerState player : players) capturedOrders.add(new ArrayList<>(MAX_TURN_ACTIONS));
+            for (ActionOrder order : turnOrders) {
+                capturedOrders.get(order.playerId).add(new TurnPlan.Order(order.action,
+                        order.reservedMillions, order.productionBudgets, order.technologies,
+                        order.targetPlayerId, order.targetCityIndex, order.weaponName,
+                        order.payloadName, order.prepareCarrier, order.diplomacyOption,
+                        order.shipStrikes, order.spyBuilding));
+            }
+            lastCommittedOrders = capturedOrders;
+        } else {
+            lastCommittedOrders = Collections.emptyList();
         }
         assignActionBuildingSlots(turnOrders);
         collectBattlePresentationRecords(turnOrders);
@@ -3650,6 +3755,29 @@ public final class GameState {
         queuedActions.clear();
         invalidateResearchChoices();
         cancelSelection();
+        return Collections.unmodifiableSet(acceptedPlans.keySet());
+    }
+
+    /** Headless human seat uses the same queues, reservations, and settlement as touch play. */
+    public boolean queueHumanPlan(TurnPlan plan) {
+        if (!queuedActions.isEmpty() || !TurnPlanner.isLegal(this, 0, plan)) return false;
+        for (TurnPlan.Order choice : plan.orders) {
+            ActionOrder order = toActionOrder(0, choice);
+            order.humanActionSlot = getNextActionSlot();
+            queuedActions.add(order);
+            getHuman().turnMoneyMillions -= order.reservedMillions;
+        }
+        invalidateResearchChoices();
+        cancelSelection();
+        return true;
+    }
+
+    private static ActionOrder toActionOrder(int playerId, TurnPlan.Order order) {
+        return new ActionOrder(playerId, order.action, order.productionBudgets,
+                order.technologies, order.reservedMillions, order.targetPlayerId,
+                order.targetCityIndex, order.weaponName, order.payloadName, order.prepareCarrier,
+                order.spyBuilding == null ? "spyCenter" : order.spyBuilding,
+                order.diplomacyOption, order.shipStrikes);
     }
 
     /** Adds the per-player economy and battle summaries built by Presenter.updatePlayerVars_4. */
@@ -4921,7 +5049,7 @@ public final class GameState {
         player.spyReadiness = Math.min(100, player.spyReadiness + 25);
     }
 
-    private static boolean canUseSpy(PlayerState player, WeaponState weapon) {
+    static boolean canUseSpy(PlayerState player, WeaponState weapon) {
         return "spy".equals(weapon.definition.type)
                 && weapon.definition.level <= player.spyReadiness / 25;
     }
@@ -5314,7 +5442,7 @@ public final class GameState {
         player.score += points * effectiveMultiplier * difficulty;
     }
 
-    private static int productionGroup(String category) {
+    static int productionGroup(String category) {
         for (int index = 0; index < STARTING_PRODUCTION_CATEGORIES.length; index++) {
             if (STARTING_PRODUCTION_CATEGORIES[index].equals(category)) {
                 return PRODUCTION_GROUPS[index];
@@ -5323,7 +5451,7 @@ public final class GameState {
         return 0;
     }
 
-    private static boolean isProductionGroupUnlocked(PlayerState player, int group) {
+    static boolean isProductionGroupUnlocked(PlayerState player, int group) {
         if (group == 8) {
             return true;
         }

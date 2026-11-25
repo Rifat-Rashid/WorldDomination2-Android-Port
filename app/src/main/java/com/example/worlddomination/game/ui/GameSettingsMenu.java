@@ -1,16 +1,22 @@
 package com.example.worlddomination.game.ui;
 
 import com.badlogic.gdx.math.Rectangle;
+import com.example.worlddomination.game.ai.LocalOpponentRuntime;
 import com.example.worlddomination.game.persistence.GameSaveStore;
 
-/** Presentation state for the local save library. Slot numbers are one-based. */
+/** Presentation state for the local save library and game preferences. Slot numbers are one-based. */
 public final class GameSettingsMenu {
-    public enum Command { NONE, SAVE, LOAD, SOUND, CLOSE, CONFIRM_LOAD, CANCEL_LOAD }
+    public enum Command { NONE, SAVE, LOAD, SOUND, QWEN, RETRY_QWEN, CLOSE, CONFIRM_LOAD, CANCEL_LOAD }
+
+    private static final LocalOpponentRuntime.Snapshot NO_LOCAL_MODEL = new LocalOpponentRuntime.Snapshot(
+            false, false, LocalOpponentRuntime.Stage.UNSUPPORTED, -1f, "Local AI unavailable", "");
 
     public final Rectangle panel = new Rectangle();
     public final Rectangle save = new Rectangle();
     public final Rectangle load = new Rectangle();
     public final Rectangle sound = new Rectangle();
+    public final Rectangle qwen = new Rectangle();
+    public final Rectangle retryQwen = new Rectangle();
     public final Rectangle close = new Rectangle();
     public final Rectangle confirm = new Rectangle();
     public final Rectangle cancel = new Rectangle();
@@ -22,6 +28,7 @@ public final class GameSettingsMenu {
     private boolean saveAvailable;
     private int selectedSlot = 1;
     private String status = "";
+    private LocalOpponentRuntime.Snapshot localModel = NO_LOCAL_MODEL;
 
     public GameSettingsMenu() {
         for (int i = 0; i < slots.length; i++) slots[i] = new Rectangle();
@@ -50,6 +57,8 @@ public final class GameSettingsMenu {
         place(save, 350, 45, 145, 40);
         place(load, 507, 45, 145, 40);
         place(sound, 350, 6, 145, 30);
+        place(qwen, 507, 6, 268, 30);
+        place(retryQwen, 664, 45, 111, 40);
         place(close, 738, 310, 52, 36);
         confirm.set(save);
         cancel.set(load);
@@ -75,7 +84,19 @@ public final class GameSettingsMenu {
         if (save.contains(x, y) && saveAvailable) return Command.SAVE;
         if (load.contains(x, y) && canLoad()) return Command.LOAD;
         if (sound.contains(x, y)) return Command.SOUND;
+        if (localModel.supported && qwen.contains(x, y)) return Command.QWEN;
+        if (canRetryQwen() && retryQwen.contains(x, y)) return Command.RETRY_QWEN;
         return close.contains(x, y) ? Command.CLOSE : Command.NONE;
+    }
+
+    public void updateLocalModel(LocalOpponentRuntime.Snapshot model) {
+        localModel = model == null ? NO_LOCAL_MODEL : model;
+    }
+
+    public LocalOpponentRuntime.Snapshot getLocalModel() { return localModel; }
+
+    public boolean canRetryQwen() {
+        return localModel.supported && localModel.requested && localModel.stage == LocalOpponentRuntime.Stage.ERROR;
     }
 
     public void requestLoad() { if (open && canLoad()) confirmingLoad = true; }
