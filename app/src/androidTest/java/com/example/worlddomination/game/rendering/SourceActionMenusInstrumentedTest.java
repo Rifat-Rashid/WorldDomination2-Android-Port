@@ -80,6 +80,12 @@ public final class SourceActionMenusInstrumentedTest {
                     render(app);
                     assertEquals(action.label, mapCaptions[action.ordinal()],
                             field("actionFooterText").get(app).toString());
+                    if (action != GameState.Action.MASS_MEDIA) {
+                        tap(app, footer[1]);
+                        tap(app, footer[2]);
+                        assertEquals("No authored callbacks on the empty " + action.label + " frame",
+                                action, state.getSelectedAction());
+                    }
                 }
                 assertEquals(0, state.getQueuedActionCount());
                 assertEquals(initialFunds, state.getTurnMoneyMillions());
