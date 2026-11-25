@@ -15,13 +15,27 @@ public final class TitleMenuLayoutTest {
         assertEquals(441.84f, layout.logo.width, 0.01f);
         assertEquals(235.2f, layout.logo.height, 0.01f);
         assertEquals(new Rectangle(694, 182, 428, 89), layout.continueGame);
-        assertEquals(new Rectangle(694, 62, 428, 89), layout.newGame);
-        assertEquals(TitleMenuLayout.Action.CONTINUE, layout.hit(695, 183, true));
-        assertEquals(TitleMenuLayout.Action.NEW_GAME, layout.hit(1121, 150, false));
-        assertEquals(TitleMenuLayout.Action.CONTINUE, layout.hit(908, 226, true));
-        assertEquals(TitleMenuLayout.Action.NONE, layout.hit(908, 226, false));
-        assertEquals(TitleMenuLayout.Action.NEW_GAME, layout.hit(908, 98, false));
-        assertEquals(TitleMenuLayout.Action.NONE, layout.hit(908, 156, true));
+        assertEquals(new Rectangle(694, 74, 428, 89), layout.newGame);
+        boolean[] empty = {false, false, false};
+        assertEquals(TitleMenuLayout.Action.CONTINUE, layout.hit(695, 183, false, empty));
+        assertEquals(TitleMenuLayout.Action.NEW_GAME, layout.hit(1121, 150, false, empty));
+        assertEquals(TitleMenuLayout.Action.CONTINUE, layout.hit(908, 226, false, empty));
+        assertEquals(TitleMenuLayout.Action.NEW_GAME, layout.hit(908, 98, false, empty));
+        assertEquals(TitleMenuLayout.Action.NONE, layout.hit(908, 173, false, empty));
+    }
+
+    @Test public void pickerUsesOnlyOccupiedRowsAndBack() {
+        TitleMenuLayout layout = new TitleMenuLayout();
+        layout.fit(new Rectangle(10, 4, 960, 500));
+        boolean[] loadable = {true, false, true};
+        for (int i = 0; i < 3; i++) {
+            Rectangle row = layout.slots[i];
+            assertEquals(loadable[i] ? TitleMenuLayout.Action.slot(i) : TitleMenuLayout.Action.NONE,
+                    layout.hit(row.x + 1, row.y + row.height / 2, true, loadable));
+            if (i > 0) assertTrue(row.y + row.height < layout.slots[i - 1].y);
+        }
+        assertTrue(layout.back.y + layout.back.height < layout.slots[2].y);
+        assertEquals(TitleMenuLayout.Action.BACK, layout.hit(layout.back.x + 1, layout.back.y + 1, true, loadable));
     }
 
     @Test public void controlsStayWithinOffsetSafeAreasAndRetainTheirProportions() {

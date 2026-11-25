@@ -269,6 +269,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private TitleMenuLayout.Action titlePressed = TitleMenuLayout.Action.NONE;
     private GameSaveStore.LatestSave latestTitleSave;
     private boolean titleSavesDirty = true;
+    private boolean titlePickingSlots;
+    private final boolean[] titleSlotLoadable = new boolean[GameSaveStore.SLOT_COUNT];
+    private final String[] titleSlotSummaries = new String[GameSaveStore.SLOT_COUNT];
     private String titleMetadata = "";
     private String titleMessage = "";
     private PersonalBestStore personalBestStore;
@@ -2002,14 +2005,19 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         batch.begin();
         batch.setColor(Color.WHITE);
         titleGlobe.draw(batch, titleMenu.globeX, titleMenu.globeY, titleMenu.globeRadius, titleRotationTurns);
-        titleRenderer.draw(batch, font, titleMenu, latestTitleSave != null, titlePressed, titleMetadata, titleMessage);
+        titleRenderer.draw(batch, font, titleMenu, latestTitleSave != null, titlePressed, titleMetadata, titleMessage,
+                titlePickingSlots, titleSlotSummaries, titleSlotLoadable);
         batch.end();
     }
 
     private void refreshTitleSaves() {
         titleSavesDirty = false;
+        if (titlePickingSlots) {
+            refreshTitleSlots();
+            return;
+        }
         latestTitleSave = gameSaveStore == null ? null : gameSaveStore.latestCompatible();
-        titleMetadata = latestTitleSave == null ? "" : "Slot " + latestTitleSave.slot + " - Turn " + latestTitleSave.turn;
+        titleMetadata = latestTitleSave == null ? "" : "Latest: Slot " + latestTitleSave.slot + " - Turn " + latestTitleSave.turn;
         titleMessage = latestTitleSave != null && latestTitleSave.skippedNewerUnreadable
                 ? "A newer save could not be opened." : "";
         if (latestTitleSave == null && gameSaveStore != null) {
@@ -2022,21 +2030,48 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
     }
 
+    private void refreshTitleSlots() {
+        titleMessage = "";
+        for (int i = 0; i < titleSlotSummaries.length; i++) {
+            titleSlotLoadable[i] = false;
+            try {
+                GameSaveStore.SlotDescription info = gameSaveStore == null ? null : gameSaveStore.describe(i + 1);
+                if (info == null) {
+                    titleSlotSummaries[i] = "Empty";
+                } else {
+                    titleSlotSummaries[i] = "Turn " + info.turn + "   /   " + DIFFICULTY_LABELS[info.difficulty]
+                            + "   /   $" + info.fundsMillions + "M";
+                    titleSlotLoadable[i] = true;
+                }
+            } catch (IOException | IllegalArgumentException failure) {
+                titleSlotSummaries[i] = "Unreadable";
+            }
+        }
+    }
+
+    private void showTitleSlots(boolean show) {
+        titlePickingSlots = show;
+        titlePressed = TitleMenuLayout.Action.NONE;
+        refreshTitleSaves();
+        Gdx.graphics.requestRendering();
+    }
+
     private void activateTitleAction(TitleMenuLayout.Action action) {
         if (!splashState.isVisible() || splashContinuePending || action == TitleMenuLayout.Action.NONE) return;
         showExitPromptSeconds = 0f;
         if (action == TitleMenuLayout.Action.NEW_GAME) {
             requestSplashContinue();
-        } else if (latestTitleSave != null) {
+        } else if (action == TitleMenuLayout.Action.CONTINUE || action == TitleMenuLayout.Action.BACK) {
+            showTitleSlots(action == TitleMenuLayout.Action.CONTINUE);
+        } else if (action.slotNumber > 0) {
             try {
-                restoreMatch(latestTitleSave.slot);
+                restoreMatch(action.slotNumber);
                 splashState.dismiss();
                 skipNextFrameDelta = true;
             } catch (IOException | IllegalArgumentException failure) {
-                Gdx.app.error("Game save", "Unable to continue saved match", failure);
-                refreshTitleSaves();
-                titleMessage = latestTitleSave == null ? "Save unavailable. Start a new game."
-                        : "Save unavailable. Continue will use Slot " + latestTitleSave.slot + ".";
+                Gdx.app.error("Game save", "Unable to open slot " + action.slotNumber, failure);
+                refreshTitleSlots();
+                titleMessage = "Slot " + action.slotNumber + " is unavailable.";
             }
         }
     }
@@ -6109,6 +6144,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     }
 
     private boolean handleBack() {
+        if (game == null && splashState.isVisible() && titlePickingSlots) {
+            showTitleSlots(false);
+            return true;
+        }
         if (settingsMenu.isOpen()) {
             settingsMenu.back();
             skipNextFrameDelta = true;
@@ -6196,7 +6235,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             pointerStartX = pointer.x;
             pointerStartY = pointer.y;
             titlePressed = splashContinuePending ? TitleMenuLayout.Action.NONE
-                    : titleMenu.hit(pointer.x, pointer.y, latestTitleSave != null);
+                    : titleMenu.hit(pointer.x, pointer.y, titlePickingSlots, titleSlotLoadable);
             return true;
         }
         if (isTurnInputBlocked()) {
@@ -6254,7 +6293,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             TitleMenuLayout.Action pressed = titlePressed;
             titlePressed = TitleMenuLayout.Action.NONE;
             unproject(screenX, screenY);
-            if (pressed == titleMenu.hit(pointer.x, pointer.y, latestTitleSave != null)
+            if (pressed == titleMenu.hit(pointer.x, pointer.y, titlePickingSlots, titleSlotLoadable)
                     && Math.hypot(pointer.x - pointerStartX, pointer.y - pointerStartY) <= TAP_SLOP) {
                 activateTitleAction(pressed);
             }
@@ -6332,7 +6371,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             if (pointerIndex == 0 && splashPointerDown) {
                 unproject(screenX, screenY);
                 if (Math.hypot(pointer.x - pointerStartX, pointer.y - pointerStartY) > TAP_SLOP
-                        || titlePressed != titleMenu.hit(pointer.x, pointer.y, latestTitleSave != null)) {
+                        || titlePressed != titleMenu.hit(pointer.x, pointer.y, titlePickingSlots, titleSlotLoadable)) {
                     titlePressed = TitleMenuLayout.Action.NONE;
                 }
             }
