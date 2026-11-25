@@ -48,8 +48,8 @@ public final class GameSettingsMenuTest {
         assertTrue(menu.isConfirmingLoad());
         assertEquals(Command.CONFIRM_LOAD, hit(menu, menu.confirm));
         assertEquals(Command.CANCEL_LOAD, hit(menu, menu.cancel));
-        assertEquals(Command.NONE, hit(menu, menu.save));
-        assertEquals(Command.NONE, hit(menu, menu.load));
+        assertEquals(Command.NONE, hit(menu, menu.sound));
+        assertEquals(Command.NONE, hit(menu, menu.close));
 
         menu.back();
         assertTrue(menu.isOpen());
@@ -68,7 +68,8 @@ public final class GameSettingsMenuTest {
         GameSettingsMenu menu = createMenu();
         menu.open(false, new boolean[]{false, true, false});
         assertEquals(1, menu.getSelectedSlot());
-        assertEquals("Empty slot", menu.getStatus());
+        assertFalse(menu.isOccupied(1));
+        assertTrue(menu.isOccupied(2));
         assertEquals(Command.NONE, hit(menu, menu.load));
 
         assertEquals(Command.NONE, hit(menu, menu.slots[1]));
