@@ -2,7 +2,7 @@
 
 The beta uses the native Android `:app` module, Java 11 source compatibility,
 JDK 17, and the Gradle wrapper. It runs offline. The current beta version is
-`0.1.0-beta.11`, version code `12`.
+`0.1.0-beta.11`, version code `13`.
 
 ## Build and verify
 
