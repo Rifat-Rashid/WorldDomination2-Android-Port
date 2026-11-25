@@ -4662,6 +4662,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             game.selectAction(diplomacy);
             sourceActionMenu.begin(game);
             selectedEquipment = "";
+            modalOpen = true;
             audio.play(OriginalAudio.Cue.ACTION_SWITCH);
             audio.play(OriginalAudio.Cue.ACTION_OPEN);
         }
@@ -4669,7 +4670,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         // Only eligible rivals replace the current target.
         sourceActionMenu.chooseLeader(game, playerId);
         sourceActionInstruction.onSelectionUpdate(diplomacy, sourceActionMenu.getKey());
-        modalOpen = true;
     }
 
     private boolean canScrollMessageHistory() {

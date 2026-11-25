@@ -89,6 +89,13 @@ public final class EnemyPortraitDiplomacyInstrumentedTest {
         assertEquals(2, game.getSelectedTargetPlayer());
         assertEquals(14, game.getPlayerState(game.getSelectedTargetPlayer()).getLeaderId());
 
+        assertTrue((boolean) field(view, "modalOpen"));
+        tap(view, field(view, "actionMapButton"));
+        assertFalse((boolean) field(view, "modalOpen"));
+        tap(view, cards[0]);
+        assertEquals(1, game.getSelectedTargetPlayer());
+        assertFalse("Retargeting the same action keeps the map open", (boolean) field(view, "modalOpen"));
+
         tap(view, field(view, "helpButton"));
         SourceHelpState help = field(view, "helpState");
         assertTrue(help.isOpen());
