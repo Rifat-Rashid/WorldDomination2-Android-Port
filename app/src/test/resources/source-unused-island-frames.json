@@ -1,0 +1,422 @@
+{
+  "schema": "phone-island-presence-v1",
+  "seed": 0,
+  "difficulty": 0,
+  "building": 2,
+  "presentationTicks": 24,
+  "sourceHashes": {
+    "wd2/generated/View.py": "2de8afd493f28e36c3a94afa96b80795d685b8b023b12dc9d9ed634692c3accf",
+    "wd2/iphone_ui.py": "1146ccec8049db82a1fe1ca5d5c68dae6311c7ce92dc07369d7a390721badf7e",
+    "wd2/iphone_map.py": "02b4cbaf891bf888b2a428bd98dba85ca779e1cabbe9f06dd95df582dd6dfafa",
+    "assets/runtime/scene.json.gz": "7213f06fac4e887050ad89e0d3c9a67f47789096d559af8e08333991f7616629"
+  },
+  "cases": [
+    {
+      "leaders": [
+        0
+      ],
+      "controls": [
+        "splashScreenMC",
+        "btn1",
+        "buildingBtn2",
+        "BTN_allLeaders_screen1",
+        "btn_start"
+      ],
+      "lands": [
+        {
+          "mapSide": 0,
+          "frame": 1,
+          "visible": true,
+          "waterOverlayFrame": null
+        },
+        {
+          "mapSide": 1,
+          "frame": 1,
+          "visible": true,
+          "waterOverlayFrame": null
+        },
+        {
+          "mapSide": 2,
+          "frame": 1,
+          "visible": true,
+          "waterOverlayFrame": 2
+        },
+        {
+          "mapSide": 3,
+          "frame": 1,
+          "visible": true,
+          "waterOverlayFrame": 2
+        },
+        {
+          "mapSide": 4,
+          "frame": 1,
+          "visible": true,
+          "waterOverlayFrame": 2
+        }
+      ],
+      "phoneSamples": [
+        {
+          "mapSide": 0,
+          "sourcePoint": [
+            425,
+            345
+          ],
+          "phonePixel": [
+            584,
+            283
+          ],
+          "rgba": [
+            145,
+            147,
+            135,
+            255
+          ]
+        },
+        {
+          "mapSide": 1,
+          "sourcePoint": [
+            140,
+            145
+          ],
+          "phonePixel": [
+            382,
+            176
+          ],
+          "rgba": [
+            174,
+            172,
+            155,
+            255
+          ]
+        },
+        {
+          "mapSide": 2,
+          "sourcePoint": [
+            665,
+            145
+          ],
+          "phonePixel": [
+            761,
+            176
+          ],
+          "rgba": [
+            114,
+            120,
+            90,
+            255
+          ]
+        },
+        {
+          "mapSide": 3,
+          "sourcePoint": [
+            150,
+            500
+          ],
+          "phonePixel": [
+            388,
+            365
+          ],
+          "rgba": [
+            170,
+            173,
+            157,
+            255
+          ]
+        },
+        {
+          "mapSide": 4,
+          "sourcePoint": [
+            665,
+            490
+          ],
+          "phonePixel": [
+            761,
+            360
+          ],
+          "rgba": [
+            118,
+            125,
+            100,
+            255
+          ]
+        }
+      ],
+      "image": "source-islands-1-opponents.png",
+      "imageSha256": "25159643773904b1cd673651741f81a8048701e7f99b6219846546759bc47349"
+    },
+    {
+      "leaders": [
+        1,
+        3
+      ],
+      "controls": [
+        "splashScreenMC",
+        "btn1",
+        "buildingBtn2",
+        "BTN_allLeaders_screen2",
+        "BTN_allLeaders_screen4",
+        "btn_start"
+      ],
+      "lands": [
+        {
+          "mapSide": 0,
+          "frame": 1,
+          "visible": true,
+          "waterOverlayFrame": null
+        },
+        {
+          "mapSide": 1,
+          "frame": 5,
+          "visible": true,
+          "waterOverlayFrame": null
+        },
+        {
+          "mapSide": 2,
+          "frame": 2,
+          "visible": true,
+          "waterOverlayFrame": 1
+        },
+        {
+          "mapSide": 3,
+          "frame": 1,
+          "visible": true,
+          "waterOverlayFrame": 2
+        },
+        {
+          "mapSide": 4,
+          "frame": 1,
+          "visible": true,
+          "waterOverlayFrame": 2
+        }
+      ],
+      "phoneSamples": [
+        {
+          "mapSide": 0,
+          "sourcePoint": [
+            425,
+            345
+          ],
+          "phonePixel": [
+            584,
+            283
+          ],
+          "rgba": [
+            145,
+            147,
+            135,
+            255
+          ]
+        },
+        {
+          "mapSide": 1,
+          "sourcePoint": [
+            140,
+            145
+          ],
+          "phonePixel": [
+            382,
+            176
+          ],
+          "rgba": [
+            180,
+            174,
+            157,
+            255
+          ]
+        },
+        {
+          "mapSide": 2,
+          "sourcePoint": [
+            665,
+            145
+          ],
+          "phonePixel": [
+            761,
+            176
+          ],
+          "rgba": [
+            131,
+            131,
+            82,
+            255
+          ]
+        },
+        {
+          "mapSide": 3,
+          "sourcePoint": [
+            150,
+            500
+          ],
+          "phonePixel": [
+            388,
+            365
+          ],
+          "rgba": [
+            170,
+            173,
+            157,
+            255
+          ]
+        },
+        {
+          "mapSide": 4,
+          "sourcePoint": [
+            665,
+            490
+          ],
+          "phonePixel": [
+            761,
+            360
+          ],
+          "rgba": [
+            118,
+            125,
+            100,
+            255
+          ]
+        }
+      ],
+      "image": "source-islands-2-opponents.png",
+      "imageSha256": "275332e408129e2f8a27dc179d911b9fd2fe647f88d6574e33b0e538256f4f9e"
+    },
+    {
+      "leaders": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "controls": [
+        "splashScreenMC",
+        "btn1",
+        "buildingBtn2",
+        "BTN_allLeaders_screen1",
+        "BTN_allLeaders_screen2",
+        "BTN_allLeaders_screen3",
+        "BTN_allLeaders_screen4",
+        "btn_start"
+      ],
+      "lands": [
+        {
+          "mapSide": 0,
+          "frame": 1,
+          "visible": true,
+          "waterOverlayFrame": null
+        },
+        {
+          "mapSide": 1,
+          "frame": 1,
+          "visible": true,
+          "waterOverlayFrame": null
+        },
+        {
+          "mapSide": 2,
+          "frame": 5,
+          "visible": true,
+          "waterOverlayFrame": 1
+        },
+        {
+          "mapSide": 3,
+          "frame": 5,
+          "visible": true,
+          "waterOverlayFrame": 1
+        },
+        {
+          "mapSide": 4,
+          "frame": 2,
+          "visible": true,
+          "waterOverlayFrame": 1
+        }
+      ],
+      "phoneSamples": [
+        {
+          "mapSide": 0,
+          "sourcePoint": [
+            425,
+            345
+          ],
+          "phonePixel": [
+            584,
+            283
+          ],
+          "rgba": [
+            145,
+            147,
+            135,
+            255
+          ]
+        },
+        {
+          "mapSide": 1,
+          "sourcePoint": [
+            140,
+            145
+          ],
+          "phonePixel": [
+            382,
+            176
+          ],
+          "rgba": [
+            174,
+            172,
+            155,
+            255
+          ]
+        },
+        {
+          "mapSide": 2,
+          "sourcePoint": [
+            665,
+            145
+          ],
+          "phonePixel": [
+            761,
+            176
+          ],
+          "rgba": [
+            144,
+            132,
+            107,
+            255
+          ]
+        },
+        {
+          "mapSide": 3,
+          "sourcePoint": [
+            150,
+            500
+          ],
+          "phonePixel": [
+            388,
+            365
+          ],
+          "rgba": [
+            180,
+            177,
+            161,
+            255
+          ]
+        },
+        {
+          "mapSide": 4,
+          "sourcePoint": [
+            665,
+            490
+          ],
+          "phonePixel": [
+            761,
+            360
+          ],
+          "rgba": [
+            127,
+            130,
+            92,
+            255
+          ]
+        }
+      ],
+      "image": "source-islands-4-opponents.png",
+      "imageSha256": "27c5485a31d094fb92c65aa6b20b840ef5363569a675182de31ce9869a84a323"
+    }
+  ]
+}

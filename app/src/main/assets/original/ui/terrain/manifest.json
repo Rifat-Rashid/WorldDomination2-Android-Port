@@ -6,7 +6,7 @@
   ],
   "rasterScale": 2,
   "sourceSceneSha256": "7213f06fac4e887050ad89e0d3c9a67f47789096d559af8e08333991f7616629",
-  "sourceRule": "View.setMapFrames: original player religion, including defeated players; absent slots are ocean",
+  "sourceRule": "View.setMapFrames: original player religion, including defeated players; LandscapeUI.draw_map retains default frame 1 (chr) for unused slots and excludes water overlays",
   "ocean": {
     "file": "ocean.png",
     "stageCrop": [
