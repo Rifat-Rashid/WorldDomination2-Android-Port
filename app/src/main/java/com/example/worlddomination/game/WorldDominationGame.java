@@ -2010,7 +2010,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         titleSavesDirty = false;
         latestTitleSave = gameSaveStore == null ? null : gameSaveStore.latestCompatible();
         titleMetadata = latestTitleSave == null ? "" : "Slot " + latestTitleSave.slot + " - Turn " + latestTitleSave.turn;
-        titleMessage = "";
+        titleMessage = latestTitleSave != null && latestTitleSave.skippedNewerUnreadable
+                ? "A newer save could not be opened." : "";
         if (latestTitleSave == null && gameSaveStore != null) {
             for (int slot = 1; slot <= GameSaveStore.SLOT_COUNT; slot++) {
                 if (gameSaveStore.hasSave(slot)) {
@@ -2034,7 +2035,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             } catch (IOException | IllegalArgumentException failure) {
                 Gdx.app.error("Game save", "Unable to continue saved match", failure);
                 refreshTitleSaves();
-                titleMessage = "Save unavailable. Choose another action.";
+                titleMessage = latestTitleSave == null ? "Save unavailable. Start a new game."
+                        : "Save unavailable. Continue will use Slot " + latestTitleSave.slot + ".";
             }
         }
     }
