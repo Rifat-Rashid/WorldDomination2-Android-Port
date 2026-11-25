@@ -52,7 +52,10 @@ HIDDEN_CONTEXT_EVIDENCE = {
     "hidden-help-context-before.png", "hidden-help-context-first-resumed.png",
 }
 TITLE_MENU = "com.example.worlddomination.game.rendering.TitleMenuInstrumentedTest"
-TITLE_MENU_EVIDENCE = {"title-menu-empty.png", "title-menu-continue.png"}
+TITLE_MENU_EVIDENCE = {
+    "title-menu-empty.png", "title-menu-continue.png",
+    "title-slot-picker-empty.png", "title-slot-picker-mixed.png",
+}
 SETTINGS = "com.example.worlddomination.game.rendering.SettingsSaveLoadInstrumentedTest"
 SETTINGS_EVIDENCE = {"settings-save-load-menu.png", "settings-save-load-confirm.png"}
 FULL_HUD = "com.example.worlddomination.game.rendering.FullHudSourceComparisonInstrumentedTest"

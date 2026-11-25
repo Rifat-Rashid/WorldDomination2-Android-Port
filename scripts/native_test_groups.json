@@ -893,11 +893,11 @@
     ],
     [
       "com.example.worlddomination.game.rendering.TitleMenuInstrumentedTest",
-      "continueLoadsLatestCompatibleSaveThroughTitleTouch"
+      "continueOpensEmptyPickerAndBothBackRoutesReturnToTitle"
     ],
     [
       "com.example.worlddomination.game.rendering.TitleMenuInstrumentedTest",
-      "continueReadFailureStaysOnTitleAndRechecksRemainingSaves"
+      "continueLetsPlayerChooseAnOlderSlotAfterAStaleSlotFails"
     ],
     [
       "com.example.worlddomination.game.rendering.SourceSetupPortraitRenderingInstrumentedTest",

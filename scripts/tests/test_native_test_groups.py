@@ -344,7 +344,7 @@ class NativeGroupTests(unittest.TestCase):
         result = groups.verify_artifacts(self.manifest, self.root)
         self.assertEqual(122, sum(row["classes"] for row in result.values()))
         self.assertEqual(198, sum(row["executed"] for row in result.values()))
-        self.assertEqual(235, sum(row["requiredPngs"] for row in result.values()))
+        self.assertEqual(237, sum(row["requiredPngs"] for row in result.values()))
 
     def test_unsaved_score_requires_actual_endgame_capture(self):
         self.fixture()
@@ -528,7 +528,7 @@ class NativeGroupTests(unittest.TestCase):
                          [pair for pair in self.manifest["expectedCases"] if pair[0] == name])
         self.fixture()
         result = groups.verify_artifacts(self.manifest, self.root)
-        self.assertEqual(235, sum(row["requiredPngs"] for row in result.values()))
+        self.assertEqual(237, sum(row["requiredPngs"] for row in result.values()))
 
     def test_full_hud_case_and_each_native_and_independent_source_capture_are_required(self):
         name = groups.FULL_HUD
@@ -576,10 +576,20 @@ class NativeGroupTests(unittest.TestCase):
         self.assertIn('test "$NATIVE_RESULT" = success', check)
         self.assertIn("python3 scripts/run_manual_save_probe.py --verify ", check)
 
-    def test_title_evidence_requires_both_save_states(self):
+    def test_title_evidence_requires_main_and_picker_save_states(self):
+        name = groups.TITLE_MENU
+        self.assertEqual([
+            [name, "continueOpensEmptyPickerAndBothBackRoutesReturnToTitle"],
+            [name, "continueLetsPlayerChooseAnOlderSlotAfterAStaleSlotFails"],
+        ], [pair for pair in self.manifest["expectedCases"] if pair[0] == name])
+        expected = {
+            "title-menu-empty.png", "title-menu-continue.png",
+            "title-slot-picker-empty.png", "title-slot-picker-mixed.png",
+        }
+        self.assertEqual(expected, groups.TITLE_MENU_EVIDENCE)
         self.fixture()
         folder = self.root / "android-native-b-results/reports/androidTests/beta-ui-evidence"
-        for filename in groups.TITLE_MENU_EVIDENCE:
+        for filename in sorted(expected):
             image = folder / filename
             image.unlink()
             with self.subTest(filename=filename), self.assertRaisesRegex(
