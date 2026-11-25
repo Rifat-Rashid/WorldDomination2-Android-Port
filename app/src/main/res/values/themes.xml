@@ -13,6 +13,7 @@
         <!-- Status bar color. -->
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
         <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
-        <!-- Customize your theme here. -->
+        <item name="android:windowBackground">@color/title_navy</item>
+        <item name="android:windowSplashScreenBackground" tools:targetApi="s">@color/title_navy</item>
     </style>
 </resources>
