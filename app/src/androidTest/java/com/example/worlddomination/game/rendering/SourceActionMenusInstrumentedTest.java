@@ -86,6 +86,11 @@ public final class SourceActionMenusInstrumentedTest {
                         assertEquals("No authored callbacks on the empty " + action.label + " frame",
                                 action, state.getSelectedAction());
                     }
+                    if (opensDetails) {
+                        tap(app, footer[0]);
+                        assertTrue(action.label, field("modalOpen").getBoolean(app));
+                        capture(app, name + "-reopened.png");
+                    }
                 }
                 assertEquals(0, state.getQueuedActionCount());
                 assertEquals(initialFunds, state.getTurnMoneyMillions());
