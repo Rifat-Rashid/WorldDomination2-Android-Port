@@ -25,6 +25,8 @@ import org.junit.runner.RunWith;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -51,14 +53,28 @@ public final class SourceActionMenusInstrumentedTest {
 
                     begin(app, GameState.Action.MASS_MEDIA);
                     assertFalse(field("modalOpen").getBoolean(app));
+                    byte[][] mapPixels = readBattlefieldMargins(app);
                     sourceTap(app, 307, 258);
                     assertEquals("An invisible dialog has no Accept hit target", 0,
                             state.getQueuedActionCount());
                     tap(app, footer[0]);
                     assertTrue(field("modalOpen").getBoolean(app));
+                    byte[][] detailsPixels = readBattlefieldMargins(app);
+                    assertFalse("DETAILS must cover the left island margin",
+                            Arrays.equals(mapPixels[0], detailsPixels[0]));
+                    assertFalse("DETAILS must cover the right island margin",
+                            Arrays.equals(mapPixels[1], detailsPixels[1]));
+
+                    TurnPlaybackSequence playback = (TurnPlaybackSequence) field("turnPlaybackSequence").get(app);
+                    playback.begin(Collections.emptyList());
+                    assertBattlefieldMargins("Turn playback takes priority over DETAILS", mapPixels, app);
+                    playback.reset();
+                    assertBattlefieldMargins("DETAILS returns after playback", detailsPixels, app);
+
                     tap(app, mapButton);
                     assertFalse(field("modalOpen").getBoolean(app));
                     assertEquals(GameState.Action.MASS_MEDIA, state.getSelectedAction());
+                    assertBattlefieldMargins("MAP restores both battlefield margins", mapPixels, app);
                     tap(app, footer[2]);
                     assertEquals(GameState.Action.MASS_MEDIA, state.getQueuedAction(0));
 
@@ -95,6 +111,28 @@ public final class SourceActionMenusInstrumentedTest {
                     assertEquals(GameState.Action.RESEARCH, state.getQueuedAction(1));
                     assertEquals(initialFunds - cost, state.getTurnMoneyMillions());
                     assertEquals(nextRandom, state.createPresentationRandomCopy().nextDouble(), 0d);
+
+                    state = fresh(app);
+                    begin(app, GameState.Action.PRODUCTION);
+                    assertTrue(field("modalOpen").getBoolean(app));
+                    tap(app, (Rectangle) field("helpButton").get(app));
+                    assertBattlefieldMargins("Help DETAILS uses the phone panel", detailsPixels, app);
+                    BattlefieldFlagRenderer flags = (BattlefieldFlagRenderer) field("flagRenderer").get(app);
+                    int flagFrame = flags.getFrameIndex();
+                    Method fixedUpdate = WorldDominationGame.class.getDeclaredMethod("fixedUpdate", float.class);
+                    fixedUpdate.setAccessible(true);
+                    fixedUpdate.invoke(app, 1f / 24f);
+                    assertNotEquals("The battlefield clock continues behind DETAILS", flagFrame, flags.getFrameIndex());
+                    Rectangle helpMap = (Rectangle) field("helpMapButton").get(app);
+                    tap(app, helpMap);
+                    byte[][] helpMapPixels = readBattlefieldMargins(app);
+                    assertFalse("Help MAP exposes the battlefield over the existing draft",
+                            Arrays.deepEquals(detailsPixels, helpMapPixels));
+                    tap(app, footer[0]);
+                    assertBattlefieldMargins("Reopening Help DETAILS hides the battlefield", detailsPixels, app);
+                    tap(app, helpMap);
+                    assertBattlefieldMargins("Help MAP restores both battlefield margins", helpMapPixels, app);
+                    tap(app, footer[1]);
 
                     state = fresh(app);
                     stock(state, "soldier1", 1);
@@ -445,6 +483,27 @@ public final class SourceActionMenusInstrumentedTest {
     private static void render(WorldDominationGame app) throws Exception {
         field("skipNextFrameDelta").setBoolean(app, true); app.render();
     }
+
+    private static void assertBattlefieldMargins(String message, byte[][] expected, WorldDominationGame app)
+            throws Exception {
+        byte[][] pixels = readBattlefieldMargins(app);
+        assertArrayEquals(message + " (left)", expected[0], pixels[0]);
+        assertArrayEquals(message + " (right)", expected[1], pixels[1]);
+    }
+
+    private static byte[][] readBattlefieldMargins(WorldDominationGame app) throws Exception {
+        render(app);
+        Rectangle map = (Rectangle) field("mapBounds").get(app);
+        Viewport viewport = (Viewport) field("viewport").get(app);
+        // Read inside the battlefield but outside the authored drawer on either side.
+        Vector2 left = viewport.project(new Vector2(map.x + 0.05f * map.width, map.y + 0.68f * map.height));
+        Vector2 right = viewport.project(new Vector2(map.x + 0.95f * map.width, map.y + 0.32f * map.height));
+        return new byte[][]{
+                ScreenUtils.getFrameBufferPixels(Math.round(left.x) - 4, Math.round(left.y) - 4, 8, 8, false),
+                ScreenUtils.getFrameBufferPixels(Math.round(right.x) - 4, Math.round(right.y) - 4, 8, 8, false)
+        };
+    }
+
     private static void capture(WorldDominationGame app, String name) throws Exception {
         render(app);
         int width = Gdx.graphics.getBackBufferWidth(), height = Gdx.graphics.getBackBufferHeight();

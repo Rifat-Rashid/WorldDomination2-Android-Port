@@ -805,13 +805,18 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 && outcomeSequence.isEndgameVisible()) {
             drawEndgameOverlay();
         } else {
-            drawPanelsAndMap();
+            boolean showCenterControls = !isTurnInputBlocked();
+            boolean showHelp = showCenterControls && helpState.isOpen();
+            boolean showProposal = showCenterControls && game.getPendingHumanDiplomacyProposal() != null;
+            boolean showActionDetails = showCenterControls && modalOpen;
+            boolean showDetails = showHelp ? helpState.isVisible() : showProposal || showActionDetails;
+            drawPanelsAndMap(!showDetails);
             drawTextAndControls();
-            if (!isTurnInputBlocked() && helpState.isOpen()) {
+            if (showHelp) {
                 drawHelpScreen();
-            } else if (!isTurnInputBlocked() && game.getPendingHumanDiplomacyProposal() != null) {
+            } else if (showProposal) {
                 drawDiplomacyResponseModal();
-            } else if (!isTurnInputBlocked() && modalOpen) {
+            } else if (showActionDetails) {
                 drawActionModal();
                 if (actionCanShowMap()) drawActionMapButton();
             }
@@ -2255,8 +2260,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
     }
 
-    private void drawPanelsAndMap() {
+    private void drawPanelsAndMap(boolean showBattlefield) {
         preparePhonePanels();
+        if (!showBattlefield) preparePhonePanel(mapFrame);
         if (displayGame != game) resetBattlefieldDisplay(false);
         battlefieldDisplay.syncCityMarkers(game);
         shapes.setProjectionMatrix(camera.combined);
@@ -2277,27 +2283,13 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         phonePanelRenderer.draw(batch, centerHeader);
         phonePanelRenderer.draw(batch, toolbarPanel);
         phonePanelRenderer.draw(batch, stockPanel);
-        drawPanelTexture(mapFrame);
+        if (showBattlefield) drawPanelTexture(mapFrame);
+        else phonePanelRenderer.draw(batch, mapFrame);
         phonePanelRenderer.draw(batch, messagePanel);
         messagePanelRenderer.drawBackground(batch, messagePanel);
         scorePanelRenderer.draw(batch, scorePanel, game.getHuman().getPlayerColor());
         phonePanelRenderer.draw(batch, actionPanel);
-        battlefieldFrameRenderer.draw(batch, mapFrame);
-        batch.flush();
-        setScissor(mapBounds);
-        terrainRenderer.draw(batch, mapBounds);
-        drawBattlefieldDisplay();
-        battleUnitRenderer.drawSubmarines(batch, mapBounds, submarineBattleAnimations);
-        battleUnitRenderer.drawRocket(batch, mapBounds, rocketBattleAnimations);
-        battleUnitRenderer.drawCarrierPlanes(batch, mapBounds, carrierPlaneAnimations);
-        battleUnitRenderer.drawStandalonePlanes(batch, mapBounds, standalonePlaneAnimations);
-        battleUnitRenderer.drawAntiDefenseTracking(batch, mapBounds,
-                antiDefenseTrackingAnimations);
-        battleUnitRenderer.drawSatellites(batch, mapBounds, satelliteBattleAnimations);
-        explosionRenderer.draw(batch, mapBounds, battleAnimations);
-        turnControlRenderer.drawAnnouncement(batch, mapBounds, turnActionDisplay, game);
-        batch.flush();
-        Gdx.gl.glDisable(GL20.GL_SCISSOR_TEST);
+        if (showBattlefield) drawBattlefield();
         drawContained(uiAssets.logo, logoPanel.x + 7f, logoPanel.y + 2f,
                 logoPanel.width - 14f, logoPanel.height - 4f);
         drawPortraits();
@@ -2315,10 +2307,12 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         drawPortraitMeters();
 
         shapes.begin(ShapeRenderer.ShapeType.Line);
-        setScissor(mapBounds);
-        battleUnitRenderer.drawSatelliteBeams(shapes, mapBounds, satelliteBattleAnimations);
-        shapes.flush();
-        Gdx.gl.glDisable(GL20.GL_SCISSOR_TEST);
+        if (showBattlefield) {
+            setScissor(mapBounds);
+            battleUnitRenderer.drawSatelliteBeams(shapes, mapBounds, satelliteBattleAnimations);
+            shapes.flush();
+            Gdx.gl.glDisable(GL20.GL_SCISSOR_TEST);
+        }
         drawPanelEdges(leftPanel);
         drawPanelEdges(rightPanel);
         shapes.end();
@@ -2338,6 +2332,25 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
         drawNavigationRows();
         drawEquipmentRows();
+    }
+
+    private void drawBattlefield() {
+        battlefieldFrameRenderer.draw(batch, mapFrame);
+        batch.flush();
+        setScissor(mapBounds);
+        terrainRenderer.draw(batch, mapBounds);
+        drawBattlefieldDisplay();
+        battleUnitRenderer.drawSubmarines(batch, mapBounds, submarineBattleAnimations);
+        battleUnitRenderer.drawRocket(batch, mapBounds, rocketBattleAnimations);
+        battleUnitRenderer.drawCarrierPlanes(batch, mapBounds, carrierPlaneAnimations);
+        battleUnitRenderer.drawStandalonePlanes(batch, mapBounds, standalonePlaneAnimations);
+        battleUnitRenderer.drawAntiDefenseTracking(batch, mapBounds,
+                antiDefenseTrackingAnimations);
+        battleUnitRenderer.drawSatellites(batch, mapBounds, satelliteBattleAnimations);
+        explosionRenderer.draw(batch, mapBounds, battleAnimations);
+        turnControlRenderer.drawAnnouncement(batch, mapBounds, turnActionDisplay, game);
+        batch.flush();
+        Gdx.gl.glDisable(GL20.GL_SCISSOR_TEST);
     }
 
     private void drawPanelTexture(Rectangle rectangle) {
