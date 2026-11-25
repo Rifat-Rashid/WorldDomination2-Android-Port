@@ -12,6 +12,10 @@ public final class ActionFooterLayout {
 
     private ActionFooterLayout() { }
 
+    public static Rectangle setMapButtonBounds(Rectangle map, Rectangle output) {
+        return output.set(map.x + map.width - 52f, map.y + map.height - 24f, 50f, 22f);
+    }
+
     public static Rectangle setButtonBounds(Rectangle footer, int buttonIndex,
                                             Rectangle output) {
         if (buttonIndex < 0 || buttonIndex >= BUTTON_COUNT) {

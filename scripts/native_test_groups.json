@@ -359,6 +359,10 @@
     ],
     [
       "com.example.worlddomination.game.rendering.SourceActionMenusInstrumentedTest",
+      "phoneMapAndDetailsKeepDraftsAndRouteFooterActions"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.SourceActionMenusInstrumentedTest",
       "originalMenusSelectTargetsEquipmentAndQueueAllFiveActions"
     ],
     [

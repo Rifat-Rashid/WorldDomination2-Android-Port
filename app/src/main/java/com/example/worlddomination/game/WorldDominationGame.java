@@ -338,6 +338,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private final Rectangle toolbarPanel = new Rectangle();
     private final Rectangle helpButton = new Rectangle();
     private final Rectangle helpMapButton = new Rectangle();
+    private final Rectangle actionMapButton = new Rectangle();
     private final Rectangle muteButton = new Rectangle();
     private final Rectangle settingsButton = new Rectangle();
     private final Rectangle stockPanel = new Rectangle();
@@ -696,6 +697,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             ActionFooterLayout.setButtonBounds(messagePanel, i, actionFooterButtons[i]);
         }
 
+        ActionFooterLayout.setMapButtonBounds(mapBounds, actionMapButton);
         ProductionScreenLayout.setModalBounds(mapFrame, modal);
         float modalScaleX = modal.width / ProductionScreenLayout.ART_WIDTH;
         float modalScaleY = modal.height / ProductionScreenLayout.ART_HEIGHT;
@@ -809,10 +811,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 drawHelpScreen();
             } else if (!isTurnInputBlocked() && game.getPendingHumanDiplomacyProposal() != null) {
                 drawDiplomacyResponseModal();
-            } else if (!isTurnInputBlocked() && (modalOpen
-                    || SourceActionMenuState.supports(game.getSelectedAction())
-                    && sourceActionMenu.isMapSelection() && sourceActionMenu.isCancelVisible())) {
+            } else if (!isTurnInputBlocked() && modalOpen) {
                 drawActionModal();
+                if (actionCanShowMap()) drawActionMapButton();
             }
         }
         if (settingsMenu.isOpen()) drawSettingsMenu();
@@ -865,8 +866,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 drawHiddenHelpText(warning);
             } else {
                 helpRenderer.draw(batch, mapBounds);
-                helpMapButton.set(mapBounds.x + mapBounds.width - 52f,
-                        mapBounds.y + mapBounds.height - 24f, 50f, 22f);
+                ActionFooterLayout.setMapButtonBounds(mapBounds, helpMapButton);
                 drawOriginalButton(helpMapButton);
                 drawCentered("MAP", helpMapButton.x + 25f, helpMapButton.y + 14f, 8f);
                 // The secret password field is hit-testable but lies behind the
@@ -3007,8 +3007,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 muteButton.y + muteButton.height / 2f + 3f, 9f);
 
         drawStatistics();
-        if (!ActionScreenLayout.hasInlineActionControls(game.getSelectedAction())
-                || SourceActionMenuState.supports(game.getSelectedAction())) drawMessageWell();
+        if (!showsInlineActionFooter() || sourceActionInstruction.getText() != null) {
+            drawMessageWell();
+        }
         font.setColor(TITLE_TEXT);
         drawScoreValue();
         drawCentered("FIRST ACTION", actionSlots[0].x + actionSlots[0].width / 2f,
@@ -3054,8 +3055,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     private void drawMessageWell() {
         instructionViewport.set(messageViewport);
-        if (game.getSelectedAction() == GameState.Action.PROPAGANDA
-                && sourceActionMenu.isMapSelection()) {
+        if (showsInlineActionFooter()) {
             float lowerEdge = actionFooterButtons[1].y + actionFooterButtons[1].height + 3f;
             float top = messageViewport.y + messageViewport.height;
             instructionViewport.y = Math.max(messageViewport.y, lowerEdge);
@@ -3082,98 +3082,55 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         Gdx.gl.glDisable(GL20.GL_SCISSOR_TEST);
     }
 
-    private void drawInlineActionFooter() {
-        if (helpState.isOpen()) return;
+    private boolean showsInlineActionFooter() {
+        return !modalOpen && !helpState.isOpen() && !isTurnInputBlocked()
+                && game.getPendingHumanDiplomacyProposal() == null
+                && ActionScreenLayout.hasInlineActionControls(game.getSelectedAction());
+    }
+
+    private boolean actionCanShowMap() {
         GameState.Action action = game.getSelectedAction();
-        if (SourceActionMenuState.supports(action)) {
-            if (action == GameState.Action.PROPAGANDA && sourceActionMenu.isMapSelection())
-                drawPropagandaCityPrompt();
-            return;
-        }
-        if (!ActionScreenLayout.hasInlineActionControls(action) || modalOpen) return;
-        if (action == GameState.Action.PROPAGANDA) {
-            drawPropagandaCityPrompt();
-            return;
-        }
+        return ActionScreenLayout.hasInlineActionControls(action)
+                && !sourceActionMenu.isEconomyWarning(game)
+                && (!SourceActionMenuState.supports(action)
+                || sourceActionMenu.getError() == null && !sourceActionMenu.isCancelling());
+    }
+
+    private void drawActionMapButton() {
+        batch.begin();
+        drawOriginalButton(actionMapButton);
+        font.setColor(TITLE_TEXT);
+        drawCentered("MAP", actionMapButton.x + 25f, actionMapButton.y + 14f, 8f);
+        batch.end();
+    }
+
+    private void drawInlineActionFooter() {
+        if (!showsInlineActionFooter()) return;
+
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
+        if (sourceActionInstruction.getText() == null) {
+            font.setColor(GREEN);
+            actionFooterText.setLength(0);
+            appendUppercase(actionFooterText, game.getSelectedAction().label);
+            drawFittedLeft(actionFooterText, messagePanel.x + 8f, messagePanel.y + messagePanel.height - 10f,
+                    messagePanel.width - 16f, 9f);
+        }
         for (Rectangle button : actionFooterButtons) {
             drawOriginalButton(button);
         }
-        batch.end();
-
-        shapes.setProjectionMatrix(camera.combined);
-        shapes.begin(ShapeRenderer.ShapeType.Filled);
-        for (int i = 0; i < actionFooterButtons.length; i++) {
-            boolean selected = i == 2 && (action != GameState.Action.ATTACK
-                    || game.canAcceptAttack());
-            drawButtonGradient(actionFooterButtons[i], selected);
-        }
-        shapes.end();
-
-        batch.setProjectionMatrix(camera.combined);
-        batch.begin();
-        font.setColor(GREEN);
-        CharSequence summary = action == GameState.Action.MASS_MEDIA
-                ? massMediaFooterSummary() : directAttackFooterSummary();
-        drawFittedLeft(summary, messagePanel.x + 8f,
-                messagePanel.y + messagePanel.height - 10f,
-                messagePanel.width - 16f, 9f);
         font.setColor(TITLE_TEXT);
-        drawCentered("DETAILS", actionFooterButtons[0].x
-                        + actionFooterButtons[0].width / 2f,
-                actionFooterButtons[0].y + actionFooterButtons[0].height / 2f + 2f, 7.5f);
-        drawCentered("CANCEL", actionFooterButtons[1].x
-                        + actionFooterButtons[1].width / 2f,
-                actionFooterButtons[1].y + actionFooterButtons[1].height / 2f + 2f, 7.5f);
-        font.setColor(action != GameState.Action.ATTACK || game.canAcceptAttack()
-                ? TITLE_TEXT : DISABLED_TEXT);
-        drawCentered("ACCEPT", actionFooterButtons[2].x
-                        + actionFooterButtons[2].width / 2f,
-                actionFooterButtons[2].y + actionFooterButtons[2].height / 2f + 2f, 7.5f);
-        batch.end();
-    }
-
-    private void drawPropagandaCityPrompt() {
+        Rectangle details = actionFooterButtons[0];
+        drawCentered("DETAILS", details.x + details.width / 2f,
+                details.y + details.height / 2f + 2f, 7.5f);
         Rectangle cancel = actionFooterButtons[1];
-        batch.setProjectionMatrix(camera.combined);
-        batch.begin();
-        drawOriginalButton(cancel);
-        batch.end();
-        shapes.setProjectionMatrix(camera.combined);
-        shapes.begin(ShapeRenderer.ShapeType.Filled);
-        drawButtonGradient(cancel, false);
-        shapes.end();
-        batch.begin();
-        font.setColor(TITLE_TEXT);
         drawCentered("CANCEL", cancel.x + cancel.width / 2f,
                 cancel.y + cancel.height / 2f + 2f, 7.5f);
+        font.setColor(canAcceptInlineAction() ? TITLE_TEXT : DISABLED_TEXT);
+        Rectangle accept = actionFooterButtons[2];
+        drawCentered("ACCEPT", accept.x + accept.width / 2f,
+                accept.y + accept.height / 2f + 2f, 7.5f);
         batch.end();
-    }
-
-    private CharSequence massMediaFooterSummary() {
-        actionFooterText.setLength(0);
-        actionFooterText.append("MASS MEDIA  +").append(game.getMassMediaGain())
-                .append("% INFLUENCE");
-        return actionFooterText;
-    }
-
-    private CharSequence directAttackFooterSummary() {
-        actionFooterText.setLength(0);
-        String weapon = game.getSelectedAttackWeapon();
-        GameState.PlayerState target = game.getPlayerState(game.getSelectedTargetPlayer());
-        actionFooterText.append("ATTACK: ");
-        if (weapon == null) {
-            actionFooterText.append("SELECT A UNIT");
-        } else {
-            appendUppercase(actionFooterText, weapon);
-            actionFooterText.append(" x").append(game.getWeaponStock(weapon));
-        }
-        if (target != null) {
-            actionFooterText.append("  |  NATION ").append(target.id)
-                    .append("  CITY ").append(game.getSelectedTargetCity() + 1);
-        }
-        return actionFooterText;
     }
 
     private static void appendUppercase(StringBuilder output, String value) {
@@ -4744,10 +4701,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 continue;
             }
             if (game.getSelectedAction() == action) {
-                if (action == GameState.Action.PRODUCTION) {
-                    modalOpen = !modalOpen;
-                    audio.play(modalOpen ? OriginalAudio.Cue.ACTION_OPEN
-                            : OriginalAudio.Cue.ACTION_CLOSE);
+                if (ActionScreenLayout.hasInlineActionControls(action)) {
+                    if (actionCanShowMap()) setActionDetailsOpen(!modalOpen);
                     return;
                 }
                 audio.play(OriginalAudio.Cue.ACTION_SWITCH_OFF);
@@ -4769,15 +4724,43 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                             sourceActionMenu.getKey());
                     selectedEquipment = "";
                 }
-                modalOpen = SourceActionMenuState.supports(game.getSelectedAction())
-                        ? !sourceActionMenu.isMapSelection()
-                        : ActionScreenLayout.opensCenterDialog(game.getSelectedAction());
+                modalOpen = ActionScreenLayout.opensCenterDialog(game.getSelectedAction());
                 if (modalOpen) {
                     audio.play(OriginalAudio.Cue.ACTION_OPEN);
                 }
             }
             return;
         }
+    }
+
+    private void setActionDetailsOpen(boolean open) {
+        modalOpen = open;
+        audio.play(open ? OriginalAudio.Cue.ACTION_OPEN : OriginalAudio.Cue.ACTION_CLOSE);
+    }
+
+    private boolean canAcceptInlineAction() {
+        GameState.Action action = game.getSelectedAction();
+        if (SourceActionMenuState.supports(action)) return sourceActionMenu.isAcceptVisible();
+        if (action == GameState.Action.PRODUCTION) return productionSummaryCount > 0;
+        return action == GameState.Action.RESEARCH && game.getSelectedTechnology() != null;
+    }
+
+    private boolean activateActionViewControl(float x, float y) {
+        if (modalOpen && actionCanShowMap() && actionMapButton.contains(x, y)) {
+            setActionDetailsOpen(false);
+            return true;
+        }
+        if (!showsInlineActionFooter()) return false;
+        if (actionFooterButtons[0].contains(x, y)) {
+            setActionDetailsOpen(true);
+        } else if (actionFooterButtons[1].contains(x, y)) {
+            cancelActionSelection(false);
+        } else if (actionFooterButtons[2].contains(x, y)) {
+            if (canAcceptInlineAction()) acceptActionSelection(false);
+        } else {
+            return false;
+        }
+        return true;
     }
 
     private void acceptProductionSelection() {
@@ -4797,6 +4780,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                     sourceActionMenu.begin(game);
                     sourceActionInstruction.onSelectionUpdate(game.getSelectedAction(),
                             sourceActionMenu.getKey());
+                    modalOpen = ActionScreenLayout.opensCenterDialog(automatic);
                     audio.play(OriginalAudio.Cue.ACTION_SWITCH);
                 }
                 if (SourceActionMenuState.supports(game.getSelectedAction()) && weapon != null) {
@@ -4808,9 +4792,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                         selectedEquipment = selected == null ? "" : selected;
                         if (selected != null) audio.play(OriginalAudio.Cue.STOCK_SELECT);
                     }
-                    modalOpen = !sourceActionMenu.isMapSelection();
-                    if (automatic != null) {
-                        if (modalOpen) audio.play(OriginalAudio.Cue.ACTION_OPEN);
+                    if (!modalOpen && sourceActionMenu.getError() != null) {
+                        setActionDetailsOpen(true);
                     }
                 } else {
                     selectedEquipment = weapon;
@@ -5216,14 +5199,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     }
 
     private void activateSourceActionMenu(float x, float y, boolean pending) {
-        if (!pending && game.getSelectedAction() == GameState.Action.PROPAGANDA
-                && sourceActionMenu.isMapSelection() && actionFooterButtons[1].contains(x, y)) {
-            sourceActionMenu.cancel(game);
-            modalOpen = false;
-            audio.play(OriginalAudio.Cue.ACTION_CLOSE);
-            return;
-        }
-        String control = sourceActionMenuRenderer.controlAt(modal, x, y, game, sourceActionMenu);
+        String control = pending || modalOpen
+                ? sourceActionMenuRenderer.controlAt(modal, x, y, game, sourceActionMenu) : null;
         if (control != null) {
             if (control.endsWith("btnOK")) {
                 sourceActionMenu.dismissError(game);
@@ -5231,23 +5208,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                         sourceActionMenu.getKey());
             }
             else if ("btnAccept".equals(control)) {
-                boolean accepted = pending ? game.respondToDiplomacyProposal(true) : sourceActionMenu.accept(game);
-                if (accepted) {
-                    selectedEquipment = "";
-                    if (pending) game.cancelSelection();
-                    modalOpen = false;
-                    audio.play(OriginalAudio.Cue.ACTION_ACCEPT);
-                } else if (pending) {
-                    sourceActionMenu.showMoneyError(game);
-                }
+                acceptActionSelection(pending);
             } else if ("btnCancel".equals(control)) {
-                boolean closed = pending ? game.respondToDiplomacyProposal(false) : sourceActionMenu.cancel(game);
-                if (closed) {
-                    selectedEquipment = "";
-                    if (pending) game.cancelSelection();
-                    modalOpen = false;
-                    audio.play(OriginalAudio.Cue.ACTION_CLOSE);
-                }
+                cancelActionSelection(pending);
             } else if (!pending && control.startsWith("leader")) {
                 if (sourceActionMenu.chooseLeader(game, control.charAt(6) - '0'))
                     audio.play(OriginalAudio.Cue.UNIT_SELECT);
@@ -5264,7 +5227,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             }
             return;
         }
-        if (!pending && sourceActionMenu.isMapSelection() && mapBounds.contains(x, y)) {
+        if (!pending && !modalOpen && sourceActionMenu.isMapSelection() && mapBounds.contains(x, y)) {
             int address = cityRenderer == null ? -1
                     : cityRenderer.hitTest(x, y, mapBounds, game);
             if (address >= 0) {
@@ -5275,14 +5238,47 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 if (chosen) {
                     sourceActionInstruction.onSelectionUpdate(game.getSelectedAction(),
                             sourceActionMenu.getKey());
-                    modalOpen = !sourceActionMenu.isMapSelection();
                     String selected = sourceActionMenu.getSelectedEquipment();
                     selectedEquipment = selected == null ? "" : selected;
-                    if (modalOpen) audio.play(OriginalAudio.Cue.ACTION_OPEN);
                 }
                 sourceActionInstruction.onCityAttempt(owner,
                         game.getHuman().hasCeasefireWith(owner));
             }
+        }
+    }
+
+    private void acceptActionSelection(boolean pending) {
+        boolean accepted = pending ? game.respondToDiplomacyProposal(true)
+                : SourceActionMenuState.supports(game.getSelectedAction())
+                ? sourceActionMenu.accept(game) : game.acceptSelectedAction();
+        if (accepted) {
+            selectedEquipment = "";
+            if (pending) game.cancelSelection();
+            modalOpen = false;
+            audio.play(OriginalAudio.Cue.ACTION_ACCEPT);
+        } else if (pending) {
+            sourceActionMenu.showMoneyError(game);
+        } else if (SourceActionMenuState.supports(game.getSelectedAction())
+                && sourceActionMenu.getError() != null) {
+            modalOpen = true;
+        }
+    }
+
+    private void cancelActionSelection(boolean pending) {
+        boolean closed;
+        if (pending) {
+            closed = game.respondToDiplomacyProposal(false);
+            if (closed) game.cancelSelection();
+        } else if (SourceActionMenuState.supports(game.getSelectedAction())) {
+            closed = sourceActionMenu.cancel(game);
+        } else {
+            game.cancelSelection();
+            closed = true;
+        }
+        modalOpen = !closed;
+        if (closed) {
+            selectedEquipment = "";
+            audio.play(OriginalAudio.Cue.ACTION_CLOSE);
         }
     }
 
@@ -5396,6 +5392,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             }
             return;
         }
+        if (activateActionViewControl(x, y)) return;
         if (SourceActionMenuState.supports(game.getSelectedAction())) {
             if (navViewport.contains(x, y)) activateNavigationRow(x, y);
             else if (equipmentViewport.contains(x, y)) activateEquipmentRow(x, y);
@@ -5625,8 +5622,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             sourceActionInstruction.onSelectionUpdate(game.getSelectedAction(),
                     sourceActionMenu.getKey());
             selectedEquipment = "";
-            modalOpen = true;
-            audio.play(OriginalAudio.Cue.ACTION_OPEN);
+            modalOpen = ActionScreenLayout.opensCenterDialog(GameState.Action.SKIP);
         }
     }
 
@@ -5988,8 +5984,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 || action == GameState.Action.PROPAGANDA && modal.contains(x, y))) {
             return false;
         }
-        boolean targetAction = action == GameState.Action.ATTACK
-                || action == GameState.Action.PROPAGANDA;
+        boolean targetAction = ActionScreenLayout.selectsTargetsOnMap(action);
         boolean shipSelection = false;
         if (action == GameState.Action.PREPARED_ATTACK) {
             String carrier = game.getPreparedCarrierName(0);
@@ -6112,7 +6107,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             if (!modalOpen) selectedEquipment = "";
             return true;
         }
-        if (modalOpen) {
+        if (game.getSelectedAction() != null) {
             modalOpen = false;
             game.cancelSelection();
             return true;

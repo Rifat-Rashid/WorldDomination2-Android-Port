@@ -33,6 +33,100 @@ import static org.junit.Assert.*;
 /** Runs original menu controls through the real phone viewport and touch dispatcher. */
 @RunWith(AndroidJUnit4.class)
 public final class SourceActionMenusInstrumentedTest {
+    @Test public void phoneMapAndDetailsKeepDraftsAndRouteFooterActions() throws Exception {
+        try (GameActivityScenario scenario = GameActivityScenario.launch(MainActivity.class)) {
+            CountDownLatch done = new CountDownLatch(1);
+            AtomicReference<Throwable> failure = new AtomicReference<>();
+            scenario.onActivity(activity -> Gdx.app.postRunnable(() -> {
+                try {
+                    WorldDominationGame app = (WorldDominationGame) Gdx.app.getApplicationListener();
+                    invoke(app, "initializeGameplayAssets");
+                    Object splash = field("splashState").get(app);
+                    splash.getClass().getMethod("dismiss").invoke(splash);
+                    GameState state = fresh(app);
+                    Rectangle[] footer = (Rectangle[]) field("actionFooterButtons").get(app);
+                    Rectangle mapButton = (Rectangle) field("actionMapButton").get(app);
+                    int initialFunds = state.getTurnMoneyMillions();
+                    double nextRandom = state.createPresentationRandomCopy().nextDouble();
+
+                    begin(app, GameState.Action.MASS_MEDIA);
+                    assertFalse(field("modalOpen").getBoolean(app));
+                    sourceTap(app, 307, 258);
+                    assertEquals("An invisible dialog has no Accept hit target", 0,
+                            state.getQueuedActionCount());
+                    tap(app, footer[0]);
+                    assertTrue(field("modalOpen").getBoolean(app));
+                    tap(app, mapButton);
+                    assertFalse(field("modalOpen").getBoolean(app));
+                    assertEquals(GameState.Action.MASS_MEDIA, state.getSelectedAction());
+                    tap(app, footer[2]);
+                    assertEquals(GameState.Action.MASS_MEDIA, state.getQueuedAction(0));
+
+                    begin(app, GameState.Action.RESEARCH);
+                    assertTrue(field("modalOpen").getBoolean(app));
+                    render(app);
+                    Rectangle[] cards = (Rectangle[]) field("technologyCards").get(app);
+                    String[] choices = (String[]) field("researchChoiceByCard").get(app);
+                    int available = 0;
+                    while (available < choices.length && (choices[available] == null
+                            || !state.isResearchAvailable(choices[available]))) available++;
+                    assertTrue(available < choices.length);
+                    tap(app, cards[available]);
+                    java.util.List<String> draft = state.getSelectedResearchTechnologies();
+                    assertEquals(1, draft.size());
+                    int cost = state.getSelectedResearchCostMillions();
+                    assertTrue(cost > 0);
+                    begin(app, GameState.Action.RESEARCH);
+                    assertFalse(field("modalOpen").getBoolean(app));
+                    tap(app, (Rectangle) field("modalAccept").get(app));
+                    assertEquals(1, state.getQueuedActionCount());
+                    assertEquals(draft, state.getSelectedResearchTechnologies());
+                    assertEquals(initialFunds, state.getTurnMoneyMillions());
+
+                    begin(app, GameState.Action.RESEARCH);
+                    assertTrue(field("modalOpen").getBoolean(app));
+                    tap(app, mapButton);
+                    assertEquals(draft, state.getSelectedResearchTechnologies());
+                    tap(app, footer[0]);
+                    assertTrue(field("modalOpen").getBoolean(app));
+                    assertEquals(draft, state.getSelectedResearchTechnologies());
+                    tap(app, mapButton);
+                    tap(app, footer[2]);
+                    assertEquals(GameState.Action.RESEARCH, state.getQueuedAction(1));
+                    assertEquals(initialFunds - cost, state.getTurnMoneyMillions());
+                    assertEquals(nextRandom, state.createPresentationRandomCopy().nextDouble(), 0d);
+
+                    state = fresh(app);
+                    stock(state, "soldier1", 1);
+                    begin(app, GameState.Action.ATTACK);
+                    equipment(app, "soldier1");
+                    assertFalse(field("modalOpen").getBoolean(app));
+                    tap(app, footer[0]);
+                    cityTap(app, 1, 0);
+                    assertEquals("attack1", menu(app).getKey());
+                    tap(app, mapButton);
+                    cityTap(app, 1, 0);
+                    assertFalse(field("modalOpen").getBoolean(app));
+                    assertEquals("attack2-soldier1", menu(app).getKey());
+                    begin(app, GameState.Action.ATTACK);
+                    assertTrue(field("modalOpen").getBoolean(app));
+                    assertEquals(1, state.getSelectedTargetPlayer());
+                    tap(app, mapButton);
+                    tap(app, footer[1]);
+                    assertNull(state.getSelectedAction());
+                    assertEquals(1, state.getAvailableWeaponStock(0, "soldier1"));
+                    assertEquals(0, state.getQueuedActionCount());
+                } catch (Throwable error) {
+                    failure.set(error);
+                } finally {
+                    done.countDown();
+                }
+            }));
+            assertTrue("Source phone action navigation timed out", done.await(90, TimeUnit.SECONDS));
+            if (failure.get() != null) throw new AssertionError("Source phone action navigation", failure.get());
+        }
+    }
+
     @Test public void originalMenusSelectTargetsEquipmentAndQueueAllFiveActions() throws Exception {
         try (GameActivityScenario scenario = GameActivityScenario.launch(MainActivity.class)) {
             CountDownLatch done = new CountDownLatch(1);
@@ -48,6 +142,7 @@ public final class SourceActionMenusInstrumentedTest {
                     assertEquals("religion-chr", menu(app).getKey());
                     assertEquals(65, state.getHuman().religion);
                     assertEquals(20, state.getMassMediaPreviewGain());
+                    showDetails(app);
                     capture(app, "source-mass-media.png");
                     accept(app, state, GameState.Action.MASS_MEDIA);
                     state = fresh(app);
@@ -60,20 +155,23 @@ public final class SourceActionMenusInstrumentedTest {
                     state = fresh(app); begin(app, GameState.Action.PROPAGANDA);
                     assertTrue(menu(app).isMapSelection()); cityTap(app, 1, 2);
                     assertEquals("propaganda2", menu(app).getKey());
+                    showDetails(app);
                     capture(app, "source-propaganda.png"); accept(app, state, GameState.Action.PROPAGANDA);
 
                     state = fresh(app); begin(app, GameState.Action.DEFENSE);
                     equipment(app, "antiAir"); assertEquals("defense-antiAir", menu(app).getKey());
+                    showDetails(app);
                     capture(app, "source-defense.png"); accept(app, state, GameState.Action.DEFENSE);
 
                     state = fresh(app); stock(state, "soldier1", 1); begin(app, GameState.Action.ATTACK);
                     assertEquals("attackSelect", menu(app).getKey()); equipment(app, "soldier1");
                     assertEquals("attack1", menu(app).getKey()); cityTap(app, 1, 0);
                     assertEquals("attack2-soldier1", menu(app).getKey());
+                    showDetails(app);
                     capture(app, "source-direct-attack.png"); accept(app, state, GameState.Action.ATTACK);
 
                     state = fresh(app); begin(app, GameState.Action.ATTACK); equipment(app, "spy1");
-                    cityTap(app, 1, 0); sourceTap(app, 313, 138);
+                    cityTap(app, 1, 0); showDetails(app); sourceTap(app, 313, 138);
                     assertEquals("factory", state.getSelectedSpyBuilding());
                     assertTrue(menu(app).getKey().startsWith("attack-spy-"));
                     capture(app, "source-spy.png");
@@ -81,6 +179,7 @@ public final class SourceActionMenusInstrumentedTest {
                     state = fresh(app); stock(state, "rocket1", 1); stock(state, "warhead1", 1);
                     begin(app, GameState.Action.PREPARED_ATTACK); equipment(app, "rocket1");
                     assertEquals("preAttack-rocket1", menu(app).getKey());
+                    showDetails(app);
                     capture(app, "source-prepared-step-one.png");
                     accept(app, state, GameState.Action.PREPARED_ATTACK);
                     state.selectAction(GameState.Action.RESOURCES); assertTrue(state.acceptSelectedAction());
@@ -89,6 +188,7 @@ public final class SourceActionMenusInstrumentedTest {
                     begin(app, GameState.Action.PREPARED_ATTACK);
                     equipment(app, "warhead1"); assertEquals("preAttack4", menu(app).getKey());
                     cityTap(app, 1, 1); assertEquals("preAttack3-warhead", menu(app).getKey());
+                    showDetails(app);
                     capture(app, "source-prepared-step-two.png");
                     accept(app, state, GameState.Action.PREPARED_ATTACK);
 
@@ -121,6 +221,7 @@ public final class SourceActionMenusInstrumentedTest {
                     stock(state, "warhead1", 2);
                     begin(app, GameState.Action.PREPARED_ATTACK); equipment(app, "warhead1"); cityTap(app, 1, 0);
                     assertEquals("ship1-1", menu(app).getKey()); assertTrue(menu(app).isAcceptVisible());
+                    showDetails(app);
                     capture(app, "source-ship-one-payload.png");
                     sourceTap(app, 307, 258);
                     assertEquals(GameState.Action.RESOURCES, state.getQueuedAction(0));
@@ -159,6 +260,7 @@ public final class SourceActionMenusInstrumentedTest {
                     assertEquals("ship1-1", menu(app).getKey());
                     assertTrue(menu(app).isAcceptVisible());
                     assertEquals(2, state.getSelectedShipTargetPlayerId());
+                    showDetails(app);
                     sourceTap(app, 307, 258);
                     assertEquals(2, state.getQueuedActionCount());
                     assertEquals(GameState.Action.RESOURCES, state.getQueuedAction(0));
@@ -318,13 +420,21 @@ public final class SourceActionMenusInstrumentedTest {
         tap(app, fit.x + x * fit.width / 365, fit.y + fit.height - y * fit.height / 275);
     }
     private static void accept(WorldDominationGame app, GameState game, GameState.Action action) throws Exception {
+        if (!field("modalOpen").getBoolean(app)) showDetails(app);
         sourceTap(app, 307, 258); assertEquals(action, game.getQueuedAction(0));
+    }
+    private static void showDetails(WorldDominationGame app) throws Exception {
+        tap(app, ((Rectangle[]) field("actionFooterButtons").get(app))[0]);
+        assertTrue(field("modalOpen").getBoolean(app));
     }
     private static void tap(WorldDominationGame app, float x, float y) throws Exception {
         Viewport viewport = (Viewport) field("viewport").get(app);
         Vector2 screen = viewport.project(new Vector2(x, y));
         int sx = Math.round(screen.x), sy = Gdx.graphics.getHeight() - Math.round(screen.y);
         app.touchDown(sx, sy, 0, 0); app.touchUp(sx, sy, 0, 0);
+    }
+    private static void tap(WorldDominationGame app, Rectangle bounds) throws Exception {
+        tap(app, bounds.x + bounds.width / 2f, bounds.y + bounds.height / 2f);
     }
     private static Field field(String name) throws Exception {
         Field field = WorldDominationGame.class.getDeclaredField(name); field.setAccessible(true); return field;

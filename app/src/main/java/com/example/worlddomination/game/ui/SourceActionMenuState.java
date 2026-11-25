@@ -70,6 +70,7 @@ public final class SourceActionMenuState {
     public boolean hasPendingError() { return pendingError; }
     public boolean hasLeader() { return leaderChosen; }
     public boolean hasOption() { return optionChosen; }
+    public boolean isCancelling() { return cancelling; }
 
     /** Presenter_interface selects the appropriate action when idle stock is tapped. */
     public static GameState.Action actionForEquipment(GameState game, String name) {

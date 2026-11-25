@@ -19,13 +19,21 @@ public final class ActionScreenLayoutTest {
 
     @Test
     public void mapFirstActionsKeepTheBattlefieldVisible() {
-        assertTrue(ActionScreenLayout.opensCenterDialog(GameState.Action.MASS_MEDIA));
+        assertFalse(ActionScreenLayout.opensCenterDialog(GameState.Action.MASS_MEDIA));
         assertFalse(ActionScreenLayout.opensCenterDialog(GameState.Action.ATTACK));
-        assertFalse(ActionScreenLayout.hasInlineActionControls(GameState.Action.MASS_MEDIA));
+        assertFalse(ActionScreenLayout.opensCenterDialog(GameState.Action.PREPARED_ATTACK));
+        assertFalse(ActionScreenLayout.opensCenterDialog(GameState.Action.DEFENSE));
+        assertTrue(ActionScreenLayout.hasInlineActionControls(GameState.Action.MASS_MEDIA));
         assertTrue(ActionScreenLayout.hasInlineActionControls(GameState.Action.ATTACK));
         assertTrue(ActionScreenLayout.selectsTargetsOnMap(GameState.Action.ATTACK));
         assertFalse(ActionScreenLayout.selectsTargetsOnMap(GameState.Action.MASS_MEDIA));
+        assertTrue(ActionScreenLayout.opensCenterDialog(GameState.Action.RESOURCES));
+        assertTrue(ActionScreenLayout.opensCenterDialog(GameState.Action.PRODUCTION));
         assertTrue(ActionScreenLayout.opensCenterDialog(GameState.Action.RESEARCH));
+        assertTrue(ActionScreenLayout.opensCenterDialog(GameState.Action.DIPLOMACY));
+        assertFalse(ActionScreenLayout.hasInlineActionControls(GameState.Action.RESOURCES));
+        assertTrue(ActionScreenLayout.hasInlineActionControls(GameState.Action.RESEARCH));
+        assertTrue(ActionScreenLayout.hasInlineActionControls(GameState.Action.DIPLOMACY));
     }
 
     @Test
@@ -94,6 +102,11 @@ public final class ActionScreenLayoutTest {
                 assertFalse(buttons[i].overlaps(buttons[previous]));
             }
         }
+        Rectangle map = new Rectangle(10f, 90f, 380f, 280f);
+        Rectangle mapButton = ActionFooterLayout.setMapButtonBounds(map, new Rectangle());
+        assertTrue(map.contains(mapButton));
+        assertEquals(map.x + map.width - 2f, mapButton.x + mapButton.width, 0f);
+        assertEquals(map.y + map.height - 2f, mapButton.y + mapButton.height, 0f);
     }
 
     @Test

@@ -123,7 +123,12 @@ public final class SourceActionInstructionsInstrumentedTest {
                     navigation(app, GameState.Action.DEFENSE);
                     assertPrompt(instruction, SourceActionInstruction.SELECT_WEAPON, 108);
 
-                    navigation(app, GameState.Action.DEFENSE); // Same navigation row cancels.
+                    navigation(app, GameState.Action.DEFENSE); // Same row opens Details.
+                    assertTrue(field("modalOpen").getBoolean(app));
+                    assertEquals(GameState.Action.DEFENSE, state.getSelectedAction());
+                    navigation(app, GameState.Action.DEFENSE);
+                    assertFalse(field("modalOpen").getBoolean(app));
+                    tap(app, ((Rectangle[]) field("actionFooterButtons").get(app))[1]);
                     assertNull(state.getSelectedAction());
                     GameState.WeaponState soldier = state.getHuman().getWeapons().get("soldier1");
                     assertNotNull(soldier);

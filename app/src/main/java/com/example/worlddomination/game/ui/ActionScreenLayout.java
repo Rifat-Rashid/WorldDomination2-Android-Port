@@ -7,12 +7,12 @@ public final class ActionScreenLayout {
     private ActionScreenLayout() { }
 
     public static boolean opensCenterDialog(GameState.Action action) {
-        return action != null && action != GameState.Action.ATTACK
-                && action != GameState.Action.PROPAGANDA;
+        return action == GameState.Action.RESOURCES || action == GameState.Action.PRODUCTION
+                || action == GameState.Action.RESEARCH || action == GameState.Action.DIPLOMACY;
     }
 
     public static boolean hasInlineActionControls(GameState.Action action) {
-        return action == GameState.Action.ATTACK || action == GameState.Action.PROPAGANDA;
+        return action != null && action != GameState.Action.RESOURCES;
     }
 
     public static boolean selectsTargetsOnMap(GameState.Action action) {
