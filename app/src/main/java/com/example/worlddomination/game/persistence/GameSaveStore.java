@@ -39,10 +39,13 @@ public final class GameSaveStore {
     public static final class LatestSave {
         public final int slot;
         public final int turn;
+        /** Whether an unreadable slot had a strictly newer timestamp than this save. */
+        public final boolean skippedNewerUnreadable;
 
-        private LatestSave(int slot, int turn) {
+        private LatestSave(int slot, int turn, boolean skippedNewerUnreadable) {
             this.slot = slot;
             this.turn = turn;
+            this.skippedNewerUnreadable = skippedNewerUnreadable;
         }
     }
 
@@ -118,8 +121,10 @@ public final class GameSaveStore {
      * Ties favor the lowest slot.
      */
     public LatestSave latestCompatible() {
-        LatestSave latest = null;
+        int latestSlot = 0;
+        int latestTurn = 0;
         long latestModified = Long.MIN_VALUE;
+        long newestUnreadable = Long.MIN_VALUE;
         for (int slot = FIRST_SLOT; slot <= SLOT_COUNT; slot++) {
             File saveFile = fileForSlot(slot);
             if (!saveFile.isFile()) continue;
@@ -127,13 +132,15 @@ public final class GameSaveStore {
             if (modified <= latestModified) continue;
             try {
                 GameState state = loadFile(saveFile);
-                latest = new LatestSave(slot, state.getTurn());
+                latestSlot = slot;
+                latestTurn = state.getTurn();
                 latestModified = modified;
             } catch (IOException unreadable) {
-                // A missing, damaged or unsupported checkpoint does not hide another slot.
+                newestUnreadable = Math.max(newestUnreadable, modified);
             }
         }
-        return latest;
+        if (latestSlot == 0) return null;
+        return new LatestSave(latestSlot, latestTurn, newestUnreadable > latestModified);
     }
 
     private File fileForSlot(int slot) {

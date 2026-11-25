@@ -48,6 +48,7 @@ public final class GameSaveStoreTest {
         GameSaveStore.LatestSave latest = store.latestCompatible();
         assertEquals(1, latest.slot);
         assertEquals(store.load().getTurn(), latest.turn);
+        assertFalse(latest.skippedNewerUnreadable);
         assertArrayEquals(legacyCheckpoint, Files.readAllBytes(legacyFile));
 
         GameState replacement = new GameState(2, 59L);
@@ -158,17 +159,36 @@ public final class GameSaveStoreTest {
         GameState match = new GameState(1, 42L);
         store.save(1, match);
         store.save(2, match);
-        byte[] corrupt = Files.readAllBytes(secondFile);
+        byte[] corrupt = Files.readAllBytes(firstFile);
         corrupt[corrupt.length - 1] ^= 1;
-        Files.write(secondFile, corrupt);
-        Files.setLastModifiedTime(firstFile, FileTime.fromMillis(10_000L));
+        Files.write(firstFile, corrupt);
+        Files.setLastModifiedTime(firstFile, FileTime.fromMillis(30_000L));
         Files.setLastModifiedTime(secondFile, FileTime.fromMillis(20_000L));
         Files.createDirectory(thirdFile);
 
         GameSaveStore.LatestSave latest = store.latestCompatible();
-        assertEquals(1, latest.slot);
+        assertEquals(2, latest.slot);
         assertEquals(match.getTurn(), latest.turn);
-        Files.delete(firstFile);
+        assertTrue(latest.skippedNewerUnreadable);
+
+        Files.setLastModifiedTime(firstFile, FileTime.fromMillis(20_000L));
+        latest = store.latestCompatible();
+        assertEquals(2, latest.slot);
+        assertFalse(latest.skippedNewerUnreadable);
+
+        Files.setLastModifiedTime(firstFile, FileTime.fromMillis(10_000L));
+        latest = store.latestCompatible();
+        assertEquals(2, latest.slot);
+        assertFalse(latest.skippedNewerUnreadable);
+
+        Files.delete(thirdFile);
+        Files.write(thirdFile, corrupt);
+        Files.setLastModifiedTime(thirdFile, FileTime.fromMillis(30_000L));
+        latest = store.latestCompatible();
+        assertEquals(2, latest.slot);
+        assertTrue(latest.skippedNewerUnreadable);
+
+        Files.delete(secondFile);
         assertNull(store.latestCompatible());
     }
 
