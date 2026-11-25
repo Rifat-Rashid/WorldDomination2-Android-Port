@@ -53,6 +53,10 @@ The AVX2 stock run downloaded, verified, and initialized the official file in 12
 
 ## Compare a candidate GGUF in a debug build
 
+On Android 12L or earlier, run the separate QA class `com.example.worlddomination.game.rendering.QwenUnsupportedDeviceTest`. On an API 32 x86_64 emulator this verified the visible Android 13 requirement, an inert switch, and a full conventional opponent turn whose encoded state matched the seeded baseline.
+
+For a self-contained offline APK, pass `-Pwd2QwenPackagedModel=<absolute GGUF path>` and `-Pwd2QwenPackagedSha256=<lowercase SHA-256>` to the Gradle wrapper. It verifies the weights and packages an uncompressed asset. Enabling the switch copies the asset to private storage with byte progress, verifies it, then loads the native model. Use this option for distributing a tested local candidate directly to a phone. It adds roughly the GGUF file size to the APK. The ordinary build acquires the stock model on demand.
+
 Set both `-Pwd2QwenDebugModelSha256=<lowercase SHA-256>` and `-Pwd2QwenDebugModelSize=<bytes>` when assembling a debug APK. Provision the file with `scripts/provision-qwen-model.py` using matching `--debug-sha256` and `--debug-size` options in addition to `--provision`. A separate debug application ID keeps the game and model caches isolated. The instrumented runtime uses the same architecture, embedded non-thinking template, context, constraint, and checksum validation as stock. Release builds use the official stock model.
 
 The smoke-trained Q8_0 export completed an offline, one-opponent Android round in 11.1 seconds at 898 prompt tokens. Disabling it during the following decision reproduced the seeded original AI settlement. The smoke run verifies that Android can execute a plan from the exported file. Model quality requires a held-out comparison.

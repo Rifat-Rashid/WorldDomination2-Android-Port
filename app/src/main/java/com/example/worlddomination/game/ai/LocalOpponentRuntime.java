@@ -5,7 +5,7 @@ import java.util.function.Consumer;
 
 /** Optional local model service. Loading and inference run asynchronously. */
 public interface LocalOpponentRuntime extends AutoCloseable {
-    enum Stage { UNSUPPORTED, OFF, DOWNLOADING, VERIFYING, LOADING, PREPARING, READY, PAUSED, ERROR }
+    enum Stage { UNSUPPORTED, OFF, DOWNLOADING, COPYING, VERIFYING, LOADING, PREPARING, READY, PAUSED, ERROR }
 
     final class Snapshot {
         public final boolean supported;

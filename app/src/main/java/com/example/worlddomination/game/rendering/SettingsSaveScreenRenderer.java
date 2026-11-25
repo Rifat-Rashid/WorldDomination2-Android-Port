@@ -161,6 +161,7 @@ public final class SettingsSaveScreenRenderer {
 
     private void drawModelProgress(ShapeRenderer shapes, LocalOpponentRuntime.Snapshot model) {
         switch (model.stage) {
+            case COPYING:
             case DOWNLOADING:
             case LOADING:
                 if (model.progress < 0f) return;
@@ -186,6 +187,7 @@ public final class SettingsSaveScreenRenderer {
         switch (model.stage) {
             case OFF: status = "Uses original AI"; break;
             case DOWNLOADING: status = "Downloading model"; break;
+            case COPYING: status = "Copying model"; break;
             case VERIFYING: status = "Verifying model"; break;
             case LOADING: status = "Loading model weights"; break;
             case PREPARING: status = "Preparing AI"; break;
