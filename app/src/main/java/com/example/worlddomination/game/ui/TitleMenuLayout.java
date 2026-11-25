@@ -19,9 +19,10 @@ public final class TitleMenuLayout {
         // The decorative hemisphere can extend under the left cutout. Controls stay in the safe area.
         globeX = Math.min(300f * scale, controlsX - 608f * scale);
         globeY = centerY;
-        place(logo, controlsX, centerY, 49, 526, 280);
+        // Keep the original logo aspect and center the smaller mark above both actions.
+        place(logo, controlsX, centerY, 78, 526f * 0.84f, 280f * 0.84f);
         place(continueGame, controlsX, centerY, 337, 428, 89);
-        place(newGame, controlsX, centerY, 465, 428, 89);
+        place(newGame, controlsX, centerY, 457, 428, 89);
     }
 
     private void place(Rectangle bounds, float centerX, float centerY,

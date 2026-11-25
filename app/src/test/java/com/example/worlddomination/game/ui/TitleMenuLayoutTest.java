@@ -6,14 +6,18 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 public final class TitleMenuLayoutTest {
-    @Test public void authoredCompositionMatchesReferenceFrame() {
+    @Test public void compactCompositionKeepsGenerousTapTargets() {
         TitleMenuLayout layout = new TitleMenuLayout();
         layout.fit(new Rectangle(0, 0, 1280, 608));
         assertEquals(300f, layout.globeX, 0.01f);
         assertEquals(304f, layout.globeY, 0.01f);
         assertEquals(305f, layout.globeRadius, 0.01f);
+        assertEquals(441.84f, layout.logo.width, 0.01f);
+        assertEquals(235.2f, layout.logo.height, 0.01f);
         assertEquals(new Rectangle(694, 182, 428, 89), layout.continueGame);
-        assertEquals(new Rectangle(694, 54, 428, 89), layout.newGame);
+        assertEquals(new Rectangle(694, 62, 428, 89), layout.newGame);
+        assertEquals(TitleMenuLayout.Action.CONTINUE, layout.hit(695, 183, true));
+        assertEquals(TitleMenuLayout.Action.NEW_GAME, layout.hit(1121, 150, false));
         assertEquals(TitleMenuLayout.Action.CONTINUE, layout.hit(908, 226, true));
         assertEquals(TitleMenuLayout.Action.NONE, layout.hit(908, 226, false));
         assertEquals(TitleMenuLayout.Action.NEW_GAME, layout.hit(908, 98, false));
