@@ -21,12 +21,119 @@ import java.util.stream.Stream;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 public final class GameSaveStoreTest {
     @Rule public final TemporaryFolder directory = new TemporaryFolder();
+
+    @Test
+    public void existingManualSaveRemainsSlotOneAndBothApisUseItsOriginalFile() throws IOException {
+        Path legacyFile = directory.getRoot().toPath().resolve("manual-game.wd2");
+        byte[] legacyCheckpoint = GameSaveCodec.encode(new GameState(1, 42L));
+        Files.write(legacyFile, legacyCheckpoint);
+        GameSaveStore store = createStore(legacyFile);
+
+        assertTrue(store.hasSave());
+        assertTrue(store.hasSave(1));
+        assertArrayEquals(legacyCheckpoint, GameSaveCodec.encode(store.load()));
+        assertArrayEquals(legacyCheckpoint, GameSaveCodec.encode(store.load(1)));
+        assertFalse(store.hasSave(2));
+        assertFalse(store.hasSave(3));
+        assertNull(store.describe(2));
+        assertNull(store.describe(3));
+        assertArrayEquals(legacyCheckpoint, Files.readAllBytes(legacyFile));
+
+        GameState replacement = new GameState(2, 59L);
+        store.save(1, replacement);
+        assertArrayEquals(GameSaveCodec.encode(replacement), GameSaveCodec.encode(store.load()));
+        store.save(new GameState(0, 17L));
+        assertEquals(0, store.load(1).getDifficulty());
+        try (Stream<Path> savedFiles = Files.list(legacyFile.getParent())) {
+            assertArrayEquals(new Path[]{legacyFile}, savedFiles.toArray(Path[]::new));
+        }
+    }
+
+    @Test
+    public void threeIndependentSlotsSurviveReopenAndExposeDecodedMetadata() throws IOException {
+        Path firstFile = directory.getRoot().toPath().resolve("manual-game.wd2");
+        GameSaveStore writer = createStore(firstFile);
+        GameState[] matches = {new GameState(0, 17L), new GameState(1, 42L), new GameState(2, 59L)};
+        for (int slot = 1; slot <= GameSaveStore.SLOT_COUNT; slot++) {
+            writer.save(slot, matches[slot - 1]);
+        }
+
+        GameState replacement = matches[1];
+        replacement.selectAction(GameState.Action.RESOURCES);
+        assertTrue(replacement.acceptSelectedAction());
+        replacement.selectAction(GameState.Action.MASS_MEDIA);
+        assertTrue(replacement.acceptSelectedAction());
+        replacement.confirmTurn();
+        replacement.selectAction(GameState.Action.DIPLOMACY);
+        assertTrue(replacement.selectDiplomacyTarget(1));
+        assertTrue(replacement.selectDiplomacyOption(0));
+        assertTrue(replacement.acceptSelectedAction());
+        assertTrue(replacement.getTurnMoneyMillions() < replacement.getHuman().moneyMillions);
+        replacement.getHuman().score = 3_000_000_001L;
+        createStore(firstFile).save(2, replacement);
+
+        GameSaveStore reopened = createStore(firstFile);
+        for (int slot = 1; slot <= GameSaveStore.SLOT_COUNT; slot++) {
+            GameState match = matches[slot - 1];
+            assertTrue(reopened.hasSave(slot));
+            assertArrayEquals(GameSaveCodec.encode(match), GameSaveCodec.encode(reopened.load(slot)));
+            GameSaveStore.SlotDescription info = reopened.describe(slot);
+            assertEquals(match.getTurn(), info.turn);
+            assertEquals(match.getDifficulty(), info.difficulty);
+            assertEquals(match.getTurnMoneyMillions(), info.fundsMillions);
+            assertEquals(match.getHuman().score, info.score);
+        }
+        assertTrue(Files.isRegularFile(firstFile.resolveSibling("manual-game-slot-2.wd2")));
+        assertTrue(Files.isRegularFile(firstFile.resolveSibling("manual-game-slot-3.wd2")));
+    }
+
+    @Test
+    public void corruptionInOneSlotDoesNotBlockNeighborReadsOrWrites() throws IOException {
+        Path firstFile = saveFile();
+        GameSaveStore store = createStore(firstFile);
+        GameState first = new GameState(0, 17L);
+        GameState second = new GameState(1, 42L);
+        GameState third = new GameState(2, 59L);
+        store.save(1, first);
+        store.save(2, second);
+        Path secondFile = firstFile.resolveSibling("match-slot-2.wd2");
+        byte[] truncated = Arrays.copyOf(Files.readAllBytes(secondFile), 9);
+        Files.write(secondFile, truncated);
+
+        assertTrue(store.hasSave(2));
+        assertThrows(IOException.class, () -> store.load(2));
+        assertThrows(IOException.class, () -> store.describe(2));
+        assertEquals(0, store.describe(1).difficulty);
+        store.save(3, third);
+        assertArrayEquals(truncated, Files.readAllBytes(secondFile));
+        store.save(2, second);
+        assertEquals(1, store.describe(2).difficulty);
+        assertArrayEquals(GameSaveCodec.encode(first), GameSaveCodec.encode(store.load(1)));
+        assertArrayEquals(GameSaveCodec.encode(third), GameSaveCodec.encode(store.load(3)));
+    }
+
+    @Test
+    public void invalidSlotNumbersAreRejectedBeforeAccessingFiles() throws IOException {
+        Path firstFile = saveFile();
+        GameSaveStore store = createStore(firstFile);
+        GameState state = new GameState(0, 17L);
+        for (int slot : new int[]{-1, 0, GameSaveStore.SLOT_COUNT + 1}) {
+            assertThrows(IllegalArgumentException.class, () -> store.hasSave(slot));
+            assertThrows(IllegalArgumentException.class, () -> store.save(slot, state));
+            assertThrows(IllegalArgumentException.class, () -> store.load(slot));
+            assertThrows(IllegalArgumentException.class, () -> store.describe(slot));
+        }
+        try (Stream<Path> savedFiles = Files.list(firstFile.getParent())) {
+            assertEquals(0, savedFiles.count());
+        }
+    }
 
     @Test
     public void storesAndReplacesMatchAcrossStoreInstances() throws IOException {
@@ -57,9 +164,12 @@ public final class GameSaveStoreTest {
         Path file = saveFile();
         Files.write(file.resolveSibling("interrupted.tmp"), new byte[] {1, 2, 3});
         GameSaveStore store = createStore(file);
+        store.save(2, new GameState(2, 59L));
 
         assertFalse(store.hasSave());
+        assertNull(store.describe(1));
         assertThrows(IOException.class, store::load);
+        assertTrue(store.hasSave(2));
     }
 
     @Test
@@ -104,7 +214,10 @@ public final class GameSaveStoreTest {
         Path file = saveFile();
         GameState oldMatch = new GameState(0, 17L);
         GameState newMatch = new GameState(2, 59L);
-        createStore(file).save(oldMatch);
+        GameSaveStore reader = createStore(file);
+        reader.save(oldMatch);
+        GameState otherSlot = new GameState(1, 42L);
+        reader.save(2, otherSlot);
         byte[] oldCheckpoint = GameSaveCodec.encode(oldMatch);
         byte[] newCheckpoint = GameSaveCodec.encode(newMatch);
         CountDownLatch replacementReady = new CountDownLatch(1);
@@ -130,10 +243,14 @@ public final class GameSaveStoreTest {
             });
             assertTrue("Writer reached the atomic replacement boundary",
                     replacementReady.await(10, TimeUnit.SECONDS));
-            assertArrayEquals(oldCheckpoint, GameSaveCodec.encode(createStore(file).load()));
+            assertArrayEquals(oldCheckpoint, GameSaveCodec.encode(reader.load()));
+            assertArrayEquals(GameSaveCodec.encode(otherSlot), GameSaveCodec.encode(reader.load(2)));
+            reader.save(3, newMatch);
+            assertArrayEquals(newCheckpoint, GameSaveCodec.encode(reader.load(3)));
+            assertArrayEquals(oldCheckpoint, GameSaveCodec.encode(reader.load()));
             allowReplacement.countDown();
             save.get(10, TimeUnit.SECONDS);
-            assertArrayEquals(newCheckpoint, GameSaveCodec.encode(createStore(file).load()));
+            assertArrayEquals(newCheckpoint, GameSaveCodec.encode(reader.load()));
         } finally {
             allowReplacement.countDown();
             executor.shutdownNow();
