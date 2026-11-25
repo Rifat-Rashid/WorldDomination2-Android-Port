@@ -25,7 +25,8 @@ if ($Command -eq 'build') {
     $game = Join-Path $repo 'app/src/main/java/com/example/worlddomination/game'
     $sources = @(Get-ChildItem -LiteralPath (Join-Path $game 'simulation') -Filter '*.java' -File | ForEach-Object FullName)
     $sources += (Join-Path $game 'ai/OpponentAI.java'), (Join-Path $game 'ai/DecisionRequest.java'), `
-        (Join-Path $game 'persistence/GameSaveCodec.java'), (Join-Path $PSScriptRoot 'Play.java')
+        (Join-Path $game 'persistence/GameSaveCodec.java'), (Join-Path $PSScriptRoot 'Play.java'), `
+        (Join-Path $PSScriptRoot 'ReviewSimulation.java'), (Join-Path $PSScriptRoot 'AlternativeReview.java')
     $sourceManifest = ($sources | Sort-Object | ForEach-Object {
         $relative = $_.Substring($repo.Length + 1).Replace('\', '/')
         "$relative $((Get-FileHash -Algorithm SHA256 -LiteralPath $_).Hash.ToLowerInvariant())"

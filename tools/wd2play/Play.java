@@ -6,6 +6,7 @@ import com.example.worlddomination.game.simulation.GameState;
 import com.example.worlddomination.game.simulation.GameState.CombatEvent;
 import com.example.worlddomination.game.simulation.GameState.PlayerState;
 import com.example.worlddomination.game.simulation.TurnPlan;
+import com.example.worlddomination.game.simulation.ReviewSimulation;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -93,7 +94,7 @@ public final class Play {
         throw new IllegalArgumentException("Unknown policy " + value);
     }
 
-    private static Session restore(Path file, int stopBeforeTurn) throws Exception {
+    static Session restore(Path file, int stopBeforeTurn) throws Exception {
         try (BufferedReader input = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
             String header = input.readLine();
             if (header == null || !"episode".equals(field(header, "type"))
@@ -313,7 +314,7 @@ public final class Play {
         return decoded.toString();
     }
 
-    private static final class Session {
+    static final class Session {
         final String episode;
         final String family;
         final long seed;
@@ -329,6 +330,7 @@ public final class Play {
         final int version;
         final String sourceHash;
         final GameState game;
+        final ReviewSimulation simulation;
         DecisionRequest request;
         String humanSelection;
         final List<Boolean> humanAnswers = new ArrayList<>();
@@ -357,7 +359,8 @@ public final class Play {
                     throw new IllegalArgumentException("Choose one to four distinct leaders");
                 }
             }
-            game = new GameState(setup);
+            simulation = new ReviewSimulation(setup);
+            game = simulation.game;
             if (focal < 1 || focal > setup.getSelectedOpponentIds().size()) {
                 throw new IllegalArgumentException("Focal actor must be an occupied AI seat");
             }

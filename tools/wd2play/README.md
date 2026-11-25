@@ -85,3 +85,13 @@ The audit file is UTF-8 JSONL. Version 1 of its schema contains the following re
 The policy user message contains `own` funds, starting planning budget, city populations in millions, resource income, influence, research, stock, spy readiness, prepared carrier and known contamination. `rivals` has visible city populations, survival, the actor's regard, shared ceasefires, and publicly prepared carriers. `rival_private` marks private fields unknown. `memory` carries the actor's previous orders and last known attacker, bounded combat feedback in version 2, and a strategic preference. The policy never receives the audit copy of other seats' orders, seed, engine events after its choice, or final outcome.
 
 Candidate action fields include `reserve` for current budget reservation, `spend` for a production category and its integer allocation, `tech` for the technologies to acquire, and attack or diplomacy parameters where applicable. `target` and `city` are zero-based game seat and city indices. A prepared carrier either has `prepare:true` or specifies a payload and city or a `strikes` list of `[target,city,payload]`. A diplomacy `offer` has an actual payment `amount` at settlement even when AI reservation is zero. Two queued actions do not produce new funds, stock, research, or launch readiness for the next slot during planning.
+
+## Review alternative decisions
+
+After collecting a game, use the headless reviewer to compare two or more choices offered on a turn. The optional `java` entry runs the original focal planner. This command replays the recorded prefix, prepares the same turn, then changes only the future simulation random stream. Every choice uses the same set of future seeds. After settling the first choice, the focal opponent follows the Java AI. The surrounding policies remain those recorded for the episode.
+
+```powershell
+java -cp analysis/wd2play/classes com.example.worlddomination.game.ai.AlternativeReview $episode 0 6 P01,P02,java 32981,65419,93113,146239
+```
+
+Use plan IDs from the actual observation. The arguments after the path are the zero-based turn, horizon in turns, comma-separated plans, and distinct nonnegative future seeds. The reviewer emits one JSON observation of survival and populations per branch, including early terminal and cap status. Keep these results in the review sidecar. Several sampled futures and a short horizon supply evidence for reviewing an ambiguous decision. They cannot establish the globally best plan.
