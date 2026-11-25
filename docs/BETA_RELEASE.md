@@ -64,7 +64,7 @@ The beta includes source flag colors, faith poles and 24 Hz cloth animation,
 conquest ownership updates, empty flags for unused islands, and a clean original
 terrain layer with native cities instead of fixed buildings underneath them.
 Terrain uses each original nation's selected faith, retains that style after
-conquest, and shows ocean for unused island slots. Only selected terrain tiles
+conquest, and shows the default island ground for unused slots. Only selected terrain tiles
 are cached on the GPU. Existing enhanced map and font assets remain preserved.
 This candidate adds original enemy-removal artwork, equipment eligibility switch
 states, source action instructions, queued city action markers, and building-frame touch
