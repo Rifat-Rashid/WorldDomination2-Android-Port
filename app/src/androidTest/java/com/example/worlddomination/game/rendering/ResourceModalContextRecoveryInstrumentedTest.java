@@ -24,6 +24,7 @@ import com.example.worlddomination.game.simulation.GameSetup;
 import com.example.worlddomination.game.simulation.GameState;
 import com.example.worlddomination.game.ui.ScorePanelLayout;
 import com.example.worlddomination.game.ui.SetupScreenLayout;
+import com.example.worlddomination.game.ui.TitleMenuLayout;
 import com.example.worlddomination.testing.GameActivityScenario;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -116,8 +117,8 @@ public final class ResourceModalContextRecoveryInstrumentedTest {
         setup.setDifficulty(1);
         field("setup").set(app, setup);
         app.render();
-        Viewport viewport = (Viewport) field("viewport").get(app);
-        tap(app, viewport.getWorldWidth() / 2f, viewport.getWorldHeight() / 2f);
+        Rectangle newGame = ((TitleMenuLayout) field("titleMenu").get(app)).newGame;
+        tap(app, newGame.x + newGame.width / 2f, newGame.y + newGame.height / 2f);
         long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(45);
         OriginalFlashAnimationAssets assets;
         do {
@@ -126,7 +127,7 @@ public final class ResourceModalContextRecoveryInstrumentedTest {
             if (assets != null && assets.areSetupPortraitsLoaded()) break;
             Thread.sleep(10);
         } while (System.nanoTime() < deadline);
-        assertNotNull("Setup atlas requested by splash touch", assets);
+        assertNotNull("Setup atlas requested by New Game", assets);
         assertTrue("Setup portraits ready", assets.areSetupPortraitsLoaded());
         app.render();
         SetupScreenLayout layout = (SetupScreenLayout) field("setupLayout").get(app);

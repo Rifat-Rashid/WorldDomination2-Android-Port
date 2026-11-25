@@ -35,8 +35,8 @@ public final class PropagandaUiInstrumentedTest {
     public void citySelectionConfirmationCancelAndTurnPlaybackUseTheOriginalPanel() throws Exception {
         try (GameActivityScenario scenario = GameActivityScenario.launch(MainActivity.class)) {
             onGl(scenario, view -> {
-                view.touchDown(Gdx.graphics.getWidth() / 2, Gdx.graphics.getHeight() / 2, 0, 0);
-                view.touchUp(Gdx.graphics.getWidth() / 2, Gdx.graphics.getHeight() / 2, 0, 0);
+                TitleMenuLayout title = field(view, "titleMenu");
+                tap(view, title.newGame);
             });
             AtomicBoolean loaded = new AtomicBoolean();
             long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(90);

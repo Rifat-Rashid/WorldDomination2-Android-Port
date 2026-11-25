@@ -26,6 +26,7 @@ import com.example.worlddomination.game.assets.OriginalFlashAnimationAssets;
 import com.example.worlddomination.game.simulation.GameSetup;
 import com.example.worlddomination.game.simulation.GameState;
 import com.example.worlddomination.game.ui.SetupScreenLayout;
+import com.example.worlddomination.game.ui.TitleMenuLayout;
 import com.example.worlddomination.game.ui.SourceHelpState;
 import com.example.worlddomination.testing.GameActivityScenario;
 import java.io.File;
@@ -114,8 +115,7 @@ public final class SourceHiddenHelpContextRecoveryInstrumentedTest {
         GameSetup setup = new GameSetup(0L); setup.setDifficulty(1);
         field("setup").set(app, setup);
         app.render();
-        Viewport viewport = (Viewport) field("viewport").get(app);
-        tap(app, new Rectangle(viewport.getWorldWidth()/2f, viewport.getWorldHeight()/2f, 0, 0));
+        tap(app, ((TitleMenuLayout) field("titleMenu").get(app)).newGame);
         long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(45);
         OriginalFlashAnimationAssets assets;
         do {

@@ -18,6 +18,7 @@ import com.example.worlddomination.game.simulation.GameSetup;
 import com.example.worlddomination.game.simulation.ReferenceRandom;
 import com.example.worlddomination.game.ui.SetupScreenLayout;
 import com.example.worlddomination.game.ui.SplashScreenState;
+import com.example.worlddomination.game.ui.TitleMenuLayout;
 import com.example.worlddomination.testing.GameActivityScenario;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -33,8 +34,8 @@ import static org.junit.Assert.*;
 /** Real World setup waits for the early atlas, independent of the later battle atlas. */
 @RunWith(AndroidJUnit4.class)
 public final class SetupPortraitReadinessInstrumentedTest {
-    @Test public void tapWaitsForPortraitUpload() throws Exception { verifyTransition(false); }
-    @Test public void backWaitsForPortraitUpload() throws Exception { verifyTransition(true); }
+    @Test public void newGameWaitsForPortraitUpload() throws Exception { verifyTransition(false); }
+    @Test public void backStaysAtTitleUntilNewGameIsTapped() throws Exception { verifyTransition(true); }
 
     private void verifyTransition(boolean useBack) throws Exception {
         CountDownLatch beforePublication = new CountDownLatch(1);
@@ -58,11 +59,13 @@ public final class SetupPortraitReadinessInstrumentedTest {
                     beforeLoading.set(setupRng(setup));
                     if (useBack) {
                         assertTrue(app.keyDown(Input.Keys.BACK));
-                        assertTrue(app.keyDown(Input.Keys.BACK));
-                    } else {
-                        app.touchDown(1, 1, 0, 0); app.touchUp(1, 1, 0, 0);
-                        app.touchDown(1, 1, 0, 0); app.touchUp(1, 1, 0, 0);
+                        assertTrue("Back leaves the launch menu visible", splash(app).isVisible());
+                        assertFalse("Back must not start New Game",
+                                field("splashContinuePending").getBoolean(app));
                     }
+                    TitleMenuLayout title = (TitleMenuLayout) field("titleMenu").get(app);
+                    tap(app, title.newGame);
+                    tap(app, title.newGame);
                     assertTrue(splash(app).isVisible());
                     assertTrue(setup.getSelectedOpponentIds().isEmpty());
                     assertEquals(beforeLoading.get(), setupRng(setup), 0d);

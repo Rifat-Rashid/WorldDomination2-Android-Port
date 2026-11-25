@@ -462,7 +462,7 @@ public final class SettingsSaveLoadInstrumentedTest {
         app.render();
     }
 
-    private static void capture(WorldDominationGame app, String name) throws Exception {
+    static void capture(WorldDominationGame app, String name) throws Exception {
         render(app);
         int width = Gdx.graphics.getBackBufferWidth();
         int height = Gdx.graphics.getBackBufferHeight();

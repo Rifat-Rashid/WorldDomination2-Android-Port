@@ -35,6 +35,20 @@ public final class GameSaveStore {
         }
     }
 
+    /** Display fields for the compatible checkpoint selected for Continue. */
+    public static final class LatestSave {
+        public final int slot;
+        public final int turn;
+        /** Whether an unreadable slot had a strictly newer timestamp than this save. */
+        public final boolean skippedNewerUnreadable;
+
+        private LatestSave(int slot, int turn, boolean skippedNewerUnreadable) {
+            this.slot = slot;
+            this.turn = turn;
+            this.skippedNewerUnreadable = skippedNewerUnreadable;
+        }
+    }
+
     private final File[] slotFiles = new File[SLOT_COUNT];
     private final AtomicReplace atomicReplace;
 
@@ -100,6 +114,33 @@ public final class GameSaveStore {
     public SlotDescription describe(int slot) throws IOException {
         File saveFile = fileForSlot(slot);
         return saveFile.isFile() ? new SlotDescription(loadFile(saveFile)) : null;
+    }
+
+    /**
+     * Returns the compatible checkpoint with the newest file modification time, or null if none.
+     * Ties favor the lowest slot.
+     */
+    public LatestSave latestCompatible() {
+        int latestSlot = 0;
+        int latestTurn = 0;
+        long latestModified = Long.MIN_VALUE;
+        long newestUnreadable = Long.MIN_VALUE;
+        for (int slot = FIRST_SLOT; slot <= SLOT_COUNT; slot++) {
+            File saveFile = fileForSlot(slot);
+            if (!saveFile.isFile()) continue;
+            long modified = saveFile.lastModified();
+            if (modified <= latestModified) continue;
+            try {
+                GameState state = loadFile(saveFile);
+                latestSlot = slot;
+                latestTurn = state.getTurn();
+                latestModified = modified;
+            } catch (IOException unreadable) {
+                newestUnreadable = Math.max(newestUnreadable, modified);
+            }
+        }
+        if (latestSlot == 0) return null;
+        return new LatestSave(latestSlot, latestTurn, newestUnreadable > latestModified);
     }
 
     private File fileForSlot(int slot) {

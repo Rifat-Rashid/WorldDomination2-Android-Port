@@ -137,7 +137,9 @@ import com.example.worlddomination.game.ui.ProductionScreenLayout;
 import com.example.worlddomination.game.ui.ScrollPaneState;
 import com.example.worlddomination.game.ui.SafeAreaInsets;
 import com.example.worlddomination.game.ui.PanelGestureVelocity;
-import com.example.worlddomination.game.ui.SplashScreenLayout;
+import com.example.worlddomination.game.ui.TitleMenuLayout;
+import com.example.worlddomination.game.rendering.MenuGlobeRenderer;
+import com.example.worlddomination.game.rendering.TitleMenuRenderer;
 import com.example.worlddomination.game.ui.SplashScreenState;
 import com.example.worlddomination.game.ui.SetupScreenLayout;
 import com.example.worlddomination.game.ui.TechnologyScreenLayout;
@@ -255,10 +257,20 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     /** Installed by the Android launcher; no platform storage enters the simulation. */
     public void setGameSaveStore(GameSaveStore store) {
         gameSaveStore = store;
+        titleSavesDirty = true;
     }
     private GameSetup setup;
     private final SplashScreenState splashState = new SplashScreenState();
-    private final Rectangle splashBounds = new Rectangle();
+    private final TitleMenuLayout titleMenu = new TitleMenuLayout();
+    private MenuGlobeRenderer titleGlobe;
+    private TitleMenuRenderer titleRenderer;
+    private static final float GLOBE_REVOLUTION_SECONDS = 18f;
+    private float titleRotationTurns;
+    private TitleMenuLayout.Action titlePressed = TitleMenuLayout.Action.NONE;
+    private GameSaveStore.LatestSave latestTitleSave;
+    private boolean titleSavesDirty = true;
+    private String titleMetadata = "";
+    private String titleMessage = "";
     private PersonalBestStore personalBestStore;
     private String outcomePersonalBestText = "";
     private OriginalEndgameAssets endgameAssets;
@@ -601,6 +613,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         battlefieldFrameRenderer = new OriginalBattlefieldFrame(uiAssets.battlefieldFrame);
         setupPanelRenderer = new SourceSetupPanelRenderer();
         splashAssets = new OriginalSplashAssets();
+        titleGlobe = new MenuGlobeRenderer();
+        titleRenderer = new TitleMenuRenderer();
         cityAssets = new OriginalCityAssets(true);
         audio.initialize();
         setup = new GameSetup(System.nanoTime());
@@ -638,13 +652,13 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         safeRight = worldInsets.right;
         safeBottom = worldInsets.bottom;
         appliedSafeInsets = pixelInsets;
-        SplashScreenLayout.fit(worldWidth, worldHeight, splashBounds);
 
         float contentX = safeLeft + 4f;
         float contentY = safeBottom + 4f;
         float contentWidth = Math.max(1f, worldWidth - safeLeft - safeRight - 8f);
         float contentHeight = Math.max(1f, worldHeight - safeTop - safeBottom - 8f);
         endgameContentBounds.set(contentX, contentY, contentWidth, contentHeight);
+        titleMenu.fit(endgameContentBounds);
         if (endgameRenderer != null) {
             endgameRenderer.layout().fit(contentX, contentY, contentWidth, contentHeight);
         }
@@ -772,6 +786,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             }
             preparePendingBattleAnimations();
         }
+        if (!splashState.isVisible() && titleGlobe != null) releaseTitleGraphics();
         if (cityRenderer != null) {
             cityRenderer.updateTargets(game);
         }
@@ -789,7 +804,13 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         float frameSeconds = discardElapsedTime
                 ? 0f : Math.min(Gdx.graphics.getDeltaTime(), 0.25f);
-        accumulator = Math.min(accumulator + frameSeconds, FIXED_STEP * 6f);
+        if (game == null && splashState.isVisible()) {
+            titleRotationTurns = (titleRotationTurns + frameSeconds / GLOBE_REVOLUTION_SECONDS) % 1f;
+            showExitPromptSeconds = Math.max(0f, showExitPromptSeconds - frameSeconds);
+            accumulator = 0f;
+        } else {
+            accumulator = Math.min(accumulator + frameSeconds, FIXED_STEP * 6f);
+        }
         while (accumulator >= FIXED_STEP) {
             fixedUpdate(FIXED_STEP);
             accumulator -= FIXED_STEP;
@@ -797,11 +818,12 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
         Gdx.gl.glViewport(viewport.getScreenX(), viewport.getScreenY(),
                 viewport.getScreenWidth(), viewport.getScreenHeight());
-        Gdx.gl.glClearColor(0.006f, 0.016f, 0.022f, 1f);
+        if (game == null && splashState.isVisible()) Gdx.gl.glClearColor(0.002f, 0.022f, 0.047f, 1f);
+        else Gdx.gl.glClearColor(0.006f, 0.016f, 0.022f, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         camera.update();
         if (game == null && splashState.isVisible()) {
-            drawOriginalSplash();
+            drawTitleMenu();
         } else if (game == null) {
             drawSetupScreen();
             drawSettingsGear();
@@ -829,7 +851,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         if (showExitPromptSeconds > 0f) {
             drawExitPrompt();
         }
-        setContinuousRendering(RenderLoopPolicy.shouldRenderContinuously(game != null,
+        setContinuousRendering(splashState.isVisible() || RenderLoopPolicy.shouldRenderContinuously(game != null,
                 showExitPromptSeconds > 0f, hasActivePresentation()));
         scheduleSettingsInputFrame();
         renderingFrame = false;
@@ -1974,16 +1996,60 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         Gdx.graphics.requestRendering();
     }
 
-    private void drawOriginalSplash() {
+    private void drawTitleMenu() {
+        if (titleSavesDirty) refreshTitleSaves();
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
-        batch.setColor(0.36f, 0.44f, 0.48f, 1f);
-        batch.draw(uiAssets.metalPanel, 0f, 0f, worldWidth, worldHeight,
-                0f, 0f, worldWidth / 240f, worldHeight / 168f);
         batch.setColor(Color.WHITE);
-        batch.draw(splashAssets.getTexture(), splashBounds.x, splashBounds.y,
-                splashBounds.width, splashBounds.height);
+        titleGlobe.draw(batch, titleMenu.globeX, titleMenu.globeY, titleMenu.globeRadius, titleRotationTurns);
+        titleRenderer.draw(batch, font, titleMenu, latestTitleSave != null, titlePressed, titleMetadata, titleMessage);
         batch.end();
+    }
+
+    private void refreshTitleSaves() {
+        titleSavesDirty = false;
+        latestTitleSave = gameSaveStore == null ? null : gameSaveStore.latestCompatible();
+        titleMetadata = latestTitleSave == null ? "" : "Slot " + latestTitleSave.slot + " - Turn " + latestTitleSave.turn;
+        titleMessage = latestTitleSave != null && latestTitleSave.skippedNewerUnreadable
+                ? "A newer save could not be opened." : "";
+        if (latestTitleSave == null && gameSaveStore != null) {
+            for (int slot = 1; slot <= GameSaveStore.SLOT_COUNT; slot++) {
+                if (gameSaveStore.hasSave(slot)) {
+                    titleMessage = "No compatible save could be opened.";
+                    break;
+                }
+            }
+        }
+    }
+
+    private void activateTitleAction(TitleMenuLayout.Action action) {
+        if (!splashState.isVisible() || splashContinuePending || action == TitleMenuLayout.Action.NONE) return;
+        showExitPromptSeconds = 0f;
+        if (action == TitleMenuLayout.Action.NEW_GAME) {
+            requestSplashContinue();
+        } else if (latestTitleSave != null) {
+            try {
+                restoreMatch(latestTitleSave.slot);
+                splashState.dismiss();
+                skipNextFrameDelta = true;
+            } catch (IOException | IllegalArgumentException failure) {
+                Gdx.app.error("Game save", "Unable to continue saved match", failure);
+                refreshTitleSaves();
+                titleMessage = latestTitleSave == null ? "Save unavailable. Start a new game."
+                        : "Save unavailable. Continue will use Slot " + latestTitleSave.slot + ".";
+            }
+        }
+    }
+
+    private GameState restoreMatch(int slot) throws IOException {
+        // Decode before changing presentation or replacing the current match.
+        GameState loaded = gameSaveStore.load(slot);
+        loaded.cancelSelection();
+        resetMatchPresentation();
+        activateGame(loaded);
+        sourceActionInstruction.clear();
+        sourceActionMenu.reset();
+        return loaded;
     }
 
     private void drawSetupScreen() {
@@ -4173,13 +4239,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 break;
             case CONFIRM_LOAD:
                 try {
-                    // Decode first: an invalid save must not replace the live match.
-                    GameState loaded = gameSaveStore.load(settingsMenu.getSelectedSlot());
-                    loaded.cancelSelection(); // Unaccepted menu drafts are not queued orders.
-                    resetMatchPresentation();
-                    activateGame(loaded);
-                    sourceActionInstruction.clear();
-                    sourceActionMenu.reset();
+                    GameState loaded = restoreMatch(settingsMenu.getSelectedSlot());
                     settingsMenu.loaded(loaded.getTurn());
                 } catch (IOException | IllegalArgumentException failure) {
                     Gdx.app.error("Game save", "Unable to load match", failure);
@@ -6060,10 +6120,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             return true;
         }
         if (game == null) {
-            if (splashState.isVisible()) {
-                requestSplashContinue();
-                return true;
-            }
             if (showExitPromptSeconds > 0f) {
                 Gdx.app.exit();
             } else {
@@ -6135,7 +6191,12 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             return false;
         }
         if (splashState.isVisible()) {
+            unproject(screenX, screenY);
             splashPointerDown = true;
+            pointerStartX = pointer.x;
+            pointerStartY = pointer.y;
+            titlePressed = splashContinuePending ? TitleMenuLayout.Action.NONE
+                    : titleMenu.hit(pointer.x, pointer.y, latestTitleSave != null);
             return true;
         }
         if (isTurnInputBlocked()) {
@@ -6190,7 +6251,13 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
         if (splashPointerDown) {
             splashPointerDown = false;
-            requestSplashContinue();
+            TitleMenuLayout.Action pressed = titlePressed;
+            titlePressed = TitleMenuLayout.Action.NONE;
+            unproject(screenX, screenY);
+            if (pressed == titleMenu.hit(pointer.x, pointer.y, latestTitleSave != null)
+                    && Math.hypot(pointer.x - pointerStartX, pointer.y - pointerStartY) <= TAP_SLOP) {
+                activateTitleAction(pressed);
+            }
             return true;
         }
         if (splashState.isVisible()) {
@@ -6245,6 +6312,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     public boolean touchCancelled(int screenX, int screenY, int pointerIndex, int button) {
         if (pointerIndex == 0 && splashPointerDown) {
             splashPointerDown = false;
+            titlePressed = TitleMenuLayout.Action.NONE;
             return true;
         }
         if (pointerIndex == 0) {
@@ -6261,6 +6329,13 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     @Override
     public boolean touchDragged(int screenX, int screenY, int pointerIndex) {
         if (splashPointerDown || splashState.isVisible()) {
+            if (pointerIndex == 0 && splashPointerDown) {
+                unproject(screenX, screenY);
+                if (Math.hypot(pointer.x - pointerStartX, pointer.y - pointerStartY) > TAP_SLOP
+                        || titlePressed != titleMenu.hit(pointer.x, pointer.y, latestTitleSave != null)) {
+                    titlePressed = TitleMenuLayout.Action.NONE;
+                }
+            }
             return true;
         }
         if (ignorePlaybackTouchUntilUp || isTurnInputBlocked()) {
@@ -6356,6 +6431,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     @Override
     public void pause() {
+        splashPointerDown = false;
+        titlePressed = TitleMenuLayout.Action.NONE;
         cancelSettingsInputFrame();
         accumulator = 0f;
         blurHiddenHelpInput();
@@ -6368,11 +6445,13 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     @Override
     public void resume() {
+        titleSavesDirty = true;
+        skipNextFrameDelta = true;
         accumulator = 0f;
         if (phonePanelRenderer != null) phonePanelRenderer.invalidate();
         audio.resume();
         Gdx.input.setInputProcessor(this);
-        setContinuousRendering(RenderLoopPolicy.shouldRenderContinuously(game != null,
+        setContinuousRendering(splashState.isVisible() || RenderLoopPolicy.shouldRenderContinuously(game != null,
                 showExitPromptSeconds > 0f, hasActivePresentation()));
         Gdx.graphics.requestRendering();
     }
@@ -6388,8 +6467,16 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
     }
 
+    private void releaseTitleGraphics() {
+        if (titleRenderer != null) titleRenderer.dispose();
+        if (titleGlobe != null) titleGlobe.dispose();
+        titleRenderer = null;
+        titleGlobe = null;
+    }
+
     @Override
     public void dispose() {
+        releaseTitleGraphics();
         cancelSettingsInputFrame();
         blurHiddenHelpInput();
         disposeEndgameResources();
