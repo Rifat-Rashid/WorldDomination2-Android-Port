@@ -4130,6 +4130,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             return false;
         }
         String category = ProductionScreenLayout.categoryKey(sliderIndex);
+        sourceActionMenu.rememberEconomyMapCancel(game);
         game.selectProductionCategory(category);
         int remainingPercent = game.getSelectedProductionMaximumPercent();
         int percent = ProductionScreenLayout.percentAt(
@@ -4744,8 +4745,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 audio.play(OriginalAudio.Cue.ACTION_SWITCH);
                 game.selectAction(action);
                 if (action == GameState.Action.RESEARCH) {
+                    sourceActionMenu.begin(game);
                     researchPage = 0;
                 } else if (action == GameState.Action.PRODUCTION) {
+                    sourceActionMenu.begin(game);
                     refreshProductionSummary();
                 }
                 if (SourceActionMenuState.supports(game.getSelectedAction())) {
@@ -4784,9 +4787,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         if (actionFooterButtons[0].contains(x, y)) {
             setActionDetailsOpen(true);
         } else if (actionFooterButtons[1].contains(x, y)) {
-            cancelActionSelection(false);
+            if (sourceActionMenu.canCancelFromMap(game)) cancelActionSelection(false);
         } else if (actionFooterButtons[2].contains(x, y)) {
-            if (canAcceptInlineAction()) acceptActionSelection(false);
+            if (sourceActionMenu.canAcceptFromMap(game)) acceptActionSelection(false);
         } else {
             return false;
         }
@@ -5498,6 +5501,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                     }
                     String technology = researchChoiceByCard[i];
                     if (technology != null) {
+                        sourceActionMenu.rememberEconomyMapCancel(game);
                         boolean selected = game.selectResearchTechnology(technology);
                         if (!selected) {
                             String warning = EconomyWarningText.research(game, technology);

@@ -69,7 +69,9 @@ public final class SourceActionMenuStateTest {
     @Test public void diplomacyRequiresBothPortraitAndOption() {
         begin(GameState.Action.DIPLOMACY); game.getHuman().turnMoneyMillions = 100; assertFalse(menu.isAcceptVisible());
         assertTrue(menu.chooseOption(game, 2)); assertFalse(menu.isAcceptVisible());
+        assertFalse(menu.canCancelFromMap(game));
         assertTrue(menu.chooseLeader(game, 2)); assertTrue(menu.isAcceptVisible());
+        assertTrue(menu.canCancelFromMap(game));
         assertEquals(10, game.getSelectedDiplomacyDuration()); assertEquals(90, game.getSelectedDiplomacyAmount());
         assertTrue(menu.accept(game)); assertEquals(GameState.Action.DIPLOMACY, game.getQueuedAction(0));
     }
@@ -105,8 +107,10 @@ public final class SourceActionMenuStateTest {
     }
     @Test public void preparedPayloadRequiresMapTargetBeforeStepTwo() {
         readyCarrier("rocket1"); assertEquals("preAttack2", menu.getKey());
+        assertTrue(menu.canCancelFromMap(game));
         assertTrue(menu.chooseEquipment(game, "warhead1")); assertEquals("preAttack4", menu.getKey());
         assertTrue(menu.isMapSelection()); assertFalse(menu.isAcceptVisible());
+        assertFalse(menu.canCancelFromMap(game));
         assertTrue(menu.chooseCity(game, 1, 0)); assertEquals("preAttack3-warhead", menu.getKey());
         assertTrue(menu.accept(game));
     }
@@ -136,6 +140,93 @@ public final class SourceActionMenuStateTest {
         assertEquals("ship", game.getPreparedCarrierName(0)); assertEquals(0, game.getSelectedShipStrikeCount());
         assertEquals(3, game.getWeaponStock(0, "warhead1"));
     }
+    @Test public void freshMapCancelRequiresAnAuthoredCallback() {
+        GameState.Action[] unconfigured = {
+                GameState.Action.PRODUCTION, GameState.Action.RESEARCH, GameState.Action.ATTACK,
+                GameState.Action.PREPARED_ATTACK, GameState.Action.DEFENSE,
+                GameState.Action.PROPAGANDA, GameState.Action.DIPLOMACY
+        };
+        for (GameState.Action action : unconfigured) {
+            begin(action);
+            assertFalse(action.name(), menu.canCancelFromMap(game));
+            assertFalse(action.name(), menu.canAcceptFromMap(game));
+        }
+        begin(GameState.Action.MASS_MEDIA);
+        assertTrue(menu.canCancelFromMap(game));
+        assertTrue(menu.canAcceptFromMap(game));
+    }
+
+    @Test public void economyRetainsMapCancelAfterClearingDraftButNotOnNewEntry() {
+        begin(GameState.Action.PRODUCTION);
+        assertTrue(game.configureProductionSlider("defense", 30));
+        assertTrue(menu.canCancelFromMap(game));
+        assertTrue(menu.canAcceptFromMap(game));
+        menu.rememberEconomyMapCancel(game);
+        assertTrue(game.configureProductionSlider("defense", 0));
+        assertTrue(menu.canCancelFromMap(game));
+        assertFalse(menu.canAcceptFromMap(game));
+        menu.showEconomyWarning(game, "Locked category");
+        assertFalse(menu.canCancelFromMap(game));
+        menu.dismissError(game);
+        assertFalse(menu.canCancelFromMap(game));
+
+        begin(GameState.Action.RESEARCH);
+        assertTrue(game.selectResearchTechnology("soldier2"));
+        assertTrue(menu.canCancelFromMap(game));
+        assertTrue(menu.canAcceptFromMap(game));
+        menu.rememberEconomyMapCancel(game);
+        assertTrue(game.selectResearchTechnology("soldier2"));
+        assertNull(game.getSelectedTechnology());
+        assertTrue(menu.canCancelFromMap(game));
+        assertFalse(menu.canAcceptFromMap(game));
+        assertTrue(menu.cancel(game));
+        begin(GameState.Action.RESEARCH);
+        assertFalse(menu.canCancelFromMap(game));
+    }
+
+    @Test public void defenseRetainsCancelWhenStockIsDeselected() {
+        stock("antiAir", 2);
+        begin(GameState.Action.DEFENSE);
+        assertTrue(menu.chooseEquipment(game, "antiAir"));
+        assertTrue(menu.canCancelFromMap(game));
+        assertTrue(menu.chooseEquipment(game, "antiAir"));
+        assertFalse(menu.isCancelVisible());
+        assertTrue(menu.canCancelFromMap(game));
+        assertTrue(menu.cancel(game));
+        begin(GameState.Action.DEFENSE);
+        assertFalse(menu.canCancelFromMap(game));
+    }
+
+    @Test public void shipMapFooterHasNoCallbacksWhileSelectingItsNextTarget() {
+        readyCarrier("ship");
+        assertTrue(menu.canCancelFromMap(game));
+        assertFalse(menu.canAcceptFromMap(game));
+        assertTrue(menu.chooseEquipment(game, "warhead1"));
+        assertFalse(menu.canCancelFromMap(game));
+        assertFalse(menu.canAcceptFromMap(game));
+        assertTrue(menu.chooseCity(game, 1, 0));
+        assertTrue(menu.canCancelFromMap(game));
+        assertTrue(menu.canAcceptFromMap(game));
+        assertTrue(menu.chooseEquipment(game, "warhead1"));
+        assertTrue(menu.isAcceptVisible());
+        assertFalse(menu.canCancelFromMap(game));
+        assertFalse(menu.canAcceptFromMap(game));
+        assertTrue(menu.chooseCity(game, 1, 1));
+        assertTrue(menu.canCancelFromMap(game));
+        assertTrue(menu.canAcceptFromMap(game));
+    }
+
+    @Test public void directAttackDropsMapCancelWhenItReturnsToTargetSelection() {
+        stock("soldier1", 2);
+        begin(GameState.Action.ATTACK);
+        assertTrue(menu.chooseEquipment(game, "soldier1"));
+        assertFalse(menu.canCancelFromMap(game));
+        assertTrue(menu.chooseCity(game, 1, 0));
+        assertTrue(menu.canCancelFromMap(game));
+        assertTrue(menu.chooseEquipment(game, "soldier1"));
+        assertFalse(menu.canCancelFromMap(game));
+    }
+
     @Test public void newMenuDoesNotReuseOldWeaponAndCityChoices() {
         stock("soldier1", 1); begin(GameState.Action.ATTACK);
         assertTrue(menu.chooseEquipment(game, "soldier1")); assertTrue(menu.chooseCity(game, 1, 0));
