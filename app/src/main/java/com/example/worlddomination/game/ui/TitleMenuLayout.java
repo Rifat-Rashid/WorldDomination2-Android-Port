@@ -16,8 +16,8 @@ public final class TitleMenuLayout {
         float controlsX = safeArea.x + safeArea.width * (908f / 1280f);
         float centerY = safeArea.y + safeArea.height * 0.5f;
         globeRadius = 305f * scale;
-        globeX = Math.min(safeArea.x + safeArea.width * (300f / 1280f),
-                controlsX - 608f * scale);
+        // The decorative hemisphere can extend under the left cutout. Controls stay in the safe area.
+        globeX = Math.min(300f * scale, controlsX - 608f * scale);
         globeY = centerY;
         place(logo, controlsX, centerY, 49, 526, 280);
         place(continueGame, controlsX, centerY, 337, 428, 89);
