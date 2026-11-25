@@ -10,6 +10,10 @@ agent.md
 **/GEMINI.md
 
 # Local prompts and analysis (do not commit)
+/WD2AISCOPE.txt
+/wd2-training/
+*.gguf
+*.safetensors
 analysis/
 **/analysis/
 prompts/
