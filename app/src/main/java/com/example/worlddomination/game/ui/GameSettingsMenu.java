@@ -1,17 +1,11 @@
 package com.example.worlddomination.game.ui;
 
 import com.badlogic.gdx.math.Rectangle;
+import com.example.worlddomination.game.persistence.GameSaveStore;
 
-/** Native-only settings overlay; never changes queued gameplay actions itself. */
+/** Presentation state for the local save library. Slot numbers are one-based. */
 public final class GameSettingsMenu {
     public enum Command { NONE, SAVE, LOAD, SOUND, CLOSE, CONFIRM_LOAD, CANCEL_LOAD }
-
-    private static final float PANEL_WIDTH = 300f;
-    private static final float PANEL_HEIGHT = 236f;
-    private static final float OUTER_PADDING = 8f;
-    private static final float ROW_HEIGHT = 34f;
-    private static final float ROW_SPACING = 6f;
-    private static final float ROW_INSET = 18f;
 
     public final Rectangle panel = new Rectangle();
     public final Rectangle save = new Rectangle();
@@ -20,67 +14,88 @@ public final class GameSettingsMenu {
     public final Rectangle close = new Rectangle();
     public final Rectangle confirm = new Rectangle();
     public final Rectangle cancel = new Rectangle();
-    private final Rectangle[] rows = {save, load, sound, close};
+    public final Rectangle[] slots = new Rectangle[GameSaveStore.SLOT_COUNT];
+    private final boolean[] occupied = new boolean[slots.length];
     private float scale;
     private boolean open;
     private boolean confirmingLoad;
     private boolean saveAvailable;
-    private boolean loadAvailable;
+    private int selectedSlot = 1;
     private String status = "";
 
+    public GameSettingsMenu() {
+        for (int i = 0; i < slots.length; i++) slots[i] = new Rectangle();
+    }
+
     public void open(boolean canSave, boolean hasSave) {
+        open(canSave, new boolean[]{hasSave, false, false});
+    }
+
+    public void open(boolean canSave, boolean[] availability) {
+        System.arraycopy(availability, 0, occupied, 0, occupied.length);
         open = true;
         confirmingLoad = false;
         saveAvailable = canSave;
-        loadAvailable = hasSave;
-        status = hasSave ? "One local save. Saving replaces it." : "No saved game on this device.";
+        selectedSlot = 1;
+        status = "";
     }
 
     public void layout(Rectangle area) {
-        float availableWidth = Math.max(0f, area.width - 2f * OUTER_PADDING);
-        float availableHeight = Math.max(0f, area.height - 2f * OUTER_PADDING);
-        scale = Math.min(1f, Math.min(availableWidth / PANEL_WIDTH, availableHeight / PANEL_HEIGHT));
-        float width = PANEL_WIDTH * scale;
-        float height = PANEL_HEIGHT * scale;
-        panel.set(area.x + (area.width - width) / 2f,
-                area.y + (area.height - height) / 2f, width, height);
-
-        float rowTop = PANEL_HEIGHT - 56f;
-        float rowWidth = PANEL_WIDTH - 2f * ROW_INSET;
-        for (int i = 0; i < rows.length; i++) {
-            place(rows[i], ROW_INSET, rowTop - ROW_HEIGHT - i * (ROW_HEIGHT + ROW_SPACING),
-                    rowWidth, ROW_HEIGHT);
-        }
-        float half = (rowWidth - ROW_SPACING) / 2f;
-        place(cancel, ROW_INSET, 30f, half, 32f);
-        place(confirm, ROW_INSET + half + ROW_SPACING, 30f, half, 32f);
+        scale = Math.max(0f, Math.min((area.width - 16f) / 800f, (area.height - 16f) / 360f));
+        float width = 800f * scale;
+        float height = 360f * scale;
+        panel.set(area.x + (area.width - width) / 2f, area.y + (area.height - height) / 2f,
+                width, height);
+        for (int i = 0; i < slots.length; i++) place(slots[i], 16, 118 - 48 * i, 296, 42);
+        place(save, 350, 45, 145, 40);
+        place(load, 507, 45, 145, 40);
+        place(sound, 350, 6, 145, 30);
+        place(close, 738, 310, 52, 36);
+        confirm.set(save);
+        cancel.set(load);
     }
 
-    private void place(Rectangle rectangle, float x, float y, float width, float height) {
-        rectangle.set(panel.x + x * scale, panel.y + y * scale, width * scale, height * scale);
+    private void place(Rectangle r, float x, float y, float w, float h) {
+        r.set(panel.x + x * scale, panel.y + y * scale, w * scale, h * scale);
     }
 
     public Command hit(float x, float y) {
         if (!open || scale == 0f) return Command.NONE;
         if (confirmingLoad) {
-            if (confirm.contains(x, y) && loadAvailable) return Command.CONFIRM_LOAD;
+            if (confirm.contains(x, y) && canLoad()) return Command.CONFIRM_LOAD;
             return cancel.contains(x, y) ? Command.CANCEL_LOAD : Command.NONE;
         }
+        for (int i = 0; i < slots.length; i++) {
+            if (slots[i].contains(x, y)) {
+                selectedSlot = i + 1;
+                status = "";
+                return Command.NONE;
+            }
+        }
         if (save.contains(x, y) && saveAvailable) return Command.SAVE;
-        if (load.contains(x, y) && loadAvailable) return Command.LOAD;
+        if (load.contains(x, y) && canLoad()) return Command.LOAD;
         if (sound.contains(x, y)) return Command.SOUND;
         return close.contains(x, y) ? Command.CLOSE : Command.NONE;
     }
 
-    public void requestLoad() { if (open && loadAvailable) confirmingLoad = true; }
+    public void requestLoad() { if (open && canLoad()) confirmingLoad = true; }
     public void back() { if (confirmingLoad) confirmingLoad = false; else close(); }
     public void close() { open = false; confirmingLoad = false; }
-    public void saved(int turn) { loadAvailable = true; status = "Game saved. Turn " + turn + "."; }
+    public void saved(int turn) {
+        occupied[selectedSlot - 1] = true;
+        status = "Game saved. Turn " + turn + ".";
+    }
+    public void loaded(int turn) {
+        saveAvailable = true;
+        message("Loaded turn " + turn + ".");
+    }
     public void message(String text) { status = text; confirmingLoad = false; }
+    public int getSelectedSlot() { return selectedSlot; }
+    public boolean isOccupied(int slot) { return occupied[slot - 1]; }
     public boolean isOpen() { return open; }
     public boolean isConfirmingLoad() { return confirmingLoad; }
     public boolean canSave() { return saveAvailable; }
-    public boolean canLoad() { return loadAvailable; }
+    public boolean canLoad() { return isOccupied(selectedSlot); }
     public float getScale() { return scale; }
     public String getStatus() { return status; }
 }
