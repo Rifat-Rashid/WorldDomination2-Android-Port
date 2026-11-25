@@ -2001,10 +2001,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     private void drawTitleMenu() {
         if (titleSavesDirty) refreshTitleSaves();
+        titleGlobe.draw(camera.combined, titleMenu.globeX, titleMenu.globeY, titleMenu.globeRadius, titleRotationTurns);
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
         batch.setColor(Color.WHITE);
-        titleGlobe.draw(batch, titleMenu.globeX, titleMenu.globeY, titleMenu.globeRadius, titleRotationTurns);
         titleRenderer.draw(batch, font, titleMenu, latestTitleSave != null, titlePressed, titleMetadata, titleMessage,
                 titlePickingSlots, titleSlotSummaries, titleSlotLoadable);
         batch.end();
