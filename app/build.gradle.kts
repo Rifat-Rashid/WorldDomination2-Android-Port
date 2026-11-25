@@ -44,9 +44,21 @@ check(uploadSettings.all { it.isNullOrBlank() } || hasUploadSigning) {
     "Upload signing is incomplete: provide all four wd2Upload properties or WD2_UPLOAD variables."
 }
 val uploadKeyExists = uploadStoreFile?.let { file(it).isFile } ?: false
+val qwenLlamaSourceArchive = providers.gradleProperty("wd2LlamaSourceArchive").orNull
+val includeDeviceQa = providers.gradleProperty("wd2DeviceQa").getOrElse("false") == "true"
+val qwenDebugModelHash = providers.gradleProperty("wd2QwenDebugModelSha256").orNull
+val qwenDebugModelBytes = providers.gradleProperty("wd2QwenDebugModelSize").orNull?.toLongOrNull()
+check(qwenDebugModelHash == null && !providers.gradleProperty("wd2QwenDebugModelSize").isPresent ||
+        qwenDebugModelHash?.matches(Regex("[0-9a-f]{64}")) == true && qwenDebugModelBytes != null && qwenDebugModelBytes > 0) {
+    "Provide both wd2QwenDebugModelSha256 (lowercase) and wd2QwenDebugModelSize (bytes)."
+}
 
 android {
     namespace = "com.example.worlddomination"
+    ndkVersion = "28.2.13676358"
+    buildFeatures {
+        buildConfig = true
+    }
     compileSdk {
         version = release(37)
     }
@@ -59,6 +71,27 @@ android {
         versionName = "0.1.0-beta.11"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField("String", "QWEN_DEBUG_MODEL_SHA256", "\"\"")
+        buildConfigField("long", "QWEN_DEBUG_MODEL_SIZE", "0L")
+
+        externalNativeBuild {
+            cmake {
+                // Limit the optional runtime, while retaining libGDX's existing 32-bit ABIs.
+                abiFilters("arm64-v8a", "x86_64")
+                targets("wd2_qwen")
+                arguments("-DANDROID_STL=c++_static")
+                qwenLlamaSourceArchive?.let {
+                    arguments("-DWD2_LLAMA_SOURCE_ARCHIVE=${file(it).absolutePath}")
+                }
+            }
+        }
+    }
+
+    externalNativeBuild {
+        cmake {
+            path = file("src/main/cpp/CMakeLists.txt")
+            version = "3.22.1"
+        }
     }
 
     androidResources {
@@ -69,6 +102,9 @@ android {
     sourceSets.getByName("main").jniLibs.srcDir(generatedNativesDirectory)
     // Share deterministic source fixtures with device tests, never the game APK.
     sourceSets.getByName("androidTest").assets.srcDir("src/test/resources")
+    if (includeDeviceQa) {
+        sourceSets.getByName("androidTest").java.srcDir("src/deviceQa/java")
+    }
 
     val uploadSigning = if (hasUploadSigning) signingConfigs.create("upload") {
         storeFile = file(uploadStoreFile!!)
@@ -78,6 +114,12 @@ android {
     } else null
 
     buildTypes {
+        debug {
+            if (qwenDebugModelHash != null && qwenDebugModelBytes != null) {
+                buildConfigField("String", "QWEN_DEBUG_MODEL_SHA256", "\"$qwenDebugModelHash\"")
+                buildConfigField("long", "QWEN_DEBUG_MODEL_SIZE", "${qwenDebugModelBytes}L")
+            }
+        }
         release {
             isDebuggable = false
             if (uploadSigning != null) signingConfig = uploadSigning

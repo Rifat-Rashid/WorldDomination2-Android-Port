@@ -68,10 +68,11 @@ class ReleaseManifestTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "permanent"):
             check.verify_manifest(text, True)
 
-    def test_offline_release_cannot_silently_gain_internet(self):
+    def test_release_internet_requires_cleartext_traffic_disabled(self):
         text = self.source.replace("<application", '<uses-permission android:name="android.permission.INTERNET" /><application')
         with self.assertRaisesRegex(ValueError, "INTERNET"):
             check.verify_manifest(text)
+        check.verify_manifest(text.replace("<application", '<application android:usesCleartextTraffic="false"'))
 
     def test_version_code_must_be_positive(self):
         with self.assertRaisesRegex(ValueError, "version code"):
@@ -79,7 +80,7 @@ class ReleaseManifestTests(unittest.TestCase):
 
 
 class GeneratedAudioBundleTests(unittest.TestCase):
-    def make_bundle(self, audio_directory, missing=None, corrupt=None):
+    def make_bundle(self, audio_directory, missing=None, corrupt=None, qwen_abis=check.QWEN_ABIS):
         entries = {
             "BundleConfig.pb": b"config",
             "base/manifest/AndroidManifest.xml": b"binary manifest",
@@ -88,6 +89,8 @@ class GeneratedAudioBundleTests(unittest.TestCase):
         }
         for abi in check.ABIS:
             entries[f"base/lib/{abi}/libgdx.so"] = bytes(elf())
+        for abi in qwen_abis:
+            entries[f"base/lib/{abi}/libwd2_qwen.so"] = bytes(elf())
         for image in check.REQUIRED_UI:
             entries["base/assets/original/ui/" + image] = b"art"
         for island in range(5):
@@ -124,6 +127,14 @@ class GeneratedAudioBundleTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             audio = self.source_directory(temporary)
             check.verify_bundle(self.make_bundle(audio), audio)
+
+    def test_requires_qwen_native_libraries_for_both_supported_abis(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            audio = self.source_directory(temporary)
+            with self.assertRaisesRegex(ValueError, "Missing Qwen native library"):
+                check.verify_bundle(self.make_bundle(audio, qwen_abis=("arm64-v8a",)), audio)
+            with self.assertRaisesRegex(ValueError, "unsupported ABI"):
+                check.verify_bundle(self.make_bundle(audio, qwen_abis=(*check.QWEN_ABIS, "x86")), audio)
 
     def test_rejects_each_missing_generated_audio_bundle_entry(self):
         with tempfile.TemporaryDirectory() as temporary:

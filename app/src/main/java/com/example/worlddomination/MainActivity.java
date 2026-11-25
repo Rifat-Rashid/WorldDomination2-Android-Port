@@ -22,6 +22,7 @@ import com.example.worlddomination.platform.audio.SourceAndroidAudio;
 import com.example.worlddomination.platform.persistence.AndroidScorePreferenceBackend;
 import com.example.worlddomination.platform.persistence.AndroidGameSaveStore;
 import com.example.worlddomination.platform.graphics.SerializedAndroidGraphics;
+import com.example.worlddomination.platform.qwen.QwenRuntime;
 
 /** Android-only landscape launcher for the libGDX game. */
 public final class MainActivity extends AndroidApplication {
@@ -44,7 +45,8 @@ public final class MainActivity extends AndroidApplication {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         game = new WorldDominationGame(new AndroidScorePreferenceBackend(
-                getSharedPreferences("world_domination_2_scores", Context.MODE_PRIVATE)));
+                getSharedPreferences("world_domination_2_scores", Context.MODE_PRIVATE)),
+                new QwenRuntime(getApplicationContext()));
         game.setGameSaveStore(AndroidGameSaveStore.create(getFilesDir()));
 
         AndroidApplicationConfiguration configuration = new AndroidApplicationConfiguration();

@@ -37,7 +37,7 @@ jobs:
           set +o pipefail
           yes | "$sdkmanager" --licenses
           set -o pipefail
-          "$sdkmanager" 'platform-tools' 'platforms;android-37.0' 'build-tools;36.0.0'
+          "$sdkmanager" 'platform-tools' 'platforms;android-37.0' 'build-tools;36.0.0' 'ndk;28.2.13676358' 'cmake;3.22.1'
 
       - name: Execute the complete debug JUnit suite
         id: junit
@@ -120,6 +120,9 @@ jobs:
           - id: settings-save-load-menu
             check: Settings save and load controls and confirmation hitboxes
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.GameSettingsMenuTest"'
+          - id: qwen-opponent-contract
+            check: Local opponent decisions, legal plans, and fallback settlement
+            task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ai.OpponentTurnPlannerTest" --tests "com.example.worlddomination.game.ai.DecisionRequestSerializationTest" --tests "com.example.worlddomination.game.simulation.TurnPlannerTest"'
           - id: phone-funds-statistics
             check: Phone funds and fractional population statistics
             task: ':app:testDebugUnitTest --tests "com.example.worlddomination.game.ui.InformationPanelTextTest"'
