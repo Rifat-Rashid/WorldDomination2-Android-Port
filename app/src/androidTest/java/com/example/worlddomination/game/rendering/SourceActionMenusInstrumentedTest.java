@@ -201,6 +201,7 @@ public final class SourceActionMenusInstrumentedTest {
                     tap(app, footer[0]);
                     cityTap(app, 1, 0);
                     assertEquals("attack1", menu(app).getKey());
+                    assertSelectionDrawerGlass(app);
                     tap(app, mapButton);
                     cityTap(app, 1, 0);
                     assertFalse(field("modalOpen").getBoolean(app));
@@ -250,7 +251,11 @@ public final class SourceActionMenusInstrumentedTest {
                     capture(app, "source-diplomacy.png"); accept(app, state, GameState.Action.DIPLOMACY);
 
                     state = fresh(app); begin(app, GameState.Action.PROPAGANDA);
-                    assertTrue(menu(app).isMapSelection()); cityTap(app, 1, 2);
+                    assertEquals("propaganda1", menu(app).getKey());
+                    showDetails(app);
+                    assertSelectionDrawerGlass(app);
+                    tap(app, (Rectangle) field("actionMapButton").get(app));
+                    cityTap(app, 1, 2);
                     assertEquals("propaganda2", menu(app).getKey());
                     showDetails(app);
                     capture(app, "source-propaganda.png"); accept(app, state, GameState.Action.PROPAGANDA);
@@ -284,6 +289,9 @@ public final class SourceActionMenusInstrumentedTest {
                     while (state.getPendingHumanDiplomacyProposal() != null) assertTrue(state.respondToDiplomacyProposal(false));
                     begin(app, GameState.Action.PREPARED_ATTACK);
                     equipment(app, "warhead1"); assertEquals("preAttack4", menu(app).getKey());
+                    showDetails(app);
+                    assertSelectionDrawerGlass(app);
+                    tap(app, (Rectangle) field("actionMapButton").get(app));
                     cityTap(app, 1, 1); assertEquals("preAttack3-warhead", menu(app).getKey());
                     showDetails(app);
                     capture(app, "source-prepared-step-two.png");
@@ -316,7 +324,12 @@ public final class SourceActionMenusInstrumentedTest {
                     // Match the source callback diagnostic's injection boundaries;
                     // this exercises UI settlement, not legal stock acquisition.
                     stock(state, "warhead1", 2);
-                    begin(app, GameState.Action.PREPARED_ATTACK); equipment(app, "warhead1"); cityTap(app, 1, 0);
+                    begin(app, GameState.Action.PREPARED_ATTACK); equipment(app, "warhead1");
+                    assertEquals("preAttack4-ship", menu(app).getKey());
+                    showDetails(app);
+                    assertSelectionDrawerGlass(app);
+                    tap(app, (Rectangle) field("actionMapButton").get(app));
+                    cityTap(app, 1, 0);
                     assertEquals("ship1-1", menu(app).getKey()); assertTrue(menu(app).isAcceptVisible());
                     showDetails(app);
                     capture(app, "source-ship-one-payload.png");
@@ -561,6 +574,39 @@ public final class SourceActionMenusInstrumentedTest {
                 ScreenUtils.getFrameBufferPixels(Math.round(left.x) - 4, Math.round(left.y) - 4, 8, 8, false),
                 ScreenUtils.getFrameBufferPixels(Math.round(right.x) - 4, Math.round(right.y) - 4, 8, 8, false)
         };
+    }
+
+    private static void assertSelectionDrawerGlass(WorldDominationGame app) throws Exception {
+        render(app);
+        String frame = menu(app).getKey();
+        Rectangle fit = SourceActionMenuRenderer.fit((Rectangle) field("modal").get(app), new Rectangle());
+        Viewport viewport = (Viewport) field("viewport").get(app);
+        double rim = drawerBrightness(viewport, fit, 4, 8);
+        double interior = drawerBrightness(viewport, fit, 43, 58);
+
+        // The source phone crop gains 57.7 RGB levels across the rim and zero
+        // in the body when the authored HUD layers are rendered over these frames.
+        Method drawBackdrop = WorldDominationGame.class.getDeclaredMethod("drawPanelsAndMap", boolean.class);
+        drawBackdrop.setAccessible(true);
+        drawBackdrop.invoke(app, false);
+        double rimIncrease = rim - drawerBrightness(viewport, fit, 4, 8);
+        assertTrue(frame + " should have a bright glass rim: " + rimIncrease, rimIncrease >= 25);
+        assertEquals(frame + " should have a clear body", interior, drawerBrightness(viewport, fit, 43, 58), 2);
+        render(app);
+    }
+
+    private static double drawerBrightness(Viewport viewport, Rectangle fit, int top, int bottom) {
+        float scale = fit.width / 365f;
+        Vector2 lower = viewport.project(new Vector2(fit.x + 95 * scale, fit.y + fit.height - bottom * scale));
+        Vector2 upper = viewport.project(new Vector2(fit.x + 250 * scale, fit.y + fit.height - top * scale));
+        int x = Math.round(lower.x), y = Math.round(lower.y);
+        byte[] rgba = ScreenUtils.getFrameBufferPixels(x, y,
+                Math.round(upper.x) - x, Math.round(upper.y) - y, false);
+        long sum = 0;
+        for (int i = 0; i < rgba.length; i += 4) {
+            sum += (rgba[i] & 255) + (rgba[i + 1] & 255) + (rgba[i + 2] & 255);
+        }
+        return sum / (3d * (rgba.length / 4));
     }
 
     private static void capture(WorldDominationGame app, String name) throws Exception {

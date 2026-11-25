@@ -247,8 +247,9 @@ public final class SourceActionMenuRenderer implements Disposable {
         if (proposal != null ? pending : state.isAcceptVisible()) button(batch, accept, 279.15f, scale);
         if (proposal != null ? pending : state.isCancelVisible()) button(batch, cancel, 28.15f, scale);
         batch.setColor(Color.WHITE);
-        if (!screen.getBoolean("map"))
-            batch.draw(sourceGlass, scratch.x, scratch.y, scratch.width, scratch.height);
+        // The phone Details crop includes the authored HUD glass above centerScreen,
+        // even when the selected source frame is transparent for map targeting.
+        batch.draw(sourceGlass, scratch.x, scratch.y, scratch.width, scratch.height);
     }
 
     private void button(SpriteBatch batch, Texture image, float x, float scale) {
