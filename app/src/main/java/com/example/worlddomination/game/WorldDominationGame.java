@@ -786,6 +786,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             }
             preparePendingBattleAnimations();
         }
+        if (!splashState.isVisible() && titleGlobe != null) releaseTitleGraphics();
         if (cityRenderer != null) {
             cityRenderer.updateTargets(game);
         }
@@ -6464,10 +6465,16 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         }
     }
 
-    @Override
-    public void dispose() {
+    private void releaseTitleGraphics() {
         if (titleRenderer != null) titleRenderer.dispose();
         if (titleGlobe != null) titleGlobe.dispose();
+        titleRenderer = null;
+        titleGlobe = null;
+    }
+
+    @Override
+    public void dispose() {
+        releaseTitleGraphics();
         cancelSettingsInputFrame();
         blurHiddenHelpInput();
         disposeEndgameResources();
