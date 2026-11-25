@@ -71,6 +71,7 @@
     "com.example.worlddomination.game.rendering.SourceEndgameInstrumentedTest",
     "com.example.worlddomination.game.rendering.SourceEndgameContextRecoveryInstrumentedTest",
     "com.example.worlddomination.game.ui.PropagandaUiInstrumentedTest",
+    "com.example.worlddomination.game.ui.EnemyPortraitDiplomacyInstrumentedTest",
     "com.example.worlddomination.game.rendering.SourceSiloRocketClockInstrumentedTest",
     "com.example.worlddomination.game.rendering.SourceSiloRocketRenderingInstrumentedTest",
     "com.example.worlddomination.game.rendering.SourcePreparedAirfieldLocationInstrumentedTest",
@@ -166,6 +167,7 @@
         "com.example.worlddomination.game.rendering.ApacheRenderingInstrumentedTest",
         "com.example.worlddomination.game.rendering.SourceEndgameInstrumentedTest",
         "com.example.worlddomination.game.ui.PropagandaUiInstrumentedTest",
+        "com.example.worlddomination.game.ui.EnemyPortraitDiplomacyInstrumentedTest",
         "com.example.worlddomination.game.rendering.SourceSiloRocketClockInstrumentedTest",
         "com.example.worlddomination.game.rendering.SourcePreparedAirfieldLocationInstrumentedTest",
         "com.example.worlddomination.game.rendering.SourcePassedRocketDefenseClockInstrumentedTest",
@@ -674,6 +676,10 @@
     [
       "com.example.worlddomination.game.ui.PropagandaUiInstrumentedTest",
       "citySelectionConfirmationCancelAndTurnPlaybackUseTheOriginalPanel"
+    ],
+    [
+      "com.example.worlddomination.game.ui.EnemyPortraitDiplomacyInstrumentedTest",
+      "tapsUseDrawnRivalCardsAndRespectGesturesAndOverlays"
     ],
     [
       "com.example.worlddomination.game.rendering.SourceSiloRocketClockInstrumentedTest",

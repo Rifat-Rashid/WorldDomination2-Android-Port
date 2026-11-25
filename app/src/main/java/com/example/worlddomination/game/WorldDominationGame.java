@@ -177,6 +177,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private static final int GESTURE_EQUIPMENT = 2;
     private static final int GESTURE_PRODUCTION = 3;
     private static final int GESTURE_MESSAGE = 4;
+    private static final int GESTURE_PORTRAIT = 5;
 
     private static final GameState.Action[] ACTIONS = GameState.Action.navigationValues();
     private static final String[] EQUIPMENT_ROWS = {
@@ -4650,6 +4651,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private int pointArea(float x, float y) {
         if (settingsMenu.isOpen()) return GESTURE_NONE;
         if (outcomeSequence.isEndgameVisible()) return GESTURE_NONE;
+        if (game != null && portraitPlayerAt(x, y) > 0) return GESTURE_PORTRAIT;
         if (!helpState.isOpen() && modalOpen && game != null && !sourceActionMenu.isEconomyWarning(game)
                 && game.getSelectedAction() == GameState.Action.PRODUCTION) {
             for (int i = 0; i < productionSliderHitTargets.length; i++) {
@@ -4668,6 +4670,49 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             return GESTURE_MESSAGE;
         }
         return GESTURE_NONE;
+    }
+
+    private int portraitPlayerAt(float x, float y) {
+        for (int slot = 0; slot < portraitCards.length; slot++) {
+            if (portraitPlayerIds[slot] > 0 && portraitCards[slot].contains(x, y)) {
+                return portraitPlayerIds[slot];
+            }
+        }
+        return -1;
+    }
+
+    private void activateDiplomacyPortrait(int playerId) {
+        if (settingsMenu.isOpen() || game.getMatchStatus() != GameState.MatchStatus.ONGOING
+                || !game.getHuman().alive || game.getPendingHumanDiplomacyProposal() != null) {
+            return;
+        }
+        GameState.Action diplomacy = GameState.Action.DIPLOMACY;
+        if (game.getSelectedAction() != diplomacy || helpState.isOpen()) {
+            // The source portrait calls the Diplomacy action button, which also opens
+            // the occupied tube when the player already reserved that action.
+            for (int slot = 0; slot < actionSlots.length; slot++) {
+                if (game.getQueuedAction(slot) == diplomacy) {
+                    if (helpState.isOpen()) closeHelpSelection();
+                    activateActionSlot(slot);
+                    return;
+                }
+            }
+            if (game.getQueuedActionCount() == actionSlots.length
+                    || game.isActionBioloaded(0, diplomacy)) {
+                return;
+            }
+            if (helpState.isOpen()) closeHelpSelection();
+            game.selectAction(diplomacy);
+            sourceActionMenu.begin(game);
+            selectedEquipment = "";
+            audio.play(OriginalAudio.Cue.ACTION_SWITCH);
+            audio.play(OriginalAudio.Cue.ACTION_OPEN);
+        }
+        // The header still opens the menu for a defeated rival or a ceasefire.
+        // Only eligible rivals replace the current target.
+        sourceActionMenu.chooseLeader(game, playerId);
+        sourceActionInstruction.onSelectionUpdate(diplomacy, sourceActionMenu.getKey());
+        modalOpen = true;
     }
 
     private boolean canScrollMessageHistory() {
@@ -6192,6 +6237,13 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             }
         } else if (gestureArea == GESTURE_MESSAGE) {
             // The source uses separate up/down hit targets; on Android the panel swipes instead.
+        } else if (gestureArea == GESTURE_PORTRAIT) {
+            if (!dragging && distance < TAP_SLOP) {
+                int playerId = portraitPlayerAt(pointer.x, pointer.y);
+                if (playerId > 0 && playerId == portraitPlayerAt(pointerStartX, pointerStartY)) {
+                    activateDiplomacyPortrait(playerId);
+                }
+            }
         } else if (gestureArea != GESTURE_NONE && dragging) {
             if (gestureArea == GESTURE_NAV) {
                 navigationScroll.endGesture(gestureVelocityY);
@@ -6251,6 +6303,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         unproject(screenX, screenY);
         float totalX = pointer.x - pointerStartX;
         float totalY = pointer.y - pointerStartY;
+        if (gestureArea == GESTURE_PORTRAIT) {
+            dragging |= Math.hypot(totalX, totalY) >= TAP_SLOP;
+            return true;
+        }
         if (gestureArea == GESTURE_PRODUCTION) {
             if (!dragging && Math.hypot(totalX, totalY) > TAP_SLOP) {
                 dragging = true;
