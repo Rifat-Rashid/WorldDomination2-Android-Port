@@ -38,15 +38,19 @@ def fingerprint(observation, plan):
     # Keep actual available choices, stock, readiness and agreements to distinguish decisions.
     def coarse(value, field=""):
         if isinstance(value, dict):
+            if field == "spend":
+                return {key: amount // 5 for key, amount in value.items()}
             return {k: coarse(v, k) for k, v in value.items() if k not in ("turn", "priority")}
         if isinstance(value, list):
             return [coarse(v, field) for v in value]
         if type(value) is int and field in ("cash", "budget", "cities", "influence", "regard", "income"):
             return value // 10
+        if type(value) is int and field == "reserve":
+            return value // 5
         return value
     state = {k: v for k, v in observation.items() if k != "plans"}
-    choices = sorted(set(packed(candidate) for candidate in observation["plans"].values()))
-    return identity([coarse(state), choices, plan])
+    choices = sorted(set(packed(coarse(candidate)) for candidate in observation["plans"].values()))
+    return identity([coarse(state), choices]), identity(coarse(plan))
 
 
 def evidence(log, evidence_dir, episode, outcome):
@@ -69,7 +73,7 @@ def export(args):
     for review in lines(args.reviews):
         decision = review["decision_id"]
         # Corrections supersede older reviews, which remain in the append-only journal.
-        if not review["reviewer"] or not review["why"]:
+        if not review["reviewer"] or not review["why"] or type(review["accepted"]) is not bool:
             raise ValueError("Unattributed review")
         reviews[decision] = review
     counts = Counter()
@@ -77,9 +81,12 @@ def export(args):
     turns = Counter()
     actions = Counter()
     seen = set()
+    state_splits = {}
     seeds = {}
     families = {}
     token_lengths = []
+    degrees = Counter()
+    teachers = Counter()
     output = {k: [] for k in QUOTA}
     audit = []
     for log in sorted(args.episodes.glob("*.jsonl")):
@@ -119,8 +126,9 @@ def export(args):
             if len(set(map(packed, plans.values()))) < 2:
                 rejected["forced"] += 1
                 continue
-            fp = fingerprint(obs, plans[selected])
-            if fp in seen:
+            state_id, selection_id = fingerprint(obs, plans[selected])
+            fp = (state_id, selection_id)
+            if fp in seen or state_splits.get(state_id, split) != split:
                 rejected["duplicate"] += 1
                 continue
             if counts[split] >= QUOTA[split]:
@@ -132,12 +140,15 @@ def export(args):
                                         {"plan_id": selected}, separators=(",", ":"))}]}
             tokens = encode_example(tokenizer, message)
             seen.add(fp)
+            state_splits[state_id] = split
             encoded = packed(message)
             output[split].append(encoded)
             token_lengths.append(len(tokens["input_ids"]))
             counts[split] += 1
             turns[str(row["turn"] // 10 * 10)] += 1
             actions.update(action["action"] for action in plans[selected])
+            degrees[str(cfg["difficulty"])] += 1
+            teachers[cfg["teacher"]] += 1
             audit.append(packed({"split": split, "row": counts[split], "family": family,
                                  "episode": cfg["episode"], "decision_id": row["decision_id"],
                                  "raw_sha256": identity(row), "row_sha256": hashlib.sha256(encoded.encode()).hexdigest(),
@@ -155,8 +166,20 @@ def export(args):
         report = {"counts": {k: counts[k] for k in QUOTA}, "families": families,
                   "sha256": {k: file_hash(dest / (k + ".jsonl")) for k in QUOTA},
                   "action_counts": actions, "turn_decades": turns, "rejections": rejected,
+                  "teachers": teachers, "difficulty_counts": degrees, "complete": all(counts[k] == v for k, v in QUOTA.items()),
                   "token_range": [min(token_lengths), max(token_lengths)] if token_lengths else []}
         (dest / "report.json").write_text(json.dumps(report, indent=2), encoding="utf8")
+        (dest / "DATA_CARD.md").write_text(
+            "# World Domination 2 opponent decisions\n\n"
+            + ("Full quota reached." if report["complete"] else "Partial collection.")
+            + f" Contains {counts['train']} training, {counts['validation']} validation and {counts['test']} test decisions "
+            + f"from {len(families)} families. Each target selects one legal ordered pair on one observed turn.\n\n"
+            + "Families, including related seeds and branches, use the WD2 family-v1 hash split. The exporter verifies "
+            + "engine replay, Android end-screen evidence and an independent review of each accepted choice. It drops "
+            + "near-duplicate decisions and excludes repeated observations across splits. Review is qualitative. "
+            + "Human elimination may leave several surviving AI nations. The data alone do not establish that a trained opponent plays better.\n\n"
+            + "See report.json for coverage, exclusions, token lengths and SHA-256 hashes. provenance.jsonl links every "
+            + "exported example to its decision record, review and device screenshot.\n", encoding="utf8")
         dest.rename(args.out)
     print(dict(counts))
 
@@ -167,4 +190,3 @@ if __name__ == "__main__":
         parser.add_argument("--" + arg, required=True, type=Path)
     parser.add_argument("--partial", action="store_true", help="Export available evidence without claiming the quota")
     export(parser.parse_args())
-

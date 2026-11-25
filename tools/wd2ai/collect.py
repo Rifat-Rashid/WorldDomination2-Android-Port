@@ -6,6 +6,7 @@ import os
 import subprocess
 import urllib.request
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from game_tools import CLASSES, MAIN, PREFERENCES, ROOT, engine
 
@@ -25,19 +26,29 @@ TEACHER_INSTRUCTION = (
     "If possible take an affordable path to victory before a long-term investment pays off.")
 
 
-def complete(messages, schema, seed, temperature=0.35):
+def endpoint():
     url = os.environ.get("WD2_TEACHER_URL", "http://127.0.0.1:8795")
-    if not url.startswith(("http://127.0.0.1:", "http://[::1]:")):
+    parts = urlsplit(url)
+    if (parts.scheme != "http" or parts.hostname not in ("127.0.0.1", "::1") or not parts.port
+            or parts.username or parts.password or parts.path not in ("", "/") or parts.query or parts.fragment):
         raise ValueError("Teacher endpoint must be local")
+    return url.rstrip("/")
+
+
+def local_request(path, body=None):
     headers = {"Content-Type": "application/json"}
     if os.environ.get("WD2_TEACHER_TOKEN"):
         headers["Authorization"] = "Bearer " + os.environ["WD2_TEACHER_TOKEN"]
+    request = urllib.request.Request(endpoint() + path, None if body is None else json.dumps(body).encode(), headers)
+    with urllib.request.urlopen(request, timeout=180) as response:
+        return json.load(response)
+
+
+def complete(messages, schema, seed, temperature=0.35):
     body = {"model": "wd2-teacher", "messages": messages, "temperature": temperature,
             "seed": seed, "max_tokens": 160, "chat_template_kwargs": {"enable_thinking": False},
             "response_format": {"type": "json_schema", "json_schema": {"name": "decision", "schema": schema}}}
-    req = urllib.request.Request(url + "/v1/chat/completions", json.dumps(body).encode(), headers)
-    with urllib.request.urlopen(req, timeout=180) as response:
-        result = json.load(response)
+    result = local_request("/v1/chat/completions", body)
     choice = result["choices"][0]
     if choice["finish_reason"] != "stop":
         raise ValueError("Teacher did not finish its response")
@@ -52,6 +63,12 @@ def journal(path, entry):
 
 
 def collect(root, family, index, strategy, difficulty, leaders, policy, human):
+    # Refuse to label a differently provisioned server as the pinned teacher.
+    props = local_request("/props")
+    model_path = Path(props["model_path"])
+    if (model_path.name.lower() != "qwen3.5-9b-q8_0.gguf"
+            or TEACHER.split("@")[1].split(":")[0] not in model_path.parts):
+        raise ValueError("Teacher server must use the documented Qwen3.5-9B Q8_0 snapshot")
     episode = family + "-" + strategy
     path = root / (episode + ".jsonl")
     root.mkdir(parents=True, exist_ok=True)
@@ -63,6 +80,10 @@ def collect(root, family, index, strategy, difficulty, leaders, policy, human):
     feedback = {}
     for line in path.read_text(encoding="utf8").splitlines():
         row = json.loads(line)
+        if row["type"] == "episode" and any(row[key] != value for key, value in {
+                "seed": seed, "family": family, "difficulty": difficulty, "leaders": leaders,
+                "human_policy": human, "policy": policy, "teacher": TEACHER + ":" + strategy}.items()):
+            raise ValueError("Resume parameters disagree with the recorded episode")
         if row["type"] == "decision":
             feedback = row["transition"]
     with subprocess.Popen(["java", "-cp", str(CLASSES), MAIN, "stream", str(path)],
@@ -92,9 +113,17 @@ def collect(root, family, index, strategy, difficulty, leaders, policy, human):
                 # Teacher sees only focal observation and feedback. Seed/family/log stay out of text.
                 msgs = [{"role": "system", "content": TEACHER_INSTRUCTION},
                         {"role": "user", "content": payload + "\nPrevious feedback: " + json.dumps(feedback)}]
-                answer = complete(msgs, schema, index + observation["turn"])
-                if answer["plan_id"] not in ids:
-                    raise ValueError("Teacher proposed an unavailable plan")
+                for attempt in range(3):
+                    try:
+                        answer = complete(msgs, schema, index + observation["turn"] + attempt)
+                        if answer.get("plan_id") not in ids or not isinstance(answer.get("intent"), str):
+                            raise ValueError("Teacher proposed an unavailable plan or missing reason")
+                        break
+                    except (ValueError, KeyError) as error:
+                        journal(path.with_suffix(".attempts.json"), {"decision_id": observation["decision_id"],
+                                "attempt": attempt + 1, "error": str(error)})
+                        if attempt == 2:
+                            raise
                 reason = " ".join(answer["intent"].split())[:250]
                 row = command("choose", answer["plan_id"], reason, observation["decision_id"])
                 if row["type"] != "decision":
@@ -121,4 +150,3 @@ if __name__ == "__main__":
         p.error("Family must be a short alphanumeric identifier")
     collect(args.directory.resolve(), args.family, 3407, args.strategy, args.difficulty,
             args.leaders, args.other_policy, args.human)
-

@@ -139,4 +139,3 @@ if __name__ == "__main__":
     p.add_argument("--merge", action="store_true")
     os.environ.setdefault("WANDB_DISABLED", "true")
     train(p.parse_args())
-

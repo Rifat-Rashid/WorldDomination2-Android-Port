@@ -53,4 +53,3 @@ async def export_status():
 async def training_hardware():
     """Inspect the GPU and precision capabilities reported by Studio."""
     return await studio_request("/api/train/hardware")
-

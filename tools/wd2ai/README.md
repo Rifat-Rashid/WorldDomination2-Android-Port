@@ -72,4 +72,3 @@ The verified Windows training stack used Python 3.12, Unsloth 2026.9.14, unsloth
 ```powershell
 & $bridge -m unittest discover -s tools/wd2ai -p 'test_*.py'
 ```
-

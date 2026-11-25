@@ -99,4 +99,3 @@ if __name__ == "__main__" and len(sys.argv) == 5 and sys.argv[1] == "--worker":
     except BaseException:
         update(run, {"phase": "failed"})
         raise
-

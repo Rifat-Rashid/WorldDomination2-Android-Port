@@ -52,4 +52,3 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("directory", type=Path)
     provision(parser.parse_args().directory)
-

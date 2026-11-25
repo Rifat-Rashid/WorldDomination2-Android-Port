@@ -36,4 +36,3 @@ try {
 } finally {
     Remove-Item Env:WD2_MCP_TOKEN
 }
-

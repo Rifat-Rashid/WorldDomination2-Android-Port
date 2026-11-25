@@ -5,6 +5,7 @@ from collections import Counter
 from contextlib import contextmanager
 import hashlib
 import json
+import math
 from pathlib import Path
 import re
 import statistics
@@ -252,6 +253,7 @@ def summarize(config, policy, terminal, raw, diagnostics):
     requests = {row["decision_reason"]: row for row in stream_rows(diagnostics)}
     actions = Counter()
     choices = Counter()
+    plan_ids = Counter()
     latencies = []
     token_counts = []
     inflicted = lost = 0
@@ -260,6 +262,8 @@ def summarize(config, policy, terminal, raw, diagnostics):
             continue
         request = requests[row["reason"]]
         choices[request["reason"]] += 1
+        if row["selected"]:
+            plan_ids[row["selected"]] += 1
         if policy not in {"existing", "stochastic"}:
             latencies.append(request["elapsed_ms"])
         if "prompt_tokens" in request:
@@ -273,13 +277,18 @@ def summarize(config, policy, terminal, raw, diagnostics):
                 lost += event["casualties"]
     outcome = terminal["outcome"]
     focal = next(nation for nation in outcome["nations"] if nation["actor"] == config["actor"])
+    attempted = sum(choices.values())
+    measured = sorted(latencies)
     return {"episode": config["episode"], "family": config["family"], "policy": policy,
-            "outcome": outcome, "focal": focal, "decisions": sum(choices.values()),
+            "outcome": outcome, "focal": focal, "decisions": attempted,
             "decision_sources": dict(choices), "actions": dict(actions),
+            "plan_ids": dict(plan_ids),
+            "fallback_rate": (attempted - choices["accepted"]) / attempted if measured else None,
             "combat_casualties_inflicted": inflicted, "combat_casualties_taken": lost,
             "max_prompt_tokens": max(token_counts, default=None),
             "mean_request_ms": statistics.mean(latencies) if latencies else None,
             "median_request_ms": statistics.median(latencies) if latencies else None,
+            "p95_request_ms": measured[math.ceil(len(measured) * 0.95) - 1] if measured else None,
             "engine_log_sha256": sha256(raw), "diagnostics_sha256": sha256(diagnostics)}
 
 

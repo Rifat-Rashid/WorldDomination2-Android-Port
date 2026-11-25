@@ -2,11 +2,15 @@
 
 import argparse
 import base64
+from contextlib import contextmanager
 import hashlib
 import json
+import os
 from pathlib import Path
 import re
 import subprocess
+import tempfile
+import time
 
 
 REPOSITORY = Path(__file__).resolve().parents[2]
@@ -34,6 +38,31 @@ def checked(result):
 
 def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+@contextmanager
+def device_slot(serial):
+    """Serialize independent replay writers on one physical Android test device."""
+    name = hashlib.sha256(serial.encode()).hexdigest()
+    path = Path(tempfile.gettempdir()) / f"wd2-replay-{name}.lock"
+    with path.open("a+b") as handle:
+        if handle.tell() == 0:
+            handle.write(b"0")
+            handle.flush()
+        handle.seek(0)
+        if os.name == "nt":
+            import msvcrt
+            while True:
+                try:
+                    msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
+                    break
+                except PermissionError:
+                    time.sleep(0.5)
+        else:
+            import fcntl
+            fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
+        # Closing the file releases the OS lock, including on worker termination.
+        yield
 
 
 def play(command, *args):
@@ -143,7 +172,8 @@ def main():
         parser.error("Use an isolated .replayqa application ID")
     args.out.mkdir(parents=True, exist_ok=True)
     for path in args.logs:
-        collect_evidence(args, path)
+        with device_slot(args.serial):
+            collect_evidence(args, path)
 
 
 if __name__ == "__main__":
