@@ -22,8 +22,8 @@ public final class TitleMenuRenderer implements Disposable {
     private static final Color LABEL_SHADOW = Color.valueOf("18191adb");
 
     private final Texture logo = texture("logo.png");
-    private final Texture continuePlate = texture("continue-plate.png");
-    private final Texture newGamePlate = texture("new-game-plate.png");
+    private final Texture orangePlate = texture("orange-plate.png");
+    private final Texture steelPlate = texture("steel-plate.png");
     private final GlyphLayout glyphs = new GlyphLayout();
     private final GlyphLayout shadow = new GlyphLayout();
 
@@ -45,10 +45,11 @@ public final class TitleMenuRenderer implements Disposable {
         try {
             batch.setColor(Color.WHITE);
             drawContained(batch, logo, layout.logo, 0f);
-            batch.setColor(available ? (continuePressed ? PRESSED_PLATE : Color.WHITE) : DISABLED_PLATE);
-            drawContained(batch, continuePlate, layout.continueGame, continueOffset);
+            Color continueTint = available ? Color.WHITE : DISABLED_PLATE;
+            batch.setColor(continuePressed ? PRESSED_PLATE : continueTint);
+            drawContained(batch, available ? orangePlate : steelPlate, layout.continueGame, continueOffset);
             batch.setColor(newGamePressed ? PRESSED_PLATE : Color.WHITE);
-            drawContained(batch, newGamePlate, layout.newGame, newGameOffset);
+            drawContained(batch, available ? steelPlate : orangePlate, layout.newGame, newGameOffset);
             batch.setColor(Color.WHITE);
 
             font.getData().setScale(1f);
@@ -112,7 +113,7 @@ public final class TitleMenuRenderer implements Disposable {
     @Override
     public void dispose() {
         logo.dispose();
-        continuePlate.dispose();
-        newGamePlate.dispose();
+        orangePlate.dispose();
+        steelPlate.dispose();
     }
 }
