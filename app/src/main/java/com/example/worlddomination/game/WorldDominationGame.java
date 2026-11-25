@@ -438,7 +438,6 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private SourceActionMenuRenderer sourceActionMenuRenderer;
     private final SourceActionMenuState sourceActionMenu = new SourceActionMenuState();
     private final SourceActionInstruction sourceActionInstruction = new SourceActionInstruction();
-    private final SourceActionMenuRenderer.PortraitDrawer menuPortraitDrawer = this::drawSetupLeaderPortrait;
     private MessagePanelRenderer messagePanelRenderer;
     private SourceNavigationPanel navigationPanelRenderer;
     private SourcePhonePanel phonePanelRenderer;
@@ -2221,20 +2220,11 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private void drawSourceSetupPortrait(int leaderId, float x, float y,
                                          float width, float height) {
         if (leaderId < 0) return;
-        if (flashAnimationAssets != null && flashAnimationAssets.areSetupPortraitsLoaded()) {
-            FlashAnimationTimeline faces = flashAnimationAssets.getTimeline(
-                    OriginalFlashAnimationAssets.LEADER_PORTRAITS_TIMELINE);
-            GameSetup.Leader leader = GameSetup.leader(leaderId);
-            FlashAnimationTimeline.Frame frame = faces == null ? null
-                    : faces.getFrame(leader.portraitFrame - 1);
-            if (frame != null) {
-                com.badlogic.gdx.graphics.g2d.TextureRegion region =
-                        flashAnimationAssets.getShape(frame.shapeId);
-                if (region != null) {
-                    drawContained(region, x, y, width, height);
-                    return;
-                }
-            }
+        TextureRegion region = flashAnimationAssets == null ? null
+                : flashAnimationAssets.getLeaderPortraitFrame(GameSetup.leader(leaderId).portraitFrame);
+        if (region != null) {
+            drawContained(region, x, y, width, height);
+            return;
         }
         drawSetupLeaderPortrait(leaderId, x, y, width, height);
     }
@@ -2246,20 +2236,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             drawContained(uiAssets.portraits[leaderId], x, y, width, height);
             return;
         }
-        if (flashAnimationAssets != null && flashAnimationAssets.areSetupPortraitsLoaded()) {
-            FlashAnimationTimeline faces = flashAnimationAssets.getTimeline(
-                    OriginalFlashAnimationAssets.LEADER_PORTRAITS_TIMELINE);
-            GameSetup.Leader leader = GameSetup.leader(leaderId);
-            FlashAnimationTimeline.Frame frame = faces == null ? null
-                    : faces.getFrame(leader.portraitFrame - 1);
-            if (frame != null) {
-                com.badlogic.gdx.graphics.g2d.TextureRegion region =
-                        flashAnimationAssets.getShape(frame.shapeId);
-                if (region != null) {
-                    drawContained(region, x, y, width, height);
-                    return;
-                }
-            }
+        TextureRegion region = flashAnimationAssets == null ? null
+                : flashAnimationAssets.getLeaderPortraitFrame(GameSetup.leader(leaderId).portraitFrame);
+        if (region != null) {
+            drawContained(region, x, y, width, height);
         }
     }
 
@@ -4354,7 +4334,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private void drawSourceActionMenu() {
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
-        sourceActionMenuRenderer.draw(batch, modal, game, sourceActionMenu, menuPortraitDrawer, turnControlRenderer,
+        sourceActionMenuRenderer.draw(batch, modal, game, sourceActionMenu, flashAnimationAssets, turnControlRenderer,
                 uiAssets.propagandaFrame, uiAssets.propagandaStrengthFont);
         batch.end();
     }

@@ -15,6 +15,7 @@ import com.badlogic.gdx.utils.JsonValue;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.example.worlddomination.MainActivity;
 import com.example.worlddomination.game.WorldDominationGame;
+import com.example.worlddomination.game.assets.OriginalFlashAnimationAssets;
 import com.example.worlddomination.game.simulation.GameState;
 import com.example.worlddomination.game.simulation.GameSetup;
 import com.example.worlddomination.game.ui.BattlefieldCityLayout;
@@ -253,6 +254,7 @@ public final class SourceActionMenusInstrumentedTest {
                     accept(app, state, GameState.Action.MASS_MEDIA);
                     state = fresh(app);
                     begin(app, GameState.Action.DIPLOMACY);
+                    assertSourceDiplomacyPortraits(app);
                     sourceTap(app, 50, 80); sourceTap(app, 70, 169);
                     assertTrue(menu(app).hasLeader()); assertTrue(menu(app).hasOption());
                     assertEquals(1, state.getSelectedTargetPlayer());
@@ -536,6 +538,56 @@ public final class SourceActionMenusInstrumentedTest {
         Rectangle modal = (Rectangle) field("modal").get(app);
         Rectangle fit = SourceActionMenuRenderer.fit(modal, new Rectangle());
         tap(app, fit.x + x * fit.width / 365, fit.y + fit.height - y * fit.height / 275);
+    }
+
+    private static void assertSourceDiplomacyPortraits(WorldDominationGame app) throws Exception {
+        OriginalFlashAnimationAssets art =
+                (OriginalFlashAnimationAssets) field("flashAnimationAssets").get(app);
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(25);
+        while (!art.areSetupPortraitsLoaded() && System.nanoTime() < deadline) {
+            art.update();
+            Thread.sleep(10);
+        }
+        assertTrue("Load the original portrait timeline", art.areSetupPortraitsLoaded());
+        render(app);
+
+        Rectangle fit = SourceActionMenuRenderer.fit((Rectangle) field("modal").get(app), new Rectangle());
+        // Independent 2400x1080 Python phone capture, at source-canvas sample
+        // points where the old framed header renders markedly different RGB.
+        float[][] facePoints = {{24.25f, 97.85f}, {118.85f, 67.85f},
+                {234.45f, 100.85f}, {345.15f, 103.85f}};
+        int[] sourceFaces = {0x83592e, 0xcbedfc, 0xae9187, 0x0d0925};
+        for (int i = 0; i < facePoints.length; i++) {
+            int actual = sourcePixel(app, fit, facePoints[i][0], facePoints[i][1]);
+            int expected = sourceFaces[i];
+            int distance = Math.abs((actual >>> 24 & 255) - (expected >>> 16 & 255))
+                    + Math.abs((actual >>> 16 & 255) - (expected >>> 8 & 255))
+                    + Math.abs((actual >>> 8 & 255) - (expected & 255));
+            assertTrue("Diplomacy face " + (i + 1) + " has original crop and colors: " + distance,
+                    distance <= 70);
+        }
+        // These points lie inside the visible face as well as on the corner.
+        // A draw that paints the clean face after the corner hides this artwork.
+        for (float[] point : new float[][] {{30.45f, 52.05f},
+                {214.15f, 113.75f}, {349.25f, 113.75f}}) {
+            int color = sourcePixel(app, fit, point[0], point[1]);
+            assertTrue("The authored corner draws over the face",
+                    Math.min(color >>> 24 & 255,
+                            Math.min(color >>> 16 & 255, color >>> 8 & 255)) >= 165);
+        }
+    }
+
+    private static int sourcePixel(WorldDominationGame app, Rectangle fit, float x, float y)
+            throws Exception {
+        Viewport viewport = (Viewport) field("viewport").get(app);
+        Vector2 point = viewport.project(new Vector2(fit.x + x * fit.width / 365f,
+                fit.y + fit.height - y * fit.height / 275f));
+        Pixmap pixel = ScreenUtils.getFrameBufferPixmap((int) point.x, (int) point.y, 1, 1);
+        try {
+            return pixel.getPixel(0, 0);
+        } finally {
+            pixel.dispose();
+        }
     }
     private static void accept(WorldDominationGame app, GameState game, GameState.Action action) throws Exception {
         if (!field("modalOpen").getBoolean(app)) showDetails(app);
