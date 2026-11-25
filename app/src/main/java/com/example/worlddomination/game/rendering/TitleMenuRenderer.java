@@ -13,6 +13,8 @@ import com.example.worlddomination.game.ui.TitleMenuLayout;
 
 /** Stationary artwork and live controls over the animated title backdrop. */
 public final class TitleMenuRenderer implements Disposable {
+    // Scale the plate and its label together within the full-size touch target.
+    private static final float BUTTON_ART_SCALE = 0.88f;
     private static final Color DISABLED_PLATE = Color.valueOf("8a9197");
     private static final Color PRESSED_PLATE = Color.valueOf("b8b2ac");
     private static final Color BUTTON_INK = Color.valueOf("fffdfa");
@@ -46,15 +48,15 @@ public final class TitleMenuRenderer implements Disposable {
         float previousScaleY = font.getScaleY();
         try {
             batch.setColor(Color.WHITE);
-            drawContained(batch, logo, layout.logo, 0f);
+            drawContained(batch, logo, layout.logo, 1f, 0f);
             Color continueTint = available ? Color.WHITE : DISABLED_PLATE;
             batch.setColor(continuePressed ? PRESSED_PLATE : continueTint);
-            drawContained(batch, available ? orangePlate : steelPlate, layout.continueGame, continueOffset);
+            drawContained(batch, available ? orangePlate : steelPlate, layout.continueGame, BUTTON_ART_SCALE, continueOffset);
             batch.setColor(newGamePressed ? PRESSED_PLATE : Color.WHITE);
-            drawContained(batch, available ? steelPlate : orangePlate, layout.newGame, newGameOffset);
+            drawContained(batch, available ? steelPlate : orangePlate, layout.newGame, BUTTON_ART_SCALE, newGameOffset);
             batch.setColor(Color.WHITE);
 
-            float titleScale = 35f * scale / buttonCapHeight;
+            float titleScale = 35f * BUTTON_ART_SCALE * scale / buttonCapHeight;
             drawCaption(batch, buttonFont, "CONTINUE", layout.continueGame,
                     layout.continueGame.y + layout.continueGame.height * .5f + continueOffset,
                     titleScale, available ? BUTTON_INK : DISABLED_INK, scale);
@@ -96,8 +98,9 @@ public final class TitleMenuRenderer implements Disposable {
         font.draw(batch, glyphs, x, y);
     }
 
-    private static void drawContained(SpriteBatch batch, Texture texture, Rectangle bounds, float offsetY) {
-        float scale = Math.min(bounds.width / texture.getWidth(), bounds.height / texture.getHeight());
+    private static void drawContained(SpriteBatch batch, Texture texture, Rectangle bounds,
+                                      float artScale, float offsetY) {
+        float scale = artScale * Math.min(bounds.width / texture.getWidth(), bounds.height / texture.getHeight());
         float width = texture.getWidth() * scale;
         float height = texture.getHeight() * scale;
         batch.draw(texture, bounds.x + (bounds.width - width) * .5f,
