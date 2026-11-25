@@ -35,6 +35,59 @@ import static org.junit.Assert.*;
 /** Runs original menu controls through the real phone viewport and touch dispatcher. */
 @RunWith(AndroidJUnit4.class)
 public final class SourceActionMenusInstrumentedTest {
+    @Test public void allNinePhoneNavigationRowsOpenTheirSourceViews() throws Exception {
+        SourceBattleCleanupInstrumentedTest.runInGame(app -> {
+            GameSetup setup = new GameSetup(0L);
+            setup.setDifficulty(1);
+            setup.setPlayerColor(1);
+            setup.setStartingBuilding(2);
+            for (int leader = 0; leader < 4; leader++) assertTrue(setup.toggleOpponent(leader));
+            GameState state = new GameState(setup);
+            Method activate = WorldDominationGame.class.getDeclaredMethod("activateGame", GameState.class);
+            activate.setAccessible(true);
+            activate.invoke(app, state);
+            double initialRandom = state.createPresentationRandomCopy().nextDouble();
+            int initialFunds = state.getTurnMoneyMillions();
+            Rectangle[] footer = (Rectangle[]) field("actionFooterButtons").get(app);
+            Rectangle mapButton = (Rectangle) field("actionMapButton").get(app);
+            GameState.Action[] rows = GameState.Action.navigationValues();
+            assertEquals(9, rows.length);
+            // Seed-zero RealTest phone center frames 2, 6, 10, 14, 55, 18, 66, 72 and 79.
+            String[] sourceMenus = {null, null, null, "religion-chr", "attackSelect",
+                    "preAttackSelect", "defenseSelect", "propaganda1", "diplomacy"};
+            String[] mapCaptions = {"RESOURCES", "PRODUCTION", "RESEARCH", "MASS MEDIA", "ATTACK",
+                    "PREATTACK", "DEFENSE", "PROPAGANDA", "DIPLOMACY"};
+            for (GameState.Action action : rows) {
+                begin(app, action);
+                if (sourceMenus[action.ordinal()] != null) {
+                    assertEquals(action.label, sourceMenus[action.ordinal()], menu(app).getKey());
+                }
+                boolean opensDetails = action == GameState.Action.RESOURCES
+                        || action == GameState.Action.PRODUCTION || action == GameState.Action.RESEARCH
+                        || action == GameState.Action.DIPLOMACY;
+                assertEquals(action.label, opensDetails, field("modalOpen").getBoolean(app));
+                String name = "nav-" + action.name().toLowerCase(java.util.Locale.ROOT);
+                capture(app, name + "-entry.png");
+                if (!opensDetails) {
+                    tap(app, footer[0]);
+                    assertTrue(action.label, field("modalOpen").getBoolean(app));
+                    capture(app, name + "-details.png");
+                }
+                if (action != GameState.Action.RESOURCES) {
+                    tap(app, mapButton);
+                    assertFalse(action.label, field("modalOpen").getBoolean(app));
+                    assertEquals(action, state.getSelectedAction());
+                    render(app);
+                    assertEquals(action.label, mapCaptions[action.ordinal()],
+                            field("actionFooterText").get(app).toString());
+                }
+                assertEquals(0, state.getQueuedActionCount());
+                assertEquals(initialFunds, state.getTurnMoneyMillions());
+                assertEquals(initialRandom, state.createPresentationRandomCopy().nextDouble(), 0d);
+            }
+        });
+    }
+
     @Test public void phoneMapAndDetailsKeepDraftsAndRouteFooterActions() throws Exception {
         try (GameActivityScenario scenario = GameActivityScenario.launch(MainActivity.class)) {
             CountDownLatch done = new CountDownLatch(1);

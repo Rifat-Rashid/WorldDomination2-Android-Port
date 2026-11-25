@@ -363,6 +363,10 @@
     ],
     [
       "com.example.worlddomination.game.rendering.SourceActionMenusInstrumentedTest",
+      "allNinePhoneNavigationRowsOpenTheirSourceViews"
+    ],
+    [
+      "com.example.worlddomination.game.rendering.SourceActionMenusInstrumentedTest",
       "originalMenusSelectTargetsEquipmentAndQueueAllFiveActions"
     ],
     [

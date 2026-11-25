@@ -691,8 +691,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         actionSlots[1].set(actionSlots[0].x + firstWidth + 4f, tubeY,
                 firstWidth, 33f);
         confirmButton.set(actionPanel.x + actionPanel.width - 35f, tubeY, 27f, 33f);
-        portraitStrip.set(centerHeader.x + centerHeader.width * 0.28f,
-                centerHeader.y + 1f, centerHeader.width * 0.44f, 6f);
+        portraitStrip.set(centerHeader.x + 6f, centerHeader.y + 2f, centerHeader.width - 12f, 10f);
         for (int i = 0; i < actionFooterButtons.length; i++) {
             ActionFooterLayout.setButtonBounds(messagePanel, i, actionFooterButtons[i]);
         }
@@ -3020,9 +3019,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 muteButton.y + muteButton.height / 2f + 3f, 9f);
 
         drawStatistics();
-        if (!showsInlineActionFooter() || sourceActionInstruction.getText() != null) {
-            drawMessageWell();
-        }
+        boolean actionSelected = game.getSelectedAction() != null && !isTurnInputBlocked();
+        if (!showsInlineActionFooter()) drawMessageWell(actionSelected ? null : sourceActionInstruction.getText());
+        if (actionSelected && sourceActionInstruction.getText() != null) drawPortraitInstruction();
         font.setColor(TITLE_TEXT);
         drawScoreValue();
         drawCentered("FIRST ACTION", actionSlots[0].x + actionSlots[0].width / 2f,
@@ -3066,17 +3065,26 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         font.setColor(oldR, oldG, oldB, oldA);
     }
 
-    private void drawMessageWell() {
-        instructionViewport.set(messageViewport);
-        if (showsInlineActionFooter()) {
-            float lowerEdge = actionFooterButtons[1].y + actionFooterButtons[1].height + 3f;
-            float top = messageViewport.y + messageViewport.height;
-            instructionViewport.y = Math.max(messageViewport.y, lowerEdge);
-            instructionViewport.height = Math.max(1f, top - instructionViewport.y);
-        }
+    private void drawPortraitInstruction() {
+        instructionViewport.set(portraitStrip);
+        float scale = font.getScaleX();
+        font.getData().setScale(7f / font.getLineHeight());
+        font.setColor(GREEN);
+        instructionLayout.setText(font, sourceActionInstruction.getText());
         batch.flush();
         setScissor(instructionViewport);
-        String instruction = sourceActionInstruction.getText();
+        font.draw(batch, instructionLayout, portraitStrip.x + 2f,
+                portraitStrip.y + (portraitStrip.height + instructionLayout.height) / 2f);
+        batch.flush();
+        Gdx.gl.glDisable(GL20.GL_SCISSOR_TEST);
+        font.getData().setScale(scale);
+        laidOutInstruction = null;
+    }
+
+    private void drawMessageWell(String instruction) {
+        instructionViewport.set(messageViewport);
+        batch.flush();
+        setScissor(instructionViewport);
         if (instruction == null) {
             messagePanelRenderer.drawHistory(batch, messageHistoryLayout, instructionViewport,
                     messageHistoryScroll.getFirstVisibleLine());
@@ -3113,7 +3121,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         batch.begin();
         drawOriginalButton(actionMapButton);
         font.setColor(TITLE_TEXT);
-        drawCentered("MAP", actionMapButton.x + 25f, actionMapButton.y + 14f, 8f);
+        drawPhoneActionCaption("MAP", actionMapButton);
         batch.end();
     }
 
@@ -3122,28 +3130,26 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
-        if (sourceActionInstruction.getText() == null) {
-            font.setColor(GREEN);
-            actionFooterText.setLength(0);
-            appendUppercase(actionFooterText, game.getSelectedAction().label);
-            drawFittedLeft(actionFooterText, messagePanel.x + 8f, messagePanel.y + messagePanel.height - 10f,
-                    messagePanel.width - 16f, 9f);
-        }
+        GameState.Action action = game.getSelectedAction();
+        font.setColor(GREEN);
+        actionFooterText.setLength(0);
+        appendUppercase(actionFooterText, action == GameState.Action.MASS_MEDIA ? "Mass media"
+                : TurnControlRenderer.sourceLabel(action));
+        drawFittedLeft(actionFooterText, messagePanel.x + 10f, messagePanel.y + messagePanel.height - 12f,
+                messagePanel.width - 20f, 12f);
         for (Rectangle button : actionFooterButtons) {
             drawOriginalButton(button);
         }
         font.setColor(TITLE_TEXT);
-        Rectangle details = actionFooterButtons[0];
-        drawCentered("DETAILS", details.x + details.width / 2f,
-                details.y + details.height / 2f + 2f, 7.5f);
-        Rectangle cancel = actionFooterButtons[1];
-        drawCentered("CANCEL", cancel.x + cancel.width / 2f,
-                cancel.y + cancel.height / 2f + 2f, 7.5f);
-        font.setColor(canAcceptInlineAction() ? TITLE_TEXT : DISABLED_TEXT);
-        Rectangle accept = actionFooterButtons[2];
-        drawCentered("ACCEPT", accept.x + accept.width / 2f,
-                accept.y + accept.height / 2f + 2f, 7.5f);
+        drawPhoneActionCaption("DETAILS", actionFooterButtons[0]);
+        drawPhoneActionCaption("CANCEL", actionFooterButtons[1]);
+        drawPhoneActionCaption("ACCEPT", actionFooterButtons[2]);
         batch.end();
+    }
+
+    private void drawPhoneActionCaption(String text, Rectangle button) {
+        drawFittedCentered(text, button.x + button.width / 2f, button.y + button.height / 2f + 4.5f,
+                13f, button.width - 8f);
     }
 
     private static void appendUppercase(StringBuilder output, String value) {

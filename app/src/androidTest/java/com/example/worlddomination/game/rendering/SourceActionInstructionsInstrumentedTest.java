@@ -73,8 +73,9 @@ public final class SourceActionInstructionsInstrumentedTest {
                     assertTrue("Wrapped source instruction needs positive glyph height", glyphs.height > 0f);
                     Rectangle viewport = (Rectangle) field("instructionViewport").get(app);
                     Rectangle cancel = ((Rectangle[]) field("actionFooterButtons").get(app))[1];
-                    assertTrue("Instruction clip stays above Propaganda Cancel",
-                            viewport.height > 0f && viewport.y >= cancel.y + cancel.height + 2f);
+                    assertEquals("The phone shows instructions in the portrait strip",
+                            field("portraitStrip").get(app), viewport);
+                    assertFalse("The pending action caption and buttons remain clear", viewport.overlaps(cancel));
                     capture(app, "source-propaganda-instruction.png");
                     city(app, 0, 0);
                     assertPrompt(instruction, SourceActionInstruction.OWN_CITY, 108);
