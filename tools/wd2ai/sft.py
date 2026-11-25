@@ -1,6 +1,7 @@
 """Response-only Qwen3 training on reviewed WD2 plan decisions using local Unsloth."""
 import argparse
 import hashlib
+from importlib.metadata import version
 import json
 import os
 import re
@@ -9,6 +10,7 @@ from pathlib import Path
 from base_model import REVISION, TEMPLATE_SHA256, WEIGHTS_SHA256
 
 CONTEXT = 2048
+DEPLOYMENT_OUTPUT_BUDGET = 20
 SEED = 3407
 
 
@@ -32,8 +34,9 @@ def encode_example(tokenizer, record):
     if (ids[:len(prefix_ids)] != prefix_ids or ids[-1] != tokenizer.eos_token_id
             or tokenizer.decode(ids[len(prefix_ids):-1], skip_special_tokens=False) != target):
         raise ValueError("Assistant token boundary or EOS mismatch")
-    if len(ids) > CONTEXT:
-        raise ValueError(f"Decision exceeds context ({len(ids)} > {CONTEXT})")
+    required = max(len(ids), len(prefix_ids) + DEPLOYMENT_OUTPUT_BUDGET)
+    if required > CONTEXT:
+        raise ValueError(f"Decision exceeds deployment context ({required} > {CONTEXT})")
     return {"input_ids": ids, "attention_mask": [1] * len(ids),
             "labels": [-100] * len(prefix_ids) + ids[len(prefix_ids):]}
 
@@ -87,7 +90,10 @@ def train(args):
                 "supervised_range": [min(supervised), max(supervised)],
                 "first_supervised_text": tokenizer.decode([t for t in example["labels"] if t != -100]),
                 "max_train_tokens": max(len(row["input_ids"]) for row in training_rows),
-                "device": torch.cuda.get_device_name(), "cuda": torch.version.cuda}
+                "device": torch.cuda.get_device_name(), "cuda": torch.version.cuda,
+                "validation_sha256": None if args.smoke else file_hash(val_path),
+                "packages": {name: version(name) for name in ("unsloth", "unsloth-zoo", "torch", "transformers",
+                            "trl", "peft", "datasets", "bitsandbytes")}}
     record_path = args.out / "run.json"
     if args.resume and json.loads(record_path.read_text()) != metadata:
         raise ValueError("Resume metadata differs from the original run")
@@ -114,6 +120,14 @@ def train(args):
                       data_collator=DataCollatorForSeq2Seq(tokenizer, label_pad_token_id=-100))
     result = trainer.train(resume_from_checkpoint=True if args.resume else None)
     trainer.save_state()
+    (args.out / "configuration.json").write_text(json.dumps({
+        "lora_rank": 16, "lora_alpha": 32, "sequence_length": CONTEXT,
+        "precision": "bfloat16" if bf16 else "float16", "seed": SEED,
+        "learning_rate": trainer_args.learning_rate, "epochs": trainer_args.num_train_epochs,
+        "per_device_batch": trainer_args.per_device_train_batch_size,
+        "gradient_accumulation": trainer_args.gradient_accumulation_steps,
+        "selected_checkpoint": trainer.state.best_model_checkpoint,
+        "best_validation_loss": trainer.state.best_metric}, indent=2), encoding="utf8")
     trainer.save_model(str(args.out / "adapter"))
     tokenizer.save_pretrained(args.out / "adapter")
     (args.out / "metrics.json").write_text(json.dumps(result.metrics, indent=2))

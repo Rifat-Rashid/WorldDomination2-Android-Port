@@ -69,6 +69,8 @@ The pinned trainable checkpoint is Qwen/Qwen3-0.6B revision `c1899de289a04d12100
 
 The verified Windows training stack used Python 3.12, Unsloth 2026.9.14, unsloth-zoo 2026.9.9, PyTorch 2.11.0+cu130, Transformers 5.5.0, TRL 0.23.1, PEFT 0.18.1, datasets 4.3.0 and bitsandbytes 0.50.2. Install the desktop environment separately from the MCP dependencies. Large weights, private trajectories and checkpoints belong outside ordinary Git history.
 
+Run `export_gguf.py --run <training-run> --source <b7700-source-dir> --bin <b7700-binary-dir>` with the training interpreter to create standalone F16, Q8_0 and Q4_K_M exports and their byte counts and checksums. Use `tools/wd2play/score_choices.py` on the validation split before choosing a deployment quantization. The bundled APK option in the runtime guide makes that specific file usable offline from first launch.
+
 ```powershell
 & $bridge -m unittest discover -s tools/wd2ai -p 'test_*.py'
 ```

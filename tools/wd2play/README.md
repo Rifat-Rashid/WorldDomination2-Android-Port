@@ -63,6 +63,12 @@ python tools/wd2play/evaluate.py --manifest analysis/locked-games.json `
 
 The local server renders the model's non-thinking template, uses the Android context and output limits, constrains generation to available IDs, and uses greedy sampling with the per-request cache disabled. Focal requests and their exact committed decision records can be replayed. A timeout, context overflow, or invalid selection falls back to the existing AI, with the reason recorded separately from model successes. Use `--smoke` and a separate `development_smoke` manifest while checking the pipeline. An explicit `--smoke-server-commit` permits a different local binary for this check. Smoke runs permit `--policies` to select a subset and should use families outside all training, validation, and test splits.
 
+### Compare quantizations before opening the test set
+
+Use `score_choices.py --split validation --dataset <reviewed-dir> --server <b7700-llama-server> --model <gguf> --out <new-dir>` for stock, merged F16, Q8_0 and Q4_K_M. It uses the deployed prompt and grammar and reports exact teacher agreement, selection frequencies and a 95% interval resampled by family. Always record the number of families. Choices within a game are correlated.
+
+For validation games pass `--validation` to `evaluate.py`, use a manifest with purpose `validation_evaluation`, and supply the reviewed dataset report. The evaluator enforces family membership. Choose the checkpoint and quantization before scoring `--split test` or running the held-out test game manifest. Separate output directories preserve the hashes of each model and dataset.
+
 ## Data dictionary
 
 The audit file is UTF-8 JSONL. Version 1 of its schema contains the following record types.

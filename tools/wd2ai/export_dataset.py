@@ -1,9 +1,10 @@
 """Export independently reviewed, replayed and Android-verified WD2 episodes."""
 import argparse
-from collections import Counter
+from collections import Counter, defaultdict, deque
 import hashlib
 import json
 from pathlib import Path
+import re
 import tempfile
 
 from game_tools import engine
@@ -18,6 +19,13 @@ def packed(x):
 
 def identity(obj):
     return hashlib.sha256(packed(obj).encode()).hexdigest()
+
+
+def principal(label):
+    """A collector's review-session suffix does not create an independent person."""
+    label = label.strip().casefold()
+    match = re.match(r"^(teacher-[abc]|coordinator)(?:-|$)", label)
+    return match.group(1) if match else label
 
 
 def lines(path):
@@ -66,6 +74,21 @@ def evidence(log, evidence_dir, episode, outcome):
     return receipt
 
 
+def sample_families(rows, limit):
+    """Round-robin the eligible families, shuffling turns by a fixed content hash."""
+    groups = defaultdict(list)
+    for item in rows:
+        groups[item["audit"]["family"]].append(item)
+    queue = deque(deque(sorted(groups[name], key=lambda x: identity(x["audit"]["decision_id"])))
+                  for name in sorted(groups, key=identity))
+    while queue and limit:
+        family = queue.popleft()
+        yield family.popleft()
+        if family:
+            queue.append(family)
+        limit -= 1
+
+
 def export(args):
     from transformers import AutoTokenizer
     tokenizer = AutoTokenizer.from_pretrained(args.base, local_files_only=True)
@@ -88,6 +111,7 @@ def export(args):
     degrees = Counter()
     teachers = Counter()
     output = {k: [] for k in QUOTA}
+    eligible = {k: [] for k in QUOTA}
     audit = []
     for log in sorted(args.episodes.glob("*.jsonl")):
         raw = list(lines(log))
@@ -114,7 +138,7 @@ def export(args):
             if not review or not review["accepted"]:
                 rejected["unreviewed_or_rejected"] += 1
                 continue
-            if review["reviewer"] == row["teacher"] or review["row_sha256"] != identity(row):
+            if principal(review["reviewer"]) == principal(row["teacher"]) or review["row_sha256"] != identity(row):
                 raise ValueError("Review must link an independent reviewer and the exact raw record")
             obs = json.loads(row["user"])
             plans = row["candidates"]
@@ -131,9 +155,6 @@ def export(args):
             if fp in seen or state_splits.get(state_id, split) != split:
                 rejected["duplicate"] += 1
                 continue
-            if counts[split] >= QUOTA[split]:
-                rejected["split_full"] += 1
-                continue
             message = {"messages": [{"role": "system", "content": row["system"]},
                                     {"role": "user", "content": row["user"]},
                                     {"role": "assistant", "content": json.dumps(
@@ -142,17 +163,24 @@ def export(args):
             seen.add(fp)
             state_splits[state_id] = split
             encoded = packed(message)
-            output[split].append(encoded)
-            token_lengths.append(len(tokens["input_ids"]))
-            counts[split] += 1
-            turns[str(row["turn"] // 10 * 10)] += 1
-            actions.update(action["action"] for action in plans[selected])
-            degrees[str(cfg["difficulty"])] += 1
-            teachers[cfg["teacher"]] += 1
-            audit.append(packed({"split": split, "row": counts[split], "family": family,
+            provenance = {"split": split, "family": family,
                                  "episode": cfg["episode"], "decision_id": row["decision_id"],
                                  "raw_sha256": identity(row), "row_sha256": hashlib.sha256(encoded.encode()).hexdigest(),
-                                 "review": review, "screenshot_sha256": proof["screenshot_sha256"]}))
+                                 "review": review, "screenshot_sha256": proof["screenshot_sha256"]}
+            eligible[split].append({"encoded": encoded, "length": len(tokens["input_ids"]), "turn": row["turn"],
+                                    "actions": [a["action"] for a in plans[selected]], "difficulty": cfg["difficulty"],
+                                    "teacher": cfg["teacher"], "audit": provenance})
+    for split, choices in eligible.items():
+        for item in sample_families(choices, QUOTA[split]):
+            counts[split] += 1
+            output[split].append(item["encoded"])
+            token_lengths.append(item["length"])
+            turns[str(item["turn"] // 10 * 10)] += 1
+            actions.update(item["actions"])
+            degrees[str(item["difficulty"])] += 1
+            teachers[item["teacher"]] += 1
+            audit.append(packed(dict(item["audit"], row=counts[split])))
+        rejected["split_full"] += len(choices) - counts[split]
     if not args.partial and any(counts[k] != target for k, target in QUOTA.items()):
         raise ValueError(f"Insufficient verified, reviewed data: {dict(counts)}; quota {QUOTA}")
     if args.out.exists():

@@ -9,10 +9,23 @@ import unittest
 from unittest.mock import patch
 
 from collect import endpoint
-from export_dataset import evidence, family_split, fingerprint
+from export_dataset import evidence, family_split, fingerprint, principal, sample_families
 
 
 class DatasetContractTests(unittest.TestCase):
+    def test_review_role_alias_cannot_approve_own_decisions(self):
+        self.assertEqual(principal("teacher-b-v2"), principal("Teacher-B-independent-review"))
+        self.assertNotEqual(principal("teacher-a"), principal("teacher-b-independent-review"))
+
+    def test_oversubscribed_split_balances_families_independent_of_file_order(self):
+        records = [{"audit": {"family": family, "decision_id": f"{family}-{turn}"}}
+                   for family in ("A", "B", "C") for turn in range(9)]
+        selected = list(sample_families(records, 6))
+        self.assertEqual(selected, list(sample_families(reversed(records), 6)))
+        self.assertEqual(6, len({r["audit"]["decision_id"] for r in selected}))
+        for family in ("A", "B", "C"):
+            self.assertEqual(2, sum(r["audit"]["family"] == family for r in selected))
+
     def test_family_split_is_stable(self):
         self.assertEqual("train", family_split("teacher-b-83321"))
         self.assertEqual("validation", family_split("teacher-c-84000"))

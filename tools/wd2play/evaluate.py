@@ -47,7 +47,8 @@ def verified_manifest(args):
     manifest = read_json(args.manifest)
     if sha256(args.manifest) != args.manifest_sha256:
         raise ValueError("Manifest checksum does not match its locked value")
-    expected = "development_smoke" if args.smoke else "held_out_evaluation"
+    split = "validation" if args.validation else "test"
+    expected = "development_smoke" if args.smoke else ("validation_evaluation" if args.validation else "held_out_evaluation")
     if manifest.get("schema") != 1 or manifest.get("purpose") != expected:
         raise ValueError("Manifest purpose or schema does not match this run")
     configs = manifest.get("episodes", [])
@@ -72,8 +73,8 @@ def verified_manifest(args):
         report = read_json(args.dataset_report)
         if report["counts"] != {"train": 1600, "validation": 200, "test": 200}:
             raise ValueError("Held-out evaluation requires the complete reviewed dataset")
-        if any(report["families"].get(family) != "test" for family in families):
-            raise ValueError("Held-out gameplay may use locked test families only")
+        if any(report["families"].get(family) != split for family in families):
+            raise ValueError(f"Evaluation may use registered {split} families only")
     return manifest
 
 
@@ -350,6 +351,8 @@ if __name__ == "__main__":
     parser.add_argument("--deadline", type=float, default=60)
     parser.add_argument("--threads", type=int, default=4)
     parser.add_argument("--gpu-layers", type=int, default=0)
-    parser.add_argument("--smoke", action="store_true")
+    purpose = parser.add_mutually_exclusive_group()
+    purpose.add_argument("--smoke", action="store_true")
+    purpose.add_argument("--validation", action="store_true", help="Use a locked validation gameplay manifest")
     parser.add_argument("--smoke-server-commit")
     evaluate(parser.parse_args())
