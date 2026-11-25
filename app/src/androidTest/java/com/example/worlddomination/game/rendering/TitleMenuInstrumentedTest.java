@@ -48,6 +48,7 @@ public final class TitleMenuInstrumentedTest {
             render(app);
             TitleMenuLayout title = (TitleMenuLayout) field("titleMenu").get(app);
             assertTrue("Continue has an onscreen control", title.continueGame.width > 0f);
+            SettingsSaveLoadInstrumentedTest.capture(app, "title-menu-empty.png");
             tap(app, title.logo);
             tap(app, title.continueGame);
             assertOnTitle(app);
@@ -69,6 +70,7 @@ public final class TitleMenuInstrumentedTest {
             assertTrue(new File(directory, "manual-game-slot-2.wd2").setLastModified(oldest + 10_000));
             app.setGameSaveStore(AndroidGameSaveStore.create(directory));
             render(app);
+            SettingsSaveLoadInstrumentedTest.capture(app, "title-menu-continue.png");
             tap(app, title.logo);
             assertOnTitle(app);
             tap(app, title.continueGame);

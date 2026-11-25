@@ -51,6 +51,8 @@ HIDDEN_OUTCOME = "com.example.worlddomination.game.rendering.SourceHiddenOutcome
 HIDDEN_CONTEXT_EVIDENCE = {
     "hidden-help-context-before.png", "hidden-help-context-first-resumed.png",
 }
+TITLE_MENU = "com.example.worlddomination.game.rendering.TitleMenuInstrumentedTest"
+TITLE_MENU_EVIDENCE = {"title-menu-empty.png", "title-menu-continue.png"}
 SETTINGS = "com.example.worlddomination.game.rendering.SettingsSaveLoadInstrumentedTest"
 SETTINGS_EVIDENCE = {"settings-save-load-menu.png", "settings-save-load-confirm.png"}
 FULL_HUD = "com.example.worlddomination.game.rendering.FullHudSourceComparisonInstrumentedTest"
@@ -381,6 +383,7 @@ def verify_group_artifact(manifest: dict, group: dict, artifact: Path) -> tuple[
                     (HIDDEN_TYPOGRAPHY, HIDDEN_TYPOGRAPHY_EVIDENCE, "hidden Help typography"),
                     (HIDDEN_CONTEXT, HIDDEN_CONTEXT_EVIDENCE, "hidden Help context recovery"),
                     (FULL_HUD, FULL_HUD_EVIDENCE, "full HUD source comparison"),
+                    (TITLE_MENU, TITLE_MENU_EVIDENCE, "animated title menu"),
                     (SETTINGS, SETTINGS_EVIDENCE, "settings save and load"),
                     (SETUP_PANELS, SETUP_PANELS_EVIDENCE, "setup panels"),
                     (SETUP_LAYOUT, SETUP_LAYOUT_EVIDENCE, "setup layout"),
