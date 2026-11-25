@@ -74,6 +74,10 @@ The debug APK is written to `app/build/outputs/apk/debug/app-debug.apk`. GitHub 
 
 ## Code map
 
+The optional **qwen3 0.6b ai** setting runs an opponent model on supported Android devices. It starts off and uses a verified model download on first use. [Android provisioning and device checks](docs/qwen-runtime.md)
+
+Developers can play the Java simulation from Unsloth Desktop or Codex, collect actor-filtered decisions, replay them on Android, and train a local opponent. [MCP setup and training tools](tools/wd2ai/README.md)
+
 | Directory | Responsibility |
 | --- | --- |
 | `app/src/main/java/com/example/worlddomination/game/simulation/` | Game state, rules, and turn resolution |

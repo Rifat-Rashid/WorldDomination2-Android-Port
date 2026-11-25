@@ -56,7 +56,7 @@ jobs:
           set +o pipefail
           yes | "$sdkmanager" --licenses
           set -o pipefail
-          "$sdkmanager" 'platform-tools' 'platforms;android-37.0' 'build-tools;36.0.0'
+          "$sdkmanager" 'platform-tools' 'platforms;android-37.0' 'build-tools;36.0.0' 'ndk;28.2.13676358' 'cmake;3.22.1'
 
       - name: Assemble Android debug APK
         run: bash scripts/gradle_rate_limit_retry.sh ./gradlew --no-daemon --stacktrace :app:assembleDebug
