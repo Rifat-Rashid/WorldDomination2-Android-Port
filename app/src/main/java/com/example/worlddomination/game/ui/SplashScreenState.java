@@ -1,6 +1,6 @@
 package com.example.worlddomination.game.ui;
 
-/** Tracks the tap-to-continue title screen independently from its rendering. */
+/** Tracks the launch menu independently from its graphics and game state. */
 public final class SplashScreenState {
     private boolean visible = true;
 
