@@ -88,21 +88,31 @@ public final class SettingsSaveLoadInstrumentedTest {
                 GameState saved = newMatch();
                 queue(saved, GameState.Action.RESOURCES);
                 saved.cancelSelection();
-                empty.save(saved);
+                empty.save(2, saved);
                 GameSaveStore reopened = AndroidGameSaveStore.create(directory);
                 app.setGameSaveStore(reopened);
                 openSettings(app);
                 assertFalse(menu.canSave());
+                assertEquals(1, menu.getSelectedSlot());
+                assertFalse(menu.canLoad());
+                tap(app, menu.load);
+                assertFalse(menu.isConfirmingLoad());
+
+                tap(app, menu.slots[1]);
+                assertEquals(2, menu.getSelectedSlot());
                 assertTrue(menu.canLoad());
                 tap(app, menu.load);
                 assertTrue(menu.isConfirmingLoad());
                 assertTrue(app.keyDown(Input.Keys.BACK));
                 assertTrue(menu.isOpen());
                 assertFalse(menu.isConfirmingLoad());
+                assertEquals(2, menu.getSelectedSlot());
                 assertNull(game(app));
+
                 tap(app, menu.load);
                 tap(app, menu.confirm);
                 assertTrue(menu.canSave());
+                assertEquals(2, menu.getSelectedSlot());
                 assertNotSame(saved, game(app));
                 assertArrayEquals(GameSaveCodec.encode(saved), GameSaveCodec.encode(game(app)));
                 assertNull("Load from setup immediately shows saved history", actionInstruction(app).getText());
@@ -149,7 +159,8 @@ public final class SettingsSaveLoadInstrumentedTest {
     }
 
     private void checkGameplaySaveAndReload(UiAutomation automation) throws Exception {
-        Vector2 panelSample = new Vector2();
+        Vector2 panelSampleFraction = new Vector2();
+        int[] panelColor = new int[1];
         EGLDisplay[] display = new EGLDisplay[1];
         EGLContext[] context = new EGLContext[1];
         SourceBattleCleanupInstrumentedTest.runInGame(app -> {
@@ -204,6 +215,13 @@ public final class SettingsSaveLoadInstrumentedTest {
                 current.confirmTurn();
                 assertEquals(1, current.getTurn());
                 assertEquals(0, current.getQueuedActionCount());
+                byte[] secondSlot = GameSaveCodec.encode(current);
+                openSettings(app);
+                tap(app, menu.slots[1]);
+                assertFalse(menu.canLoad());
+                tap(app, menu.save);
+                assertEquals("Game saved. Turn 1.", menu.getStatus());
+                tap(app, menu.close);
 
                 // Same turn, count and latest message, but a different first order.
                 GameState alternate = newMatch();
@@ -223,8 +241,17 @@ public final class SettingsSaveLoadInstrumentedTest {
                 GameSaveStore reopened = AndroidGameSaveStore.create(directory);
                 assertTrue(reopened.hasSave());
                 assertArrayEquals(expected, GameSaveCodec.encode(reopened.load()));
+                assertArrayEquals(secondSlot, GameSaveCodec.encode(reopened.load(2)));
+                assertFalse(reopened.hasSave(3));
                 app.setGameSaveStore(reopened);
                 openSettings(app);
+                tap(app, menu.slots[1]);
+                assertTrue(menu.canLoad());
+                tap(app, menu.save);
+                assertArrayEquals(GameSaveCodec.encode(alternate), GameSaveCodec.encode(reopened.load(2)));
+                assertArrayEquals(expected, GameSaveCodec.encode(reopened.load(1)));
+                assertFalse(reopened.hasSave(3));
+                tap(app, menu.slots[0]);
                 tap(app, menu.load);
                 tap(app, menu.confirm);
                 GameState loaded = game(app);
@@ -258,8 +285,16 @@ public final class SettingsSaveLoadInstrumentedTest {
                 display[0] = EGL14.eglGetCurrentDisplay();
                 context[0] = EGL14.eglGetCurrentContext();
                 assertTrue("Settings EGL context is queryable", contextValid(display[0], context[0]));
-                panelSample.set(project(app, menu.panel.x + 6f * menu.getScale(),
-                        menu.panel.y + menu.panel.height - 12f * menu.getScale()));
+                render(app);
+                // Sample the solid part of Save, clear of its text and rounded edge.
+                Vector2 panelSample = project(app, menu.save.x + menu.save.width * .14f,
+                        menu.save.y + menu.save.height / 2f);
+                panelColor[0] = readFramebufferColor(panelSample);
+                assertTrue("The save button provides a distinct solid swatch",
+                        Color.red(panelColor[0]) > 220 && Color.green(panelColor[0]) > 100
+                                && Color.blue(panelColor[0]) < 85);
+                panelSampleFraction.set(panelSample.x / Gdx.graphics.getWidth(),
+                        panelSample.y / Gdx.graphics.getHeight());
             } finally {
                 app.setGameSaveStore(previous);
                 removeStoreDirectory(directory);
@@ -277,11 +312,17 @@ public final class SettingsSaveLoadInstrumentedTest {
                     contextValid(display[0], context[0]));
             scenario.moveToState(Lifecycle.State.RESUMED);
             int[] viewOrigin = new int[2];
-            scenario.onActivity(activity -> ((AndroidGraphics) activity.getGraphics())
-                    .getView().getLocationOnScreen(viewOrigin));
+            int[] viewSize = new int[2];
+            scenario.onActivity(activity -> {
+                android.view.View view = ((AndroidGraphics) activity.getGraphics()).getView();
+                view.getLocationOnScreen(viewOrigin);
+                viewSize[0] = view.getWidth();
+                viewSize[1] = view.getHeight();
+            });
             assertSystemBackDismissesSettings(automation,
-                    viewOrigin[0] + Math.round(panelSample.x),
-                    viewOrigin[1] + Math.round(panelSample.y));
+                    viewOrigin[0] + Math.round(panelSampleFraction.x * viewSize[0]),
+                    viewOrigin[1] + Math.round(panelSampleFraction.y * viewSize[1]),
+                    panelColor[0]);
             scenario.onActivity(activity -> assertTrue("Back keeps the match in front",
                     activity.getWindow().getDecorView().hasWindowFocus()));
         });
@@ -292,14 +333,23 @@ public final class SettingsSaveLoadInstrumentedTest {
                 EGL14.EGL_CONTEXT_CLIENT_VERSION, new int[1], 0);
     }
 
-    private static void assertSystemBackDismissesSettings(UiAutomation automation, int x, int y)
-            throws Exception {
+    private static int readFramebufferColor(Vector2 inputPixel) {
+        int width = Gdx.graphics.getBackBufferWidth();
+        int height = Gdx.graphics.getBackBufferHeight();
+        int x = Math.round(inputPixel.x * width / Gdx.graphics.getWidth());
+        int y = height - 1 - Math.round(inputPixel.y * height / Gdx.graphics.getHeight());
+        byte[] rgba = ScreenUtils.getFrameBufferPixels(x, y, 1, 1, false);
+        return Color.rgb(rgba[0] & 255, rgba[1] & 255, rgba[2] & 255);
+    }
+
+    private static void assertSystemBackDismissesSettings(UiAutomation automation, int x, int y,
+                                                          int panelColor) throws Exception {
         assertTrue("Settings is visible before the Android Back event",
-                awaitSettingsVisible(automation, x, y, true));
+                awaitSettingsVisible(automation, x, y, panelColor, true));
         // Another touch or a GL runnable would wake an on-demand surface and hide the regression.
         shell(automation, "input keyevent KEYCODE_BACK");
         assertTrue("Android Back closes Settings without another input or forced frame",
-                awaitSettingsVisible(automation, x, y, false));
+                awaitSettingsVisible(automation, x, y, panelColor, false));
     }
 
     private static String shell(UiAutomation automation, String command) throws Exception {
@@ -314,22 +364,41 @@ public final class SettingsSaveLoadInstrumentedTest {
     }
 
     private static boolean awaitSettingsVisible(UiAutomation automation, int x, int y,
-                                                boolean visible) {
-        long deadline = SystemClock.uptimeMillis() + 3_000L;
+                                                int panelColor, boolean visible) {
+        long deadline = SystemClock.uptimeMillis() + 5_000L;
+        int lastWidth = 0;
+        int lastHeight = 0;
         do {
             Bitmap screen = automation.takeScreenshot();
             assertNotNull("Android window screenshot", screen);
             try {
-                int pixel = screen.getPixel(x, y);
-                boolean settingsBackground = Math.abs(Color.red(pixel) - 9) <= 2
-                        && Math.abs(Color.green(pixel) - 20) <= 2
-                        && Math.abs(Color.blue(pixel) - 28) <= 2;
-                if (settingsBackground == visible) return true;
+                lastWidth = screen.getWidth();
+                lastHeight = screen.getHeight();
+                // Android can briefly return a portrait frame while restoring the landscape activity.
+                if (lastWidth <= lastHeight || x < 2 || x + 2 >= lastWidth
+                        || y < 2 || y + 2 >= lastHeight) {
+                    SystemClock.sleep(50);
+                    continue;
+                }
+                int matchingPixels = 0;
+                for (int dy = -2; dy <= 2; dy++) {
+                    for (int dx = -2; dx <= 2; dx++) {
+                        int pixel = screen.getPixel(x + dx, y + dy);
+                        if (Math.abs(Color.red(pixel) - Color.red(panelColor)) <= 5
+                                && Math.abs(Color.green(pixel) - Color.green(panelColor)) <= 5
+                                && Math.abs(Color.blue(pixel) - Color.blue(panelColor)) <= 5) {
+                            matchingPixels++;
+                        }
+                    }
+                }
+                if (visible ? matchingPixels >= 21 : matchingPixels <= 4) return true;
             } finally {
                 screen.recycle();
             }
             SystemClock.sleep(50);
         } while (SystemClock.uptimeMillis() < deadline);
+        System.out.println("Settings swatch unavailable at " + x + "," + y
+                + " in the last " + lastWidth + "x" + lastHeight + " screenshot");
         return false;
     }
 

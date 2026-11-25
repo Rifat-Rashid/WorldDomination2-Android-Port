@@ -17,7 +17,8 @@ ISOLATED_TARGET = TARGET + ".saveprobe"
 TEST = (TARGET + ".game.rendering.ManualSaveProcessRestartInstrumentedTest"
         "#manualSaveRestoresAfterProcessDeath")
 PHASES = ("save", "load")
-SCHEMA = "wd2-manual-save-persistence-v1"
+SLOTS = (1, 2, 3)
+SCHEMA = "wd2-manual-save-persistence-v2"
 DEFAULT_OUTPUT = Path("app/build/reports/androidTests/manual-save-persistence.json")
 
 
@@ -40,13 +41,20 @@ def parse_instrumentation(text, phase):
     _check(type(pid) is int and pid > 0, "Invalid process PID")
     _check(isinstance(token, str) and re.fullmatch(rf"{pid}:[0-9]+", token),
            "Invalid PID/start-time process token")
-    _check(type(receipt.get("turn")) is int and receipt["turn"] == 1, "Wrong match turn")
-    _check(receipt.get("queued") == ["RESOURCES", "RESEARCH"], "Wrong queued orders")
-    checkpoint = receipt.get("checkpointSha256")
-    _check(isinstance(checkpoint, str) and re.fullmatch(r"[0-9a-f]{64}", checkpoint),
-           "Invalid checkpoint digest")
-    for key in ("funds", "nextRandomBits"):
-        _check(type(receipt.get(key)) is int, "Invalid " + key)
+    slots = receipt.get("slots")
+    _check(isinstance(slots, list) and len(slots) == len(SLOTS), "Expected three slot receipts")
+    for number, slot in zip(SLOTS, slots):
+        _check(isinstance(slot, dict) and type(slot.get("slot")) is int
+               and slot["slot"] == number, "Missing, duplicate or unordered slots")
+        _check(type(slot.get("turn")) is int and slot["turn"] == number, "Wrong match turn")
+        _check(slot.get("queued") == ["RESOURCES", "RESEARCH"], "Wrong queued orders")
+        checkpoint = slot.get("checkpointSha256")
+        _check(isinstance(checkpoint, str) and re.fullmatch(r"[0-9a-f]{64}", checkpoint),
+               "Invalid checkpoint digest")
+        for key in ("funds", "nextRandomBits"):
+            _check(type(slot.get(key)) is int, "Invalid " + key)
+    _check(len({slot["checkpointSha256"] for slot in slots}) == len(SLOTS),
+           "Save slots must have distinct checkpoints")
     return receipt
 
 
@@ -88,8 +96,7 @@ def verify_receipt(path, environment=None):
     save_token, load_token = saved["processToken"], loaded["processToken"]
     _check(save_token != load_token and int(save_token.split(":")[1]) < int(load_token.split(":")[1]),
            "Process reused or start clock did not advance")
-    for key in ("funds", "checkpointSha256", "nextRandomBits"):
-        _check(saved[key] == loaded[key], "Saved and loaded evidence disagree: " + key)
+    _check(saved["slots"] == loaded["slots"], "Saved and loaded slot evidence disagree")
     return receipt
 
 
@@ -176,7 +183,7 @@ def main(argv=None):
     except (OSError, ValueError) as error:
         print("Manual-save persistence probe FAIL: " + str(error))
         return 1
-    print("Manual-save persistence probe PASS: save and load verified in distinct processes")
+    print("Manual-save persistence probe PASS: all three slots verified in distinct processes")
     return 0
 
 
