@@ -29,6 +29,12 @@ public final class FlashCenterUiRenderer implements Disposable {
     public boolean draw(SpriteBatch batch, OriginalFlashAnimationAssets assets,
                         Rectangle bounds, String frameLabel, String religionCode,
                         int[] researchFrames) {
+        return draw(batch, assets, bounds, frameLabel, religionCode, researchFrames, true);
+    }
+
+    public boolean draw(SpriteBatch batch, OriginalFlashAnimationAssets assets,
+                        Rectangle bounds, String frameLabel, String religionCode,
+                        int[] researchFrames, boolean showResearchActions) {
         FlashAnimationTimeline centerScreen = assets.getCenterUiTimeline();
         if (centerScreen == null || !assets.areCenterUiAssetsLoaded()) {
             return false;
@@ -46,6 +52,10 @@ public final class FlashCenterUiRenderer implements Disposable {
         }
         colors[0].identity();
         for (FlashAnimationTimeline.Layer layer : frame.layers) {
+            if (!showResearchActions
+                    && ("btnCancel".equals(layer.name) || "btnAccept".equals(layer.name))) {
+                continue;
+            }
             drawLayer(batch, assets, layer, bounds, transformScratch[0],
                     religionCode, researchFrames, scaleX, scaleY, 0);
         }

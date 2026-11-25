@@ -356,6 +356,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private final Rectangle modal = new Rectangle();
     private final Rectangle modalAccept = new Rectangle();
     private final Rectangle modalCancel = new Rectangle();
+    private final Rectangle technologyAccept = new Rectangle();
+    private final Rectangle technologyCancel = new Rectangle();
     private final SetupScreenLayout setupLayout = new SetupScreenLayout();
     private final Rectangle researchPrevious = new Rectangle();
     private final Rectangle researchNext = new Rectangle();
@@ -712,6 +714,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             TechnologyScreenLayout.setCardBounds(i, modal, technologyCards[i]);
         }
         TechnologyScreenLayout.setSelectedBounds(modal, technologySelectedArea);
+        TechnologyScreenLayout.setFooterButtonBounds(modal, true, technologyAccept);
+        TechnologyScreenLayout.setFooterButtonBounds(modal, false, technologyCancel);
         float researchRowHeight = Math.min(18f, (modal.height - 83f) / RESEARCH_ROWS_PER_PAGE);
         float researchTop = modal.y + modal.height - 50f;
         for (int i = 0; i < researchRows.length; i++) {
@@ -3566,8 +3570,9 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
     private void drawTechnologyModal() {
         java.util.List<String> choices = game.getResearchChoices();
         updateResearchChoiceCards(choices);
+        boolean showActions = game.getSelectedTechnology() != null;
 
-        if (drawOriginalTechnologyModal()) {
+        if (drawOriginalTechnologyModal(showActions)) {
             return;
         }
 
@@ -3579,8 +3584,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
         drawPanelTexture(modal);
-        drawOriginalButton(modalCancel);
-        drawOriginalButton(modalAccept);
+        if (showActions) {
+            drawOriginalButton(technologyCancel);
+            drawOriginalButton(technologyAccept);
+        }
         batch.end();
 
         shapes.setProjectionMatrix(camera.combined);
@@ -3609,8 +3616,10 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
             }
             shapes.rect(card.x, card.y, card.width, card.height);
         }
-        drawButtonGradient(modalCancel, false);
-        drawButtonGradient(modalAccept, false);
+        if (showActions) {
+            drawButtonGradient(technologyCancel, false);
+            drawButtonGradient(technologyAccept, false);
+        }
         shapes.end();
 
         batch.begin();
@@ -3658,11 +3667,13 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                 technologySelectedArea.x + technologySelectedArea.width / 2f,
                 technologySelectedArea.y + 14f, 7f,
                 technologySelectedArea.width - 12f);
-        font.setColor(TITLE_TEXT);
-        drawCentered("CANCEL", modalCancel.x + modalCancel.width / 2f,
-                modalCancel.y + modalCancel.height / 2f + 3f, 8f);
-        drawCentered("ACCEPT", modalAccept.x + modalAccept.width / 2f,
-                modalAccept.y + modalAccept.height / 2f + 3f, 8f);
+        if (showActions) {
+            font.setColor(TITLE_TEXT);
+            drawCentered("CANCEL", technologyCancel.x + technologyCancel.width / 2f,
+                    technologyCancel.y + technologyCancel.height / 2f + 3f, 8f);
+            drawCentered("ACCEPT", technologyAccept.x + technologyAccept.width / 2f,
+                    technologyAccept.y + technologyAccept.height / 2f + 3f, 8f);
+        }
         batch.end();
 
         shapes.begin(ShapeRenderer.ShapeType.Line);
@@ -3674,7 +3685,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         shapes.end();
     }
 
-    private boolean drawOriginalTechnologyModal() {
+    private boolean drawOriginalTechnologyModal(boolean showActions) {
         for (int i = 0; i < researchFrameIndexes.length; i++) {
             String technology = researchChoiceByCard[i];
             if (technology == null) {
@@ -3693,7 +3704,7 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
         batch.begin();
         boolean drawn = centerUiRenderer.draw(batch, flashAnimationAssets, modal,
                 FlashCenterUiRenderer.RESEARCH_FRAME,
-                game.getHuman().getReligionCode(), researchFrameIndexes);
+                game.getHuman().getReligionCode(), researchFrameIndexes, showActions);
         if (drawn) {
             drawOriginalTechnologyText();
             batch.setColor(Color.WHITE);
@@ -5496,6 +5507,11 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
                     }
                     return;
                 }
+                if (game.getSelectedTechnology() != null) {
+                    if (technologyAccept.contains(x, y)) acceptActionSelection(false);
+                    else if (technologyCancel.contains(x, y)) cancelActionSelection(false);
+                }
+                return;
             }
             if (selectMapTargetCity(action, x, y)) {
                 return;

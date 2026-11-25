@@ -78,6 +78,21 @@ public final class TechnologyUiInstrumentedTest {
                     assertTrue("Source white list bar must not remain orange: " + Integer.toHexString(white),
                             red > 180 && green > 180 && blue > 180
                                     && Math.abs(red - green) < 12 && Math.abs(green - blue) < 12);
+                    Vector2 cancel = sourcePoint(app, modal, 255.7f, 394.5f);
+                    Vector2 accept = sourcePoint(app, modal, 506.7f, 394.5f);
+                    assertTrue("The empty source Cancel area shows its orange backing",
+                            sourceFooterAreaIsBlank(app, modal, 228.2f));
+                    assertTrue("The empty source Accept area shows its orange backing",
+                            sourceFooterAreaIsBlank(app, modal, 479.2f));
+                    int initialFunds = game.getTurnMoneyMillions();
+                    java.util.List<String> messages = new java.util.ArrayList<>(game.getMessages());
+                    tap(app, cancel);
+                    tap(app, accept);
+                    assertEquals(GameState.Action.RESEARCH, game.getSelectedAction());
+                    assertTrue(field("modalOpen").getBoolean(app));
+                    assertEquals(0, game.getQueuedActionCount());
+                    assertEquals(initialFunds, game.getTurnMoneyMillions());
+                    assertEquals(messages, game.getMessages());
                     capture(app, "source-technology-original-empty.png");
                     String[] choices = (String[]) field("researchChoiceByCard").get(app);
                     Rectangle[] cards = (Rectangle[]) field("technologyCards").get(app);
@@ -90,10 +105,28 @@ public final class TechnologyUiInstrumentedTest {
                     tap(app, cards[available]);
                     assertTrue(game.isResearchTechnologySelected(technology));
                     capture(app, "source-technology-original-selected.png");
+                    // The same oracle must reject the old always-visible state in both regions.
+                    assertFalse("Populated Cancel reveals the authored button",
+                            sourceFooterAreaIsBlank(app, modal, 228.2f));
+                    assertFalse("Populated Accept reveals the authored button",
+                            sourceFooterAreaIsBlank(app, modal, 479.2f));
+                    tap(app, cards[available]);
+                    render(app);
+                    assertTrue("Deselecting the last item hides Cancel again",
+                            sourceFooterAreaIsBlank(app, modal, 228.2f));
+                    assertTrue("Deselecting the last item hides Accept again",
+                            sourceFooterAreaIsBlank(app, modal, 479.2f));
+                    tap(app, cards[available]);
+                    tap(app, cancel);
+                    assertNull(game.getSelectedAction());
+                    assertEquals(initialFunds, game.getTurnMoneyMillions());
+                    tap(app, row);
+                    tap(app, cards[available]);
+                    render(app);
                     assertSourceResearchFields(app, game, choices, cards, available);
                     assertMinifiedSelectedTextRetainsWhiteInk(app);
                     int funds = game.getTurnMoneyMillions();
-                    tap(app, (Rectangle) field("modalAccept").get(app));
+                    tap(app, accept);
                     assertEquals(GameState.Action.RESEARCH, game.getQueuedAction(0));
                     assertEquals(funds - cost, game.getTurnMoneyMillions());
                     assertEquals(GL20.GL_NO_ERROR, Gdx.gl.glGetError());
@@ -151,6 +184,32 @@ public final class TechnologyUiInstrumentedTest {
         return ((Viewport) field("viewport").get(app)).project(new Vector2(
                 modal.x + (x - 205f) * modal.width / 365f,
                 modal.y + modal.height - (y - 135f) * modal.height / 275f));
+    }
+
+    private static boolean sourceFooterAreaIsBlank(WorldDominationGame app, Rectangle modal,
+                                                   float buttonLeft) throws Exception {
+        // Independent Python phone captures show solid #ff7800 in both inset areas
+        // before selection and no orange pixels there after the buttons appear.
+        Vector2 topLeft = sourcePoint(app, modal, buttonLeft + 6f, 387f);
+        Vector2 bottomRight = sourcePoint(app, modal, buttonLeft + 49f, 402f);
+        int x = (int) Math.ceil(topLeft.x), y = (int) Math.ceil(bottomRight.y);
+        int width = (int) Math.floor(bottomRight.x) - x;
+        int height = (int) Math.floor(topLeft.y) - y;
+        Pixmap pixels = ScreenUtils.getFrameBufferPixmap(x, y, width, height);
+        int orange = 0;
+        try {
+            for (int py = 0; py < height; py++) {
+                for (int px = 0; px < width; px++) {
+                    int color = pixels.getPixel(px, py);
+                    int red = color >>> 24 & 255, green = color >>> 16 & 255, blue = color >>> 8 & 255;
+                    if (red >= 180 && green >= 60 && green <= 190 && blue <= 70
+                            && red > green * 1.2f) orange++;
+                }
+            }
+        } finally {
+            pixels.dispose();
+        }
+        return orange >= width * height * 0.95f;
     }
 
     private static int[] inkBounds(WorldDominationGame app, Rectangle modal,
@@ -314,6 +373,10 @@ public final class TechnologyUiInstrumentedTest {
     private static void tap(WorldDominationGame app, Rectangle bounds) throws Exception {
         Vector2 screen = ((Viewport) field("viewport").get(app))
                 .project(new Vector2(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2));
+        tap(app, screen);
+    }
+
+    private static void tap(WorldDominationGame app, Vector2 screen) {
         int x = Math.round(screen.x), y = Gdx.graphics.getHeight() - Math.round(screen.y);
         app.touchDown(x, y, 0, 0); app.touchUp(x, y, 0, 0);
     }

@@ -112,6 +112,15 @@ public final class TechnologyScreenLayout {
                 SELECTED_HEIGHT * scaleY);
     }
 
+    /** Authored button bounds in the (205, 135, 365, 275) phone crop. */
+    public static Rectangle setFooterButtonBounds(Rectangle modal, boolean accept, Rectangle output) {
+        float scaleX = modal.width / ART_WIDTH;
+        float scaleY = modal.height / ART_HEIGHT;
+        float left = accept ? 274.2f : 23.2f;
+        return output.set(modal.x + left * scaleX, modal.y + 3.5f * scaleY,
+                55f * scaleX, 24f * scaleY);
+    }
+
     private static void checkCard(int cardIndex) {
         if (cardIndex < 0 || cardIndex >= CARD_COUNT) {
             throw new IndexOutOfBoundsException("Technology card: " + cardIndex);
