@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.FileTime;
 import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -44,6 +45,9 @@ public final class GameSaveStoreTest {
         assertFalse(store.hasSave(3));
         assertNull(store.describe(2));
         assertNull(store.describe(3));
+        GameSaveStore.LatestSave latest = store.latestCompatible();
+        assertEquals(1, latest.slot);
+        assertEquals(store.load().getTurn(), latest.turn);
         assertArrayEquals(legacyCheckpoint, Files.readAllBytes(legacyFile));
 
         GameState replacement = new GameState(2, 59L);
@@ -117,6 +121,83 @@ public final class GameSaveStoreTest {
         assertEquals(1, store.describe(2).difficulty);
         assertArrayEquals(GameSaveCodec.encode(first), GameSaveCodec.encode(store.load(1)));
         assertArrayEquals(GameSaveCodec.encode(third), GameSaveCodec.encode(store.load(3)));
+    }
+
+    @Test
+    public void latestCompatibleUsesFileModificationTimesAndBreaksTiesBySlot() throws IOException {
+        Path firstFile = saveFile();
+        Path secondFile = firstFile.resolveSibling("match-slot-2.wd2");
+        Path thirdFile = firstFile.resolveSibling("match-slot-3.wd2");
+        GameSaveStore store = createStore(firstFile);
+        GameState match = new GameState(1, 42L);
+        store.save(3, match);
+        store.save(2, match);
+        store.save(1, match);
+        FileTime older = FileTime.fromMillis(10_000L);
+        FileTime newer = FileTime.fromMillis(20_000L);
+        Files.setLastModifiedTime(firstFile, older);
+        Files.setLastModifiedTime(secondFile, newer);
+        Files.setLastModifiedTime(thirdFile, older);
+
+        assertEquals(2, createStore(firstFile).latestCompatible().slot);
+        Files.setLastModifiedTime(thirdFile, newer);
+        assertEquals(2, store.latestCompatible().slot);
+        Files.setLastModifiedTime(firstFile, newer);
+        assertEquals(1, store.latestCompatible().slot);
+        Files.setLastModifiedTime(thirdFile, FileTime.fromMillis(30_000L));
+        assertEquals(3, store.latestCompatible().slot);
+    }
+
+    @Test
+    public void latestCompatibleSkipsMissingAndInvalidCheckpoints() throws IOException {
+        Path firstFile = saveFile();
+        Path secondFile = firstFile.resolveSibling("match-slot-2.wd2");
+        Path thirdFile = firstFile.resolveSibling("match-slot-3.wd2");
+        GameSaveStore store = createStore(firstFile);
+        assertNull(store.latestCompatible());
+        GameState match = new GameState(1, 42L);
+        store.save(1, match);
+        store.save(2, match);
+        byte[] corrupt = Files.readAllBytes(secondFile);
+        corrupt[corrupt.length - 1] ^= 1;
+        Files.write(secondFile, corrupt);
+        Files.setLastModifiedTime(firstFile, FileTime.fromMillis(10_000L));
+        Files.setLastModifiedTime(secondFile, FileTime.fromMillis(20_000L));
+        Files.createDirectory(thirdFile);
+
+        GameSaveStore.LatestSave latest = store.latestCompatible();
+        assertEquals(1, latest.slot);
+        assertEquals(match.getTurn(), latest.turn);
+        Files.delete(firstFile);
+        assertNull(store.latestCompatible());
+    }
+
+    @Test
+    public void latestCompatibleReflectsAnOverwriteWithAnEarlierGameTurn() throws IOException {
+        Path firstFile = saveFile();
+        Path secondFile = firstFile.resolveSibling("match-slot-2.wd2");
+        GameSaveStore store = createStore(firstFile);
+        GameState newMatch = new GameState(0, 17L);
+        GameState progressedMatch = new GameState(2, 59L);
+        progressedMatch.selectAction(GameState.Action.RESOURCES);
+        assertTrue(progressedMatch.acceptSelectedAction());
+        progressedMatch.selectAction(GameState.Action.MASS_MEDIA);
+        assertTrue(progressedMatch.acceptSelectedAction());
+        progressedMatch.confirmTurn();
+        assertTrue(progressedMatch.getTurn() > newMatch.getTurn());
+        store.save(1, progressedMatch);
+        store.save(2, progressedMatch);
+        Files.setLastModifiedTime(firstFile, FileTime.fromMillis(10_000L));
+        Files.setLastModifiedTime(secondFile, FileTime.fromMillis(20_000L));
+        GameSaveStore.LatestSave latest = store.latestCompatible();
+        assertEquals(2, latest.slot);
+        assertEquals(progressedMatch.getTurn(), latest.turn);
+
+        store.save(1, newMatch);
+        latest = store.latestCompatible();
+        assertEquals(1, latest.slot);
+        assertEquals(newMatch.getTurn(), latest.turn);
+        assertArrayEquals(GameSaveCodec.encode(newMatch), GameSaveCodec.encode(store.load(latest.slot)));
     }
 
     @Test

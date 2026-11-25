@@ -35,6 +35,17 @@ public final class GameSaveStore {
         }
     }
 
+    /** Display fields for the compatible checkpoint selected for Continue. */
+    public static final class LatestSave {
+        public final int slot;
+        public final int turn;
+
+        private LatestSave(int slot, int turn) {
+            this.slot = slot;
+            this.turn = turn;
+        }
+    }
+
     private final File[] slotFiles = new File[SLOT_COUNT];
     private final AtomicReplace atomicReplace;
 
@@ -100,6 +111,29 @@ public final class GameSaveStore {
     public SlotDescription describe(int slot) throws IOException {
         File saveFile = fileForSlot(slot);
         return saveFile.isFile() ? new SlotDescription(loadFile(saveFile)) : null;
+    }
+
+    /**
+     * Returns the compatible checkpoint with the newest file modification time, or null if none.
+     * Ties favor the lowest slot.
+     */
+    public LatestSave latestCompatible() {
+        LatestSave latest = null;
+        long latestModified = Long.MIN_VALUE;
+        for (int slot = FIRST_SLOT; slot <= SLOT_COUNT; slot++) {
+            File saveFile = fileForSlot(slot);
+            if (!saveFile.isFile()) continue;
+            long modified = saveFile.lastModified();
+            if (modified <= latestModified) continue;
+            try {
+                GameState state = loadFile(saveFile);
+                latest = new LatestSave(slot, state.getTurn());
+                latestModified = modified;
+            } catch (IOException unreadable) {
+                // A missing, damaged or unsupported checkpoint does not hide another slot.
+            }
+        }
+        return latest;
     }
 
     private File fileForSlot(int slot) {
