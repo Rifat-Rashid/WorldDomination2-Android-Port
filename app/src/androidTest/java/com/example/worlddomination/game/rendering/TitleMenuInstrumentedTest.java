@@ -32,6 +32,7 @@ import static com.example.worlddomination.game.rendering.SettingsSaveLoadInstrum
 import static com.example.worlddomination.game.rendering.SettingsSaveLoadInstrumentedTest.tap;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
@@ -75,7 +76,7 @@ public final class TitleMenuInstrumentedTest {
             assertFalse(splash(app).isVisible());
             GameState loaded = game(app);
             assertNotNull(loaded);
-            assertArrayEquals(GameSaveCodec.encode(latest), GameSaveCodec.encode(loaded));
+            assertRestoredMatch(store, 2, latest, loaded);
             tap(app, title.continueGame);
             assertSame("A second touch cannot reload the title checkpoint", loaded, game(app));
         });
@@ -105,8 +106,18 @@ public final class TitleMenuInstrumentedTest {
             GameState loaded = game(app);
             assertFalse(splash(app).isVisible());
             assertNotNull(loaded);
-            assertArrayEquals(GameSaveCodec.encode(fallback), GameSaveCodec.encode(loaded));
+            assertRestoredMatch(store, 1, fallback, loaded);
         });
+    }
+
+    private static void assertRestoredMatch(GameSaveStore store, int slot, GameState checkpoint,
+                                            GameState loaded) throws Exception {
+        assertArrayEquals(GameSaveCodec.encode(checkpoint), GameSaveCodec.encode(store.load(slot)));
+        // A load returns to the battlefield, retaining accepted orders and closing any draft.
+        checkpoint.cancelSelection();
+        assertNull(loaded.getSelectedAction());
+        assertEquals(GameState.Action.RESOURCES, loaded.getQueuedAction(0));
+        assertArrayEquals(GameSaveCodec.encode(checkpoint), GameSaveCodec.encode(loaded));
     }
 
     private static GameState checkpoint(int turns) {
