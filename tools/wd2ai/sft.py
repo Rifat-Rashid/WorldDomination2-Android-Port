@@ -8,6 +8,7 @@ import re
 from pathlib import Path
 
 from base_model import REVISION, TEMPLATE_SHA256, WEIGHTS_SHA256
+from corpus import verify_dataset
 
 CONTEXT = 2048
 DEPLOYMENT_OUTPUT_BUDGET = 20
@@ -73,13 +74,7 @@ def train(args):
     if not train_rows:
         raise ValueError("No real decisions supplied")
     if not args.smoke:
-        manifest = json.loads((args.dataset / "report.json").read_text(encoding="utf8"))
-        for split, count in (("train", 1600), ("validation", 200), ("test", 200)):
-            path = args.dataset / f"{split}.jsonl"
-            if manifest["counts"][split] != count or manifest["sha256"][split] != file_hash(path):
-                raise ValueError(f"Split provenance or count mismatch for {split}")
-        if len(train_rows) != 1600 or len(validation) != 200:
-            raise ValueError("Expected the complete reviewed dataset")
+        verify_dataset(args.dataset)
     training_rows = [encode_example(tokenizer, row) for row in train_rows]
     validation_rows = [encode_example(tokenizer, row) for row in validation]
     supervised = [sum(token != -100 for token in row["labels"]) for row in training_rows]
@@ -107,12 +102,14 @@ def train(args):
         model, r=16, lora_alpha=32, lora_dropout=0, random_state=SEED,
         target_modules=["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"],
         use_gradient_checkpointing="unsloth")
+    # Keep eight evaluations per epoch for both the original and expanded experiment.
+    checkpoint_steps = max(1, (len(training_rows) + 63) // 64)
     trainer_args = TrainingArguments(
         output_dir=str(args.out), num_train_epochs=1, max_steps=1 if args.smoke else -1,
         per_device_train_batch_size=1 if args.smoke else 2, gradient_accumulation_steps=1 if args.smoke else 4,
         per_device_eval_batch_size=1, learning_rate=1e-4, warmup_ratio=0.04,
-        logging_steps=1 if args.smoke else 5, save_steps=1 if args.smoke else 25,
-        eval_strategy="no" if args.smoke else "steps", eval_steps=25,
+        logging_steps=1 if args.smoke else 5, save_steps=1 if args.smoke else checkpoint_steps,
+        eval_strategy="no" if args.smoke else "steps", eval_steps=checkpoint_steps,
         load_best_model_at_end=not args.smoke, metric_for_best_model="eval_loss",
         report_to="none", seed=SEED, bf16=bf16, fp16=not bf16, dataloader_pin_memory=False)
     trainer = Trainer(model=model, args=trainer_args, train_dataset=Dataset.from_list(training_rows),

@@ -79,6 +79,18 @@ The full Windows training run used Python 3.12.0, Unsloth and unsloth-zoo 2026.1
 
 Run `export_gguf.py --run <training-run> --source <b7700-source-dir> --bin <b7700-binary-dir>` with the training interpreter to create standalone F16, Q8_0 and Q4_K_M exports and their byte counts and checksums. Use `tools/wd2play/score_choices.py` on the validation split before choosing a deployment quantization. The bundled APK option in the runtime guide makes that specific file usable offline from first launch.
 
+### Extend a completed experiment
+
+Choose a fresh training root and keep the parent run intact. Supply the previous certified examples, reviews and Android receipts along with evidence from new, independently reviewed families. To grow the training split from 1,600 to 6,400, add these arguments to the export command:
+
+```powershell
+--extend-from <parent-reviewed-directory> --train-count 6400
+```
+
+All original decisions keep their position, message digest, review and screenshot digest. The exporter fills additional positions from new families. Validation and test messages stay byte-identical to the parent. The expanded report records the parent's split hashes and the collected seeds. Preview and train using the usual MCP tools against the new training root. Each run trains from the pinned base for one epoch and evaluates eight checkpoints.
+
+To compare gameplay across dataset sizes, freeze a JSON manifest with purpose `prospective_gameplay` and a list of previously unused episode and seed configurations before fitting. For each comparison policy, run `tools/wd2play/compare_checkpoints.py` with the same manifest, its SHA-256, the expanded dataset report, a policy label and a unique output directory. Supply the pinned server and GGUF to evaluate a model. The harness checks for re-used collection seeds, replays the same setups for each policy and records every action, fallback and terminal outcome.
+
 ```powershell
 & $bridge -m unittest discover -s tools/wd2ai -p 'test_*.py'
 ```

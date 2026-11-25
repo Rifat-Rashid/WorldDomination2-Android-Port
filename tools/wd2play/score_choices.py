@@ -7,7 +7,8 @@ from pathlib import Path
 import random
 import subprocess
 
-from evaluate import LLAMA_COMMIT, compact, inference_server, sha256, stream_rows, write_json
+from evaluate import (DECODER, LLAMA_COMMIT, compact, complete_reviewed_report,
+                      inference_server, sha256, stream_rows, write_json)
 
 
 def family_interval(groups):
@@ -27,7 +28,8 @@ def family_interval(groups):
 def score(args):
     report = json.loads((args.dataset / "report.json").read_text(encoding="utf8"))
     path = args.dataset / (args.split + ".jsonl")
-    if report["counts"] != {"train": 1600, "validation": 200, "test": 200} or sha256(path) != report["sha256"][args.split]:
+    if (not complete_reviewed_report(report)
+            or sha256(path) != report["sha256"][args.split]):
         raise ValueError("Expected a complete reviewed export and the frozen split")
     version = subprocess.run([str(args.server), "--version"], capture_output=True, text=True, check=True)
     if LLAMA_COMMIT[:9] not in version.stdout + version.stderr:
@@ -42,7 +44,7 @@ def score(args):
             raise ValueError("Provenance does not match the frozen row or family split")
     params = {"split": args.split, "split_sha256": sha256(path), "model_sha256": sha256(args.model),
               "llama_commit": LLAMA_COMMIT, "gpu_layers": args.gpu_layers, "threads": args.threads,
-              "deadline_s": args.deadline}
+              "deadline_s": args.deadline, "decoder": DECODER}
     args.out.mkdir(parents=True, exist_ok=True)
     manifest = args.out / "parameters.json"
     if manifest.exists() and json.loads(manifest.read_text()) != params:

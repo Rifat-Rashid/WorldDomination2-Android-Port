@@ -24,6 +24,15 @@ OUTPUT_TOKENS = 20
 CHAT_SUFFIX = "<|im_start|>assistant\n<think>\n\n</think>\n\n"
 PREFERENCE = "Preserve citizens, exploit threats, and build sustainable fighting strength."
 POLICIES = ("existing", "stochastic", "stock", "prequant", "deployment")
+DECODER = "legal-greedy-v1"
+
+
+def complete_reviewed_report(report):
+    original = {"train": 1600, "validation": 200, "test": 200}
+    target = report.get("target_counts", original)
+    train = target.get("train")
+    return (report.get("complete") is True and type(train) is int and train >= 1600
+            and target == dict(original, train=train) and report.get("counts") == target)
 
 
 def compact(value):
@@ -71,7 +80,7 @@ def verified_manifest(args):
         if args.dataset_report is None:
             raise ValueError("Held-out runs require the frozen dataset report")
         report = read_json(args.dataset_report)
-        if report["counts"] != {"train": 1600, "validation": 200, "test": 200}:
+        if not complete_reviewed_report(report):
             raise ValueError("Held-out evaluation requires the complete reviewed dataset")
         if any(report["families"].get(family) != split for family in families):
             raise ValueError(f"Evaluation may use registered {split} families only")
@@ -150,7 +159,10 @@ class LocalServer:
         grammar += " | ".join(compact(plan_id) for plan_id in ids)
         result = request("/completion", {
             "prompt": tokens, "grammar": grammar, "n_predict": OUTPUT_TOKENS,
-            "temperature": 0, "samplers": [], "stream": False, "cache_prompt": False,
+            # b7700 always appends a distribution sampler. With no temperature stage
+            # it samples raw logits even at temperature zero. Android uses greedy.
+            "temperature": 0, "samplers": ["temperature"], "seed": 3407,
+            "stream": False, "cache_prompt": False,
         })
         content = result["content"]
         chosen = re.fullmatch(r'\{"plan_id":"(P[0-9]{2})"\}', content)
@@ -322,7 +334,7 @@ def evaluate(args):
             raise ValueError(f"llama-server version does not match {required}")
     parameters = {"purpose": manifest["purpose"], "manifest_sha256": args.manifest_sha256,
                   "dataset_report_sha256": sha256(args.dataset_report) if args.dataset_report else None,
-                  "server_version": version, "android_llama_commit": LLAMA_COMMIT,
+                  "server_version": version, "android_llama_commit": LLAMA_COMMIT, "decoder": DECODER,
                   "context_tokens": CONTEXT, "max_output_tokens": OUTPUT_TOKENS,
                   "deadline_seconds": args.deadline, "threads": args.threads, "gpu_layers": args.gpu_layers,
                   "policies": labels, "model_sha256": {label: sha256(models[label]) for label in labels

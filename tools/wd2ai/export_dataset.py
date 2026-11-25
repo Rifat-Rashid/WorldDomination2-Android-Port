@@ -9,8 +9,7 @@ import tempfile
 
 from game_tools import engine
 from sft import encode_example, file_hash
-
-QUOTA = {"train": 1600, "validation": 200, "test": 200}
+from corpus import ORIGINAL_COUNTS, frozen_decisions
 
 
 def packed(x):
@@ -91,6 +90,14 @@ def sample_families(rows, limit):
 
 def export(args):
     from transformers import AutoTokenizer
+    parent_report, frozen = (frozen_decisions(args.extend_from) if args.extend_from else
+                             ({}, {split: [] for split in ORIGINAL_COUNTS}))
+    if args.train_count < ORIGINAL_COUNTS["train"] or (args.extend_from and
+            args.train_count <= parent_report["counts"]["train"]):
+        raise ValueError("Choose a larger training target for an extension")
+    quota = dict(ORIGINAL_COUNTS, train=args.train_count)
+    original_episodes = {row["episode"] for rows in frozen.values() for row in rows}
+    retained = {row["decision_id"] for rows in frozen.values() for row in rows}
     tokenizer = AutoTokenizer.from_pretrained(args.base, local_files_only=True)
     reviews = {}
     for review in lines(args.reviews):
@@ -110,10 +117,10 @@ def export(args):
     token_lengths = []
     degrees = Counter()
     teachers = Counter()
-    output = {k: [] for k in QUOTA}
-    eligible = {k: [] for k in QUOTA}
+    output = {k: [] for k in quota}
+    eligible = {k: [] for k in quota}
     audit = []
-    for log in sorted(args.episodes.glob("*.jsonl")):
+    for log in sorted(args.episodes.glob("*.jsonl"), key=lambda p: (p.stem not in original_episodes, p.name)):
         raw = list(lines(log))
         cfg, last = raw[0], raw[-1]
         family = cfg["family"]
@@ -133,6 +140,8 @@ def export(args):
         families[family] = split
         for row in raw:
             if row["type"] != "decision":
+                continue
+            if family in parent_report.get("families", {}) and row["decision_id"] not in retained:
                 continue
             review = reviews.get(row["decision_id"])
             if not review or not review["accepted"]:
@@ -171,7 +180,15 @@ def export(args):
                                     "actions": [a["action"] for a in plans[selected]], "difficulty": cfg["difficulty"],
                                     "teacher": cfg["teacher"], "audit": provenance})
     for split, choices in eligible.items():
-        for item in sample_families(choices, QUOTA[split]):
+        by_id = {x["audit"]["decision_id"]: x for x in choices}
+        originals = []
+        for prior in frozen[split]:
+            item = by_id.pop(prior["decision_id"], None)
+            if item is None or dict(item["audit"], row=prior["row"]) != prior:
+                raise ValueError("Original decision, evidence or review changed: " + prior["decision_id"])
+            originals.append(item)
+        added = sample_families(by_id.values(), quota[split] - len(originals))
+        for item in [*originals, *added]:
             counts[split] += 1
             output[split].append(item["encoded"])
             token_lengths.append(item["length"])
@@ -181,8 +198,8 @@ def export(args):
             teachers[item["teacher"]] += 1
             audit.append(packed(dict(item["audit"], row=counts[split])))
         rejected["split_full"] += len(choices) - counts[split]
-    if not args.partial and any(counts[k] != target for k, target in QUOTA.items()):
-        raise ValueError(f"Insufficient verified, reviewed data: {dict(counts)}; quota {QUOTA}")
+    if not args.partial and any(counts[k] != target for k, target in quota.items()):
+        raise ValueError(f"Insufficient verified, reviewed data: {dict(counts)}; quota {quota}")
     if args.out.exists():
         raise ValueError("Choose a fresh output directory")
     args.out.parent.mkdir(parents=True, exist_ok=True)
@@ -191,10 +208,11 @@ def export(args):
         dest.mkdir()
         for split, records in {**output, "provenance": audit}.items():
             (dest / (split + ".jsonl")).write_bytes("".join(r + "\n" for r in records).encode())
-        report = {"counts": {k: counts[k] for k in QUOTA}, "families": families,
-                  "sha256": {k: file_hash(dest / (k + ".jsonl")) for k in QUOTA},
+        report = {"counts": {k: counts[k] for k in quota}, "families": families, "target_counts": quota,
+                  "seed_families": seeds, "parent_split_sha256": parent_report.get("sha256"),
+                  "sha256": {k: file_hash(dest / (k + ".jsonl")) for k in quota},
                   "action_counts": actions, "turn_decades": turns, "rejections": rejected,
-                  "teachers": teachers, "difficulty_counts": degrees, "complete": all(counts[k] == v for k, v in QUOTA.items()),
+                  "teachers": teachers, "difficulty_counts": degrees, "complete": all(counts[k] == v for k, v in quota.items()),
                   "token_range": [min(token_lengths), max(token_lengths)] if token_lengths else []}
         (dest / "report.json").write_text(json.dumps(report, indent=2), encoding="utf8")
         (dest / "DATA_CARD.md").write_text(
@@ -216,5 +234,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     for arg in ("episodes", "evidence", "reviews", "base", "out"):
         parser.add_argument("--" + arg, required=True, type=Path)
+    parser.add_argument("--extend-from", type=Path, help="Preserve all certified parent decisions and holdout splits")
+    parser.add_argument("--train-count", type=int, default=ORIGINAL_COUNTS["train"])
     parser.add_argument("--partial", action="store_true", help="Export available evidence without claiming the quota")
     export(parser.parse_args())

@@ -1,5 +1,4 @@
 """MCP entry points for the local Studio dataset preview and the WD2 Unsloth job."""
-import hashlib
 import json
 import os
 from pathlib import Path
@@ -9,6 +8,7 @@ import sys
 import httpx
 
 from studio import studio_request, studio_url, training_status
+from corpus import verify_dataset
 
 
 def workspace():
@@ -20,13 +20,7 @@ def workspace():
 
 def certified():
     directory = workspace() / "reviewed"
-    manifest = json.loads((directory / "report.json").read_text(encoding="utf8"))
-    for split, required in (("train", 1600), ("validation", 200), ("test", 200)):
-        data = (directory / (split + ".jsonl")).read_bytes()
-        if (manifest["counts"].get(split) != required or len(data.splitlines()) != required
-                or hashlib.sha256(data).hexdigest() != manifest["sha256"].get(split)):
-            raise ValueError(f"Reviewed {split} split does not pass its count and checksum gates")
-    return directory, manifest
+    return directory, verify_dataset(directory)
 
 
 async def preview_reviewed_training() -> dict:
