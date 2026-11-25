@@ -26,12 +26,15 @@ def compare(args):
         raise ValueError("Evaluation families overlap collection or the dataset is incomplete")
     if "seed_families" not in report or set(map(str, seeds)) & set(report["seed_families"]):
         raise ValueError("Expected verified collection seeds disjoint from every prospective setup")
+    if args.label in ("existing", "stochastic"):
+        if args.model is not None:
+            raise ValueError("The Java and stochastic baselines do not execute a GGUF")
+    elif args.model is None or args.server is None:
+        raise ValueError("A model policy requires both its GGUF and a llama.cpp server")
     if args.model:
         version = subprocess.run([str(args.server), "--version"], capture_output=True, text=True, check=True)
         if LLAMA_COMMIT[:9] not in version.stdout + version.stderr:
             raise ValueError("Use the same llama.cpp revision as Android")
-    elif args.label not in ("existing", "stochastic"):
-        raise ValueError("This policy requires a GGUF")
     args.out.mkdir(parents=True, exist_ok=True)
     params = dict(manifest_sha256=args.manifest_sha256, report_sha256=sha256(args.dataset_report),
                   policy=args.label, model_sha256=sha256(args.model) if args.model else None,

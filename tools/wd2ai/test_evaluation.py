@@ -49,6 +49,15 @@ class EvaluationTransportTest(unittest.TestCase):
                                               "complete": True}))
                 with self.subTest(error=error), self.assertRaisesRegex(ValueError, error):
                     compare(args)
+            report.write_text(json.dumps({"families": {}, "seed_families": {},
+                                          "counts": {"train": 1600, "validation": 200, "test": 200},
+                                          "complete": True}))
+            args.model, args.server = Path("unused.gguf"), None
+            with self.assertRaisesRegex(ValueError, "baselines do not execute"):
+                compare(args)
+            args.label = "candidate"
+            with self.assertRaisesRegex(ValueError, "both its GGUF"):
+                compare(args)
 
     def test_separates_dead_server_from_individual_request_timeout(self):
         server = LocalServer(0, 1)

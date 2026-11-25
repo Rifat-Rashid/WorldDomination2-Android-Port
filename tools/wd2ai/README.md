@@ -91,6 +91,8 @@ All original decisions keep their position, message digest, review and screensho
 
 To compare gameplay across dataset sizes, freeze a JSON manifest with purpose `prospective_gameplay` and a list of previously unused episode and seed configurations before fitting. For each comparison policy, run `tools/wd2play/compare_checkpoints.py` with the same manifest, its SHA-256, the expanded dataset report, a policy label and a unique output directory. Supply the pinned server and GGUF to evaluate a model. The harness checks for re-used collection seeds, replays the same setups for each policy and records every action, fallback and terminal outcome.
 
+Use the same decoder for the incumbent and candidate. Results recorded with `legal-greedy-v1` use the b7700 temperature stage at zero to reproduce Android's highest-scoring legal selection. Earlier evaluation manifests omitted the decoder and allowed sampling. Rerun those checkpoints in fresh output directories before calculating paired changes. Compare `choices.jsonl` across two runs to check reproducibility by decision ID.
+
 ```powershell
 & $bridge -m unittest discover -s tools/wd2ai -p 'test_*.py'
 ```
