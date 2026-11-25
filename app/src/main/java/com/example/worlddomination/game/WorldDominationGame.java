@@ -4129,8 +4129,8 @@ public final class WorldDominationGame extends ApplicationAdapter implements Inp
 
     private void drawSettingsMenu() {
         settingsMenu.layout(endgameContentBounds);
-        settingsRenderer.draw(camera.combined, batch, shapes, font, uiAssets, worldWidth, worldHeight,
-                audio.isSoundEnabled());
+        settingsRenderer.draw(camera.combined, batch, shapes, font, uiAssets, splashAssets.getTexture(),
+                worldWidth, worldHeight, audio.isSoundEnabled());
     }
 
     private void openSettingsMenu() {

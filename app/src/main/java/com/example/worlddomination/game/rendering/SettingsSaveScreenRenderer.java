@@ -1,6 +1,7 @@
 package com.example.worlddomination.game.rendering;
 
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
@@ -50,7 +51,7 @@ public final class SettingsSaveScreenRenderer {
     private float size(float value) { return value * menu.getScale(); }
 
     public void draw(Matrix4 projection, SpriteBatch batch, ShapeRenderer shapes, BitmapFont font,
-                     OriginalUiAssets art, float worldWidth, float worldHeight, boolean soundEnabled) {
+                     OriginalUiAssets art, Texture title, float worldWidth, float worldHeight, boolean soundEnabled) {
         if (menu.getScale() <= 0f) return;
         final int selected = menu.getSelectedSlot() - 1;
         final boolean confirming = menu.isConfirmingLoad();
@@ -65,20 +66,25 @@ public final class SettingsSaveScreenRenderer {
         rect(shapes, 329, 1, 470, 358, NIGHT);
         rect(shapes, 350, 305, 425, 1, CARD);
         rect(shapes, 350, 305, 70, 2, ORANGE);
-        rect(shapes, 350, 151, 425, 119, CARD);
+        rounded(shapes, x(350), y(151), size(425), size(119), size(9), CARD);
         for (int i = 0; i < menu.slots.length; i++) {
             fill(shapes, menu.slots[i], i == selected ? SELECTED : CARD);
-            if (i == selected) rect(shapes, 16, 118 - 48 * i, 3, 42, ORANGE);
+            if (i == selected) rect(shapes, 16, 123 - 48 * i, 3, 32, ORANGE);
         }
         fill(shapes, menu.save, (confirming || menu.canSave()) ? ORANGE : CARD);
         fill(shapes, menu.load, (confirming || menu.canLoad()) ? SELECTED : CARD);
         shapes.end();
 
         batch.begin();
-        batch.setColor(0.55f, 0.74f, 0.84f, 1f);
-        batch.draw(art.metalPanel, x(1), y(279), size(327), size(80), 0f, 0f, 1.35f, 0.48f);
         batch.setColor(Color.WHITE);
-        contain(batch, art.logo, 160, 283, 153, 71);
+        // Widen the empty left margin of the Flash title plate. Keep the wordmark at its authored aspect.
+        int cropY = 116, cropHeight = 350, margin = 75;
+        float titleWidth = size(80) * (title.getWidth() - margin) / cropHeight;
+        float marginWidth = size(327) - titleWidth;
+        batch.draw(title, x(1), y(279), marginWidth, size(80),
+                10, cropY, margin - 10, cropHeight, false, false);
+        batch.draw(title, x(1) + marginWidth, y(279), titleWidth, size(80),
+                margin, cropY, title.getWidth() - margin, cropHeight, false, false);
         if (readable) contain(batch, art.battleMap, 362, 201, 84, 58);
         batch.end();
 
@@ -162,8 +168,18 @@ public final class SettingsSaveScreenRenderer {
         shapes.rect(x(dx), y(dy), size(width), size(height));
     }
 
-    private static void fill(ShapeRenderer shapes, Rectangle r, Color color) {
+    private void fill(ShapeRenderer shapes, Rectangle r, Color color) {
+        rounded(shapes, r.x, r.y, r.width, r.height, size(5), color);
+    }
+
+    private static void rounded(ShapeRenderer shapes, float x, float y, float w, float h,
+                                float radius, Color color) {
         shapes.setColor(color);
-        shapes.rect(r.x, r.y, r.width, r.height);
+        shapes.rect(x + radius, y, w - 2 * radius, h);
+        shapes.rect(x, y + radius, w, h - 2 * radius);
+        shapes.circle(x + radius, y + radius, radius, 16);
+        shapes.circle(x + w - radius, y + radius, radius, 16);
+        shapes.circle(x + radius, y + h - radius, radius, 16);
+        shapes.circle(x + w - radius, y + h - radius, radius, 16);
     }
 }
