@@ -198,6 +198,9 @@ public final class SourceActionMenusInstrumentedTest {
                     begin(app, GameState.Action.ATTACK);
                     equipment(app, "soldier1");
                     assertFalse(field("modalOpen").getBoolean(app));
+                    tap(app, footer[1]);
+                    assertEquals(GameState.Action.ATTACK, state.getSelectedAction());
+                    assertEquals("attack1", menu(app).getKey());
                     tap(app, footer[0]);
                     cityTap(app, 1, 0);
                     assertEquals("attack1", menu(app).getKey());

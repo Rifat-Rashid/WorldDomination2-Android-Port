@@ -82,8 +82,13 @@ public final class SourceActionInstructionsInstrumentedTest {
                     assertEquals("propaganda1", menu(app).getKey());
                     capture(app, "source-propaganda-own-city-warning.png");
                     tap(app, cancel);
-                    assertNull(state.getSelectedAction());
+                    assertEquals(GameState.Action.PROPAGANDA, state.getSelectedAction());
+                    assertEquals("propaganda1", menu(app).getKey());
                     assertPrompt(instruction, SourceActionInstruction.OWN_CITY, 108);
+                    city(app, 1, 0);
+                    assertEquals("propaganda2", menu(app).getKey());
+                    tap(app, cancel);
+                    assertNull(state.getSelectedAction());
                     advance(app, 10);
                     city(app, 0, 0); // Source citySelect warns even with no action selected.
                     assertPrompt(instruction, SourceActionInstruction.OWN_CITY, 108);
@@ -105,8 +110,9 @@ public final class SourceActionInstructionsInstrumentedTest {
                     assertPrompt(instruction, SourceActionInstruction.CEASEFIRE, 108);
                     assertEquals("propaganda1", menu(app).getKey());
                     capture(app, "source-propaganda-ceasefire-warning.png");
-                    tap(app, ((Rectangle[]) field("actionFooterButtons").get(app))[1]);
-                    assertNull(state.getSelectedAction());
+                    tap(app, cancel);
+                    assertEquals(GameState.Action.PROPAGANDA, state.getSelectedAction());
+                    assertEquals("propaganda1", menu(app).getKey());
                     assertPrompt(instruction, SourceActionInstruction.CEASEFIRE, 108);
 
                     navigation(app, GameState.Action.DEFENSE);
@@ -129,7 +135,15 @@ public final class SourceActionInstructionsInstrumentedTest {
                     assertEquals(GameState.Action.DEFENSE, state.getSelectedAction());
                     navigation(app, GameState.Action.DEFENSE);
                     assertFalse(field("modalOpen").getBoolean(app));
-                    tap(app, ((Rectangle[]) field("actionFooterButtons").get(app))[1]);
+                    tap(app, cancel);
+                    assertEquals(GameState.Action.DEFENSE, state.getSelectedAction());
+                    assertEquals("defenseSelect", menu(app).getKey());
+                    GameState.WeaponState antiAir = state.getHuman().getWeapons().get("antiAir");
+                    antiAir.active = true;
+                    antiAir.inStock = 1;
+                    equipment(app, "antiAir");
+                    assertEquals("defense-antiAir", menu(app).getKey());
+                    tap(app, cancel);
                     assertNull(state.getSelectedAction());
                     GameState.WeaponState soldier = state.getHuman().getWeapons().get("soldier1");
                     assertNotNull(soldier);

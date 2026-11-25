@@ -85,6 +85,10 @@ public final class PropagandaUiInstrumentedTest {
                 tapCity(view, 0, 0);
                 assertFalse(field(view, "modalOpen"));
                 assertFalse(game.canAcceptPropaganda());
+                Rectangle[] footer = field(view, "actionFooterButtons");
+                tap(view, footer[1]);
+                assertEquals(GameState.Action.PROPAGANDA, game.getSelectedAction());
+                assertEquals(0, game.getQueuedActionCount());
             });
             capture(scenario, "propaganda-select-city");
             onGl(scenario, view -> {
