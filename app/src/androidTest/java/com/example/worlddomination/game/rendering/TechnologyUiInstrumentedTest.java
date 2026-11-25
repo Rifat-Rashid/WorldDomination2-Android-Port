@@ -61,17 +61,36 @@ public final class TechnologyUiInstrumentedTest {
                     float scale = modal.width / 365;
                     float outsideX = modal.x + modal.width / 2;
                     float outsideY = modal.y + modal.height + 8 * scale;
-                    int outsideBefore = pixel(app, outsideX, outsideY);
                     SpriteBatch batch = (SpriteBatch) field("batch").get(app);
                     Object previousShader = batch.getShader();
                     Rectangle row = ((Rectangle[]) field("navRows").get(app))[GameState.Action.RESEARCH.ordinal()];
                     tap(app, row);
                     assertEquals(GameState.Action.RESEARCH, game.getSelectedAction());
+                    // Both samples use Details chrome, which replaces the map frame.
+                    Method drawBackdrop = WorldDominationGame.class
+                            .getDeclaredMethod("drawPanelsAndMap", boolean.class);
+                    drawBackdrop.setAccessible(true);
+                    drawBackdrop.invoke(app, false);
+                    int outsideBefore = pixel(app, outsideX, outsideY);
                     render(app);
                     assertEquals("Oversized source backing cannot overwrite the top HUD", outsideBefore,
                             pixel(app, outsideX, outsideY));
                     assertSame("Restore the caller's shader", previousShader, batch.getShader());
                     assertFalse("Restore scissor state after the menu", Gdx.gl.glIsEnabled(GL20.GL_SCISSOR_TEST));
+                    // Render the same source clip with scissoring omitted to prove this
+                    // sample distinguishes an oversized draw from the normal clipped draw.
+                    FlashCenterUiRenderer center = (FlashCenterUiRenderer) field("centerUiRenderer").get(app);
+                    int[] researchFrames = (int[]) field("researchFrameIndexes").get(app);
+                    batch.begin();
+                    try {
+                        assertTrue(center.draw(batch, art, modal, FlashCenterUiRenderer.RESEARCH_FRAME,
+                                game.getHuman().getReligionCode(), researchFrames, false));
+                    } finally {
+                        batch.end();
+                    }
+                    assertNotEquals("Unclipped source backing must reach the outside sample",
+                            outsideBefore, pixel(app, outsideX, outsideY));
+                    render(app);
                     int white = pixel(app, modal.x + 300 * scale,
                             modal.y + modal.height - 132 * scale);
                     int red = white >>> 24 & 255, green = white >>> 16 & 255, blue = white >>> 8 & 255;
