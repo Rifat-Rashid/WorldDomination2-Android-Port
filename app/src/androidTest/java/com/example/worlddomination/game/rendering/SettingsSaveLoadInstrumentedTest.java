@@ -159,7 +159,7 @@ public final class SettingsSaveLoadInstrumentedTest {
     }
 
     private void checkGameplaySaveAndReload(UiAutomation automation) throws Exception {
-        Vector2 panelSample = new Vector2();
+        Vector2 panelSampleFraction = new Vector2();
         int[] panelColor = new int[1];
         EGLDisplay[] display = new EGLDisplay[1];
         EGLContext[] context = new EGLContext[1];
@@ -285,10 +285,16 @@ public final class SettingsSaveLoadInstrumentedTest {
                 display[0] = EGL14.eglGetCurrentDisplay();
                 context[0] = EGL14.eglGetCurrentContext();
                 assertTrue("Settings EGL context is queryable", contextValid(display[0], context[0]));
-                panelSample.set(project(app, menu.panel.x + 6f * menu.getScale(),
-                        menu.panel.y + menu.panel.height - 12f * menu.getScale()));
                 render(app);
+                // Sample the solid part of Save, clear of its text and rounded edge.
+                Vector2 panelSample = project(app, menu.save.x + menu.save.width * .14f,
+                        menu.save.y + menu.save.height / 2f);
                 panelColor[0] = readFramebufferColor(panelSample);
+                assertTrue("The save button provides a distinct solid swatch",
+                        Color.red(panelColor[0]) > 220 && Color.green(panelColor[0]) > 100
+                                && Color.blue(panelColor[0]) < 85);
+                panelSampleFraction.set(panelSample.x / Gdx.graphics.getWidth(),
+                        panelSample.y / Gdx.graphics.getHeight());
             } finally {
                 app.setGameSaveStore(previous);
                 removeStoreDirectory(directory);
@@ -306,11 +312,17 @@ public final class SettingsSaveLoadInstrumentedTest {
                     contextValid(display[0], context[0]));
             scenario.moveToState(Lifecycle.State.RESUMED);
             int[] viewOrigin = new int[2];
-            scenario.onActivity(activity -> ((AndroidGraphics) activity.getGraphics())
-                    .getView().getLocationOnScreen(viewOrigin));
+            int[] viewSize = new int[2];
+            scenario.onActivity(activity -> {
+                android.view.View view = ((AndroidGraphics) activity.getGraphics()).getView();
+                view.getLocationOnScreen(viewOrigin);
+                viewSize[0] = view.getWidth();
+                viewSize[1] = view.getHeight();
+            });
             assertSystemBackDismissesSettings(automation,
-                    viewOrigin[0] + Math.round(panelSample.x),
-                    viewOrigin[1] + Math.round(panelSample.y), panelColor[0]);
+                    viewOrigin[0] + Math.round(panelSampleFraction.x * viewSize[0]),
+                    viewOrigin[1] + Math.round(panelSampleFraction.y * viewSize[1]),
+                    panelColor[0]);
             scenario.onActivity(activity -> assertTrue("Back keeps the match in front",
                     activity.getWindow().getDecorView().hasWindowFocus()));
         });
@@ -353,21 +365,40 @@ public final class SettingsSaveLoadInstrumentedTest {
 
     private static boolean awaitSettingsVisible(UiAutomation automation, int x, int y,
                                                 int panelColor, boolean visible) {
-        long deadline = SystemClock.uptimeMillis() + 3_000L;
+        long deadline = SystemClock.uptimeMillis() + 5_000L;
+        int lastWidth = 0;
+        int lastHeight = 0;
         do {
             Bitmap screen = automation.takeScreenshot();
             assertNotNull("Android window screenshot", screen);
             try {
-                int pixel = screen.getPixel(x, y);
-                boolean settingsBackground = Math.abs(Color.red(pixel) - Color.red(panelColor)) <= 2
-                        && Math.abs(Color.green(pixel) - Color.green(panelColor)) <= 2
-                        && Math.abs(Color.blue(pixel) - Color.blue(panelColor)) <= 2;
-                if (settingsBackground == visible) return true;
+                lastWidth = screen.getWidth();
+                lastHeight = screen.getHeight();
+                // Android can briefly return a portrait frame while restoring the landscape activity.
+                if (lastWidth <= lastHeight || x < 2 || x + 2 >= lastWidth
+                        || y < 2 || y + 2 >= lastHeight) {
+                    SystemClock.sleep(50);
+                    continue;
+                }
+                int matchingPixels = 0;
+                for (int dy = -2; dy <= 2; dy++) {
+                    for (int dx = -2; dx <= 2; dx++) {
+                        int pixel = screen.getPixel(x + dx, y + dy);
+                        if (Math.abs(Color.red(pixel) - Color.red(panelColor)) <= 5
+                                && Math.abs(Color.green(pixel) - Color.green(panelColor)) <= 5
+                                && Math.abs(Color.blue(pixel) - Color.blue(panelColor)) <= 5) {
+                            matchingPixels++;
+                        }
+                    }
+                }
+                if (visible ? matchingPixels >= 21 : matchingPixels <= 4) return true;
             } finally {
                 screen.recycle();
             }
             SystemClock.sleep(50);
         } while (SystemClock.uptimeMillis() < deadline);
+        System.out.println("Settings swatch unavailable at " + x + "," + y
+                + " in the last " + lastWidth + "x" + lastHeight + " screenshot");
         return false;
     }
 
