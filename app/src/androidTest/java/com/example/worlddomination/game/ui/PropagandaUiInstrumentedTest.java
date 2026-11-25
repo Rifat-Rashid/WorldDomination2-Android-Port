@@ -85,12 +85,19 @@ public final class PropagandaUiInstrumentedTest {
                 tapCity(view, 0, 0);
                 assertFalse(field(view, "modalOpen"));
                 assertFalse(game.canAcceptPropaganda());
+                Rectangle[] footer = field(view, "actionFooterButtons");
+                tap(view, footer[1]);
+                assertEquals(GameState.Action.PROPAGANDA, game.getSelectedAction());
+                assertEquals(0, game.getQueuedActionCount());
             });
             capture(scenario, "propaganda-select-city");
             onGl(scenario, view -> {
                 tapCity(view, 1, 0);
                 GameState game = field(view, "game");
                 assertTrue(game.canAcceptPropaganda());
+                assertFalse(field(view, "modalOpen"));
+                Rectangle[] footer = field(view, "actionFooterButtons");
+                tap(view, footer[0]);
                 assertTrue(field(view, "modalOpen"));
                 tap(view, field(view, "modal"));
                 assertEquals(1, game.getSelectedTargetPlayer());
@@ -109,8 +116,9 @@ public final class PropagandaUiInstrumentedTest {
                 tapNav(view, 7);
                 assertFalse(game.canAcceptPropaganda());
                 tapCity(view, 2, 3);
-                assertTrue(field(view, "modalOpen"));
-                tap(view, field(view, "modalAccept"));
+                assertFalse(field(view, "modalOpen"));
+                Rectangle[] footer = field(view, "actionFooterButtons");
+                tap(view, footer[2]);
                 assertFalse(field(view, "modalOpen"));
                 assertEquals(GameState.Action.PROPAGANDA, game.getQueuedAction(0));
                 tapNav(view, 0);

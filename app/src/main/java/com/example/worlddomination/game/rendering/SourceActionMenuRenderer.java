@@ -13,6 +13,8 @@ import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Disposable;
 import com.badlogic.gdx.utils.JsonReader;
 import com.badlogic.gdx.utils.JsonValue;
+import com.example.worlddomination.game.assets.OriginalFlashAnimationAssets;
+import com.example.worlddomination.game.simulation.GameSetup;
 import com.example.worlddomination.game.simulation.GameState;
 import com.example.worlddomination.game.simulation.WeaponCatalog;
 import com.example.worlddomination.game.ui.SourceActionMenuState;
@@ -23,10 +25,13 @@ import java.util.Map;
 
 /** Cached four-times source centerScreen artwork with live, high-resolution text. */
 public final class SourceActionMenuRenderer implements Disposable {
-    public interface PortraitDrawer {
-        void draw(int leaderId, float x, float y, float width, float height);
-    }
     private static final String DIRECTORY = "original/ui/action-menus/";
+    // Symbol 3191 places the 70 by 75 face at the clip origin. The controls
+    // measure its inset 66 by 71 face bounds rather than the entire bitmap.
+    private static final float FACE_LEFT_INSET = 2f;
+    private static final float FACE_TOP_INSET = 2.15f;
+    private static final float[] PORTRAIT_CORNER_X = {18.95f, 158.35f, 203.65f, 343.75f};
+    private static final float[] PORTRAIT_CORNER_Y = {49.55f, 49.55f, 102.25f, 102.25f};
     // The source iPhone adapter copies religion text3 with TextFormat size 16
     // and translates its authored clip down by seven source units. The SWF's
     // unmodified field metadata still reports size 22.
@@ -165,7 +170,8 @@ public final class SourceActionMenuRenderer implements Disposable {
     }
 
     public void draw(SpriteBatch batch, Rectangle container, GameState game,
-                     SourceActionMenuState state, PortraitDrawer portraits, TurnControlRenderer turnControls,
+                     SourceActionMenuState state, OriginalFlashAnimationAssets animationAssets,
+                     TurnControlRenderer turnControls,
                      TextureRegion sourceGlass, BitmapFont propagandaFont) {
         prepare(game, state);
         if (screen == null) return;
@@ -201,14 +207,33 @@ public final class SourceActionMenuRenderer implements Disposable {
                     scheme.getFloat(2) * scale, scheme.getFloat(3) * scale, proposal.proposerId, game);
         }
         JsonValue leaders = screen.get("portraits");
-        for (int i = 0; i < leaders.size; i++) {
+        for (int i = 0; animationAssets != null && i < leaders.size; i++) {
             int player = proposal == null ? i + 1 : proposal.proposerId;
             GameState.PlayerState nation = game.getPlayerState(player);
-            if (!nation.alive || proposal == null && game.getHuman().hasCeasefireWith(player)) continue;
+            if (nation.getLeaderId() < 0 || !nation.alive
+                    || proposal == null && game.getHuman().hasCeasefireWith(player)) continue;
+            TextureRegion face = animationAssets.getLeaderPortraitFrame(
+                    GameSetup.leader(nation.getLeaderId()).portraitFrame);
+            if (face == null) continue;
             JsonValue b = leaders.get(i).get("bounds");
-            portraits.draw(nation.getLeaderId(), scratch.x + b.getFloat(0) * scale,
-                    scratch.y + scratch.height - (b.getFloat(1) + b.getFloat(3)) * scale,
-                    b.getFloat(2) * scale, b.getFloat(3) * scale);
+            float faceScaleX = b.getFloat(2) * scale / 66f;
+            float faceScaleY = b.getFloat(3) * scale / 71f;
+            float faceHeight = face.getRegionHeight() * faceScaleY;
+            batch.draw(face, scratch.x + b.getFloat(0) * scale - FACE_LEFT_INSET * faceScaleX,
+                    scratch.y + scratch.height - b.getFloat(1) * scale
+                            + FACE_TOP_INSET * faceScaleY - faceHeight,
+                    face.getRegionWidth() * faceScaleX, faceHeight);
+        }
+        if ("diplomacy".equals(key) && animationAssets != null) {
+            // These clips sit in front of the faces. At the bottom-left corner,
+            // the clip rotation cancels the inverse rotation of the bitmap fill.
+            for (int i = 0; i < PORTRAIT_CORNER_X.length; i++) {
+                TextureRegion corner = animationAssets.getDiplomacyPortraitCorner(i);
+                if (corner == null) continue;
+                batch.draw(corner, scratch.x + PORTRAIT_CORNER_X[i] * scale,
+                        scratch.y + scratch.height - (PORTRAIT_CORNER_Y[i] + 20f) * scale,
+                        20f * scale, 20f * scale);
+            }
         }
         if ("diplomacy".equals(key) && state.hasLeader()) {
             JsonValue b = screen.get("selectedPortraits").get(game.getSelectedTargetPlayer() - 1).get("bounds");
@@ -247,8 +272,9 @@ public final class SourceActionMenuRenderer implements Disposable {
         if (proposal != null ? pending : state.isAcceptVisible()) button(batch, accept, 279.15f, scale);
         if (proposal != null ? pending : state.isCancelVisible()) button(batch, cancel, 28.15f, scale);
         batch.setColor(Color.WHITE);
-        if (!screen.getBoolean("map"))
-            batch.draw(sourceGlass, scratch.x, scratch.y, scratch.width, scratch.height);
+        // The phone Details crop includes the authored HUD glass above centerScreen,
+        // even when the selected source frame is transparent for map targeting.
+        batch.draw(sourceGlass, scratch.x, scratch.y, scratch.width, scratch.height);
     }
 
     private void button(SpriteBatch batch, Texture image, float x, float scale) {

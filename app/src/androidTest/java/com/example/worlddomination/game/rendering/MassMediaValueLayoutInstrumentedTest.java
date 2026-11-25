@@ -252,7 +252,7 @@ public final class MassMediaValueLayoutInstrumentedTest {
             Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
             batch.setTransformMatrix(new Matrix4());
             batch.begin();
-            renderer.draw(batch, container, game, state, (id, x, y, w, h) -> { },
+            renderer.draw(batch, container, game, state, null,
                     controls, ui.propagandaFrame,
                     ui.propagandaStrengthFont);
             batch.end();

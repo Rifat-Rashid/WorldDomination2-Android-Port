@@ -52,6 +52,9 @@ public final class ActionSlotsInstrumentedTest {
                     assertEquals(GameState.Action.SKIP, state.getSelectedAction());
                     assertEquals("skip_action", menu(app).getKey());
                     assertEquals(0, state.getNextActionSlot());
+                    assertFalse(field("modalOpen").getBoolean(app));
+                    Rectangle[] footer = (Rectangle[]) field("actionFooterButtons").get(app);
+                    tap(app, footer[0]);
                     capture(app, "source-skip-action.png");
                     sourceTap(app, 50, 258);
                     assertNull(state.getSelectedAction()); assertEquals(0, state.getQueuedActionCount());
@@ -68,7 +71,7 @@ public final class ActionSlotsInstrumentedTest {
 
                     queueEconomy(app, state); tube(app, 0); tube(app, 0);
                     assertEquals(GameState.Action.SKIP, state.getSelectedAction());
-                    sourceTap(app, 307, 258);
+                    tap(app, footer[2]);
                     assertEquals(GameState.Action.SKIP, state.getQueuedAction(0));
                     assertEquals(GameState.Action.MASS_MEDIA, state.getQueuedAction(1));
                     assertEquals(65, state.getTurnMoneyMillions());
@@ -200,7 +203,8 @@ public final class ActionSlotsInstrumentedTest {
         navigation(app, GameState.Action.RESOURCES);
         tap(app, (Rectangle) field("modalAccept").get(app));
         assertEquals(GameState.Action.RESOURCES, state.getQueuedAction(0));
-        navigation(app, GameState.Action.MASS_MEDIA); sourceTap(app, 307, 258);
+        navigation(app, GameState.Action.MASS_MEDIA);
+        tap(app, ((Rectangle[]) field("actionFooterButtons").get(app))[2]);
         assertEquals(GameState.Action.MASS_MEDIA, state.getQueuedAction(1));
     }
     private static SourceActionMenuState menu(WorldDominationGame app) throws Exception {

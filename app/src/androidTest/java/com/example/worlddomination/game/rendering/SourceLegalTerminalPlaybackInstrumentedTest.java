@@ -314,6 +314,8 @@ public final class SourceLegalTerminalPlaybackInstrumentedTest {
             int slot = state.getQueuedActionCount();
             if (action == GameState.Action.RESEARCH || action == GameState.Action.PRODUCTION
                     || action == GameState.Action.RESOURCES) tap(app, (Rectangle) value(app, "modalAccept"));
+            else if (action == GameState.Action.MASS_MEDIA || action == GameState.Action.ATTACK)
+                tap(app, ((Rectangle[]) value(app, "actionFooterButtons"))[2]);
             else sourceTap(app, 307f, 258f);
             assertEquals("Accepted physical slot: " + requested, action, state.getQueuedAction(slot));
         }

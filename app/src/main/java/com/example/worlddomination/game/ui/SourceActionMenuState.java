@@ -9,6 +9,7 @@ public final class SourceActionMenuState {
     private boolean weaponChosen, cityChosen, leaderChosen, optionChosen, cancelling;
     private boolean pendingError;
     private boolean economyWarning;
+    private boolean mapCancelAttached;
     private String equipment;
     private int shipStrikeCount;
     private String payload;
@@ -28,6 +29,7 @@ public final class SourceActionMenuState {
         equipment = payload = error = key = null;
         pendingError = false;
         economyWarning = false;
+        mapCancelAttached = false;
         shipStrikeCount = 0;
         revision++;
     }
@@ -35,7 +37,7 @@ public final class SourceActionMenuState {
     public void begin(GameState game) {
         reset();
         action = game.getSelectedAction();
-        game.clearBattlefieldCitySelection();
+        if (supports(action)) game.clearBattlefieldCitySelection();
         refresh(game);
     }
 
@@ -48,6 +50,7 @@ public final class SourceActionMenuState {
         action = selected;
         error = message;
         economyWarning = true;
+        mapCancelAttached = false;
         pendingError = false;
         key = selected == GameState.Action.PRODUCTION ? "production_error" : "research_error-" + game.getHuman().getReligionCode();
         revision++;
@@ -70,6 +73,7 @@ public final class SourceActionMenuState {
     public boolean hasPendingError() { return pendingError; }
     public boolean hasLeader() { return leaderChosen; }
     public boolean hasOption() { return optionChosen; }
+    public boolean isCancelling() { return cancelling; }
 
     /** Presenter_interface selects the appropriate action when idle stock is tapped. */
     public static GameState.Action actionForEquipment(GameState game, String name) {
@@ -102,6 +106,8 @@ public final class SourceActionMenuState {
             }
         } else if (action == GameState.Action.DEFENSE) {
             selected = game.configureDefense(name);
+            // The authored Defense frames retain the Cancel clip even after deselecting stock.
+            if (selected) mapCancelAttached = true;
         } else if (action == GameState.Action.PREPARED_ATTACK) {
             String carrier = game.getPreparedCarrierName(0);
             if (carrier == null) selected = game.configurePreparedCarrier(name);
@@ -211,6 +217,34 @@ public final class SourceActionMenuState {
     public boolean isCancelVisible() {
         return isAcceptVisible() || "preAttack2".equals(key) || key != null
                 && (key.startsWith("ship1-") || "preAttack4-ship".equals(key));
+    }
+
+    /** The phone footer dispatches to the authored center-screen Cancel callback by name. */
+    public boolean canCancelFromMap(GameState game) {
+        return hasMapFooterCallbacks(game)
+                && (mapCancelAttached || hasEconomySelection(game) || isCancelVisible());
+    }
+
+    public boolean canAcceptFromMap(GameState game) {
+        return hasMapFooterCallbacks(game) && (hasEconomySelection(game) || isAcceptVisible());
+    }
+
+    private boolean hasMapFooterCallbacks(GameState game) {
+        // The source ship target-selection frame has no authored controls, even with queued strikes.
+        return action != null && action == game.getSelectedAction() && error == null
+                && !"preAttack4-ship".equals(key);
+    }
+
+    public void rememberEconomyMapCancel(GameState game) {
+        // Hiding buttons after clearing a draft keeps their callbacks on the same clip instances.
+        if (action == game.getSelectedAction() && hasEconomySelection(game)) {
+            mapCancelAttached = true;
+        }
+    }
+
+    private boolean hasEconomySelection(GameState game) {
+        return action == GameState.Action.PRODUCTION && game.getSelectedProductionAllocatedPercent() > 0
+                || action == GameState.Action.RESEARCH && game.getSelectedTechnology() != null;
     }
 
     public boolean isMapSelection() {

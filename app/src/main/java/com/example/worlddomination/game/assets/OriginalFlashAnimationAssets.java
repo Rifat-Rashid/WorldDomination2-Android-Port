@@ -71,6 +71,7 @@ public final class OriginalFlashAnimationAssets implements Disposable {
     /** Alive portrait clip used by both the source setup and gameplay leader cards. */
     public static final int LEADER_PORTRAITS_SYMBOL_ID = 3191;
     public static final String LEADER_PORTRAITS_TIMELINE = "leaderPortraits";
+    private static final int[] DIPLOMACY_PORTRAIT_CORNERS = {3900, 3897, 3906, 3903};
     private static final int SETUP_PORTRAIT_COUNT = 19;
     /** Visible second frame of the source setup btnCancel movie clip (5826). */
     public static final int SETUP_REMOVE_LEADER_SHAPE_ID = 5825;
@@ -240,6 +241,17 @@ public final class OriginalFlashAnimationAssets implements Disposable {
         return setupPortraitsLoaded;
     }
 
+    public TextureRegion getLeaderPortraitFrame(int frameNumber) {
+        if (!areSetupPortraitsLoaded()) return null;
+        FlashAnimationTimeline timeline = getTimeline(LEADER_PORTRAITS_TIMELINE);
+        FlashAnimationTimeline.Frame frame = timeline == null ? null : timeline.getFrame(frameNumber - 1);
+        return frame == null ? null : getShape(frame.shapeId);
+    }
+
+    public TextureRegion getDiplomacyPortraitCorner(int slot) {
+        return getShape(DIPLOMACY_PORTRAIT_CORNERS[slot]);
+    }
+
     /** The source flag family and all its nested leaf shapes share the early UI atlas. */
     public boolean areBattlefieldFlagsLoaded() {
         return earlyUiLoaded;
@@ -326,6 +338,10 @@ public final class OriginalFlashAnimationAssets implements Disposable {
             }
             for (int id : new int[] {4580, 4582, 5819, 5822}) {
                 if (!cachedShape.test(id)) throw new IllegalStateException("Missing setup control shape " + id);
+                loadedPortraitIds.add(id);
+            }
+            for (int id : DIPLOMACY_PORTRAIT_CORNERS) {
+                if (!cachedShape.test(id)) throw new IllegalStateException("Missing diplomacy corner shape " + id);
                 loadedPortraitIds.add(id);
             }
             Map<Integer, ShapeOrigin> loadedShapeOrigins = new LinkedHashMap<>();

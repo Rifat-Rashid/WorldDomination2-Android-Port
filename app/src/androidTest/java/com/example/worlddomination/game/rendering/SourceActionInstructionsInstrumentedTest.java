@@ -73,16 +73,22 @@ public final class SourceActionInstructionsInstrumentedTest {
                     assertTrue("Wrapped source instruction needs positive glyph height", glyphs.height > 0f);
                     Rectangle viewport = (Rectangle) field("instructionViewport").get(app);
                     Rectangle cancel = ((Rectangle[]) field("actionFooterButtons").get(app))[1];
-                    assertTrue("Instruction clip stays above Propaganda Cancel",
-                            viewport.height > 0f && viewport.y >= cancel.y + cancel.height + 2f);
+                    assertEquals("The phone shows instructions in the portrait strip",
+                            field("portraitStrip").get(app), viewport);
+                    assertFalse("The pending action caption and buttons remain clear", viewport.overlaps(cancel));
                     capture(app, "source-propaganda-instruction.png");
                     city(app, 0, 0);
                     assertPrompt(instruction, SourceActionInstruction.OWN_CITY, 108);
                     assertEquals("propaganda1", menu(app).getKey());
                     capture(app, "source-propaganda-own-city-warning.png");
                     tap(app, cancel);
-                    assertNull(state.getSelectedAction());
+                    assertEquals(GameState.Action.PROPAGANDA, state.getSelectedAction());
+                    assertEquals("propaganda1", menu(app).getKey());
                     assertPrompt(instruction, SourceActionInstruction.OWN_CITY, 108);
+                    city(app, 1, 0);
+                    assertEquals("propaganda2", menu(app).getKey());
+                    tap(app, cancel);
+                    assertNull(state.getSelectedAction());
                     advance(app, 10);
                     city(app, 0, 0); // Source citySelect warns even with no action selected.
                     assertPrompt(instruction, SourceActionInstruction.OWN_CITY, 108);
@@ -104,8 +110,9 @@ public final class SourceActionInstructionsInstrumentedTest {
                     assertPrompt(instruction, SourceActionInstruction.CEASEFIRE, 108);
                     assertEquals("propaganda1", menu(app).getKey());
                     capture(app, "source-propaganda-ceasefire-warning.png");
-                    tap(app, ((Rectangle[]) field("actionFooterButtons").get(app))[1]);
-                    assertNull(state.getSelectedAction());
+                    tap(app, cancel);
+                    assertEquals(GameState.Action.PROPAGANDA, state.getSelectedAction());
+                    assertEquals("propaganda1", menu(app).getKey());
                     assertPrompt(instruction, SourceActionInstruction.CEASEFIRE, 108);
 
                     navigation(app, GameState.Action.DEFENSE);
@@ -123,7 +130,20 @@ public final class SourceActionInstructionsInstrumentedTest {
                     navigation(app, GameState.Action.DEFENSE);
                     assertPrompt(instruction, SourceActionInstruction.SELECT_WEAPON, 108);
 
-                    navigation(app, GameState.Action.DEFENSE); // Same navigation row cancels.
+                    navigation(app, GameState.Action.DEFENSE); // Same row opens Details.
+                    assertTrue(field("modalOpen").getBoolean(app));
+                    assertEquals(GameState.Action.DEFENSE, state.getSelectedAction());
+                    navigation(app, GameState.Action.DEFENSE);
+                    assertFalse(field("modalOpen").getBoolean(app));
+                    tap(app, cancel);
+                    assertEquals(GameState.Action.DEFENSE, state.getSelectedAction());
+                    assertEquals("defenseSelect", menu(app).getKey());
+                    GameState.WeaponState antiAir = state.getHuman().getWeapons().get("antiAir");
+                    antiAir.active = true;
+                    antiAir.inStock = 1;
+                    equipment(app, "antiAir");
+                    assertEquals("defense-antiAir", menu(app).getKey());
+                    tap(app, cancel);
                     assertNull(state.getSelectedAction());
                     GameState.WeaponState soldier = state.getHuman().getWeapons().get("soldier1");
                     assertNotNull(soldier);
