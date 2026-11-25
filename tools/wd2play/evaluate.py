@@ -109,14 +109,20 @@ class LocalServer:
     def __init__(self, port, timeout):
         self.url = f"http://127.0.0.1:{port}"
         self.timeout = timeout
+        self.process = None
         self.http = urllib.request.build_opener(urllib.request.ProxyHandler({}))
 
     def call(self, endpoint, body=None, timeout=5):
         request = urllib.request.Request(self.url + endpoint,
                                          None if body is None else compact(body).encode("utf-8"),
                                          {"Content-Type": "application/json"})
-        with self.http.open(request, timeout=timeout) as response:
-            return json.load(response)
+        try:
+            with self.http.open(request, timeout=timeout) as response:
+                return json.load(response)
+        except OSError as error:
+            if self.process is not None and self.process.poll() is not None:
+                raise RuntimeError("Evaluation server exited during the run; inspect its log") from error
+            raise
 
     def select(self, observation):
         started = time.monotonic()
@@ -171,9 +177,10 @@ def inference_server(args, policy, model, directory):
     command = [str(args.server), "-m", str(model), "--host", "127.0.0.1", "--port", str(args.port),
                "-c", str(CONTEXT), "-np", "1", "-b", "128", "-ub", "128", "--jinja",
                "--chat-template-kwargs", '{"enable_thinking":false}', "--no-context-shift",
-               "-t", str(args.threads), "-ngl", str(args.gpu_layers)]
+               "--cache-ram", "0", "-t", str(args.threads), "-ngl", str(args.gpu_layers)]
     with (directory / f"{policy}-server.log").open("ab") as stdout:
         with subprocess.Popen(command, stdout=stdout, stderr=subprocess.STDOUT) as process:
+            server.process = process
             try:
                 expires = time.monotonic() + 180
                 while time.monotonic() < expires:
