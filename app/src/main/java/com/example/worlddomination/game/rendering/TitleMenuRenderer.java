@@ -24,6 +24,8 @@ public final class TitleMenuRenderer implements Disposable {
     private final Texture logo = texture("logo.png");
     private final Texture orangePlate = texture("orange-plate.png");
     private final Texture steelPlate = texture("steel-plate.png");
+    private final BitmapFont buttonFont = loadButtonFont();
+    private final float buttonCapHeight = buttonFont.getCapHeight();
     private final GlyphLayout glyphs = new GlyphLayout();
     private final GlyphLayout shadow = new GlyphLayout();
 
@@ -52,22 +54,23 @@ public final class TitleMenuRenderer implements Disposable {
             drawContained(batch, available ? steelPlate : orangePlate, layout.newGame, newGameOffset);
             batch.setColor(Color.WHITE);
 
-            font.getData().setScale(1f);
-            float unitCapHeight = font.getCapHeight();
-            float titleScale = 35f * scale / unitCapHeight;
-            drawCaption(batch, font, "CONTINUE", layout.continueGame,
+            float titleScale = 35f * scale / buttonCapHeight;
+            drawCaption(batch, buttonFont, "CONTINUE", layout.continueGame,
                     layout.continueGame.y + layout.continueGame.height * .5f + continueOffset,
                     titleScale, available ? BUTTON_INK : DISABLED_INK, scale);
-            drawCaption(batch, font, "NEW GAME", layout.newGame,
+            drawCaption(batch, buttonFont, "NEW GAME", layout.newGame,
                     layout.newGame.y + layout.newGame.height * .5f + newGameOffset,
                     titleScale, BUTTON_INK, scale);
+
+            font.getData().setScale(1f);
+            float captionScale = 17f * scale / font.getCapHeight();
             if (available) {
                 float gapCenter = (layout.continueGame.y + layout.newGame.y + layout.newGame.height) * .5f;
                 drawCaption(batch, font, metadata, layout.continueGame, gapCenter,
-                        17f * scale / unitCapHeight, METADATA_INK, 0f);
+                        captionScale, METADATA_INK, 0f);
             }
             drawCaption(batch, font, message, layout.newGame, layout.newGame.y - 22f * scale,
-                    17f * scale / unitCapHeight, MESSAGE_INK, 0f);
+                    captionScale, MESSAGE_INK, 0f);
         } finally {
             font.getData().setScale(previousScaleX, previousScaleY);
             batch.setPackedColor(previousTint);
@@ -75,7 +78,7 @@ public final class TitleMenuRenderer implements Disposable {
     }
 
     private void drawCaption(SpriteBatch batch, BitmapFont font, String text, Rectangle bounds,
-                             float centerY, float fontScale, Color color, float weight) {
+                             float centerY, float fontScale, Color color, float shadowOffset) {
         if (text == null || text.isEmpty()) return;
         font.getData().setScale(fontScale);
         glyphs.setText(font, text, color, 0f, Align.left, false);
@@ -86,12 +89,9 @@ public final class TitleMenuRenderer implements Disposable {
         }
         float x = bounds.x + (bounds.width - glyphs.width) * .5f;
         float y = centerY + font.getCapHeight() * .5f;
-        if (weight > 0f) {
+        if (shadowOffset > 0f) {
             shadow.setText(font, text, LABEL_SHADOW, 0f, Align.left, false);
-            font.draw(batch, shadow, x, y - weight);
-            // Thicken the shared Arial glyphs without baking either title into the plate.
-            font.draw(batch, glyphs, x - weight, y);
-            font.draw(batch, glyphs, x + weight, y);
+            font.draw(batch, shadow, x, y - shadowOffset);
         }
         font.draw(batch, glyphs, x, y);
     }
@@ -110,10 +110,18 @@ public final class TitleMenuRenderer implements Disposable {
         return texture;
     }
 
+    private static BitmapFont loadButtonFont() {
+        BitmapFont font = new BitmapFont(Gdx.files.internal("title-menu/button-caps.fnt"));
+        font.setUseIntegerPositions(false);
+        font.getRegion().getTexture().setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
+        return font;
+    }
+
     @Override
     public void dispose() {
         logo.dispose();
         orangePlate.dispose();
         steelPlate.dispose();
+        buttonFont.dispose();
     }
 }
