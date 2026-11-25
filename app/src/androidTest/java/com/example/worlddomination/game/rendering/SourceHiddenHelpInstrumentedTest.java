@@ -82,12 +82,7 @@ public final class SourceHiddenHelpInstrumentedTest {
                 if (!help(app).isOpen()) { open(app); pressIndex(app); }
                 inputCommand(app, command); pressIndex(app);
             }
-            // Queue both actions through the actual navigation/modal controls.
-            tap(app, ((Rectangle[]) field("navRows").get(app))[0]);
-            tap(app, (Rectangle) field("modalAccept").get(app));
-            tap(app, ((Rectangle[]) field("navRows").get(app))[3]);
-            tap(app, (Rectangle) field("modalAccept").get(app));
-            assertEquals(2, game.getQueuedActionCount());
+            queueResourcesAndMassMedia(app, game);
             for (int i=0; i<11; i++) tick(app);
             tap(app, (Rectangle) field("confirmButton").get(app));
             for (int i=0; i<100 && game.getTurn()==0; i++) tick(app);
@@ -122,13 +117,7 @@ public final class SourceHiddenHelpInstrumentedTest {
             GameState game=setup(app);unlock(app);
             inputCommand(app,"psycho killer");pressIndex(app);
             open(app);pressIndex(app);inputCommand(app,"I am Bush");pressIndex(app);
-            // Clicking an already queued navigation action reselects that tube.
-            // Use two distinct source actions to fill both slots through the UI.
-            for(int row:new int[]{0,3}) {
-                tap(app,((Rectangle[])field("navRows").get(app))[row]);
-                tap(app,(Rectangle)field("modalAccept").get(app));
-            }
-            assertEquals(2,game.getQueuedActionCount());
+            queueResourcesAndMassMedia(app, game);
             for(int i=0;i<11;i++)tick(app);
             tap(app,(Rectangle)field("confirmButton").get(app));
             for(int i=0;i<100&&game.getTurn()==0;i++)tick(app);
@@ -152,6 +141,23 @@ public final class SourceHiddenHelpInstrumentedTest {
             assertEquals(population,game.getHuman().populationMillions);
             assertEquals(random,game.createPresentationRandomCopy().nextDouble(),0d);
         });
+    }
+
+    private static void queueResourcesAndMassMedia(WorldDominationGame app, GameState game) throws Exception {
+        Rectangle[] navigation = (Rectangle[]) field("navRows").get(app);
+        tap(app, navigation[0]);
+        assertEquals(GameState.Action.RESOURCES, game.getSelectedAction());
+        assertTrue(field("modalOpen").getBoolean(app));
+        tap(app, (Rectangle) field("modalAccept").get(app));
+        assertEquals(GameState.Action.RESOURCES, game.getQueuedAction(0));
+
+        tap(app, navigation[3]);
+        assertEquals(GameState.Action.MASS_MEDIA, game.getSelectedAction());
+        assertFalse(field("modalOpen").getBoolean(app));
+        Rectangle[] footer = (Rectangle[]) field("actionFooterButtons").get(app);
+        tap(app, footer[2]);
+        assertEquals(GameState.Action.MASS_MEDIA, game.getQueuedAction(1));
+        assertEquals(2, game.getQueuedActionCount());
     }
 
     private static GameState setup(WorldDominationGame app) throws Exception {
