@@ -133,6 +133,7 @@ def export(args):
     output = args.out
     output.mkdir(parents=True, exist_ok=False)
     database = sqlite3.connect(output / "dedup.sqlite")
+    database.execute("PRAGMA temp_store = FILE")
     database.executescript("""
         CREATE TABLE observations (exact TEXT PRIMARY KEY, state TEXT, action TEXT);
         CREATE INDEX coarse_state ON observations(state);
@@ -194,17 +195,29 @@ def export(args):
     """
     database.execute("CREATE TABLE ambiguities AS " + conflicting)
     database.execute("CREATE INDEX ambiguity_state ON ambiguities(state)")
-    query = """
-        SELECT c.exact, c.state, c.action, c.provenance, c.message FROM candidates c
+    eligible = """
+        SELECT c.rowid AS candidate_id, MIN(c.ordering) AS sample_order
+        FROM candidates c
         WHERE NOT EXISTS(SELECT 1 FROM observations o WHERE o.state=c.state)
           AND NOT EXISTS(SELECT 1 FROM ambiguities a WHERE a.state=c.state)
-        GROUP BY c.state HAVING c.ordering = MIN(c.ordering)
-        ORDER BY c.ordering
+        GROUP BY c.state
     """
     wanted = args.target - report["counts"]["train"]
-    available = database.execute("SELECT COUNT(*) FROM ("+query+")").fetchone()[0]
+    available = database.execute("SELECT COUNT(*) FROM (" + eligible + ")").fetchone()[0]
     if available < wanted:
         raise ValueError(f"Only {available} unique, unambiguous additions for {wanted} slots")
+    # Sort only narrow identifiers before fetching multi-kilobyte observations.
+    database.execute("CREATE TEMP TABLE sample (position INTEGER PRIMARY KEY, candidate_id INTEGER NOT NULL)")
+    database.execute(f"""
+        INSERT INTO sample(candidate_id)
+        SELECT candidate_id FROM ({eligible})
+        ORDER BY sample_order LIMIT ?
+    """, (wanted,))
+    query = """
+        SELECT c.provenance, c.message FROM sample
+        CROSS JOIN candidates c ON c.rowid = sample.candidate_id
+        ORDER BY sample.position
+    """
     for split in ("train", "validation", "test"):
         shutil.copyfile(args.parent / (split + ".jsonl"), output / (split + ".jsonl"))
     families = {}
@@ -213,7 +226,7 @@ def export(args):
     with (output / "train.jsonl").open("ab") as data, (output / "provenance.jsonl").open("w", encoding="utf8") as audit:
         for prior in frozen["train"]:
             audit.write(json.dumps(prior, ensure_ascii=False) + "\n")
-        for index, (exact, state, action, source, message) in enumerate(database.execute(query + " LIMIT ?", (wanted,)), 1):
+        for index, (source, message) in enumerate(database.execute(query), 1):
             encoded = message.encode("utf8")
             data.write(encoded + b"\n")
             provenance = json.loads(source)
@@ -224,6 +237,8 @@ def export(args):
             families[family] = "train"
             by_difficulty[json.loads(json.loads(message)["messages"][1]["content"])["difficulty"]] += 1
             plan_labels[json.loads(json.loads(message)["messages"][2]["content"])["plan_id"]] += 1
+            if index % 100000 == 0:
+                print(f"{index} verified additions written", flush=True)
         for split in ("validation", "test"):
             for prior in frozen[split]:
                 audit.write(json.dumps(prior, ensure_ascii=False) + "\n")

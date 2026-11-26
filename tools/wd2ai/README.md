@@ -91,6 +91,8 @@ python tools/wd2ai/rollout_corpus.py export --parent <certified-corpus> --shards
 
 Pilot games compare the teacher and Java on matched setups. Keep pilot and prospective seeds separate from collection. The exporter checks legal choices, score margins, terminal evidence, transcript completeness and semantic duplication. The Java worker independently verifies each trajectory through replay. Newly automated labels lack individual Android and independent manual review. Existing certified rows and both original holdouts retain their bytes and provenance. The fine-tuning worker stores token batches in a disk-backed Arrow dataset and retains the latest and best checkpoints within its save limit.
 
+For multi-million-row runs, keep collection, export and training outputs on a disk with room for the raw replay shards, the indexed corpus and the Arrow cache. The exporter sorts compact record IDs before reading the full messages. Use `--token-shard-rows 50000` to keep reusable byte-range token shards and set `--checkpoint-steps` to a save interval suited to the GPU. Restart with `--resume` in the same training directory. This reuses completed token shards and resumes from the newest checkpoint carrying both trainer state and optimizer state. Split files and token shards are bound to the corpus checksum.
+
 Run `export_gguf.py --run <training-run> --source <b7700-source-dir> --bin <b7700-binary-dir>` with the training interpreter to create standalone F16, Q8_0 and Q4_K_M exports and their byte counts and checksums. Use `tools/wd2play/score_choices.py` on the validation split before choosing a deployment quantization. The bundled APK option in the runtime guide makes that specific file usable offline from first launch.
 
 ### Extend a completed experiment

@@ -8,6 +8,8 @@ import unittest
 from export_dataset import family_split
 from game_tools import CLASSES
 from rollout_corpus import keys, review_scores, setups
+from sft import record_ranges, tokenized_rows
+from unittest.mock import patch
 
 
 class RolloutCorpusTests(unittest.TestCase):
@@ -38,6 +40,19 @@ class RolloutCorpusTests(unittest.TestCase):
         second = keys(record("P02"))
         self.assertEqual(first[:2], second[:2])
         self.assertNotEqual(first[2], second[2])
+
+    def test_token_shards_preserve_order_and_stop_at_the_limit(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "train.jsonl"
+            path.write_bytes(b'{"id":1}\r\n\n{"id":2}\n{"id":3}\n{"id":4}')
+            with patch("sft.encode_example", side_effect=lambda tok, row: {
+                    "input_ids": [row["id"], 99], "attention_mask": [1, 1], "labels": [-100, 99]}):
+                spans = list(record_ranges(path, 2, limit=3))
+                self.assertEqual([2, 1], [count for _, _, count in spans])
+                result = [feature for start, stop, _ in spans
+                          for feature in tokenized_rows(path, None, start, stop, "frozen-digest")]
+                self.assertEqual([1, 2, 3], [feature["input_ids"][0] for feature in result])
+                self.assertEqual([1, 1, 1], [feature["supervised_length"] for feature in result])
 
     def test_rollout_forks_and_replays_are_repeatable(self):
         with tempfile.TemporaryDirectory() as temp:
