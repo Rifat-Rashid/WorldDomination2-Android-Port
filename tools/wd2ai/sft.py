@@ -103,8 +103,10 @@ def train(args):
         def _get_train_sampler(self, train_dataset=None):
             if self.args.train_sampling_strategy != "group_by_length":
                 return super()._get_train_sampler(train_dataset)
-            training = self.train_dataset if train_dataset is None else train_dataset
-            lengths = training.data.column("length").to_numpy().tolist()
+            # Trainer strips non-model columns from the dataloader dataset before asking for a sampler.
+            lengths = self.train_dataset.data.column("length").to_numpy().tolist()
+            if train_dataset is not None and len(train_dataset) != len(lengths):
+                raise ValueError("Dataloader changed the number of training examples")
             return LengthGroupedSampler(
                 self.args.train_batch_size * self.args.gradient_accumulation_steps, lengths=lengths)
 
