@@ -26,6 +26,7 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.example.worlddomination.game.WorldDominationGame;
+import com.example.worlddomination.game.ai.LocalOpponentRuntime;
 import com.example.worlddomination.game.persistence.GameSaveCodec;
 import com.example.worlddomination.game.persistence.GameSaveStore;
 import com.example.worlddomination.game.simulation.GameSetup;
@@ -77,6 +78,13 @@ public final class SettingsSaveLoadInstrumentedTest {
                 GameSettingsMenu menu = openSettings(app);
                 assertFalse(menu.canSave());
                 assertFalse(menu.canLoad());
+                LocalOpponentRuntime.Snapshot model = menu.getLocalModel();
+                assertFalse(model.requested);
+                assertEquals(model.supported ? LocalOpponentRuntime.Stage.OFF : LocalOpponentRuntime.Stage.UNSUPPORTED,
+                        model.stage);
+                assertTrue(menu.panel.contains(menu.qwen));
+                assertFalse(menu.save.overlaps(menu.qwen));
+                assertFalse(menu.load.overlaps(menu.qwen));
                 tap(app, menu.save);
                 assertTrue(menu.isOpen());
                 assertFalse(empty.hasSave());
@@ -464,6 +472,10 @@ public final class SettingsSaveLoadInstrumentedTest {
 
     static void capture(WorldDominationGame app, String name) throws Exception {
         render(app);
+        captureFrame(name);
+    }
+
+    static void captureFrame(String name) throws Exception {
         int width = Gdx.graphics.getBackBufferWidth();
         int height = Gdx.graphics.getBackBufferHeight();
         byte[] pixels = ScreenUtils.getFrameBufferPixels(0, 0, width, height, true);

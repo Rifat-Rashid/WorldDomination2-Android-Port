@@ -9,6 +9,7 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.Align;
+import com.example.worlddomination.game.ai.LocalOpponentRuntime;
 import com.example.worlddomination.game.assets.OriginalUiAssets;
 import com.example.worlddomination.game.persistence.GameSaveStore;
 import com.example.worlddomination.game.ui.GameSettingsMenu;
@@ -56,6 +57,7 @@ public final class SettingsSaveScreenRenderer {
         final int selected = menu.getSelectedSlot() - 1;
         final boolean confirming = menu.isConfirmingLoad();
         final boolean readable = resources[selected] != null;
+        LocalOpponentRuntime.Snapshot model = menu.getLocalModel();
         shapes.setProjectionMatrix(projection);
         batch.setProjectionMatrix(projection);
         shapes.begin(ShapeRenderer.ShapeType.Filled);
@@ -73,6 +75,12 @@ public final class SettingsSaveScreenRenderer {
         }
         fill(shapes, menu.save, (confirming || menu.canSave()) ? ORANGE : CARD);
         fill(shapes, menu.load, (confirming || menu.canLoad()) ? SELECTED : CARD);
+        if (!confirming) {
+            fill(shapes, menu.qwen, model.supported ? SELECTED : CARD);
+            rect(shapes, 729, 11, 38, 20, model.supported && model.requested ? ORANGE : NIGHT);
+            if (menu.canRetryQwen()) fill(shapes, menu.retryQwen, SELECTED);
+            drawModelProgress(shapes, model);
+        }
         shapes.end();
 
         batch.begin();
@@ -138,10 +146,58 @@ public final class SettingsSaveScreenRenderer {
                 confirming || menu.canSave() ? NIGHT : STEEL, 18);
         buttonLabel(batch, font, menu.load, confirming ? "Cancel" : "Load game",
                 confirming || menu.canLoad() ? Color.WHITE : STEEL, 18);
-        if (!confirming) buttonLabel(batch, font, menu.sound, soundEnabled ? "Sound on" : "Sound off", LIGHT, 15);
+        if (!confirming) {
+            buttonLabel(batch, font, menu.sound, soundEnabled ? "Sound on" : "Sound off", LIGHT, 15);
+            label(batch, font, "qwen3 0.6b ai", 516, 33, 14, model.supported ? Color.WHITE : LIGHT);
+            label(batch, font, model.requested ? "ON" : "OFF", 738, 26, 12,
+                    model.supported && model.requested ? NIGHT : LIGHT);
+            modelStatus(batch, font, model);
+            if (menu.canRetryQwen()) buttonLabel(batch, font, menu.retryQwen, "Retry AI", LIGHT, 15);
+        }
         font.getData().setScale(oldScale);
         font.setColor(Color.WHITE);
         batch.end();
+    }
+
+    private void drawModelProgress(ShapeRenderer shapes, LocalOpponentRuntime.Snapshot model) {
+        switch (model.stage) {
+            case COPYING:
+            case DOWNLOADING:
+            case LOADING:
+                if (model.progress < 0f) return;
+                rect(shapes, 516, 8, 202, 2, NIGHT);
+                shapes.setColor(ORANGE);
+                shapes.rect(x(516), y(8), size(202 * Math.min(1f, model.progress)), size(2));
+                break;
+            case VERIFYING:
+            case PREPARING:
+                rect(shapes, 516, 8, 202, 2, NIGHT);
+                float phase = Math.floorMod(System.nanoTime() / 1_000_000L, 1_600L) / 800f;
+                float offset = 166f * (phase <= 1f ? phase : 2f - phase);
+                shapes.setColor(ORANGE);
+                shapes.rect(x(516) + size(offset), y(8), size(36), size(2));
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void modelStatus(SpriteBatch batch, BitmapFont font, LocalOpponentRuntime.Snapshot model) {
+        String status;
+        switch (model.stage) {
+            case OFF: status = "Uses original AI"; break;
+            case DOWNLOADING: status = "Downloading model"; break;
+            case COPYING: status = "Copying model"; break;
+            case VERIFYING: status = "Verifying model"; break;
+            case LOADING: status = "Loading model weights"; break;
+            case PREPARING: status = "Preparing AI"; break;
+            case READY: status = "Ready"; break;
+            case PAUSED: status = "Paused"; break;
+            default: status = model.detail == null || model.detail.isEmpty() ? "Local AI unavailable" : model.detail;
+        }
+        font.getData().setScale(size(11) / 18f);
+        font.setColor(LIGHT);
+        font.draw(batch, status, x(516), y(18), 0, status.length(), size(205), Align.left, false, "...");
     }
 
     private void label(SpriteBatch batch, BitmapFont font, String text, int dx, int dy, int height, Color color) {
